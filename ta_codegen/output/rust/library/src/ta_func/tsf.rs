@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::tsf`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TSF`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn tsf_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn TSF_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.tsf(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TSF(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -141,12 +141,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::linearreg`] · [`Core::linearreg_slope`] · [`Core::linearreg_intercept`] ·
-    /// [`Core::linearreg_angle`]
+    /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_INTERCEPT`] ·
+    /// [`Core::LINEARREG_ANGLE`]
     ///
-    /// Further reading: [ta-lib.org/functions/tsf](https://ta-lib.org/functions/tsf/)
+    /// Further reading: [ta-lib.org/functions/TSF](https://ta-lib.org/functions/TSF/)
     #[doc(alias = "TimeSeriesForecast")]
-    pub fn tsf(
+    pub fn TSF(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -157,13 +157,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, tsf_fma, tsf_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, TSF_fma, TSF_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.tsf_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TSF_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn tsf_fma(
+    fn TSF_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -173,10 +173,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.tsf_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TSF_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn tsf_impl(
+    fn TSF_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -197,7 +197,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.tsf_lookback(optInTimePeriod);
+        let _assertLb = self.TSF_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -232,7 +232,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.tsf_lookback(optInTimePeriod);
+        lookbackTotal = self.TSF_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -293,20 +293,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TSF stream: one value per closed bar, bit-identical to [`Core::tsf`]
-/// over the same series. Open with [`Core::tsf_open`]; dropping the handle
+/// Live TSF stream: one value per closed bar, bit-identical to [`Core::TSF`]
+/// over the same series. Open with [`Core::TSF_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TSF_Stream")]
-pub struct TsfStream {
+pub struct TSF_Stream {
     core: Core,
-    state: TsfStreamState,
+    state: TSF_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TsfStreamState {
+struct TSF_StreamState {
     optInTimePeriod: i32,
     SumX: f64,
     SumXY: f64,
@@ -325,7 +325,7 @@ struct TsfStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn tsf_step_internal(&self, sp: &mut TsfStreamState, inReal: f64, outReal: &mut f64) {
+    fn TSF_step_internal(&self, sp: &mut TSF_StreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
@@ -344,10 +344,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::tsf_open`] (composition seam).
-    pub(crate) fn tsf_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TSF_Open`] (composition seam).
+    pub(crate) fn TSF_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TsfStream, f64), RetCode> {
+    ) -> Result<(TSF_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -395,7 +395,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.tsf_lookback(optInTimePeriod);
+        lookbackTotal = self.TSF_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -459,7 +459,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = TsfStreamState {
+        let state = TSF_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -470,11 +470,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((TsfStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TSF_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TSF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::tsf`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TSF`] at that bar.
     ///
     /// # Errors
     ///
@@ -486,23 +486,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.tsf_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.TSF_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TSF_Open")]
-    pub fn tsf_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TsfStream, f64), RetCode> {
-        self.tsf_open_internal(inReal, 0, optInTimePeriod)
+    pub fn TSF_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TSF_Stream, f64), RetCode> {
+        self.TSF_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::tsf_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::tsf`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TSF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TSF`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TSF_OpenAndFill")]
-    pub fn tsf_open_and_fill(
+    pub fn TSF_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TsfStream, RetCode> {
+    ) -> Result<TSF_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -549,7 +549,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.tsf_lookback(optInTimePeriod);
+        lookbackTotal = self.TSF_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -615,7 +615,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = TsfStreamState {
+        let state = TSF_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -626,19 +626,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(TsfStream { core: self.clone(), state })
+        Ok(TSF_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TsfStream {
+impl TSF_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TSF_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.tsf_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TSF_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -656,7 +656,7 @@ impl TsfStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TsfStream>();
+    _assert_auto::<TSF_Stream>();
 };
 
 /***************/

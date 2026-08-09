@@ -64,9 +64,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::pvi`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::PVI`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn pvi_lookback(&self) -> usize {
+    pub fn PVI_Lookback(&self) -> usize {
         // This function have no lookback needed.
         return (0) as usize;
     }
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.pvi(
+    /// let ret = core.PVI(
     ///     0, close.len() - 1, &close, &volume,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -142,9 +142,9 @@ impl Core {
     /// * Norman G. Fosback, *Stock Market Logic*, The Institute for Econometric Research (ISBN
     ///   0917604482)
     ///
-    /// Further reading: [ta-lib.org/functions/pvi](https://ta-lib.org/functions/pvi/)
+    /// Further reading: [ta-lib.org/functions/PVI](https://ta-lib.org/functions/PVI/)
     #[doc(alias = "PositiveVolumeIndex")]
-    pub fn pvi(
+    pub fn PVI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -160,7 +160,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.pvi_lookback();
+        let _assertLb = self.PVI_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -201,20 +201,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PVI stream: one value per closed bar, bit-identical to [`Core::pvi`]
-/// over the same series. Open with [`Core::pvi_open`]; dropping the handle
+/// Live PVI stream: one value per closed bar, bit-identical to [`Core::PVI`]
+/// over the same series. Open with [`Core::PVI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PVI_Stream")]
-pub struct PviStream {
+pub struct PVI_Stream {
     core: Core,
-    state: PviStreamState,
+    state: PVI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PviStreamState {
+struct PVI_StreamState {
     prevPVI: f64,
     prevClose: f64,
     prevVolume: f64,
@@ -227,7 +227,7 @@ struct PviStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn pvi_step_internal(&self, sp: &mut PviStreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn PVI_step_internal(&self, sp: &mut PVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         tempClose = inClose;
@@ -243,10 +243,10 @@ impl Core {
         sp.prevVolume = tempVolume;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::pvi_open`] (composition seam).
-    pub(crate) fn pvi_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::PVI_Open`] (composition seam).
+    pub(crate) fn PVI_OpenInternal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(PviStream, f64), RetCode> {
+    ) -> Result<(PVI_Stream, f64), RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -290,16 +290,16 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = PviStreamState {
+        let state = PVI_StreamState {
             prevPVI,
             prevClose,
             prevVolume,
         };
-        Ok((PviStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((PVI_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live PVI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::pvi`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::PVI`] at that bar.
     ///
     /// # Errors
     ///
@@ -316,23 +316,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.pvi_open(&close, &volume).expect("enough history");
+    /// let (mut s, _last) = core.PVI_Open(&close, &volume).expect("enough history");
     /// let peeked = s.peek(100.9, 12_345.0);
     /// let updated = s.update(100.9, 12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVI_Open")]
-    pub fn pvi_open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PviStream, f64), RetCode> {
-        self.pvi_open_internal(inClose, inVolume, 0)
+    pub fn PVI_Open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(PVI_Stream, f64), RetCode> {
+        self.PVI_OpenInternal(inClose, inVolume, 0)
     }
 
-    /// [`Core::pvi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::pvi`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::PVI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::PVI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PVI_OpenAndFill")]
-    pub fn pvi_open_and_fill(
+    pub fn PVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PviStream, RetCode> {
+    ) -> Result<PVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -376,24 +376,24 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = PviStreamState {
+        let state = PVI_StreamState {
             prevPVI,
             prevClose,
             prevVolume,
         };
-        Ok(PviStream { core: self.clone(), state })
+        Ok(PVI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PviStream {
+impl PVI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_PVI_Update")]
     pub fn update(&mut self, inClose: f64, inVolume: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.pvi_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
+        self.core.PVI_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
         outReal
     }
 
@@ -411,7 +411,7 @@ impl PviStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PviStream>();
+    _assert_auto::<PVI_Stream>();
 };
 
 /***************/

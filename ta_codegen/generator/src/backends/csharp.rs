@@ -50,10 +50,10 @@
 //!   [`compat_fold`](super::compat_fold) engine folds the whole `if` away
 //!   (dead-code removal only — never a value change).
 //!
-//! - **Method names are PascalCase**, i.e. the YAML `camel_case` verbatim
-//!   (historical spellings like `WillR`, `StochF`, `CdlHignWave` preserved).
-//!   This must agree with `Lang::CSharp` in `registry.rs` or every
-//!   cross-indicator call targets a method that does not exist — pinned by the
+//! - **Method names are the YAML `name:` verbatim** (`SMA`, `WILLR`, `MA`), with
+//!   suffixed variants separated by an underscore (`SMA_Lookback`). This must
+//!   agree with `Lang::CSharp` in `registry.rs` or every cross-indicator call
+//!   targets a method that does not exist — pinned by the
 //!   `csharp_method_names_agree_with_registry` test below.
 
 use std::cell::Cell;
@@ -76,8 +76,8 @@ use super::expr_walk::{binop_prec, expr_prec, is_int_bitwise, wrap_child, wrap_i
 use super::fma::{self, FmaVarSets};
 use super::java::{
     bool_ternary_collapse, build_matype_map, circbuf_arrays, collect_address_of_vars,
-    collect_double_address_of_vars, collect_matype_vars, is_boolean_expr, to_java_method_name,
-    unst_pascal_name, BoolTernaryCollapse,
+    collect_double_address_of_vars, collect_matype_vars, is_boolean_expr,
+    unst_variant_name, BoolTernaryCollapse,
 };
 use super::stmt_walk::StatementEmitter;
 
@@ -211,23 +211,6 @@ fn cs_circbuf_elem(t: &VarType) -> &'static str {
     }
 }
 
-/// Convert a function to its C# `PascalCase` method base name: the YAML
-/// `camel_case` verbatim (`MovingAverage`, `WillR`, `CdlHignWave` — historical
-/// spellings preserved for one-to-one diffability against the Java fragments).
-/// Falls back to capitalizing the Java camelCase derivation when the YAML field
-/// is absent.
-pub(crate) fn to_csharp_method_name(name: &str, camel_case: Option<&str>) -> String {
-    if let Some(cc) = camel_case {
-        return cc.to_string();
-    }
-    let camel = to_java_method_name(name, None);
-    let mut chars = camel.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-    }
-}
-
 /// Leaf classifier for the single-precision comparison fold: an `==`/`!=`
 /// between two bare identifiers of which exactly one is a `float[]` input
 /// parameter can never hold (the other side is a `double[]`), and C# rejects
@@ -300,7 +283,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
         .and_then(|e| e.variants.iter().find(|v| v.value == value))
         .map_or_else(
             || format!("({enum_name}){value}"),
-            |v| format!("{enum_name}.{}", v.pascal_name),
+            |v| format!("{enum_name}.{}", v.name),
         )
 }
 
@@ -411,7 +394,7 @@ fn gen_lookback(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
+    let name = func.name.clone();
 
     let param_str = if func.optional_inputs.is_empty() {
         " ".to_string()
@@ -441,7 +424,7 @@ fn gen_lookback(
 
     let docs = super::csharp_doc::lookback_docs(func, &name, enums);
     format!(
-        "{docs}   public int {name}Lookback({param_str})\n\
+        "{docs}   public int {name}_Lookback({param_str})\n\
          \x20  {{\n\
          {body}\n\
          \x20  }}\n"
@@ -489,7 +472,7 @@ fn gen_public_wrapper(
     single_precision: bool,
     enums: &HashMap<String, EnumDef>,
 ) -> String {
-    let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
+    let base_name = func.name.clone();
     let core = base_name.clone();
     let public_name = core.clone();
 
@@ -553,8 +536,8 @@ fn gen_private(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
-    let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
-    let name_override = format!("{base_name}Private");
+    let base_name = func.name.clone();
+    let name_override = format!("{base_name}_Private");
     gen_func_inner(func, single_precision, Some(&name_override), enums, registry, helpers)
 }
 
@@ -578,7 +561,7 @@ fn gen_func_inner(
     helpers: &HelperRegistry,
 ) -> String {
     let mut out = String::new();
-    let base_name = to_csharp_method_name(&func.name, func.camel_case.as_deref());
+    let base_name = func.name.clone();
     let name = if let Some(n) = name_override {
         n.to_string()
     } else {
@@ -1434,7 +1417,7 @@ pub(crate) fn render_statement_ctx(
 /// pre-21 JDKs. C# requires the qualified form.
 fn render_csharp_switch_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
     if let Some((enum_name, variant)) = lookup_variant(label, enums) {
-        format!("{enum_name}.{}", variant.pascal_name)
+        format!("{enum_name}.{}", variant.name)
     } else {
         label.to_string()
     }
@@ -1825,8 +1808,8 @@ fn render_func_call(
                 // UNSTABLE_PERIOD(RSI) -> this.unstablePeriod[(int)FuncUnstId.Rsi]
                 // (C# enums cast to int; there is no ordinal()).
                 if let Some(Expr::Var(func_name)) = args.first() {
-                    let pascal = unst_pascal_name(func_name);
-                    return format!("this.unstablePeriod[(int)FuncUnstId.{pascal}]");
+                    let variant = unst_variant_name(func_name);
+                    return format!("this.unstablePeriod[(int)FuncUnstId.{variant}]");
                 }
                 "this.unstablePeriod[0]".to_string()
             }
@@ -2117,7 +2100,7 @@ mod tests {
                 continue;
             }
             let fd = parser::yaml::parse_yaml(&yaml);
-            let base = to_csharp_method_name(&fd.name, fd.camel_case.as_deref());
+            let base = fd.name.clone();
             assert_eq!(
                 registry.resolve_call(&key, Lang::CSharp),
                 base,
@@ -2125,7 +2108,7 @@ mod tests {
             );
             assert_eq!(
                 registry.resolve_call(&format!("{key}_lookback"), Lang::CSharp),
-                format!("{base}Lookback"),
+                format!("{base}_Lookback"),
                 "lookback cross-call target for `{key}` disagrees with the emitted name"
             );
             checked += 1;
@@ -2145,7 +2128,7 @@ mod tests {
         assert!(output.contains("public partial class Core"), "missing partial class");
 
         // The internal core with the out-int pair and the CS0177 seeding prologue.
-        assert!(output.contains("   internal RetCode Sma( "), "missing guarded core");
+        assert!(output.contains("   internal RetCode SMA( "), "missing guarded core");
         assert!(!output.contains("Unguarded"), "no unguarded tier may exist");
         assert!(output.contains("out int outBegIdx"), "missing out param");
         assert!(
@@ -2155,7 +2138,7 @@ mod tests {
 
         // The surviving core validates. Bounded to the double core's own body so
         // a match inside the float overload cannot stand in for it.
-        let guarded_pos = output.find("internal RetCode Sma( ").unwrap();
+        let guarded_pos = output.find("internal RetCode SMA( ").unwrap();
         let guarded_end = output[guarded_pos + 1..]
             .find("   internal RetCode ")
             .map_or(output.len() - guarded_pos, |i| i + 1);
@@ -2166,7 +2149,7 @@ mod tests {
 
         // The public surface is OutRange-returning wrappers over those cores,
         // and nothing Java-shaped leaks through.
-        assert!(output.contains("   public OutRange Sma( "), "missing public wrapper");
+        assert!(output.contains("   public OutRange SMA( "), "missing public wrapper");
         assert!(
             output.contains("throw Failure(\"SMA\", retCode);"),
             "guarded wrapper must map RetCode onto the documented exception"
@@ -2192,7 +2175,7 @@ mod tests {
             "&localBegIdx must lower to an `out` argument"
         );
         assert!(
-            output.contains("MovingAverage(startIdx, endIdx, inReal, minUsed"),
+            output.contains("MA(startIdx, endIdx, inReal, minUsed"),
             "cross-call must resolve through the registry's C# naming"
         );
         assert!(
@@ -2215,8 +2198,8 @@ mod tests {
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
-        assert!(output.contains("case MAType.Sma:"), "switch labels must be qualified");
-        assert!(!output.contains("case Sma:"), "unqualified labels are Java-only");
+        assert!(output.contains("case MAType.SMA:"), "switch labels must be qualified");
+        assert!(!output.contains("case SMA:"), "unqualified labels are Java-only");
         assert!(
             output.contains("new double[(int)(endIdx - startIdx + 1)]"),
             "MAMA's discarded FAMA output must materialize a throwaway array"

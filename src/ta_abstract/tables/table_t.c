@@ -84,7 +84,6 @@ static const TA_OptInputParameterInfo *TA_T3_OptInputs[] =
 DEF_FUNCTION( T3,
               TA_GroupId_OverlapStudies,
               "Triple Exponential Moving Average (T3)",
-              "T3",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* T3 END */
@@ -108,7 +107,6 @@ static const TA_OptInputParameterInfo *TA_TAN_OptInputs[] =
 DEF_FUNCTION( TAN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Tan",
-              "Tan",
               TA_FUNC_FLG_STREAM
              );
 /* TAN END */
@@ -132,7 +130,6 @@ static const TA_OptInputParameterInfo *TA_TANH_OptInputs[] =
 DEF_FUNCTION( TANH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Tanh",
-              "Tanh",
               TA_FUNC_FLG_STREAM
              );
 /* TANH END */
@@ -158,7 +155,6 @@ static const TA_OptInputParameterInfo *TA_TEMA_OptInputs[] =
 DEF_FUNCTION( TEMA,
               TA_GroupId_OverlapStudies,
               "Triple Exponential Moving Average",
-              "Tema",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TEMA END */
@@ -182,7 +178,6 @@ static const TA_OptInputParameterInfo *TA_TRANGE_OptInputs[] =
 DEF_FUNCTION( TRANGE,
               TA_GroupId_VolatilityIndicators,
               "True Range",
-              "TrueRange",
               TA_FUNC_FLG_STREAM
              );
 /* TRANGE END */
@@ -208,7 +203,6 @@ static const TA_OptInputParameterInfo *TA_TRIMA_OptInputs[] =
 DEF_FUNCTION( TRIMA,
               TA_GroupId_OverlapStudies,
               "Triangular Moving Average",
-              "Trima",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TRIMA END */
@@ -234,7 +228,6 @@ static const TA_OptInputParameterInfo *TA_TRIX_OptInputs[] =
 DEF_FUNCTION( TRIX,
               TA_GroupId_MomentumIndicators,
               "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
-              "Trix",
               TA_FUNC_FLG_STREAM
              );
 /* TRIX END */
@@ -260,7 +253,6 @@ static const TA_OptInputParameterInfo *TA_TSF_OptInputs[] =
 DEF_FUNCTION( TSF,
               TA_GroupId_Statistic,
               "Time Series Forecast",
-              "Tsf",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TSF END */
@@ -284,7 +276,6 @@ static const TA_OptInputParameterInfo *TA_TYPPRICE_OptInputs[] =
 DEF_FUNCTION( TYPPRICE,
               TA_GroupId_PriceTransform,
               "Typical Price",
-              "TypPrice",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* TYPPRICE END */

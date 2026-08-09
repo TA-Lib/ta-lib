@@ -57,7 +57,7 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>AdOsc</c> consumes before it can produce
+   /// Number of leading input bars <c>ADOSC</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -70,7 +70,7 @@ public partial class Core
    /// <param name="optInSlowPeriod">Period of the slow A/D EMA (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AdOscLookback( int optInFastPeriod, int optInSlowPeriod )
+   public int ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
    {
       if( optInFastPeriod == int.MinValue ) {
          optInFastPeriod = 3;
@@ -90,10 +90,10 @@ public partial class Core
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      return EmaLookback(slowestPeriod) ;
+      return EMA_Lookback(slowestPeriod) ;
 
    }
-   internal RetCode AdOsc( int startIdx,
+   internal RetCode ADOSC( int startIdx,
                            int endIdx,
                            double[] inHigh,
                            double[] inLow,
@@ -170,7 +170,7 @@ public partial class Core
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = EmaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -239,7 +239,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode AdOsc( int startIdx,
+   internal RetCode ADOSC( int startIdx,
                            int endIdx,
                            float[] inHigh,
                            float[] inLow,
@@ -289,7 +289,7 @@ public partial class Core
       } else {
          slowestPeriod = optInFastPeriod;
       }
-      lookbackTotal = EmaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -362,7 +362,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdOscLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>ADOSC_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -386,7 +386,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange AdOsc( int startIdx,
+   public OutRange ADOSC( int startIdx,
                           int endIdx,
                           double[] inHigh,
                           double[] inLow,
@@ -396,7 +396,7 @@ public partial class Core
                           int optInSlowPeriod,
                           double[] outReal )
    {
-      RetCode retCode = AdOsc(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
       }
@@ -426,7 +426,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdOscLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>ADOSC_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -450,7 +450,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange AdOsc( int startIdx,
+   public OutRange ADOSC( int startIdx,
                           int endIdx,
                           float[] inHigh,
                           float[] inLow,
@@ -460,7 +460,7 @@ public partial class Core
                           int optInSlowPeriod,
                           double[] outReal )
    {
-      RetCode retCode = AdOsc(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
       }

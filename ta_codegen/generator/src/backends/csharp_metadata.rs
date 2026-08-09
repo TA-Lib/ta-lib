@@ -648,18 +648,16 @@ fn opt_expr(opt: &OptRow) -> String {
 /// expression as the parameter lists they index.
 fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) {
     let def = by_name[r.name.as_str()];
-    let method = super::csharp::to_csharp_method_name(&r.name, r.camel_case.as_deref());
+    let method = r.name.clone();
 
     let _ = writeln!(s, "    private static FunctionInfo {}() => new(", factory_name(&r.name));
     let _ = writeln!(s, "        name: {},", cs(&r.name));
     let _ = writeln!(s, "        group: {},", group_ident(r.group));
     let _ = writeln!(s, "        hint: {},", cs(&r.hint));
-    let _ = writeln!(s, "        camelCaseName: {},", cs(r.camel_case_name()));
-    let _ = writeln!(s, "        methodName: {},", cs(&method));
     let _ = writeln!(s, "        flags: {},", func_flags_expr(r.flags));
     match &r.unst {
         Some(u) => {
-            let _ = writeln!(s, "        unstableId: FuncUnstId.{},", u.pascal_name);
+            let _ = writeln!(s, "        unstableId: FuncUnstId.{},", u.name);
         }
         None => s.push_str("        unstableId: null,\n"),
     }
@@ -672,7 +670,7 @@ fn emit_factory(s: &mut String, r: &FuncRow, by_name: &HashMap<&str, &FuncDef>) 
     let opt_args = opt_arg_exprs(def);
     let _ = writeln!(
         s,
-        "        lookback: static (core, c) => core.{method}Lookback({}),",
+        "        lookback: static (core, c) => core.{method}_Lookback({}),",
         opt_args.join(", ")
     );
 
@@ -1213,8 +1211,8 @@ public sealed record OutputInfo
 /// <summary>Everything the library knows about one indicator.</summary>
 public sealed record FunctionInfo
 {
-    internal FunctionInfo(string name, FunctionGroup group, string hint, string camelCaseName,
-                          string methodName, FunctionFlags flags, FuncUnstId? unstableId,
+    internal FunctionInfo(string name, FunctionGroup group, string hint,
+                          FunctionFlags flags, FuncUnstId? unstableId,
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
@@ -1223,8 +1221,6 @@ public sealed record FunctionInfo
         Name = name;
         Group = group;
         Hint = hint;
-        CamelCaseName = camelCaseName;
-        MethodName = methodName;
         Flags = flags;
         UnstableId = unstableId;
         Inputs = inputs;
@@ -1234,7 +1230,8 @@ public sealed record FunctionInfo
         Invoke = invoke;
     }
 
-    /// <summary>The canonical upper-case name, for example <c>"BBANDS"</c>.</summary>
+    /// <summary>The canonical name, for example <c>"BBANDS"</c>. It is also the
+    /// name of the <see cref="Core"/> method that computes the function.</summary>
     public string Name { get; }
 
     /// <summary>The category the function belongs to.</summary>
@@ -1242,14 +1239,6 @@ public sealed record FunctionInfo
 
     /// <summary>A one-line description. Empty when the definition declares none.</summary>
     public string Hint { get; }
-
-    /// <summary>C's <c>TA_FuncInfo.camelCaseName</c>, kept for cross-backend
-    /// parity. Not a method name — use <see cref="MethodName"/> for that.</summary>
-    public string CamelCaseName { get; }
-
-    /// <summary>The name of the <see cref="Core"/> method that computes this
-    /// function, for example <c>Bbands</c>.</summary>
-    public string MethodName { get; }
 
     /// <summary>Behavioural properties of the function.</summary>
     public FunctionFlags Flags { get; }
@@ -1555,7 +1544,7 @@ public sealed class FunctionCall
     public FunctionCall SetOption(int index, MAType value)
     {
         /* Not a delegation to SetOption(int, int): that accepts an
-           IntegerRange too, so `SetOption(0, MAType.Ema)` on SMA would bind a
+           IntegerRange too, so `SetOption(0, MAType.EMA)` on SMA would bind a
            period of 1 and return Success with silently wrong output. Java's
            ParamHolder.setOptInput(int, MAType) checks INTEGER_LIST for the same
            reason, and no moving-average parameter is an IntegerRange, so this

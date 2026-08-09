@@ -1,5 +1,4 @@
 name: CDLEVENINGSTAR
-camel_case: CdlEveningStar
 group: Pattern Recognition
 hint: Evening Star
 flags: [candlestick, stream]

@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlUpsideGap2Crows} consumes
+    * Number of leading input bars {@link Core#CDLUPSIDEGAP2CROWS} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlUpsideGap2CrowsLookback( )
+   public int CDLUPSIDEGAP2CROWS_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   RetCode cdlUpsideGap2CrowsInternal( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode CDLUPSIDEGAP2CROWS_Internal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlUpsideGap2CrowsLookback();
+      lookbackTotal = CDLUPSIDEGAP2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -136,15 +136,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlUpsideGap2CrowsInternal( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode CDLUPSIDEGAP2CROWS_Internal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -165,7 +165,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlUpsideGap2CrowsLookback();
+      lookbackTotal = CDLUPSIDEGAP2CROWS_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -219,7 +219,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlUpsideGap2CrowsLookback} is a
+    * valid range shorter than {@link Core#CDLUPSIDEGAP2CROWS_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -239,10 +239,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdl2Crows
-    * @see Core#cdlGapSideSideWhite
+    * @see Core#CDL2CROWS
+    * @see Core#CDLGAPSIDESIDEWHITE
     */
-   public OutRange cdlUpsideGap2Crows( int startIdx,
+   public OutRange CDLUPSIDEGAP2CROWS( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -252,7 +252,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlUpsideGap2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLUPSIDEGAP2CROWS", retCode);
       }
@@ -274,7 +274,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlUpsideGap2CrowsLookback} is a
+    * valid range shorter than {@link Core#CDLUPSIDEGAP2CROWS_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -294,10 +294,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdl2Crows
-    * @see Core#cdlGapSideSideWhite
+    * @see Core#CDL2CROWS
+    * @see Core#CDLGAPSIDESIDEWHITE
     */
-   public OutRange cdlUpsideGap2Crows( int startIdx,
+   public OutRange CDLUPSIDEGAP2CROWS( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -307,7 +307,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlUpsideGap2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLUPSIDEGAP2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLUPSIDEGAP2CROWS", retCode);
       }
@@ -317,8 +317,8 @@
 
    /**
     * A live CDLUPSIDEGAP2CROWS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlUpsideGap2Crows} over the same series.
-    * Open with {@link Core#cdlUpsideGap2CrowsOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLUPSIDEGAP2CROWS} over the same series.
+    * Open with {@link Core#CDLUPSIDEGAP2CROWS_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -329,7 +329,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlUpsideGap2CrowsStream {
+   public static final class CDLUPSIDEGAP2CROWS_Stream {
       final Core core;
       double BodyShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -362,10 +362,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlUpsideGap2CrowsStream( Core core ) { this.core = core; }
+      CDLUPSIDEGAP2CROWS_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlUpsideGap2CrowsOpenAndFill}, or
+       * The range filled by {@link Core#CDLUPSIDEGAP2CROWS_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -373,7 +373,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlUpsideGap2CrowsStream( CdlUpsideGap2CrowsStream other ) {
+      CDLUPSIDEGAP2CROWS_Stream( CDLUPSIDEGAP2CROWS_Stream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -412,7 +412,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlUpsideGap2CrowsStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLUPSIDEGAP2CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -424,8 +424,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlUpsideGap2CrowsStream scratch = new CdlUpsideGap2CrowsStream(this);
-         core.cdlUpsideGap2CrowsStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLUPSIDEGAP2CROWS_Stream scratch = new CDLUPSIDEGAP2CROWS_Stream(this);
+         core.CDLUPSIDEGAP2CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -442,11 +442,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlUpsideGap2CrowsStream copy() {
-         return new CdlUpsideGap2CrowsStream(this);
+      public CDLUPSIDEGAP2CROWS_Stream copy() {
+         return new CDLUPSIDEGAP2CROWS_Stream(this);
       }
    }
-   void cdlUpsideGap2CrowsStreamStep( CdlUpsideGap2CrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLUPSIDEGAP2CROWS_StreamStep( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -510,7 +510,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode cdlUpsideGap2CrowsOpenBody( CdlUpsideGap2CrowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenBody( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -539,7 +539,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlUpsideGap2CrowsLookback();
+      lookbackTotal = CDLUPSIDEGAP2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -667,7 +667,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlUpsideGap2CrowsOpenAndFillBody( CdlUpsideGap2CrowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillBody( CDLUPSIDEGAP2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -697,7 +697,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlUpsideGap2CrowsLookback();
+      lookbackTotal = CDLUPSIDEGAP2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -825,11 +825,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlUpsideGap2CrowsOpen (composition seam). */
-   CdlUpsideGap2CrowsStream cdlUpsideGap2CrowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLUPSIDEGAP2CROWS_Open (composition seam). */
+   CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlUpsideGap2CrowsStream sp = new CdlUpsideGap2CrowsStream(this);
-      RetCode retCode = cdlUpsideGap2CrowsOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
+      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -844,32 +844,32 @@
    /**
     * Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlUpsideGap2Crows} at that bar.
-    * <p>The history must hold at least {@code cdlUpsideGap2CrowsLookback(...) + 1} bars
+    * to {@link Core#CDLUPSIDEGAP2CROWS} at that bar.
+    * <p>The history must hold at least {@code CDLUPSIDEGAP2CROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlUpsideGap2CrowsStream cdlUpsideGap2CrowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlUpsideGap2CrowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlUpsideGap2CrowsOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlUpsideGap2Crows} over the whole history in the same single pass
+    * {@link Core#CDLUPSIDEGAP2CROWS_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLUPSIDEGAP2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlUpsideGap2CrowsStream#fillRange()}.
+    * {@link CDLUPSIDEGAP2CROWS_Stream#fillRange()}.
     */
-   public CdlUpsideGap2CrowsStream cdlUpsideGap2CrowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlUpsideGap2CrowsStream sp = new CdlUpsideGap2CrowsStream(this);
+      CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlUpsideGap2CrowsOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLUPSIDEGAP2CROWS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -69,9 +69,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlhikkakemod`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLHIKKAKEMOD`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlhikkakemod_lookback(&self) -> usize {
+    pub fn CDLHIKKAKEMOD_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlhikkakemod(
+    /// let ret = core.CDLHIKKAKEMOD(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -143,13 +143,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlhikkake`]
+    /// [`Core::CDLHIKKAKE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlhikkakemod](https://ta-lib.org/functions/cdlhikkakemod/)
+    /// [ta-lib.org/functions/CDLHIKKAKEMOD](https://ta-lib.org/functions/CDLHIKKAKEMOD/)
     #[doc(alias = "ModifiedHikkake")]
     #[doc(alias = "ModifiedHikkakePattern")]
-    pub fn cdlhikkakemod(
+    pub fn CDLHIKKAKEMOD(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,7 +167,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlhikkakemod_lookback();
+        let _assertLb = self.CDLHIKKAKEMOD_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -195,7 +195,7 @@ impl Core {
         // [patternIdx-1]) so nothing in the per-bar logic references the cursor.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhikkakemod_lookback();
+        lookbackTotal = self.CDLHIKKAKEMOD_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -376,20 +376,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHIKKAKEMOD stream: one value per closed bar, bit-identical to [`Core::cdlhikkakemod`]
-/// over the same series. Open with [`Core::cdlhikkakemod_open`]; dropping the handle
+/// Live CDLHIKKAKEMOD stream: one value per closed bar, bit-identical to [`Core::CDLHIKKAKEMOD`]
+/// over the same series. Open with [`Core::CDLHIKKAKEMOD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHIKKAKEMOD_Stream")]
-pub struct CdlhikkakemodStream {
+pub struct CDLHIKKAKEMOD_Stream {
     core: Core,
-    state: CdlhikkakemodStreamState,
+    state: CDLHIKKAKEMOD_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlhikkakemodStreamState {
+struct CDLHIKKAKEMOD_StreamState {
     NearPeriodTotal: f64,
     patternResult: i32,
     patternCount: usize,
@@ -421,7 +421,7 @@ struct CdlhikkakemodStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlhikkakemod_step_internal(&self, sp: &mut CdlhikkakemodStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHIKKAKEMOD_step_internal(&self, sp: &mut CDLHIKKAKEMOD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -505,10 +505,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlhikkakemod_open`] (composition seam).
-    pub(crate) fn cdlhikkakemod_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLHIKKAKEMOD_Open`] (composition seam).
+    pub(crate) fn CDLHIKKAKEMOD_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlhikkakemodStream, i32), RetCode> {
+    ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -541,7 +541,7 @@ impl Core {
         // [patternIdx-1]) so nothing in the per-bar logic references the cursor.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhikkakemod_lookback();
+        lookbackTotal = self.CDLHIKKAKEMOD_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -754,7 +754,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlhikkakemodStreamState {
+        let state = CDLHIKKAKEMOD_StreamState {
             NearPeriodTotal,
             patternResult,
             patternCount,
@@ -778,11 +778,11 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok((CdlhikkakemodStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLHIKKAKEMOD_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLHIKKAKEMOD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlhikkakemod`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLHIKKAKEMOD`] at that bar.
     ///
     /// # Errors
     ///
@@ -801,23 +801,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlhikkakemod_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLHIKKAKEMOD_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHIKKAKEMOD_Open")]
-    pub fn cdlhikkakemod_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhikkakemodStream, i32), RetCode> {
-        self.cdlhikkakemod_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLHIKKAKEMOD_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
+        self.CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlhikkakemod_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlhikkakemod`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLHIKKAKEMOD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHIKKAKEMOD`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLHIKKAKEMOD_OpenAndFill")]
-    pub fn cdlhikkakemod_open_and_fill(
+    pub fn CDLHIKKAKEMOD_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlhikkakemodStream, RetCode> {
+    ) -> Result<CDLHIKKAKEMOD_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -849,7 +849,7 @@ impl Core {
         // [patternIdx-1]) so nothing in the per-bar logic references the cursor.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhikkakemod_lookback();
+        lookbackTotal = self.CDLHIKKAKEMOD_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1065,7 +1065,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlhikkakemodStreamState {
+        let state = CDLHIKKAKEMOD_StreamState {
             NearPeriodTotal,
             patternResult,
             patternCount,
@@ -1089,19 +1089,19 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok(CdlhikkakemodStream { core: self.clone(), state })
+        Ok(CDLHIKKAKEMOD_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlhikkakemodStream {
+impl CDLHIKKAKEMOD_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLHIKKAKEMOD_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlhikkakemod_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHIKKAKEMOD_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1119,7 +1119,7 @@ impl CdlhikkakemodStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlhikkakemodStream>();
+    _assert_auto::<CDLHIKKAKEMOD_Stream>();
 };
 
 /***************/

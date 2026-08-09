@@ -58,7 +58,7 @@ public partial class Core
     *  122104 MF,CF  Fix#1089506 for out-of-bound access to ep_temp.
     */
    /// <summary>
-   /// Number of leading input bars <c>Sar</c> consumes before it can produce its
+   /// Number of leading input bars <c>SAR</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -71,7 +71,7 @@ public partial class Core
    /// <param name="optInMaximum">Ceiling on the acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int SarLookback( double optInAcceleration, double optInMaximum )
+   public int SAR_Lookback( double optInAcceleration, double optInMaximum )
    {
       if( optInAcceleration == TA_REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
@@ -89,7 +89,7 @@ public partial class Core
       return 1 ;
 
    }
-   internal RetCode Sar( int startIdx,
+   internal RetCode SAR( int startIdx,
                          int endIdx,
                          double[] inHigh,
                          double[] inLow,
@@ -198,7 +198,7 @@ public partial class Core
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -346,7 +346,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Sar( int startIdx,
+   internal RetCode SAR( int startIdx,
                          int endIdx,
                          float[] inHigh,
                          float[] inLow,
@@ -400,7 +400,7 @@ public partial class Core
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+      retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -525,8 +525,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SarLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SAR_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -547,7 +547,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Sar( int startIdx,
+   public OutRange SAR( int startIdx,
                         int endIdx,
                         double[] inHigh,
                         double[] inLow,
@@ -555,7 +555,7 @@ public partial class Core
                         double optInMaximum,
                         double[] outReal )
    {
-      RetCode retCode = Sar(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
       }
@@ -584,8 +584,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SarLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SAR_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -606,7 +606,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Sar( int startIdx,
+   public OutRange SAR( int startIdx,
                         int endIdx,
                         float[] inHigh,
                         float[] inLow,
@@ -614,7 +614,7 @@ public partial class Core
                         double optInMaximum,
                         double[] outReal )
    {
-      RetCode retCode = Sar(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
       }

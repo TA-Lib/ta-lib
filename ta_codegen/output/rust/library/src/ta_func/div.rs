@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::div`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::DIV`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn div_lookback(&self) -> usize {
+    pub fn DIV_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Element-wise division of two input series. Computes the quotient of corresponding values
@@ -112,7 +112,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.div(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.DIV(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -120,12 +120,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::mult`] · [`Core::add`] · [`Core::sub`]
+    /// [`Core::MULT`] · [`Core::ADD`] · [`Core::SUB`]
     ///
-    /// Further reading: [ta-lib.org/functions/div](https://ta-lib.org/functions/div/)
+    /// Further reading: [ta-lib.org/functions/DIV](https://ta-lib.org/functions/DIV/)
     #[doc(alias = "VectorArithmeticDivide")]
     #[doc(alias = "Divide")]
-    pub fn div(
+    pub fn DIV(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -141,7 +141,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.div_lookback();
+        let _assertLb = self.DIV_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -164,20 +164,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live DIV stream: one value per closed bar, bit-identical to [`Core::div`]
-/// over the same series. Open with [`Core::div_open`]; dropping the handle
+/// Live DIV stream: one value per closed bar, bit-identical to [`Core::DIV`]
+/// over the same series. Open with [`Core::DIV_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DIV_Stream")]
-pub struct DivStream {
+pub struct DIV_Stream {
     core: Core,
-    state: DivStreamState,
+    state: DIV_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct DivStreamState {
+struct DIV_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -187,14 +187,14 @@ struct DivStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn div_step_internal(&self, sp: &mut DivStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn DIV_step_internal(&self, sp: &mut DIV_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 / inReal1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::div_open`] (composition seam).
-    pub(crate) fn div_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::DIV_Open`] (composition seam).
+    pub(crate) fn DIV_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(DivStream, f64), RetCode> {
+    ) -> Result<(DIV_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -221,13 +221,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = DivStreamState {
+        let state = DIV_StreamState {
         };
-        Ok((DivStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((DIV_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live DIV stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::div`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::DIV`] at that bar.
     ///
     /// # Errors
     ///
@@ -242,23 +242,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.div_open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.DIV_Open(&data0, &data1).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_DIV_Open")]
-    pub fn div_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(DivStream, f64), RetCode> {
-        self.div_open_internal(inReal0, inReal1, 0)
+    pub fn DIV_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(DIV_Stream, f64), RetCode> {
+        self.DIV_OpenInternal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::div_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::div`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::DIV_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::DIV`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_DIV_OpenAndFill")]
-    pub fn div_open_and_fill(
+    pub fn DIV_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<DivStream, RetCode> {
+    ) -> Result<DIV_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -284,21 +284,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = DivStreamState {
+        let state = DIV_StreamState {
         };
-        Ok(DivStream { core: self.clone(), state })
+        Ok(DIV_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl DivStream {
+impl DIV_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_DIV_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.div_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.DIV_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -316,7 +316,7 @@ impl DivStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<DivStream>();
+    _assert_auto::<DIV_Stream>();
 };
 
 /***************/

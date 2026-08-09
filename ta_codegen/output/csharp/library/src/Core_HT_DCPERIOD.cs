@@ -57,7 +57,7 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>HtDcPeriod</c> consumes before it can
+   /// Number of leading input bars <c>HT_DCPERIOD</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -70,18 +70,18 @@ public partial class Core
    /// </para>
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int HtDcPeriodLookback( )
+   public int HT_DCPERIOD_Lookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[(int)FuncUnstId.HtDcPeriod] ;
+      return 32 + this.unstablePeriod[(int)FuncUnstId.HT_DCPERIOD] ;
 
    }
-   internal RetCode HtDcPeriod( int startIdx,
-                                int endIdx,
-                                double[] inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                double[] outReal )
+   internal RetCode HT_DCPERIOD( int startIdx,
+                                 int endIdx,
+                                 double[] inReal,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -158,7 +158,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HtDcPeriod];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HT_DCPERIOD];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -418,12 +418,12 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HtDcPeriod( int startIdx,
-                                int endIdx,
-                                float[] inReal,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                double[] outReal )
+   internal RetCode HT_DCPERIOD( int startIdx,
+                                 int endIdx,
+                                 float[] inReal,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -494,7 +494,7 @@ public partial class Core
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.Atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HtDcPeriod];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HT_DCPERIOD];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -718,8 +718,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtDcPeriodLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_DCPERIOD_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -735,12 +735,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtDcPeriod( int startIdx,
-                               int endIdx,
-                               double[] inReal,
-                               double[] outReal )
+   public OutRange HT_DCPERIOD( int startIdx,
+                                int endIdx,
+                                double[] inReal,
+                                double[] outReal )
    {
-      RetCode retCode = HtDcPeriod(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPERIOD", retCode);
       }
@@ -762,8 +762,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtDcPeriodLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_DCPERIOD_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -779,12 +779,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtDcPeriod( int startIdx,
-                               int endIdx,
-                               float[] inReal,
-                               double[] outReal )
+   public OutRange HT_DCPERIOD( int startIdx,
+                                int endIdx,
+                                float[] inReal,
+                                double[] outReal )
    {
-      RetCode retCode = HtDcPeriod(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPERIOD", retCode);
       }

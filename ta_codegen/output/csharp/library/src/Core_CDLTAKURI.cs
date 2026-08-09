@@ -56,7 +56,7 @@ public partial class Core
     *  011505 AC   Creation
     */
    /// <summary>
-   /// Number of leading input bars <c>CdlTakuri</c> consumes before it can
+   /// Number of leading input bars <c>CDLTAKURI</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -65,7 +65,7 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CdlTakuriLookback( )
+   public int CDLTAKURI_Lookback( )
    {
       int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
       int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
@@ -79,7 +79,7 @@ public partial class Core
       return Math.Max(Math.Max(BodyDoji_avgPeriod, ShadowVeryShort_avgPeriod), ShadowVeryLong_avgPeriod) ;
 
    }
-   internal RetCode CdlTakuri( int startIdx,
+   internal RetCode CDLTAKURI( int startIdx,
                                int endIdx,
                                double[] inOpen,
                                double[] inHigh,
@@ -118,7 +118,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CdlTakuriLookback();
+      lookbackTotal = CDLTAKURI_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -187,7 +187,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlTakuri( int startIdx,
+   internal RetCode CDLTAKURI( int startIdx,
                                int endIdx,
                                float[] inOpen,
                                float[] inHigh,
@@ -223,7 +223,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlTakuriLookback();
+      lookbackTotal = CDLTAKURI_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -287,7 +287,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlTakuriLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>CDLTAKURI_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -308,7 +308,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlTakuri( int startIdx,
+   public OutRange CDLTAKURI( int startIdx,
                               int endIdx,
                               double[] inOpen,
                               double[] inHigh,
@@ -316,7 +316,7 @@ public partial class Core
                               double[] inClose,
                               int[] outInteger )
    {
-      RetCode retCode = CdlTakuri(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTAKURI", retCode);
       }
@@ -343,7 +343,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlTakuriLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>CDLTAKURI_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -364,7 +364,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlTakuri( int startIdx,
+   public OutRange CDLTAKURI( int startIdx,
                               int endIdx,
                               float[] inOpen,
                               float[] inHigh,
@@ -372,7 +372,7 @@ public partial class Core
                               float[] inClose,
                               int[] outInteger )
    {
-      RetCode retCode = CdlTakuri(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLTAKURI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLTAKURI", retCode);
       }

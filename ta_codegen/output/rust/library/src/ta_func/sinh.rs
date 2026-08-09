@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::sinh`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::SINH`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn sinh_lookback(&self) -> usize {
+    pub fn SINH_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Element-wise hyperbolic sine of the input series. A vector math transform applying sinh() to
@@ -108,7 +108,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.sinh(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.SINH(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -116,11 +116,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cosh`] · [`Core::tanh`]
+    /// [`Core::COSH`] · [`Core::TANH`]
     ///
-    /// Further reading: [ta-lib.org/functions/sinh](https://ta-lib.org/functions/sinh/)
+    /// Further reading: [ta-lib.org/functions/SINH](https://ta-lib.org/functions/SINH/)
     #[doc(alias = "HyperbolicSine")]
-    pub fn sinh(
+    pub fn SINH(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -135,7 +135,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.sinh_lookback();
+        let _assertLb = self.SINH_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -157,20 +157,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SINH stream: one value per closed bar, bit-identical to [`Core::sinh`]
-/// over the same series. Open with [`Core::sinh_open`]; dropping the handle
+/// Live SINH stream: one value per closed bar, bit-identical to [`Core::SINH`]
+/// over the same series. Open with [`Core::SINH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SINH_Stream")]
-pub struct SinhStream {
+pub struct SINH_Stream {
     core: Core,
-    state: SinhStreamState,
+    state: SINH_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SinhStreamState {
+struct SINH_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -180,14 +180,14 @@ struct SinhStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn sinh_step_internal(&self, sp: &mut SinhStreamState, inReal: f64, outReal: &mut f64) {
+    fn SINH_step_internal(&self, sp: &mut SINH_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).sinh();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::sinh_open`] (composition seam).
-    pub(crate) fn sinh_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::SINH_Open`] (composition seam).
+    pub(crate) fn SINH_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(SinhStream, f64), RetCode> {
+    ) -> Result<(SINH_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -214,13 +214,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = SinhStreamState {
+        let state = SINH_StreamState {
         };
-        Ok((SinhStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((SINH_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live SINH stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::sinh`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::SINH`] at that bar.
     ///
     /// # Errors
     ///
@@ -232,23 +232,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.sinh_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.SINH_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SINH_Open")]
-    pub fn sinh_open(&self, inReal: &[f64], ) -> Result<(SinhStream, f64), RetCode> {
-        self.sinh_open_internal(inReal, 0)
+    pub fn SINH_Open(&self, inReal: &[f64], ) -> Result<(SINH_Stream, f64), RetCode> {
+        self.SINH_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::sinh_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::sinh`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::SINH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SINH`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_SINH_OpenAndFill")]
-    pub fn sinh_open_and_fill(
+    pub fn SINH_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SinhStream, RetCode> {
+    ) -> Result<SINH_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -274,21 +274,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = SinhStreamState {
+        let state = SINH_StreamState {
         };
-        Ok(SinhStream { core: self.clone(), state })
+        Ok(SINH_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SinhStream {
+impl SINH_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_SINH_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.sinh_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.SINH_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -306,7 +306,7 @@ impl SinhStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SinhStream>();
+    _assert_auto::<SINH_Stream>();
 };
 
 /***************/

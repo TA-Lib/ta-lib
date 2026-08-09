@@ -64,9 +64,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlladderbottom`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLLADDERBOTTOM`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlladderbottom_lookback(&self) -> usize {
+    pub fn CDLLADDERBOTTOM_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
         #[allow(non_snake_case)]
@@ -127,7 +127,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlladderbottom(
+    /// let ret = core.CDLLADDERBOTTOM(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -137,12 +137,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl3blackcrows`] · [`Core::cdlmatchinglow`] · [`Core::cdlbreakaway`]
+    /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLMATCHINGLOW`] · [`Core::CDLBREAKAWAY`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlladderbottom](https://ta-lib.org/functions/cdlladderbottom/)
+    /// [ta-lib.org/functions/CDLLADDERBOTTOM](https://ta-lib.org/functions/CDLLADDERBOTTOM/)
     #[doc(alias = "LadderBottom")]
-    pub fn cdlladderbottom(
+    pub fn CDLLADDERBOTTOM(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -160,7 +160,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlladderbottom_lookback();
+        let _assertLb = self.CDLLADDERBOTTOM_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -181,7 +181,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlladderbottom_lookback();
+        lookbackTotal = self.CDLLADDERBOTTOM_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -293,20 +293,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLLADDERBOTTOM stream: one value per closed bar, bit-identical to [`Core::cdlladderbottom`]
-/// over the same series. Open with [`Core::cdlladderbottom_open`]; dropping the handle
+/// Live CDLLADDERBOTTOM stream: one value per closed bar, bit-identical to [`Core::CDLLADDERBOTTOM`]
+/// over the same series. Open with [`Core::CDLLADDERBOTTOM_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLLADDERBOTTOM_Stream")]
-pub struct CdlladderbottomStream {
+pub struct CDLLADDERBOTTOM_Stream {
     core: Core,
-    state: CdlladderbottomStreamState,
+    state: CDLLADDERBOTTOM_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlladderbottomStreamState {
+struct CDLLADDERBOTTOM_StreamState {
     ShadowVeryShortPeriodTotal: f64,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
@@ -334,7 +334,7 @@ struct CdlladderbottomStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlladderbottom_step_internal(&self, sp: &mut CdlladderbottomStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLLADDERBOTTOM_step_internal(&self, sp: &mut CDLLADDERBOTTOM_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
         #[allow(non_snake_case)]
@@ -415,10 +415,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlladderbottom_open`] (composition seam).
-    pub(crate) fn cdlladderbottom_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLLADDERBOTTOM_Open`] (composition seam).
+    pub(crate) fn CDLLADDERBOTTOM_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlladderbottomStream, i32), RetCode> {
+    ) -> Result<(CDLLADDERBOTTOM_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -444,7 +444,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlladderbottom_lookback();
+        lookbackTotal = self.CDLLADDERBOTTOM_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -589,7 +589,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlladderbottomStreamState {
+        let state = CDLLADDERBOTTOM_StreamState {
             ShadowVeryShortPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -609,11 +609,11 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok((CdlladderbottomStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLLADDERBOTTOM_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLLADDERBOTTOM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlladderbottom`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLLADDERBOTTOM`] at that bar.
     ///
     /// # Errors
     ///
@@ -632,23 +632,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlladderbottom_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLLADDERBOTTOM_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLLADDERBOTTOM_Open")]
-    pub fn cdlladderbottom_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlladderbottomStream, i32), RetCode> {
-        self.cdlladderbottom_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLLADDERBOTTOM_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLLADDERBOTTOM_Stream, i32), RetCode> {
+        self.CDLLADDERBOTTOM_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlladderbottom_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlladderbottom`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLLADDERBOTTOM_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLLADDERBOTTOM`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLLADDERBOTTOM_OpenAndFill")]
-    pub fn cdlladderbottom_open_and_fill(
+    pub fn CDLLADDERBOTTOM_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlladderbottomStream, RetCode> {
+    ) -> Result<CDLLADDERBOTTOM_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -673,7 +673,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlladderbottom_lookback();
+        lookbackTotal = self.CDLLADDERBOTTOM_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -820,7 +820,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlladderbottomStreamState {
+        let state = CDLLADDERBOTTOM_StreamState {
             ShadowVeryShortPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -840,19 +840,19 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok(CdlladderbottomStream { core: self.clone(), state })
+        Ok(CDLLADDERBOTTOM_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlladderbottomStream {
+impl CDLLADDERBOTTOM_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLLADDERBOTTOM_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlladderbottom_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLLADDERBOTTOM_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -870,7 +870,7 @@ impl CdlladderbottomStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlladderbottomStream>();
+    _assert_auto::<CDLLADDERBOTTOM_Stream>();
 };
 
 /***************/

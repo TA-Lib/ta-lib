@@ -1,5 +1,4 @@
 name: PPO
-camel_case: Ppo
 group: Momentum Indicators
 hint: Percentage Price Oscillator
 flags: [stream]

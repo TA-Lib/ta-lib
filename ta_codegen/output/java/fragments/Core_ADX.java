@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#adx} consumes before it can
+    * Number of leading input bars {@link Core#ADX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -33,25 +33,25 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int adxLookback( int optInTimePeriod )
+   public int ADX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1 ;
+      return 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1 ;
 
    }
-   RetCode adxInternal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ADX_Internal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -195,7 +195,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -306,7 +306,7 @@
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.Adx.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -410,15 +410,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode adxInternal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ADX_Internal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -449,7 +449,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -538,7 +538,7 @@
          }
       }
       prevADX = (sumDX / optInTimePeriod);
-      i = this.unstablePeriod[FuncUnstId.Adx.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
       while( i-- > 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -640,7 +640,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#ADX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -661,15 +661,15 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adxr
-    * @see Core#dx
-    * @see Core#plusDI
-    * @see Core#minusDI
-    * @see Core#plusDM
-    * @see Core#minusDM
-    * @see Core#trueRange
+    * @see Core#ADXR
+    * @see Core#DX
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DM
+    * @see Core#TRANGE
     */
-   public OutRange adx( int startIdx,
+   public OutRange ADX( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -679,7 +679,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADX", retCode);
       }
@@ -705,7 +705,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#ADX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -726,15 +726,15 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adxr
-    * @see Core#dx
-    * @see Core#plusDI
-    * @see Core#minusDI
-    * @see Core#plusDM
-    * @see Core#minusDM
-    * @see Core#trueRange
+    * @see Core#ADXR
+    * @see Core#DX
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DM
+    * @see Core#TRANGE
     */
-   public OutRange adx( int startIdx,
+   public OutRange ADX( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -744,7 +744,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADX", retCode);
       }
@@ -754,8 +754,8 @@
 
    /**
     * A live ADX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#adx} over the same series.
-    * Open with {@link Core#adxOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ADX} over the same series.
+    * Open with {@link Core#ADX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -766,7 +766,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AdxStream {
+   public static final class ADX_Stream {
       final Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -784,10 +784,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      AdxStream( Core core ) { this.core = core; }
+      ADX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#adxOpenAndFill}, or
+       * The range filled by {@link Core#ADX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -795,7 +795,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AdxStream( AdxStream other ) {
+      ADX_Stream( ADX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -819,7 +819,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose ) {
-         core.adxStreamStep(this, inHigh, inLow, inClose);
+         core.ADX_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -831,8 +831,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         AdxStream scratch = new AdxStream(this);
-         core.adxStreamStep(scratch, inHigh, inLow, inClose);
+         ADX_Stream scratch = new ADX_Stream(this);
+         core.ADX_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -849,11 +849,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AdxStream copy() {
-         return new AdxStream(this);
+      public ADX_Stream copy() {
+         return new ADX_Stream(this);
       }
    }
-   void adxStreamStep( AdxStream sp, double inHigh, double inLow, double inClose )
+   void ADX_StreamStep( ADX_Stream sp, double inHigh, double inLow, double inClose )
    {
       /* Calculate the prevMinusDM and prevPlusDM */
       sp.tempReal = inHigh;
@@ -902,7 +902,7 @@
       /* Output the ADX */
       sp.cur_outReal = sp.prevADX;
    }
-   private RetCode adxOpenBody( AdxStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ADX_OpenBody( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1051,7 +1051,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1162,7 +1162,7 @@
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.Adx.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -1281,7 +1281,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode adxOpenAndFillBody( AdxStream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ADX_OpenAndFillBody( ADX_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1431,7 +1431,7 @@
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.Adx.ordinal()] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[FuncUnstId.ADX.ordinal()] - 1;
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -1542,7 +1542,7 @@
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[FuncUnstId.Adx.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.ADX.ordinal()];
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -1661,11 +1661,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind adxOpen (composition seam). */
-   AdxStream adxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind ADX_Open (composition seam). */
+   ADX_Stream ADX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      AdxStream sp = new AdxStream(this);
-      RetCode retCode = adxOpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      ADX_Stream sp = new ADX_Stream(this);
+      RetCode retCode = ADX_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1680,32 +1680,32 @@
    /**
     * Open a live ADX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#adx} at that bar.
-    * <p>The history must hold at least {@code adxLookback(...) + 1} bars
+    * to {@link Core#ADX} at that bar.
+    * <p>The history must hold at least {@code ADX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AdxStream adxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public ADX_Stream ADX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      return adxOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#adxOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#adx} over the whole history in the same single pass
+    * {@link Core#ADX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ADX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AdxStream#fillRange()}.
+    * {@link ADX_Stream#fillRange()}.
     */
-   public AdxStream adxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public ADX_Stream ADX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      AdxStream sp = new AdxStream(this);
+      ADX_Stream sp = new ADX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADX_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -64,9 +64,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::nvi`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::NVI`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn nvi_lookback(&self) -> usize {
+    pub fn NVI_Lookback(&self) -> usize {
         // This function have no lookback needed.
         return (0) as usize;
     }
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.nvi(
+    /// let ret = core.NVI(
     ///     0, close.len() - 1, &close, &volume,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -142,9 +142,9 @@ impl Core {
     /// * Norman G. Fosback, *Stock Market Logic*, The Institute for Econometric Research (ISBN
     ///   0917604482)
     ///
-    /// Further reading: [ta-lib.org/functions/nvi](https://ta-lib.org/functions/nvi/)
+    /// Further reading: [ta-lib.org/functions/NVI](https://ta-lib.org/functions/NVI/)
     #[doc(alias = "NegativeVolumeIndex")]
-    pub fn nvi(
+    pub fn NVI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -160,7 +160,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.nvi_lookback();
+        let _assertLb = self.NVI_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inClose.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -201,20 +201,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live NVI stream: one value per closed bar, bit-identical to [`Core::nvi`]
-/// over the same series. Open with [`Core::nvi_open`]; dropping the handle
+/// Live NVI stream: one value per closed bar, bit-identical to [`Core::NVI`]
+/// over the same series. Open with [`Core::NVI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_NVI_Stream")]
-pub struct NviStream {
+pub struct NVI_Stream {
     core: Core,
-    state: NviStreamState,
+    state: NVI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct NviStreamState {
+struct NVI_StreamState {
     prevNVI: f64,
     prevClose: f64,
     prevVolume: f64,
@@ -227,7 +227,7 @@ struct NviStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn nvi_step_internal(&self, sp: &mut NviStreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn NVI_step_internal(&self, sp: &mut NVI_StreamState, inClose: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
         tempClose = inClose;
@@ -243,10 +243,10 @@ impl Core {
         sp.prevVolume = tempVolume;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::nvi_open`] (composition seam).
-    pub(crate) fn nvi_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::NVI_Open`] (composition seam).
+    pub(crate) fn NVI_OpenInternal(
         &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(NviStream, f64), RetCode> {
+    ) -> Result<(NVI_Stream, f64), RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -290,16 +290,16 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = NviStreamState {
+        let state = NVI_StreamState {
             prevNVI,
             prevClose,
             prevVolume,
         };
-        Ok((NviStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((NVI_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live NVI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::nvi`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::NVI`] at that bar.
     ///
     /// # Errors
     ///
@@ -316,23 +316,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.nvi_open(&close, &volume).expect("enough history");
+    /// let (mut s, _last) = core.NVI_Open(&close, &volume).expect("enough history");
     /// let peeked = s.peek(100.9, 12_345.0);
     /// let updated = s.update(100.9, 12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_NVI_Open")]
-    pub fn nvi_open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(NviStream, f64), RetCode> {
-        self.nvi_open_internal(inClose, inVolume, 0)
+    pub fn NVI_Open(&self, inClose: &[f64], inVolume: &[f64], ) -> Result<(NVI_Stream, f64), RetCode> {
+        self.NVI_OpenInternal(inClose, inVolume, 0)
     }
 
-    /// [`Core::nvi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::nvi`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::NVI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::NVI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_NVI_OpenAndFill")]
-    pub fn nvi_open_and_fill(
+    pub fn NVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<NviStream, RetCode> {
+    ) -> Result<NVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -376,24 +376,24 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = NviStreamState {
+        let state = NVI_StreamState {
             prevNVI,
             prevClose,
             prevVolume,
         };
-        Ok(NviStream { core: self.clone(), state })
+        Ok(NVI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl NviStream {
+impl NVI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_NVI_Update")]
     pub fn update(&mut self, inClose: f64, inVolume: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.nvi_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
+        self.core.NVI_step_internal(&mut self.state, inClose, inVolume, &mut outReal);
         outReal
     }
 
@@ -411,7 +411,7 @@ impl NviStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<NviStream>();
+    _assert_auto::<NVI_Stream>();
 };
 
 /***************/

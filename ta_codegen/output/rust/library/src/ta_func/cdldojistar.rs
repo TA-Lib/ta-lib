@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdldojistar`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLDOJISTAR`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdldojistar_lookback(&self) -> usize {
+    pub fn CDLDOJISTAR_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -140,7 +140,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdldojistar(
+    /// let ret = core.CDLDOJISTAR(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -150,13 +150,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlmorningdojistar`] · [`Core::cdleveningdojistar`] · [`Core::cdldoji`] ·
-    /// [`Core::cdlmorningstar`] · [`Core::cdleveningstar`]
+    /// [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLDOJI`] ·
+    /// [`Core::CDLMORNINGSTAR`] · [`Core::CDLEVENINGSTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdldojistar](https://ta-lib.org/functions/cdldojistar/)
+    /// [ta-lib.org/functions/CDLDOJISTAR](https://ta-lib.org/functions/CDLDOJISTAR/)
     #[doc(alias = "DojiStar")]
-    pub fn cdldojistar(
+    pub fn CDLDOJISTAR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -174,7 +174,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdldojistar_lookback();
+        let _assertLb = self.CDLDOJISTAR_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -203,7 +203,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldojistar_lookback();
+        lookbackTotal = self.CDLDOJISTAR_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -360,20 +360,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLDOJISTAR stream: one value per closed bar, bit-identical to [`Core::cdldojistar`]
-/// over the same series. Open with [`Core::cdldojistar_open`]; dropping the handle
+/// Live CDLDOJISTAR stream: one value per closed bar, bit-identical to [`Core::CDLDOJISTAR`]
+/// over the same series. Open with [`Core::CDLDOJISTAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDOJISTAR_Stream")]
-pub struct CdldojistarStream {
+pub struct CDLDOJISTAR_Stream {
     core: Core,
-    state: CdldojistarStreamState,
+    state: CDLDOJISTAR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdldojistarStreamState {
+struct CDLDOJISTAR_StreamState {
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -401,7 +401,7 @@ struct CdldojistarStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdldojistar_step_internal(&self, sp: &mut CdldojistarStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDOJISTAR_step_internal(&self, sp: &mut CDLDOJISTAR_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -520,10 +520,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdldojistar_open`] (composition seam).
-    pub(crate) fn cdldojistar_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLDOJISTAR_Open`] (composition seam).
+    pub(crate) fn CDLDOJISTAR_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdldojistarStream, i32), RetCode> {
+    ) -> Result<(CDLDOJISTAR_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -557,7 +557,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldojistar_lookback();
+        lookbackTotal = self.CDLDOJISTAR_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -743,7 +743,7 @@ impl Core {
         let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
         ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let state = CdldojistarStreamState {
+        let state = CDLDOJISTAR_StreamState {
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -763,11 +763,11 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok((CdldojistarStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLDOJISTAR_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLDOJISTAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdldojistar`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLDOJISTAR`] at that bar.
     ///
     /// # Errors
     ///
@@ -786,23 +786,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdldojistar_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLDOJISTAR_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLDOJISTAR_Open")]
-    pub fn cdldojistar_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdldojistarStream, i32), RetCode> {
-        self.cdldojistar_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLDOJISTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLDOJISTAR_Stream, i32), RetCode> {
+        self.CDLDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdldojistar_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdldojistar`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLDOJISTAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLDOJISTAR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLDOJISTAR_OpenAndFill")]
-    pub fn cdldojistar_open_and_fill(
+    pub fn CDLDOJISTAR_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdldojistarStream, RetCode> {
+    ) -> Result<CDLDOJISTAR_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -835,7 +835,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldojistar_lookback();
+        lookbackTotal = self.CDLDOJISTAR_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1023,7 +1023,7 @@ impl Core {
         let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
         ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let state = CdldojistarStreamState {
+        let state = CDLDOJISTAR_StreamState {
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1043,19 +1043,19 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok(CdldojistarStream { core: self.clone(), state })
+        Ok(CDLDOJISTAR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdldojistarStream {
+impl CDLDOJISTAR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLDOJISTAR_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdldojistar_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLDOJISTAR_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1073,7 +1073,7 @@ impl CdldojistarStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdldojistarStream>();
+    _assert_auto::<CDLDOJISTAR_Stream>();
 };
 
 /***************/

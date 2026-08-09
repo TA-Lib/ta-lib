@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::stddev`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::STDDEV`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -77,7 +77,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
     /// and real parameters `-4e37`, to select their default value.
     #[inline]
-    pub fn stddev_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
+    pub fn STDDEV_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -89,7 +89,7 @@ impl Core {
             return usize::MAX;
         }
         // Lookback is driven by the variance.
-        return self.var_lookback(optInTimePeriod, optInNbDev);
+        return self.VAR_Lookback(optInTimePeriod, optInNbDev);
     }
     /// Rolling standard deviation of a series over a window, scaled by a deviations multiplier.
     /// Delegates to VAR, then takes the square root.
@@ -143,7 +143,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.stddev(
+    /// let ret = core.STDDEV(
     ///     0, data.len() - 1, &data, 5, 1.0,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -154,13 +154,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::var`] · [`Core::bbands`] · [`Core::sma`]
+    /// [`Core::VAR`] · [`Core::BBANDS`] · [`Core::SMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/stddev](https://ta-lib.org/functions/stddev/)
+    /// Further reading: [ta-lib.org/functions/STDDEV](https://ta-lib.org/functions/STDDEV/)
     #[doc(alias = "StandardDeviation")]
     #[doc(alias = "SD")]
     #[doc(alias = "sigma")]
-    pub fn stddev(
+    pub fn STDDEV(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -187,7 +187,7 @@ impl Core {
         } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.stddev_lookback(optInTimePeriod, optInNbDev);
+        let _assertLb = self.STDDEV_Lookback(optInTimePeriod, optInNbDev);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -196,7 +196,7 @@ impl Core {
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
         // Calculate the variance.
-        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+        retCode = self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -234,23 +234,23 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::stddev`]
-/// over the same series. Open with [`Core::stddev_open`]; dropping the handle
+/// Live STDDEV stream: one value per closed bar, bit-identical to [`Core::STDDEV`]
+/// over the same series. Open with [`Core::STDDEV_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STDDEV_Stream")]
-pub struct StddevStream {
+pub struct STDDEV_Stream {
     core: Core,
-    state: StddevStreamState,
+    state: STDDEV_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct StddevStreamState {
+struct STDDEV_StreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
-    sub0: VarStream,
+    sub0: VAR_Stream,
 }
 
 #[allow(non_snake_case)]
@@ -260,7 +260,7 @@ struct StddevStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn stddev_step_internal(&self, sp: &mut StddevStreamState, inReal: f64, outReal: &mut f64) {
+    fn STDDEV_step_internal(&self, sp: &mut STDDEV_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
@@ -285,10 +285,10 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::stddev_open`] (composition seam).
-    pub(crate) fn stddev_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::STDDEV_Open`] (composition seam).
+    pub(crate) fn STDDEV_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
-    ) -> Result<(StddevStream, f64), RetCode> {
+    ) -> Result<(STDDEV_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -322,8 +322,8 @@ impl Core {
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub0, _) = self.VAR_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
+        retCode = self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -361,16 +361,16 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = StddevStreamState {
+        let state = STDDEV_StreamState {
             optInTimePeriod,
             optInNbDev,
             sub0,
         };
-        Ok((StddevStream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        Ok((STDDEV_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
     }
 
     /// Open a live STDDEV stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::stddev`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::STDDEV`] at that bar.
     ///
     /// # Errors
     ///
@@ -382,23 +382,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.stddev_open(&data, 5, 1.0).expect("enough history");
+    /// let (mut s, _last) = core.STDDEV_Open(&data, 5, 1.0).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_STDDEV_Open")]
-    pub fn stddev_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(StddevStream, f64), RetCode> {
-        self.stddev_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
+    pub fn STDDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(STDDEV_Stream, f64), RetCode> {
+        self.STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
-    /// [`Core::stddev_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::stddev`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::STDDEV_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::STDDEV`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STDDEV_OpenAndFill")]
-    pub fn stddev_open_and_fill(
+    pub fn STDDEV_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<StddevStream, RetCode> {
+    ) -> Result<STDDEV_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -427,8 +427,8 @@ impl Core {
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.var_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.var(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub0, _) = self.VAR_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
+        retCode = self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -466,25 +466,25 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = StddevStreamState {
+        let state = STDDEV_StreamState {
             optInTimePeriod,
             optInNbDev,
             sub0,
         };
         outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(StddevStream { core: self.clone(), state })
+        Ok(STDDEV_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl StddevStream {
+impl STDDEV_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_STDDEV_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.stddev_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.STDDEV_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -502,7 +502,7 @@ impl StddevStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<StddevStream>();
+    _assert_auto::<STDDEV_Stream>();
 };
 
 /***************/

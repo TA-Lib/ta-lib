@@ -23,7 +23,7 @@ import io.github.talib.OutRange;
 double[] close = /* ...your closing prices... */;
 double[] out   = new double[close.length];
 
-OutRange r = Core.DEFAULT.sma(
+OutRange r = Core.DEFAULT.SMA(
     0, close.length - 1,   // startIdx, endIdx
     close,                 // input(s)
     30,                    // optInTimePeriod
@@ -42,7 +42,7 @@ for (int i = 0; i < r.count(); i++) {
 An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `begIdx()` is the first valid bar and `count()` is the number written; the rest of the array is left untouched, never padded with NaN. Size the output array to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```java
-int lookback = Core.DEFAULT.smaLookback(30);    // 29 for a 30-period SMA
+int lookback = Core.DEFAULT.SMA_Lookback(30);    // 29 for a 30-period SMA
 ```
 
 The lookback is how many inputs are consumed before the first output.
@@ -51,7 +51,7 @@ The lookback is how many inputs are consumed before the first output.
 
 ## Parameters and errors
 
-Integer parameters are `int`; real parameters are `double`; enumerated parameters use their enum type (e.g. `MAType.Sma`). Passing `Integer.MIN_VALUE` for an integer parameter (or the real-default sentinel `-4e37` for a `double` parameter) selects that parameter's documented default.
+Integer parameters are `int`; real parameters are `double`; enumerated parameters use their enum type (e.g. `MAType.SMA`). Passing `Integer.MIN_VALUE` for an integer parameter (or the real-default sentinel `-4e37` for a `double` parameter) selects that parameter's documented default.
 
 Misuse throws rather than returning an error code:
 
@@ -81,9 +81,9 @@ import io.github.talib.FuncUnstId;
 import io.github.talib.RangeType;
 
 Core core = Core.builder()
-    .unstablePeriod(FuncUnstId.Ema, 10)
+    .unstablePeriod(FuncUnstId.EMA, 10)
     .candleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.0)
     .build();
 ```
 
-There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.Ema)` — the same name the builder writes it under, since a `Core` is immutable and has no writer to distinguish it from.
+There are no setters: to change a setting, derive a new instance with `core.toBuilder()`. Read a configured unstable period back with `core.unstablePeriod(FuncUnstId.EMA)` — the same name the builder writes it under, since a `Core` is immutable and has no writer to distinguish it from.

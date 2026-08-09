@@ -55,7 +55,7 @@ public partial class Core
     *  090807 MF     Initial Version
     */
    /// <summary>
-   /// Number of leading input bars <c>Add</c> consumes before it can produce its
+   /// Number of leading input bars <c>ADD</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -64,12 +64,12 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AddLookback( )
+   public int ADD_Lookback( )
    {
       return 0 ;
 
    }
-   internal RetCode Add( int startIdx,
+   internal RetCode ADD( int startIdx,
                          int endIdx,
                          double[] inReal0,
                          double[] inReal1,
@@ -94,7 +94,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode Add( int startIdx,
+   internal RetCode ADD( int startIdx,
                          int endIdx,
                          float[] inReal0,
                          float[] inReal1,
@@ -132,8 +132,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AddLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ADD_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -150,13 +150,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Add( int startIdx,
+   public OutRange ADD( int startIdx,
                         int endIdx,
                         double[] inReal0,
                         double[] inReal1,
                         double[] outReal )
    {
-      RetCode retCode = Add(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }
@@ -181,8 +181,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AddLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ADD_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -199,13 +199,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Add( int startIdx,
+   public OutRange ADD( int startIdx,
                         int endIdx,
                         float[] inReal0,
                         float[] inReal1,
                         double[] outReal )
    {
-      RetCode retCode = Add(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADD(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADD", retCode);
       }

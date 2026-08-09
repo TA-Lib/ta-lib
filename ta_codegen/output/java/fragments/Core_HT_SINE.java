@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#htSine} consumes before it can
+    * Number of leading input bars {@link Core#HT_SINE} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,7 +25,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int htSineLookback( )
+   public int HT_SINE_Lookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -35,16 +35,16 @@
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()] ;
+      return 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()] ;
 
    }
-   RetCode htSineInternal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outSine[],
-                           double outLeadSine[] )
+   RetCode HT_SINE_Internal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outSine[],
+                             double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -143,7 +143,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -453,13 +453,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode htSineInternal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outSine[],
-                           double outLeadSine[] )
+   RetCode HT_SINE_Internal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outSine[],
+                             double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -546,7 +546,7 @@
       rad2Deg = 45.0 / tempReal;
       deg2Rad = 1.0 / rad2Deg;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -810,8 +810,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htSineLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#HT_SINE_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -828,21 +828,21 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPhase
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#htTrendMode
-    * @see Core#mama
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
     */
-   public OutRange htSine( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           double outSine[],
-                           double outLeadSine[] )
+   public OutRange HT_SINE( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            double outSine[],
+                            double outLeadSine[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htSineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw failure("HT_SINE", retCode);
       }
@@ -859,8 +859,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htSineLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#HT_SINE_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -877,21 +877,21 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPhase
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#htTrendMode
-    * @see Core#mama
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
     */
-   public OutRange htSine( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           double outSine[],
-                           double outLeadSine[] )
+   public OutRange HT_SINE( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            double outSine[],
+                            double outLeadSine[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htSineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
       if( retCode != RetCode.Success ) {
          throw failure("HT_SINE", retCode);
       }
@@ -901,8 +901,8 @@
 
    /**
     * A live HT_SINE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#htSine} over the same series.
-    * Open with {@link Core#htSineOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#HT_SINE} over the same series.
+    * Open with {@link Core#HT_SINE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -913,7 +913,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HtSineStream {
+   public static final class HT_SINE_Stream {
       final Core core;
       int i;
       double tempReal;
@@ -988,10 +988,10 @@
       Value cachedValue;
       OutRange fillRange = OutRange.EMPTY;
 
-      HtSineStream( Core core ) { this.core = core; }
+      HT_SINE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#htSineOpenAndFill}, or
+       * The range filled by {@link Core#HT_SINE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -999,7 +999,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      HtSineStream( HtSineStream other ) {
+      HT_SINE_Stream( HT_SINE_Stream other ) {
          this.core = other.core;
          this.i = other.i;
          this.tempReal = other.tempReal;
@@ -1093,7 +1093,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public Value update( double inReal ) {
-         core.htSineStreamStep(this, inReal);
+         core.HT_SINE_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outSine, this.cur_outLeadSine);
          return this.cachedValue;
       }
@@ -1106,8 +1106,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public Value peek( double inReal ) {
-         HtSineStream scratch = new HtSineStream(this);
-         core.htSineStreamStep(scratch, inReal);
+         HT_SINE_Stream scratch = new HT_SINE_Stream(this);
+         core.HT_SINE_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outSine, scratch.cur_outLeadSine);
       }
 
@@ -1124,11 +1124,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HtSineStream copy() {
-         return new HtSineStream(this);
+      public HT_SINE_Stream copy() {
+         return new HT_SINE_Stream(this);
       }
    }
-   void htSineStreamStep( HtSineStream sp, double inReal )
+   void HT_SINE_StreamStep( HT_SINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;
@@ -1324,7 +1324,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode htSineOpenBody( HtSineStream sp, double inReal[], int startIdx )
+   private RetCode HT_SINE_OpenBody( HT_SINE_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -1426,7 +1426,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1816,10 +1816,10 @@
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = lastValue_outSine;
       sp.cur_outLeadSine = lastValue_outLeadSine;
-      sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
+      sp.cachedValue = new HT_SINE_Stream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
-   private RetCode htSineOpenAndFillBody( HtSineStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
+   private RetCode HT_SINE_OpenAndFillBody( HT_SINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1921,7 +1921,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtSine.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_SINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -2311,14 +2311,14 @@
       sp.cb_smoothPrice = smoothPrice;
       sp.cur_outSine = outSine[outNBElement.value - 1];
       sp.cur_outLeadSine = outLeadSine[outNBElement.value - 1];
-      sp.cachedValue = new HtSineStream.Value(sp.cur_outSine, sp.cur_outLeadSine);
+      sp.cachedValue = new HT_SINE_Stream.Value(sp.cur_outSine, sp.cur_outLeadSine);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind htSineOpen (composition seam). */
-   HtSineStream htSineOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind HT_SINE_Open (composition seam). */
+   HT_SINE_Stream HT_SINE_OpenInternal( double inReal[], int startIdx )
    {
-      HtSineStream sp = new HtSineStream(this);
-      RetCode retCode = htSineOpenBody(sp, inReal, startIdx);
+      HT_SINE_Stream sp = new HT_SINE_Stream(this);
+      RetCode retCode = HT_SINE_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2333,32 +2333,32 @@
    /**
     * Open a live HT_SINE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#htSine} at that bar.
-    * <p>The history must hold at least {@code htSineLookback(...) + 1} bars
+    * to {@link Core#HT_SINE} at that bar.
+    * <p>The history must hold at least {@code HT_SINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public HtSineStream htSineOpen( double inReal[] )
+   public HT_SINE_Stream HT_SINE_Open( double inReal[] )
    {
-      return htSineOpenInternal(inReal, 0);
+      return HT_SINE_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#htSineOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#htSine} over the whole history in the same single pass
+    * {@link Core#HT_SINE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#HT_SINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HtSineStream#fillRange()}.
+    * {@link HT_SINE_Stream#fillRange()}.
     */
-   public HtSineStream htSineOpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
+   public HT_SINE_Stream HT_SINE_OpenAndFill( double inReal[], double outSine[], double outLeadSine[] )
    {
-      HtSineStream sp = new HtSineStream(this);
+      HT_SINE_Stream sp = new HT_SINE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htSineOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
+      RetCode retCode = HT_SINE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outSine, outLeadSine);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

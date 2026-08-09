@@ -1,5 +1,4 @@
 name: ADXR
-camel_case: Adxr
 group: Momentum Indicators
 hint: Average Directional Movement Index Rating
 flags: [stream]

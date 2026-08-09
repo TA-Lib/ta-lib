@@ -105,7 +105,7 @@ public static class SMathOverflowTest
         var core = new Core();
         float[] a = { 3.0e38f }, b = { 3.0e38f };   // 6e38 > float.MaxValue
         double[] o = { -1.0 };
-        OutRange r = core.Add(0, 0, a, b, o);
+        OutRange r = core.ADD(0, 0, a, b, o);
         CheckFiniteAndEqual("ADD", r, o[0], (double)a[0] + (double)b[0]);
     }
 
@@ -114,7 +114,7 @@ public static class SMathOverflowTest
         var core = new Core();
         float[] a = { 3.0e38f }, b = { -3.0e38f };  // 6e38 > float.MaxValue
         double[] o = { -1.0 };
-        OutRange r = core.Sub(0, 0, a, b, o);
+        OutRange r = core.SUB(0, 0, a, b, o);
         CheckFiniteAndEqual("SUB", r, o[0], (double)a[0] - (double)b[0]);
     }
 
@@ -123,7 +123,7 @@ public static class SMathOverflowTest
         var core = new Core();
         float[] a = { 3.0e38f }, b = { 10.0f };     // 3e39 > float.MaxValue (PR #33)
         double[] o = { -1.0 };
-        OutRange r = core.Mult(0, 0, a, b, o);
+        OutRange r = core.MULT(0, 0, a, b, o);
         CheckFiniteAndEqual("MULT", r, o[0], (double)a[0] * (double)b[0]);
     }
 
@@ -132,7 +132,7 @@ public static class SMathOverflowTest
         var core = new Core();
         float[] a = { 3.0e38f }, b = { 1.0e-3f };   // 3e41 > float.MaxValue
         double[] o = { -1.0 };
-        OutRange r = core.Div(0, 0, a, b, o);
+        OutRange r = core.DIV(0, 0, a, b, o);
         CheckFiniteAndEqual("DIV", r, o[0], (double)a[0] / (double)b[0]);
     }
 
@@ -151,7 +151,7 @@ public static class SMathOverflowTest
         }
         var output = new double[10];
 
-        OutRange r = core.Sma(0, input.Length - 1, input, 10, output);
+        OutRange r = core.SMA(0, input.Length - 1, input, 10, output);
 
         _checks++;
         if (r.Count != 1)

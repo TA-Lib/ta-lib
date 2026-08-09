@@ -1,5 +1,4 @@
 name: ULTOSC
-camel_case: UltOsc
 group: Momentum Indicators
 hint: Ultimate Oscillator
 flags: [stream]

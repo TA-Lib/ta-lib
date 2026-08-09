@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlshortline`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLSHORTLINE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlshortline_lookback(&self) -> usize {
+    pub fn CDLSHORTLINE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlshortline(
+    /// let ret = core.CDLSHORTLINE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,13 +148,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdllongline`] · [`Core::cdlspinningtop`] · [`Core::cdldoji`]
+    /// [`Core::CDLLONGLINE`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlshortline](https://ta-lib.org/functions/cdlshortline/)
+    /// [ta-lib.org/functions/CDLSHORTLINE](https://ta-lib.org/functions/CDLSHORTLINE/)
     #[doc(alias = "ShortLineCandle")]
     #[doc(alias = "ShortLine")]
-    pub fn cdlshortline(
+    pub fn CDLSHORTLINE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -172,7 +172,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlshortline_lookback();
+        let _assertLb = self.CDLSHORTLINE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -201,7 +201,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlshortline_lookback();
+        lookbackTotal = self.CDLSHORTLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -352,20 +352,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLSHORTLINE stream: one value per closed bar, bit-identical to [`Core::cdlshortline`]
-/// over the same series. Open with [`Core::cdlshortline_open`]; dropping the handle
+/// Live CDLSHORTLINE stream: one value per closed bar, bit-identical to [`Core::CDLSHORTLINE`]
+/// over the same series. Open with [`Core::CDLSHORTLINE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSHORTLINE_Stream")]
-pub struct CdlshortlineStream {
+pub struct CDLSHORTLINE_Stream {
     core: Core,
-    state: CdlshortlineStreamState,
+    state: CDLSHORTLINE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlshortlineStreamState {
+struct CDLSHORTLINE_StreamState {
     BodyPeriodTotal: f64,
     ShadowPeriodTotal: f64,
     ringPos_BodyTrailingIdx: usize,
@@ -389,7 +389,7 @@ struct CdlshortlineStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlshortline_step_internal(&self, sp: &mut CdlshortlineStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSHORTLINE_step_internal(&self, sp: &mut CDLSHORTLINE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -501,10 +501,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlshortline_open`] (composition seam).
-    pub(crate) fn cdlshortline_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLSHORTLINE_Open`] (composition seam).
+    pub(crate) fn CDLSHORTLINE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlshortlineStream, i32), RetCode> {
+    ) -> Result<(CDLSHORTLINE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -538,7 +538,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlshortline_lookback();
+        lookbackTotal = self.CDLSHORTLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -718,7 +718,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdlshortlineStreamState {
+        let state = CDLSHORTLINE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -734,11 +734,11 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok((CdlshortlineStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLSHORTLINE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLSHORTLINE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlshortline`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLSHORTLINE`] at that bar.
     ///
     /// # Errors
     ///
@@ -757,23 +757,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlshortline_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLSHORTLINE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSHORTLINE_Open")]
-    pub fn cdlshortline_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlshortlineStream, i32), RetCode> {
-        self.cdlshortline_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLSHORTLINE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSHORTLINE_Stream, i32), RetCode> {
+        self.CDLSHORTLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlshortline_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlshortline`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLSHORTLINE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLSHORTLINE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLSHORTLINE_OpenAndFill")]
-    pub fn cdlshortline_open_and_fill(
+    pub fn CDLSHORTLINE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlshortlineStream, RetCode> {
+    ) -> Result<CDLSHORTLINE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -806,7 +806,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlshortline_lookback();
+        lookbackTotal = self.CDLSHORTLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -988,7 +988,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdlshortlineStreamState {
+        let state = CDLSHORTLINE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -1004,19 +1004,19 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok(CdlshortlineStream { core: self.clone(), state })
+        Ok(CDLSHORTLINE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlshortlineStream {
+impl CDLSHORTLINE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLSHORTLINE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlshortline_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLSHORTLINE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1034,7 +1034,7 @@ impl CdlshortlineStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlshortlineStream>();
+    _assert_auto::<CDLSHORTLINE_Stream>();
 };
 
 /***************/

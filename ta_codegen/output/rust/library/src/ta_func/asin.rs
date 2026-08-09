@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::asin`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ASIN`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn asin_lookback(&self) -> usize {
+    pub fn ASIN_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Element-wise arcsine (inverse sine) of each input value. A vector math transform, not a
@@ -108,7 +108,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.asin(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.ASIN(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -116,12 +116,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::acos`] · [`Core::atan`] · [`Core::sin`] · [`Core::cos`]
+    /// [`Core::ACOS`] · [`Core::ATAN`] · [`Core::SIN`] · [`Core::COS`]
     ///
-    /// Further reading: [ta-lib.org/functions/asin](https://ta-lib.org/functions/asin/)
+    /// Further reading: [ta-lib.org/functions/ASIN](https://ta-lib.org/functions/ASIN/)
     #[doc(alias = "arcsine")]
     #[doc(alias = "inversesine")]
-    pub fn asin(
+    pub fn ASIN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -136,7 +136,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.asin_lookback();
+        let _assertLb = self.ASIN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -158,20 +158,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ASIN stream: one value per closed bar, bit-identical to [`Core::asin`]
-/// over the same series. Open with [`Core::asin_open`]; dropping the handle
+/// Live ASIN stream: one value per closed bar, bit-identical to [`Core::ASIN`]
+/// over the same series. Open with [`Core::ASIN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ASIN_Stream")]
-pub struct AsinStream {
+pub struct ASIN_Stream {
     core: Core,
-    state: AsinStreamState,
+    state: ASIN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AsinStreamState {
+struct ASIN_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -181,14 +181,14 @@ struct AsinStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn asin_step_internal(&self, sp: &mut AsinStreamState, inReal: f64, outReal: &mut f64) {
+    fn ASIN_step_internal(&self, sp: &mut ASIN_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).asin();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::asin_open`] (composition seam).
-    pub(crate) fn asin_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ASIN_Open`] (composition seam).
+    pub(crate) fn ASIN_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(AsinStream, f64), RetCode> {
+    ) -> Result<(ASIN_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -215,13 +215,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AsinStreamState {
+        let state = ASIN_StreamState {
         };
-        Ok((AsinStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ASIN_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ASIN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::asin`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ASIN`] at that bar.
     ///
     /// # Errors
     ///
@@ -233,23 +233,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.asin_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ASIN_Open(&data).expect("enough history");
     /// let peeked = s.peek(0.42);
     /// let updated = s.update(0.42);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ASIN_Open")]
-    pub fn asin_open(&self, inReal: &[f64], ) -> Result<(AsinStream, f64), RetCode> {
-        self.asin_open_internal(inReal, 0)
+    pub fn ASIN_Open(&self, inReal: &[f64], ) -> Result<(ASIN_Stream, f64), RetCode> {
+        self.ASIN_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::asin_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::asin`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ASIN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ASIN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ASIN_OpenAndFill")]
-    pub fn asin_open_and_fill(
+    pub fn ASIN_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AsinStream, RetCode> {
+    ) -> Result<ASIN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -275,21 +275,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AsinStreamState {
+        let state = ASIN_StreamState {
         };
-        Ok(AsinStream { core: self.clone(), state })
+        Ok(ASIN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AsinStream {
+impl ASIN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ASIN_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.asin_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.ASIN_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -307,7 +307,7 @@ impl AsinStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AsinStream>();
+    _assert_auto::<ASIN_Stream>();
 };
 
 /***************/

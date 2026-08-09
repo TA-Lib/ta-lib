@@ -1,5 +1,4 @@
 name: DIV
-camel_case: Div
 group: Math Operators
 hint: Vector Arithmetic Div
 flags: [stream]

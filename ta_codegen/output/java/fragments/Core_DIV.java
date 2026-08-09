@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#div} consumes before it can
+    * Number of leading input bars {@link Core#DIV} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,18 +20,18 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int divLookback( )
+   public int DIV_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode divInternal( int startIdx,
-                        int endIdx,
-                        double inReal0[],
-                        double inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode DIV_Internal( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,13 +48,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode divInternal( int startIdx,
-                        int endIdx,
-                        float inReal0[],
-                        float inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode DIV_Internal( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -81,7 +81,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#divLookback} is a <b>success with no
+    * valid range shorter than {@link Core#DIV_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -98,11 +98,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#mult
-    * @see Core#add
-    * @see Core#sub
+    * @see Core#MULT
+    * @see Core#ADD
+    * @see Core#SUB
     */
-   public OutRange div( int startIdx,
+   public OutRange DIV( int startIdx,
                         int endIdx,
                         double inReal0[],
                         double inReal1[],
@@ -110,7 +110,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = divInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DIV", retCode);
       }
@@ -129,7 +129,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#divLookback} is a <b>success with no
+    * valid range shorter than {@link Core#DIV_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -146,11 +146,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#mult
-    * @see Core#add
-    * @see Core#sub
+    * @see Core#MULT
+    * @see Core#ADD
+    * @see Core#SUB
     */
-   public OutRange div( int startIdx,
+   public OutRange DIV( int startIdx,
                         int endIdx,
                         float inReal0[],
                         float inReal1[],
@@ -158,7 +158,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = divInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DIV", retCode);
       }
@@ -168,8 +168,8 @@
 
    /**
     * A live DIV stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#div} over the same series.
-    * Open with {@link Core#divOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#DIV} over the same series.
+    * Open with {@link Core#DIV_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -180,15 +180,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class DivStream {
+   public static final class DIV_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      DivStream( Core core ) { this.core = core; }
+      DIV_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#divOpenAndFill}, or
+       * The range filled by {@link Core#DIV_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -196,7 +196,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      DivStream( DivStream other ) {
+      DIV_Stream( DIV_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -207,7 +207,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal0, double inReal1 ) {
-         core.divStreamStep(this, inReal0, inReal1);
+         core.DIV_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
 
@@ -219,8 +219,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal0, double inReal1 ) {
-         DivStream scratch = new DivStream(this);
-         core.divStreamStep(scratch, inReal0, inReal1);
+         DIV_Stream scratch = new DIV_Stream(this);
+         core.DIV_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -237,15 +237,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public DivStream copy() {
-         return new DivStream(this);
+      public DIV_Stream copy() {
+         return new DIV_Stream(this);
       }
    }
-   void divStreamStep( DivStream sp, double inReal0, double inReal1 )
+   void DIV_StreamStep( DIV_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
-   private RetCode divOpenBody( DivStream sp, double inReal0[], double inReal1[], int startIdx )
+   private RetCode DIV_OpenBody( DIV_Stream sp, double inReal0[], double inReal1[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -269,7 +269,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode divOpenAndFillBody( DivStream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode DIV_OpenAndFillBody( DIV_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -294,11 +294,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind divOpen (composition seam). */
-   DivStream divOpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind DIV_Open (composition seam). */
+   DIV_Stream DIV_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      DivStream sp = new DivStream(this);
-      RetCode retCode = divOpenBody(sp, inReal0, inReal1, startIdx);
+      DIV_Stream sp = new DIV_Stream(this);
+      RetCode retCode = DIV_OpenBody(sp, inReal0, inReal1, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -313,32 +313,32 @@
    /**
     * Open a live DIV stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#div} at that bar.
-    * <p>The history must hold at least {@code divLookback(...) + 1} bars
+    * to {@link Core#DIV} at that bar.
+    * <p>The history must hold at least {@code DIV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public DivStream divOpen( double inReal0[], double inReal1[] )
+   public DIV_Stream DIV_Open( double inReal0[], double inReal1[] )
    {
-      return divOpenInternal(inReal0, inReal1, 0);
+      return DIV_OpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#divOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#div} over the whole history in the same single pass
+    * {@link Core#DIV_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#DIV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link DivStream#fillRange()}.
+    * {@link DIV_Stream#fillRange()}.
     */
-   public DivStream divOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public DIV_Stream DIV_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      DivStream sp = new DivStream(this);
+      DIV_Stream sp = new DIV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = divOpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DIV_OpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

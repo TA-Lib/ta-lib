@@ -1,5 +1,4 @@
 name: STOCHRSI
-camel_case: StochRsi
 group: Momentum Indicators
 hint: Stochastic Relative Strength Index
 flags: [stream]

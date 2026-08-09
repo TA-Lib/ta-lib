@@ -7,9 +7,14 @@ use crate::ir::{EnumDef, EnumVariant};
 
 #[derive(Deserialize)]
 struct YamlVariant {
-    c_name: String,
-    pascal_name: String,
+    name: String,
     value: i32,
+}
+
+#[derive(Deserialize)]
+struct YamlEnum {
+    c_prefix: String,
+    variants: Vec<YamlVariant>,
 }
 
 /// Load enum definitions from `enums.yaml`.
@@ -19,31 +24,56 @@ pub fn load_enums(path: &Path) -> HashMap<String, EnumDef> {
     let content = std::fs::read_to_string(path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
 
-    let raw: HashMap<String, Vec<YamlVariant>> = serde_yaml::from_str(&content)
+    let raw: HashMap<String, YamlEnum> = serde_yaml::from_str(&content)
         .unwrap_or_else(|e| panic!("Failed to parse {}: {}", path.display(), e));
 
     raw.into_iter()
-        .map(|(name, variants)| {
-            let prefix = format!("TA_{name}_");
-            let variants = variants
+        .map(|(name, spec)| {
+            let variants: Vec<EnumVariant> = spec
+                .variants
                 .into_iter()
-                .map(|v| {
-                    let short_name = v
-                        .c_name
-                        .strip_prefix(&prefix)
-                        .unwrap_or(&v.c_name)
-                        .to_string();
-                    EnumVariant {
-                        c_name: v.c_name,
-                        pascal_name: v.pascal_name,
-                        short_name,
-                        value: v.value,
-                    }
+                .map(|v| EnumVariant {
+                    c_name: format!("{}{}", spec.c_prefix, v.name),
+                    name: v.name,
+                    value: v.value,
                 })
                 .collect();
-            (name.clone(), EnumDef { name, variants })
+            check_unique(&name, &variants, path);
+            (
+                name.clone(),
+                EnumDef { name, c_prefix: spec.c_prefix, variants },
+            )
         })
         .collect()
+}
+
+/// A variant's `name` and `value` are both identities: the name is the
+/// identifier every backend emits, the value is the pinned ABI integer. A
+/// duplicate in either is caught here, at parse time, because downstream it
+/// surfaces only as a foreign-compiler error — a repeated `name` reaches javac
+/// as a duplicate enum constant, and a repeated `value` reaches nothing at all
+/// when the contiguity check happens to still pass.
+fn check_unique(enum_name: &str, variants: &[EnumVariant], path: &Path) {
+    let mut errors = Vec::new();
+    for (i, a) in variants.iter().enumerate() {
+        for b in &variants[i + 1..] {
+            if a.name.eq_ignore_ascii_case(&b.name) {
+                errors.push(format!("  duplicate name: {} and {}", a.name, b.name));
+            }
+            if a.value == b.value {
+                errors.push(format!(
+                    "  duplicate value {}: {} and {}",
+                    a.value, a.name, b.name
+                ));
+            }
+        }
+    }
+    assert!(
+        errors.is_empty(),
+        "{}: enum {enum_name} is not well formed:\n{}",
+        path.display(),
+        errors.join("\n")
+    );
 }
 
 /// Look up an enum variant by its case label (e.g. `"MAType_SMA"`).
@@ -60,7 +90,7 @@ pub fn lookup_variant<'a>(
         let prefix = format!("{enum_name}_");
         if label.starts_with(&prefix) {
             let short = &label[prefix.len()..];
-            if let Some(variant) = enum_def.variants.iter().find(|v| v.short_name == short) {
+            if let Some(variant) = enum_def.variants.iter().find(|v| v.name == short) {
                 return Some((enum_name, variant));
             }
         }

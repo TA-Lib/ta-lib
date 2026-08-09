@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#htPhasor} consumes before it can
+    * Number of leading input bars {@link Core#HT_PHASOR} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,19 +25,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int htPhasorLookback( )
+   public int HT_PHASOR_Lookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()] ;
+      return 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()] ;
 
    }
-   RetCode htPhasorInternal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outInPhase[],
-                             double outQuadrature[] )
+   RetCode HT_PHASOR_Internal( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outInPhase[],
+                               double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -114,7 +114,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -378,13 +378,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode htPhasorInternal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outInPhase[],
-                             double outQuadrature[] )
+   RetCode HT_PHASOR_Internal( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outInPhase[],
+                               double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -455,7 +455,7 @@
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -683,7 +683,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_PHASOR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -701,22 +701,22 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htDcPhase
-    * @see Core#htSine
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htPhasor( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             double outInPhase[],
-                             double outQuadrature[] )
+   public OutRange HT_PHASOR( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              double outInPhase[],
+                              double outQuadrature[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htPhasorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -736,7 +736,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htPhasorLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_PHASOR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -754,22 +754,22 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htDcPhase
-    * @see Core#htSine
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htPhasor( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             double outInPhase[],
-                             double outQuadrature[] )
+   public OutRange HT_PHASOR( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              double outInPhase[],
+                              double outQuadrature[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htPhasorInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw failure("HT_PHASOR", retCode);
       }
@@ -779,8 +779,8 @@
 
    /**
     * A live HT_PHASOR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#htPhasor} over the same series.
-    * Open with {@link Core#htPhasorOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#HT_PHASOR} over the same series.
+    * Open with {@link Core#HT_PHASOR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -791,7 +791,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HtPhasorStream {
+   public static final class HT_PHASOR_Stream {
       final Core core;
       double tempReal;
       double tempReal2;
@@ -852,10 +852,10 @@
       Value cachedValue;
       OutRange fillRange = OutRange.EMPTY;
 
-      HtPhasorStream( Core core ) { this.core = core; }
+      HT_PHASOR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#htPhasorOpenAndFill}, or
+       * The range filled by {@link Core#HT_PHASOR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -863,7 +863,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      HtPhasorStream( HtPhasorStream other ) {
+      HT_PHASOR_Stream( HT_PHASOR_Stream other ) {
          this.core = other.core;
          this.tempReal = other.tempReal;
          this.tempReal2 = other.tempReal2;
@@ -943,7 +943,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public Value update( double inReal ) {
-         core.htPhasorStreamStep(this, inReal);
+         core.HT_PHASOR_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outInPhase, this.cur_outQuadrature);
          return this.cachedValue;
       }
@@ -956,8 +956,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public Value peek( double inReal ) {
-         HtPhasorStream scratch = new HtPhasorStream(this);
-         core.htPhasorStreamStep(scratch, inReal);
+         HT_PHASOR_Stream scratch = new HT_PHASOR_Stream(this);
+         core.HT_PHASOR_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outInPhase, scratch.cur_outQuadrature);
       }
 
@@ -974,11 +974,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HtPhasorStream copy() {
-         return new HtPhasorStream(this);
+      public HT_PHASOR_Stream copy() {
+         return new HT_PHASOR_Stream(this);
       }
    }
-   void htPhasorStreamStep( HtPhasorStream sp, double inReal )
+   void HT_PHASOR_StreamStep( HT_PHASOR_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;
@@ -1128,7 +1128,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode htPhasorOpenBody( HtPhasorStream sp, double inReal[], int startIdx )
+   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -1208,7 +1208,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1534,10 +1534,10 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outInPhase = lastValue_outInPhase;
       sp.cur_outQuadrature = lastValue_outQuadrature;
-      sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
+      sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   private RetCode htPhasorOpenAndFillBody( HtPhasorStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1617,7 +1617,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtPhasor.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_PHASOR.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1943,14 +1943,14 @@
       sp.ring_trailingWMAIdx_inReal = capRing_trailingWMAIdx_inReal;
       sp.cur_outInPhase = outInPhase[outNBElement.value - 1];
       sp.cur_outQuadrature = outQuadrature[outNBElement.value - 1];
-      sp.cachedValue = new HtPhasorStream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
+      sp.cachedValue = new HT_PHASOR_Stream.Value(sp.cur_outInPhase, sp.cur_outQuadrature);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind htPhasorOpen (composition seam). */
-   HtPhasorStream htPhasorOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
+   HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {
-      HtPhasorStream sp = new HtPhasorStream(this);
-      RetCode retCode = htPhasorOpenBody(sp, inReal, startIdx);
+      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      RetCode retCode = HT_PHASOR_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1965,32 +1965,32 @@
    /**
     * Open a live HT_PHASOR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#htPhasor} at that bar.
-    * <p>The history must hold at least {@code htPhasorLookback(...) + 1} bars
+    * to {@link Core#HT_PHASOR} at that bar.
+    * <p>The history must hold at least {@code HT_PHASOR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public HtPhasorStream htPhasorOpen( double inReal[] )
+   public HT_PHASOR_Stream HT_PHASOR_Open( double inReal[] )
    {
-      return htPhasorOpenInternal(inReal, 0);
+      return HT_PHASOR_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#htPhasorOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#htPhasor} over the whole history in the same single pass
+    * {@link Core#HT_PHASOR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#HT_PHASOR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HtPhasorStream#fillRange()}.
+    * {@link HT_PHASOR_Stream#fillRange()}.
     */
-   public HtPhasorStream htPhasorOpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
+   public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double inReal[], double outInPhase[], double outQuadrature[] )
    {
-      HtPhasorStream sp = new HtPhasorStream(this);
+      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htPhasorOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

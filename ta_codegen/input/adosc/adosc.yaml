@@ -1,5 +1,4 @@
 name: ADOSC
-camel_case: AdOsc
 group: Volume Indicators
 hint: Chaikin A/D Oscillator
 flags: [stream, path_dependent]

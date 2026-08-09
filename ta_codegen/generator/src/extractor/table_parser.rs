@@ -676,13 +676,12 @@ fn parse_local_defs(source: &str, defs: &mut SharedDefs) {
 
 fn parse_math_unary_operators(source: &str, results: &mut Vec<TableFuncDef>) {
     let re =
-        Regex::new(r#"DEF_MATH_UNARY_OPERATOR\(\s*(\w+)\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)"#)
+        Regex::new(r#"DEF_MATH_UNARY_OPERATOR\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)"#)
             .unwrap();
 
     for cap in re.captures_iter(source) {
         results.push(TableFuncDef {
             name: cap[1].to_string(),
-            camel_case: cap[3].to_string(),
             group: "Math Transform".to_string(),
             hint: cap[2].to_string(),
             flags: vec![],
@@ -703,13 +702,12 @@ fn parse_math_unary_operators(source: &str, results: &mut Vec<TableFuncDef>) {
 
 fn parse_math_binary_operators(source: &str, results: &mut Vec<TableFuncDef>) {
     let re =
-        Regex::new(r#"DEF_MATH_BINARY_OPERATOR\(\s*(\w+)\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)"#)
+        Regex::new(r#"DEF_MATH_BINARY_OPERATOR\(\s*(\w+)\s*,\s*"([^"]+)"\s*\)"#)
             .unwrap();
 
     for cap in re.captures_iter(source) {
         results.push(TableFuncDef {
             name: cap[1].to_string(),
-            camel_case: cap[3].to_string(),
             group: "Math Operators".to_string(),
             hint: cap[2].to_string(),
             flags: vec![],
@@ -738,9 +736,9 @@ fn parse_math_binary_operators(source: &str, results: &mut Vec<TableFuncDef>) {
 fn parse_def_functions(source: &str, local: &SharedDefs, results: &mut Vec<TableFuncDef>) {
     // Strip C comments first so they don't interfere with regex matching
     let stripped = strip_c_comments(source);
-    // Match DEF_FUNCTION(...) calls with 5 arguments
+    // Match DEF_FUNCTION(...) calls with 4 arguments
     let re = Regex::new(
-        r#"(?s)DEF_FUNCTION\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*([^)]+)\)"#,
+        r#"(?s)DEF_FUNCTION\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*,\s*([^)]+)\)"#,
     )
     .unwrap();
 
@@ -748,8 +746,7 @@ fn parse_def_functions(source: &str, local: &SharedDefs, results: &mut Vec<Table
         let name = cap[1].to_string();
         let group_id = cap[2].trim().to_string();
         let hint = cap[3].to_string();
-        let camel_case = cap[4].to_string();
-        let flags_raw = cap[5].trim().to_string();
+        let flags_raw = cap[4].trim().to_string();
 
         let group = resolve_group(&group_id, local);
         let flags = parse_func_flags(&flags_raw);
@@ -761,7 +758,6 @@ fn parse_def_functions(source: &str, local: &SharedDefs, results: &mut Vec<Table
 
         results.push(TableFuncDef {
             name,
-            camel_case,
             group,
             hint,
             flags,
@@ -978,7 +974,6 @@ mod tests {
             .expect("SMA not found");
 
         assert_eq!(sma.name, "SMA");
-        assert_eq!(sma.camel_case, "Sma");
         assert_eq!(sma.group, "Overlap Studies");
         assert_eq!(sma.hint, "Simple Moving Average");
         assert_eq!(sma.flags, vec!["overlap"]);
@@ -1019,7 +1014,6 @@ mod tests {
             .expect("MULT not found");
 
         assert_eq!(mult.name, "MULT");
-        assert_eq!(mult.camel_case, "Mult");
         assert_eq!(mult.group, "Math Operators");
         assert_eq!(mult.hint, "Vector Arithmetic Mult");
         assert!(mult.flags.is_empty());
@@ -1053,7 +1047,6 @@ mod tests {
             .expect("STOCH not found");
 
         assert_eq!(stoch.name, "STOCH");
-        assert_eq!(stoch.camel_case, "Stoch");
         assert_eq!(stoch.group, "Momentum Indicators");
         assert_eq!(stoch.hint, "Stochastic");
         assert!(stoch.flags.is_empty());
@@ -1103,7 +1096,6 @@ mod tests {
             .expect("SIN not found");
 
         assert_eq!(sin.name, "SIN");
-        assert_eq!(sin.camel_case, "Sin");
         assert_eq!(sin.group, "Math Transform");
         assert_eq!(sin.hint, "Vector Trigonometric Sin");
         assert!(sin.flags.is_empty());
@@ -1134,7 +1126,6 @@ mod tests {
             .expect("SAR not found");
 
         assert_eq!(sar.name, "SAR");
-        assert_eq!(sar.camel_case, "Sar");
         assert_eq!(sar.group, "Overlap Studies");
         assert_eq!(sar.hint, "Parabolic SAR");
         assert_eq!(sar.flags, vec!["overlap"]);

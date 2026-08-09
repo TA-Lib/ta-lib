@@ -97,7 +97,6 @@ fn test_parse_mult_yaml() {
 #[test]
 fn test_parse_mult_yaml_enriched() {
     let func = load_mult();
-    assert_eq!(func.camel_case.as_deref(), Some("Mult"));
     assert_eq!(func.hint.as_deref(), Some("Vector Arithmetic Mult"));
 }
 
@@ -119,7 +118,6 @@ fn test_parse_sma_yaml() {
     let func = load_sma();
     assert_eq!(func.name, "SMA");
     assert_eq!(func.group, "Overlap Studies");
-    assert_eq!(func.camel_case.as_deref(), Some("Sma"));
     assert_eq!(func.hint.as_deref(), Some("Simple Moving Average"));
     assert!(func.flags.contains(&"overlap".to_string()));
     assert_eq!(func.inputs.len(), 1);
@@ -212,11 +210,11 @@ fn test_rust_backend_generates_mult() {
     let func = load_mult();
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
     assert!(
-        output.contains("mult_lookback"),
+        output.contains("MULT_Lookback"),
         "Rust output missing lookback function"
     );
     assert!(
-        output.contains("fn mult("),
+        output.contains("fn MULT("),
         "Rust output missing mult function"
     );
 }
@@ -232,8 +230,8 @@ fn test_rust_sma_from_c_produces_valid_output() {
     let output = backends::rust_lang::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
 
     assert!(
-        output.contains("sma_lookback"),
-        "Missing sma_lookback function"
+        output.contains("SMA_Lookback"),
+        "Missing SMA_Lookback function"
     );
     assert!(
         !output.contains("_unguarded"),
@@ -274,7 +272,7 @@ fn test_java_backend_generates_mult() {
     let func = load_mult();
     let output = backends::java::generate(&func, &no_enums(), &make_registry(), &HelperRegistry::empty());
     assert!(
-        output.contains("multLookback") || output.contains("Lookback"),
+        output.contains("MULT_Lookback") || output.contains("Lookback"),
         "Java output missing lookback method"
     );
     assert!(
@@ -455,7 +453,7 @@ fn test_rust_generates_generic_variants() {
 
     // Guarded function (concrete f64)
     assert!(
-        output.contains("pub fn sma("),
+        output.contains("pub fn SMA("),
         "Missing sma function"
     );
 
@@ -488,7 +486,7 @@ fn test_rust_mult_generates_generic_variants() {
 
     // One batch entry point, concrete f64.
     assert!(
-        output.contains("pub fn mult("),
+        output.contains("pub fn MULT("),
         "Missing mult function"
     );
     assert!(

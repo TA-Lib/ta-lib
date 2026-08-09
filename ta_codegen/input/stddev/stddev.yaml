@@ -1,5 +1,4 @@
 name: STDDEV
-camel_case: StdDev
 group: Statistic Functions
 hint: Standard Deviation
 flags: [stream]

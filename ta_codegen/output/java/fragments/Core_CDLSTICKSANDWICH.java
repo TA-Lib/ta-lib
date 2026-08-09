@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlStickSandwich} consumes before
+    * Number of leading input bars {@link Core#CDLSTICKSANDWICH} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlStickSandwichLookback( )
+   public int CDLSTICKSANDWICH_Lookback( )
    {
       int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
       int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return Equal_avgPeriod + 2 ;
 
    }
-   RetCode cdlStickSandwichInternal( int startIdx,
-                                     int endIdx,
-                                     double inOpen[],
-                                     double inHigh[],
-                                     double inLow[],
-                                     double inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
+                                      int endIdx,
+                                      double inOpen[],
+                                      double inHigh[],
+                                      double inLow[],
+                                      double inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlStickSandwichLookback();
+      lookbackTotal = CDLSTICKSANDWICH_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -114,15 +114,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlStickSandwichInternal( int startIdx,
-                                     int endIdx,
-                                     float inOpen[],
-                                     float inHigh[],
-                                     float inLow[],
-                                     float inClose[],
-                                     MInteger outBegIdx,
-                                     MInteger outNBElement,
-                                     int outInteger[] )
+   RetCode CDLSTICKSANDWICH_Internal( int startIdx,
+                                      int endIdx,
+                                      float inOpen[],
+                                      float inHigh[],
+                                      float inLow[],
+                                      float inClose[],
+                                      MInteger outBegIdx,
+                                      MInteger outNBElement,
+                                      int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -138,7 +138,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlStickSandwichLookback();
+      lookbackTotal = CDLSTICKSANDWICH_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -179,7 +179,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlStickSandwichLookback} is a
+    * valid range shorter than {@link Core#CDLSTICKSANDWICH_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -199,10 +199,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlMatchingLow
-    * @see Core#cdlHomingPigeon
+    * @see Core#CDLMATCHINGLOW
+    * @see Core#CDLHOMINGPIGEON
     */
-   public OutRange cdlStickSandwich( int startIdx,
+   public OutRange CDLSTICKSANDWICH( int startIdx,
                                      int endIdx,
                                      double inOpen[],
                                      double inHigh[],
@@ -212,7 +212,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlStickSandwichInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
@@ -230,7 +230,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlStickSandwichLookback} is a
+    * valid range shorter than {@link Core#CDLSTICKSANDWICH_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -250,10 +250,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlMatchingLow
-    * @see Core#cdlHomingPigeon
+    * @see Core#CDLMATCHINGLOW
+    * @see Core#CDLHOMINGPIGEON
     */
-   public OutRange cdlStickSandwich( int startIdx,
+   public OutRange CDLSTICKSANDWICH( int startIdx,
                                      int endIdx,
                                      float inOpen[],
                                      float inHigh[],
@@ -263,7 +263,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlStickSandwichInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSTICKSANDWICH", retCode);
       }
@@ -273,8 +273,8 @@
 
    /**
     * A live CDLSTICKSANDWICH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlStickSandwich} over the same series.
-    * Open with {@link Core#cdlStickSandwichOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLSTICKSANDWICH} over the same series.
+    * Open with {@link Core#CDLSTICKSANDWICH_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -285,7 +285,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlStickSandwichStream {
+   public static final class CDLSTICKSANDWICH_Stream {
       final Core core;
       double EqualPeriodTotal;
       double lag1_inOpen;
@@ -309,10 +309,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlStickSandwichStream( Core core ) { this.core = core; }
+      CDLSTICKSANDWICH_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlStickSandwichOpenAndFill}, or
+       * The range filled by {@link Core#CDLSTICKSANDWICH_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -320,7 +320,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlStickSandwichStream( CdlStickSandwichStream other ) {
+      CDLSTICKSANDWICH_Stream( CDLSTICKSANDWICH_Stream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -350,7 +350,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlStickSandwichStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSTICKSANDWICH_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -362,8 +362,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlStickSandwichStream scratch = new CdlStickSandwichStream(this);
-         core.cdlStickSandwichStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLSTICKSANDWICH_Stream scratch = new CDLSTICKSANDWICH_Stream(this);
+         core.CDLSTICKSANDWICH_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -380,11 +380,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlStickSandwichStream copy() {
-         return new CdlStickSandwichStream(this);
+      public CDLSTICKSANDWICH_Stream copy() {
+         return new CDLSTICKSANDWICH_Stream(this);
       }
    }
-   void cdlStickSandwichStreamStep( CdlStickSandwichStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLSTICKSANDWICH_StreamStep( CDLSTICKSANDWICH_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -425,7 +425,7 @@
          sp.ringPos_EqualTrailingIdx = 0;
       }
    }
-   private RetCode cdlStickSandwichOpenBody( CdlStickSandwichStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLSTICKSANDWICH_OpenBody( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -449,7 +449,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlStickSandwichLookback();
+      lookbackTotal = CDLSTICKSANDWICH_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -550,7 +550,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlStickSandwichOpenAndFillBody( CdlStickSandwichStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLSTICKSANDWICH_OpenAndFillBody( CDLSTICKSANDWICH_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double EqualPeriodTotal = 0;
       int i = 0;
@@ -575,7 +575,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlStickSandwichLookback();
+      lookbackTotal = CDLSTICKSANDWICH_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -676,11 +676,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlStickSandwichOpen (composition seam). */
-   CdlStickSandwichStream cdlStickSandwichOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLSTICKSANDWICH_Open (composition seam). */
+   CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlStickSandwichStream sp = new CdlStickSandwichStream(this);
-      RetCode retCode = cdlStickSandwichOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
+      RetCode retCode = CDLSTICKSANDWICH_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -695,32 +695,32 @@
    /**
     * Open a live CDLSTICKSANDWICH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlStickSandwich} at that bar.
-    * <p>The history must hold at least {@code cdlStickSandwichLookback(...) + 1} bars
+    * to {@link Core#CDLSTICKSANDWICH} at that bar.
+    * <p>The history must hold at least {@code CDLSTICKSANDWICH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlStickSandwichStream cdlStickSandwichOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlStickSandwichOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLSTICKSANDWICH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlStickSandwichOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlStickSandwich} over the whole history in the same single pass
+    * {@link Core#CDLSTICKSANDWICH_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLSTICKSANDWICH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlStickSandwichStream#fillRange()}.
+    * {@link CDLSTICKSANDWICH_Stream#fillRange()}.
     */
-   public CdlStickSandwichStream cdlStickSandwichOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLSTICKSANDWICH_Stream CDLSTICKSANDWICH_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlStickSandwichStream sp = new CdlStickSandwichStream(this);
+      CDLSTICKSANDWICH_Stream sp = new CDLSTICKSANDWICH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlStickSandwichOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSTICKSANDWICH_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

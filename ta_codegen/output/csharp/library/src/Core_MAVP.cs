@@ -62,8 +62,8 @@ public partial class Core
     *  080326 MF,CC  Split the size temp from the cast-fed period temp (#160).
     */
    /// <summary>
-   /// Number of leading input bars <c>MovingAverageVariablePeriod</c> consumes
-   /// before it can produce its first value.
+   /// Number of leading input bars <c>MAVP</c> consumes before it can produce
+   /// its first value.
    /// </summary>
    /// <remarks>
    /// Equivalently, the index of the first bar with a value when the whole
@@ -78,7 +78,7 @@ public partial class Core
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MovingAverageVariablePeriodLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public int MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       if( optInMinPeriod == int.MinValue ) {
          optInMinPeriod = 2;
@@ -91,21 +91,21 @@ public partial class Core
          return -1;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
-      return MovingAverageLookback(optInMaxPeriod, optInMAType) ;
+      return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   internal RetCode MovingAverageVariablePeriod( int startIdx,
-                                                 int endIdx,
-                                                 double[] inReal,
-                                                 double[] inPeriods,
-                                                 int optInMinPeriod,
-                                                 int optInMaxPeriod,
-                                                 MAType optInMAType,
-                                                 out int outBegIdx,
-                                                 out int outNBElement,
-                                                 double[] outReal )
+   internal RetCode MAVP( int startIdx,
+                          int endIdx,
+                          double[] inReal,
+                          double[] inPeriods,
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -147,7 +147,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       /* An inverted period window (min above max) is an invalid parameter
        * combination: the per-bar clamp below would push a period above
@@ -162,7 +162,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = MovingAverageLookback(optInMaxPeriod, optInMAType);
+      lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -277,7 +277,7 @@ public partial class Core
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MA(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -329,7 +329,7 @@ public partial class Core
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -364,16 +364,16 @@ public partial class Core
       outNBElement = outputSize;
       return RetCode.Success ;
    }
-   internal RetCode MovingAverageVariablePeriod( int startIdx,
-                                                 int endIdx,
-                                                 float[] inReal,
-                                                 float[] inPeriods,
-                                                 int optInMinPeriod,
-                                                 int optInMaxPeriod,
-                                                 MAType optInMAType,
-                                                 out int outBegIdx,
-                                                 out int outNBElement,
-                                                 double[] outReal )
+   internal RetCode MAVP( int startIdx,
+                          int endIdx,
+                          float[] inReal,
+                          float[] inPeriods,
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          out int outBegIdx,
+                          out int outNBElement,
+                          double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -415,14 +415,14 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       if( optInMinPeriod > optInMaxPeriod ) {
          outBegIdx = 0;
          outNBElement = 0;
          return RetCode.BadParam ;
       }
-      lookbackTotal = MovingAverageLookback(optInMaxPeriod, optInMAType);
+      lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -479,7 +479,7 @@ public partial class Core
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = MovingAverage(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
+         retCode = MA(startIdx, endIdx, inReal, minUsed, optInMAType, out localBegIdx, out localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -509,7 +509,7 @@ public partial class Core
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = MovingAverage(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
+               retCode = MA(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, out localBegIdx, out localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -556,8 +556,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MovingAverageVariablePeriodLookback</c>
-   /// is a <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MAVP_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -581,16 +581,16 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MovingAverageVariablePeriod( int startIdx,
-                                                int endIdx,
-                                                double[] inReal,
-                                                double[] inPeriods,
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                double[] outReal )
+   public OutRange MAVP( int startIdx,
+                         int endIdx,
+                         double[] inReal,
+                         double[] inPeriods,
+                         int optInMinPeriod,
+                         int optInMaxPeriod,
+                         MAType optInMAType,
+                         double[] outReal )
    {
-      RetCode retCode = MovingAverageVariablePeriod(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }
@@ -620,8 +620,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MovingAverageVariablePeriodLookback</c>
-   /// is a <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MAVP_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -645,16 +645,16 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MovingAverageVariablePeriod( int startIdx,
-                                                int endIdx,
-                                                float[] inReal,
-                                                float[] inPeriods,
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                double[] outReal )
+   public OutRange MAVP( int startIdx,
+                         int endIdx,
+                         float[] inReal,
+                         float[] inPeriods,
+                         int optInMinPeriod,
+                         int optInMaxPeriod,
+                         MAType optInMAType,
+                         double[] outReal )
    {
-      RetCode retCode = MovingAverageVariablePeriod(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
       }

@@ -1,5 +1,4 @@
 name: CDLHARAMICROSS
-camel_case: CdlHaramiCross
 group: Pattern Recognition
 hint: Harami Cross Pattern
 flags: [candlestick, stream]

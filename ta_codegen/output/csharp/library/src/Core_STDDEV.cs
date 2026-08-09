@@ -59,7 +59,7 @@ public partial class Core
     *  090404 MF   Fix #978056. Trap sqrt with negative zero values.
     */
    /// <summary>
-   /// Number of leading input bars <c>StdDev</c> consumes before it can produce
+   /// Number of leading input bars <c>STDDEV</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -72,7 +72,7 @@ public partial class Core
    /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int StdDevLookback( int optInTimePeriod, double optInNbDev )
+   public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 5;
@@ -85,10 +85,10 @@ public partial class Core
          return -1;
       }
       /* Lookback is driven by the variance. */
-      return VarianceLookback(optInTimePeriod, optInNbDev) ;
+      return VAR_Lookback(optInTimePeriod, optInNbDev) ;
 
    }
-   internal RetCode StdDev( int startIdx,
+   internal RetCode STDDEV( int startIdx,
                             int endIdx,
                             double[] inReal,
                             int optInTimePeriod,
@@ -119,7 +119,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
-      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -149,7 +149,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode StdDev( int startIdx,
+   internal RetCode STDDEV( int startIdx,
                             int endIdx,
                             float[] inReal,
                             int optInTimePeriod,
@@ -179,7 +179,7 @@ public partial class Core
       } else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
+      retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -220,8 +220,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StdDevLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>STDDEV_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -241,14 +241,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange StdDev( int startIdx,
+   public OutRange STDDEV( int startIdx,
                            int endIdx,
                            double[] inReal,
                            int optInTimePeriod,
                            double optInNbDev,
                            double[] outReal )
    {
-      RetCode retCode = StdDev(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }
@@ -276,8 +276,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StdDevLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>STDDEV_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -297,14 +297,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange StdDev( int startIdx,
+   public OutRange STDDEV( int startIdx,
                            int endIdx,
                            float[] inReal,
                            int optInTimePeriod,
                            double optInNbDev,
                            double[] outReal )
    {
-      RetCode retCode = StdDev(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = STDDEV(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("STDDEV", retCode);
       }

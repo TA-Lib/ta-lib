@@ -1,56 +1,67 @@
 # Enum type definitions for ta_codegen.
 #
-# Each enum has a name and a list of variants. The variant fields are:
-#   c_name:      C constant (e.g. TA_MAType_SMA)
-#   pascal_name: PascalCase for Java/.NET (e.g. Sma)
-#   value:       Integer value
+# ONE NAME PER VARIANT, spelled verbatim in every backend. C alone prepends the
+# enum's `c_prefix` — the same rule the indicator names follow (`SMA` in Rust,
+# Java and C#; `TA_SMA` in C). One spelling means nothing to keep in sync and no
+# way for a backend's constant to disagree with the name it is declared under.
 #
-# The short_name (used in source case labels like MAType_SMA) is derived
-# automatically from the c_name by stripping the TA_{EnumName}_ prefix.
+#   c_prefix: the C constant prefix for this enum
+#   name:     the variant identity. Used verbatim by Rust, Java and C#, as the
+#             source case label (`MAType_SMA`), and by C after `c_prefix`.
+#   value:    the pinned integer. Part of the ABI: identical in every backend,
+#             append-only. Retire a variant by reserving its slot (see UNUSED_*
+#             below), never by deleting or renumbering it.
 
 MAType:
-  - { c_name: TA_MAType_SMA,   pascal_name: Sma,   value: 0 }
-  - { c_name: TA_MAType_EMA,   pascal_name: Ema,   value: 1 }
-  - { c_name: TA_MAType_WMA,   pascal_name: Wma,   value: 2 }
-  - { c_name: TA_MAType_DEMA,  pascal_name: Dema,  value: 3 }
-  - { c_name: TA_MAType_TEMA,  pascal_name: Tema,  value: 4 }
-  - { c_name: TA_MAType_TRIMA, pascal_name: Trima, value: 5 }
-  - { c_name: TA_MAType_KAMA,  pascal_name: Kama,  value: 6 }
-  - { c_name: TA_MAType_MAMA,  pascal_name: Mama,  value: 7 }
-  - { c_name: TA_MAType_T3,    pascal_name: T3,    value: 8 }
-  - { c_name: TA_MAType_HMA,   pascal_name: Hma,   value: 9 }
-  # DISABLED (#93): identity copy, lookback 0, ignores optInTimePeriod. Dispatch
-  # is the pre-switch identity guard in ma/ma.c (batch + stream), not a switch arm.
-  - { c_name: TA_MAType_DISABLED, pascal_name: Disabled, value: 10 }
+  c_prefix: TA_MAType_
+  variants:
+    - { name: SMA,   value: 0 }
+    - { name: EMA,   value: 1 }
+    - { name: WMA,   value: 2 }
+    - { name: DEMA,  value: 3 }
+    - { name: TEMA,  value: 4 }
+    - { name: TRIMA, value: 5 }
+    - { name: KAMA,  value: 6 }
+    - { name: MAMA,  value: 7 }
+    - { name: T3,    value: 8 }
+    - { name: HMA,   value: 9 }
+    # DISABLED (#93): identity copy, lookback 0, ignores optInTimePeriod. Dispatch
+    # is the pre-switch identity guard in ma/ma.c (batch + stream), not a switch arm.
+    - { name: DISABLED, value: 10 }
 
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h
 # (ta_codegen takes over gen_code's last role there). Order = ascending `value`,
 # which is the enum ordinal (the C/Java backends index unstablePeriod[] by it).
 # The TA_FUNC_UNST_ALL / _NONE sentinels are appended by the generator, not listed
-# here. Add a row when a new indicator gains an unstable period.
+# here. Add a row when a new indicator gains an unstable period — APPEND it, never
+# insert: a mid-list insertion renumbers every later id and the contiguity check
+# cannot see it (all it requires is position == value, which a lockstep renumber
+# satisfies).
 FuncUnstId:
-  - { c_name: TA_FUNC_UNST_ADX,          pascal_name: Adx,         value: 0 }
-  - { c_name: TA_FUNC_UNST_UNUSED_1,     pascal_name: Unused1,     value: 1 }  # reserved: was ADXR, knob was inert (#129); kept for ABI, reusable
-  - { c_name: TA_FUNC_UNST_ATR,          pascal_name: Atr,         value: 2 }
-  - { c_name: TA_FUNC_UNST_CMO,          pascal_name: Cmo,         value: 3 }
-  - { c_name: TA_FUNC_UNST_DX,           pascal_name: Dx,          value: 4 }
-  - { c_name: TA_FUNC_UNST_EMA,          pascal_name: Ema,         value: 5 }
-  - { c_name: TA_FUNC_UNST_HT_DCPERIOD,  pascal_name: HtDcPeriod,  value: 6 }
-  - { c_name: TA_FUNC_UNST_HT_DCPHASE,   pascal_name: HtDcPhase,   value: 7 }
-  - { c_name: TA_FUNC_UNST_HT_PHASOR,    pascal_name: HtPhasor,    value: 8 }
-  - { c_name: TA_FUNC_UNST_HT_SINE,      pascal_name: HtSine,      value: 9 }
-  - { c_name: TA_FUNC_UNST_HT_TRENDLINE, pascal_name: HtTrendline, value: 10 }
-  - { c_name: TA_FUNC_UNST_HT_TRENDMODE, pascal_name: HtTrendMode, value: 11 }
-  - { c_name: TA_FUNC_UNST_UNUSED_12,    pascal_name: Unused12,    value: 12 }  # reserved: was IMI, reclassified stable (#14); kept for ABI, reusable
-  - { c_name: TA_FUNC_UNST_KAMA,         pascal_name: Kama,        value: 13 }
-  - { c_name: TA_FUNC_UNST_MAMA,         pascal_name: Mama,        value: 14 }
-  - { c_name: TA_FUNC_UNST_UNUSED_15,    pascal_name: Unused15,    value: 15 }  # reserved: was MFI, reclassified stable (#4); kept for ABI, reusable
-  - { c_name: TA_FUNC_UNST_MINUS_DI,     pascal_name: MinusDI,     value: 16 }
-  - { c_name: TA_FUNC_UNST_MINUS_DM,     pascal_name: MinusDM,     value: 17 }
-  - { c_name: TA_FUNC_UNST_NATR,         pascal_name: Natr,        value: 18 }
-  - { c_name: TA_FUNC_UNST_PLUS_DI,      pascal_name: PlusDI,      value: 19 }
-  - { c_name: TA_FUNC_UNST_PLUS_DM,      pascal_name: PlusDM,      value: 20 }
-  - { c_name: TA_FUNC_UNST_RSI,          pascal_name: Rsi,         value: 21 }
-  - { c_name: TA_FUNC_UNST_UNUSED_22,    pascal_name: Unused22,    value: 22 }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
-  - { c_name: TA_FUNC_UNST_T3,           pascal_name: T3,          value: 23 }
+  c_prefix: TA_FUNC_UNST_
+  variants:
+    - { name: ADX,          value: 0 }
+    - { name: UNUSED_1,     value: 1 }   # reserved: was ADXR, knob was inert (#129); kept for ABI, reusable
+    - { name: ATR,          value: 2 }
+    - { name: CMO,          value: 3 }
+    - { name: DX,           value: 4 }
+    - { name: EMA,          value: 5 }
+    - { name: HT_DCPERIOD,  value: 6 }
+    - { name: HT_DCPHASE,   value: 7 }
+    - { name: HT_PHASOR,    value: 8 }
+    - { name: HT_SINE,      value: 9 }
+    - { name: HT_TRENDLINE, value: 10 }
+    - { name: HT_TRENDMODE, value: 11 }
+    - { name: UNUSED_12,    value: 12 }  # reserved: was IMI, reclassified stable (#14); kept for ABI, reusable
+    - { name: KAMA,         value: 13 }
+    - { name: MAMA,         value: 14 }
+    - { name: UNUSED_15,    value: 15 }  # reserved: was MFI, reclassified stable (#4); kept for ABI, reusable
+    - { name: MINUS_DI,     value: 16 }
+    - { name: MINUS_DM,     value: 17 }
+    - { name: NATR,         value: 18 }
+    - { name: PLUS_DI,      value: 19 }
+    - { name: PLUS_DM,      value: 20 }
+    - { name: RSI,          value: 21 }
+    - { name: UNUSED_22,    value: 22 }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
+    - { name: T3,           value: 23 }

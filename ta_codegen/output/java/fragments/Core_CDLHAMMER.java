@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlHammer} consumes before it can
+    * Number of leading input bars {@link Core#CDLHAMMER} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlHammerLookback( )
+   public int CDLHAMMER_Lookback( )
    {
       int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
       int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
@@ -38,15 +38,15 @@
       return Math.max(Math.max(Math.max(BodyShort_avgPeriod, ShadowLong_avgPeriod), ShadowVeryShort_avgPeriod), Near_avgPeriod) + 1 ;
 
    }
-   RetCode cdlHammerInternal( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode CDLHAMMER_Internal( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -80,7 +80,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHammerLookback();
+      lookbackTotal = CDLHAMMER_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -163,15 +163,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlHammerInternal( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode CDLHAMMER_Internal( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -202,7 +202,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlHammerLookback();
+      lookbackTotal = CDLHAMMER_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -273,7 +273,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHammerLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLHAMMER_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -293,11 +293,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlInvertedHammer
-    * @see Core#cdlHangingMan
-    * @see Core#cdlTakuri
+    * @see Core#CDLINVERTEDHAMMER
+    * @see Core#CDLHANGINGMAN
+    * @see Core#CDLTAKURI
     */
-   public OutRange cdlHammer( int startIdx,
+   public OutRange CDLHAMMER( int startIdx,
                               int endIdx,
                               double inOpen[],
                               double inHigh[],
@@ -307,7 +307,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHammerInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHAMMER", retCode);
       }
@@ -328,7 +328,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHammerLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLHAMMER_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -348,11 +348,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlInvertedHammer
-    * @see Core#cdlHangingMan
-    * @see Core#cdlTakuri
+    * @see Core#CDLINVERTEDHAMMER
+    * @see Core#CDLHANGINGMAN
+    * @see Core#CDLTAKURI
     */
-   public OutRange cdlHammer( int startIdx,
+   public OutRange CDLHAMMER( int startIdx,
                               int endIdx,
                               float inOpen[],
                               float inHigh[],
@@ -362,7 +362,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHammerInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHAMMER_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHAMMER", retCode);
       }
@@ -372,8 +372,8 @@
 
    /**
     * A live CDLHAMMER stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlHammer} over the same series.
-    * Open with {@link Core#cdlHammerOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLHAMMER} over the same series.
+    * Open with {@link Core#CDLHAMMER_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -384,7 +384,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlHammerStream {
+   public static final class CDLHAMMER_Stream {
       final Core core;
       double BodyPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -433,10 +433,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlHammerStream( Core core ) { this.core = core; }
+      CDLHAMMER_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlHammerOpenAndFill}, or
+       * The range filled by {@link Core#CDLHAMMER_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -444,7 +444,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlHammerStream( CdlHammerStream other ) {
+      CDLHAMMER_Stream( CDLHAMMER_Stream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -499,7 +499,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlHammerStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHAMMER_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -511,8 +511,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlHammerStream scratch = new CdlHammerStream(this);
-         core.cdlHammerStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLHAMMER_Stream scratch = new CDLHAMMER_Stream(this);
+         core.CDLHAMMER_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -529,11 +529,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlHammerStream copy() {
-         return new CdlHammerStream(this);
+      public CDLHAMMER_Stream copy() {
+         return new CDLHAMMER_Stream(this);
       }
    }
-   void cdlHammerStreamStep( CdlHammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHAMMER_StreamStep( CDLHAMMER_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -624,7 +624,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode cdlHammerOpenBody( CdlHammerStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLHAMMER_OpenBody( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -663,7 +663,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHammerLookback();
+      lookbackTotal = CDLHAMMER_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -844,7 +844,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlHammerOpenAndFillBody( CdlHammerStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLHAMMER_OpenAndFillBody( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -884,7 +884,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHammerLookback();
+      lookbackTotal = CDLHAMMER_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1065,11 +1065,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlHammerOpen (composition seam). */
-   CdlHammerStream cdlHammerOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLHAMMER_Open (composition seam). */
+   CDLHAMMER_Stream CDLHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlHammerStream sp = new CdlHammerStream(this);
-      RetCode retCode = cdlHammerOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
+      RetCode retCode = CDLHAMMER_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1084,32 +1084,32 @@
    /**
     * Open a live CDLHAMMER stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlHammer} at that bar.
-    * <p>The history must hold at least {@code cdlHammerLookback(...) + 1} bars
+    * to {@link Core#CDLHAMMER} at that bar.
+    * <p>The history must hold at least {@code CDLHAMMER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlHammerStream cdlHammerOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLHAMMER_Stream CDLHAMMER_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlHammerOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlHammerOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlHammer} over the whole history in the same single pass
+    * {@link Core#CDLHAMMER_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLHAMMER} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlHammerStream#fillRange()}.
+    * {@link CDLHAMMER_Stream#fillRange()}.
     */
-   public CdlHammerStream cdlHammerOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLHAMMER_Stream CDLHAMMER_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlHammerStream sp = new CdlHammerStream(this);
+      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHammerOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHAMMER_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

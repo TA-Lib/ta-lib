@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#sma} consumes before it can
+    * Number of leading input bars {@link Core#SMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int smaLookback( int optInTimePeriod )
+   public int SMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -34,13 +34,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode smaInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode SMA_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -105,13 +105,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode smaInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode SMA_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -176,7 +176,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#smaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#SMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -194,13 +194,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#wma
-    * @see Core#movingAverage
-    * @see Core#dema
-    * @see Core#tema
+    * @see Core#EMA
+    * @see Core#WMA
+    * @see Core#MA
+    * @see Core#DEMA
+    * @see Core#TEMA
     */
-   public OutRange sma( int startIdx,
+   public OutRange SMA( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -208,7 +208,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = smaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SMA", retCode);
       }
@@ -231,7 +231,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#smaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#SMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -249,13 +249,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#wma
-    * @see Core#movingAverage
-    * @see Core#dema
-    * @see Core#tema
+    * @see Core#EMA
+    * @see Core#WMA
+    * @see Core#MA
+    * @see Core#DEMA
+    * @see Core#TEMA
     */
-   public OutRange sma( int startIdx,
+   public OutRange SMA( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -263,7 +263,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = smaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SMA", retCode);
       }
@@ -273,8 +273,8 @@
 
    /**
     * A live SMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#sma} over the same series.
-    * Open with {@link Core#smaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#SMA} over the same series.
+    * Open with {@link Core#SMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -285,7 +285,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SmaStream {
+   public static final class SMA_Stream {
       final Core core;
       int optInTimePeriod;
       double periodTotal;
@@ -296,10 +296,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      SmaStream( Core core ) { this.core = core; }
+      SMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#smaOpenAndFill}, or
+       * The range filled by {@link Core#SMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -307,7 +307,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      SmaStream( SmaStream other ) {
+      SMA_Stream( SMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -324,7 +324,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.smaStreamStep(this, inReal);
+         core.SMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -336,8 +336,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         SmaStream scratch = new SmaStream(this);
-         core.smaStreamStep(scratch, inReal);
+         SMA_Stream scratch = new SMA_Stream(this);
+         core.SMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -354,11 +354,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SmaStream copy() {
-         return new SmaStream(this);
+      public SMA_Stream copy() {
+         return new SMA_Stream(this);
       }
    }
-   void smaStreamStep( SmaStream sp, double inReal )
+   void SMA_StreamStep( SMA_Stream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
@@ -373,7 +373,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode smaOpenBody( SmaStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode SMA_OpenBody( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -458,7 +458,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode smaOpenAndFillBody( SmaStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SMA_OpenAndFillBody( SMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double periodTotal = 0;
       double tempReal = 0;
@@ -544,11 +544,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind smaOpen (composition seam). */
-   SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
+   SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      SmaStream sp = new SmaStream(this);
-      RetCode retCode = smaOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      SMA_Stream sp = new SMA_Stream(this);
+      RetCode retCode = SMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -563,32 +563,32 @@
    /**
     * Open a live SMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#sma} at that bar.
-    * <p>The history must hold at least {@code smaLookback(...) + 1} bars
+    * to {@link Core#SMA} at that bar.
+    * <p>The history must hold at least {@code SMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public SmaStream smaOpen( double inReal[], int optInTimePeriod )
+   public SMA_Stream SMA_Open( double inReal[], int optInTimePeriod )
    {
-      return smaOpenInternal(inReal, 0, optInTimePeriod);
+      return SMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#smaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#sma} over the whole history in the same single pass
+    * {@link Core#SMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#SMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link SmaStream#fillRange()}.
+    * {@link SMA_Stream#fillRange()}.
     */
-   public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      SmaStream sp = new SmaStream(this);
+      SMA_Stream sp = new SMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = smaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

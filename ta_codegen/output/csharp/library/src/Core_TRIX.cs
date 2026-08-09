@@ -62,7 +62,7 @@ public partial class Core
     *                output was mislabeled by up to one EMA lookback.
     */
    /// <summary>
-   /// Number of leading input bars <c>Trix</c> consumes before it can produce
+   /// Number of leading input bars <c>TRIX</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -73,7 +73,7 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period used at each of the three smoothing passes (default 30; range
    /// 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int TrixLookback( int optInTimePeriod )
+   public int TRIX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -81,11 +81,11 @@ public partial class Core
          return -1;
       }
       int emaLookback = 0;
-      emaLookback = EmaLookback(optInTimePeriod);
-      return emaLookback * 3 + RocRLookback(1) ;
+      emaLookback = EMA_Lookback(optInTimePeriod);
+      return emaLookback * 3 + ROCR_Lookback(1) ;
 
    }
-   internal RetCode Trix( int startIdx,
+   internal RetCode TRIX( int startIdx,
                           int endIdx,
                           double[] inReal,
                           int optInTimePeriod,
@@ -121,8 +121,8 @@ public partial class Core
       outNBElement = 0;
       outBegIdx = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EmaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + RocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -215,7 +215,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Trix( int startIdx,
+   internal RetCode TRIX( int startIdx,
                           int endIdx,
                           float[] inReal,
                           int optInTimePeriod,
@@ -248,8 +248,8 @@ public partial class Core
       }
       outNBElement = 0;
       outBegIdx = 0;
-      lookbackEMA = EmaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + RocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -327,7 +327,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TrixLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TRIX_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -346,13 +346,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Trix( int startIdx,
+   public OutRange TRIX( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Trix(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }
@@ -382,7 +382,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TrixLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TRIX_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -401,13 +401,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Trix( int startIdx,
+   public OutRange TRIX( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Trix(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRIX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRIX", retCode);
       }

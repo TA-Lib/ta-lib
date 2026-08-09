@@ -1,5 +1,4 @@
 name: CDLMORNINGDOJISTAR
-camel_case: CdlMorningDojiStar
 group: Pattern Recognition
 hint: Morning Doji Star
 flags: [candlestick, stream]

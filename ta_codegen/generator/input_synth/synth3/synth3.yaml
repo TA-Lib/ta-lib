@@ -1,5 +1,4 @@
 name: SYNTH3
-camel_case: Synth3
 group: Math Operators
 hint: Synthetic gate function 3 - integer locals typed by declaration, not by name (never shipped)
 flags: [stream]

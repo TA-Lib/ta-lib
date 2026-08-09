@@ -65,9 +65,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlharamicross`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLHARAMICROSS`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlharamicross_lookback(&self) -> usize {
+    pub fn CDLHARAMICROSS_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -136,7 +136,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlharamicross(
+    /// let ret = core.CDLHARAMICROSS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -146,12 +146,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlharami`] · [`Core::cdldoji`]
+    /// [`Core::CDLHARAMI`] · [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlharamicross](https://ta-lib.org/functions/cdlharamicross/)
+    /// [ta-lib.org/functions/CDLHARAMICROSS](https://ta-lib.org/functions/CDLHARAMICROSS/)
     #[doc(alias = "HaramiCross")]
-    pub fn cdlharamicross(
+    pub fn CDLHARAMICROSS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlharamicross_lookback();
+        let _assertLb = self.CDLHARAMICROSS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -198,7 +198,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlharamicross_lookback();
+        lookbackTotal = self.CDLHARAMICROSS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -371,20 +371,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHARAMICROSS stream: one value per closed bar, bit-identical to [`Core::cdlharamicross`]
-/// over the same series. Open with [`Core::cdlharamicross_open`]; dropping the handle
+/// Live CDLHARAMICROSS stream: one value per closed bar, bit-identical to [`Core::CDLHARAMICROSS`]
+/// over the same series. Open with [`Core::CDLHARAMICROSS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHARAMICROSS_Stream")]
-pub struct CdlharamicrossStream {
+pub struct CDLHARAMICROSS_Stream {
     core: Core,
-    state: CdlharamicrossStreamState,
+    state: CDLHARAMICROSS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlharamicrossStreamState {
+struct CDLHARAMICROSS_StreamState {
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -412,7 +412,7 @@ struct CdlharamicrossStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlharamicross_step_internal(&self, sp: &mut CdlharamicrossStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHARAMICROSS_step_internal(&self, sp: &mut CDLHARAMICROSS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -545,10 +545,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlharamicross_open`] (composition seam).
-    pub(crate) fn cdlharamicross_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLHARAMICROSS_Open`] (composition seam).
+    pub(crate) fn CDLHARAMICROSS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlharamicrossStream, i32), RetCode> {
+    ) -> Result<(CDLHARAMICROSS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -582,7 +582,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlharamicross_lookback();
+        lookbackTotal = self.CDLHARAMICROSS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -781,7 +781,7 @@ impl Core {
         let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
         ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let state = CdlharamicrossStreamState {
+        let state = CDLHARAMICROSS_StreamState {
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -801,11 +801,11 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok((CdlharamicrossStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLHARAMICROSS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLHARAMICROSS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlharamicross`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLHARAMICROSS`] at that bar.
     ///
     /// # Errors
     ///
@@ -824,23 +824,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlharamicross_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLHARAMICROSS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHARAMICROSS_Open")]
-    pub fn cdlharamicross_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlharamicrossStream, i32), RetCode> {
-        self.cdlharamicross_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLHARAMICROSS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHARAMICROSS_Stream, i32), RetCode> {
+        self.CDLHARAMICROSS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlharamicross_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlharamicross`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLHARAMICROSS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHARAMICROSS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLHARAMICROSS_OpenAndFill")]
-    pub fn cdlharamicross_open_and_fill(
+    pub fn CDLHARAMICROSS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlharamicrossStream, RetCode> {
+    ) -> Result<CDLHARAMICROSS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -873,7 +873,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlharamicross_lookback();
+        lookbackTotal = self.CDLHARAMICROSS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1077,7 +1077,7 @@ impl Core {
         let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
         ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let state = CdlharamicrossStreamState {
+        let state = CDLHARAMICROSS_StreamState {
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1097,19 +1097,19 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok(CdlharamicrossStream { core: self.clone(), state })
+        Ok(CDLHARAMICROSS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlharamicrossStream {
+impl CDLHARAMICROSS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLHARAMICROSS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlharamicross_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHARAMICROSS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1127,7 +1127,7 @@ impl CdlharamicrossStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlharamicrossStream>();
+    _assert_auto::<CDLHARAMICROSS_Stream>();
 };
 
 /***************/

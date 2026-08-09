@@ -1,5 +1,4 @@
 name: SYNTH1
-camel_case: Synth1
 group: Math Operators
 hint: Synthetic gate function 1 - bitwise operators and truthiness (never shipped)
 flags: [stream]

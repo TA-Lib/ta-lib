@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ema} consumes before it can
+    * Number of leading input bars {@link Core#EMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,24 +28,24 @@
     *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int emaLookback( int optInTimePeriod )
+   public int EMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.Ema.ordinal()] ;
+      return optInTimePeriod - 1 + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
 
    }
-   RetCode emaPrivate( int startIdx,
-                       int endIdx,
-                       double inReal[],
-                       int optInTimePeriod,
-                       double optInK_1,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode EMA_Private( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double optInK_1,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -68,7 +68,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = emaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -122,14 +122,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode emaPrivate( int startIdx,
-                       int endIdx,
-                       float inReal[],
-                       int optInTimePeriod,
-                       double optInK_1,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode EMA_Private( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double optInK_1,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -137,7 +137,7 @@
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      lookbackTotal = emaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -166,13 +166,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode emaInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode EMA_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double optInK_1 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -188,15 +188,15 @@
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* Simply call the internal implementation of the EMA. */
-      return emaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal) ;
+      return EMA_Private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal) ;
    }
-   RetCode emaInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode EMA_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -217,7 +217,7 @@
          return RetCode.BadParam;
       }
       optInK_1 = (2.0/(double)((optInTimePeriod+1)));
-      lookbackTotal = emaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -262,7 +262,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#emaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#EMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -281,14 +281,14 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#dema
-    * @see Core#tema
-    * @see Core#movingAverage
-    * @see Core#macd
-    * @see Core#t3
+    * @see Core#SMA
+    * @see Core#DEMA
+    * @see Core#TEMA
+    * @see Core#MA
+    * @see Core#MACD
+    * @see Core#T3
     */
-   public OutRange ema( int startIdx,
+   public OutRange EMA( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -296,7 +296,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EMA", retCode);
       }
@@ -321,7 +321,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#emaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#EMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -340,14 +340,14 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#dema
-    * @see Core#tema
-    * @see Core#movingAverage
-    * @see Core#macd
-    * @see Core#t3
+    * @see Core#SMA
+    * @see Core#DEMA
+    * @see Core#TEMA
+    * @see Core#MA
+    * @see Core#MACD
+    * @see Core#T3
     */
-   public OutRange ema( int startIdx,
+   public OutRange EMA( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -355,7 +355,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = emaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EMA", retCode);
       }
@@ -365,8 +365,8 @@
 
    /**
     * A live EMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ema} over the same series.
-    * Open with {@link Core#emaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#EMA} over the same series.
+    * Open with {@link Core#EMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -377,7 +377,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class EmaStream {
+   public static final class EMA_Stream {
       final Core core;
       int optInTimePeriod;
       double optInK_1;
@@ -385,10 +385,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      EmaStream( Core core ) { this.core = core; }
+      EMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#emaOpenAndFill}, or
+       * The range filled by {@link Core#EMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -396,7 +396,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      EmaStream( EmaStream other ) {
+      EMA_Stream( EMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -410,7 +410,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.emaStreamStep(this, inReal);
+         core.EMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -422,8 +422,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         EmaStream scratch = new EmaStream(this);
-         core.emaStreamStep(scratch, inReal);
+         EMA_Stream scratch = new EMA_Stream(this);
+         core.EMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -440,16 +440,16 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public EmaStream copy() {
-         return new EmaStream(this);
+      public EMA_Stream copy() {
+         return new EMA_Stream(this);
       }
    }
-   void emaStreamStep( EmaStream sp, double inReal )
+   void EMA_StreamStep( EMA_Stream sp, double inReal )
    {
       sp.prevMA = (inReal - sp.prevMA) * sp.optInK_1 + sp.prevMA;
       sp.cur_outReal = sp.prevMA;
    }
-   private RetCode emaOpenBody( EmaStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode EMA_OpenBody( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -489,7 +489,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = emaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -548,7 +548,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode emaOpenAndFillBody( EmaStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode EMA_OpenAndFillBody( EMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -589,7 +589,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = emaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -648,11 +648,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind emaOpen (composition seam). */
-   EmaStream emaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
+   EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      EmaStream sp = new EmaStream(this);
-      RetCode retCode = emaOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      EMA_Stream sp = new EMA_Stream(this);
+      RetCode retCode = EMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -667,32 +667,32 @@
    /**
     * Open a live EMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ema} at that bar.
-    * <p>The history must hold at least {@code emaLookback(...) + 1} bars
+    * to {@link Core#EMA} at that bar.
+    * <p>The history must hold at least {@code EMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public EmaStream emaOpen( double inReal[], int optInTimePeriod )
+   public EMA_Stream EMA_Open( double inReal[], int optInTimePeriod )
    {
-      return emaOpenInternal(inReal, 0, optInTimePeriod);
+      return EMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#emaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ema} over the whole history in the same single pass
+    * {@link Core#EMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#EMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link EmaStream#fillRange()}.
+    * {@link EMA_Stream#fillRange()}.
     */
-   public EmaStream emaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public EMA_Stream EMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      EmaStream sp = new EmaStream(this);
+      EMA_Stream sp = new EMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = emaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

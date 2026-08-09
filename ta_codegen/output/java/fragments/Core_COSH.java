@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cosh} consumes before it can
+    * Number of leading input bars {@link Core#COSH} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int coshLookback( )
+   public int COSH_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode coshInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode COSH_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode coshInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode COSH_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,8 +79,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#coshLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#COSH_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -95,18 +95,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sinh
-    * @see Core#tanh
-    * @see Core#cos
+    * @see Core#SINH
+    * @see Core#TANH
+    * @see Core#COS
     */
-   public OutRange cosh( int startIdx,
+   public OutRange COSH( int startIdx,
                          int endIdx,
                          double inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = coshInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
@@ -125,8 +125,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#coshLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#COSH_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -141,18 +141,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sinh
-    * @see Core#tanh
-    * @see Core#cos
+    * @see Core#SINH
+    * @see Core#TANH
+    * @see Core#COS
     */
-   public OutRange cosh( int startIdx,
+   public OutRange COSH( int startIdx,
                          int endIdx,
                          float inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = coshInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("COSH", retCode);
       }
@@ -162,8 +162,8 @@
 
    /**
     * A live COSH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cosh} over the same series.
-    * Open with {@link Core#coshOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#COSH} over the same series.
+    * Open with {@link Core#COSH_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -174,15 +174,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CoshStream {
+   public static final class COSH_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      CoshStream( Core core ) { this.core = core; }
+      COSH_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#coshOpenAndFill}, or
+       * The range filled by {@link Core#COSH_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -190,7 +190,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CoshStream( CoshStream other ) {
+      COSH_Stream( COSH_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -201,7 +201,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.coshStreamStep(this, inReal);
+         core.COSH_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -213,8 +213,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         CoshStream scratch = new CoshStream(this);
-         core.coshStreamStep(scratch, inReal);
+         COSH_Stream scratch = new COSH_Stream(this);
+         core.COSH_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -231,15 +231,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CoshStream copy() {
-         return new CoshStream(this);
+      public COSH_Stream copy() {
+         return new COSH_Stream(this);
       }
    }
-   void coshStreamStep( CoshStream sp, double inReal )
+   void COSH_StreamStep( COSH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
-   private RetCode coshOpenBody( CoshStream sp, double inReal[], int startIdx )
+   private RetCode COSH_OpenBody( COSH_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -263,7 +263,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode coshOpenAndFillBody( CoshStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode COSH_OpenAndFillBody( COSH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -288,11 +288,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind coshOpen (composition seam). */
-   CoshStream coshOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind COSH_Open (composition seam). */
+   COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
    {
-      CoshStream sp = new CoshStream(this);
-      RetCode retCode = coshOpenBody(sp, inReal, startIdx);
+      COSH_Stream sp = new COSH_Stream(this);
+      RetCode retCode = COSH_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -307,32 +307,32 @@
    /**
     * Open a live COSH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cosh} at that bar.
-    * <p>The history must hold at least {@code coshLookback(...) + 1} bars
+    * to {@link Core#COSH} at that bar.
+    * <p>The history must hold at least {@code COSH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CoshStream coshOpen( double inReal[] )
+   public COSH_Stream COSH_Open( double inReal[] )
    {
-      return coshOpenInternal(inReal, 0);
+      return COSH_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#coshOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cosh} over the whole history in the same single pass
+    * {@link Core#COSH_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#COSH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CoshStream#fillRange()}.
+    * {@link COSH_Stream#fillRange()}.
     */
-   public CoshStream coshOpenAndFill( double inReal[], double outReal[] )
+   public COSH_Stream COSH_OpenAndFill( double inReal[], double outReal[] )
    {
-      CoshStream sp = new CoshStream(this);
+      COSH_Stream sp = new COSH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = coshOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = COSH_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

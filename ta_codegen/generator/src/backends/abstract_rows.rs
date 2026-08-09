@@ -32,10 +32,9 @@
 //! vocabulary pinned by `flag_sync` against `include/ta_abstract.h` — are shared
 //! precisely because an independent gate already covers them.)
 //!
-//! Per-backend derived *names* (a Java method name, a C# method name) are never
-//! stored on a row: they are functions of `name`/`camel_case` that each backend
-//! computes with the very helper it emits the method with, so they cannot drift
-//! from the real signature.
+//! A row carries no derived name: there is one identity, `name`, and every
+//! backend spells it verbatim, so there is nothing per-backend left to store or
+//! to drift from the real signature.
 
 use std::collections::HashMap;
 
@@ -305,18 +304,13 @@ pub struct OptRow {
 pub struct UnstRow {
     pub value: i32,
     pub c_name: String,
-    pub pascal_name: String,
+    pub name: String,
 }
 
 /// Everything the abstract layer knows about one function.
 #[derive(Debug, Clone)]
 pub struct FuncRow {
     pub name: String,
-    /// The raw YAML `camel_case:`, or `None`. Kept unresolved because the
-    /// per-backend method-name helpers distinguish the two cases: for
-    /// `HT_DCPERIOD` (no `camel_case:`) Java derives `htDcperiod`, whereas
-    /// feeding them the resolved `camelCaseName` would yield `hT_DCPERIOD`.
-    pub camel_case: Option<String>,
     pub group: Group,
     pub hint: String,
     pub flags: u32,
@@ -324,15 +318,6 @@ pub struct FuncRow {
     pub opt_inputs: Vec<OptRow>,
     pub outputs: Vec<OutputRow>,
     pub unst: Option<UnstRow>,
-}
-
-impl FuncRow {
-    /// C's `TA_FuncInfo.camelCaseName` — the YAML `camel_case:` when present,
-    /// otherwise the plain name. Pascal-cased for several functions
-    /// (`Accbands`, `MovingAverage`), which is why it is not a method name.
-    pub fn camel_case_name(&self) -> &str {
-        self.camel_case.as_deref().unwrap_or(&self.name)
-    }
 }
 
 /// Build every function's row, name-sorted — the order every registry enumerates in.
@@ -347,7 +332,6 @@ pub fn rows(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> Vec<FuncRow>
 fn row(f: &FuncDef, enums: &HashMap<String, EnumDef>) -> FuncRow {
     FuncRow {
         name: f.name.clone(),
-        camel_case: f.camel_case.clone(),
         group: Group::parse(&f.group),
         hint: f.hint.clone().unwrap_or_default(),
         flags: func_flag_bits(&f.flags),
@@ -475,7 +459,7 @@ fn opt_row(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> OptRow {
             values: enums.get(name).map_or_else(Vec::new, |ed| {
                 ed.variants
                     .iter()
-                    .map(|v| (i64::from(v.value), v.short_name.clone()))
+                    .map(|v| (i64::from(v.value), v.name.clone()))
                     .collect()
             }),
             default: opt.default.unwrap_or(0.0) as i64,
@@ -514,7 +498,7 @@ fn unst_row(name: &str, enums: &HashMap<String, EnumDef>) -> Option<UnstRow> {
         .map(|v| UnstRow {
             value: v.value,
             c_name: v.c_name.clone(),
-            pascal_name: v.pascal_name.clone(),
+            name: v.name.clone(),
         })
 }
 

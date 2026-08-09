@@ -20,7 +20,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#midPrice} consumes before it can
+    * Number of leading input bars {@link Core#MIDPRICE} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,7 +31,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int midPriceLookback( int optInTimePeriod )
+   public int MIDPRICE_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -41,14 +41,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode midPriceInternal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MIDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -193,14 +193,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode midPriceInternal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MIDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -312,7 +312,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midPriceLookback} is a <b>success
+    * valid range shorter than {@link Core#MIDPRICE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -332,10 +332,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPoint
-    * @see Core#medPrice
+    * @see Core#MIDPOINT
+    * @see Core#MEDPRICE
     */
-   public OutRange midPrice( int startIdx,
+   public OutRange MIDPRICE( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -344,7 +344,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPriceInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPRICE", retCode);
       }
@@ -364,7 +364,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midPriceLookback} is a <b>success
+    * valid range shorter than {@link Core#MIDPRICE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -384,10 +384,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPoint
-    * @see Core#medPrice
+    * @see Core#MIDPOINT
+    * @see Core#MEDPRICE
     */
-   public OutRange midPrice( int startIdx,
+   public OutRange MIDPRICE( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -396,7 +396,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPriceInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPRICE", retCode);
       }
@@ -406,8 +406,8 @@
 
    /**
     * A live MIDPRICE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#midPrice} over the same series.
-    * Open with {@link Core#midPriceOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MIDPRICE} over the same series.
+    * Open with {@link Core#MIDPRICE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -418,7 +418,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MidPriceStream {
+   public static final class MIDPRICE_Stream {
       final Core core;
       int optInTimePeriod;
       double lowest;
@@ -434,10 +434,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MidPriceStream( Core core ) { this.core = core; }
+      MIDPRICE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#midPriceOpenAndFill}, or
+       * The range filled by {@link Core#MIDPRICE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -445,7 +445,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MidPriceStream( MidPriceStream other ) {
+      MIDPRICE_Stream( MIDPRICE_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -467,7 +467,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow ) {
-         core.midPriceStreamStep(this, inHigh, inLow);
+         core.MIDPRICE_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
 
@@ -479,8 +479,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow ) {
-         MidPriceStream scratch = new MidPriceStream(this);
-         core.midPriceStreamStep(scratch, inHigh, inLow);
+         MIDPRICE_Stream scratch = new MIDPRICE_Stream(this);
+         core.MIDPRICE_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -497,11 +497,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MidPriceStream copy() {
-         return new MidPriceStream(this);
+      public MIDPRICE_Stream copy() {
+         return new MIDPRICE_Stream(this);
       }
    }
-   void midPriceStreamStep( MidPriceStream sp, double inHigh, double inLow )
+   void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;
@@ -551,7 +551,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode midPriceOpenBody( MidPriceStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   private RetCode MIDPRICE_OpenBody( MIDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       double lowest = 0;
       double highest = 0;
@@ -704,7 +704,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode midPriceOpenAndFillBody( MidPriceStream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIDPRICE_OpenAndFillBody( MIDPRICE_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -858,11 +858,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind midPriceOpen (composition seam). */
-   MidPriceStream midPriceOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MIDPRICE_Open (composition seam). */
+   MIDPRICE_Stream MIDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      MidPriceStream sp = new MidPriceStream(this);
-      RetCode retCode = midPriceOpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
+      RetCode retCode = MIDPRICE_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -877,32 +877,32 @@
    /**
     * Open a live MIDPRICE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#midPrice} at that bar.
-    * <p>The history must hold at least {@code midPriceLookback(...) + 1} bars
+    * to {@link Core#MIDPRICE} at that bar.
+    * <p>The history must hold at least {@code MIDPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MidPriceStream midPriceOpen( double inHigh[], double inLow[], int optInTimePeriod )
+   public MIDPRICE_Stream MIDPRICE_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
-      return midPriceOpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#midPriceOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#midPrice} over the whole history in the same single pass
+    * {@link Core#MIDPRICE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MIDPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MidPriceStream#fillRange()}.
+    * {@link MIDPRICE_Stream#fillRange()}.
     */
-   public MidPriceStream midPriceOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+   public MIDPRICE_Stream MIDPRICE_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      MidPriceStream sp = new MidPriceStream(this);
+      MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPriceOpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPRICE_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

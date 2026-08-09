@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_KAMA_OptInputs[] =
 DEF_FUNCTION( KAMA,
               TA_GroupId_OverlapStudies,
               "Kaufman Adaptive Moving Average",
-              "Kama",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* KAMA END */

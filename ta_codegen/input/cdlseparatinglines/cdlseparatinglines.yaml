@@ -1,5 +1,4 @@
 name: CDLSEPARATINGLINES
-camel_case: CdlSeperatingLines
 group: Pattern Recognition
 hint: Separating Lines
 flags: [candlestick, stream]

@@ -1,5 +1,4 @@
 name: EMA
-camel_case: Ema
 group: Overlap Studies
 hint: Exponential Moving Average
 flags: [overlap, unstable_period, stream]

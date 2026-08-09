@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::sma`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::SMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn sma_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn SMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.sma(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.SMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -142,11 +142,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ema`] · [`Core::wma`] · [`Core::ma`] · [`Core::dema`] · [`Core::tema`]
+    /// [`Core::EMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/sma](https://ta-lib.org/functions/sma/)
+    /// Further reading: [ta-lib.org/functions/SMA](https://ta-lib.org/functions/SMA/)
     #[doc(alias = "simplemovingaverage")]
-    pub fn sma(
+    pub fn SMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,7 +167,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.sma_lookback(optInTimePeriod);
+        let _assertLb = self.SMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -224,20 +224,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SMA stream: one value per closed bar, bit-identical to [`Core::sma`]
-/// over the same series. Open with [`Core::sma_open`]; dropping the handle
+/// Live SMA stream: one value per closed bar, bit-identical to [`Core::SMA`]
+/// over the same series. Open with [`Core::SMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SMA_Stream")]
-pub struct SmaStream {
+pub struct SMA_Stream {
     core: Core,
-    state: SmaStreamState,
+    state: SMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SmaStreamState {
+struct SMA_StreamState {
     optInTimePeriod: i32,
     periodTotal: f64,
     tempReal: f64,
@@ -253,7 +253,7 @@ struct SmaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn sma_step_internal(&self, sp: &mut SmaStreamState, inReal: f64, outReal: &mut f64) {
+    fn SMA_step_internal(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -268,10 +268,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::sma_open`] (composition seam).
-    pub(crate) fn sma_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::SMA_Open`] (composition seam).
+    pub(crate) fn SMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(SmaStream, f64), RetCode> {
+    ) -> Result<(SMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -346,7 +346,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = SmaStreamState {
+        let state = SMA_StreamState {
             optInTimePeriod,
             periodTotal,
             tempReal,
@@ -354,11 +354,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((SmaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((SMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live SMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::sma`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::SMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -370,23 +370,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.sma_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.SMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SMA_Open")]
-    pub fn sma_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SmaStream, f64), RetCode> {
-        self.sma_open_internal(inReal, 0, optInTimePeriod)
+    pub fn SMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SMA_Stream, f64), RetCode> {
+        self.SMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::sma_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::sma`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::SMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_SMA_OpenAndFill")]
-    pub fn sma_open_and_fill(
+    pub fn SMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SmaStream, RetCode> {
+    ) -> Result<SMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -460,7 +460,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = SmaStreamState {
+        let state = SMA_StreamState {
             optInTimePeriod,
             periodTotal,
             tempReal,
@@ -468,19 +468,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(SmaStream { core: self.clone(), state })
+        Ok(SMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SmaStream {
+impl SMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_SMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.sma_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.SMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -498,7 +498,7 @@ impl SmaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SmaStream>();
+    _assert_auto::<SMA_Stream>();
 };
 
 /***************/

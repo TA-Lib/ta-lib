@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::exp`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::EXP`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn exp_lookback(&self) -> usize {
+    pub fn EXP_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector arithmetic exponential: applies the base-e exponential to each input value.
@@ -108,7 +108,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.exp(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.EXP(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -116,12 +116,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ln`] · [`Core::sqrt`]
+    /// [`Core::LN`] · [`Core::SQRT`]
     ///
-    /// Further reading: [ta-lib.org/functions/exp](https://ta-lib.org/functions/exp/)
+    /// Further reading: [ta-lib.org/functions/EXP](https://ta-lib.org/functions/EXP/)
     #[doc(alias = "exponential")]
     #[doc(alias = "ex")]
-    pub fn exp(
+    pub fn EXP(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -136,7 +136,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.exp_lookback();
+        let _assertLb = self.EXP_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -158,20 +158,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live EXP stream: one value per closed bar, bit-identical to [`Core::exp`]
-/// over the same series. Open with [`Core::exp_open`]; dropping the handle
+/// Live EXP stream: one value per closed bar, bit-identical to [`Core::EXP`]
+/// over the same series. Open with [`Core::EXP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EXP_Stream")]
-pub struct ExpStream {
+pub struct EXP_Stream {
     core: Core,
-    state: ExpStreamState,
+    state: EXP_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct ExpStreamState {
+struct EXP_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -181,14 +181,14 @@ struct ExpStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn exp_step_internal(&self, sp: &mut ExpStreamState, inReal: f64, outReal: &mut f64) {
+    fn EXP_step_internal(&self, sp: &mut EXP_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).exp();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::exp_open`] (composition seam).
-    pub(crate) fn exp_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::EXP_Open`] (composition seam).
+    pub(crate) fn EXP_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(ExpStream, f64), RetCode> {
+    ) -> Result<(EXP_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -215,13 +215,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = ExpStreamState {
+        let state = EXP_StreamState {
         };
-        Ok((ExpStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((EXP_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live EXP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::exp`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::EXP`] at that bar.
     ///
     /// # Errors
     ///
@@ -233,23 +233,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.exp_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.EXP_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_EXP_Open")]
-    pub fn exp_open(&self, inReal: &[f64], ) -> Result<(ExpStream, f64), RetCode> {
-        self.exp_open_internal(inReal, 0)
+    pub fn EXP_Open(&self, inReal: &[f64], ) -> Result<(EXP_Stream, f64), RetCode> {
+        self.EXP_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::exp_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::exp`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::EXP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::EXP`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_EXP_OpenAndFill")]
-    pub fn exp_open_and_fill(
+    pub fn EXP_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<ExpStream, RetCode> {
+    ) -> Result<EXP_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -275,21 +275,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = ExpStreamState {
+        let state = EXP_StreamState {
         };
-        Ok(ExpStream { core: self.clone(), state })
+        Ok(EXP_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl ExpStream {
+impl EXP_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_EXP_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.exp_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.EXP_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -307,7 +307,7 @@ impl ExpStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<ExpStream>();
+    _assert_auto::<EXP_Stream>();
 };
 
 /***************/

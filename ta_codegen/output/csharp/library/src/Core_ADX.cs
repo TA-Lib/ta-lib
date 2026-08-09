@@ -62,7 +62,7 @@ public partial class Core
     *  082206 MF   Fix #1544555. Div by zero bug reported by GC.
     */
    /// <summary>
-   /// Number of leading input bars <c>Adx</c> consumes before it can produce its
+   /// Number of leading input bars <c>ADX</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -77,17 +77,17 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing/averaging period for DM, TR, and ADX (default 14; range
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AdxLookback( int optInTimePeriod )
+   public int ADX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Adx] - 1 ;
+      return 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.ADX] - 1 ;
 
    }
-   internal RetCode Adx( int startIdx,
+   internal RetCode ADX( int startIdx,
                          int endIdx,
                          double[] inHigh,
                          double[] inLow,
@@ -241,7 +241,7 @@ public partial class Core
        * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
        * you can comment out the following #undef/#define and rebuild the library.
        */
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Adx] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.ADX] - 1;
       /* Adjust startIdx to account for the lookback period. */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -352,7 +352,7 @@ public partial class Core
       /* Calculate the first ADX */
       prevADX = (sumDX / optInTimePeriod);
       /* Skip the unstable period */
-      i = this.unstablePeriod[(int)FuncUnstId.Adx];
+      i = this.unstablePeriod[(int)FuncUnstId.ADX];
       while( i-- > 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -456,7 +456,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Adx( int startIdx,
+   internal RetCode ADX( int startIdx,
                          int endIdx,
                          float[] inHigh,
                          float[] inLow,
@@ -497,7 +497,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Adx] - 1;
+      lookbackTotal = 2 * optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.ADX] - 1;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -586,7 +586,7 @@ public partial class Core
          }
       }
       prevADX = (sumDX / optInTimePeriod);
-      i = this.unstablePeriod[(int)FuncUnstId.Adx];
+      i = this.unstablePeriod[(int)FuncUnstId.ADX];
       while( i-- > 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -690,8 +690,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdxLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ADX_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -711,7 +711,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Adx( int startIdx,
+   public OutRange ADX( int startIdx,
                         int endIdx,
                         double[] inHigh,
                         double[] inLow,
@@ -719,7 +719,7 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Adx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADX", retCode);
       }
@@ -750,8 +750,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdxLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ADX_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -771,7 +771,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Adx( int startIdx,
+   public OutRange ADX( int startIdx,
                         int endIdx,
                         float[] inHigh,
                         float[] inLow,
@@ -779,7 +779,7 @@ public partial class Core
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Adx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADX", retCode);
       }

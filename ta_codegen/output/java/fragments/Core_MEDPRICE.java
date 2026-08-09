@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#medPrice} consumes before it can
+    * Number of leading input bars {@link Core#MEDPRICE} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,19 +23,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int medPriceLookback( )
+   public int MEDPRICE_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode medPriceInternal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MEDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -59,13 +59,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode medPriceInternal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MEDPRICE_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -93,7 +93,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#medPriceLookback} is a <b>success
+    * valid range shorter than {@link Core#MEDPRICE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -110,12 +110,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPrice
-    * @see Core#avgPrice
-    * @see Core#typPrice
-    * @see Core#wclPrice
+    * @see Core#MIDPRICE
+    * @see Core#AVGPRICE
+    * @see Core#TYPPRICE
+    * @see Core#WCLPRICE
     */
-   public OutRange medPrice( int startIdx,
+   public OutRange MEDPRICE( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -123,7 +123,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = medPriceInternal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MEDPRICE", retCode);
       }
@@ -142,7 +142,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#medPriceLookback} is a <b>success
+    * valid range shorter than {@link Core#MEDPRICE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -159,12 +159,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPrice
-    * @see Core#avgPrice
-    * @see Core#typPrice
-    * @see Core#wclPrice
+    * @see Core#MIDPRICE
+    * @see Core#AVGPRICE
+    * @see Core#TYPPRICE
+    * @see Core#WCLPRICE
     */
-   public OutRange medPrice( int startIdx,
+   public OutRange MEDPRICE( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -172,7 +172,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = medPriceInternal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MEDPRICE_Internal(startIdx, endIdx, inHigh, inLow, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MEDPRICE", retCode);
       }
@@ -182,8 +182,8 @@
 
    /**
     * A live MEDPRICE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#medPrice} over the same series.
-    * Open with {@link Core#medPriceOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MEDPRICE} over the same series.
+    * Open with {@link Core#MEDPRICE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -194,15 +194,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MedPriceStream {
+   public static final class MEDPRICE_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MedPriceStream( Core core ) { this.core = core; }
+      MEDPRICE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#medPriceOpenAndFill}, or
+       * The range filled by {@link Core#MEDPRICE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -210,7 +210,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MedPriceStream( MedPriceStream other ) {
+      MEDPRICE_Stream( MEDPRICE_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -221,7 +221,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow ) {
-         core.medPriceStreamStep(this, inHigh, inLow);
+         core.MEDPRICE_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
 
@@ -233,8 +233,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow ) {
-         MedPriceStream scratch = new MedPriceStream(this);
-         core.medPriceStreamStep(scratch, inHigh, inLow);
+         MEDPRICE_Stream scratch = new MEDPRICE_Stream(this);
+         core.MEDPRICE_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -251,15 +251,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MedPriceStream copy() {
-         return new MedPriceStream(this);
+      public MEDPRICE_Stream copy() {
+         return new MEDPRICE_Stream(this);
       }
    }
-   void medPriceStreamStep( MedPriceStream sp, double inHigh, double inLow )
+   void MEDPRICE_StreamStep( MEDPRICE_Stream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
-   private RetCode medPriceOpenBody( MedPriceStream sp, double inHigh[], double inLow[], int startIdx )
+   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -290,7 +290,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode medPriceOpenAndFillBody( MedPriceStream sp, double inHigh[], double inLow[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MEDPRICE_OpenAndFillBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -322,11 +322,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind medPriceOpen (composition seam). */
-   MedPriceStream medPriceOpenInternal( double inHigh[], double inLow[], int startIdx )
+   /* Internal startIdx-anchored open behind MEDPRICE_Open (composition seam). */
+   MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )
    {
-      MedPriceStream sp = new MedPriceStream(this);
-      RetCode retCode = medPriceOpenBody(sp, inHigh, inLow, startIdx);
+      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
+      RetCode retCode = MEDPRICE_OpenBody(sp, inHigh, inLow, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -341,32 +341,32 @@
    /**
     * Open a live MEDPRICE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#medPrice} at that bar.
-    * <p>The history must hold at least {@code medPriceLookback(...) + 1} bars
+    * to {@link Core#MEDPRICE} at that bar.
+    * <p>The history must hold at least {@code MEDPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MedPriceStream medPriceOpen( double inHigh[], double inLow[] )
+   public MEDPRICE_Stream MEDPRICE_Open( double inHigh[], double inLow[] )
    {
-      return medPriceOpenInternal(inHigh, inLow, 0);
+      return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
    /**
-    * {@link Core#medPriceOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#medPrice} over the whole history in the same single pass
+    * {@link Core#MEDPRICE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MEDPRICE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MedPriceStream#fillRange()}.
+    * {@link MEDPRICE_Stream#fillRange()}.
     */
-   public MedPriceStream medPriceOpenAndFill( double inHigh[], double inLow[], double outReal[] )
+   public MEDPRICE_Stream MEDPRICE_OpenAndFill( double inHigh[], double inLow[], double outReal[] )
    {
-      MedPriceStream sp = new MedPriceStream(this);
+      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = medPriceOpenAndFillBody(sp, inHigh, inLow, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MEDPRICE_OpenAndFillBody(sp, inHigh, inLow, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

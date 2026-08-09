@@ -71,7 +71,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::accbands`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::ACCBANDS`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -82,13 +82,13 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn accbands_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ACCBANDS_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        return self.sma_lookback(optInTimePeriod);
+        return self.SMA_Lookback(optInTimePeriod);
     }
     /// Acceleration Bands: three overlap lines around price. The middle band is an SMA of the
     /// close; the upper/lower bands are SMAs of the high/low scaled by an intraday-range factor.
@@ -148,7 +148,7 @@ impl Core {
     /// let mut middle_band = vec![0.0; 252];
     /// let mut lower_band = vec![0.0; 252];
     ///
-    /// let ret = core.accbands(
+    /// let ret = core.ACCBANDS(
     ///     0, high.len() - 1, &high, &low, &close, 20,
     ///     &mut out_beg, &mut out_nb, &mut upper_band, &mut middle_band, &mut lower_band,
     /// );
@@ -159,11 +159,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::bbands`]
+    /// [`Core::SMA`] · [`Core::BBANDS`]
     ///
-    /// Further reading: [ta-lib.org/functions/accbands](https://ta-lib.org/functions/accbands/)
+    /// Further reading: [ta-lib.org/functions/ACCBANDS](https://ta-lib.org/functions/ACCBANDS/)
     #[doc(alias = "AccelerationBands")]
-    pub fn accbands(
+    pub fn ACCBANDS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -191,7 +191,7 @@ impl Core {
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.accbands_lookback(optInTimePeriod);
+        let _assertLb = self.ACCBANDS_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -213,7 +213,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.sma_lookback(optInTimePeriod);
+        lookbackTotal = self.SMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -302,20 +302,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ACCBANDS stream: one value per closed bar, bit-identical to [`Core::accbands`]
-/// over the same series. Open with [`Core::accbands_open`]; dropping the handle
+/// Live ACCBANDS stream: one value per closed bar, bit-identical to [`Core::ACCBANDS`]
+/// over the same series. Open with [`Core::ACCBANDS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ACCBANDS_Stream")]
-pub struct AccbandsStream {
+pub struct ACCBANDS_Stream {
     core: Core,
-    state: AccbandsStreamState,
+    state: ACCBANDS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AccbandsStreamState {
+struct ACCBANDS_StreamState {
     optInTimePeriod: i32,
     periodTotalUpper: f64,
     periodTotalMiddle: f64,
@@ -337,7 +337,7 @@ struct AccbandsStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn accbands_step_internal(&self, sp: &mut AccbandsStreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
+    fn ACCBANDS_step_internal(&self, sp: &mut ACCBANDS_StreamState, inHigh: f64, inLow: f64, inClose: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inHigh[0] = inHigh;
@@ -383,10 +383,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::accbands_open`] (composition seam).
-    pub(crate) fn accbands_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ACCBANDS_Open`] (composition seam).
+    pub(crate) fn ACCBANDS_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AccbandsStream, (f64, f64, f64)), RetCode> {
+    ) -> Result<(ACCBANDS_Stream, (f64, f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -419,7 +419,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.sma_lookback(optInTimePeriod);
+        lookbackTotal = self.SMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -519,7 +519,7 @@ impl Core {
         let mut ring_trailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inClose[..cap_trailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_trailingIdx as usize..]);
-        let state = AccbandsStreamState {
+        let state = ACCBANDS_StreamState {
             optInTimePeriod,
             periodTotalUpper,
             periodTotalMiddle,
@@ -533,11 +533,11 @@ impl Core {
             ring_trailingIdx_inLow,
             ring_trailingIdx_inClose,
         };
-        Ok((AccbandsStream { core: self.clone(), state }, (lastValue_outRealUpperBand, lastValue_outRealMiddleBand, lastValue_outRealLowerBand)))
+        Ok((ACCBANDS_Stream { core: self.clone(), state }, (lastValue_outRealUpperBand, lastValue_outRealMiddleBand, lastValue_outRealLowerBand)))
     }
 
     /// Open a live ACCBANDS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::accbands`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ACCBANDS`] at that bar.
     ///
     /// # Errors
     ///
@@ -553,7 +553,7 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.accbands_open(&high, &low, &close, 20).expect("enough history");
+    /// let (mut s, _last) = core.ACCBANDS_Open(&high, &low, &close, 20).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -561,17 +561,17 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_ACCBANDS_Open")]
-    pub fn accbands_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AccbandsStream, (f64, f64, f64)), RetCode> {
-        self.accbands_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn ACCBANDS_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ACCBANDS_Stream, (f64, f64, f64)), RetCode> {
+        self.ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::accbands_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::accbands`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ACCBANDS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ACCBANDS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ACCBANDS_OpenAndFill")]
-    pub fn accbands_open_and_fill(
+    pub fn ACCBANDS_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
-    ) -> Result<AccbandsStream, RetCode> {
+    ) -> Result<ACCBANDS_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -610,7 +610,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.sma_lookback(optInTimePeriod);
+        lookbackTotal = self.SMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -710,7 +710,7 @@ impl Core {
         let mut ring_trailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inClose[..cap_trailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_trailingIdx as usize..]);
-        let state = AccbandsStreamState {
+        let state = ACCBANDS_StreamState {
             optInTimePeriod,
             periodTotalUpper,
             periodTotalMiddle,
@@ -724,21 +724,21 @@ impl Core {
             ring_trailingIdx_inLow,
             ring_trailingIdx_inClose,
         };
-        Ok(AccbandsStream { core: self.clone(), state })
+        Ok(ACCBANDS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AccbandsStream {
+impl ACCBANDS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ACCBANDS_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64, f64) {
         let mut outRealUpperBand: f64 = 0.0_f64;
         let mut outRealMiddleBand: f64 = 0.0_f64;
         let mut outRealLowerBand: f64 = 0.0_f64;
-        self.core.accbands_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+        self.core.ACCBANDS_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
         (outRealUpperBand, outRealMiddleBand, outRealLowerBand)
     }
 
@@ -756,7 +756,7 @@ impl AccbandsStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AccbandsStream>();
+    _assert_auto::<ACCBANDS_Stream>();
 };
 
 /***************/

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdldragonflydoji`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLDRAGONFLYDOJI`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdldragonflydoji_lookback(&self) -> usize {
+    pub fn CDLDRAGONFLYDOJI_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -139,7 +139,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdldragonflydoji(
+    /// let ret = core.CDLDRAGONFLYDOJI(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -149,13 +149,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdldoji`] · [`Core::cdlgravestonedoji`] · [`Core::cdllongleggeddoji`] ·
-    /// [`Core::cdltakuri`]
+    /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLLONGLEGGEDDOJI`] ·
+    /// [`Core::CDLTAKURI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdldragonflydoji](https://ta-lib.org/functions/cdldragonflydoji/)
+    /// [ta-lib.org/functions/CDLDRAGONFLYDOJI](https://ta-lib.org/functions/CDLDRAGONFLYDOJI/)
     #[doc(alias = "DragonflyDoji")]
-    pub fn cdldragonflydoji(
+    pub fn CDLDRAGONFLYDOJI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -173,7 +173,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdldragonflydoji_lookback();
+        let _assertLb = self.CDLDRAGONFLYDOJI_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -202,7 +202,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldragonflydoji_lookback();
+        lookbackTotal = self.CDLDRAGONFLYDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -355,20 +355,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLDRAGONFLYDOJI stream: one value per closed bar, bit-identical to [`Core::cdldragonflydoji`]
-/// over the same series. Open with [`Core::cdldragonflydoji_open`]; dropping the handle
+/// Live CDLDRAGONFLYDOJI stream: one value per closed bar, bit-identical to [`Core::CDLDRAGONFLYDOJI`]
+/// over the same series. Open with [`Core::CDLDRAGONFLYDOJI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDRAGONFLYDOJI_Stream")]
-pub struct CdldragonflydojiStream {
+pub struct CDLDRAGONFLYDOJI_Stream {
     core: Core,
-    state: CdldragonflydojiStreamState,
+    state: CDLDRAGONFLYDOJI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdldragonflydojiStreamState {
+struct CDLDRAGONFLYDOJI_StreamState {
     BodyDojiPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: f64,
     ringPos_BodyDojiTrailingIdx: usize,
@@ -392,7 +392,7 @@ struct CdldragonflydojiStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdldragonflydoji_step_internal(&self, sp: &mut CdldragonflydojiStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDRAGONFLYDOJI_step_internal(&self, sp: &mut CDLDRAGONFLYDOJI_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -504,10 +504,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdldragonflydoji_open`] (composition seam).
-    pub(crate) fn cdldragonflydoji_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLDRAGONFLYDOJI_Open`] (composition seam).
+    pub(crate) fn CDLDRAGONFLYDOJI_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdldragonflydojiStream, i32), RetCode> {
+    ) -> Result<(CDLDRAGONFLYDOJI_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -541,7 +541,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldragonflydoji_lookback();
+        lookbackTotal = self.CDLDRAGONFLYDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -723,7 +723,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdldragonflydojiStreamState {
+        let state = CDLDRAGONFLYDOJI_StreamState {
             BodyDojiPeriodTotal,
             ShadowVeryShortPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
@@ -739,11 +739,11 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok((CdldragonflydojiStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLDRAGONFLYDOJI_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLDRAGONFLYDOJI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdldragonflydoji`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLDRAGONFLYDOJI`] at that bar.
     ///
     /// # Errors
     ///
@@ -762,23 +762,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdldragonflydoji_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLDRAGONFLYDOJI_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLDRAGONFLYDOJI_Open")]
-    pub fn cdldragonflydoji_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdldragonflydojiStream, i32), RetCode> {
-        self.cdldragonflydoji_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLDRAGONFLYDOJI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLDRAGONFLYDOJI_Stream, i32), RetCode> {
+        self.CDLDRAGONFLYDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdldragonflydoji_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdldragonflydoji`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLDRAGONFLYDOJI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLDRAGONFLYDOJI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLDRAGONFLYDOJI_OpenAndFill")]
-    pub fn cdldragonflydoji_open_and_fill(
+    pub fn CDLDRAGONFLYDOJI_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdldragonflydojiStream, RetCode> {
+    ) -> Result<CDLDRAGONFLYDOJI_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -811,7 +811,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldragonflydoji_lookback();
+        lookbackTotal = self.CDLDRAGONFLYDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -995,7 +995,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdldragonflydojiStreamState {
+        let state = CDLDRAGONFLYDOJI_StreamState {
             BodyDojiPeriodTotal,
             ShadowVeryShortPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
@@ -1011,19 +1011,19 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok(CdldragonflydojiStream { core: self.clone(), state })
+        Ok(CDLDRAGONFLYDOJI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdldragonflydojiStream {
+impl CDLDRAGONFLYDOJI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLDRAGONFLYDOJI_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdldragonflydoji_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLDRAGONFLYDOJI_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1041,7 +1041,7 @@ impl CdldragonflydojiStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdldragonflydojiStream>();
+    _assert_auto::<CDLDRAGONFLYDOJI_Stream>();
 };
 
 /***************/

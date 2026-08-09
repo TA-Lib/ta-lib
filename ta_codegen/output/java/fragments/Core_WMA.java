@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#wma} consumes before it can
+    * Number of leading input bars {@link Core#WMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int wmaLookback( int optInTimePeriod )
+   public int WMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -34,13 +34,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode wmaInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode WMA_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -164,13 +164,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode wmaInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode WMA_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -253,7 +253,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#wmaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#WMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -271,13 +271,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#ema
-    * @see Core#movingAverage
-    * @see Core#dema
-    * @see Core#tema
+    * @see Core#SMA
+    * @see Core#EMA
+    * @see Core#MA
+    * @see Core#DEMA
+    * @see Core#TEMA
     */
-   public OutRange wma( int startIdx,
+   public OutRange WMA( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -285,7 +285,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WMA", retCode);
       }
@@ -309,7 +309,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#wmaLookback} is a <b>success with no
+    * valid range shorter than {@link Core#WMA_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -327,13 +327,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#ema
-    * @see Core#movingAverage
-    * @see Core#dema
-    * @see Core#tema
+    * @see Core#SMA
+    * @see Core#EMA
+    * @see Core#MA
+    * @see Core#DEMA
+    * @see Core#TEMA
     */
-   public OutRange wma( int startIdx,
+   public OutRange WMA( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -341,7 +341,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = wmaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("WMA", retCode);
       }
@@ -351,8 +351,8 @@
 
    /**
     * A live WMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#wma} over the same series.
-    * Open with {@link Core#wmaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#WMA} over the same series.
+    * Open with {@link Core#WMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -363,7 +363,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class WmaStream {
+   public static final class WMA_Stream {
       final Core core;
       int optInTimePeriod;
       double periodSum;
@@ -376,10 +376,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      WmaStream( Core core ) { this.core = core; }
+      WMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#wmaOpenAndFill}, or
+       * The range filled by {@link Core#WMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -387,7 +387,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      WmaStream( WmaStream other ) {
+      WMA_Stream( WMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodSum = other.periodSum;
@@ -406,7 +406,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.wmaStreamStep(this, inReal);
+         core.WMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -418,8 +418,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         WmaStream scratch = new WmaStream(this);
-         core.wmaStreamStep(scratch, inReal);
+         WMA_Stream scratch = new WMA_Stream(this);
+         core.WMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -436,11 +436,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public WmaStream copy() {
-         return new WmaStream(this);
+      public WMA_Stream copy() {
+         return new WMA_Stream(this);
       }
    }
-   void wmaStreamStep( WmaStream sp, double inReal )
+   void WMA_StreamStep( WMA_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.optInTimePeriod == 1 ) {
@@ -473,7 +473,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode wmaOpenBody( WmaStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode WMA_OpenBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -502,7 +502,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < wmaLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -621,7 +621,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode wmaOpenAndFillBody( WmaStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WMA_OpenAndFillBody( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -651,7 +651,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < wmaLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -662,7 +662,7 @@
          sp.ringPos_trailingIdx = 0;
          sp.ringCap_trailingIdx = 0;
          sp.ring_trailingIdx_inReal = new double[1];
-         int fillLb = wmaLookback(optInTimePeriod);
+         int fillLb = WMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -776,11 +776,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind wmaOpen (composition seam). */
-   WmaStream wmaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
+   WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      WmaStream sp = new WmaStream(this);
-      RetCode retCode = wmaOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      WMA_Stream sp = new WMA_Stream(this);
+      RetCode retCode = WMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -795,32 +795,32 @@
    /**
     * Open a live WMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#wma} at that bar.
-    * <p>The history must hold at least {@code wmaLookback(...) + 1} bars
+    * to {@link Core#WMA} at that bar.
+    * <p>The history must hold at least {@code WMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public WmaStream wmaOpen( double inReal[], int optInTimePeriod )
+   public WMA_Stream WMA_Open( double inReal[], int optInTimePeriod )
    {
-      return wmaOpenInternal(inReal, 0, optInTimePeriod);
+      return WMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#wmaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#wma} over the whole history in the same single pass
+    * {@link Core#WMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#WMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link WmaStream#fillRange()}.
+    * {@link WMA_Stream#fillRange()}.
     */
-   public WmaStream wmaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public WMA_Stream WMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      WmaStream sp = new WmaStream(this);
+      WMA_Stream sp = new WMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = wmaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = WMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdl3linestrike`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDL3LINESTRIKE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdl3linestrike_lookback(&self) -> usize {
+    pub fn CDL3LINESTRIKE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -129,7 +129,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdl3linestrike(
+    /// let ret = core.CDL3LINESTRIKE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -139,13 +139,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl3whitesoldiers`] · [`Core::cdl3blackcrows`]
+    /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDL3BLACKCROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdl3linestrike](https://ta-lib.org/functions/cdl3linestrike/)
+    /// [ta-lib.org/functions/CDL3LINESTRIKE](https://ta-lib.org/functions/CDL3LINESTRIKE/)
     #[doc(alias = "Three-LineStrike")]
     #[doc(alias = "3-LineStrike")]
-    pub fn cdl3linestrike(
+    pub fn CDL3LINESTRIKE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -163,7 +163,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdl3linestrike_lookback();
+        let _assertLb = self.CDL3LINESTRIKE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -185,7 +185,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3linestrike_lookback();
+        lookbackTotal = self.CDL3LINESTRIKE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -317,20 +317,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3LINESTRIKE stream: one value per closed bar, bit-identical to [`Core::cdl3linestrike`]
-/// over the same series. Open with [`Core::cdl3linestrike_open`]; dropping the handle
+/// Live CDL3LINESTRIKE stream: one value per closed bar, bit-identical to [`Core::CDL3LINESTRIKE`]
+/// over the same series. Open with [`Core::CDL3LINESTRIKE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL3LINESTRIKE_Stream")]
-pub struct Cdl3linestrikeStream {
+pub struct CDL3LINESTRIKE_Stream {
     core: Core,
-    state: Cdl3linestrikeStreamState,
+    state: CDL3LINESTRIKE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdl3linestrikeStreamState {
+struct CDL3LINESTRIKE_StreamState {
     NearPeriodTotal: [f64; 4 as usize],
     totIdx: usize,
     lag1_inOpen: f64,
@@ -367,7 +367,7 @@ struct Cdl3linestrikeStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdl3linestrike_step_internal(&self, sp: &mut Cdl3linestrikeStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3LINESTRIKE_step_internal(&self, sp: &mut CDL3LINESTRIKE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -460,10 +460,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdl3linestrike_open`] (composition seam).
-    pub(crate) fn cdl3linestrike_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDL3LINESTRIKE_Open`] (composition seam).
+    pub(crate) fn CDL3LINESTRIKE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdl3linestrikeStream, i32), RetCode> {
+    ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -490,7 +490,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3linestrike_lookback();
+        lookbackTotal = self.CDL3LINESTRIKE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -667,7 +667,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdl3linestrikeStreamState {
+        let state = CDL3LINESTRIKE_StreamState {
             NearPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -696,11 +696,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((Cdl3linestrikeStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDL3LINESTRIKE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDL3LINESTRIKE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdl3linestrike`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDL3LINESTRIKE`] at that bar.
     ///
     /// # Errors
     ///
@@ -719,23 +719,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdl3linestrike_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDL3LINESTRIKE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDL3LINESTRIKE_Open")]
-    pub fn cdl3linestrike_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdl3linestrikeStream, i32), RetCode> {
-        self.cdl3linestrike_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDL3LINESTRIKE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
+        self.CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdl3linestrike_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdl3linestrike`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDL3LINESTRIKE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDL3LINESTRIKE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDL3LINESTRIKE_OpenAndFill")]
-    pub fn cdl3linestrike_open_and_fill(
+    pub fn CDL3LINESTRIKE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdl3linestrikeStream, RetCode> {
+    ) -> Result<CDL3LINESTRIKE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -761,7 +761,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3linestrike_lookback();
+        lookbackTotal = self.CDL3LINESTRIKE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -940,7 +940,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdl3linestrikeStreamState {
+        let state = CDL3LINESTRIKE_StreamState {
             NearPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -969,19 +969,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(Cdl3linestrikeStream { core: self.clone(), state })
+        Ok(CDL3LINESTRIKE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdl3linestrikeStream {
+impl CDL3LINESTRIKE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDL3LINESTRIKE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdl3linestrike_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDL3LINESTRIKE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -999,7 +999,7 @@ impl Cdl3linestrikeStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdl3linestrikeStream>();
+    _assert_auto::<CDL3LINESTRIKE_Stream>();
 };
 
 /***************/

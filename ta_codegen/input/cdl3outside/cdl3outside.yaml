@@ -1,5 +1,4 @@
 name: CDL3OUTSIDE
-camel_case: Cdl3Outside
 group: Pattern Recognition
 hint: Three Outside Up/Down
 flags: [candlestick, stream]

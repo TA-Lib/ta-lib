@@ -57,7 +57,7 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>HtPhasor</c> consumes before it can
+   /// Number of leading input bars <c>HT_PHASOR</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -70,19 +70,19 @@ public partial class Core
    /// </para>
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int HtPhasorLookback( )
+   public int HT_PHASOR_Lookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[(int)FuncUnstId.HtPhasor] ;
+      return 32 + this.unstablePeriod[(int)FuncUnstId.HT_PHASOR] ;
 
    }
-   internal RetCode HtPhasor( int startIdx,
-                              int endIdx,
-                              double[] inReal,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              double[] outInPhase,
-                              double[] outQuadrature )
+   internal RetCode HT_PHASOR( int startIdx,
+                               int endIdx,
+                               double[] inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               double[] outInPhase,
+                               double[] outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -161,7 +161,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HtPhasor];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HT_PHASOR];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -425,13 +425,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HtPhasor( int startIdx,
-                              int endIdx,
-                              float[] inReal,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              double[] outInPhase,
-                              double[] outQuadrature )
+   internal RetCode HT_PHASOR( int startIdx,
+                               int endIdx,
+                               float[] inReal,
+                               out int outBegIdx,
+                               out int outNBElement,
+                               double[] outInPhase,
+                               double[] outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -504,7 +504,7 @@ public partial class Core
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.Atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HtPhasor];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.HT_PHASOR];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -735,7 +735,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtPhasorLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>HT_PHASOR_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -754,13 +754,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtPhasor( int startIdx,
-                             int endIdx,
-                             double[] inReal,
-                             double[] outInPhase,
-                             double[] outQuadrature )
+   public OutRange HT_PHASOR( int startIdx,
+                              int endIdx,
+                              double[] inReal,
+                              double[] outInPhase,
+                              double[] outQuadrature )
    {
-      RetCode retCode = HtPhasor(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }
@@ -786,7 +786,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtPhasorLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>HT_PHASOR_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -805,13 +805,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtPhasor( int startIdx,
-                             int endIdx,
-                             float[] inReal,
-                             double[] outInPhase,
-                             double[] outQuadrature )
+   public OutRange HT_PHASOR( int startIdx,
+                              int endIdx,
+                              float[] inReal,
+                              double[] outInPhase,
+                              double[] outQuadrature )
    {
-      RetCode retCode = HtPhasor(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
+      RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
       }

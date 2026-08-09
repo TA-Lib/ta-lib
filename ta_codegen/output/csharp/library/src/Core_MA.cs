@@ -63,8 +63,8 @@ public partial class Core
     *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
     */
    /// <summary>
-   /// Number of leading input bars <c>MovingAverage</c> consumes before it can
-   /// produce its first value.
+   /// Number of leading input bars <c>MA</c> consumes before it can produce its
+   /// first value.
    /// </summary>
    /// <remarks>
    /// Equivalently, the index of the first bar with a value when the whole
@@ -77,7 +77,7 @@ public partial class Core
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MovingAverageLookback( int optInTimePeriod, MAType optInMAType )
+   public int MA_Lookback( int optInTimePeriod, MAType optInMAType )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -85,43 +85,43 @@ public partial class Core
          return -1;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       int retValue = 0;
-      if( optInTimePeriod <= 1 || optInMAType == MAType.Disabled ) {
+      if( optInTimePeriod <= 1 || optInMAType == MAType.DISABLED ) {
          return 0 ;
       }
       switch( optInMAType )
       {
-      case MAType.Sma:
-         retValue = SmaLookback(optInTimePeriod);
+      case MAType.SMA:
+         retValue = SMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Ema:
-         retValue = EmaLookback(optInTimePeriod);
+      case MAType.EMA:
+         retValue = EMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Wma:
-         retValue = WmaLookback(optInTimePeriod);
+      case MAType.WMA:
+         retValue = WMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Dema:
-         retValue = DemaLookback(optInTimePeriod);
+      case MAType.DEMA:
+         retValue = DEMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Tema:
-         retValue = TemaLookback(optInTimePeriod);
+      case MAType.TEMA:
+         retValue = TEMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Trima:
-         retValue = TrimaLookback(optInTimePeriod);
+      case MAType.TRIMA:
+         retValue = TRIMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Kama:
-         retValue = KamaLookback(optInTimePeriod);
+      case MAType.KAMA:
+         retValue = KAMA_Lookback(optInTimePeriod);
          break;
-      case MAType.Mama:
-         retValue = MamaLookback(0.5, 0.05);
+      case MAType.MAMA:
+         retValue = MAMA_Lookback(0.5, 0.05);
          break;
       case MAType.T3:
-         retValue = T3Lookback(optInTimePeriod, 0.7);
+         retValue = T3_Lookback(optInTimePeriod, 0.7);
          break;
-      case MAType.Hma:
-         retValue = HmaLookback(optInTimePeriod);
+      case MAType.HMA:
+         retValue = HMA_Lookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -130,14 +130,14 @@ public partial class Core
       return retValue ;
 
    }
-   internal RetCode MovingAverage( int startIdx,
-                                   int endIdx,
-                                   double[] inReal,
-                                   int optInTimePeriod,
-                                   MAType optInMAType,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
+   internal RetCode MA( int startIdx,
+                        int endIdx,
+                        double[] inReal,
+                        int optInTimePeriod,
+                        MAType optInMAType,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -157,12 +157,12 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       /* No-smoothing identity: period 1 (every MA type) or the explicit
        * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
        */
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -174,38 +174,38 @@ public partial class Core
       /* Simply forward the job to the corresponding TA function. */
       switch( optInMAType )
       {
-      case MAType.Sma:
-         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.SMA:
+         retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Ema:
-         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.EMA:
+         retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Wma:
-         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.WMA:
+         retCode = WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Dema:
-         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.DEMA:
+         retCode = DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Tema:
-         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.TEMA:
+         retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Trima:
-         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.TRIMA:
+         retCode = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Kama:
-         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.KAMA:
+         retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Mama:
+      case MAType.MAMA:
          /* The optInTimePeriod is ignored. FAMA is a nullable output
           * (issue #125): pass NULL to compute only the MAMA line into outReal.
           */
-         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+         retCode = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
          retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Hma:
-         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.HMA:
+         retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -213,14 +213,14 @@ public partial class Core
       }
       return retCode ;
    }
-   internal RetCode MovingAverage( int startIdx,
-                                   int endIdx,
-                                   float[] inReal,
-                                   int optInTimePeriod,
-                                   MAType optInMAType,
-                                   out int outBegIdx,
-                                   out int outNBElement,
-                                   double[] outReal )
+   internal RetCode MA( int startIdx,
+                        int endIdx,
+                        float[] inReal,
+                        int optInTimePeriod,
+                        MAType optInMAType,
+                        out int outBegIdx,
+                        out int outNBElement,
+                        double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -240,9 +240,9 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
-      if( optInTimePeriod == 1 || optInMAType == MAType.Disabled ) {
+      if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;
          outNBElement = nbElement;
          for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 ) {
@@ -253,35 +253,35 @@ public partial class Core
       }
       switch( optInMAType )
       {
-      case MAType.Sma:
-         retCode = Sma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.SMA:
+         retCode = SMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Ema:
-         retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.EMA:
+         retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Wma:
-         retCode = Wma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.WMA:
+         retCode = WMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Dema:
-         retCode = Dema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.DEMA:
+         retCode = DEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Tema:
-         retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.TEMA:
+         retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Trima:
-         retCode = Trima(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.TRIMA:
+         retCode = TRIMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Kama:
-         retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.KAMA:
+         retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Mama:
-         retCode = Mama(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
+      case MAType.MAMA:
+         retCode = MAMA(startIdx, endIdx, inReal, 0.5, 0.05, out outBegIdx, out outNBElement, outReal, new double[(int)(endIdx - startIdx + 1)]);
          break;
       case MAType.T3:
          retCode = T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, out outBegIdx, out outNBElement, outReal);
          break;
-      case MAType.Hma:
-         retCode = Hma(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+      case MAType.HMA:
+         retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          break;
       default:
          retCode = RetCode.BadParam;
@@ -307,8 +307,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MovingAverageLookback</c> is a
-   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MA_Lookback</c> is a <b>success with no
+   /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -329,14 +329,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MovingAverage( int startIdx,
-                                  int endIdx,
-                                  double[] inReal,
-                                  int optInTimePeriod,
-                                  MAType optInMAType,
-                                  double[] outReal )
+   public OutRange MA( int startIdx,
+                       int endIdx,
+                       double[] inReal,
+                       int optInTimePeriod,
+                       MAType optInMAType,
+                       double[] outReal )
    {
-      RetCode retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }
@@ -366,8 +366,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MovingAverageLookback</c> is a
-   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MA_Lookback</c> is a <b>success with no
+   /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -388,14 +388,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MovingAverage( int startIdx,
-                                  int endIdx,
-                                  float[] inReal,
-                                  int optInTimePeriod,
-                                  MAType optInMAType,
-                                  double[] outReal )
+   public OutRange MA( int startIdx,
+                       int endIdx,
+                       float[] inReal,
+                       int optInTimePeriod,
+                       MAType optInMAType,
+                       double[] outReal )
    {
-      RetCode retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
       }

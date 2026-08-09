@@ -19,8 +19,8 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#movingAverageVariablePeriod}
-    * consumes before it can produce its first value.
+    * Number of leading input bars {@link Core#MAVP} consumes before it can
+    * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
@@ -34,7 +34,7 @@
     *        10=DISABLED).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int movingAverageVariablePeriodLookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public int MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       if( optInMinPeriod == Integer.MIN_VALUE ) {
          optInMinPeriod = 2;
@@ -46,19 +46,19 @@
       } else if( optInMaxPeriod < 1 || optInMaxPeriod > 100000 ) {
          return -1;
       }
-      return movingAverageLookback(optInMaxPeriod, optInMAType) ;
+      return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
    }
-   RetCode movingAverageVariablePeriodInternal( int startIdx,
-                                                int endIdx,
-                                                double inReal[],
-                                                double inPeriods[],
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                double outReal[] )
+   RetCode MAVP_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double inPeriods[],
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int i = 0;
       int lookbackTotal = 0;
@@ -110,7 +110,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
+      lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -225,7 +225,7 @@
          /* Single distinct period: one MA pass, written straight into the
           * destination buffer. Nothing to group or copy.
           */
-         retCode = movingAverageInternal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
+         retCode = MA_Internal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -277,7 +277,7 @@
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
                /* Calculation of the MA required. */
-               retCode = movingAverageInternal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+               retCode = MA_Internal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -312,16 +312,16 @@
       outNBElement.value = outputSize;
       return RetCode.Success ;
    }
-   RetCode movingAverageVariablePeriodInternal( int startIdx,
-                                                int endIdx,
-                                                float inReal[],
-                                                float inPeriods[],
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                MInteger outBegIdx,
-                                                MInteger outNBElement,
-                                                double outReal[] )
+   RetCode MAVP_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          float inPeriods[],
+                          int optInMinPeriod,
+                          int optInMaxPeriod,
+                          MAType optInMAType,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int i = 0;
       int lookbackTotal = 0;
@@ -365,7 +365,7 @@
          outNBElement.value = 0;
          return RetCode.BadParam ;
       }
-      lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
+      lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -427,7 +427,7 @@
       }
       bucketOfs = new int[(int)((maxUsed - minUsed + 2) * 1)];
       if( minUsed == maxUsed ) {
-         retCode = movingAverageInternal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
+         retCode = MA_Internal(startIdx, endIdx, inReal, minUsed, optInMAType, localBegIdx, localNbElement, localFinalArray);
          if( retCode != RetCode.Success ) {
             if( (finalIsAllocated) != 0 ) {
             }
@@ -457,7 +457,7 @@
             if( bucketEnd > bucketStart ) {
                firstOccurrence = sortedIdx[bucketStart];
                lastOccurrence = sortedIdx[bucketEnd - 1];
-               retCode = movingAverageInternal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
+               retCode = MA_Internal(startIdx, startIdx + lastOccurrence, inReal, curPeriod, optInMAType, localBegIdx, localNbElement, localOutputArray);
                if( retCode != RetCode.Success ) {
                   if( (finalIsAllocated) != 0 ) {
                   }
@@ -502,8 +502,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#movingAverageVariablePeriodLookback}
-    * is a <b>success with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MAVP_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -526,23 +526,23 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#movingAverage
-    * @see Core#sma
-    * @see Core#mama
-    * @see Core#t3
+    * @see Core#MA
+    * @see Core#SMA
+    * @see Core#MAMA
+    * @see Core#T3
     */
-   public OutRange movingAverageVariablePeriod( int startIdx,
-                                                int endIdx,
-                                                double inReal[],
-                                                double inPeriods[],
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                double outReal[] )
+   public OutRange MAVP( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         double inPeriods[],
+                         int optInMinPeriod,
+                         int optInMaxPeriod,
+                         MAType optInMAType,
+                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = movingAverageVariablePeriodInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
@@ -567,8 +567,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#movingAverageVariablePeriodLookback}
-    * is a <b>success with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MAVP_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -591,23 +591,23 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#movingAverage
-    * @see Core#sma
-    * @see Core#mama
-    * @see Core#t3
+    * @see Core#MA
+    * @see Core#SMA
+    * @see Core#MAMA
+    * @see Core#T3
     */
-   public OutRange movingAverageVariablePeriod( int startIdx,
-                                                int endIdx,
-                                                float inReal[],
-                                                float inPeriods[],
-                                                int optInMinPeriod,
-                                                int optInMaxPeriod,
-                                                MAType optInMAType,
-                                                double outReal[] )
+   public OutRange MAVP( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         float inPeriods[],
+                         int optInMinPeriod,
+                         int optInMaxPeriod,
+                         MAType optInMAType,
+                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = movingAverageVariablePeriodInternal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_Internal(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAVP", retCode);
       }
@@ -617,8 +617,8 @@
 
    /**
     * A live MAVP stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#movingAverageVariablePeriod} over the same series.
-    * Open with {@link Core#movingAverageVariablePeriodOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MAVP} over the same series.
+    * Open with {@link Core#MAVP_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -629,20 +629,20 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MovingAverageVariablePeriodStream {
+   public static final class MAVP_Stream {
       final Core core;
       int optInMinPeriod;
       int optInMaxPeriod;
       MAType optInMAType;
       double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-      MovingAverageStream[] bank;
+      MA_Stream[] bank;
       OutRange fillRange = OutRange.EMPTY;
 
-      MovingAverageVariablePeriodStream( Core core ) { this.core = core; }
+      MAVP_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#movingAverageVariablePeriodOpenAndFill}, or
+       * The range filled by {@link Core#MAVP_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -650,15 +650,15 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MovingAverageVariablePeriodStream( MovingAverageVariablePeriodStream other ) {
+      MAVP_Stream( MAVP_Stream other ) {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
          this.optInMAType = other.optInMAType;
          this.cur_outReal = other.cur_outReal;
-         this.bank = new MovingAverageStream[other.bank.length];
+         this.bank = new MA_Stream[other.bank.length];
          for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
-            this.bank[bankIdx] = new MovingAverageStream(other.bank[bankIdx]);
+            this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
          }
          this.fillRange = other.fillRange;
       }
@@ -668,7 +668,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal, double inPeriods ) {
-         core.movingAverageVariablePeriodStreamStep(this, inReal, inPeriods);
+         core.MAVP_StreamStep(this, inReal, inPeriods);
          return this.cur_outReal;
       }
 
@@ -680,8 +680,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal, double inPeriods ) {
-         MovingAverageVariablePeriodStream scratch = new MovingAverageVariablePeriodStream(this);
-         core.movingAverageVariablePeriodStreamStep(scratch, inReal, inPeriods);
+         MAVP_Stream scratch = new MAVP_Stream(this);
+         core.MAVP_StreamStep(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }
 
@@ -698,11 +698,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MovingAverageVariablePeriodStream copy() {
-         return new MovingAverageVariablePeriodStream(this);
+      public MAVP_Stream copy() {
+         return new MAVP_Stream(this);
       }
    }
-   void movingAverageVariablePeriodStreamStep( MovingAverageVariablePeriodStream sp, double inReal, double inPeriods )
+   void MAVP_StreamStep( MAVP_Stream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {
@@ -718,7 +718,7 @@
          }
       }
    }
-   private RetCode movingAverageVariablePeriodOpenBody( MovingAverageVariablePeriodStream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MAVP_OpenBody( MAVP_Stream sp, double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 || inPeriods.length != inReal.length ) {
@@ -741,7 +741,7 @@
       if( optInMinPeriod > optInMaxPeriod ) {
          return RetCode.BadParam;
       }
-      if( historyLen < movingAverageVariablePeriodLookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
+      if( historyLen < MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       /* Seed EVERY sub at the SHARED max-period lookback, exactly as batch
@@ -749,12 +749,12 @@
        * with that same start for every period. Seeding each sub at its own
        * (smaller) lookback would seed the recurrence from a different bar and
        * diverge for every period < maxPeriod. */
-      int lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
+      int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       int subStart = (startIdx < lookbackTotal)? lookbackTotal : startIdx;
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
-      MovingAverageStream[] bank = new MovingAverageStream[nBank];
+      MA_Stream[] bank = new MA_Stream[nBank];
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         bank[bankIdx] = movingAverageOpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
+         bank[bankIdx] = MA_OpenInternal(inReal, subStart, optInMinPeriod + bankIdx, optInMAType);
       }
       int cp = (int)inPeriods[historyLen - 1];
       if( cp < optInMinPeriod ) {
@@ -769,7 +769,7 @@
       sp.cur_outReal = bank[cp - optInMinPeriod].cur_outReal;
       return RetCode.Success;
    }
-   private RetCode movingAverageVariablePeriodOpenAndFillBody( MovingAverageVariablePeriodStream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       if( historyLen < 1 || inPeriods.length != inReal.length ) {
@@ -795,17 +795,17 @@
       if( optInMinPeriod > optInMaxPeriod ) {
          return RetCode.BadParam;
       }
-      int lookbackTotal = movingAverageLookback(optInMaxPeriod, optInMAType);
+      int lookbackTotal = MA_Lookback(optInMaxPeriod, optInMAType);
       if( historyLen < lookbackTotal + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       int nBank = optInMaxPeriod - optInMinPeriod + 1;
       /* Seed each sub at the first output bar (lookbackTotal), NOT the last. */
-      MovingAverageStream[] bank = new MovingAverageStream[nBank];
+      MA_Stream[] bank = new MA_Stream[nBank];
       double[] scratch = new double[nBank];
       double[] seedPrefix = java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1);
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
-         MovingAverageStream sub = movingAverageOpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
+         MA_Stream sub = MA_OpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
          bank[bankIdx] = sub;
          scratch[bankIdx] = sub.cur_outReal;
       }
@@ -838,11 +838,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind movingAverageVariablePeriodOpen (composition seam). */
-   MovingAverageVariablePeriodStream movingAverageVariablePeriodOpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   /* Internal startIdx-anchored open behind MAVP_Open (composition seam). */
+   MAVP_Stream MAVP_OpenInternal( double inReal[], double inPeriods[], int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      MovingAverageVariablePeriodStream sp = new MovingAverageVariablePeriodStream(this);
-      RetCode retCode = movingAverageVariablePeriodOpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
+      MAVP_Stream sp = new MAVP_Stream(this);
+      RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -857,32 +857,32 @@
    /**
     * Open a live MAVP stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#movingAverageVariablePeriod} at that bar.
-    * <p>The history must hold at least {@code movingAverageVariablePeriodLookback(...) + 1} bars
+    * to {@link Core#MAVP} at that bar.
+    * <p>The history must hold at least {@code MAVP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MovingAverageVariablePeriodStream movingAverageVariablePeriodOpen( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public MAVP_Stream MAVP_Open( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      return movingAverageVariablePeriodOpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
+      return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
    /**
-    * {@link Core#movingAverageVariablePeriodOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#movingAverageVariablePeriod} over the whole history in the same single pass
+    * {@link Core#MAVP_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MAVP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MovingAverageVariablePeriodStream#fillRange()}.
+    * {@link MAVP_Stream#fillRange()}.
     */
-   public MovingAverageVariablePeriodStream movingAverageVariablePeriodOpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
+   public MAVP_Stream MAVP_OpenAndFill( double inReal[], double inPeriods[], int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double outReal[] )
    {
-      MovingAverageVariablePeriodStream sp = new MovingAverageVariablePeriodStream(this);
+      MAVP_Stream sp = new MAVP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = movingAverageVariablePeriodOpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -1,5 +1,4 @@
 name: CDLONNECK
-camel_case: CdlOnNeck
 group: Pattern Recognition
 hint: On-Neck Pattern
 flags: [candlestick, stream]

@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlmorningdojistar`]: the number of leading input values
+    /// Lookback period for [`Core::CDLMORNINGDOJISTAR`]: the number of leading input values
     /// consumed before the first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn cdlmorningdojistar_lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLMORNINGDOJISTAR_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
@@ -161,7 +161,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlmorningdojistar(
+    /// let ret = core.CDLMORNINGDOJISTAR(
     ///     0, open.len() - 1, &open, &high, &low, &close, 0.3,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -171,13 +171,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlmorningstar`] · [`Core::cdleveningdojistar`] · [`Core::cdleveningstar`] ·
-    /// [`Core::cdldojistar`]
+    /// [`Core::CDLMORNINGSTAR`] · [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLEVENINGSTAR`] ·
+    /// [`Core::CDLDOJISTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlmorningdojistar](https://ta-lib.org/functions/cdlmorningdojistar/)
+    /// [ta-lib.org/functions/CDLMORNINGDOJISTAR](https://ta-lib.org/functions/CDLMORNINGDOJISTAR/)
     #[doc(alias = "MorningDojiStar")]
-    pub fn cdlmorningdojistar(
+    pub fn CDLMORNINGDOJISTAR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -191,13 +191,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cdlmorningdojistar_fma, cdlmorningdojistar_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, CDLMORNINGDOJISTAR_fma, CDLMORNINGDOJISTAR_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cdlmorningdojistar_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.CDLMORNINGDOJISTAR_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn cdlmorningdojistar_fma(
+    fn CDLMORNINGDOJISTAR_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -210,10 +210,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.cdlmorningdojistar_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.CDLMORNINGDOJISTAR_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn cdlmorningdojistar_impl(
+    fn CDLMORNINGDOJISTAR_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -237,7 +237,7 @@ impl Core {
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cdlmorningdojistar_lookback(optInPenetration);
+        let _assertLb = self.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -274,7 +274,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmorningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -492,20 +492,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLMORNINGDOJISTAR stream: one value per closed bar, bit-identical to [`Core::cdlmorningdojistar`]
-/// over the same series. Open with [`Core::cdlmorningdojistar_open`]; dropping the handle
+/// Live CDLMORNINGDOJISTAR stream: one value per closed bar, bit-identical to [`Core::CDLMORNINGDOJISTAR`]
+/// over the same series. Open with [`Core::CDLMORNINGDOJISTAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMORNINGDOJISTAR_Stream")]
-pub struct CdlmorningdojistarStream {
+pub struct CDLMORNINGDOJISTAR_Stream {
     core: Core,
-    state: CdlmorningdojistarStreamState,
+    state: CDLMORNINGDOJISTAR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlmorningdojistarStreamState {
+struct CDLMORNINGDOJISTAR_StreamState {
     optInPenetration: f64,
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
@@ -545,7 +545,7 @@ struct CdlmorningdojistarStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlmorningdojistar_step_internal(&self, sp: &mut CdlmorningdojistarStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMORNINGDOJISTAR_step_internal(&self, sp: &mut CDLMORNINGDOJISTAR_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -723,10 +723,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlmorningdojistar_open`] (composition seam).
-    pub(crate) fn cdlmorningdojistar_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLMORNINGDOJISTAR_Open`] (composition seam).
+    pub(crate) fn CDLMORNINGDOJISTAR_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CdlmorningdojistarStream, i32), RetCode> {
+    ) -> Result<(CDLMORNINGDOJISTAR_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -773,7 +773,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmorningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1037,7 +1037,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlmorningdojistarStreamState {
+        let state = CDLMORNINGDOJISTAR_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1069,11 +1069,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((CdlmorningdojistarStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLMORNINGDOJISTAR_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLMORNINGDOJISTAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlmorningdojistar`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLMORNINGDOJISTAR`] at that bar.
     ///
     /// # Errors
     ///
@@ -1092,23 +1092,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlmorningdojistar_open(&open, &high, &low, &close, 0.3).expect("enough history");
+    /// let (mut s, _last) = core.CDLMORNINGDOJISTAR_Open(&open, &high, &low, &close, 0.3).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLMORNINGDOJISTAR_Open")]
-    pub fn cdlmorningdojistar_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdlmorningdojistarStream, i32), RetCode> {
-        self.cdlmorningdojistar_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn CDLMORNINGDOJISTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLMORNINGDOJISTAR_Stream, i32), RetCode> {
+        self.CDLMORNINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::cdlmorningdojistar_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlmorningdojistar`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLMORNINGDOJISTAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLMORNINGDOJISTAR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLMORNINGDOJISTAR_OpenAndFill")]
-    pub fn cdlmorningdojistar_open_and_fill(
+    pub fn CDLMORNINGDOJISTAR_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlmorningdojistarStream, RetCode> {
+    ) -> Result<CDLMORNINGDOJISTAR_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1154,7 +1154,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmorningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1420,7 +1420,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlmorningdojistarStreamState {
+        let state = CDLMORNINGDOJISTAR_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1452,19 +1452,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(CdlmorningdojistarStream { core: self.clone(), state })
+        Ok(CDLMORNINGDOJISTAR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlmorningdojistarStream {
+impl CDLMORNINGDOJISTAR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLMORNINGDOJISTAR_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlmorningdojistar_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLMORNINGDOJISTAR_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1482,7 +1482,7 @@ impl CdlmorningdojistarStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlmorningdojistarStream>();
+    _assert_auto::<CDLMORNINGDOJISTAR_Stream>();
 };
 
 /***************/

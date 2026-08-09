@@ -1,5 +1,4 @@
 name: CDL3WHITESOLDIERS
-camel_case: Cdl3WhiteSoldiers
 group: Pattern Recognition
 hint: Three Advancing White Soldiers
 flags: [candlestick, stream]

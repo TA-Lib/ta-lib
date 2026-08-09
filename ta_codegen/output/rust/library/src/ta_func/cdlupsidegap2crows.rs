@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlupsidegap2crows`]: the number of leading input values
+    /// Lookback period for [`Core::CDLUPSIDEGAP2CROWS`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlupsidegap2crows_lookback(&self) -> usize {
+    pub fn CDLUPSIDEGAP2CROWS_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlupsidegap2crows(
+    /// let ret = core.CDLUPSIDEGAP2CROWS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -143,12 +143,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl2crows`] · [`Core::cdlgapsidesidewhite`]
+    /// [`Core::CDL2CROWS`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlupsidegap2crows](https://ta-lib.org/functions/cdlupsidegap2crows/)
+    /// [ta-lib.org/functions/CDLUPSIDEGAP2CROWS](https://ta-lib.org/functions/CDLUPSIDEGAP2CROWS/)
     #[doc(alias = "UpsideGapTwoCrows")]
-    pub fn cdlupsidegap2crows(
+    pub fn CDLUPSIDEGAP2CROWS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -166,7 +166,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlupsidegap2crows_lookback();
+        let _assertLb = self.CDLUPSIDEGAP2CROWS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -195,7 +195,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlupsidegap2crows_lookback();
+        lookbackTotal = self.CDLUPSIDEGAP2CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -360,20 +360,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLUPSIDEGAP2CROWS stream: one value per closed bar, bit-identical to [`Core::cdlupsidegap2crows`]
-/// over the same series. Open with [`Core::cdlupsidegap2crows_open`]; dropping the handle
+/// Live CDLUPSIDEGAP2CROWS stream: one value per closed bar, bit-identical to [`Core::CDLUPSIDEGAP2CROWS`]
+/// over the same series. Open with [`Core::CDLUPSIDEGAP2CROWS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Stream")]
-pub struct Cdlupsidegap2crowsStream {
+pub struct CDLUPSIDEGAP2CROWS_Stream {
     core: Core,
-    state: Cdlupsidegap2crowsStreamState,
+    state: CDLUPSIDEGAP2CROWS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdlupsidegap2crowsStreamState {
+struct CDLUPSIDEGAP2CROWS_StreamState {
     BodyShortPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -405,7 +405,7 @@ struct Cdlupsidegap2crowsStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlupsidegap2crows_step_internal(&self, sp: &mut Cdlupsidegap2crowsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLUPSIDEGAP2CROWS_step_internal(&self, sp: &mut CDLUPSIDEGAP2CROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -534,10 +534,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlupsidegap2crows_open`] (composition seam).
-    pub(crate) fn cdlupsidegap2crows_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLUPSIDEGAP2CROWS_Open`] (composition seam).
+    pub(crate) fn CDLUPSIDEGAP2CROWS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdlupsidegap2crowsStream, i32), RetCode> {
+    ) -> Result<(CDLUPSIDEGAP2CROWS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -571,7 +571,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlupsidegap2crows_lookback();
+        lookbackTotal = self.CDLUPSIDEGAP2CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -765,7 +765,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = Cdlupsidegap2crowsStreamState {
+        let state = CDLUPSIDEGAP2CROWS_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -789,11 +789,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((Cdlupsidegap2crowsStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLUPSIDEGAP2CROWS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLUPSIDEGAP2CROWS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlupsidegap2crows`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLUPSIDEGAP2CROWS`] at that bar.
     ///
     /// # Errors
     ///
@@ -812,23 +812,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlupsidegap2crows_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLUPSIDEGAP2CROWS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Open")]
-    pub fn cdlupsidegap2crows_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlupsidegap2crowsStream, i32), RetCode> {
-        self.cdlupsidegap2crows_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLUPSIDEGAP2CROWS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLUPSIDEGAP2CROWS_Stream, i32), RetCode> {
+        self.CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlupsidegap2crows_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlupsidegap2crows`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLUPSIDEGAP2CROWS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLUPSIDEGAP2CROWS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_OpenAndFill")]
-    pub fn cdlupsidegap2crows_open_and_fill(
+    pub fn CDLUPSIDEGAP2CROWS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdlupsidegap2crowsStream, RetCode> {
+    ) -> Result<CDLUPSIDEGAP2CROWS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -861,7 +861,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlupsidegap2crows_lookback();
+        lookbackTotal = self.CDLUPSIDEGAP2CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1057,7 +1057,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = Cdlupsidegap2crowsStreamState {
+        let state = CDLUPSIDEGAP2CROWS_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1081,19 +1081,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(Cdlupsidegap2crowsStream { core: self.clone(), state })
+        Ok(CDLUPSIDEGAP2CROWS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdlupsidegap2crowsStream {
+impl CDLUPSIDEGAP2CROWS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLUPSIDEGAP2CROWS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlupsidegap2crows_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLUPSIDEGAP2CROWS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1111,7 +1111,7 @@ impl Cdlupsidegap2crowsStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdlupsidegap2crowsStream>();
+    _assert_auto::<CDLUPSIDEGAP2CROWS_Stream>();
 };
 
 /***************/

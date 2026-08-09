@@ -313,7 +313,7 @@ static void handle_abstract_call(const char *json, char *resp, int resp_size) {
 /* ---- TA_GetFuncInfo ----
  * Mirrors: TA_GetFuncHandle + TA_GetFuncInfo
  * Params:  funcName
- * Returns: name, group, hint, camelCaseName, flags, nbInput, nbOptInput, nbOutput
+ * Returns: name, group, hint, flags, nbInput, nbOptInput, nbOutput
  */
 
 static void handle_TA_GetFuncInfo(const char *json, char *resp, int resp_size) {
@@ -327,11 +327,10 @@ static void handle_TA_GetFuncInfo(const char *json, char *resp, int resp_size) {
 
    snprintf(resp, resp_size,
       "{\"name\":\"%s\",\"group\":\"%s\",\"hint\":\"%s\","
-      "\"camelCaseName\":\"%s\",\"flags\":%d,"
+      "\"flags\":%d,"
       "\"nbInput\":%u,\"nbOptInput\":%u,\"nbOutput\":%u}",
       fi->name, fi->group,
       fi->hint ? fi->hint : "",
-      fi->camelCaseName ? fi->camelCaseName : "",
       (int)fi->flags,
       fi->nbInput, fi->nbOptInput, fi->nbOutput);
 }

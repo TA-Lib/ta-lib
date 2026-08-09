@@ -28,7 +28,7 @@ let core = Core::new();
 let mut sma = vec![0.0; close.len()];
 let (mut out_beg, mut out_nb) = (0, 0);
 
-let ret = core.sma(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
+let ret = core.SMA(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
 assert_eq!(ret, RetCode::Success);
 assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3, at input index `out_beg` = 2
 ```
@@ -36,7 +36,7 @@ assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3, at input index `out_beg` = 2
 Every indicator is a method on `Core` with the same calling pattern: `&[f64]`
 input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 `RetCode` result. `outBegIdx` reports the input index of the first output value;
-`*_lookback` methods return how many leading values an indicator consumes.
+`*_Lookback` methods return how many leading values an indicator consumes.
 
 ## Configuration
 
@@ -48,7 +48,7 @@ frozen:
 use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
-    .unstable_period(FuncUnstId::Ema, 10)
+    .unstable_period(FuncUnstId::EMA, 10)
     .build();
 ```
 

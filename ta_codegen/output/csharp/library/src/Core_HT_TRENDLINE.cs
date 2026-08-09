@@ -68,7 +68,7 @@ public partial class Core
     *                literal cap lets the streaming rescan-window machinery bound it.
     */
    /// <summary>
-   /// Number of leading input bars <c>HtTrendline</c> consumes before it can
+   /// Number of leading input bars <c>HT_TRENDLINE</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -81,7 +81,7 @@ public partial class Core
    /// </para>
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int HtTrendlineLookback( )
+   public int HT_TRENDLINE_Lookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -91,15 +91,15 @@ public partial class Core
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendline] ;
+      return 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDLINE] ;
 
    }
-   internal RetCode HtTrendline( int startIdx,
-                                 int endIdx,
-                                 double[] inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 double[] outReal )
+   internal RetCode HT_TRENDLINE( int startIdx,
+                                  int endIdx,
+                                  double[] inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -188,7 +188,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendline];
+      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDLINE];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -476,12 +476,12 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HtTrendline( int startIdx,
-                                 int endIdx,
-                                 float[] inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 double[] outReal )
+   internal RetCode HT_TRENDLINE( int startIdx,
+                                  int endIdx,
+                                  float[] inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -561,7 +561,7 @@ public partial class Core
       iTrend1 = iTrend2;
       tempReal = Math.Atan(1);
       rad2Deg = 45.0 / tempReal;
-      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendline];
+      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDLINE];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -800,8 +800,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtTrendlineLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_TRENDLINE_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -817,12 +817,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtTrendline( int startIdx,
-                                int endIdx,
-                                double[] inReal,
-                                double[] outReal )
+   public OutRange HT_TRENDLINE( int startIdx,
+                                 int endIdx,
+                                 double[] inReal,
+                                 double[] outReal )
    {
-      RetCode retCode = HtTrendline(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDLINE", retCode);
       }
@@ -844,8 +844,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtTrendlineLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_TRENDLINE_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -861,12 +861,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtTrendline( int startIdx,
-                                int endIdx,
-                                float[] inReal,
-                                double[] outReal )
+   public OutRange HT_TRENDLINE( int startIdx,
+                                 int endIdx,
+                                 float[] inReal,
+                                 double[] outReal )
    {
-      RetCode retCode = HtTrendline(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDLINE", retCode);
       }

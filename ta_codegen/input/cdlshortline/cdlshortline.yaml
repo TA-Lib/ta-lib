@@ -1,5 +1,4 @@
 name: CDLSHORTLINE
-camel_case: CdlShortLine
 group: Pattern Recognition
 hint: Short Line Candle
 flags: [candlestick, stream]

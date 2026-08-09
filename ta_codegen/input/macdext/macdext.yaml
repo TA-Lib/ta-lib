@@ -1,5 +1,4 @@
 name: MACDEXT
-camel_case: MacdExt
 group: Momentum Indicators
 hint: MACD with controllable MA type
 flags: [stream]

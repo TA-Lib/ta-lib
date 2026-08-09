@@ -1,5 +1,4 @@
 name: TANH
-camel_case: Tanh
 group: Math Transform
 hint: Vector Trigonometric Tanh
 flags: [stream]

@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#exp} consumes before it can
+    * Number of leading input bars {@link Core#EXP} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int expLookback( )
+   public int EXP_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode expInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode EXP_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode expInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode EXP_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,7 +79,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#expLookback} is a <b>success with no
+    * valid range shorter than {@link Core#EXP_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -95,17 +95,17 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ln
-    * @see Core#sqrt
+    * @see Core#LN
+    * @see Core#SQRT
     */
-   public OutRange exp( int startIdx,
+   public OutRange EXP( int startIdx,
                         int endIdx,
                         double inReal[],
                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = expInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EXP", retCode);
       }
@@ -124,7 +124,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#expLookback} is a <b>success with no
+    * valid range shorter than {@link Core#EXP_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -140,17 +140,17 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ln
-    * @see Core#sqrt
+    * @see Core#LN
+    * @see Core#SQRT
     */
-   public OutRange exp( int startIdx,
+   public OutRange EXP( int startIdx,
                         int endIdx,
                         float inReal[],
                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = expInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("EXP", retCode);
       }
@@ -160,8 +160,8 @@
 
    /**
     * A live EXP stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#exp} over the same series.
-    * Open with {@link Core#expOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#EXP} over the same series.
+    * Open with {@link Core#EXP_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -172,15 +172,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class ExpStream {
+   public static final class EXP_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      ExpStream( Core core ) { this.core = core; }
+      EXP_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#expOpenAndFill}, or
+       * The range filled by {@link Core#EXP_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -188,7 +188,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      ExpStream( ExpStream other ) {
+      EXP_Stream( EXP_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -199,7 +199,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.expStreamStep(this, inReal);
+         core.EXP_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -211,8 +211,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         ExpStream scratch = new ExpStream(this);
-         core.expStreamStep(scratch, inReal);
+         EXP_Stream scratch = new EXP_Stream(this);
+         core.EXP_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -229,15 +229,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public ExpStream copy() {
-         return new ExpStream(this);
+      public EXP_Stream copy() {
+         return new EXP_Stream(this);
       }
    }
-   void expStreamStep( ExpStream sp, double inReal )
+   void EXP_StreamStep( EXP_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.exp(inReal);
    }
-   private RetCode expOpenBody( ExpStream sp, double inReal[], int startIdx )
+   private RetCode EXP_OpenBody( EXP_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -261,7 +261,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode expOpenAndFillBody( ExpStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode EXP_OpenAndFillBody( EXP_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -286,11 +286,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind expOpen (composition seam). */
-   ExpStream expOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind EXP_Open (composition seam). */
+   EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
    {
-      ExpStream sp = new ExpStream(this);
-      RetCode retCode = expOpenBody(sp, inReal, startIdx);
+      EXP_Stream sp = new EXP_Stream(this);
+      RetCode retCode = EXP_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -305,32 +305,32 @@
    /**
     * Open a live EXP stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#exp} at that bar.
-    * <p>The history must hold at least {@code expLookback(...) + 1} bars
+    * to {@link Core#EXP} at that bar.
+    * <p>The history must hold at least {@code EXP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public ExpStream expOpen( double inReal[] )
+   public EXP_Stream EXP_Open( double inReal[] )
    {
-      return expOpenInternal(inReal, 0);
+      return EXP_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#expOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#exp} over the whole history in the same single pass
+    * {@link Core#EXP_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#EXP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link ExpStream#fillRange()}.
+    * {@link EXP_Stream#fillRange()}.
     */
-   public ExpStream expOpenAndFill( double inReal[], double outReal[] )
+   public EXP_Stream EXP_OpenAndFill( double inReal[], double outReal[] )
    {
-      ExpStream sp = new ExpStream(this);
+      EXP_Stream sp = new EXP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = expOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = EXP_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

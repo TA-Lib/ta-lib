@@ -1,5 +1,4 @@
 name: TSF
-camel_case: Tsf
 group: Statistic Functions
 hint: Time Series Forecast
 flags: [overlap, stream]

@@ -1,5 +1,4 @@
 name: CDLMARUBOZU
-camel_case: CdlMarubozu
 group: Pattern Recognition
 hint: Marubozu
 flags: [candlestick, stream]

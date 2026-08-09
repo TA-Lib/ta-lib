@@ -61,9 +61,9 @@ ta-lib = "0.8"
 
 Every function follows the same pattern: it reads its inputs from slices you pass in and writes results into slices you allocate. It never writes more elements than you request, so the output only needs to cover the `startIdx`-to-`endIdx` range.
 
-This is the **same calling pattern as the C library**, argument for argument and name for name — only the types change. Walking through `sma`, a simple moving average:
+This is the **same calling pattern as the C library**, argument for argument and name for name — a function is spelled exactly as C spells it minus the `TA_` prefix, so C's `TA_SMA` is `SMA` here, and only the argument types change. Walking through `SMA`, a simple moving average:
 
-<pre>fn sma( &amp;self,
+<pre>fn SMA( &amp;self,
         <span class="ta-arg-range">startIdx: usize,</span>
         <span class="ta-arg-range">endIdx: usize,</span>
         <span class="ta-arg-in">inReal: &amp;[f64],</span>
@@ -93,7 +93,7 @@ let mut beg = 0usize;
 let mut nb  = 0usize;
 ```
 
-<pre>let rc = core.sma( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">close.len() - 1</span>,
+<pre>let rc = core.SMA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">close.len() - 1</span>,
                    <span class="ta-arg-in">&amp;close</span>,
                    <span class="ta-arg-opt">30</span>,
                    <span class="ta-arg-out">&amp;mut beg</span>, <span class="ta-arg-out">&amp;mut nb</span>, <span class="ta-arg-out">&amp;mut out</span> );
@@ -115,7 +115,7 @@ for i in 0..nb {
 An output is written only where the indicator is defined — a 30-period SMA has no value until the 30th bar. `beg` (`outBegIdx`) is the first valid bar and `nb` (`outNBElement`) is the count written; the rest of the slice is left untouched. Size the output slice to at least `endIdx - startIdx + 1`, or exactly with the lookback:
 
 ```rust
-let lookback = core.sma_lookback(30);   // 29 for a 30-period SMA
+let lookback = core.SMA_Lookback(30);   // 29 for a 30-period SMA
 ```
 
 The lookback is how many inputs are consumed before the first output.
@@ -132,8 +132,8 @@ Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so a violat
 
 | Method | Purpose |
 |--------|---------|
-| `core.sma_lookback(..) -> usize` | first valid output index |
-| `core.sma(..) -> RetCode` | guarded: validates parameters, then computes |
+| `core.SMA_Lookback(..) -> usize` | first valid output index |
+| `core.SMA(..) -> RetCode` | guarded: validates parameters, then computes |
 
 ## 4.0 Advanced features {#advanced}
 
@@ -185,7 +185,7 @@ Some indicators are recursive, so their earliest values depend on how much histo
 use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
-    .unstable_period(FuncUnstId::Ema, 10)
+    .unstable_period(FuncUnstId::EMA, 10)
     .build();
 ```
 

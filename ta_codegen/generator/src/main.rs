@@ -932,11 +932,11 @@ fn verify_hand_maintained_funcunstid(
     let Some(fu) = enums.get("FuncUnstId") else {
         return;
     };
-    // The crate enum is the enums.yaml variants followed by the `FuncUnstAll`
+    // The crate enum is the enums.yaml variants followed by the `ALL`
     // wildcard sentinel; keep it in the expected list so a misplaced/duplicated
-    // sentinel (which would mis-size `[i32; FuncUnstAll as usize]`) is caught.
-    let mut expected: Vec<&str> = fu.variants.iter().map(|v| v.pascal_name.as_str()).collect();
-    expected.push("FuncUnstAll");
+    // sentinel (which would mis-size `[i32; ALL as usize]`) is caught.
+    let mut expected: Vec<&str> = fu.variants.iter().map(|v| v.name.as_str()).collect();
+    expected.push("ALL");
 
     let path = root.join("ta_codegen/generator/templates/rust/types.rs");
     let src = match std::fs::read_to_string(&path) {
@@ -964,7 +964,7 @@ fn verify_hand_maintained_funcunstid(
 
     // Variants are comma-separated; take each entry's leading identifier so an
     // explicit `= discriminant` or several variants on one line are handled, and
-    // keep `FuncUnstAll` in place (compared positionally against `expected`).
+    // keep `ALL` in place (compared positionally against `expected`).
     let found: Vec<&str> = stripped[..end]
         .split(',')
         .map(str::trim)
@@ -1923,7 +1923,6 @@ fn func_to_yaml(func: &TableFuncDef) -> String {
     let mut out = String::new();
 
     out.push_str(&format!("name: {}\n", func.name));
-    out.push_str(&format!("camel_case: {}\n", func.camel_case));
     out.push_str(&format!("group: {}\n", func.group));
     out.push_str(&format!("hint: {}\n", func.hint));
 
@@ -2228,7 +2227,7 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
 //! let mut sma = vec![0.0; close.len()];
 //! let (mut out_beg, mut out_nb) = (0, 0);
 //!
-//! let ret = core.sma(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
+//! let ret = core.SMA(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
 //! assert_eq!(ret, RetCode::Success);
 //!
 //! // The first 3-period average lands at input index 2 (the lookback):
@@ -2244,8 +2243,8 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
 //! * Outputs are written into caller-provided `&mut` slices; `outBegIdx` receives the
 //!   input index of the first output value and `outNBElement` the number of values
 //!   written. An indicator consumes a number of leading values (its *lookback*)
-//!   before producing output — query it with the matching `*_lookback` method
-//!   (e.g. [`Core::sma_lookback`]).
+//!   before producing output — query it with the matching `*_Lookback` method
+//!   (e.g. [`Core::SMA_Lookback`]).
 //! * Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their
 //!   default value. A parameter outside its documented range returns
 //!   [`RetCode::BadParam`].
@@ -2261,7 +2260,7 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
 //! use ta_lib::{Core, FuncUnstId};
 //!
 //! let core = Core::builder()
-//!     .unstable_period(FuncUnstId::Ema, 10)
+//!     .unstable_period(FuncUnstId::EMA, 10)
 //!     .build();
 //! ```
 //!
@@ -2279,7 +2278,7 @@ ta-lib-dispatch = { path = "../dispatch", version = "=0.1.1" }
 //! [ta-lib.org/functions](https://ta-lib.org/functions/).
 
 #![forbid(unsafe_code)]
-#![allow(non_snake_case, unused_variables, unused_assignments, unused_mut, unused_parens, arithmetic_overflow)]
+#![allow(non_snake_case, non_camel_case_types, unused_variables, unused_assignments, unused_mut, unused_parens, arithmetic_overflow)]
 // Generated code: Clippy's style/complexity lints are noise on machine output, and
 // several "fixes" would change numeric behavior — e.g. `neg_cmp_op_on_partial_ord`
 // on C's `!(a < b)` NaN idiom, or De Morgan rewrites under `nonminimal_bool`. The
@@ -2326,7 +2325,7 @@ let core = Core::new();
 let mut sma = vec![0.0; close.len()];
 let (mut out_beg, mut out_nb) = (0, 0);
 
-let ret = core.sma(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
+let ret = core.SMA(0, close.len() - 1, &close, 3, &mut out_beg, &mut out_nb, &mut sma);
 assert_eq!(ret, RetCode::Success);
 assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3, at input index `out_beg` = 2
 ```
@@ -2334,7 +2333,7 @@ assert_eq!(sma[0], 12.0); // (11 + 12 + 13) / 3, at input index `out_beg` = 2
 Every indicator is a method on `Core` with the same calling pattern: `&[f64]`
 input slices, a `startIdx..=endIdx` range, caller-provided output slices, and a
 `RetCode` result. `outBegIdx` reports the input index of the first output value;
-`*_lookback` methods return how many leading values an indicator consumes.
+`*_Lookback` methods return how many leading values an indicator consumes.
 
 ## Configuration
 
@@ -2346,7 +2345,7 @@ frozen:
 use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
-    .unstable_period(FuncUnstId::Ema, 10)
+    .unstable_period(FuncUnstId::EMA, 10)
     .build();
 ```
 

@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ln`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::LN`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn ln_lookback(&self) -> usize {
+    pub fn LN_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector natural logarithm: applies the natural log (base e) elementwise to the input series.
@@ -107,7 +107,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ln(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.LN(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -115,13 +115,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::log10`] · [`Core::exp`] · [`Core::sqrt`]
+    /// [`Core::LOG10`] · [`Core::EXP`] · [`Core::SQRT`]
     ///
-    /// Further reading: [ta-lib.org/functions/ln](https://ta-lib.org/functions/ln/)
+    /// Further reading: [ta-lib.org/functions/LN](https://ta-lib.org/functions/LN/)
     #[doc(alias = "NaturalLog")]
     #[doc(alias = "VectorLogNatural")]
     #[doc(alias = "Log")]
-    pub fn ln(
+    pub fn LN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -136,7 +136,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ln_lookback();
+        let _assertLb = self.LN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -158,20 +158,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live LN stream: one value per closed bar, bit-identical to [`Core::ln`]
-/// over the same series. Open with [`Core::ln_open`]; dropping the handle
+/// Live LN stream: one value per closed bar, bit-identical to [`Core::LN`]
+/// over the same series. Open with [`Core::LN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LN_Stream")]
-pub struct LnStream {
+pub struct LN_Stream {
     core: Core,
-    state: LnStreamState,
+    state: LN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LnStreamState {
+struct LN_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -181,14 +181,14 @@ struct LnStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ln_step_internal(&self, sp: &mut LnStreamState, inReal: f64, outReal: &mut f64) {
+    fn LN_step_internal(&self, sp: &mut LN_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).ln();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ln_open`] (composition seam).
-    pub(crate) fn ln_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::LN_Open`] (composition seam).
+    pub(crate) fn LN_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(LnStream, f64), RetCode> {
+    ) -> Result<(LN_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -215,13 +215,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = LnStreamState {
+        let state = LN_StreamState {
         };
-        Ok((LnStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((LN_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live LN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ln`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::LN`] at that bar.
     ///
     /// # Errors
     ///
@@ -233,23 +233,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ln_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.LN_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LN_Open")]
-    pub fn ln_open(&self, inReal: &[f64], ) -> Result<(LnStream, f64), RetCode> {
-        self.ln_open_internal(inReal, 0)
+    pub fn LN_Open(&self, inReal: &[f64], ) -> Result<(LN_Stream, f64), RetCode> {
+        self.LN_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ln_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ln`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::LN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::LN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_LN_OpenAndFill")]
-    pub fn ln_open_and_fill(
+    pub fn LN_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LnStream, RetCode> {
+    ) -> Result<LN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -275,21 +275,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = LnStreamState {
+        let state = LN_StreamState {
         };
-        Ok(LnStream { core: self.clone(), state })
+        Ok(LN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LnStream {
+impl LN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_LN_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ln_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.LN_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -307,7 +307,7 @@ impl LnStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LnStream>();
+    _assert_auto::<LN_Stream>();
 };
 
 /***************/

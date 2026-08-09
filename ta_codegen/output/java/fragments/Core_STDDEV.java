@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#stdDev} consumes before it can
+    * Number of leading input bars {@link Core#STDDEV} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        {@code -4e37} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int stdDevLookback( int optInTimePeriod, double optInNbDev )
+   public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
@@ -41,17 +41,17 @@
          return -1;
       }
       /* Lookback is driven by the variance. */
-      return varianceLookback(optInTimePeriod, optInNbDev) ;
+      return VAR_Lookback(optInTimePeriod, optInNbDev) ;
 
    }
-   RetCode stdDevInternal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           int optInTimePeriod,
-                           double optInNbDev,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode STDDEV_Internal( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -73,7 +73,7 @@
          return RetCode.BadParam;
       }
       /* Calculate the variance. */
-      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -103,14 +103,14 @@
       }
       return RetCode.Success ;
    }
-   RetCode stdDevInternal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           int optInTimePeriod,
-                           double optInNbDev,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode STDDEV_Internal( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            double optInNbDev,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -131,7 +131,7 @@
       } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
+      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -170,7 +170,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stdDevLookback} is a <b>success with
+    * valid range shorter than {@link Core#STDDEV_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -190,11 +190,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#variance
-    * @see Core#bbands
-    * @see Core#sma
+    * @see Core#VAR
+    * @see Core#BBANDS
+    * @see Core#SMA
     */
-   public OutRange stdDev( int startIdx,
+   public OutRange STDDEV( int startIdx,
                            int endIdx,
                            double inReal[],
                            int optInTimePeriod,
@@ -203,7 +203,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = stdDevInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("STDDEV", retCode);
       }
@@ -226,7 +226,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#stdDevLookback} is a <b>success with
+    * valid range shorter than {@link Core#STDDEV_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -246,11 +246,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#variance
-    * @see Core#bbands
-    * @see Core#sma
+    * @see Core#VAR
+    * @see Core#BBANDS
+    * @see Core#SMA
     */
-   public OutRange stdDev( int startIdx,
+   public OutRange STDDEV( int startIdx,
                            int endIdx,
                            float inReal[],
                            int optInTimePeriod,
@@ -259,7 +259,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = stdDevInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("STDDEV", retCode);
       }
@@ -269,8 +269,8 @@
 
    /**
     * A live STDDEV stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#stdDev} over the same series.
-    * Open with {@link Core#stdDevOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#STDDEV} over the same series.
+    * Open with {@link Core#STDDEV_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -281,18 +281,18 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class StdDevStream {
+   public static final class STDDEV_Stream {
       final Core core;
       int optInTimePeriod;
       double optInNbDev;
       double cur_outReal;
-      VarianceStream sub0;
+      VAR_Stream sub0;
       OutRange fillRange = OutRange.EMPTY;
 
-      StdDevStream( Core core ) { this.core = core; }
+      STDDEV_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#stdDevOpenAndFill}, or
+       * The range filled by {@link Core#STDDEV_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -300,12 +300,12 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      StdDevStream( StdDevStream other ) {
+      STDDEV_Stream( STDDEV_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
          this.cur_outReal = other.cur_outReal;
-         this.sub0 = new VarianceStream(other.sub0);
+         this.sub0 = new VAR_Stream(other.sub0);
          this.fillRange = other.fillRange;
       }
 
@@ -314,7 +314,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.stdDevStreamStep(this, inReal);
+         core.STDDEV_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -326,8 +326,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         StdDevStream scratch = new StdDevStream(this);
-         core.stdDevStreamStep(scratch, inReal);
+         STDDEV_Stream scratch = new STDDEV_Stream(this);
+         core.STDDEV_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -344,11 +344,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public StdDevStream copy() {
-         return new StdDevStream(this);
+      public STDDEV_Stream copy() {
+         return new STDDEV_Stream(this);
       }
    }
-   void stdDevStreamStep( StdDevStream sp, double inReal )
+   void STDDEV_StreamStep( STDDEV_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_outReal = 0.0;
@@ -372,7 +372,7 @@
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode stdDevOpenBody( StdDevStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
       int i = 0;
       RetCode retCode;
@@ -397,15 +397,15 @@
       } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+      if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      VAR_Stream sub0 = VAR_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
+      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -443,7 +443,7 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode stdDevOpenAndFillBody( StdDevStream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode STDDEV_OpenAndFillBody( STDDEV_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int i = 0;
       RetCode retCode;
@@ -470,15 +470,15 @@
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      if( historyLen < stdDevLookback(optInTimePeriod, optInNbDev) + 1 ) {
+      if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      VarianceStream sub0 = varianceOpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
+      VAR_Stream sub0 = VAR_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
+      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -517,11 +517,11 @@
       System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind stdDevOpen (composition seam). */
-   StdDevStream stdDevOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   /* Internal startIdx-anchored open behind STDDEV_Open (composition seam). */
+   STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
-      StdDevStream sp = new StdDevStream(this);
-      RetCode retCode = stdDevOpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      STDDEV_Stream sp = new STDDEV_Stream(this);
+      RetCode retCode = STDDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -536,32 +536,32 @@
    /**
     * Open a live STDDEV stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#stdDev} at that bar.
-    * <p>The history must hold at least {@code stdDevLookback(...) + 1} bars
+    * to {@link Core#STDDEV} at that bar.
+    * <p>The history must hold at least {@code STDDEV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public StdDevStream stdDevOpen( double inReal[], int optInTimePeriod, double optInNbDev )
+   public STDDEV_Stream STDDEV_Open( double inReal[], int optInTimePeriod, double optInNbDev )
    {
-      return stdDevOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+      return STDDEV_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
-    * {@link Core#stdDevOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#stdDev} over the whole history in the same single pass
+    * {@link Core#STDDEV_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#STDDEV} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link StdDevStream#fillRange()}.
+    * {@link STDDEV_Stream#fillRange()}.
     */
-   public StdDevStream stdDevOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
+   public STDDEV_Stream STDDEV_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      StdDevStream sp = new StdDevStream(this);
+      STDDEV_Stream sp = new STDDEV_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = stdDevOpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = STDDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

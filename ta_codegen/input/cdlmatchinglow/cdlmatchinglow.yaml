@@ -1,5 +1,4 @@
 name: CDLMATCHINGLOW
-camel_case: CdlMatchingLow
 group: Pattern Recognition
 hint: Matching Low
 flags: [candlestick, stream]

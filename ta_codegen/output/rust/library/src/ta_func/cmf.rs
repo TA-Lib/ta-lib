@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cmf`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CMF`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -73,7 +73,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn cmf_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CMF_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -171,7 +171,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.cmf(
+    /// let ret = core.CMF(
     ///     0, high.len() - 1, &high, &low, &close, &volume, 20,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -182,7 +182,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ad`] · [`Core::adosc`] · [`Core::mfi`] · [`Core::obv`]
+    /// [`Core::AD`] · [`Core::ADOSC`] · [`Core::MFI`] · [`Core::OBV`]
     ///
     /// # References
     ///
@@ -193,9 +193,9 @@ impl Core {
     /// * Kirkpatrick and Dahlquist, *Technical Analysis: The Complete Resource for Financial Market
     ///   Technicians*, 2nd edition, pages 419 and 421.
     ///
-    /// Further reading: [ta-lib.org/functions/cmf](https://ta-lib.org/functions/cmf/)
+    /// Further reading: [ta-lib.org/functions/CMF](https://ta-lib.org/functions/CMF/)
     #[doc(alias = "ChaikinMoneyFlow")]
-    pub fn cmf(
+    pub fn CMF(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -219,7 +219,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cmf_lookback(optInTimePeriod);
+        let _assertLb = self.CMF_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -354,20 +354,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CMF stream: one value per closed bar, bit-identical to [`Core::cmf`]
-/// over the same series. Open with [`Core::cmf_open`]; dropping the handle
+/// Live CMF stream: one value per closed bar, bit-identical to [`Core::CMF`]
+/// over the same series. Open with [`Core::CMF_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMF_Stream")]
-pub struct CmfStream {
+pub struct CMF_Stream {
     core: Core,
-    state: CmfStreamState,
+    state: CMF_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CmfStreamState {
+struct CMF_StreamState {
     optInTimePeriod: i32,
     sumMFV: f64,
     sumVol: f64,
@@ -390,7 +390,7 @@ struct CmfStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cmf_step_internal(&self, sp: &mut CmfStreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
+    fn CMF_step_internal(&self, sp: &mut CMF_StreamState, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64, outReal: &mut f64) {
         sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
         sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
         sp.high = inHigh;
@@ -417,10 +417,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cmf_open`] (composition seam).
-    pub(crate) fn cmf_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CMF_Open`] (composition seam).
+    pub(crate) fn CMF_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CmfStream, f64), RetCode> {
+    ) -> Result<(CMF_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -551,7 +551,7 @@ impl Core {
         if cbSize_mfv > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = CmfStreamState {
+        let state = CMF_StreamState {
             optInTimePeriod,
             sumMFV,
             sumVol,
@@ -566,11 +566,11 @@ impl Core {
             cb_mfv_flow: mfv_flow,
             cb_mfv_volume: mfv_volume,
         };
-        Ok((CmfStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CMF_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CMF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cmf`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CMF`] at that bar.
     ///
     /// # Errors
     ///
@@ -589,23 +589,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cmf_open(&high, &low, &close, &volume, 20).expect("enough history");
+    /// let (mut s, _last) = core.CMF_Open(&high, &low, &close, &volume, 20).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0);
     /// let updated = s.update(101.4, 99.1, 100.9, 12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CMF_Open")]
-    pub fn cmf_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(CmfStream, f64), RetCode> {
-        self.cmf_open_internal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
+    pub fn CMF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(CMF_Stream, f64), RetCode> {
+        self.CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
     }
 
-    /// [`Core::cmf_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cmf`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CMF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMF`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CMF_OpenAndFill")]
-    pub fn cmf_open_and_fill(
+    pub fn CMF_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CmfStream, RetCode> {
+    ) -> Result<CMF_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -739,7 +739,7 @@ impl Core {
         if cbSize_mfv > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = CmfStreamState {
+        let state = CMF_StreamState {
             optInTimePeriod,
             sumMFV,
             sumVol,
@@ -754,19 +754,19 @@ impl Core {
             cb_mfv_flow: mfv_flow,
             cb_mfv_volume: mfv_volume,
         };
-        Ok(CmfStream { core: self.clone(), state })
+        Ok(CMF_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CmfStream {
+impl CMF_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CMF_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.cmf_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
+        self.core.CMF_step_internal(&mut self.state, inHigh, inLow, inClose, inVolume, &mut outReal);
         outReal
     }
 
@@ -784,7 +784,7 @@ impl CmfStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CmfStream>();
+    _assert_auto::<CMF_Stream>();
 };
 
 /***************/

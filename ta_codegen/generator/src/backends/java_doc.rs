@@ -71,7 +71,7 @@ pub fn guarded_docs(
         "Values are written only where the indicator is defined. The returned \
          {{@link OutRange}} says where they start and how many there are; nothing outside \
          that range is touched, and the library never pads with NaN. A valid range shorter \
-         than {{@link Core#{java_name}Lookback}} is a <b>success with no values</b> \
+         than {{@link Core#{java_name}_Lookback}} is a <b>success with no values</b> \
          ({{@code count() == 0}}), not an error."
     ));
 
@@ -257,11 +257,10 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
 /// A `@see` target for a canonical `## See Also` entry, skipping anything that is
 /// not a plain function name (the source separates them with `·`).
 ///
-/// The method name comes from the [`Registry`], NOT from lower-casing the
-/// canonical name: several functions have irregular Java names (`MA` is
-/// `movingAverage`, `WILLR` is `willR`), so a naive mapping emits `@see Core#ma`
-/// — a link that silently resolves to nothing. An unknown name is dropped rather
-/// than guessed at.
+/// The method name comes from the [`Registry`] rather than from the entry text:
+/// the entry is prose the canonical `.md` chose, and only a name the registry
+/// knows is a method to link to. An unknown name is dropped rather than guessed
+/// at, so a `## See Also` entry naming a concept never emits a dead `@see`.
 fn see_also_link(entry: &str, func: &FuncDef, registry: &Registry) -> Option<String> {
     let name = entry.trim();
     if name.is_empty() || name.eq_ignore_ascii_case(&func.name) {
@@ -274,7 +273,7 @@ fn see_also_link(entry: &str, func: &FuncDef, registry: &Registry) -> Option<Str
     if !registry.contains(&key) {
         return None;
     }
-    Some(format!("Core#{}", registry.java_base(&key)))
+    Some(format!("Core#{}", registry.name_of(&key)))
 }
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#max} consumes before it can
+    * Number of leading input bars {@link Core#MAX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int maxLookback( int optInTimePeriod )
+   public int MAX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -36,13 +36,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode maxInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode MAX_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -117,13 +117,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode maxInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode MAX_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -193,7 +193,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#MAX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -211,11 +211,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#maxIndex
-    * @see Core#minMax
+    * @see Core#MIN
+    * @see Core#MAXINDEX
+    * @see Core#MINMAX
     */
-   public OutRange max( int startIdx,
+   public OutRange MAX( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -223,7 +223,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = maxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAX", retCode);
       }
@@ -242,7 +242,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#maxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#MAX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -260,11 +260,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#maxIndex
-    * @see Core#minMax
+    * @see Core#MIN
+    * @see Core#MAXINDEX
+    * @see Core#MINMAX
     */
-   public OutRange max( int startIdx,
+   public OutRange MAX( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -272,7 +272,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = maxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MAX", retCode);
       }
@@ -282,8 +282,8 @@
 
    /**
     * A live MAX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#max} over the same series.
-    * Open with {@link Core#maxOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MAX} over the same series.
+    * Open with {@link Core#MAX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -294,7 +294,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MaxStream {
+   public static final class MAX_Stream {
       final Core core;
       int optInTimePeriod;
       double highest;
@@ -307,10 +307,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MaxStream( Core core ) { this.core = core; }
+      MAX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#maxOpenAndFill}, or
+       * The range filled by {@link Core#MAX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -318,7 +318,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MaxStream( MaxStream other ) {
+      MAX_Stream( MAX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -337,7 +337,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.maxStreamStep(this, inReal);
+         core.MAX_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -349,8 +349,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         MaxStream scratch = new MaxStream(this);
-         core.maxStreamStep(scratch, inReal);
+         MAX_Stream scratch = new MAX_Stream(this);
+         core.MAX_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -367,11 +367,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MaxStream copy() {
-         return new MaxStream(this);
+      public MAX_Stream copy() {
+         return new MAX_Stream(this);
       }
    }
-   void maxStreamStep( MaxStream sp, double inReal )
+   void MAX_StreamStep( MAX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -402,7 +402,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode maxOpenBody( MaxStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MAX_OpenBody( MAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double highest = 0;
       double tmp = 0;
@@ -500,7 +500,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode maxOpenAndFillBody( MaxStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MAX_OpenAndFillBody( MAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double highest = 0;
       double tmp = 0;
@@ -599,11 +599,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind maxOpen (composition seam). */
-   MaxStream maxOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MAX_Open (composition seam). */
+   MAX_Stream MAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MaxStream sp = new MaxStream(this);
-      RetCode retCode = maxOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      MAX_Stream sp = new MAX_Stream(this);
+      RetCode retCode = MAX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -618,32 +618,32 @@
    /**
     * Open a live MAX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#max} at that bar.
-    * <p>The history must hold at least {@code maxLookback(...) + 1} bars
+    * to {@link Core#MAX} at that bar.
+    * <p>The history must hold at least {@code MAX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MaxStream maxOpen( double inReal[], int optInTimePeriod )
+   public MAX_Stream MAX_Open( double inReal[], int optInTimePeriod )
    {
-      return maxOpenInternal(inReal, 0, optInTimePeriod);
+      return MAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#maxOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#max} over the whole history in the same single pass
+    * {@link Core#MAX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MAX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MaxStream#fillRange()}.
+    * {@link MAX_Stream#fillRange()}.
     */
-   public MaxStream maxOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public MAX_Stream MAX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MaxStream sp = new MaxStream(this);
+      MAX_Stream sp = new MAX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = maxOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MAX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

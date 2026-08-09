@@ -1,5 +1,4 @@
 name: CDLTAKURI
-camel_case: CdlTakuri
 group: Pattern Recognition
 hint: Takuri (Dragonfly Doji with very long lower shadow)
 flags: [candlestick, stream]

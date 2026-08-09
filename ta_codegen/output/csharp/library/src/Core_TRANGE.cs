@@ -57,8 +57,8 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>TrueRange</c> consumes before it can
-   /// produce its first value.
+   /// Number of leading input bars <c>TRANGE</c> consumes before it can produce
+   /// its first value.
    /// </summary>
    /// <remarks>
    /// Equivalently, the index of the first bar with a value when the whole
@@ -66,19 +66,19 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int TrueRangeLookback( )
+   public int TRANGE_Lookback( )
    {
       return 1 ;
 
    }
-   internal RetCode TrueRange( int startIdx,
-                               int endIdx,
-                               double[] inHigh,
-                               double[] inLow,
-                               double[] inClose,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               double[] outReal )
+   internal RetCode TRANGE( int startIdx,
+                            int endIdx,
+                            double[] inHigh,
+                            double[] inLow,
+                            double[] inClose,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -145,14 +145,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode TrueRange( int startIdx,
-                               int endIdx,
-                               float[] inHigh,
-                               float[] inLow,
-                               float[] inClose,
-                               out int outBegIdx,
-                               out int outNBElement,
-                               double[] outReal )
+   internal RetCode TRANGE( int startIdx,
+                            int endIdx,
+                            float[] inHigh,
+                            float[] inLow,
+                            float[] inClose,
+                            out int outBegIdx,
+                            out int outNBElement,
+                            double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -218,7 +218,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TrueRangeLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>TRANGE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -237,14 +237,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange TrueRange( int startIdx,
-                              int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
-                              double[] inClose,
-                              double[] outReal )
+   public OutRange TRANGE( int startIdx,
+                           int endIdx,
+                           double[] inHigh,
+                           double[] inLow,
+                           double[] inClose,
+                           double[] outReal )
    {
-      RetCode retCode = TrueRange(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
       }
@@ -274,7 +274,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TrueRangeLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>TRANGE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -293,14 +293,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange TrueRange( int startIdx,
-                              int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
-                              float[] inClose,
-                              double[] outReal )
+   public OutRange TRANGE( int startIdx,
+                           int endIdx,
+                           float[] inHigh,
+                           float[] inLow,
+                           float[] inClose,
+                           double[] outReal )
    {
-      RetCode retCode = TrueRange(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
       }

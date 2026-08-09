@@ -60,7 +60,6 @@ static const TA_OptInputParameterInfo *TA_MA_OptInputs[] =
 DEF_FUNCTION( MA,
               TA_GroupId_OverlapStudies,
               "Moving average",
-              "MovingAverage",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MA END */
@@ -113,7 +112,6 @@ static const TA_OptInputParameterInfo *TA_MACD_OptInputs[] =
 DEF_FUNCTION( MACD,
               TA_GroupId_MomentumIndicators,
               "Moving Average Convergence/Divergence",
-              "Macd",
               TA_FUNC_FLG_STREAM
              );
 /* MACD END */
@@ -211,7 +209,6 @@ static const TA_OptInputParameterInfo *TA_MACDEXT_OptInputs[] =
 DEF_FUNCTION( MACDEXT,
               TA_GroupId_MomentumIndicators,
               "MACD with controllable MA type",
-              "MacdExt",
               TA_FUNC_FLG_STREAM
              );
 /* MACDEXT END */
@@ -262,7 +259,6 @@ static const TA_OptInputParameterInfo *TA_MACDFIX_OptInputs[] =
 DEF_FUNCTION( MACDFIX,
               TA_GroupId_MomentumIndicators,
               "Moving Average Convergence/Divergence Fix 12/26",
-              "MacdFix",
               TA_FUNC_FLG_STREAM
              );
 /* MACDFIX END */
@@ -344,7 +340,6 @@ static const TA_OptInputParameterInfo *TA_MAMA_OptInputs[] =
 DEF_FUNCTION( MAMA,
               TA_GroupId_OverlapStudies,
               "MESA Adaptive Moving Average",
-              "Mama",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAMA END */
@@ -401,7 +396,6 @@ static const TA_OptInputParameterInfo *TA_MAVP_OptInputs[] =
 DEF_FUNCTION( MAVP,
               TA_GroupId_OverlapStudies,
               "Moving average with variable period",
-              "MovingAverageVariablePeriod",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAVP END */
@@ -427,7 +421,6 @@ static const TA_OptInputParameterInfo *TA_MAX_OptInputs[] =
 DEF_FUNCTION( MAX,
               TA_GroupId_MathOperators,
               "Highest value over a specified period",
-              "Max",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MAX END */
@@ -453,7 +446,6 @@ static const TA_OptInputParameterInfo *TA_MAXINDEX_OptInputs[] =
 DEF_FUNCTION( MAXINDEX,
               TA_GroupId_MathOperators,
               "Index of highest value over a specified period",
-              "MaxIndex",
               TA_FUNC_FLG_STREAM
              );
 /* MAXINDEX END */
@@ -477,7 +469,6 @@ static const TA_OptInputParameterInfo *TA_MEDPRICE_OptInputs[] =
 DEF_FUNCTION( MEDPRICE,
               TA_GroupId_PriceTransform,
               "Median Price",
-              "MedPrice",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MEDPRICE END */
@@ -503,7 +494,6 @@ static const TA_OptInputParameterInfo *TA_MFI_OptInputs[] =
 DEF_FUNCTION( MFI,
               TA_GroupId_MomentumIndicators,
               "Money Flow Index",
-              "Mfi",
               TA_FUNC_FLG_STREAM
              );
 /* MFI END */
@@ -529,7 +519,6 @@ static const TA_OptInputParameterInfo *TA_MIDPOINT_OptInputs[] =
 DEF_FUNCTION( MIDPOINT,
               TA_GroupId_OverlapStudies,
               "MidPoint over period",
-              "MidPoint",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIDPOINT END */
@@ -555,7 +544,6 @@ static const TA_OptInputParameterInfo *TA_MIDPRICE_OptInputs[] =
 DEF_FUNCTION( MIDPRICE,
               TA_GroupId_OverlapStudies,
               "Midpoint Price over period",
-              "MidPrice",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIDPRICE END */
@@ -581,7 +569,6 @@ static const TA_OptInputParameterInfo *TA_MIN_OptInputs[] =
 DEF_FUNCTION( MIN,
               TA_GroupId_MathOperators,
               "Lowest value over a specified period",
-              "Min",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MIN END */
@@ -607,7 +594,6 @@ static const TA_OptInputParameterInfo *TA_MININDEX_OptInputs[] =
 DEF_FUNCTION( MININDEX,
               TA_GroupId_MathOperators,
               "Index of lowest value over a specified period",
-              "MinIndex",
               TA_FUNC_FLG_STREAM
              );
 /* MININDEX END */
@@ -640,7 +626,6 @@ static const TA_OptInputParameterInfo *TA_MINMAX_OptInputs[] =
 DEF_FUNCTION( MINMAX,
               TA_GroupId_MathOperators,
               "Lowest and highest values over a specified period",
-              "MinMax",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* MINMAX END */
@@ -673,7 +658,6 @@ static const TA_OptInputParameterInfo *TA_MINMAXINDEX_OptInputs[] =
 DEF_FUNCTION( MINMAXINDEX,
               TA_GroupId_MathOperators,
               "Indexes of lowest and highest values over a specified period",
-              "MinMaxIndex",
               TA_FUNC_FLG_STREAM
              );
 /* MINMAXINDEX END */
@@ -699,7 +683,6 @@ static const TA_OptInputParameterInfo *TA_MINUS_DI_OptInputs[] =
 DEF_FUNCTION( MINUS_DI,
               TA_GroupId_MomentumIndicators,
               "Minus Directional Indicator",
-              "MinusDI",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* MINUS_DI END */
@@ -725,7 +708,6 @@ static const TA_OptInputParameterInfo *TA_MINUS_DM_OptInputs[] =
 DEF_FUNCTION( MINUS_DM,
               TA_GroupId_MomentumIndicators,
               "Minus Directional Movement",
-              "MinusDM",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* MINUS_DM END */
@@ -751,7 +733,6 @@ static const TA_OptInputParameterInfo *TA_MOM_OptInputs[] =
 DEF_FUNCTION( MOM,
               TA_GroupId_MomentumIndicators,
               "Momentum",
-              "Mom",
               TA_FUNC_FLG_STREAM
              );
 /* MOM END */
@@ -776,7 +757,6 @@ static const TA_OptInputParameterInfo *TA_MULT_OptInputs[] =
 DEF_FUNCTION( MULT,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Mult",
-              "Mult",
               TA_FUNC_FLG_STREAM
              );
 /* MULT END */

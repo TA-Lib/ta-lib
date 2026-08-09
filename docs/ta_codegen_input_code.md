@@ -136,9 +136,10 @@ generator resolves it to the correct symbol per language. From
 retCode = sma( startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal );
 ```
 
-maps to `TA_SMA(...)` in C, `self.sma(...)` in Rust, `smaInternal(...)` in Java and
-`Sma(...)` in C#. Cross-indicator calls target the **guarded** entry point.
-`sma_lookback(...)` similarly maps to `TA_SMA_Lookback(...)` / `self.sma_lookback(...)`.
+maps to `TA_SMA(...)` in C, `self.SMA(...)` in Rust, `SMA_Internal(...)` in Java and
+`SMA(...)` in C#. Cross-indicator calls target the **guarded** entry point.
+`sma_lookback(...)` similarly maps to `TA_SMA_Lookback(...)` in C and
+`SMA_Lookback(...)` (`self.SMA_Lookback(...)` in Rust) elsewhere.
 
 ## What the generator adds (do NOT write these)
 

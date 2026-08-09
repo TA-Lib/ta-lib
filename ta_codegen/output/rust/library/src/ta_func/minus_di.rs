@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::minus_di`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::MINUS_DI`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -80,14 +80,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn minus_di_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn MINUS_DI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         if optInTimePeriod > 1 {
-            return (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+            return (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
         } else {
             return (1) as usize;
         }
@@ -151,7 +151,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.minus_di(
+    /// let ret = core.MINUS_DI(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -162,18 +162,18 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::plus_di`] · [`Core::minus_dm`] · [`Core::dx`] · [`Core::adx`] · [`Core::adxr`]
-    /// · [`Core::trange`]
+    /// [`Core::PLUS_DI`] · [`Core::MINUS_DM`] · [`Core::DX`] · [`Core::ADX`] · [`Core::ADXR`]
+    /// · [`Core::TRANGE`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/minus_di](https://ta-lib.org/functions/minus_di/)
+    /// Further reading: [ta-lib.org/functions/MINUS_DI](https://ta-lib.org/functions/MINUS_DI/)
     #[doc(alias = "-DI")]
     #[doc(alias = "NegativeDirectionalIndicator")]
-    pub fn minus_di(
+    pub fn MINUS_DI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -196,7 +196,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.minus_di_lookback(optInTimePeriod);
+        let _assertLb = self.MINUS_DI_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -307,7 +307,7 @@ impl Core {
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
         if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
         } else {
             lookbackTotal = 1;
         }
@@ -418,7 +418,7 @@ impl Core {
         // Process subsequent DI
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::MinusDI as usize] + 1) as usize;
+        i = (self.unstable_period[FuncUnstId::MINUS_DI as usize] + 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             // Calculate the prevMinusDM
             today += 1;
@@ -509,20 +509,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MINUS_DI stream: one value per closed bar, bit-identical to [`Core::minus_di`]
-/// over the same series. Open with [`Core::minus_di_open`]; dropping the handle
+/// Live MINUS_DI stream: one value per closed bar, bit-identical to [`Core::MINUS_DI`]
+/// over the same series. Open with [`Core::MINUS_DI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MINUS_DI_Stream")]
-pub struct MinusDIStream {
+pub struct MINUS_DI_Stream {
     core: Core,
-    state: MinusDIStreamState,
+    state: MINUS_DI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MinusDIStreamState {
+struct MINUS_DI_StreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
@@ -541,7 +541,7 @@ struct MinusDIStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn minus_di_step_internal(&self, sp: &mut MinusDIStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn MINUS_DI_step_internal(&self, sp: &mut MINUS_DI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
             sp.tempReal = inHigh;
             sp.diffP = sp.tempReal - sp.prevHigh;
@@ -615,10 +615,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::minus_di_open`] (composition seam).
-    pub(crate) fn minus_di_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MINUS_DI_Open`] (composition seam).
+    pub(crate) fn MINUS_DI_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MinusDIStream, f64), RetCode> {
+    ) -> Result<(MINUS_DI_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -741,7 +741,7 @@ impl Core {
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -806,7 +806,7 @@ impl Core {
             dummyNBElement = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = MinusDIStreamState {
+            let state = MINUS_DI_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -817,7 +817,7 @@ impl Core {
                 prevMinusDM,
                 prevTR,
             };
-            Ok((MinusDIStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((MINUS_DI_Stream { core: self.clone(), state }, lastValue_outReal))
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -923,7 +923,7 @@ impl Core {
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -983,7 +983,7 @@ impl Core {
             // Process subsequent DI
             // Skip the unstable period. Note that this loop must be executed
             // at least ONCE to calculate the first DI.
-            i = (self.unstable_period[FuncUnstId::MinusDI as usize] + 1) as usize;
+            i = (self.unstable_period[FuncUnstId::MINUS_DI as usize] + 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 // Calculate the prevMinusDM
                 today += 1;
@@ -1069,7 +1069,7 @@ impl Core {
             dummyNBElement = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = MinusDIStreamState {
+            let state = MINUS_DI_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -1080,12 +1080,12 @@ impl Core {
                 prevMinusDM,
                 prevTR,
             };
-            Ok((MinusDIStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((MINUS_DI_Stream { core: self.clone(), state }, lastValue_outReal))
         }
     }
 
     /// Open a live MINUS_DI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::minus_di`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MINUS_DI`] at that bar.
     ///
     /// # Errors
     ///
@@ -1101,23 +1101,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.minus_di_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.MINUS_DI_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MINUS_DI_Open")]
-    pub fn minus_di_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(MinusDIStream, f64), RetCode> {
-        self.minus_di_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn MINUS_DI_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(MINUS_DI_Stream, f64), RetCode> {
+        self.MINUS_DI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::minus_di_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::minus_di`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MINUS_DI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MINUS_DI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MINUS_DI_OpenAndFill")]
-    pub fn minus_di_open_and_fill(
+    pub fn MINUS_DI_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MinusDIStream, RetCode> {
+    ) -> Result<MINUS_DI_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1239,7 +1239,7 @@ impl Core {
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -1307,7 +1307,7 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = MinusDIStreamState {
+            let state = MINUS_DI_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -1318,7 +1318,7 @@ impl Core {
                 prevMinusDM,
                 prevTR,
             };
-            Ok(MinusDIStream { core: self.clone(), state })
+            Ok(MINUS_DI_Stream { core: self.clone(), state })
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -1424,7 +1424,7 @@ impl Core {
             // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
             // you can comment out the following #undef/#define and rebuild the library.
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MinusDI as usize]) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::MINUS_DI as usize]) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -1484,7 +1484,7 @@ impl Core {
             // Process subsequent DI
             // Skip the unstable period. Note that this loop must be executed
             // at least ONCE to calculate the first DI.
-            i = (self.unstable_period[FuncUnstId::MinusDI as usize] + 1) as usize;
+            i = (self.unstable_period[FuncUnstId::MINUS_DI as usize] + 1) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 // Calculate the prevMinusDM
                 today += 1;
@@ -1572,7 +1572,7 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = MinusDIStreamState {
+            let state = MINUS_DI_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -1583,7 +1583,7 @@ impl Core {
                 prevMinusDM,
                 prevTR,
             };
-            Ok(MinusDIStream { core: self.clone(), state })
+            Ok(MINUS_DI_Stream { core: self.clone(), state })
         }
     }
 
@@ -1591,12 +1591,12 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MinusDIStream {
+impl MINUS_DI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MINUS_DI_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.minus_di_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.MINUS_DI_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -1614,7 +1614,7 @@ impl MinusDIStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MinusDIStream>();
+    _assert_auto::<MINUS_DI_Stream>();
 };
 
 /***************/

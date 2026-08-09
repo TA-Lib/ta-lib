@@ -87,9 +87,9 @@ pub fn param_meta(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> ParamMeta
                 #[allow(clippy::cast_possible_truncation)]
                 let default = opt.default.unwrap_or(0.0) as i32;
                 for v in &def.variants {
-                    values.push((v.value, v.short_name.clone()));
+                    values.push((v.value, v.name.clone()));
                     if v.value == default {
-                        default_variant = Some(v.short_name.clone());
+                        default_variant = Some(v.name.clone());
                     }
                 }
             }
@@ -187,8 +187,7 @@ mod tests {
             .iter()
             .map(|(n, v)| EnumVariant {
                 c_name: format!("TA_MAType_{n}"),
-                pascal_name: (*n).to_string(),
-                short_name: (*n).to_string(),
+                name: (*n).to_string(),
                 value: *v,
             })
             .collect();
@@ -197,6 +196,7 @@ mod tests {
             "MAType".to_string(),
             EnumDef {
                 name: "MAType".to_string(),
+                c_prefix: "TA_MAType_".to_string(),
                 variants,
             },
         );

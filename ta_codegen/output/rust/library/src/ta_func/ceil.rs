@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ceil`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CEIL`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn ceil_lookback(&self) -> usize {
+    pub fn CEIL_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector ceiling: element-wise ceiling of each input value (smallest integer >= input).
@@ -107,7 +107,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ceil(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.CEIL(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -115,12 +115,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::floor`]
+    /// [`Core::FLOOR`]
     ///
-    /// Further reading: [ta-lib.org/functions/ceil](https://ta-lib.org/functions/ceil/)
+    /// Further reading: [ta-lib.org/functions/CEIL](https://ta-lib.org/functions/CEIL/)
     #[doc(alias = "VectorCeil")]
     #[doc(alias = "Ceiling")]
-    pub fn ceil(
+    pub fn CEIL(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -135,7 +135,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ceil_lookback();
+        let _assertLb = self.CEIL_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -157,20 +157,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CEIL stream: one value per closed bar, bit-identical to [`Core::ceil`]
-/// over the same series. Open with [`Core::ceil_open`]; dropping the handle
+/// Live CEIL stream: one value per closed bar, bit-identical to [`Core::CEIL`]
+/// over the same series. Open with [`Core::CEIL_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CEIL_Stream")]
-pub struct CeilStream {
+pub struct CEIL_Stream {
     core: Core,
-    state: CeilStreamState,
+    state: CEIL_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CeilStreamState {
+struct CEIL_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -180,14 +180,14 @@ struct CeilStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ceil_step_internal(&self, sp: &mut CeilStreamState, inReal: f64, outReal: &mut f64) {
+    fn CEIL_step_internal(&self, sp: &mut CEIL_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).ceil();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ceil_open`] (composition seam).
-    pub(crate) fn ceil_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CEIL_Open`] (composition seam).
+    pub(crate) fn CEIL_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(CeilStream, f64), RetCode> {
+    ) -> Result<(CEIL_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -214,13 +214,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CeilStreamState {
+        let state = CEIL_StreamState {
         };
-        Ok((CeilStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CEIL_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CEIL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ceil`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CEIL`] at that bar.
     ///
     /// # Errors
     ///
@@ -232,23 +232,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ceil_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.CEIL_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CEIL_Open")]
-    pub fn ceil_open(&self, inReal: &[f64], ) -> Result<(CeilStream, f64), RetCode> {
-        self.ceil_open_internal(inReal, 0)
+    pub fn CEIL_Open(&self, inReal: &[f64], ) -> Result<(CEIL_Stream, f64), RetCode> {
+        self.CEIL_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ceil_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ceil`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CEIL_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CEIL`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CEIL_OpenAndFill")]
-    pub fn ceil_open_and_fill(
+    pub fn CEIL_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CeilStream, RetCode> {
+    ) -> Result<CEIL_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -274,21 +274,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CeilStreamState {
+        let state = CEIL_StreamState {
         };
-        Ok(CeilStream { core: self.clone(), state })
+        Ok(CEIL_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CeilStream {
+impl CEIL_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CEIL_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ceil_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.CEIL_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -306,7 +306,7 @@ impl CeilStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CeilStream>();
+    _assert_auto::<CEIL_Stream>();
 };
 
 /***************/

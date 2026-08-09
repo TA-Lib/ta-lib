@@ -56,7 +56,7 @@ public partial class Core
     *  120904 AC   Creation
     */
    /// <summary>
-   /// Number of leading input bars <c>CdlDarkCloudCover</c> consumes before it
+   /// Number of leading input bars <c>CDLDARKCLOUDCOVER</c> consumes before it
    /// can produce its first value.
    /// </summary>
    /// <remarks>
@@ -68,7 +68,7 @@ public partial class Core
    /// below close[i-1]; larger values require deeper penetration (default 0.5;
    /// minimum 0; <c>-4e37</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CdlDarkCloudCoverLookback( double optInPenetration )
+   public int CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
    {
       if( optInPenetration == TA_REAL_DEFAULT ) {
          optInPenetration = 5e-1;
@@ -81,7 +81,7 @@ public partial class Core
       return BodyLong_avgPeriod + 1 ;
 
    }
-   internal RetCode CdlDarkCloudCover( int startIdx,
+   internal RetCode CDLDARKCLOUDCOVER( int startIdx,
                                        int endIdx,
                                        double[] inOpen,
                                        double[] inHigh,
@@ -116,7 +116,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CdlDarkCloudCoverLookback(optInPenetration);
+      lookbackTotal = CDLDARKCLOUDCOVER_Lookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -175,7 +175,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlDarkCloudCover( int startIdx,
+   internal RetCode CDLDARKCLOUDCOVER( int startIdx,
                                        int endIdx,
                                        float[] inOpen,
                                        float[] inHigh,
@@ -207,7 +207,7 @@ public partial class Core
       } else if( optInPenetration < 0e0 || optInPenetration > TA_REAL_MAX ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = CdlDarkCloudCoverLookback(optInPenetration);
+      lookbackTotal = CDLDARKCLOUDCOVER_Lookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -253,7 +253,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlDarkCloudCoverLookback</c> is a
+   /// NaN. A valid range shorter than <c>CDLDARKCLOUDCOVER_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -276,7 +276,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlDarkCloudCover( int startIdx,
+   public OutRange CDLDARKCLOUDCOVER( int startIdx,
                                       int endIdx,
                                       double[] inOpen,
                                       double[] inHigh,
@@ -285,7 +285,7 @@ public partial class Core
                                       double optInPenetration,
                                       int[] outInteger )
    {
-      RetCode retCode = CdlDarkCloudCover(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDARKCLOUDCOVER", retCode);
       }
@@ -311,7 +311,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlDarkCloudCoverLookback</c> is a
+   /// NaN. A valid range shorter than <c>CDLDARKCLOUDCOVER_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -334,7 +334,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlDarkCloudCover( int startIdx,
+   public OutRange CDLDARKCLOUDCOVER( int startIdx,
                                       int endIdx,
                                       float[] inOpen,
                                       float[] inHigh,
@@ -343,7 +343,7 @@ public partial class Core
                                       double optInPenetration,
                                       int[] outInteger )
    {
-      RetCode retCode = CdlDarkCloudCover(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDARKCLOUDCOVER", retCode);
       }

@@ -59,7 +59,7 @@ public partial class Core
     *  073126 DX   Evaluate each bar's terms once via a CIRCBUF ring (PR #154).
     */
    /// <summary>
-   /// Number of leading input bars <c>UltOsc</c> consumes before it can produce
+   /// Number of leading input bars <c>ULTOSC</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -74,7 +74,7 @@ public partial class Core
    /// <param name="optInTimePeriod3">Bars for another averaging window (default 28; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int UltOscLookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   public int ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       if( optInTimePeriod1 == int.MinValue ) {
          optInTimePeriod1 = 7;
@@ -96,10 +96,10 @@ public partial class Core
        * time period, plus 1 for the True Range.
        */
       maxPeriod = Math.Max(Math.Max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
-      return SmaLookback(maxPeriod) + 1 ;
+      return SMA_Lookback(maxPeriod) + 1 ;
 
    }
-   internal RetCode UltOsc( int startIdx,
+   internal RetCode ULTOSC( int startIdx,
                             int endIdx,
                             double[] inHigh,
                             double[] inLow,
@@ -199,7 +199,7 @@ public partial class Core
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
       /* Adjust startIdx for lookback period. */
-      lookbackTotal = UltOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -340,7 +340,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode UltOsc( int startIdx,
+   internal RetCode ULTOSC( int startIdx,
                             int endIdx,
                             float[] inHigh,
                             float[] inLow,
@@ -428,7 +428,7 @@ public partial class Core
       optInTimePeriod1 = sortedPeriods[2];
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
-      lookbackTotal = UltOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -565,8 +565,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>UltOscLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ULTOSC_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -590,7 +590,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange UltOsc( int startIdx,
+   public OutRange ULTOSC( int startIdx,
                            int endIdx,
                            double[] inHigh,
                            double[] inLow,
@@ -600,7 +600,7 @@ public partial class Core
                            int optInTimePeriod3,
                            double[] outReal )
    {
-      RetCode retCode = UltOsc(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
       }
@@ -634,8 +634,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>UltOscLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>ULTOSC_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -659,7 +659,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange UltOsc( int startIdx,
+   public OutRange ULTOSC( int startIdx,
                            int endIdx,
                            float[] inHigh,
                            float[] inLow,
@@ -669,7 +669,7 @@ public partial class Core
                            int optInTimePeriod3,
                            double[] outReal )
    {
-      RetCode retCode = UltOsc(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
       }

@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#rsi} consumes before it can
+    * Number of leading input bars {@link Core#RSI} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int rsiLookback( int optInTimePeriod )
+   public int RSI_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -36,17 +36,17 @@
          return -1;
       }
       int retValue;
-      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
+      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       return retValue ;
 
    }
-   RetCode rsiInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode RSI_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -86,7 +86,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)rsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -119,7 +119,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -220,13 +220,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode rsiInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode RSI_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -252,7 +252,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = (int)rsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -272,7 +272,7 @@
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -369,7 +369,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
+    * valid range shorter than {@link Core#RSI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -387,10 +387,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cmo
-    * @see Core#stochRsi
+    * @see Core#CMO
+    * @see Core#STOCHRSI
     */
-   public OutRange rsi( int startIdx,
+   public OutRange RSI( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -398,7 +398,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rsiInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
@@ -434,7 +434,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rsiLookback} is a <b>success with no
+    * valid range shorter than {@link Core#RSI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -452,10 +452,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cmo
-    * @see Core#stochRsi
+    * @see Core#CMO
+    * @see Core#STOCHRSI
     */
-   public OutRange rsi( int startIdx,
+   public OutRange RSI( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -463,7 +463,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rsiInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("RSI", retCode);
       }
@@ -473,8 +473,8 @@
 
    /**
     * A live RSI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#rsi} over the same series.
-    * Open with {@link Core#rsiOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#RSI} over the same series.
+    * Open with {@link Core#RSI_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -485,7 +485,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class RsiStream {
+   public static final class RSI_Stream {
       final Core core;
       int optInTimePeriod;
       double prevGain;
@@ -494,10 +494,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      RsiStream( Core core ) { this.core = core; }
+      RSI_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#rsiOpenAndFill}, or
+       * The range filled by {@link Core#RSI_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -505,7 +505,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      RsiStream( RsiStream other ) {
+      RSI_Stream( RSI_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -520,7 +520,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.rsiStreamStep(this, inReal);
+         core.RSI_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -532,8 +532,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         RsiStream scratch = new RsiStream(this);
-         core.rsiStreamStep(scratch, inReal);
+         RSI_Stream scratch = new RSI_Stream(this);
+         core.RSI_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -550,11 +550,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public RsiStream copy() {
-         return new RsiStream(this);
+      public RSI_Stream copy() {
+         return new RSI_Stream(this);
       }
    }
-   void rsiStreamStep( RsiStream sp, double inReal )
+   void RSI_StreamStep( RSI_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -581,7 +581,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode rsiOpenBody( RsiStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode RSI_OpenBody( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int outIdx = 0;
       int today = 0;
@@ -611,7 +611,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < rsiLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -637,7 +637,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)rsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -656,7 +656,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -763,7 +763,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode rsiOpenAndFillBody( RsiStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode RSI_OpenAndFillBody( RSI_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -794,14 +794,14 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < rsiLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < RSI_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
          sp.prevLoss = 0.0;
          sp.prevValue = 0.0;
-         int fillLb = rsiLookback(optInTimePeriod);
+         int fillLb = RSI_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -826,7 +826,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)rsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -845,7 +845,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Rsi.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -952,11 +952,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind rsiOpen (composition seam). */
-   RsiStream rsiOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
+   RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      RsiStream sp = new RsiStream(this);
-      RetCode retCode = rsiOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      RSI_Stream sp = new RSI_Stream(this);
+      RetCode retCode = RSI_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -971,32 +971,32 @@
    /**
     * Open a live RSI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#rsi} at that bar.
-    * <p>The history must hold at least {@code rsiLookback(...) + 1} bars
+    * to {@link Core#RSI} at that bar.
+    * <p>The history must hold at least {@code RSI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public RsiStream rsiOpen( double inReal[], int optInTimePeriod )
+   public RSI_Stream RSI_Open( double inReal[], int optInTimePeriod )
    {
-      return rsiOpenInternal(inReal, 0, optInTimePeriod);
+      return RSI_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#rsiOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#rsi} over the whole history in the same single pass
+    * {@link Core#RSI_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#RSI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link RsiStream#fillRange()}.
+    * {@link RSI_Stream#fillRange()}.
     */
-   public RsiStream rsiOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public RSI_Stream RSI_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      RsiStream sp = new RsiStream(this);
+      RSI_Stream sp = new RSI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rsiOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = RSI_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

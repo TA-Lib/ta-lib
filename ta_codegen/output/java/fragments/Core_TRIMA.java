@@ -21,7 +21,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#trima} consumes before it can
+    * Number of leading input bars {@link Core#TRIMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,7 +31,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int trimaLookback( int optInTimePeriod )
+   public int TRIMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -41,13 +41,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode trimaInternal( int startIdx,
-                          int endIdx,
-                          double inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TRIMA_Internal( int startIdx,
+                           int endIdx,
+                           double inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -322,13 +322,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode trimaInternal( int startIdx,
-                          int endIdx,
-                          float inReal[],
-                          int optInTimePeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode TRIMA_Internal( int startIdx,
+                           int endIdx,
+                           float inReal[],
+                           int optInTimePeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int lookbackTotal = 0;
       double numerator = 0;
@@ -460,7 +460,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trimaLookback} is a <b>success with
+    * valid range shorter than {@link Core#TRIMA_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -478,11 +478,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#wma
-    * @see Core#movingAverage
+    * @see Core#SMA
+    * @see Core#WMA
+    * @see Core#MA
     */
-   public OutRange trima( int startIdx,
+   public OutRange TRIMA( int startIdx,
                           int endIdx,
                           double inReal[],
                           int optInTimePeriod,
@@ -490,7 +490,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIMA", retCode);
       }
@@ -516,7 +516,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trimaLookback} is a <b>success with
+    * valid range shorter than {@link Core#TRIMA_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -534,11 +534,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#wma
-    * @see Core#movingAverage
+    * @see Core#SMA
+    * @see Core#WMA
+    * @see Core#MA
     */
-   public OutRange trima( int startIdx,
+   public OutRange TRIMA( int startIdx,
                           int endIdx,
                           float inReal[],
                           int optInTimePeriod,
@@ -546,7 +546,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trimaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIMA", retCode);
       }
@@ -556,8 +556,8 @@
 
    /**
     * A live TRIMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#trima} over the same series.
-    * Open with {@link Core#trimaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TRIMA} over the same series.
+    * Open with {@link Core#TRIMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -568,7 +568,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TrimaStream {
+   public static final class TRIMA_Stream {
       final Core core;
       int optInTimePeriod;
       double numerator;
@@ -585,10 +585,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TrimaStream( Core core ) { this.core = core; }
+      TRIMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#trimaOpenAndFill}, or
+       * The range filled by {@link Core#TRIMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -596,7 +596,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TrimaStream( TrimaStream other ) {
+      TRIMA_Stream( TRIMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.numerator = other.numerator;
@@ -619,7 +619,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.trimaStreamStep(this, inReal);
+         core.TRIMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -631,8 +631,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         TrimaStream scratch = new TrimaStream(this);
-         core.trimaStreamStep(scratch, inReal);
+         TRIMA_Stream scratch = new TRIMA_Stream(this);
+         core.TRIMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -649,11 +649,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TrimaStream copy() {
-         return new TrimaStream(this);
+      public TRIMA_Stream copy() {
+         return new TRIMA_Stream(this);
       }
    }
-   void trimaStreamStep( TrimaStream sp, double inReal )
+   void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {
@@ -721,7 +721,7 @@
          }
       }
    }
-   private RetCode trimaOpenBody( TrimaStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode TRIMA_OpenBody( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -1173,7 +1173,7 @@
          return RetCode.Success;
       }
    }
-   private RetCode trimaOpenAndFillBody( TrimaStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TRIMA_OpenAndFillBody( TRIMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
@@ -1626,11 +1626,11 @@
          return RetCode.Success;
       }
    }
-   /* Internal startIdx-anchored open behind trimaOpen (composition seam). */
-   TrimaStream trimaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind TRIMA_Open (composition seam). */
+   TRIMA_Stream TRIMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TrimaStream sp = new TrimaStream(this);
-      RetCode retCode = trimaOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      TRIMA_Stream sp = new TRIMA_Stream(this);
+      RetCode retCode = TRIMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1645,32 +1645,32 @@
    /**
     * Open a live TRIMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#trima} at that bar.
-    * <p>The history must hold at least {@code trimaLookback(...) + 1} bars
+    * to {@link Core#TRIMA} at that bar.
+    * <p>The history must hold at least {@code TRIMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TrimaStream trimaOpen( double inReal[], int optInTimePeriod )
+   public TRIMA_Stream TRIMA_Open( double inReal[], int optInTimePeriod )
    {
-      return trimaOpenInternal(inReal, 0, optInTimePeriod);
+      return TRIMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#trimaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#trima} over the whole history in the same single pass
+    * {@link Core#TRIMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TRIMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TrimaStream#fillRange()}.
+    * {@link TRIMA_Stream#fillRange()}.
     */
-   public TrimaStream trimaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TRIMA_Stream TRIMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TrimaStream sp = new TrimaStream(this);
+      TRIMA_Stream sp = new TRIMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trimaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

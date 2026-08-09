@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::willr`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::WILLR`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn willr_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn WILLR_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.willr(
+    /// let ret = core.WILLR(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -145,13 +145,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::stoch`] · [`Core::stochf`] · [`Core::minmax`]
+    /// [`Core::STOCH`] · [`Core::STOCHF`] · [`Core::MINMAX`]
     ///
-    /// Further reading: [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr/)
+    /// Further reading: [ta-lib.org/functions/WILLR](https://ta-lib.org/functions/WILLR/)
     #[doc(alias = "WilliamsR")]
     #[doc(alias = "WilliamsPercentR")]
     #[doc(alias = "R")]
-    pub fn willr(
+    pub fn WILLR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -174,7 +174,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.willr_lookback(optInTimePeriod);
+        let _assertLb = self.WILLR_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -278,20 +278,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live WILLR stream: one value per closed bar, bit-identical to [`Core::willr`]
-/// over the same series. Open with [`Core::willr_open`]; dropping the handle
+/// Live WILLR stream: one value per closed bar, bit-identical to [`Core::WILLR`]
+/// over the same series. Open with [`Core::WILLR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WILLR_Stream")]
-pub struct WillrStream {
+pub struct WILLR_Stream {
     core: Core,
-    state: WillrStreamState,
+    state: WILLR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct WillrStreamState {
+struct WILLR_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -314,7 +314,7 @@ struct WillrStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn willr_step_internal(&self, sp: &mut WillrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn WILLR_step_internal(&self, sp: &mut WILLR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -374,10 +374,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::willr_open`] (composition seam).
-    pub(crate) fn willr_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::WILLR_Open`] (composition seam).
+    pub(crate) fn WILLR_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(WillrStream, f64), RetCode> {
+    ) -> Result<(WILLR_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -503,7 +503,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = WillrStreamState {
+        let state = WILLR_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -518,11 +518,11 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok((WillrStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((WILLR_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live WILLR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::willr`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::WILLR`] at that bar.
     ///
     /// # Errors
     ///
@@ -538,23 +538,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.willr_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.WILLR_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_WILLR_Open")]
-    pub fn willr_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(WillrStream, f64), RetCode> {
-        self.willr_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn WILLR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(WILLR_Stream, f64), RetCode> {
+        self.WILLR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::willr_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::willr`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::WILLR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::WILLR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_WILLR_OpenAndFill")]
-    pub fn willr_open_and_fill(
+    pub fn WILLR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<WillrStream, RetCode> {
+    ) -> Result<WILLR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -681,7 +681,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = WillrStreamState {
+        let state = WILLR_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -696,19 +696,19 @@ impl Core {
             x_inLow,
             x_inClose,
         };
-        Ok(WillrStream { core: self.clone(), state })
+        Ok(WILLR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl WillrStream {
+impl WILLR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_WILLR_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.willr_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.WILLR_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -726,7 +726,7 @@ impl WillrStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<WillrStream>();
+    _assert_auto::<WILLR_Stream>();
 };
 
 /***************/

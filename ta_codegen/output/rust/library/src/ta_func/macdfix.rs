@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::macdfix`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::MACDFIX`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -76,7 +76,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn macdfix_lookback(&self, mut optInSignalPeriod: i32) -> usize {
+    pub fn MACDFIX_Lookback(&self, mut optInSignalPeriod: i32) -> usize {
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
@@ -86,7 +86,7 @@ impl Core {
         //
         // (must also account for the initial data consume
         //  by the fix 26 period EMA).
-        return (self.ema_lookback(26) + self.ema_lookback(optInSignalPeriod)) as usize;
+        return (self.EMA_Lookback(26) + self.EMA_Lookback(optInSignalPeriod)) as usize;
     }
     /// MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the classic fixed
     /// smoothing factors 0.15 and 0.075), exposing only the signal period. Signal-line crossovers
@@ -146,7 +146,7 @@ impl Core {
     /// let mut macd_signal = vec![0.0; 252];
     /// let mut macd_hist = vec![0.0; 252];
     ///
-    /// let ret = core.macdfix(
+    /// let ret = core.MACDFIX(
     ///     0, data.len() - 1, &data, 9,
     ///     &mut out_beg, &mut out_nb, &mut macd, &mut macd_signal, &mut macd_hist,
     /// );
@@ -157,11 +157,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::macd`] · [`Core::macdext`] · [`Core::ema`] · [`Core::apo`]
+    /// [`Core::MACD`] · [`Core::MACDEXT`] · [`Core::EMA`] · [`Core::APO`]
     ///
-    /// Further reading: [ta-lib.org/functions/macdfix](https://ta-lib.org/functions/macdfix/)
+    /// Further reading: [ta-lib.org/functions/MACDFIX](https://ta-lib.org/functions/MACDFIX/)
     #[doc(alias = "MovingAverageConvergenceDivergenceFix")]
-    pub fn macdfix(
+    pub fn MACDFIX(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -174,13 +174,13 @@ impl Core {
         outMACDHist: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, macdfix_fma, macdfix_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        return ta_lib_dispatch::dispatch_fma!(self, MACDFIX_fma, MACDFIX_impl, (startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
         #[cfg(not(target_arch = "x86_64"))]
-        self.macdfix_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACDFIX_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn macdfix_fma(
+    fn MACDFIX_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -192,10 +192,10 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        self.macdfix_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACDFIX_impl(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[inline(always)]
-    fn macdfix_impl(
+    fn MACDFIX_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -221,7 +221,7 @@ impl Core {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.macdfix_lookback(optInSignalPeriod);
+        let _assertLb = self.MACDFIX_Lookback(optInSignalPeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
@@ -254,11 +254,11 @@ impl Core {
         fastK = 0.15;
         slowK = 0.075;
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(26);
+        lookbackTotal += self.EMA_Lookback(26);
         // fixed slow period
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -382,20 +382,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MACDFIX stream: one value per closed bar, bit-identical to [`Core::macdfix`]
-/// over the same series. Open with [`Core::macdfix_open`]; dropping the handle
+/// Live MACDFIX stream: one value per closed bar, bit-identical to [`Core::MACDFIX`]
+/// over the same series. Open with [`Core::MACDFIX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACDFIX_Stream")]
-pub struct MacdfixStream {
+pub struct MACDFIX_Stream {
     core: Core,
-    state: MacdfixStreamState,
+    state: MACDFIX_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MacdfixStreamState {
+struct MACDFIX_StreamState {
     optInSignalPeriod: i32,
     prevFast: f64,
     prevSlow: f64,
@@ -412,7 +412,7 @@ struct MacdfixStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn macdfix_step_internal(&self, sp: &mut MacdfixStreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn MACDFIX_step_internal(&self, sp: &mut MACDFIX_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
@@ -425,10 +425,10 @@ impl Core {
         (*outMACDHist) = macdValue - sp.prevSignal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::macdfix_open`] (composition seam).
-    pub(crate) fn macdfix_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MACDFIX_Open`] (composition seam).
+    pub(crate) fn MACDFIX_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32,
-    ) -> Result<(MacdfixStream, (f64, f64, f64)), RetCode> {
+    ) -> Result<(MACDFIX_Stream, (f64, f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -474,11 +474,11 @@ impl Core {
         fastK = 0.15;
         slowK = 0.075;
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(26);
+        lookbackTotal += self.EMA_Lookback(26);
         // fixed slow period
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -599,7 +599,7 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MacdfixStreamState {
+        let state = MACDFIX_StreamState {
             optInSignalPeriod,
             prevFast,
             prevSlow,
@@ -608,11 +608,11 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok((MacdfixStream { core: self.clone(), state }, (lastValue_outMACD, lastValue_outMACDSignal, lastValue_outMACDHist)))
+        Ok((MACDFIX_Stream { core: self.clone(), state }, (lastValue_outMACD, lastValue_outMACDSignal, lastValue_outMACDHist)))
     }
 
     /// Open a live MACDFIX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::macdfix`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MACDFIX`] at that bar.
     ///
     /// # Errors
     ///
@@ -624,7 +624,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.macdfix_open(&data, 9).expect("enough history");
+    /// let (mut s, _last) = core.MACDFIX_Open(&data, 9).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -632,17 +632,17 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACDFIX_Open")]
-    pub fn macdfix_open(&self, inReal: &[f64], optInSignalPeriod: i32) -> Result<(MacdfixStream, (f64, f64, f64)), RetCode> {
-        self.macdfix_open_internal(inReal, 0, optInSignalPeriod)
+    pub fn MACDFIX_Open(&self, inReal: &[f64], optInSignalPeriod: i32) -> Result<(MACDFIX_Stream, (f64, f64, f64)), RetCode> {
+        self.MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod)
     }
 
-    /// [`Core::macdfix_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::macdfix`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MACDFIX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MACDFIX`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MACDFIX_OpenAndFill")]
-    pub fn macdfix_open_and_fill(
+    pub fn MACDFIX_OpenAndFill(
         &self, inReal: &[f64], mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<MacdfixStream, RetCode> {
+    ) -> Result<MACDFIX_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -694,11 +694,11 @@ impl Core {
         fastK = 0.15;
         slowK = 0.075;
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(26);
+        lookbackTotal += self.EMA_Lookback(26);
         // fixed slow period
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -819,7 +819,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MacdfixStreamState {
+        let state = MACDFIX_StreamState {
             optInSignalPeriod,
             prevFast,
             prevSlow,
@@ -828,21 +828,21 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok(MacdfixStream { core: self.clone(), state })
+        Ok(MACDFIX_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MacdfixStream {
+impl MACDFIX_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MACDFIX_Update")]
     pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.macdfix_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
+        self.core.MACDFIX_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
         (outMACD, outMACDSignal, outMACDHist)
     }
 
@@ -860,7 +860,7 @@ impl MacdfixStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MacdfixStream>();
+    _assert_auto::<MACDFIX_Stream>();
 };
 
 /***************/

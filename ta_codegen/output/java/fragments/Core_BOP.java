@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#bop} consumes before it can
+    * Number of leading input bars {@link Core#BOP} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,20 +21,20 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int bopLookback( )
+   public int BOP_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode bopInternal( int startIdx,
-                        int endIdx,
-                        double inOpen[],
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode BOP_Internal( int startIdx,
+                         int endIdx,
+                         double inOpen[],
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -59,15 +59,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode bopInternal( int startIdx,
-                        int endIdx,
-                        float inOpen[],
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode BOP_Internal( int startIdx,
+                         int endIdx,
+                         float inOpen[],
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -103,7 +103,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#bopLookback} is a <b>success with no
+    * valid range shorter than {@link Core#BOP_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -122,7 +122,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange bop( int startIdx,
+   public OutRange BOP( int startIdx,
                         int endIdx,
                         double inOpen[],
                         double inHigh[],
@@ -132,7 +132,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = bopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("BOP", retCode);
       }
@@ -153,7 +153,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#bopLookback} is a <b>success with no
+    * valid range shorter than {@link Core#BOP_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -172,7 +172,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange bop( int startIdx,
+   public OutRange BOP( int startIdx,
                         int endIdx,
                         float inOpen[],
                         float inHigh[],
@@ -182,7 +182,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = bopInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BOP_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("BOP", retCode);
       }
@@ -192,8 +192,8 @@
 
    /**
     * A live BOP stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#bop} over the same series.
-    * Open with {@link Core#bopOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#BOP} over the same series.
+    * Open with {@link Core#BOP_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -204,15 +204,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class BopStream {
+   public static final class BOP_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      BopStream( Core core ) { this.core = core; }
+      BOP_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#bopOpenAndFill}, or
+       * The range filled by {@link Core#BOP_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -220,7 +220,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      BopStream( BopStream other ) {
+      BOP_Stream( BOP_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -231,7 +231,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.bopStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.BOP_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -243,8 +243,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         BopStream scratch = new BopStream(this);
-         core.bopStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         BOP_Stream scratch = new BOP_Stream(this);
+         core.BOP_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -261,11 +261,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public BopStream copy() {
-         return new BopStream(this);
+      public BOP_Stream copy() {
+         return new BOP_Stream(this);
       }
    }
-   void bopStreamStep( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void BOP_StreamStep( BOP_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       tempReal = inHigh - inLow;
@@ -275,7 +275,7 @@
          sp.cur_outReal = (inClose - inOpen) / tempReal;
       }
    }
-   private RetCode bopOpenBody( BopStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode BOP_OpenBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -307,7 +307,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode bopOpenAndFillBody( BopStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode BOP_OpenAndFillBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -340,11 +340,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind bopOpen (composition seam). */
-   BopStream bopOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind BOP_Open (composition seam). */
+   BOP_Stream BOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      BopStream sp = new BopStream(this);
-      RetCode retCode = bopOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      BOP_Stream sp = new BOP_Stream(this);
+      RetCode retCode = BOP_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -359,32 +359,32 @@
    /**
     * Open a live BOP stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#bop} at that bar.
-    * <p>The history must hold at least {@code bopLookback(...) + 1} bars
+    * to {@link Core#BOP} at that bar.
+    * <p>The history must hold at least {@code BOP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public BopStream bopOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public BOP_Stream BOP_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return bopOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#bopOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#bop} over the whole history in the same single pass
+    * {@link Core#BOP_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#BOP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link BopStream#fillRange()}.
+    * {@link BOP_Stream#fillRange()}.
     */
-   public BopStream bopOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public BOP_Stream BOP_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      BopStream sp = new BopStream(this);
+      BOP_Stream sp = new BOP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = bopOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = BOP_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

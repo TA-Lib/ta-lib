@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#pvi} consumes before it can
+    * Number of leading input bars {@link Core#PVI} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,19 +22,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int pviLookback( )
+   public int PVI_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode pviInternal( int startIdx,
-                        int endIdx,
-                        double inClose[],
-                        double inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode PVI_Internal( int startIdx,
+                         int endIdx,
+                         double inClose[],
+                         double inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -74,13 +74,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode pviInternal( int startIdx,
-                        int endIdx,
-                        float inClose[],
-                        float inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode PVI_Internal( int startIdx,
+                         int endIdx,
+                         float inClose[],
+                         float inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -132,7 +132,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#pviLookback} is a <b>success with no
+    * valid range shorter than {@link Core#PVI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -149,7 +149,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange pvi( int startIdx,
+   public OutRange PVI( int startIdx,
                         int endIdx,
                         double inClose[],
                         double inVolume[],
@@ -157,7 +157,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = pviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PVI", retCode);
       }
@@ -185,7 +185,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#pviLookback} is a <b>success with no
+    * valid range shorter than {@link Core#PVI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -202,7 +202,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange pvi( int startIdx,
+   public OutRange PVI( int startIdx,
                         int endIdx,
                         float inClose[],
                         float inVolume[],
@@ -210,7 +210,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = pviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("PVI", retCode);
       }
@@ -220,8 +220,8 @@
 
    /**
     * A live PVI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#pvi} over the same series.
-    * Open with {@link Core#pviOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#PVI} over the same series.
+    * Open with {@link Core#PVI_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -232,7 +232,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class PviStream {
+   public static final class PVI_Stream {
       final Core core;
       double prevPVI;
       double prevClose;
@@ -240,10 +240,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      PviStream( Core core ) { this.core = core; }
+      PVI_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#pviOpenAndFill}, or
+       * The range filled by {@link Core#PVI_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -251,7 +251,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      PviStream( PviStream other ) {
+      PVI_Stream( PVI_Stream other ) {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
@@ -265,7 +265,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inClose, double inVolume ) {
-         core.pviStreamStep(this, inClose, inVolume);
+         core.PVI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
 
@@ -277,8 +277,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inClose, double inVolume ) {
-         PviStream scratch = new PviStream(this);
-         core.pviStreamStep(scratch, inClose, inVolume);
+         PVI_Stream scratch = new PVI_Stream(this);
+         core.PVI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -295,11 +295,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public PviStream copy() {
-         return new PviStream(this);
+      public PVI_Stream copy() {
+         return new PVI_Stream(this);
       }
    }
-   void pviStreamStep( PviStream sp, double inClose, double inVolume )
+   void PVI_StreamStep( PVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -316,7 +316,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode pviOpenBody( PviStream sp, double inClose[], double inVolume[], int startIdx )
+   private RetCode PVI_OpenBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
    {
       int i = 0;
       int outIdx = 0;
@@ -366,7 +366,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode pviOpenAndFillBody( PviStream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode PVI_OpenAndFillBody( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -417,11 +417,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind pviOpen (composition seam). */
-   PviStream pviOpenInternal( double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
+   PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
-      PviStream sp = new PviStream(this);
-      RetCode retCode = pviOpenBody(sp, inClose, inVolume, startIdx);
+      PVI_Stream sp = new PVI_Stream(this);
+      RetCode retCode = PVI_OpenBody(sp, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -436,32 +436,32 @@
    /**
     * Open a live PVI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#pvi} at that bar.
-    * <p>The history must hold at least {@code pviLookback(...) + 1} bars
+    * to {@link Core#PVI} at that bar.
+    * <p>The history must hold at least {@code PVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public PviStream pviOpen( double inClose[], double inVolume[] )
+   public PVI_Stream PVI_Open( double inClose[], double inVolume[] )
    {
-      return pviOpenInternal(inClose, inVolume, 0);
+      return PVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
-    * {@link Core#pviOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#pvi} over the whole history in the same single pass
+    * {@link Core#PVI_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#PVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link PviStream#fillRange()}.
+    * {@link PVI_Stream#fillRange()}.
     */
-   public PviStream pviOpenAndFill( double inClose[], double inVolume[], double outReal[] )
+   public PVI_Stream PVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      PviStream sp = new PviStream(this);
+      PVI_Stream sp = new PVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = pviOpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = PVI_OpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

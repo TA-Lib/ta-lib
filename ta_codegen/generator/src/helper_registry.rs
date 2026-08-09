@@ -21,7 +21,15 @@ impl HelperRegistry {
                 if path.extension().and_then(|e| e.to_str()) == Some("c") {
                     let parsed = parse_helper_file(&path);
                     for helper in parsed {
-                        helpers.insert(helper.name.clone(), helper);
+                        // Report rather than overwrite: the loser of a silent
+                        // overwrite is decided by `read_dir` order, so the wrong
+                        // body would be inlined non-deterministically.
+                        let name = helper.name.clone();
+                        assert!(
+                            helpers.insert(name.clone(), helper).is_none(),
+                            "duplicate helper `{name}` in {}",
+                            helpers_dir.display()
+                        );
                     }
                 }
             }

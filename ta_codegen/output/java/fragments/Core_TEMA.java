@@ -21,7 +21,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#tema} consumes before it can
+    * Number of leading input bars {@link Core#TEMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,7 +31,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int temaLookback( int optInTimePeriod )
+   public int TEMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -40,17 +40,17 @@
       }
       int retValue;
       /* Get lookack for one EMA. */
-      retValue = emaLookback(optInTimePeriod);
+      retValue = EMA_Lookback(optInTimePeriod);
       return retValue * 3 ;
 
    }
-   RetCode temaInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TEMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -100,7 +100,7 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -218,13 +218,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode temaInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TEMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -249,7 +249,7 @@
       }
       outNBElement.value = 0;
       outBegIdx.value = 0;
-      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -330,8 +330,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#temaLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TEMA_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -348,11 +348,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#dema
-    * @see Core#t3
+    * @see Core#EMA
+    * @see Core#DEMA
+    * @see Core#T3
     */
-   public OutRange tema( int startIdx,
+   public OutRange TEMA( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
@@ -360,7 +360,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = temaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TEMA", retCode);
       }
@@ -384,8 +384,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#temaLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TEMA_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -402,11 +402,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#dema
-    * @see Core#t3
+    * @see Core#EMA
+    * @see Core#DEMA
+    * @see Core#T3
     */
-   public OutRange tema( int startIdx,
+   public OutRange TEMA( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
@@ -414,7 +414,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = temaInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TEMA", retCode);
       }
@@ -424,8 +424,8 @@
 
    /**
     * A live TEMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#tema} over the same series.
-    * Open with {@link Core#temaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TEMA} over the same series.
+    * Open with {@link Core#TEMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -436,7 +436,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TemaStream {
+   public static final class TEMA_Stream {
       final Core core;
       int optInTimePeriod;
       double prevEMA1;
@@ -446,10 +446,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TemaStream( Core core ) { this.core = core; }
+      TEMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#temaOpenAndFill}, or
+       * The range filled by {@link Core#TEMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -457,7 +457,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TemaStream( TemaStream other ) {
+      TEMA_Stream( TEMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -473,7 +473,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.temaStreamStep(this, inReal);
+         core.TEMA_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -485,8 +485,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         TemaStream scratch = new TemaStream(this);
-         core.temaStreamStep(scratch, inReal);
+         TEMA_Stream scratch = new TEMA_Stream(this);
+         core.TEMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -503,11 +503,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TemaStream copy() {
-         return new TemaStream(this);
+      public TEMA_Stream copy() {
+         return new TEMA_Stream(this);
       }
    }
-   void temaStreamStep( TemaStream sp, double inReal )
+   void TEMA_StreamStep( TEMA_Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -518,7 +518,7 @@
       sp.prevEMA3 = Math.fma(sp.prevEMA2 - sp.prevEMA3, sp.optInK_1, sp.prevEMA3);
       sp.cur_outReal = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
    }
-   private RetCode temaOpenBody( TemaStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode TEMA_OpenBody( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -547,7 +547,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < temaLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -585,7 +585,7 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -701,7 +701,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode temaOpenAndFillBody( TemaStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TEMA_OpenAndFillBody( TEMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -731,7 +731,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < temaLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < TEMA_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -739,7 +739,7 @@
          sp.prevEMA2 = 0.0;
          sp.prevEMA3 = 0.0;
          sp.optInK_1 = 0.0;
-         int fillLb = temaLookback(optInTimePeriod);
+         int fillLb = TEMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -775,7 +775,7 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -891,11 +891,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind temaOpen (composition seam). */
-   TemaStream temaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind TEMA_Open (composition seam). */
+   TEMA_Stream TEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TemaStream sp = new TemaStream(this);
-      RetCode retCode = temaOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      TEMA_Stream sp = new TEMA_Stream(this);
+      RetCode retCode = TEMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -910,32 +910,32 @@
    /**
     * Open a live TEMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#tema} at that bar.
-    * <p>The history must hold at least {@code temaLookback(...) + 1} bars
+    * to {@link Core#TEMA} at that bar.
+    * <p>The history must hold at least {@code TEMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TemaStream temaOpen( double inReal[], int optInTimePeriod )
+   public TEMA_Stream TEMA_Open( double inReal[], int optInTimePeriod )
    {
-      return temaOpenInternal(inReal, 0, optInTimePeriod);
+      return TEMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#temaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#tema} over the whole history in the same single pass
+    * {@link Core#TEMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TEMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TemaStream#fillRange()}.
+    * {@link TEMA_Stream#fillRange()}.
     */
-   public TemaStream temaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TEMA_Stream TEMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TemaStream sp = new TemaStream(this);
+      TEMA_Stream sp = new TEMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = temaOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TEMA_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

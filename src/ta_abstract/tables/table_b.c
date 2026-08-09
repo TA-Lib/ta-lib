@@ -121,7 +121,6 @@ static const TA_OptInputParameterInfo *TA_BBANDS_OptInputs[] =
 DEF_FUNCTION( BBANDS,
               TA_GroupId_OverlapStudies,
               "Bollinger Bands",
-              "Bbands",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* BBANDS END */
@@ -148,7 +147,6 @@ static const TA_OptInputParameterInfo *TA_BETA_OptInputs[] =
 DEF_FUNCTION( BETA,
               TA_GroupId_Statistic,
               "Beta",
-              "Beta",
               TA_FUNC_FLG_STREAM
              );
 /* BETA END */
@@ -172,7 +170,6 @@ static const TA_OptInputParameterInfo *TA_BOP_OptInputs[] =
 DEF_FUNCTION( BOP,
               TA_GroupId_MomentumIndicators,
               "Balance Of Power",
-              "Bop",
               TA_FUNC_FLG_STREAM
              );
 /* BOP END */

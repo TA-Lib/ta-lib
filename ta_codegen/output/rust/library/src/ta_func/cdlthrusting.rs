@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlthrusting`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLTHRUSTING`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlthrusting_lookback(&self) -> usize {
+    pub fn CDLTHRUSTING_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -135,7 +135,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlthrusting(
+    /// let ret = core.CDLTHRUSTING(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -145,13 +145,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlinneck`] · [`Core::cdlonneck`] · [`Core::cdlpiercing`] · CDLMEETINGLINES
+    /// [`Core::CDLINNECK`] · [`Core::CDLONNECK`] · [`Core::CDLPIERCING`] · CDLMEETINGLINES
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlthrusting](https://ta-lib.org/functions/cdlthrusting/)
+    /// [ta-lib.org/functions/CDLTHRUSTING](https://ta-lib.org/functions/CDLTHRUSTING/)
     #[doc(alias = "ThrustingPattern")]
     #[doc(alias = "ThrustingLine")]
-    pub fn cdlthrusting(
+    pub fn CDLTHRUSTING(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,13 +164,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cdlthrusting_fma, cdlthrusting_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, CDLTHRUSTING_fma, CDLTHRUSTING_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cdlthrusting_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.CDLTHRUSTING_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn cdlthrusting_fma(
+    fn CDLTHRUSTING_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -182,10 +182,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.cdlthrusting_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
+        self.CDLTHRUSTING_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn cdlthrusting_impl(
+    fn CDLTHRUSTING_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -203,7 +203,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlthrusting_lookback();
+        let _assertLb = self.CDLTHRUSTING_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -232,7 +232,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlthrusting_lookback();
+        lookbackTotal = self.CDLTHRUSTING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -393,20 +393,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLTHRUSTING stream: one value per closed bar, bit-identical to [`Core::cdlthrusting`]
-/// over the same series. Open with [`Core::cdlthrusting_open`]; dropping the handle
+/// Live CDLTHRUSTING stream: one value per closed bar, bit-identical to [`Core::CDLTHRUSTING`]
+/// over the same series. Open with [`Core::CDLTHRUSTING_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLTHRUSTING_Stream")]
-pub struct CdlthrustingStream {
+pub struct CDLTHRUSTING_Stream {
     core: Core,
-    state: CdlthrustingStreamState,
+    state: CDLTHRUSTING_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlthrustingStreamState {
+struct CDLTHRUSTING_StreamState {
     EqualPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -436,7 +436,7 @@ struct CdlthrustingStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlthrusting_step_internal(&self, sp: &mut CdlthrustingStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLTHRUSTING_step_internal(&self, sp: &mut CDLTHRUSTING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -554,10 +554,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlthrusting_open`] (composition seam).
-    pub(crate) fn cdlthrusting_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLTHRUSTING_Open`] (composition seam).
+    pub(crate) fn CDLTHRUSTING_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlthrustingStream, i32), RetCode> {
+    ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -591,7 +591,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlthrusting_lookback();
+        lookbackTotal = self.CDLTHRUSTING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -823,7 +823,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlthrustingStreamState {
+        let state = CDLTHRUSTING_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -845,11 +845,11 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok((CdlthrustingStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLTHRUSTING_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLTHRUSTING stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlthrusting`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLTHRUSTING`] at that bar.
     ///
     /// # Errors
     ///
@@ -868,23 +868,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlthrusting_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLTHRUSTING_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLTHRUSTING_Open")]
-    pub fn cdlthrusting_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlthrustingStream, i32), RetCode> {
-        self.cdlthrusting_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLTHRUSTING_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
+        self.CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlthrusting_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlthrusting`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLTHRUSTING_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLTHRUSTING`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLTHRUSTING_OpenAndFill")]
-    pub fn cdlthrusting_open_and_fill(
+    pub fn CDLTHRUSTING_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlthrustingStream, RetCode> {
+    ) -> Result<CDLTHRUSTING_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -917,7 +917,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlthrusting_lookback();
+        lookbackTotal = self.CDLTHRUSTING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1151,7 +1151,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlthrustingStreamState {
+        let state = CDLTHRUSTING_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1173,19 +1173,19 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok(CdlthrustingStream { core: self.clone(), state })
+        Ok(CDLTHRUSTING_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlthrustingStream {
+impl CDLTHRUSTING_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLTHRUSTING_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlthrusting_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLTHRUSTING_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1203,7 +1203,7 @@ impl CdlthrustingStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlthrustingStream>();
+    _assert_auto::<CDLTHRUSTING_Stream>();
 };
 
 /***************/

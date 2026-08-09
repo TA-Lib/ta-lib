@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::macd`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MACD`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -81,7 +81,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn macd_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
+    pub fn MACD_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -110,7 +110,7 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
         }
-        return (self.ema_lookback(optInSlowPeriod) + self.ema_lookback(optInSignalPeriod)) as usize;
+        return (self.EMA_Lookback(optInSlowPeriod) + self.EMA_Lookback(optInSignalPeriod)) as usize;
     }
     /// Moving Average Convergence/Divergence: the difference between a fast and a slow EMA of the
     /// input, plus an EMA-smoothed signal line and their histogram. MACD crossing its signal line
@@ -172,7 +172,7 @@ impl Core {
     /// let mut macd_signal = vec![0.0; 252];
     /// let mut macd_hist = vec![0.0; 252];
     ///
-    /// let ret = core.macd(
+    /// let ret = core.MACD(
     ///     0, data.len() - 1, &data, 12, 26, 9,
     ///     &mut out_beg, &mut out_nb, &mut macd, &mut macd_signal, &mut macd_hist,
     /// );
@@ -183,15 +183,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::macdext`] · [`Core::macdfix`] · [`Core::ema`] · [`Core::apo`]
+    /// [`Core::MACDEXT`] · [`Core::MACDFIX`] · [`Core::EMA`] · [`Core::APO`]
     ///
     /// # References
     ///
     /// * Gerald Appel, *Stock Market Trading Systems*, Traders Pr (ISBN 0934380163)
     ///
-    /// Further reading: [ta-lib.org/functions/macd](https://ta-lib.org/functions/macd/)
+    /// Further reading: [ta-lib.org/functions/MACD](https://ta-lib.org/functions/MACD/)
     #[doc(alias = "movingaverageconvergencedivergence")]
-    pub fn macd(
+    pub fn MACD(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -206,13 +206,13 @@ impl Core {
         outMACDHist: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, macd_fma, macd_impl, (startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
+        return ta_lib_dispatch::dispatch_fma!(self, MACD_fma, MACD_impl, (startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist));
         #[cfg(not(target_arch = "x86_64"))]
-        self.macd_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACD_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn macd_fma(
+    fn MACD_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -226,10 +226,10 @@ impl Core {
         outMACDSignal: &mut [f64],
         outMACDHist: &mut [f64],
     ) -> RetCode {
-        self.macd_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
+        self.MACD_impl(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist)
     }
     #[inline(always)]
-    fn macd_impl(
+    fn MACD_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -267,7 +267,7 @@ impl Core {
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.macd_lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+        let _assertLb = self.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMACD.len());
@@ -313,11 +313,11 @@ impl Core {
             fastK = 2.0 / ((optInFastPeriod + 1) as f64);
         }
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod);
+        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -440,20 +440,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MACD stream: one value per closed bar, bit-identical to [`Core::macd`]
-/// over the same series. Open with [`Core::macd_open`]; dropping the handle
+/// Live MACD stream: one value per closed bar, bit-identical to [`Core::MACD`]
+/// over the same series. Open with [`Core::MACD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MACD_Stream")]
-pub struct MacdStream {
+pub struct MACD_Stream {
     core: Core,
-    state: MacdStreamState,
+    state: MACD_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MacdStreamState {
+struct MACD_StreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInSignalPeriod: i32,
@@ -472,7 +472,7 @@ struct MacdStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn macd_step_internal(&self, sp: &mut MacdStreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
+    fn MACD_step_internal(&self, sp: &mut MACD_StreamState, inReal: f64, outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64) {
         let mut macdValue: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inReal;
@@ -485,10 +485,10 @@ impl Core {
         (*outMACDHist) = macdValue - sp.prevSignal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::macd_open`] (composition seam).
-    pub(crate) fn macd_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MACD_Open`] (composition seam).
+    pub(crate) fn MACD_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
-    ) -> Result<(MacdStream, (f64, f64, f64)), RetCode> {
+    ) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -557,11 +557,11 @@ impl Core {
             fastK = 2.0 / ((optInFastPeriod + 1) as f64);
         }
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod);
+        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -681,7 +681,7 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MacdStreamState {
+        let state = MACD_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInSignalPeriod,
@@ -692,11 +692,11 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok((MacdStream { core: self.clone(), state }, (lastValue_outMACD, lastValue_outMACDSignal, lastValue_outMACDHist)))
+        Ok((MACD_Stream { core: self.clone(), state }, (lastValue_outMACD, lastValue_outMACDSignal, lastValue_outMACDHist)))
     }
 
     /// Open a live MACD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::macd`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MACD`] at that bar.
     ///
     /// # Errors
     ///
@@ -708,7 +708,7 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.macd_open(&data, 12, 26, 9).expect("enough history");
+    /// let (mut s, _last) = core.MACD_Open(&data, 12, 26, 9).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -716,17 +716,17 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACD_Open")]
-    pub fn macd_open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MacdStream, (f64, f64, f64)), RetCode> {
-        self.macd_open_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
+    pub fn MACD_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+        self.MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
     }
 
-    /// [`Core::macd_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::macd`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MACD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MACD`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MACD_OpenAndFill")]
-    pub fn macd_open_and_fill(
+    pub fn MACD_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<MacdStream, RetCode> {
+    ) -> Result<MACD_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -801,11 +801,11 @@ impl Core {
             fastK = 2.0 / ((optInFastPeriod + 1) as f64);
         }
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.ema_lookback(optInSignalPeriod);
+        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
         // enough initial data.
         lookbackTotal = lookbackSignal;
-        lookbackTotal += self.ema_lookback(optInSlowPeriod);
+        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -925,7 +925,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = MacdStreamState {
+        let state = MACD_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInSignalPeriod,
@@ -936,21 +936,21 @@ impl Core {
             fastK,
             signalK,
         };
-        Ok(MacdStream { core: self.clone(), state })
+        Ok(MACD_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MacdStream {
+impl MACD_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MACD_Update")]
     pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {
         let mut outMACD: f64 = 0.0_f64;
         let mut outMACDSignal: f64 = 0.0_f64;
         let mut outMACDHist: f64 = 0.0_f64;
-        self.core.macd_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
+        self.core.MACD_step_internal(&mut self.state, inReal, &mut outMACD, &mut outMACDSignal, &mut outMACDHist);
         (outMACD, outMACDSignal, outMACDHist)
     }
 
@@ -968,7 +968,7 @@ impl MacdStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MacdStream>();
+    _assert_auto::<MACD_Stream>();
 };
 
 /***************/

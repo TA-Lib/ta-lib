@@ -1,5 +1,4 @@
 name: CDLHAMMER
-camel_case: CdlHammer
 group: Pattern Recognition
 hint: Hammer
 flags: [candlestick, stream]

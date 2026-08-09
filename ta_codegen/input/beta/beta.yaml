@@ -1,5 +1,4 @@
 name: BETA
-camel_case: Beta
 group: Statistic Functions
 hint: Beta
 flags: [stream]

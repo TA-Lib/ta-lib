@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlclosingmarubozu`]: the number of leading input values
+    /// Lookback period for [`Core::CDLCLOSINGMARUBOZU`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlclosingmarubozu_lookback(&self) -> usize {
+    pub fn CDLCLOSINGMARUBOZU_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlclosingmarubozu(
+    /// let ret = core.CDLCLOSINGMARUBOZU(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -144,12 +144,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlmarubozu`] · [`Core::cdllongline`] · [`Core::cdlbelthold`]
+    /// [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`] · [`Core::CDLBELTHOLD`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlclosingmarubozu](https://ta-lib.org/functions/cdlclosingmarubozu/)
+    /// [ta-lib.org/functions/CDLCLOSINGMARUBOZU](https://ta-lib.org/functions/CDLCLOSINGMARUBOZU/)
     #[doc(alias = "ClosingMarubozu")]
-    pub fn cdlclosingmarubozu(
+    pub fn CDLCLOSINGMARUBOZU(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,7 +167,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlclosingmarubozu_lookback();
+        let _assertLb = self.CDLCLOSINGMARUBOZU_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -196,7 +196,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlclosingmarubozu_lookback();
+        lookbackTotal = self.CDLCLOSINGMARUBOZU_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -348,20 +348,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLCLOSINGMARUBOZU stream: one value per closed bar, bit-identical to [`Core::cdlclosingmarubozu`]
-/// over the same series. Open with [`Core::cdlclosingmarubozu_open`]; dropping the handle
+/// Live CDLCLOSINGMARUBOZU stream: one value per closed bar, bit-identical to [`Core::CDLCLOSINGMARUBOZU`]
+/// over the same series. Open with [`Core::CDLCLOSINGMARUBOZU_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLCLOSINGMARUBOZU_Stream")]
-pub struct CdlclosingmarubozuStream {
+pub struct CDLCLOSINGMARUBOZU_Stream {
     core: Core,
-    state: CdlclosingmarubozuStreamState,
+    state: CDLCLOSINGMARUBOZU_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlclosingmarubozuStreamState {
+struct CDLCLOSINGMARUBOZU_StreamState {
     BodyLongPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: f64,
     ringPos_BodyLongTrailingIdx: usize,
@@ -385,7 +385,7 @@ struct CdlclosingmarubozuStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlclosingmarubozu_step_internal(&self, sp: &mut CdlclosingmarubozuStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLCLOSINGMARUBOZU_step_internal(&self, sp: &mut CDLCLOSINGMARUBOZU_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -499,10 +499,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlclosingmarubozu_open`] (composition seam).
-    pub(crate) fn cdlclosingmarubozu_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLCLOSINGMARUBOZU_Open`] (composition seam).
+    pub(crate) fn CDLCLOSINGMARUBOZU_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlclosingmarubozuStream, i32), RetCode> {
+    ) -> Result<(CDLCLOSINGMARUBOZU_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -536,7 +536,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlclosingmarubozu_lookback();
+        lookbackTotal = self.CDLCLOSINGMARUBOZU_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -717,7 +717,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdlclosingmarubozuStreamState {
+        let state = CDLCLOSINGMARUBOZU_StreamState {
             BodyLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
             ringPos_BodyLongTrailingIdx: 0_usize,
@@ -733,11 +733,11 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok((CdlclosingmarubozuStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLCLOSINGMARUBOZU_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLCLOSINGMARUBOZU stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlclosingmarubozu`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLCLOSINGMARUBOZU`] at that bar.
     ///
     /// # Errors
     ///
@@ -756,23 +756,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlclosingmarubozu_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLCLOSINGMARUBOZU_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLCLOSINGMARUBOZU_Open")]
-    pub fn cdlclosingmarubozu_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlclosingmarubozuStream, i32), RetCode> {
-        self.cdlclosingmarubozu_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLCLOSINGMARUBOZU_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLCLOSINGMARUBOZU_Stream, i32), RetCode> {
+        self.CDLCLOSINGMARUBOZU_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlclosingmarubozu_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlclosingmarubozu`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLCLOSINGMARUBOZU_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLCLOSINGMARUBOZU`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLCLOSINGMARUBOZU_OpenAndFill")]
-    pub fn cdlclosingmarubozu_open_and_fill(
+    pub fn CDLCLOSINGMARUBOZU_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlclosingmarubozuStream, RetCode> {
+    ) -> Result<CDLCLOSINGMARUBOZU_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -805,7 +805,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlclosingmarubozu_lookback();
+        lookbackTotal = self.CDLCLOSINGMARUBOZU_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -988,7 +988,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdlclosingmarubozuStreamState {
+        let state = CDLCLOSINGMARUBOZU_StreamState {
             BodyLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
             ringPos_BodyLongTrailingIdx: 0_usize,
@@ -1004,19 +1004,19 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok(CdlclosingmarubozuStream { core: self.clone(), state })
+        Ok(CDLCLOSINGMARUBOZU_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlclosingmarubozuStream {
+impl CDLCLOSINGMARUBOZU_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLCLOSINGMARUBOZU_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlclosingmarubozu_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLCLOSINGMARUBOZU_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1034,7 +1034,7 @@ impl CdlclosingmarubozuStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlclosingmarubozuStream>();
+    _assert_auto::<CDLCLOSINGMARUBOZU_Stream>();
 };
 
 /***************/

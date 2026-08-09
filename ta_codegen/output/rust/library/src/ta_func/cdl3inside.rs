@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdl3inside`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::CDL3INSIDE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn cdl3inside_lookback(&self) -> usize {
+    pub fn CDL3INSIDE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -135,7 +135,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdl3inside(
+    /// let ret = core.CDL3INSIDE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -145,14 +145,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlharami`] · [`Core::cdl3outside`] · [`Core::cdlengulfing`]
+    /// [`Core::CDLHARAMI`] · [`Core::CDL3OUTSIDE`] · [`Core::CDLENGULFING`]
     ///
-    /// Further reading: [ta-lib.org/functions/cdl3inside](https://ta-lib.org/functions/cdl3inside/)
+    /// Further reading: [ta-lib.org/functions/CDL3INSIDE](https://ta-lib.org/functions/CDL3INSIDE/)
     #[doc(alias = "ThreeInsideUpDown")]
     #[doc(alias = "ThreeInside")]
     #[doc(alias = "ThreeInsideUp")]
     #[doc(alias = "ThreeInsideDown")]
-    pub fn cdl3inside(
+    pub fn CDL3INSIDE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -170,7 +170,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdl3inside_lookback();
+        let _assertLb = self.CDL3INSIDE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -199,7 +199,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3inside_lookback();
+        lookbackTotal = self.CDL3INSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -358,20 +358,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3INSIDE stream: one value per closed bar, bit-identical to [`Core::cdl3inside`]
-/// over the same series. Open with [`Core::cdl3inside_open`]; dropping the handle
+/// Live CDL3INSIDE stream: one value per closed bar, bit-identical to [`Core::CDL3INSIDE`]
+/// over the same series. Open with [`Core::CDL3INSIDE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL3INSIDE_Stream")]
-pub struct Cdl3insideStream {
+pub struct CDL3INSIDE_Stream {
     core: Core,
-    state: Cdl3insideStreamState,
+    state: CDL3INSIDE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdl3insideStreamState {
+struct CDL3INSIDE_StreamState {
     BodyShortPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -403,7 +403,7 @@ struct Cdl3insideStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdl3inside_step_internal(&self, sp: &mut Cdl3insideStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3INSIDE_step_internal(&self, sp: &mut CDL3INSIDE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -528,10 +528,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdl3inside_open`] (composition seam).
-    pub(crate) fn cdl3inside_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDL3INSIDE_Open`] (composition seam).
+    pub(crate) fn CDL3INSIDE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdl3insideStream, i32), RetCode> {
+    ) -> Result<(CDL3INSIDE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -565,7 +565,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3inside_lookback();
+        lookbackTotal = self.CDL3INSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -753,7 +753,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = Cdl3insideStreamState {
+        let state = CDL3INSIDE_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -777,11 +777,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((Cdl3insideStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDL3INSIDE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDL3INSIDE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdl3inside`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDL3INSIDE`] at that bar.
     ///
     /// # Errors
     ///
@@ -800,23 +800,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdl3inside_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDL3INSIDE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDL3INSIDE_Open")]
-    pub fn cdl3inside_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdl3insideStream, i32), RetCode> {
-        self.cdl3inside_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDL3INSIDE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3INSIDE_Stream, i32), RetCode> {
+        self.CDL3INSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdl3inside_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdl3inside`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDL3INSIDE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDL3INSIDE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDL3INSIDE_OpenAndFill")]
-    pub fn cdl3inside_open_and_fill(
+    pub fn CDL3INSIDE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdl3insideStream, RetCode> {
+    ) -> Result<CDL3INSIDE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -849,7 +849,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3inside_lookback();
+        lookbackTotal = self.CDL3INSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1039,7 +1039,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = Cdl3insideStreamState {
+        let state = CDL3INSIDE_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1063,19 +1063,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(Cdl3insideStream { core: self.clone(), state })
+        Ok(CDL3INSIDE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdl3insideStream {
+impl CDL3INSIDE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDL3INSIDE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdl3inside_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDL3INSIDE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1093,7 +1093,7 @@ impl Cdl3insideStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdl3insideStream>();
+    _assert_auto::<CDL3INSIDE_Stream>();
 };
 
 /***************/

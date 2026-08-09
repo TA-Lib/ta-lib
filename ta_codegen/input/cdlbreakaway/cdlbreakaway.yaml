@@ -1,5 +1,4 @@
 name: CDLBREAKAWAY
-camel_case: CdlBreakaway
 group: Pattern Recognition
 hint: Breakaway
 flags: [candlestick, stream]

@@ -71,7 +71,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::stochf`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::STOCHF`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -86,7 +86,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn stochf_lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32) -> usize {
+    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32) -> usize {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -104,7 +104,7 @@ impl Core {
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
         // Add the smoothing being done for Fast-D
-        retValue += self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        retValue += self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
         return retValue;
     }
     /// Fast Stochastic Oscillator: the raw %K line and its moving-average-smoothed %D line. Unlike
@@ -172,7 +172,7 @@ impl Core {
     /// let mut fast_k = vec![0.0; 252];
     /// let mut fast_d = vec![0.0; 252];
     ///
-    /// let ret = core.stochf(
+    /// let ret = core.STOCHF(
     ///     0, high.len() - 1, &high, &low, &close, 5, 3, 0,
     ///     &mut out_beg, &mut out_nb, &mut fast_k, &mut fast_d,
     /// );
@@ -183,12 +183,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::stoch`] · [`Core::stochrsi`] · [`Core::ma`]
+    /// [`Core::STOCH`] · [`Core::STOCHRSI`] · [`Core::MA`]
     ///
-    /// Further reading: [ta-lib.org/functions/stochf](https://ta-lib.org/functions/stochf/)
+    /// Further reading: [ta-lib.org/functions/STOCHF](https://ta-lib.org/functions/STOCHF/)
     #[doc(alias = "StochasticFast")]
     #[doc(alias = "FastStochasticOscillator")]
-    pub fn stochf(
+    pub fn STOCHF(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -225,7 +225,7 @@ impl Core {
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.stochf_lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+        let _assertLb = self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -280,7 +280,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -386,7 +386,7 @@ impl Core {
         }
         // Fast-K calculation completed. This K calculation is returned
         // to the caller. It is smoothed to become Fast-D.
-        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
+        retCode = self.MA(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastD);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -424,20 +424,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::stochf`]
-/// over the same series. Open with [`Core::stochf_open`]; dropping the handle
+/// Live STOCHF stream: one value per closed bar, bit-identical to [`Core::STOCHF`]
+/// over the same series. Open with [`Core::STOCHF_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCHF_Stream")]
-pub struct StochfStream {
+pub struct STOCHF_Stream {
     core: Core,
-    state: StochfStreamState,
+    state: STOCHF_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct StochfStreamState {
+struct STOCHF_StreamState {
     optInFastK_Period: i32,
     optInFastD_Period: i32,
     optInFastD_MAType: i32,
@@ -453,7 +453,7 @@ struct StochfStreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
-    sub0: MaStream,
+    sub0: MA_Stream,
 }
 
 #[allow(non_snake_case)]
@@ -463,7 +463,7 @@ struct StochfStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn stochf_step_internal(&self, sp: &mut StochfStreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) {
+    fn STOCHF_step_internal(&self, sp: &mut STOCHF_StreamState, inHigh: f64, inLow: f64, inClose: f64, outFastK: &mut f64, outFastD: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
@@ -533,10 +533,10 @@ impl Core {
         (*outFastD) = cur_outFastD;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::stochf_open`] (composition seam).
-    pub(crate) fn stochf_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::STOCHF_Open`] (composition seam).
+    pub(crate) fn STOCHF_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32,
-    ) -> Result<(StochfStream, (f64, f64)), RetCode> {
+    ) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -616,7 +616,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -724,8 +724,8 @@ impl Core {
         // to the caller. It is smoothed to become Fast-D.
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
-        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.MA(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -779,7 +779,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = StochfStreamState {
+        let state = STOCHF_StreamState {
             optInFastK_Period,
             optInFastD_Period,
             optInFastD_MAType,
@@ -797,11 +797,11 @@ impl Core {
             x_inClose,
             sub0,
         };
-        Ok((StochfStream { core: self.clone(), state }, (sc_outFastK[*outNBElement - 1], sc_outFastD[*outNBElement - 1])))
+        Ok((STOCHF_Stream { core: self.clone(), state }, (sc_outFastK[*outNBElement - 1], sc_outFastD[*outNBElement - 1])))
     }
 
     /// Open a live STOCHF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::stochf`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::STOCHF`] at that bar.
     ///
     /// # Errors
     ///
@@ -817,24 +817,24 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.stochf_open(&high, &low, &close, 5, 3, 0).expect("enough history");
+    /// let (mut s, _last) = core.STOCHF_Open(&high, &low, &close, 5, 3, 0).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHF_Open")]
-    pub fn stochf_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(StochfStream, (f64, f64)), RetCode> {
-        self.stochf_open_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
+    pub fn STOCHF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
+        self.STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
-    /// [`Core::stochf_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::stochf`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::STOCHF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::STOCHF`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCHF_OpenAndFill")]
-    pub fn stochf_open_and_fill(
+    pub fn STOCHF_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
-    ) -> Result<StochfStream, RetCode> {
+    ) -> Result<STOCHF_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -911,7 +911,7 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackFastD = self.ma_lookback(optInFastD_Period, optInFastD_MAType);
+        lookbackFastD = self.MA_Lookback(optInFastD_Period, optInFastD_MAType);
         lookbackTotal = lookbackK + lookbackFastD;
         // Move up the start index if there is not
         // enough initial data.
@@ -1019,8 +1019,8 @@ impl Core {
         // to the caller. It is smoothed to become Fast-D.
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
-        retCode = self.ma(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
+        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInFastD_Period, optInFastD_MAType)?;
+        retCode = self.MA(0, outIdx - 1, &tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, &mut sc_outFastD[..]);
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -1074,7 +1074,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = StochfStreamState {
+        let state = STOCHF_StreamState {
             optInFastK_Period,
             optInFastD_Period,
             optInFastD_MAType,
@@ -1094,20 +1094,20 @@ impl Core {
         };
         outFastK[..*outNBElement].copy_from_slice(&sc_outFastK[..*outNBElement]);
         outFastD[..*outNBElement].copy_from_slice(&sc_outFastD[..*outNBElement]);
-        Ok(StochfStream { core: self.clone(), state })
+        Ok(STOCHF_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl StochfStream {
+impl STOCHF_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_STOCHF_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64) {
         let mut outFastK: f64 = 0.0_f64;
         let mut outFastD: f64 = 0.0_f64;
-        self.core.stochf_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD);
+        self.core.STOCHF_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outFastK, &mut outFastD);
         (outFastK, outFastD)
     }
 
@@ -1125,7 +1125,7 @@ impl StochfStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<StochfStream>();
+    _assert_auto::<STOCHF_Stream>();
 };
 
 /***************/

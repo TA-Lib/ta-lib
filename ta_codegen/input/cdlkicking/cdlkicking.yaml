@@ -1,5 +1,4 @@
 name: CDLKICKING
-camel_case: CdlKicking
 group: Pattern Recognition
 hint: Kicking
 flags: [candlestick, stream]

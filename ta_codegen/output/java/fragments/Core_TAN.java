@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#tan} consumes before it can
+    * Number of leading input bars {@link Core#TAN} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int tanLookback( )
+   public int TAN_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode tanInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode TAN_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode tanInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode TAN_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,7 +79,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#tanLookback} is a <b>success with no
+    * valid range shorter than {@link Core#TAN_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -95,19 +95,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atan
-    * @see Core#sin
-    * @see Core#cos
-    * @see Core#tanh
+    * @see Core#ATAN
+    * @see Core#SIN
+    * @see Core#COS
+    * @see Core#TANH
     */
-   public OutRange tan( int startIdx,
+   public OutRange TAN( int startIdx,
                         int endIdx,
                         double inReal[],
                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TAN", retCode);
       }
@@ -126,7 +126,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#tanLookback} is a <b>success with no
+    * valid range shorter than {@link Core#TAN_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -142,19 +142,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atan
-    * @see Core#sin
-    * @see Core#cos
-    * @see Core#tanh
+    * @see Core#ATAN
+    * @see Core#SIN
+    * @see Core#COS
+    * @see Core#TANH
     */
-   public OutRange tan( int startIdx,
+   public OutRange TAN( int startIdx,
                         int endIdx,
                         float inReal[],
                         double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TAN", retCode);
       }
@@ -164,8 +164,8 @@
 
    /**
     * A live TAN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#tan} over the same series.
-    * Open with {@link Core#tanOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TAN} over the same series.
+    * Open with {@link Core#TAN_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -176,15 +176,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TanStream {
+   public static final class TAN_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TanStream( Core core ) { this.core = core; }
+      TAN_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#tanOpenAndFill}, or
+       * The range filled by {@link Core#TAN_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -192,7 +192,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TanStream( TanStream other ) {
+      TAN_Stream( TAN_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -203,7 +203,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.tanStreamStep(this, inReal);
+         core.TAN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -215,8 +215,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         TanStream scratch = new TanStream(this);
-         core.tanStreamStep(scratch, inReal);
+         TAN_Stream scratch = new TAN_Stream(this);
+         core.TAN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -233,15 +233,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TanStream copy() {
-         return new TanStream(this);
+      public TAN_Stream copy() {
+         return new TAN_Stream(this);
       }
    }
-   void tanStreamStep( TanStream sp, double inReal )
+   void TAN_StreamStep( TAN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.tan(inReal);
    }
-   private RetCode tanOpenBody( TanStream sp, double inReal[], int startIdx )
+   private RetCode TAN_OpenBody( TAN_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -265,7 +265,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode tanOpenAndFillBody( TanStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TAN_OpenAndFillBody( TAN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -290,11 +290,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind tanOpen (composition seam). */
-   TanStream tanOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind TAN_Open (composition seam). */
+   TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
    {
-      TanStream sp = new TanStream(this);
-      RetCode retCode = tanOpenBody(sp, inReal, startIdx);
+      TAN_Stream sp = new TAN_Stream(this);
+      RetCode retCode = TAN_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -309,32 +309,32 @@
    /**
     * Open a live TAN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#tan} at that bar.
-    * <p>The history must hold at least {@code tanLookback(...) + 1} bars
+    * to {@link Core#TAN} at that bar.
+    * <p>The history must hold at least {@code TAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TanStream tanOpen( double inReal[] )
+   public TAN_Stream TAN_Open( double inReal[] )
    {
-      return tanOpenInternal(inReal, 0);
+      return TAN_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#tanOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#tan} over the whole history in the same single pass
+    * {@link Core#TAN_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TanStream#fillRange()}.
+    * {@link TAN_Stream#fillRange()}.
     */
-   public TanStream tanOpenAndFill( double inReal[], double outReal[] )
+   public TAN_Stream TAN_OpenAndFill( double inReal[], double outReal[] )
    {
-      TanStream sp = new TanStream(this);
+      TAN_Stream sp = new TAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TAN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

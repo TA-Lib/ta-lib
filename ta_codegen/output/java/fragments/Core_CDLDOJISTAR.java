@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlDojiStar} consumes before it
+    * Number of leading input bars {@link Core#CDLDOJISTAR} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlDojiStarLookback( )
+   public int CDLDOJISTAR_Lookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode cdlDojiStarInternal( int startIdx,
-                                int endIdx,
-                                double inOpen[],
-                                double inHigh[],
-                                double inLow[],
-                                double inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode CDLDOJISTAR_Internal( int startIdx,
+                                 int endIdx,
+                                 double inOpen[],
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -128,15 +128,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlDojiStarInternal( int startIdx,
-                                int endIdx,
-                                float inOpen[],
-                                float inHigh[],
-                                float inLow[],
-                                float inClose[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                int outInteger[] )
+   RetCode CDLDOJISTAR_Internal( int startIdx,
+                                 int endIdx,
+                                 float inOpen[],
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inClose[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -157,7 +157,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -215,7 +215,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlDojiStarLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLDOJISTAR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -236,13 +236,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlMorningDojiStar
-    * @see Core#cdlEveningDojiStar
-    * @see Core#cdlDoji
-    * @see Core#cdlMorningStar
-    * @see Core#cdlEveningStar
+    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#CDLDOJI
+    * @see Core#CDLMORNINGSTAR
+    * @see Core#CDLEVENINGSTAR
     */
-   public OutRange cdlDojiStar( int startIdx,
+   public OutRange CDLDOJISTAR( int startIdx,
                                 int endIdx,
                                 double inOpen[],
                                 double inHigh[],
@@ -252,7 +252,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlDojiStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLDOJISTAR", retCode);
       }
@@ -279,7 +279,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlDojiStarLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLDOJISTAR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -300,13 +300,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlMorningDojiStar
-    * @see Core#cdlEveningDojiStar
-    * @see Core#cdlDoji
-    * @see Core#cdlMorningStar
-    * @see Core#cdlEveningStar
+    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#CDLDOJI
+    * @see Core#CDLMORNINGSTAR
+    * @see Core#CDLEVENINGSTAR
     */
-   public OutRange cdlDojiStar( int startIdx,
+   public OutRange CDLDOJISTAR( int startIdx,
                                 int endIdx,
                                 float inOpen[],
                                 float inHigh[],
@@ -316,7 +316,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlDojiStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLDOJISTAR", retCode);
       }
@@ -326,8 +326,8 @@
 
    /**
     * A live CDLDOJISTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlDojiStar} over the same series.
-    * Open with {@link Core#cdlDojiStarOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLDOJISTAR} over the same series.
+    * Open with {@link Core#CDLDOJISTAR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -338,7 +338,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlDojiStarStream {
+   public static final class CDLDOJISTAR_Stream {
       final Core core;
       double BodyDojiPeriodTotal;
       double BodyLongPeriodTotal;
@@ -367,10 +367,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlDojiStarStream( Core core ) { this.core = core; }
+      CDLDOJISTAR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlDojiStarOpenAndFill}, or
+       * The range filled by {@link Core#CDLDOJISTAR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -378,7 +378,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlDojiStarStream( CdlDojiStarStream other ) {
+      CDLDOJISTAR_Stream( CDLDOJISTAR_Stream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -413,7 +413,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlDojiStarStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLDOJISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -425,8 +425,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlDojiStarStream scratch = new CdlDojiStarStream(this);
-         core.cdlDojiStarStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLDOJISTAR_Stream scratch = new CDLDOJISTAR_Stream(this);
+         core.CDLDOJISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -443,11 +443,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlDojiStarStream copy() {
-         return new CdlDojiStarStream(this);
+      public CDLDOJISTAR_Stream copy() {
+         return new CDLDOJISTAR_Stream(this);
       }
    }
-   void cdlDojiStarStreamStep( CdlDojiStarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLDOJISTAR_StreamStep( CDLDOJISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -501,7 +501,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode cdlDojiStarOpenBody( CdlDojiStarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLDOJISTAR_OpenBody( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -530,7 +530,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -646,7 +646,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlDojiStarOpenAndFillBody( CdlDojiStarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLDOJISTAR_OpenAndFillBody( CDLDOJISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -676,7 +676,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -792,11 +792,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlDojiStarOpen (composition seam). */
-   CdlDojiStarStream cdlDojiStarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLDOJISTAR_Open (composition seam). */
+   CDLDOJISTAR_Stream CDLDOJISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlDojiStarStream sp = new CdlDojiStarStream(this);
-      RetCode retCode = cdlDojiStarOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
+      RetCode retCode = CDLDOJISTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -811,32 +811,32 @@
    /**
     * Open a live CDLDOJISTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlDojiStar} at that bar.
-    * <p>The history must hold at least {@code cdlDojiStarLookback(...) + 1} bars
+    * to {@link Core#CDLDOJISTAR} at that bar.
+    * <p>The history must hold at least {@code CDLDOJISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlDojiStarStream cdlDojiStarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLDOJISTAR_Stream CDLDOJISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlDojiStarOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlDojiStarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlDojiStar} over the whole history in the same single pass
+    * {@link Core#CDLDOJISTAR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLDOJISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlDojiStarStream#fillRange()}.
+    * {@link CDLDOJISTAR_Stream#fillRange()}.
     */
-   public CdlDojiStarStream cdlDojiStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLDOJISTAR_Stream CDLDOJISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlDojiStarStream sp = new CdlDojiStarStream(this);
+      CDLDOJISTAR_Stream sp = new CDLDOJISTAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlDojiStarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -57,7 +57,7 @@ public partial class Core
     *  071726 MF,CC Implement Positive Volume Index (#126).
     */
    /// <summary>
-   /// Number of leading input bars <c>Pvi</c> consumes before it can produce its
+   /// Number of leading input bars <c>PVI</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -66,13 +66,13 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int PviLookback( )
+   public int PVI_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   internal RetCode Pvi( int startIdx,
+   internal RetCode PVI( int startIdx,
                          int endIdx,
                          double[] inClose,
                          double[] inVolume,
@@ -120,7 +120,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Pvi( int startIdx,
+   internal RetCode PVI( int startIdx,
                          int endIdx,
                          float[] inClose,
                          float[] inVolume,
@@ -183,8 +183,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PviLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PVI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -201,13 +201,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Pvi( int startIdx,
+   public OutRange PVI( int startIdx,
                         int endIdx,
                         double[] inClose,
                         double[] inVolume,
                         double[] outReal )
    {
-      RetCode retCode = Pvi(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
       }
@@ -241,8 +241,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PviLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PVI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -259,13 +259,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Pvi( int startIdx,
+   public OutRange PVI( int startIdx,
                         int endIdx,
                         float[] inClose,
                         float[] inVolume,
                         double[] outReal )
    {
-      RetCode retCode = Pvi(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
       }

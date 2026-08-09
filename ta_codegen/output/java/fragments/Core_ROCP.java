@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#rocP} consumes before it can
+    * Number of leading input bars {@link Core#ROCP} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int rocPLookback( int optInTimePeriod )
+   public int ROCP_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 10;
@@ -34,13 +34,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode rocPInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ROCP_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -118,13 +118,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode rocPInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ROCP_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -176,8 +176,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rocPLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ROCP_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -194,12 +194,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#roc
-    * @see Core#rocR
-    * @see Core#rocR100
-    * @see Core#mom
+    * @see Core#ROC
+    * @see Core#ROCR
+    * @see Core#ROCR100
+    * @see Core#MOM
     */
-   public OutRange rocP( int startIdx,
+   public OutRange ROCP( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
@@ -207,7 +207,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rocPInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCP", retCode);
       }
@@ -227,8 +227,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#rocPLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ROCP_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -245,12 +245,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#roc
-    * @see Core#rocR
-    * @see Core#rocR100
-    * @see Core#mom
+    * @see Core#ROC
+    * @see Core#ROCR
+    * @see Core#ROCR100
+    * @see Core#MOM
     */
-   public OutRange rocP( int startIdx,
+   public OutRange ROCP( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
@@ -258,7 +258,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rocPInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ROCP", retCode);
       }
@@ -268,8 +268,8 @@
 
    /**
     * A live ROCP stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#rocP} over the same series.
-    * Open with {@link Core#rocPOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ROCP} over the same series.
+    * Open with {@link Core#ROCP_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -280,7 +280,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class RocPStream {
+   public static final class ROCP_Stream {
       final Core core;
       int optInTimePeriod;
       int ringPos_trailingIdx;
@@ -289,10 +289,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      RocPStream( Core core ) { this.core = core; }
+      ROCP_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#rocPOpenAndFill}, or
+       * The range filled by {@link Core#ROCP_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -300,7 +300,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      RocPStream( RocPStream other ) {
+      ROCP_Stream( ROCP_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -315,7 +315,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.rocPStreamStep(this, inReal);
+         core.ROCP_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -327,8 +327,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         RocPStream scratch = new RocPStream(this);
-         core.rocPStreamStep(scratch, inReal);
+         ROCP_Stream scratch = new ROCP_Stream(this);
+         core.ROCP_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -345,11 +345,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public RocPStream copy() {
-         return new RocPStream(this);
+      public ROCP_Stream copy() {
+         return new ROCP_Stream(this);
       }
    }
-   void rocPStreamStep( RocPStream sp, double inReal )
+   void ROCP_StreamStep( ROCP_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -367,7 +367,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode rocPOpenBody( RocPStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode ROCP_OpenBody( ROCP_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -463,7 +463,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode rocPOpenAndFillBody( RocPStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ROCP_OpenAndFillBody( ROCP_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -560,11 +560,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind rocPOpen (composition seam). */
-   RocPStream rocPOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind ROCP_Open (composition seam). */
+   ROCP_Stream ROCP_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      RocPStream sp = new RocPStream(this);
-      RetCode retCode = rocPOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      ROCP_Stream sp = new ROCP_Stream(this);
+      RetCode retCode = ROCP_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -579,32 +579,32 @@
    /**
     * Open a live ROCP stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#rocP} at that bar.
-    * <p>The history must hold at least {@code rocPLookback(...) + 1} bars
+    * to {@link Core#ROCP} at that bar.
+    * <p>The history must hold at least {@code ROCP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public RocPStream rocPOpen( double inReal[], int optInTimePeriod )
+   public ROCP_Stream ROCP_Open( double inReal[], int optInTimePeriod )
    {
-      return rocPOpenInternal(inReal, 0, optInTimePeriod);
+      return ROCP_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#rocPOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#rocP} over the whole history in the same single pass
+    * {@link Core#ROCP_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ROCP} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link RocPStream#fillRange()}.
+    * {@link ROCP_Stream#fillRange()}.
     */
-   public RocPStream rocPOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public ROCP_Stream ROCP_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      RocPStream sp = new RocPStream(this);
+      ROCP_Stream sp = new ROCP_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = rocPOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ROCP_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

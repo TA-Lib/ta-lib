@@ -57,7 +57,7 @@ public partial class Core
     *  021806 MF,BT   Fix #1434450 reported by BT.
     */
    /// <summary>
-   /// Number of leading input bars <c>Cmo</c> consumes before it can produce its
+   /// Number of leading input bars <c>CMO</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -72,7 +72,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Bars over which gains/losses are smoothed (default 14; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CmoLookback( int optInTimePeriod )
+   public int CMO_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -80,11 +80,11 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
-      retValue = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Cmo];
+      retValue = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.CMO];
       return retValue ;
 
    }
-   internal RetCode Cmo( int startIdx,
+   internal RetCode CMO( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
@@ -131,7 +131,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = CmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -164,7 +164,7 @@ public partial class Core
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.Cmo];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.CMO];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -259,7 +259,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Cmo( int startIdx,
+   internal RetCode CMO( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
@@ -295,7 +295,7 @@ public partial class Core
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackTotal = CmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -315,7 +315,7 @@ public partial class Core
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.Cmo];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.CMO];
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -397,8 +397,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CmoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CMO_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -416,13 +416,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Cmo( int startIdx,
+   public OutRange CMO( int startIdx,
                         int endIdx,
                         double[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Cmo(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMO(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMO", retCode);
       }
@@ -452,8 +452,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CmoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CMO_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -471,13 +471,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Cmo( int startIdx,
+   public OutRange CMO( int startIdx,
                         int endIdx,
                         float[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Cmo(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CMO(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMO", retCode);
       }

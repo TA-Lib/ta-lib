@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::dx`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::DX`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,14 +78,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn dx_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn DX_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         if optInTimePeriod > 1 {
-            return (optInTimePeriod + self.unstable_period[FuncUnstId::Dx as usize]) as usize;
+            return (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
         } else {
             return (2) as usize;
         }
@@ -150,7 +150,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.dx(
+    /// let ret = core.DX(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -161,18 +161,18 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::adx`] · [`Core::adxr`] · [`Core::plus_di`] · [`Core::minus_di`] ·
-    /// [`Core::plus_dm`] · [`Core::minus_dm`] · [`Core::trange`]
+    /// [`Core::ADX`] · [`Core::ADXR`] · [`Core::PLUS_DI`] · [`Core::MINUS_DI`] ·
+    /// [`Core::PLUS_DM`] · [`Core::MINUS_DM`] · [`Core::TRANGE`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/dx](https://ta-lib.org/functions/dx/)
+    /// Further reading: [ta-lib.org/functions/DX](https://ta-lib.org/functions/DX/)
     #[doc(alias = "DirectionalMovementIndex")]
     #[doc(alias = "DMI")]
-    pub fn dx(
+    pub fn DX(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -195,7 +195,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.dx_lookback(optInTimePeriod);
+        let _assertLb = self.DX_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -316,7 +316,7 @@ impl Core {
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
         if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Dx as usize]) as usize;
+            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
         } else {
             lookbackTotal = 2;
         }
@@ -378,7 +378,7 @@ impl Core {
         }
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::Dx as usize] + 1) as usize;
+        i = (self.unstable_period[FuncUnstId::DX as usize] + 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -486,20 +486,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live DX stream: one value per closed bar, bit-identical to [`Core::dx`]
-/// over the same series. Open with [`Core::dx_open`]; dropping the handle
+/// Live DX stream: one value per closed bar, bit-identical to [`Core::DX`]
+/// over the same series. Open with [`Core::DX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DX_Stream")]
-pub struct DxStream {
+pub struct DX_Stream {
     core: Core,
-    state: DxStreamState,
+    state: DX_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct DxStreamState {
+struct DX_StreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
@@ -522,7 +522,7 @@ struct DxStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn dx_step_internal(&self, sp: &mut DxStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn DX_step_internal(&self, sp: &mut DX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         // Calculate the prevMinusDM and prevPlusDM
         sp.tempReal = inHigh;
         sp.diffP = sp.tempReal - sp.prevHigh;
@@ -573,10 +573,10 @@ impl Core {
         sp.lastOut_outReal = (*outReal);
     }
 
-    /// Internal startIdx-anchored open behind [`Core::dx_open`] (composition seam).
-    pub(crate) fn dx_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::DX_Open`] (composition seam).
+    pub(crate) fn DX_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(DxStream, f64), RetCode> {
+    ) -> Result<(DX_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -708,7 +708,7 @@ impl Core {
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
         if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Dx as usize]) as usize;
+            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
         } else {
             lookbackTotal = 2;
         }
@@ -770,7 +770,7 @@ impl Core {
         }
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::Dx as usize] + 1) as usize;
+        i = (self.unstable_period[FuncUnstId::DX as usize] + 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -875,7 +875,7 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = DxStreamState {
+        let state = DX_StreamState {
             optInTimePeriod,
             prevHigh,
             prevLow,
@@ -890,11 +890,11 @@ impl Core {
             plusDI,
             lastOut_outReal: lastValue_outReal,
         };
-        Ok((DxStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((DX_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live DX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::dx`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::DX`] at that bar.
     ///
     /// # Errors
     ///
@@ -910,23 +910,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.dx_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.DX_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_DX_Open")]
-    pub fn dx_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(DxStream, f64), RetCode> {
-        self.dx_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn DX_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(DX_Stream, f64), RetCode> {
+        self.DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::dx_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::dx`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::DX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::DX`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_DX_OpenAndFill")]
-    pub fn dx_open_and_fill(
+    pub fn DX_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<DxStream, RetCode> {
+    ) -> Result<DX_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1057,7 +1057,7 @@ impl Core {
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
         if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Dx as usize]) as usize;
+            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::DX as usize]) as usize;
         } else {
             lookbackTotal = 2;
         }
@@ -1119,7 +1119,7 @@ impl Core {
         }
         // Skip the unstable period. Note that this loop must be executed
         // at least ONCE to calculate the first DI.
-        i = (self.unstable_period[FuncUnstId::Dx as usize] + 1) as usize;
+        i = (self.unstable_period[FuncUnstId::DX as usize] + 1) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -1224,7 +1224,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = DxStreamState {
+        let state = DX_StreamState {
             optInTimePeriod,
             prevHigh,
             prevLow,
@@ -1239,19 +1239,19 @@ impl Core {
             plusDI,
             lastOut_outReal: outReal[*outNBElement - 1],
         };
-        Ok(DxStream { core: self.clone(), state })
+        Ok(DX_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl DxStream {
+impl DX_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_DX_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.dx_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.DX_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -1269,7 +1269,7 @@ impl DxStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<DxStream>();
+    _assert_auto::<DX_Stream>();
 };
 
 /***************/

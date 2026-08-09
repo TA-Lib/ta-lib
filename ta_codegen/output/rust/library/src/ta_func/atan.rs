@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::atan`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ATAN`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn atan_lookback(&self) -> usize {
+    pub fn ATAN_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector trigonometric arc tangent: applies atan element-wise to each input. Pure math
@@ -108,7 +108,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.atan(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.ATAN(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -116,13 +116,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::tan`] · [`Core::acos`] · [`Core::asin`]
+    /// [`Core::TAN`] · [`Core::ACOS`] · [`Core::ASIN`]
     ///
-    /// Further reading: [ta-lib.org/functions/atan](https://ta-lib.org/functions/atan/)
+    /// Further reading: [ta-lib.org/functions/ATAN](https://ta-lib.org/functions/ATAN/)
     #[doc(alias = "arctangent")]
     #[doc(alias = "arctan")]
     #[doc(alias = "inversetangent")]
-    pub fn atan(
+    pub fn ATAN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -137,7 +137,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.atan_lookback();
+        let _assertLb = self.ATAN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -160,20 +160,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ATAN stream: one value per closed bar, bit-identical to [`Core::atan`]
-/// over the same series. Open with [`Core::atan_open`]; dropping the handle
+/// Live ATAN stream: one value per closed bar, bit-identical to [`Core::ATAN`]
+/// over the same series. Open with [`Core::ATAN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ATAN_Stream")]
-pub struct AtanStream {
+pub struct ATAN_Stream {
     core: Core,
-    state: AtanStreamState,
+    state: ATAN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AtanStreamState {
+struct ATAN_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -183,14 +183,14 @@ struct AtanStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn atan_step_internal(&self, sp: &mut AtanStreamState, inReal: f64, outReal: &mut f64) {
+    fn ATAN_step_internal(&self, sp: &mut ATAN_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).atan();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::atan_open`] (composition seam).
-    pub(crate) fn atan_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ATAN_Open`] (composition seam).
+    pub(crate) fn ATAN_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(AtanStream, f64), RetCode> {
+    ) -> Result<(ATAN_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -218,13 +218,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AtanStreamState {
+        let state = ATAN_StreamState {
         };
-        Ok((AtanStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ATAN_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ATAN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::atan`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ATAN`] at that bar.
     ///
     /// # Errors
     ///
@@ -236,23 +236,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.atan_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.ATAN_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ATAN_Open")]
-    pub fn atan_open(&self, inReal: &[f64], ) -> Result<(AtanStream, f64), RetCode> {
-        self.atan_open_internal(inReal, 0)
+    pub fn ATAN_Open(&self, inReal: &[f64], ) -> Result<(ATAN_Stream, f64), RetCode> {
+        self.ATAN_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::atan_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::atan`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ATAN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ATAN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ATAN_OpenAndFill")]
-    pub fn atan_open_and_fill(
+    pub fn ATAN_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AtanStream, RetCode> {
+    ) -> Result<ATAN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -279,21 +279,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AtanStreamState {
+        let state = ATAN_StreamState {
         };
-        Ok(AtanStream { core: self.clone(), state })
+        Ok(ATAN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AtanStream {
+impl ATAN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ATAN_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.atan_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.ATAN_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -311,7 +311,7 @@ impl AtanStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AtanStream>();
+    _assert_auto::<ATAN_Stream>();
 };
 
 /***************/

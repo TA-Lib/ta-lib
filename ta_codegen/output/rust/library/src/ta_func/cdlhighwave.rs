@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlhighwave`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLHIGHWAVE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlhighwave_lookback(&self) -> usize {
+    pub fn CDLHIGHWAVE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlhighwave(
+    /// let ret = core.CDLHIGHWAVE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -144,14 +144,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdllongleggeddoji`] · [`Core::cdlspinningtop`] · [`Core::cdlrickshawman`] ·
-    /// [`Core::cdldoji`]
+    /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLRICKSHAWMAN`] ·
+    /// [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlhighwave](https://ta-lib.org/functions/cdlhighwave/)
+    /// [ta-lib.org/functions/CDLHIGHWAVE](https://ta-lib.org/functions/CDLHIGHWAVE/)
     #[doc(alias = "High-WaveCandle")]
     #[doc(alias = "HighWave")]
-    pub fn cdlhighwave(
+    pub fn CDLHIGHWAVE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlhighwave_lookback();
+        let _assertLb = self.CDLHIGHWAVE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -198,7 +198,7 @@ impl Core {
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhighwave_lookback();
+        lookbackTotal = self.CDLHIGHWAVE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -349,20 +349,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHIGHWAVE stream: one value per closed bar, bit-identical to [`Core::cdlhighwave`]
-/// over the same series. Open with [`Core::cdlhighwave_open`]; dropping the handle
+/// Live CDLHIGHWAVE stream: one value per closed bar, bit-identical to [`Core::CDLHIGHWAVE`]
+/// over the same series. Open with [`Core::CDLHIGHWAVE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHIGHWAVE_Stream")]
-pub struct CdlhighwaveStream {
+pub struct CDLHIGHWAVE_Stream {
     core: Core,
-    state: CdlhighwaveStreamState,
+    state: CDLHIGHWAVE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlhighwaveStreamState {
+struct CDLHIGHWAVE_StreamState {
     BodyPeriodTotal: f64,
     ShadowPeriodTotal: f64,
     ringPos_BodyTrailingIdx: usize,
@@ -386,7 +386,7 @@ struct CdlhighwaveStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlhighwave_step_internal(&self, sp: &mut CdlhighwaveStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHIGHWAVE_step_internal(&self, sp: &mut CDLHIGHWAVE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -498,10 +498,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlhighwave_open`] (composition seam).
-    pub(crate) fn cdlhighwave_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLHIGHWAVE_Open`] (composition seam).
+    pub(crate) fn CDLHIGHWAVE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlhighwaveStream, i32), RetCode> {
+    ) -> Result<(CDLHIGHWAVE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -535,7 +535,7 @@ impl Core {
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhighwave_lookback();
+        lookbackTotal = self.CDLHIGHWAVE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -715,7 +715,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdlhighwaveStreamState {
+        let state = CDLHIGHWAVE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -731,11 +731,11 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok((CdlhighwaveStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLHIGHWAVE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLHIGHWAVE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlhighwave`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLHIGHWAVE`] at that bar.
     ///
     /// # Errors
     ///
@@ -754,23 +754,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlhighwave_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLHIGHWAVE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHIGHWAVE_Open")]
-    pub fn cdlhighwave_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhighwaveStream, i32), RetCode> {
-        self.cdlhighwave_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLHIGHWAVE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHIGHWAVE_Stream, i32), RetCode> {
+        self.CDLHIGHWAVE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlhighwave_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlhighwave`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLHIGHWAVE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHIGHWAVE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLHIGHWAVE_OpenAndFill")]
-    pub fn cdlhighwave_open_and_fill(
+    pub fn CDLHIGHWAVE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlhighwaveStream, RetCode> {
+    ) -> Result<CDLHIGHWAVE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -803,7 +803,7 @@ impl Core {
         let ShadowVeryLong_factor: f64 = self.candle_settings.shadow_very_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhighwave_lookback();
+        lookbackTotal = self.CDLHIGHWAVE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -985,7 +985,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdlhighwaveStreamState {
+        let state = CDLHIGHWAVE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -1001,19 +1001,19 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok(CdlhighwaveStream { core: self.clone(), state })
+        Ok(CDLHIGHWAVE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlhighwaveStream {
+impl CDLHIGHWAVE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLHIGHWAVE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlhighwave_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHIGHWAVE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1031,7 +1031,7 @@ impl CdlhighwaveStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlhighwaveStream>();
+    _assert_auto::<CDLHIGHWAVE_Stream>();
 };
 
 /***************/

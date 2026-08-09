@@ -352,8 +352,8 @@ public sealed record OutputInfo
 /// <summary>Everything the library knows about one indicator.</summary>
 public sealed record FunctionInfo
 {
-    internal FunctionInfo(string name, FunctionGroup group, string hint, string camelCaseName,
-                          string methodName, FunctionFlags flags, FuncUnstId? unstableId,
+    internal FunctionInfo(string name, FunctionGroup group, string hint,
+                          FunctionFlags flags, FuncUnstId? unstableId,
                           ImmutableArray<InputInfo> inputs,
                           ImmutableArray<OptInputInfo> optInputs,
                           ImmutableArray<OutputInfo> outputs,
@@ -362,8 +362,6 @@ public sealed record FunctionInfo
         Name = name;
         Group = group;
         Hint = hint;
-        CamelCaseName = camelCaseName;
-        MethodName = methodName;
         Flags = flags;
         UnstableId = unstableId;
         Inputs = inputs;
@@ -373,7 +371,8 @@ public sealed record FunctionInfo
         Invoke = invoke;
     }
 
-    /// <summary>The canonical upper-case name, for example <c>"BBANDS"</c>.</summary>
+    /// <summary>The canonical name, for example <c>"BBANDS"</c>. It is also the
+    /// name of the <see cref="Core"/> method that computes the function.</summary>
     public string Name { get; }
 
     /// <summary>The category the function belongs to.</summary>
@@ -381,14 +380,6 @@ public sealed record FunctionInfo
 
     /// <summary>A one-line description. Empty when the definition declares none.</summary>
     public string Hint { get; }
-
-    /// <summary>C's <c>TA_FuncInfo.camelCaseName</c>, kept for cross-backend
-    /// parity. Not a method name — use <see cref="MethodName"/> for that.</summary>
-    public string CamelCaseName { get; }
-
-    /// <summary>The name of the <see cref="Core"/> method that computes this
-    /// function, for example <c>Bbands</c>.</summary>
-    public string MethodName { get; }
 
     /// <summary>Behavioural properties of the function.</summary>
     public FunctionFlags Flags { get; }

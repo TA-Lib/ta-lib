@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::var`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::VAR`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -79,7 +79,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
     /// and real parameters `-4e37`, to select their default value.
     #[inline]
-    pub fn var_lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
+    pub fn VAR_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDev: f64) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -146,7 +146,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.var(0, data.len() - 1, &data, 5, 1.0, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.VAR(0, data.len() - 1, &data, 5, 1.0, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -154,11 +154,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::stddev`]
+    /// [`Core::STDDEV`]
     ///
-    /// Further reading: [ta-lib.org/functions/var](https://ta-lib.org/functions/var/)
+    /// Further reading: [ta-lib.org/functions/VAR](https://ta-lib.org/functions/VAR/)
     #[doc(alias = "Variance")]
-    pub fn var(
+    pub fn VAR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -185,7 +185,7 @@ impl Core {
         } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.var_lookback(optInTimePeriod, optInNbDev);
+        let _assertLb = self.VAR_Lookback(optInTimePeriod, optInNbDev);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -308,20 +308,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live VAR stream: one value per closed bar, bit-identical to [`Core::var`]
-/// over the same series. Open with [`Core::var_open`]; dropping the handle
+/// Live VAR stream: one value per closed bar, bit-identical to [`Core::VAR`]
+/// over the same series. Open with [`Core::VAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_VAR_Stream")]
-pub struct VarStream {
+pub struct VAR_Stream {
     core: Core,
-    state: VarStreamState,
+    state: VAR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct VarStreamState {
+struct VAR_StreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
     shift: f64,
@@ -347,7 +347,7 @@ struct VarStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn var_step_internal(&self, sp: &mut VarStreamState, inReal: f64, outReal: &mut f64) {
+    fn VAR_step_internal(&self, sp: &mut VAR_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.i >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -418,10 +418,10 @@ impl Core {
         sp.i += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::var_open`] (composition seam).
-    pub(crate) fn var_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::VAR_Open`] (composition seam).
+    pub(crate) fn VAR_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
-    ) -> Result<(VarStream, f64), RetCode> {
+    ) -> Result<(VAR_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -570,7 +570,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = VarStreamState {
+        let state = VAR_StreamState {
             optInTimePeriod,
             optInNbDev,
             shift,
@@ -588,11 +588,11 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok((VarStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((VAR_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live VAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::var`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::VAR`] at that bar.
     ///
     /// # Errors
     ///
@@ -604,23 +604,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.var_open(&data, 5, 1.0).expect("enough history");
+    /// let (mut s, _last) = core.VAR_Open(&data, 5, 1.0).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_VAR_Open")]
-    pub fn var_open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VarStream, f64), RetCode> {
-        self.var_open_internal(inReal, 0, optInTimePeriod, optInNbDev)
+    pub fn VAR_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDev: f64) -> Result<(VAR_Stream, f64), RetCode> {
+        self.VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev)
     }
 
-    /// [`Core::var_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::var`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::VAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::VAR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_VAR_OpenAndFill")]
-    pub fn var_open_and_fill(
+    pub fn VAR_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<VarStream, RetCode> {
+    ) -> Result<VAR_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -769,7 +769,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = VarStreamState {
+        let state = VAR_StreamState {
             optInTimePeriod,
             optInNbDev,
             shift,
@@ -787,19 +787,19 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok(VarStream { core: self.clone(), state })
+        Ok(VAR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl VarStream {
+impl VAR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_VAR_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.var_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.VAR_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -817,7 +817,7 @@ impl VarStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<VarStream>();
+    _assert_auto::<VAR_Stream>();
 };
 
 /***************/

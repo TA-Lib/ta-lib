@@ -250,7 +250,7 @@ fn matype_name(enums: &HashMap<String, EnumDef>, default: Option<f64>) -> Option
     #[allow(clippy::cast_possible_truncation)]
     let want = default? as i32;
     let e = enums.get("MAType")?;
-    e.variants.iter().find(|v| v.value == want).map(|v| v.short_name.clone())
+    e.variants.iter().find(|v| v.value == want).map(|v| v.name.clone())
 }
 
 /// `["EMA"]` -> `EMA`; `["ADX", "EMA"]` -> `ADX and EMA`.
@@ -729,7 +729,7 @@ fn enum_legends(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<String>
         let values: Vec<String> = def
             .variants
             .iter()
-            .map(|v| format!("{} {}", v.value, v.short_name))
+            .map(|v| format!("{} {}", v.value, v.name))
             .collect();
         out.push(format!("*`{name}` values: {}*", values.join(" · ")));
     }
@@ -896,7 +896,7 @@ fn build_stability_page(
         let mut variants = e.variants.clone();
         variants.sort_by_key(|v| v.value);
         for v in &variants {
-            let name = &v.short_name;
+            let name = &v.name;
             let (state, why) = match stability.get(name.as_str()) {
                 None => (
                     "Start-Independent",
@@ -983,7 +983,6 @@ mod tests {
             name: name.to_string(),
             group: "Overlap Studies".to_string(),
             description: None,
-            camel_case: None,
             hint: None,
             flags: vec![],
             inputs: vec![Input::new("inReal", ParamType::Real)],
@@ -1083,8 +1082,7 @@ mod tests {
             .iter()
             .map(|(n, v)| EnumVariant {
                 c_name: format!("TA_MAType_{n}"),
-                pascal_name: (*n).to_string(),
-                short_name: (*n).to_string(),
+                name: (*n).to_string(),
                 value: *v,
             })
             .collect();
@@ -1093,6 +1091,7 @@ mod tests {
             "MAType".to_string(),
             EnumDef {
                 name: "MAType".to_string(),
+                c_prefix: "TA_MAType_".to_string(),
                 variants,
             },
         );

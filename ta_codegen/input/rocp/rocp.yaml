@@ -1,5 +1,4 @@
 name: ROCP
-camel_case: RocP
 group: Momentum Indicators
 hint: "Rate of change Percentage: (price-prevPrice)/prevPrice"
 flags: [stream]

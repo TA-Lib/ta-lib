@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#min} consumes before it can
+    * Number of leading input bars {@link Core#MIN} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int minLookback( int optInTimePeriod )
+   public int MIN_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -36,13 +36,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode minInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode MIN_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -117,13 +117,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode minInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode MIN_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -192,7 +192,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minLookback} is a <b>success with no
+    * valid range shorter than {@link Core#MIN_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -210,11 +210,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#max
-    * @see Core#minIndex
-    * @see Core#minMax
+    * @see Core#MAX
+    * @see Core#MININDEX
+    * @see Core#MINMAX
     */
-   public OutRange min( int startIdx,
+   public OutRange MIN( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -222,7 +222,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIN", retCode);
       }
@@ -240,7 +240,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minLookback} is a <b>success with no
+    * valid range shorter than {@link Core#MIN_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -258,11 +258,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#max
-    * @see Core#minIndex
-    * @see Core#minMax
+    * @see Core#MAX
+    * @see Core#MININDEX
+    * @see Core#MINMAX
     */
-   public OutRange min( int startIdx,
+   public OutRange MIN( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -270,7 +270,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIN", retCode);
       }
@@ -280,8 +280,8 @@
 
    /**
     * A live MIN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#min} over the same series.
-    * Open with {@link Core#minOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MIN} over the same series.
+    * Open with {@link Core#MIN_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -292,7 +292,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MinStream {
+   public static final class MIN_Stream {
       final Core core;
       int optInTimePeriod;
       double lowest;
@@ -305,10 +305,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MinStream( Core core ) { this.core = core; }
+      MIN_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#minOpenAndFill}, or
+       * The range filled by {@link Core#MIN_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -316,7 +316,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MinStream( MinStream other ) {
+      MIN_Stream( MIN_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -335,7 +335,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.minStreamStep(this, inReal);
+         core.MIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -347,8 +347,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         MinStream scratch = new MinStream(this);
-         core.minStreamStep(scratch, inReal);
+         MIN_Stream scratch = new MIN_Stream(this);
+         core.MIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -365,11 +365,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MinStream copy() {
-         return new MinStream(this);
+      public MIN_Stream copy() {
+         return new MIN_Stream(this);
       }
    }
-   void minStreamStep( MinStream sp, double inReal )
+   void MIN_StreamStep( MIN_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -400,7 +400,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode minOpenBody( MinStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MIN_OpenBody( MIN_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double lowest = 0;
       double tmp = 0;
@@ -498,7 +498,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode minOpenAndFillBody( MinStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIN_OpenAndFillBody( MIN_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -597,11 +597,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind minOpen (composition seam). */
-   MinStream minOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MIN_Open (composition seam). */
+   MIN_Stream MIN_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MinStream sp = new MinStream(this);
-      RetCode retCode = minOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      MIN_Stream sp = new MIN_Stream(this);
+      RetCode retCode = MIN_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -616,32 +616,32 @@
    /**
     * Open a live MIN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#min} at that bar.
-    * <p>The history must hold at least {@code minLookback(...) + 1} bars
+    * to {@link Core#MIN} at that bar.
+    * <p>The history must hold at least {@code MIN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MinStream minOpen( double inReal[], int optInTimePeriod )
+   public MIN_Stream MIN_Open( double inReal[], int optInTimePeriod )
    {
-      return minOpenInternal(inReal, 0, optInTimePeriod);
+      return MIN_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#minOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#min} over the whole history in the same single pass
+    * {@link Core#MIN_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MinStream#fillRange()}.
+    * {@link MIN_Stream#fillRange()}.
     */
-   public MinStream minOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public MIN_Stream MIN_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MinStream sp = new MinStream(this);
+      MIN_Stream sp = new MIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIN_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -160,7 +160,7 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
   `impl Core` blocks.
 - The public API uses `f64` slices (`&[f64]` / `&mut [f64]`), `usize` indices,
   and `i32` optional params.
-- Each indicator generates a `xxx_lookback` and a guarded `xxx` (validates
+- Each indicator generates a `<NAME>_Lookback` and a guarded `<NAME>` (validates
   params, pre-computes optimization values, holds the algorithm). Indexing is
   safe: the crate is `#![forbid(unsafe_code)]`, so a violated bounds precondition
   panics — never undefined behavior. The body carries a bounds-assert preamble
@@ -169,7 +169,7 @@ is the shipped `ta-lib` crate, `tools/` holds the JSON-RPC server/bench.
   `Success` with zero elements cannot panic.
 - **Cross-indicator calls target the guarded entry point.**
 - Functions with extra internal params (e.g., EMA's k factor) expose them on an
-  `xxx_private` variant; the guarded variant pre-computes them and delegates.
+  `<NAME>_Private` variant; the guarded variant pre-computes them and delegates.
 - Rustdoc is generated from each function's canonical `<name>.md`
   (`backends/rust_doc.rs`), including a runnable doctest per function; crate
   docs/README/Cargo metadata come from the scaffolding in `main.rs`. Verify with
@@ -274,7 +274,7 @@ now 1.20x and spread-gated.
 ### Streaming vs batch
 
 `ta_bench_stream` answers the question streaming has to justify itself on: is
-`TA_S_<N>_Update` actually cheaper than recomputing the last bar with the batch
+`TA_<NAME>_Update` actually cheaper than recomputing the last bar with the batch
 call? Its `speedup` column is `batch_last_ns / update_ns` — above 1 means
 streaming wins. Both halves are measured in one TU, one input, one layout, so
 unlike `ta_bench_direct`'s ratio it is not comparing two build configurations.

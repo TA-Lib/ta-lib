@@ -1,5 +1,4 @@
 name: CDLSTALLEDPATTERN
-camel_case: CdlStalledPattern
 group: Pattern Recognition
 hint: Stalled Pattern
 flags: [candlestick, stream]

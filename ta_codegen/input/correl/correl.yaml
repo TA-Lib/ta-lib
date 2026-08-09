@@ -1,5 +1,4 @@
 name: CORREL
-camel_case: Correl
 group: Statistic Functions
 hint: Pearson's Correlation Coefficient (r)
 flags: [stream]

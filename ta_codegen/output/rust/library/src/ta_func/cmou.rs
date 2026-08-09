@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cmou`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CMOU`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn cmou_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CMOU_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.cmou(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.CMOU(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -146,15 +146,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cmo`] · [`Core::rsi`]
+    /// [`Core::CMO`] · [`Core::RSI`]
     ///
     /// # References
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
     ///
-    /// Further reading: [ta-lib.org/functions/cmou](https://ta-lib.org/functions/cmou/)
+    /// Further reading: [ta-lib.org/functions/CMOU](https://ta-lib.org/functions/CMOU/)
     #[doc(alias = "ChandeMomentumOscillatorUnsmoothed")]
-    pub fn cmou(
+    pub fn CMOU(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -175,7 +175,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cmou_lookback(optInTimePeriod);
+        let _assertLb = self.CMOU_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -204,7 +204,7 @@ impl Core {
         // change's older endpoint comes from the `trailingValue` cache, not a re-read.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.cmou_lookback(optInTimePeriod);
+        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -296,20 +296,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CMOU stream: one value per closed bar, bit-identical to [`Core::cmou`]
-/// over the same series. Open with [`Core::cmou_open`]; dropping the handle
+/// Live CMOU stream: one value per closed bar, bit-identical to [`Core::CMOU`]
+/// over the same series. Open with [`Core::CMOU_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMOU_Stream")]
-pub struct CmouStream {
+pub struct CMOU_Stream {
     core: Core,
-    state: CmouStreamState,
+    state: CMOU_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CmouStreamState {
+struct CMOU_StreamState {
     optInTimePeriod: i32,
     upSum: f64,
     downSum: f64,
@@ -328,7 +328,7 @@ struct CmouStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cmou_step_internal(&self, sp: &mut CmouStreamState, inReal: f64, outReal: &mut f64) {
+    fn CMOU_step_internal(&self, sp: &mut CMOU_StreamState, inReal: f64, outReal: &mut f64) {
         let mut diff: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
@@ -368,10 +368,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cmou_open`] (composition seam).
-    pub(crate) fn cmou_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CMOU_Open`] (composition seam).
+    pub(crate) fn CMOU_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CmouStream, f64), RetCode> {
+    ) -> Result<(CMOU_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -413,7 +413,7 @@ impl Core {
         // change's older endpoint comes from the `trailingValue` cache, not a re-read.
         dummyBegIdx = 0;
         dummyNBElement = 0;
-        lookbackTotal = self.cmou_lookback(optInTimePeriod);
+        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -506,7 +506,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = CmouStreamState {
+        let state = CMOU_StreamState {
             optInTimePeriod,
             upSum,
             downSum,
@@ -517,11 +517,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((CmouStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CMOU_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CMOU stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cmou`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CMOU`] at that bar.
     ///
     /// # Errors
     ///
@@ -533,23 +533,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cmou_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.CMOU_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CMOU_Open")]
-    pub fn cmou_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CmouStream, f64), RetCode> {
-        self.cmou_open_internal(inReal, 0, optInTimePeriod)
+    pub fn CMOU_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMOU_Stream, f64), RetCode> {
+        self.CMOU_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::cmou_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cmou`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CMOU_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMOU`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CMOU_OpenAndFill")]
-    pub fn cmou_open_and_fill(
+    pub fn CMOU_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CmouStream, RetCode> {
+    ) -> Result<CMOU_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -590,7 +590,7 @@ impl Core {
         // change's older endpoint comes from the `trailingValue` cache, not a re-read.
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        lookbackTotal = self.cmou_lookback(optInTimePeriod);
+        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -687,7 +687,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = CmouStreamState {
+        let state = CMOU_StreamState {
             optInTimePeriod,
             upSum,
             downSum,
@@ -698,19 +698,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(CmouStream { core: self.clone(), state })
+        Ok(CMOU_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CmouStream {
+impl CMOU_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CMOU_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.cmou_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.CMOU_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -728,7 +728,7 @@ impl CmouStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CmouStream>();
+    _assert_auto::<CMOU_Stream>();
 };
 
 /***************/

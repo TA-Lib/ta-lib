@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#asin} consumes before it can
+    * Number of leading input bars {@link Core#ASIN} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int asinLookback( )
+   public int ASIN_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode asinInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ASIN_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode asinInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ASIN_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -79,8 +79,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#asinLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ASIN_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -95,19 +95,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#acos
-    * @see Core#atan
-    * @see Core#sin
-    * @see Core#cos
+    * @see Core#ACOS
+    * @see Core#ATAN
+    * @see Core#SIN
+    * @see Core#COS
     */
-   public OutRange asin( int startIdx,
+   public OutRange ASIN( int startIdx,
                          int endIdx,
                          double inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = asinInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
@@ -126,8 +126,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#asinLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ASIN_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -142,19 +142,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#acos
-    * @see Core#atan
-    * @see Core#sin
-    * @see Core#cos
+    * @see Core#ACOS
+    * @see Core#ATAN
+    * @see Core#SIN
+    * @see Core#COS
     */
-   public OutRange asin( int startIdx,
+   public OutRange ASIN( int startIdx,
                          int endIdx,
                          float inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = asinInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ASIN", retCode);
       }
@@ -164,8 +164,8 @@
 
    /**
     * A live ASIN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#asin} over the same series.
-    * Open with {@link Core#asinOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ASIN} over the same series.
+    * Open with {@link Core#ASIN_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -176,15 +176,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AsinStream {
+   public static final class ASIN_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      AsinStream( Core core ) { this.core = core; }
+      ASIN_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#asinOpenAndFill}, or
+       * The range filled by {@link Core#ASIN_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -192,7 +192,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AsinStream( AsinStream other ) {
+      ASIN_Stream( ASIN_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -203,7 +203,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.asinStreamStep(this, inReal);
+         core.ASIN_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -215,8 +215,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         AsinStream scratch = new AsinStream(this);
-         core.asinStreamStep(scratch, inReal);
+         ASIN_Stream scratch = new ASIN_Stream(this);
+         core.ASIN_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -233,15 +233,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AsinStream copy() {
-         return new AsinStream(this);
+      public ASIN_Stream copy() {
+         return new ASIN_Stream(this);
       }
    }
-   void asinStreamStep( AsinStream sp, double inReal )
+   void ASIN_StreamStep( ASIN_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.asin(inReal);
    }
-   private RetCode asinOpenBody( AsinStream sp, double inReal[], int startIdx )
+   private RetCode ASIN_OpenBody( ASIN_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -265,7 +265,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode asinOpenAndFillBody( AsinStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ASIN_OpenAndFillBody( ASIN_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -290,11 +290,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind asinOpen (composition seam). */
-   AsinStream asinOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind ASIN_Open (composition seam). */
+   ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
    {
-      AsinStream sp = new AsinStream(this);
-      RetCode retCode = asinOpenBody(sp, inReal, startIdx);
+      ASIN_Stream sp = new ASIN_Stream(this);
+      RetCode retCode = ASIN_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -309,32 +309,32 @@
    /**
     * Open a live ASIN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#asin} at that bar.
-    * <p>The history must hold at least {@code asinLookback(...) + 1} bars
+    * to {@link Core#ASIN} at that bar.
+    * <p>The history must hold at least {@code ASIN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AsinStream asinOpen( double inReal[] )
+   public ASIN_Stream ASIN_Open( double inReal[] )
    {
-      return asinOpenInternal(inReal, 0);
+      return ASIN_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#asinOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#asin} over the whole history in the same single pass
+    * {@link Core#ASIN_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ASIN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AsinStream#fillRange()}.
+    * {@link ASIN_Stream#fillRange()}.
     */
-   public AsinStream asinOpenAndFill( double inReal[], double outReal[] )
+   public ASIN_Stream ASIN_OpenAndFill( double inReal[], double outReal[] )
    {
-      AsinStream sp = new AsinStream(this);
+      ASIN_Stream sp = new ASIN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = asinOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ASIN_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

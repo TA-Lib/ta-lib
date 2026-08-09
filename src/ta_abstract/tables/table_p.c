@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_PLUS_DI_OptInputs[] =
 DEF_FUNCTION( PLUS_DI,
               TA_GroupId_MomentumIndicators,
               "Plus Directional Indicator",
-              "PlusDI",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* PLUS_DI END */
@@ -85,7 +84,6 @@ static const TA_OptInputParameterInfo *TA_PLUS_DM_OptInputs[] =
 DEF_FUNCTION( PLUS_DM,
               TA_GroupId_MomentumIndicators,
               "Plus Directional Movement",
-              "PlusDM",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* PLUS_DM END */
@@ -127,7 +125,6 @@ static const TA_OptInputParameterInfo *TA_PPO_OptInputs[] =
 DEF_FUNCTION( PPO,
               TA_GroupId_MomentumIndicators,
               "Percentage Price Oscillator",
-              "Ppo",
               TA_FUNC_FLG_STREAM
              );
 /* PPO END */
@@ -151,7 +148,6 @@ static const TA_OptInputParameterInfo *TA_PVI_OptInputs[] =
 DEF_FUNCTION( PVI,
               TA_GroupId_VolumeIndicators,
               "Positive Volume Index",
-              "Pvi",
               TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* PVI END */
@@ -193,7 +189,6 @@ static const TA_OptInputParameterInfo *TA_PVO_OptInputs[] =
 DEF_FUNCTION( PVO,
               TA_GroupId_VolumeIndicators,
               "Percentage Volume Oscillator",
-              "Pvo",
               TA_FUNC_FLG_STREAM
              );
 /* PVO END */

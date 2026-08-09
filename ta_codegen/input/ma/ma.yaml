@@ -1,5 +1,4 @@
 name: MA
-camel_case: MovingAverage
 group: Overlap Studies
 hint: Moving average
 flags: [overlap, stream]

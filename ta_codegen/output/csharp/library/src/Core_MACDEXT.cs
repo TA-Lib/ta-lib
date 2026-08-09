@@ -59,7 +59,7 @@ public partial class Core
     *                when all three MA types are EMA (bit-exact).
     */
    /// <summary>
-   /// Number of leading input bars <c>MacdExt</c> consumes before it can produce
+   /// Number of leading input bars <c>MACDEXT</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -83,7 +83,7 @@ public partial class Core
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MacdExtLookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   public int MACDEXT_Lookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       if( optInFastPeriod == int.MinValue ) {
          optInFastPeriod = 12;
@@ -91,7 +91,7 @@ public partial class Core
          return -1;
       }
       if( (int)optInFastMAType == int.MinValue ) {
-         optInFastMAType = MAType.Sma;
+         optInFastMAType = MAType.SMA;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -99,7 +99,7 @@ public partial class Core
          return -1;
       }
       if( (int)optInSlowMAType == int.MinValue ) {
-         optInSlowMAType = MAType.Sma;
+         optInSlowMAType = MAType.SMA;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -107,21 +107,21 @@ public partial class Core
          return -1;
       }
       if( (int)optInSignalMAType == int.MinValue ) {
-         optInSignalMAType = MAType.Sma;
+         optInSignalMAType = MAType.SMA;
       }
       int tempInteger = 0;
       int lookbackLargest = 0;
       /* Find the MA with the largest lookback */
-      lookbackLargest = MovingAverageLookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MovingAverageLookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
+      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add to the largest MA lookback the signal line lookback */
-      return lookbackLargest + MovingAverageLookback(optInSignalPeriod, optInSignalMAType) ;
+      return lookbackLargest + MA_Lookback(optInSignalPeriod, optInSignalMAType) ;
 
    }
-   internal RetCode MacdExt( int startIdx,
+   internal RetCode MACDEXT( int startIdx,
                              int endIdx,
                              double[] inReal,
                              int optInFastPeriod,
@@ -163,7 +163,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInFastMAType == int.MinValue ) {
-         optInFastMAType = MAType.Sma;
+         optInFastMAType = MAType.SMA;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -171,7 +171,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowMAType == int.MinValue ) {
-         optInSlowMAType = MAType.Sma;
+         optInSlowMAType = MAType.SMA;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -179,7 +179,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSignalMAType == int.MinValue ) {
-         optInSignalMAType = MAType.Sma;
+         optInSignalMAType = MAType.SMA;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
@@ -189,8 +189,8 @@ public partial class Core
        * path: ma() copies the input for it instead of running an EMA
        * recursion.
        */
-      if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+      if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+         return MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
@@ -206,13 +206,13 @@ public partial class Core
          optInFastMAType = tempMAType;
       }
       /* Find the MA with the largest lookback */
-      lookbackLargest = MovingAverageLookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MovingAverageLookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
+      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
       /* Add the lookback needed for the signal line */
-      lookbackSignal = MovingAverageLookback(optInSignalPeriod, optInSignalMAType);
+      lookbackSignal = MA_Lookback(optInSignalPeriod, optInSignalMAType);
       lookbackTotal = lookbackSignal + lookbackLargest;
       /* Move up the start index if there is not
        * enough initial data.
@@ -238,14 +238,14 @@ public partial class Core
        * will start at the requested 'startIdx'.
        */
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
       /* Calculate the fast MA. */
-      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -267,7 +267,7 @@ public partial class Core
        */
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
       /* Calculate the signal/trigger line. */
-      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MA(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -282,7 +282,7 @@ public partial class Core
       outNBElement = outNbElement2;
       return RetCode.Success ;
    }
-   internal RetCode MacdExt( int startIdx,
+   internal RetCode MACDEXT( int startIdx,
                              int endIdx,
                              float[] inReal,
                              int optInFastPeriod,
@@ -324,7 +324,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInFastMAType == int.MinValue ) {
-         optInFastMAType = MAType.Sma;
+         optInFastMAType = MAType.SMA;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -332,7 +332,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowMAType == int.MinValue ) {
-         optInSlowMAType = MAType.Sma;
+         optInSlowMAType = MAType.SMA;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -340,13 +340,13 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSignalMAType == int.MinValue ) {
-         optInSignalMAType = MAType.Sma;
+         optInSignalMAType = MAType.SMA;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
       }
-      if( optInFastMAType == MAType.Ema && optInSlowMAType == MAType.Ema && optInSignalMAType == MAType.Ema && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
-         return Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
+      if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
+         return MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist) ;
       }
       if( optInSlowPeriod < optInFastPeriod ) {
          tempInteger = optInSlowPeriod;
@@ -356,12 +356,12 @@ public partial class Core
          optInSlowMAType = optInFastMAType;
          optInFastMAType = tempMAType;
       }
-      lookbackLargest = MovingAverageLookback(optInFastPeriod, optInFastMAType);
-      tempInteger = MovingAverageLookback(optInSlowPeriod, optInSlowMAType);
+      lookbackLargest = MA_Lookback(optInFastPeriod, optInFastMAType);
+      tempInteger = MA_Lookback(optInSlowPeriod, optInSlowMAType);
       if( tempInteger > lookbackLargest ) {
          lookbackLargest = tempInteger;
       }
-      lookbackSignal = MovingAverageLookback(optInSignalPeriod, optInSignalMAType);
+      lookbackSignal = MA_Lookback(optInSignalPeriod, optInSignalMAType);
       lookbackTotal = lookbackSignal + lookbackLargest;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -375,13 +375,13 @@ public partial class Core
       fastMABuffer = new double[(int)(tempInteger * 1)];
       slowMABuffer = new double[(int)(tempInteger * 1)];
       tempInteger = startIdx - lookbackSignal;
-      retCode = MovingAverage(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
+      retCode = MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, out outBegIdx1, out outNbElement1, slowMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverage(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
+      retCode = MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, out outBegIdx2, out outNbElement2, fastMABuffer);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -396,7 +396,7 @@ public partial class Core
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
       Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
-      retCode = MovingAverage(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
+      retCode = MA(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -431,7 +431,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdExtLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MACDEXT_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -467,7 +467,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MacdExt( int startIdx,
+   public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             double[] inReal,
                             int optInFastPeriod,
@@ -480,7 +480,7 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
-      RetCode retCode = MacdExt(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
       }
@@ -514,7 +514,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdExtLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MACDEXT_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -550,7 +550,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MacdExt( int startIdx,
+   public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             float[] inReal,
                             int optInFastPeriod,
@@ -563,7 +563,7 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
-      RetCode retCode = MacdExt(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
       }

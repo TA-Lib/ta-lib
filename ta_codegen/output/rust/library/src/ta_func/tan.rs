@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::tan`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TAN`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn tan_lookback(&self) -> usize {
+    pub fn TAN_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector trigonometric tangent: applies tan() element-wise to each input value.
@@ -107,7 +107,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.tan(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TAN(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -115,11 +115,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::atan`] · [`Core::sin`] · [`Core::cos`] · [`Core::tanh`]
+    /// [`Core::ATAN`] · [`Core::SIN`] · [`Core::COS`] · [`Core::TANH`]
     ///
-    /// Further reading: [ta-lib.org/functions/tan](https://ta-lib.org/functions/tan/)
+    /// Further reading: [ta-lib.org/functions/TAN](https://ta-lib.org/functions/TAN/)
     #[doc(alias = "tangent")]
-    pub fn tan(
+    pub fn TAN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -134,7 +134,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.tan_lookback();
+        let _assertLb = self.TAN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -156,20 +156,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TAN stream: one value per closed bar, bit-identical to [`Core::tan`]
-/// over the same series. Open with [`Core::tan_open`]; dropping the handle
+/// Live TAN stream: one value per closed bar, bit-identical to [`Core::TAN`]
+/// over the same series. Open with [`Core::TAN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TAN_Stream")]
-pub struct TanStream {
+pub struct TAN_Stream {
     core: Core,
-    state: TanStreamState,
+    state: TAN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TanStreamState {
+struct TAN_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -179,14 +179,14 @@ struct TanStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn tan_step_internal(&self, sp: &mut TanStreamState, inReal: f64, outReal: &mut f64) {
+    fn TAN_step_internal(&self, sp: &mut TAN_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).tan();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::tan_open`] (composition seam).
-    pub(crate) fn tan_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TAN_Open`] (composition seam).
+    pub(crate) fn TAN_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(TanStream, f64), RetCode> {
+    ) -> Result<(TAN_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -213,13 +213,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TanStreamState {
+        let state = TAN_StreamState {
         };
-        Ok((TanStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TAN_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TAN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::tan`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TAN`] at that bar.
     ///
     /// # Errors
     ///
@@ -231,23 +231,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.tan_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.TAN_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TAN_Open")]
-    pub fn tan_open(&self, inReal: &[f64], ) -> Result<(TanStream, f64), RetCode> {
-        self.tan_open_internal(inReal, 0)
+    pub fn TAN_Open(&self, inReal: &[f64], ) -> Result<(TAN_Stream, f64), RetCode> {
+        self.TAN_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::tan_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::tan`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TAN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TAN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TAN_OpenAndFill")]
-    pub fn tan_open_and_fill(
+    pub fn TAN_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TanStream, RetCode> {
+    ) -> Result<TAN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -273,21 +273,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TanStreamState {
+        let state = TAN_StreamState {
         };
-        Ok(TanStream { core: self.clone(), state })
+        Ok(TAN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TanStream {
+impl TAN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TAN_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.tan_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TAN_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -305,7 +305,7 @@ impl TanStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TanStream>();
+    _assert_auto::<TAN_Stream>();
 };
 
 /***************/

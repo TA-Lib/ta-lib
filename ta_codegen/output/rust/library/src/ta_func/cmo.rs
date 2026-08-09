@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cmo`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CMO`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,14 +75,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn cmo_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CMO_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         let mut retValue: usize = 0_usize;
-        retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::Cmo as usize]) as usize;
+        retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::CMO as usize]) as usize;
         if self.compatibility == Compatibility::Metastock {
             retValue -= 1;
         }
@@ -140,7 +140,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.cmo(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.CMO(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -148,15 +148,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::rsi`]
+    /// [`Core::RSI`]
     ///
     /// # References
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
     ///
-    /// Further reading: [ta-lib.org/functions/cmo](https://ta-lib.org/functions/cmo/)
+    /// Further reading: [ta-lib.org/functions/CMO](https://ta-lib.org/functions/CMO/)
     #[doc(alias = "ChandeMomentumOscillator")]
-    pub fn cmo(
+    pub fn CMO(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -177,7 +177,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cmo_lookback(optInTimePeriod);
+        let _assertLb = self.CMO_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -207,7 +207,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.cmo_lookback(optInTimePeriod);
+        lookbackTotal = self.CMO_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -240,7 +240,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today];
-        unstablePeriod = (self.unstable_period[FuncUnstId::Cmo as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::CMO as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -386,20 +386,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CMO stream: one value per closed bar, bit-identical to [`Core::cmo`]
-/// over the same series. Open with [`Core::cmo_open`]; dropping the handle
+/// Live CMO stream: one value per closed bar, bit-identical to [`Core::CMO`]
+/// over the same series. Open with [`Core::CMO_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CMO_Stream")]
-pub struct CmoStream {
+pub struct CMO_Stream {
     core: Core,
-    state: CmoStreamState,
+    state: CMO_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CmoStreamState {
+struct CMO_StreamState {
     optInTimePeriod: i32,
     prevGain: f64,
     prevLoss: f64,
@@ -413,7 +413,7 @@ struct CmoStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cmo_step_internal(&self, sp: &mut CmoStreamState, inReal: f64, outReal: &mut f64) {
+    fn CMO_step_internal(&self, sp: &mut CMO_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -440,10 +440,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cmo_open`] (composition seam).
-    pub(crate) fn cmo_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CMO_Open`] (composition seam).
+    pub(crate) fn CMO_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CmoStream, f64), RetCode> {
+    ) -> Result<(CMO_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -462,16 +462,16 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
-            if historyLen < self.cmo_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.CMO_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = CmoStreamState {
+            let state = CMO_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
                 prevValue: 0.0_f64,
             };
-            return Ok((CmoStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((CMO_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -498,7 +498,7 @@ impl Core {
         dummyBegIdx = 0;
         dummyNBElement = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.cmo_lookback(optInTimePeriod);
+        lookbackTotal = self.CMO_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -515,7 +515,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today];
-        unstablePeriod = (self.unstable_period[FuncUnstId::Cmo as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::CMO as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -652,17 +652,17 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = CmoStreamState {
+        let state = CMO_StreamState {
             optInTimePeriod,
             prevGain,
             prevLoss,
             prevValue,
         };
-        Ok((CmoStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CMO_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CMO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cmo`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CMO`] at that bar.
     ///
     /// # Errors
     ///
@@ -674,23 +674,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cmo_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.CMO_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CMO_Open")]
-    pub fn cmo_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CmoStream, f64), RetCode> {
-        self.cmo_open_internal(inReal, 0, optInTimePeriod)
+    pub fn CMO_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMO_Stream, f64), RetCode> {
+        self.CMO_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::cmo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cmo`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CMO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMO`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CMO_OpenAndFill")]
-    pub fn cmo_open_and_fill(
+    pub fn CMO_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CmoStream, RetCode> {
+    ) -> Result<CMO_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -708,16 +708,16 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.cmo_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.CMO_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = CmoStreamState {
+            let state = CMO_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
                 prevValue: 0.0_f64,
             };
-            let fillLb: usize = self.cmo_lookback(optInTimePeriod);
+            let fillLb: usize = self.CMO_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -725,7 +725,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            return Ok(CmoStream { core: self.clone(), state });
+            return Ok(CMO_Stream { core: self.clone(), state });
         }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -752,7 +752,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.cmo_lookback(optInTimePeriod);
+        lookbackTotal = self.CMO_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -769,7 +769,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today];
-        unstablePeriod = (self.unstable_period[FuncUnstId::Cmo as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::CMO as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -912,25 +912,25 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = CmoStreamState {
+        let state = CMO_StreamState {
             optInTimePeriod,
             prevGain,
             prevLoss,
             prevValue,
         };
-        Ok(CmoStream { core: self.clone(), state })
+        Ok(CMO_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CmoStream {
+impl CMO_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CMO_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.cmo_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.CMO_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -948,7 +948,7 @@ impl CmoStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CmoStream>();
+    _assert_auto::<CMO_Stream>();
 };
 
 /***************/

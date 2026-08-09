@@ -1,5 +1,4 @@
 name: CDLHOMINGPIGEON
-camel_case: CdlHomingPigeon
 group: Pattern Recognition
 hint: Homing Pigeon
 flags: [candlestick, stream]

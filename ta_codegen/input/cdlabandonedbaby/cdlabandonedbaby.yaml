@@ -1,5 +1,4 @@
 name: CDLABANDONEDBABY
-camel_case: CdlAbandonedBaby
 group: Pattern Recognition
 hint: Abandoned Baby
 flags: [candlestick, stream]

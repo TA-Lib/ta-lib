@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_IMI_OptInputs[] =
 DEF_FUNCTION( IMI,
               TA_GroupId_MomentumIndicators,
               "Intraday Momentum Index",
-              "Imi",
               TA_FUNC_FLG_STREAM
              );
 /* IMI END */

@@ -62,7 +62,6 @@ Full schema in `docs/ta_codegen_input_yaml.md`. Example:
 
 ```yaml
 name: SMA
-camel_case: Sma
 group: Overlap Studies
 hint: Simple Moving Average
 flags: [overlap]
@@ -176,8 +175,8 @@ Each backend has the same structure:
 
 | Call in `<name>.c` | C | Rust | Java | C# |
 |---|---|---|---|---|
-| `sma(...)` | `TA_SMA(...)` | `self.sma(...)` | `smaInternal(...)` | `Sma(...)` |
-| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.sma_lookback(...)` | `smaLookback(...)` | `SmaLookback(...)` |
+| `sma(...)` | `TA_SMA(...)` | `self.SMA(...)` | `SMA_Internal(...)` | `SMA(...)` |
+| `sma_lookback(...)` | `TA_SMA_Lookback(...)` | `self.SMA_Lookback(...)` | `SMA_Lookback(...)` | `SMA_Lookback(...)` |
 
 (C also emits single-precision `TA_S_*` variants automatically; there is no Rust `_s`
 variant — Rust is concrete `f64`.)

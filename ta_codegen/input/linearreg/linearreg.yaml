@@ -1,5 +1,4 @@
 name: LINEARREG
-camel_case: LinearReg
 group: Statistic Functions
 hint: Linear Regression
 flags: [overlap, stream]

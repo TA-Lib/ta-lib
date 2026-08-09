@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::aroonosc`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::AROONOSC`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -77,7 +77,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn aroonosc_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn AROONOSC_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.aroonosc(
+    /// let ret = core.AROONOSC(
     ///     0, high.len() - 1, &high, &low, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -149,15 +149,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::aroon`] · [`Core::minmax`]
+    /// [`Core::AROON`] · [`Core::MINMAX`]
     ///
     /// # References
     ///
     /// * Tushar S. Chande
     ///
-    /// Further reading: [ta-lib.org/functions/aroonosc](https://ta-lib.org/functions/aroonosc/)
+    /// Further reading: [ta-lib.org/functions/AROONOSC](https://ta-lib.org/functions/AROONOSC/)
     #[doc(alias = "AroonOscillator")]
-    pub fn aroonosc(
+    pub fn AROONOSC(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -179,7 +179,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.aroonosc_lookback(optInTimePeriod);
+        let _assertLb = self.AROONOSC_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -287,20 +287,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live AROONOSC stream: one value per closed bar, bit-identical to [`Core::aroonosc`]
-/// over the same series. Open with [`Core::aroonosc_open`]; dropping the handle
+/// Live AROONOSC stream: one value per closed bar, bit-identical to [`Core::AROONOSC`]
+/// over the same series. Open with [`Core::AROONOSC_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AROONOSC_Stream")]
-pub struct AroonoscStream {
+pub struct AROONOSC_Stream {
     core: Core,
-    state: AroonoscStreamState,
+    state: AROONOSC_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AroonoscStreamState {
+struct AROONOSC_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -323,7 +323,7 @@ struct AroonoscStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn aroonosc_step_internal(&self, sp: &mut AroonoscStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn AROONOSC_step_internal(&self, sp: &mut AROONOSC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -384,10 +384,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::aroonosc_open`] (composition seam).
-    pub(crate) fn aroonosc_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::AROONOSC_Open`] (composition seam).
+    pub(crate) fn AROONOSC_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AroonoscStream, f64), RetCode> {
+    ) -> Result<(AROONOSC_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -518,7 +518,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = AroonoscStreamState {
+        let state = AROONOSC_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -533,11 +533,11 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok((AroonoscStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((AROONOSC_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live AROONOSC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::aroonosc`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::AROONOSC`] at that bar.
     ///
     /// # Errors
     ///
@@ -550,23 +550,23 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.aroonosc_open(&high, &low, 14).expect("enough history");
+    /// let (mut s, _last) = core.AROONOSC_Open(&high, &low, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1);
     /// let updated = s.update(101.4, 99.1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_AROONOSC_Open")]
-    pub fn aroonosc_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AroonoscStream, f64), RetCode> {
-        self.aroonosc_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    pub fn AROONOSC_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AROONOSC_Stream, f64), RetCode> {
+        self.AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
-    /// [`Core::aroonosc_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::aroonosc`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AROONOSC_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::AROONOSC`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AROONOSC_OpenAndFill")]
-    pub fn aroonosc_open_and_fill(
+    pub fn AROONOSC_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AroonoscStream, RetCode> {
+    ) -> Result<AROONOSC_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -696,7 +696,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = AroonoscStreamState {
+        let state = AROONOSC_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -711,19 +711,19 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(AroonoscStream { core: self.clone(), state })
+        Ok(AROONOSC_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AroonoscStream {
+impl AROONOSC_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_AROONOSC_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.aroonosc_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.AROONOSC_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
         outReal
     }
 
@@ -741,7 +741,7 @@ impl AroonoscStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AroonoscStream>();
+    _assert_auto::<AROONOSC_Stream>();
 };
 
 /***************/

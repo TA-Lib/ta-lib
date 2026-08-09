@@ -49,11 +49,11 @@ fn java_stream_section(name: &str) -> String {
 fn test_java_sma_ring_stream_section() {
     let s = java_stream_section("sma");
     // Nested handle class shape: package-private fields, no public ctor.
-    assert!(s.contains("public static final class SmaStream {"));
+    assert!(s.contains("public static final class SMA_Stream {"));
     assert!(s.contains("final Core core;"));
     assert!(s.contains("double[] ring_trailingIdx_inReal;"));
     assert!(s.contains("int ringPos_trailingIdx;"));
-    assert!(!s.contains("public SmaStream("), "handle ctors stay non-public");
+    assert!(!s.contains("public SMA_Stream("), "handle ctors stay non-public");
     // Deep-copy constructor clones the ring array.
     assert!(s.contains("this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();"));
     // The C mirror/peekMode machinery is deleted by design (copy-peek).
@@ -63,10 +63,10 @@ fn test_java_sma_ring_stream_section() {
     assert!(s.contains("public double update( double inReal ) {"));
     assert!(s.contains("public double peek( double inReal ) {"));
     assert!(s.contains("public double value() {"));
-    assert!(s.contains("public SmaStream copy() {"));
-    assert!(!s.contains("public SmaStream fork()"), "copy(), never fork()");
+    assert!(s.contains("public SMA_Stream copy() {"));
+    assert!(!s.contains("public SMA_Stream fork()"), "copy(), never fork()");
     // Step is a package-private Core method writing the cur_ field.
-    assert!(s.contains("void smaStreamStep( SmaStream sp, double inReal )"));
+    assert!(s.contains("void SMA_StreamStep( SMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
     // Open body: early-success no-data guard maps to the in-band
     // insufficient-history signal; the wrapper types it.
@@ -79,12 +79,12 @@ fn test_java_sma_ring_stream_section() {
     // OpenAndFill: aliasing guard (Java is the one managed backend where
     // out == in compiles) and the batch output tail.
     assert!(s.contains("(Object)outReal == (Object)inReal"));
-    assert!(s.contains("public SmaStream smaOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
+    assert!(s.contains("public SMA_Stream SMA_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )"));
     // The filled range rides on the handle instead of a pair of out-params.
     assert!(s.contains("public OutRange fillRange() { return fillRange; }"));
     assert!(s.contains("sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);"));
     // Composition seam is package-private with a startIdx anchor.
-    assert!(s.contains("SmaStream smaOpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
+    assert!(s.contains("SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )"));
 }
 
 #[test]
@@ -130,7 +130,7 @@ fn test_java_cdl_candle_snapshot() {
     assert!(s.contains("sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;"));
     // ...and the step reads ONLY the snapshot, never the live objects.
     assert!(s.contains("int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;"));
-    let step_start = s.find("void cdl3BlackCrowsStreamStep").expect("step");
+    let step_start = s.find("void CDL3BLACKCROWS_StreamStep").expect("step");
     let step_end = s[step_start..].find("private RetCode").expect("open follows") + step_start;
     assert!(
         !s[step_start..step_end].contains("this.candleSettings"),
@@ -146,10 +146,10 @@ fn test_java_cdl_candle_snapshot() {
 fn test_java_trima_dual_mode() {
     let s = java_stream_section("trima");
     // One step, the arm re-derived from the stored param (no mode tag).
-    assert!(s.contains("void trimaStreamStep( TrimaStream sp, double inReal )"));
+    assert!(s.contains("void TRIMA_StreamStep( TRIMA_Stream sp, double inReal )"));
     assert!(s.contains("sp.optInTimePeriod % 2"));
     // Both open arms transcribe under one shared validation head.
-    let opens = s.matches("private RetCode trimaOpenBody").count();
+    let opens = s.matches("private RetCode TRIMA_OpenBody").count();
     assert_eq!(opens, 1, "one Scalar open body");
 }
 
@@ -158,7 +158,7 @@ fn test_java_midprice_fastpath_skip() {
     let s = java_stream_section("midprice");
     // The stream always runs the general arm; the batch fast path never
     // appears as a param-selected branch in the step.
-    assert!(s.contains("void midPriceStreamStep( MidPriceStream sp, double inHigh, double inLow )"));
+    assert!(s.contains("void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )"));
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ fn test_java_ma_dispatch() {
     assert!(s.contains("Object sub;"));
     // The copy constructor and the step switch derive from the SAME arm table
     // (design-review obligation): all 9 MATypes appear in both.
-    for label in ["Sma", "Ema", "Wma", "Dema", "Tema", "Trima", "Kama", "Mama", "T3"] {
+    for label in ["SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3"] {
         assert!(
             s.matches(&format!("case {label}:")).count() >= 2,
             "arm {label} must appear in both the copy constructor and dispatch switches"
@@ -180,28 +180,28 @@ fn test_java_ma_dispatch() {
     }
     // MAMA arm routes OutSlot Forward(0) through the Value field and discards
     // FAMA; the fill tail materializes a throwaway buffer for the Discard.
-    assert!(s.contains("MamaStream.Value subValue = ((MamaStream) sp.sub).update(inReal);"));
+    assert!(s.contains("MAMA_Stream.Value subValue = ((MAMA_Stream) sp.sub).update(inReal);"));
     assert!(s.contains("sp.cur_outReal = subValue.mama();"));
     assert!(s.contains("new double[historyLen]"));
     // Identity path re-derived from the stored param on every step; the guard
     // also covers the period-independent TA_MAType_DISABLED identity (issue #93).
-    assert!(s.contains("if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.Disabled ) {"));
+    assert!(s.contains("if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {"));
     // Case labels come from the shared enum authority, not hardcoded ints.
-    assert!(s.contains("case Mama:"));
+    assert!(s.contains("case MAMA:"));
 }
 
 #[test]
 fn test_java_mavp_period_bank() {
     let s = java_stream_section("mavp");
-    assert!(s.contains("MovingAverageStream[] bank;"));
+    assert!(s.contains("MA_Stream[] bank;"));
     // T1 deep-copy trap (design review): the bank must copy ELEMENT-WISE —
     // Object-array clone() would alias sub-streams and corrupt peek.
-    assert!(s.contains("this.bank[bankIdx] = new MovingAverageStream(other.bank[bankIdx]);"));
+    assert!(s.contains("this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);"));
     assert!(!s.contains("other.bank.clone()"), "bank.clone() is the aliasing trap");
     // Lockstep advance + clamp-select.
     assert!(s.contains("for( int bankIdx = 0; bankIdx < sp.bank.length; bankIdx++ ) {"));
     // Shared max-period seeding anchor.
-    assert!(s.contains("movingAverageLookback(optInMaxPeriod, optInMAType)"));
+    assert!(s.contains("MA_Lookback(optInMaxPeriod, optInMAType)"));
     // Fill replays history (no per-bar array exists to un-discard).
     assert!(s.contains("java.util.Arrays.copyOfRange(inReal, 0, lookbackTotal + 1)"));
 }
@@ -214,9 +214,9 @@ fn test_java_mavp_period_bank() {
 fn test_java_stoch_composed() {
     let s = java_stream_section("stoch");
     // Owned public sub-handles, deep-copied in the copy constructor.
-    assert!(s.contains("MovingAverageStream sub0;"));
-    assert!(s.contains("MovingAverageStream sub1;"));
-    assert!(s.contains("this.sub0 = new MovingAverageStream(other.sub0);"));
+    assert!(s.contains("MA_Stream sub0;"));
+    assert!(s.contains("MA_Stream sub1;"));
+    assert!(s.contains("this.sub0 = new MA_Stream(other.sub0);"));
     // Pipeline in batch tail order over per-bar scalars.
     assert!(s.contains("cur_tempBuffer = sp.sub0.update(cur_tempBuffer);"));
     // Open: scratch outputs + sub-opens spliced at the consumption points,

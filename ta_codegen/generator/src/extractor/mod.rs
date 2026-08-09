@@ -5,7 +5,6 @@ pub mod table_parser;
 #[derive(Debug, Clone, PartialEq)]
 pub struct TableFuncDef {
     pub name: String,
-    pub camel_case: String,
     pub group: String,
     pub hint: String,
     pub flags: Vec<String>,

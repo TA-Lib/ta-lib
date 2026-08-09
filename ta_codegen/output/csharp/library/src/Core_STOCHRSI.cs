@@ -60,7 +60,7 @@ public partial class Core
     *  020605 AA   Fix #1117656. NULL pointer assignement.
     */
    /// <summary>
-   /// Number of leading input bars <c>StochRsi</c> consumes before it can
+   /// Number of leading input bars <c>STOCHRSI</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -78,7 +78,7 @@ public partial class Core
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int StochRsiLookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public int STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -96,14 +96,14 @@ public partial class Core
          return -1;
       }
       if( (int)optInFastD_MAType == int.MinValue ) {
-         optInFastD_MAType = MAType.Sma;
+         optInFastD_MAType = MAType.SMA;
       }
       int retValue = 0;
-      retValue = RsiLookback(optInTimePeriod) + StochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      retValue = RSI_Lookback(optInTimePeriod) + STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
       return retValue ;
 
    }
-   internal RetCode StochRsi( int startIdx,
+   internal RetCode STOCHRSI( int startIdx,
                               int endIdx,
                               double[] inReal,
                               int optInTimePeriod,
@@ -147,7 +147,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInFastD_MAType == int.MinValue ) {
-         optInFastD_MAType = MAType.Sma;
+         optInFastD_MAType = MAType.SMA;
       }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
@@ -179,8 +179,8 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackSTOCHF = StochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = RsiLookback(optInTimePeriod) + lookbackSTOCHF;
+      lookbackSTOCHF = STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      lookbackTotal = RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -193,13 +193,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -207,7 +207,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode StochRsi( int startIdx,
+   internal RetCode STOCHRSI( int startIdx,
                               int endIdx,
                               float[] inReal,
                               int optInTimePeriod,
@@ -251,15 +251,15 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInFastD_MAType == int.MinValue ) {
-         optInFastD_MAType = MAType.Sma;
+         optInFastD_MAType = MAType.SMA;
       }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackSTOCHF = StochFLookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = RsiLookback(optInTimePeriod) + lookbackSTOCHF;
+      lookbackSTOCHF = STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+      lookbackTotal = RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -271,13 +271,13 @@ public partial class Core
       outBegIdx = startIdx;
       tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
       tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      retCode = Rsi(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
+      retCode = RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, out outBegIdx1, out outNbElement1, tempRSIBuffer);
       if( retCode != RetCode.Success || outNbElement1 == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
          return retCode ;
       }
-      retCode = StochF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
+      retCode = STOCHF(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outBegIdx = 0;
          outNBElement = 0;
@@ -306,7 +306,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StochRsiLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>STOCHRSI_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -334,7 +334,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange StochRsi( int startIdx,
+   public OutRange STOCHRSI( int startIdx,
                              int endIdx,
                              double[] inReal,
                              int optInTimePeriod,
@@ -344,7 +344,7 @@ public partial class Core
                              double[] outFastK,
                              double[] outFastD )
    {
-      RetCode retCode = StochRsi(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
       }
@@ -377,7 +377,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StochRsiLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>STOCHRSI_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -405,7 +405,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange StochRsi( int startIdx,
+   public OutRange STOCHRSI( int startIdx,
                              int endIdx,
                              float[] inReal,
                              int optInTimePeriod,
@@ -415,7 +415,7 @@ public partial class Core
                              double[] outFastK,
                              double[] outFastD )
    {
-      RetCode retCode = StochRsi(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
+      RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
       }

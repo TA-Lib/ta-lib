@@ -1,5 +1,4 @@
 name: CDLCLOSINGMARUBOZU
-camel_case: CdlClosingMarubozu
 group: Pattern Recognition
 hint: Closing Marubozu
 flags: [candlestick, stream]

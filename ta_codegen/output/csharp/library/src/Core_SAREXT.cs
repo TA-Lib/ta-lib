@@ -61,7 +61,7 @@ public partial class Core
     *  122104 MF,CF Fix#1089506 for out-of-bound access to ep_temp.
     */
    /// <summary>
-   /// Number of leading input bars <c>SarExt</c> consumes before it can produce
+   /// Number of leading input bars <c>SAREXT</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -86,7 +86,7 @@ public partial class Core
    /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int SarExtLookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       if( optInStartValue == TA_REAL_DEFAULT ) {
          optInStartValue = 0e0;
@@ -134,7 +134,7 @@ public partial class Core
       return 1 ;
 
    }
-   internal RetCode SarExt( int startIdx,
+   internal RetCode SAREXT( int startIdx,
                             int endIdx,
                             double[] inHigh,
                             double[] inLow,
@@ -313,7 +313,7 @@ public partial class Core
           * (ep is just used as a temp buffer here, the name
           *  of the parameter is not significant).
           */
-         retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+         retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -485,7 +485,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode SarExt( int startIdx,
+   internal RetCode SAREXT( int startIdx,
                             int endIdx,
                             float[] inHigh,
                             float[] inLow,
@@ -588,7 +588,7 @@ public partial class Core
          optInAccelerationShort = optInAccelerationMaxShort;
       }
       if( optInStartValue == 0 ) {
-         retCode = MinusDM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
+         retCode = MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, out tempInt, out tempInt, ep_temp);
          if( ep_temp[0] > 0 ) {
             isLong = 0;
          } else {
@@ -731,8 +731,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SarExtLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SAREXT_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -765,7 +765,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange SarExt( int startIdx,
+   public OutRange SAREXT( int startIdx,
                            int endIdx,
                            double[] inHigh,
                            double[] inLow,
@@ -779,7 +779,7 @@ public partial class Core
                            double optInAccelerationMaxShort,
                            double[] outReal )
    {
-      RetCode retCode = SarExt(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
       }
@@ -807,8 +807,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SarExtLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>SAREXT_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -841,7 +841,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange SarExt( int startIdx,
+   public OutRange SAREXT( int startIdx,
                            int endIdx,
                            float[] inHigh,
                            float[] inLow,
@@ -855,7 +855,7 @@ public partial class Core
                            double optInAccelerationMaxShort,
                            double[] outReal )
    {
-      RetCode retCode = SarExt(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
       }

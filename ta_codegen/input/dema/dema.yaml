@@ -1,5 +1,4 @@
 name: DEMA
-camel_case: Dema
 group: Overlap Studies
 hint: Double Exponential Moving Average
 flags: [overlap, stream]

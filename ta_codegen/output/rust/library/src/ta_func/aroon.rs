@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::aroon`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::AROON`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn aroon_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn AROON_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -136,7 +136,7 @@ impl Core {
     /// let mut aroon_down = vec![0.0; 252];
     /// let mut aroon_up = vec![0.0; 252];
     ///
-    /// let ret = core.aroon(
+    /// let ret = core.AROON(
     ///     0, high.len() - 1, &high, &low, 14,
     ///     &mut out_beg, &mut out_nb, &mut aroon_down, &mut aroon_up,
     /// );
@@ -147,14 +147,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::aroonosc`] · [`Core::minmaxindex`] · [`Core::min`] · [`Core::max`]
+    /// [`Core::AROONOSC`] · [`Core::MINMAXINDEX`] · [`Core::MIN`] · [`Core::MAX`]
     ///
     /// # References
     ///
     /// * Tushar S. Chande
     ///
-    /// Further reading: [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon/)
-    pub fn aroon(
+    /// Further reading: [ta-lib.org/functions/AROON](https://ta-lib.org/functions/AROON/)
+    pub fn AROON(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -180,7 +180,7 @@ impl Core {
         if outAroonDown.as_ptr() == outAroonUp.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.aroon_lookback(optInTimePeriod);
+        let _assertLb = self.AROON_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -276,20 +276,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live AROON stream: one value per closed bar, bit-identical to [`Core::aroon`]
-/// over the same series. Open with [`Core::aroon_open`]; dropping the handle
+/// Live AROON stream: one value per closed bar, bit-identical to [`Core::AROON`]
+/// over the same series. Open with [`Core::AROON_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AROON_Stream")]
-pub struct AroonStream {
+pub struct AROON_Stream {
     core: Core,
-    state: AroonStreamState,
+    state: AROON_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AroonStreamState {
+struct AROON_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -311,7 +311,7 @@ struct AroonStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn aroon_step_internal(&self, sp: &mut AroonStreamState, inHigh: f64, inLow: f64, outAroonDown: &mut f64, outAroonUp: &mut f64) {
+    fn AROON_step_internal(&self, sp: &mut AROON_StreamState, inHigh: f64, inLow: f64, outAroonDown: &mut f64, outAroonUp: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -365,10 +365,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::aroon_open`] (composition seam).
-    pub(crate) fn aroon_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::AROON_Open`] (composition seam).
+    pub(crate) fn AROON_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AroonStream, (f64, f64)), RetCode> {
+    ) -> Result<(AROON_Stream, (f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -487,7 +487,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = AroonStreamState {
+        let state = AROON_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -501,11 +501,11 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok((AroonStream { core: self.clone(), state }, (lastValue_outAroonDown, lastValue_outAroonUp)))
+        Ok((AROON_Stream { core: self.clone(), state }, (lastValue_outAroonDown, lastValue_outAroonUp)))
     }
 
     /// Open a live AROON stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::aroon`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::AROON`] at that bar.
     ///
     /// # Errors
     ///
@@ -518,24 +518,24 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.aroon_open(&high, &low, 14).expect("enough history");
+    /// let (mut s, _last) = core.AROON_Open(&high, &low, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1);
     /// let updated = s.update(101.4, 99.1);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_AROON_Open")]
-    pub fn aroon_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AroonStream, (f64, f64)), RetCode> {
-        self.aroon_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    pub fn AROON_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(AROON_Stream, (f64, f64)), RetCode> {
+        self.AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
-    /// [`Core::aroon_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::aroon`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AROON_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::AROON`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AROON_OpenAndFill")]
-    pub fn aroon_open_and_fill(
+    pub fn AROON_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
-    ) -> Result<AroonStream, RetCode> {
+    ) -> Result<AROON_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -655,7 +655,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = AroonStreamState {
+        let state = AROON_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -669,20 +669,20 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(AroonStream { core: self.clone(), state })
+        Ok(AROON_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AroonStream {
+impl AROON_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_AROON_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> (f64, f64) {
         let mut outAroonDown: f64 = 0.0_f64;
         let mut outAroonUp: f64 = 0.0_f64;
-        self.core.aroon_step_internal(&mut self.state, inHigh, inLow, &mut outAroonDown, &mut outAroonUp);
+        self.core.AROON_step_internal(&mut self.state, inHigh, inLow, &mut outAroonDown, &mut outAroonUp);
         (outAroonDown, outAroonUp)
     }
 
@@ -700,7 +700,7 @@ impl AroonStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AroonStream>();
+    _assert_auto::<AROON_Stream>();
 };
 
 /***************/

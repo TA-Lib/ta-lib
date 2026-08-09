@@ -1,5 +1,4 @@
 name: SAR
-camel_case: Sar
 group: Overlap Studies
 hint: Parabolic SAR
 flags: [overlap, stream, path_dependent]

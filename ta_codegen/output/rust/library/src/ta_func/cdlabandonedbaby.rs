@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlabandonedbaby`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLABANDONEDBABY`]: the number of leading input values consumed
     /// before the first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn cdlabandonedbaby_lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLABANDONEDBABY_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
@@ -158,7 +158,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlabandonedbaby(
+    /// let ret = core.CDLABANDONEDBABY(
     ///     0, open.len() - 1, &open, &high, &low, &close, 0.3,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -168,13 +168,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdleveningdojistar`] · [`Core::cdlmorningdojistar`] · [`Core::cdleveningstar`] ·
-    /// [`Core::cdlmorningstar`]
+    /// [`Core::CDLEVENINGDOJISTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLEVENINGSTAR`] ·
+    /// [`Core::CDLMORNINGSTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlabandonedbaby](https://ta-lib.org/functions/cdlabandonedbaby/)
+    /// [ta-lib.org/functions/CDLABANDONEDBABY](https://ta-lib.org/functions/CDLABANDONEDBABY/)
     #[doc(alias = "AbandonedBaby")]
-    pub fn cdlabandonedbaby(
+    pub fn CDLABANDONEDBABY(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -188,13 +188,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, cdlabandonedbaby_fma, cdlabandonedbaby_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, CDLABANDONEDBABY_fma, CDLABANDONEDBABY_impl, (startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.cdlabandonedbaby_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.CDLABANDONEDBABY_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn cdlabandonedbaby_fma(
+    fn CDLABANDONEDBABY_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -207,10 +207,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.cdlabandonedbaby_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
+        self.CDLABANDONEDBABY_impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn cdlabandonedbaby_impl(
+    fn CDLABANDONEDBABY_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -234,7 +234,7 @@ impl Core {
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cdlabandonedbaby_lookback(optInPenetration);
+        let _assertLb = self.CDLABANDONEDBABY_Lookback(optInPenetration);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -271,7 +271,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlabandonedbaby_lookback(optInPenetration);
+        lookbackTotal = self.CDLABANDONEDBABY_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -488,20 +488,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLABANDONEDBABY stream: one value per closed bar, bit-identical to [`Core::cdlabandonedbaby`]
-/// over the same series. Open with [`Core::cdlabandonedbaby_open`]; dropping the handle
+/// Live CDLABANDONEDBABY stream: one value per closed bar, bit-identical to [`Core::CDLABANDONEDBABY`]
+/// over the same series. Open with [`Core::CDLABANDONEDBABY_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLABANDONEDBABY_Stream")]
-pub struct CdlabandonedbabyStream {
+pub struct CDLABANDONEDBABY_Stream {
     core: Core,
-    state: CdlabandonedbabyStreamState,
+    state: CDLABANDONEDBABY_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlabandonedbabyStreamState {
+struct CDLABANDONEDBABY_StreamState {
     optInPenetration: f64,
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
@@ -541,7 +541,7 @@ struct CdlabandonedbabyStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlabandonedbaby_step_internal(&self, sp: &mut CdlabandonedbabyStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLABANDONEDBABY_step_internal(&self, sp: &mut CDLABANDONEDBABY_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -716,10 +716,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlabandonedbaby_open`] (composition seam).
-    pub(crate) fn cdlabandonedbaby_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLABANDONEDBABY_Open`] (composition seam).
+    pub(crate) fn CDLABANDONEDBABY_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CdlabandonedbabyStream, i32), RetCode> {
+    ) -> Result<(CDLABANDONEDBABY_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -766,7 +766,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlabandonedbaby_lookback(optInPenetration);
+        lookbackTotal = self.CDLABANDONEDBABY_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1029,7 +1029,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlabandonedbabyStreamState {
+        let state = CDLABANDONEDBABY_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1061,11 +1061,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((CdlabandonedbabyStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLABANDONEDBABY_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLABANDONEDBABY stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlabandonedbaby`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLABANDONEDBABY`] at that bar.
     ///
     /// # Errors
     ///
@@ -1084,23 +1084,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlabandonedbaby_open(&open, &high, &low, &close, 0.3).expect("enough history");
+    /// let (mut s, _last) = core.CDLABANDONEDBABY_Open(&open, &high, &low, &close, 0.3).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLABANDONEDBABY_Open")]
-    pub fn cdlabandonedbaby_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdlabandonedbabyStream, i32), RetCode> {
-        self.cdlabandonedbaby_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn CDLABANDONEDBABY_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLABANDONEDBABY_Stream, i32), RetCode> {
+        self.CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::cdlabandonedbaby_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlabandonedbaby`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLABANDONEDBABY_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLABANDONEDBABY`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLABANDONEDBABY_OpenAndFill")]
-    pub fn cdlabandonedbaby_open_and_fill(
+    pub fn CDLABANDONEDBABY_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlabandonedbabyStream, RetCode> {
+    ) -> Result<CDLABANDONEDBABY_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1146,7 +1146,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlabandonedbaby_lookback(optInPenetration);
+        lookbackTotal = self.CDLABANDONEDBABY_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1411,7 +1411,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlabandonedbabyStreamState {
+        let state = CDLABANDONEDBABY_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1443,19 +1443,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(CdlabandonedbabyStream { core: self.clone(), state })
+        Ok(CDLABANDONEDBABY_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlabandonedbabyStream {
+impl CDLABANDONEDBABY_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLABANDONEDBABY_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlabandonedbaby_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLABANDONEDBABY_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1473,7 +1473,7 @@ impl CdlabandonedbabyStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlabandonedbabyStream>();
+    _assert_auto::<CDLABANDONEDBABY_Stream>();
 };
 
 /***************/

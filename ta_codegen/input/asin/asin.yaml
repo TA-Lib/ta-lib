@@ -1,5 +1,4 @@
 name: ASIN
-camel_case: Asin
 group: Math Transform
 hint: Vector Trigonometric ASin
 flags: [stream]

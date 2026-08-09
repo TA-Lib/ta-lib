@@ -58,7 +58,6 @@ public static class FunctionDescription
 	<!-- ACCBANDS -->
 	<FinancialFunction>
 		<Abbreviation>ACCBANDS</Abbreviation>
-		<CamelCaseName>Accbands</CamelCaseName>
 		<ShortDescription>Acceleration Bands</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -123,7 +122,6 @@ public static class FunctionDescription
 	<!-- ACOS -->
 	<FinancialFunction>
 		<Abbreviation>ACOS</Abbreviation>
-		<CamelCaseName>Acos</CamelCaseName>
 		<ShortDescription>Vector Trigonometric ACos</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -150,7 +148,6 @@ public static class FunctionDescription
 	<!-- AD -->
 	<FinancialFunction>
 		<Abbreviation>AD</Abbreviation>
-		<CamelCaseName>Ad</CamelCaseName>
 		<ShortDescription>Chaikin A/D Line</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -190,7 +187,6 @@ public static class FunctionDescription
 	<!-- ADD -->
 	<FinancialFunction>
 		<Abbreviation>ADD</Abbreviation>
-		<CamelCaseName>Add</CamelCaseName>
 		<ShortDescription>Vector Arithmetic Add</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -221,7 +217,6 @@ public static class FunctionDescription
 	<!-- ADOSC -->
 	<FinancialFunction>
 		<Abbreviation>ADOSC</Abbreviation>
-		<CamelCaseName>AdOsc</CamelCaseName>
 		<ShortDescription>Chaikin A/D Oscillator</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -289,7 +284,6 @@ public static class FunctionDescription
 	<!-- ADX -->
 	<FinancialFunction>
 		<Abbreviation>ADX</Abbreviation>
-		<CamelCaseName>Adx</CamelCaseName>
 		<ShortDescription>Average Directional Movement Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -340,7 +334,6 @@ public static class FunctionDescription
 	<!-- ADXR -->
 	<FinancialFunction>
 		<Abbreviation>ADXR</Abbreviation>
-		<CamelCaseName>Adxr</CamelCaseName>
 		<ShortDescription>Average Directional Movement Index Rating</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -390,7 +383,6 @@ public static class FunctionDescription
 	<!-- APO -->
 	<FinancialFunction>
 		<Abbreviation>APO</Abbreviation>
-		<CamelCaseName>Apo</CamelCaseName>
 		<ShortDescription>Absolute Price Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -451,7 +443,6 @@ public static class FunctionDescription
 	<!-- AROON -->
 	<FinancialFunction>
 		<Abbreviation>AROON</Abbreviation>
-		<CamelCaseName>Aroon</CamelCaseName>
 		<ShortDescription>Aroon</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -504,7 +495,6 @@ public static class FunctionDescription
 	<!-- AROONOSC -->
 	<FinancialFunction>
 		<Abbreviation>AROONOSC</Abbreviation>
-		<CamelCaseName>AroonOsc</CamelCaseName>
 		<ShortDescription>Aroon Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -550,7 +540,6 @@ public static class FunctionDescription
 	<!-- ASIN -->
 	<FinancialFunction>
 		<Abbreviation>ASIN</Abbreviation>
-		<CamelCaseName>Asin</CamelCaseName>
 		<ShortDescription>Vector Trigonometric ASin</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -577,7 +566,6 @@ public static class FunctionDescription
 	<!-- ATAN -->
 	<FinancialFunction>
 		<Abbreviation>ATAN</Abbreviation>
-		<CamelCaseName>Atan</CamelCaseName>
 		<ShortDescription>Vector Trigonometric ATan</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -604,7 +592,6 @@ public static class FunctionDescription
 	<!-- ATR -->
 	<FinancialFunction>
 		<Abbreviation>ATR</Abbreviation>
-		<CamelCaseName>Atr</CamelCaseName>
 		<ShortDescription>Average True Range</ShortDescription>
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
@@ -655,7 +642,6 @@ public static class FunctionDescription
 	<!-- AVGDEV -->
 	<FinancialFunction>
 		<Abbreviation>AVGDEV</Abbreviation>
-		<CamelCaseName>AvgDev</CamelCaseName>
 		<ShortDescription>Average Deviation</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
@@ -698,7 +684,6 @@ public static class FunctionDescription
 	<!-- AVGPRICE -->
 	<FinancialFunction>
 		<Abbreviation>AVGPRICE</Abbreviation>
-		<CamelCaseName>AvgPrice</CamelCaseName>
 		<ShortDescription>Average Price</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
@@ -738,7 +723,6 @@ public static class FunctionDescription
 	<!-- BBANDS -->
 	<FinancialFunction>
 		<Abbreviation>BBANDS</Abbreviation>
-		<CamelCaseName>Bbands</CamelCaseName>
 		<ShortDescription>Bollinger Bands</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -829,7 +813,6 @@ public static class FunctionDescription
 	<!-- BETA -->
 	<FinancialFunction>
 		<Abbreviation>BETA</Abbreviation>
-		<CamelCaseName>Beta</CamelCaseName>
 		<ShortDescription>Beta</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -875,7 +858,6 @@ public static class FunctionDescription
 	<!-- BOP -->
 	<FinancialFunction>
 		<Abbreviation>BOP</Abbreviation>
-		<CamelCaseName>Bop</CamelCaseName>
 		<ShortDescription>Balance Of Power</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -914,7 +896,6 @@ public static class FunctionDescription
 	<!-- CCI -->
 	<FinancialFunction>
 		<Abbreviation>CCI</Abbreviation>
-		<CamelCaseName>Cci</CamelCaseName>
 		<ShortDescription>Commodity Channel Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -964,7 +945,6 @@ public static class FunctionDescription
 	<!-- CDL2CROWS -->
 	<FinancialFunction>
 		<Abbreviation>CDL2CROWS</Abbreviation>
-		<CamelCaseName>Cdl2Crows</CamelCaseName>
 		<ShortDescription>Two Crows</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1004,7 +984,6 @@ public static class FunctionDescription
 	<!-- CDL3BLACKCROWS -->
 	<FinancialFunction>
 		<Abbreviation>CDL3BLACKCROWS</Abbreviation>
-		<CamelCaseName>Cdl3BlackCrows</CamelCaseName>
 		<ShortDescription>Three Black Crows</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1044,7 +1023,6 @@ public static class FunctionDescription
 	<!-- CDL3INSIDE -->
 	<FinancialFunction>
 		<Abbreviation>CDL3INSIDE</Abbreviation>
-		<CamelCaseName>Cdl3Inside</CamelCaseName>
 		<ShortDescription>Three Inside Up/Down</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1084,7 +1062,6 @@ public static class FunctionDescription
 	<!-- CDL3LINESTRIKE -->
 	<FinancialFunction>
 		<Abbreviation>CDL3LINESTRIKE</Abbreviation>
-		<CamelCaseName>Cdl3LineStrike</CamelCaseName>
 		<ShortDescription>Three-Line Strike</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1124,7 +1101,6 @@ public static class FunctionDescription
 	<!-- CDL3OUTSIDE -->
 	<FinancialFunction>
 		<Abbreviation>CDL3OUTSIDE</Abbreviation>
-		<CamelCaseName>Cdl3Outside</CamelCaseName>
 		<ShortDescription>Three Outside Up/Down</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1164,7 +1140,6 @@ public static class FunctionDescription
 	<!-- CDL3STARSINSOUTH -->
 	<FinancialFunction>
 		<Abbreviation>CDL3STARSINSOUTH</Abbreviation>
-		<CamelCaseName>Cdl3StarsInSouth</CamelCaseName>
 		<ShortDescription>Three Stars In The South</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1204,7 +1179,6 @@ public static class FunctionDescription
 	<!-- CDL3WHITESOLDIERS -->
 	<FinancialFunction>
 		<Abbreviation>CDL3WHITESOLDIERS</Abbreviation>
-		<CamelCaseName>Cdl3WhiteSoldiers</CamelCaseName>
 		<ShortDescription>Three Advancing White Soldiers</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1244,7 +1218,6 @@ public static class FunctionDescription
 	<!-- CDLABANDONEDBABY -->
 	<FinancialFunction>
 		<Abbreviation>CDLABANDONEDBABY</Abbreviation>
-		<CamelCaseName>CdlAbandonedBaby</CamelCaseName>
 		<ShortDescription>Abandoned Baby</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1300,7 +1273,6 @@ public static class FunctionDescription
 	<!-- CDLADVANCEBLOCK -->
 	<FinancialFunction>
 		<Abbreviation>CDLADVANCEBLOCK</Abbreviation>
-		<CamelCaseName>CdlAdvanceBlock</CamelCaseName>
 		<ShortDescription>Advance Block</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1340,7 +1312,6 @@ public static class FunctionDescription
 	<!-- CDLBELTHOLD -->
 	<FinancialFunction>
 		<Abbreviation>CDLBELTHOLD</Abbreviation>
-		<CamelCaseName>CdlBeltHold</CamelCaseName>
 		<ShortDescription>Belt-hold</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1380,7 +1351,6 @@ public static class FunctionDescription
 	<!-- CDLBREAKAWAY -->
 	<FinancialFunction>
 		<Abbreviation>CDLBREAKAWAY</Abbreviation>
-		<CamelCaseName>CdlBreakaway</CamelCaseName>
 		<ShortDescription>Breakaway</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1420,7 +1390,6 @@ public static class FunctionDescription
 	<!-- CDLCLOSINGMARUBOZU -->
 	<FinancialFunction>
 		<Abbreviation>CDLCLOSINGMARUBOZU</Abbreviation>
-		<CamelCaseName>CdlClosingMarubozu</CamelCaseName>
 		<ShortDescription>Closing Marubozu</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1460,7 +1429,6 @@ public static class FunctionDescription
 	<!-- CDLCONCEALBABYSWALL -->
 	<FinancialFunction>
 		<Abbreviation>CDLCONCEALBABYSWALL</Abbreviation>
-		<CamelCaseName>CdlConcealBabysWall</CamelCaseName>
 		<ShortDescription>Concealing Baby Swallow</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1500,7 +1468,6 @@ public static class FunctionDescription
 	<!-- CDLCOUNTERATTACK -->
 	<FinancialFunction>
 		<Abbreviation>CDLCOUNTERATTACK</Abbreviation>
-		<CamelCaseName>CdlCounterAttack</CamelCaseName>
 		<ShortDescription>Counterattack</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1540,7 +1507,6 @@ public static class FunctionDescription
 	<!-- CDLDARKCLOUDCOVER -->
 	<FinancialFunction>
 		<Abbreviation>CDLDARKCLOUDCOVER</Abbreviation>
-		<CamelCaseName>CdlDarkCloudCover</CamelCaseName>
 		<ShortDescription>Dark Cloud Cover</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1596,7 +1562,6 @@ public static class FunctionDescription
 	<!-- CDLDOJI -->
 	<FinancialFunction>
 		<Abbreviation>CDLDOJI</Abbreviation>
-		<CamelCaseName>CdlDoji</CamelCaseName>
 		<ShortDescription>Doji</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1636,7 +1601,6 @@ public static class FunctionDescription
 	<!-- CDLDOJISTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLDOJISTAR</Abbreviation>
-		<CamelCaseName>CdlDojiStar</CamelCaseName>
 		<ShortDescription>Doji Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1676,7 +1640,6 @@ public static class FunctionDescription
 	<!-- CDLDRAGONFLYDOJI -->
 	<FinancialFunction>
 		<Abbreviation>CDLDRAGONFLYDOJI</Abbreviation>
-		<CamelCaseName>CdlDragonflyDoji</CamelCaseName>
 		<ShortDescription>Dragonfly Doji</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1716,7 +1679,6 @@ public static class FunctionDescription
 	<!-- CDLENGULFING -->
 	<FinancialFunction>
 		<Abbreviation>CDLENGULFING</Abbreviation>
-		<CamelCaseName>CdlEngulfing</CamelCaseName>
 		<ShortDescription>Engulfing Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1756,7 +1718,6 @@ public static class FunctionDescription
 	<!-- CDLEVENINGDOJISTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLEVENINGDOJISTAR</Abbreviation>
-		<CamelCaseName>CdlEveningDojiStar</CamelCaseName>
 		<ShortDescription>Evening Doji Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1812,7 +1773,6 @@ public static class FunctionDescription
 	<!-- CDLEVENINGSTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLEVENINGSTAR</Abbreviation>
-		<CamelCaseName>CdlEveningStar</CamelCaseName>
 		<ShortDescription>Evening Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1868,7 +1828,6 @@ public static class FunctionDescription
 	<!-- CDLGAPSIDESIDEWHITE -->
 	<FinancialFunction>
 		<Abbreviation>CDLGAPSIDESIDEWHITE</Abbreviation>
-		<CamelCaseName>CdlGapSideSideWhite</CamelCaseName>
 		<ShortDescription>Up/Down-gap side-by-side white lines</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1908,7 +1867,6 @@ public static class FunctionDescription
 	<!-- CDLGRAVESTONEDOJI -->
 	<FinancialFunction>
 		<Abbreviation>CDLGRAVESTONEDOJI</Abbreviation>
-		<CamelCaseName>CdlGravestoneDoji</CamelCaseName>
 		<ShortDescription>Gravestone Doji</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1948,7 +1906,6 @@ public static class FunctionDescription
 	<!-- CDLHAMMER -->
 	<FinancialFunction>
 		<Abbreviation>CDLHAMMER</Abbreviation>
-		<CamelCaseName>CdlHammer</CamelCaseName>
 		<ShortDescription>Hammer</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -1988,7 +1945,6 @@ public static class FunctionDescription
 	<!-- CDLHANGINGMAN -->
 	<FinancialFunction>
 		<Abbreviation>CDLHANGINGMAN</Abbreviation>
-		<CamelCaseName>CdlHangingMan</CamelCaseName>
 		<ShortDescription>Hanging Man</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2028,7 +1984,6 @@ public static class FunctionDescription
 	<!-- CDLHARAMI -->
 	<FinancialFunction>
 		<Abbreviation>CDLHARAMI</Abbreviation>
-		<CamelCaseName>CdlHarami</CamelCaseName>
 		<ShortDescription>Harami Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2068,7 +2023,6 @@ public static class FunctionDescription
 	<!-- CDLHARAMICROSS -->
 	<FinancialFunction>
 		<Abbreviation>CDLHARAMICROSS</Abbreviation>
-		<CamelCaseName>CdlHaramiCross</CamelCaseName>
 		<ShortDescription>Harami Cross Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2108,7 +2062,6 @@ public static class FunctionDescription
 	<!-- CDLHIGHWAVE -->
 	<FinancialFunction>
 		<Abbreviation>CDLHIGHWAVE</Abbreviation>
-		<CamelCaseName>CdlHignWave</CamelCaseName>
 		<ShortDescription>High-Wave Candle</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2148,7 +2101,6 @@ public static class FunctionDescription
 	<!-- CDLHIKKAKE -->
 	<FinancialFunction>
 		<Abbreviation>CDLHIKKAKE</Abbreviation>
-		<CamelCaseName>CdlHikkake</CamelCaseName>
 		<ShortDescription>Hikkake Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2188,7 +2140,6 @@ public static class FunctionDescription
 	<!-- CDLHIKKAKEMOD -->
 	<FinancialFunction>
 		<Abbreviation>CDLHIKKAKEMOD</Abbreviation>
-		<CamelCaseName>CdlHikkakeMod</CamelCaseName>
 		<ShortDescription>Modified Hikkake Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2228,7 +2179,6 @@ public static class FunctionDescription
 	<!-- CDLHOMINGPIGEON -->
 	<FinancialFunction>
 		<Abbreviation>CDLHOMINGPIGEON</Abbreviation>
-		<CamelCaseName>CdlHomingPigeon</CamelCaseName>
 		<ShortDescription>Homing Pigeon</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2268,7 +2218,6 @@ public static class FunctionDescription
 	<!-- CDLIDENTICAL3CROWS -->
 	<FinancialFunction>
 		<Abbreviation>CDLIDENTICAL3CROWS</Abbreviation>
-		<CamelCaseName>CdlIdentical3Crows</CamelCaseName>
 		<ShortDescription>Identical Three Crows</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2308,7 +2257,6 @@ public static class FunctionDescription
 	<!-- CDLINNECK -->
 	<FinancialFunction>
 		<Abbreviation>CDLINNECK</Abbreviation>
-		<CamelCaseName>CdlInNeck</CamelCaseName>
 		<ShortDescription>In-Neck Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2348,7 +2296,6 @@ public static class FunctionDescription
 	<!-- CDLINVERTEDHAMMER -->
 	<FinancialFunction>
 		<Abbreviation>CDLINVERTEDHAMMER</Abbreviation>
-		<CamelCaseName>CdlInvertedHammer</CamelCaseName>
 		<ShortDescription>Inverted Hammer</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2388,7 +2335,6 @@ public static class FunctionDescription
 	<!-- CDLKICKING -->
 	<FinancialFunction>
 		<Abbreviation>CDLKICKING</Abbreviation>
-		<CamelCaseName>CdlKicking</CamelCaseName>
 		<ShortDescription>Kicking</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2428,7 +2374,6 @@ public static class FunctionDescription
 	<!-- CDLKICKINGBYLENGTH -->
 	<FinancialFunction>
 		<Abbreviation>CDLKICKINGBYLENGTH</Abbreviation>
-		<CamelCaseName>CdlKickingByLength</CamelCaseName>
 		<ShortDescription>Kicking - bull/bear determined by the longer marubozu</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2468,7 +2413,6 @@ public static class FunctionDescription
 	<!-- CDLLADDERBOTTOM -->
 	<FinancialFunction>
 		<Abbreviation>CDLLADDERBOTTOM</Abbreviation>
-		<CamelCaseName>CdlLadderBottom</CamelCaseName>
 		<ShortDescription>Ladder Bottom</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2508,7 +2452,6 @@ public static class FunctionDescription
 	<!-- CDLLONGLEGGEDDOJI -->
 	<FinancialFunction>
 		<Abbreviation>CDLLONGLEGGEDDOJI</Abbreviation>
-		<CamelCaseName>CdlLongLeggedDoji</CamelCaseName>
 		<ShortDescription>Long Legged Doji</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2548,7 +2491,6 @@ public static class FunctionDescription
 	<!-- CDLLONGLINE -->
 	<FinancialFunction>
 		<Abbreviation>CDLLONGLINE</Abbreviation>
-		<CamelCaseName>CdlLongLine</CamelCaseName>
 		<ShortDescription>Long Line Candle</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2588,7 +2530,6 @@ public static class FunctionDescription
 	<!-- CDLMARUBOZU -->
 	<FinancialFunction>
 		<Abbreviation>CDLMARUBOZU</Abbreviation>
-		<CamelCaseName>CdlMarubozu</CamelCaseName>
 		<ShortDescription>Marubozu</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2628,7 +2569,6 @@ public static class FunctionDescription
 	<!-- CDLMATCHINGLOW -->
 	<FinancialFunction>
 		<Abbreviation>CDLMATCHINGLOW</Abbreviation>
-		<CamelCaseName>CdlMatchingLow</CamelCaseName>
 		<ShortDescription>Matching Low</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2668,7 +2608,6 @@ public static class FunctionDescription
 	<!-- CDLMATHOLD -->
 	<FinancialFunction>
 		<Abbreviation>CDLMATHOLD</Abbreviation>
-		<CamelCaseName>CdlMatHold</CamelCaseName>
 		<ShortDescription>Mat Hold</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2724,7 +2663,6 @@ public static class FunctionDescription
 	<!-- CDLMORNINGDOJISTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLMORNINGDOJISTAR</Abbreviation>
-		<CamelCaseName>CdlMorningDojiStar</CamelCaseName>
 		<ShortDescription>Morning Doji Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2780,7 +2718,6 @@ public static class FunctionDescription
 	<!-- CDLMORNINGSTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLMORNINGSTAR</Abbreviation>
-		<CamelCaseName>CdlMorningStar</CamelCaseName>
 		<ShortDescription>Morning Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2836,7 +2773,6 @@ public static class FunctionDescription
 	<!-- CDLONNECK -->
 	<FinancialFunction>
 		<Abbreviation>CDLONNECK</Abbreviation>
-		<CamelCaseName>CdlOnNeck</CamelCaseName>
 		<ShortDescription>On-Neck Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2876,7 +2812,6 @@ public static class FunctionDescription
 	<!-- CDLPIERCING -->
 	<FinancialFunction>
 		<Abbreviation>CDLPIERCING</Abbreviation>
-		<CamelCaseName>CdlPiercing</CamelCaseName>
 		<ShortDescription>Piercing Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2916,7 +2851,6 @@ public static class FunctionDescription
 	<!-- CDLRICKSHAWMAN -->
 	<FinancialFunction>
 		<Abbreviation>CDLRICKSHAWMAN</Abbreviation>
-		<CamelCaseName>CdlRickshawMan</CamelCaseName>
 		<ShortDescription>Rickshaw Man</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2956,7 +2890,6 @@ public static class FunctionDescription
 	<!-- CDLRISEFALL3METHODS -->
 	<FinancialFunction>
 		<Abbreviation>CDLRISEFALL3METHODS</Abbreviation>
-		<CamelCaseName>CdlRiseFall3Methods</CamelCaseName>
 		<ShortDescription>Rising/Falling Three Methods</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -2996,7 +2929,6 @@ public static class FunctionDescription
 	<!-- CDLSEPARATINGLINES -->
 	<FinancialFunction>
 		<Abbreviation>CDLSEPARATINGLINES</Abbreviation>
-		<CamelCaseName>CdlSeperatingLines</CamelCaseName>
 		<ShortDescription>Separating Lines</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3036,7 +2968,6 @@ public static class FunctionDescription
 	<!-- CDLSHOOTINGSTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLSHOOTINGSTAR</Abbreviation>
-		<CamelCaseName>CdlShootingStar</CamelCaseName>
 		<ShortDescription>Shooting Star</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3076,7 +3007,6 @@ public static class FunctionDescription
 	<!-- CDLSHORTLINE -->
 	<FinancialFunction>
 		<Abbreviation>CDLSHORTLINE</Abbreviation>
-		<CamelCaseName>CdlShortLine</CamelCaseName>
 		<ShortDescription>Short Line Candle</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3116,7 +3046,6 @@ public static class FunctionDescription
 	<!-- CDLSPINNINGTOP -->
 	<FinancialFunction>
 		<Abbreviation>CDLSPINNINGTOP</Abbreviation>
-		<CamelCaseName>CdlSpinningTop</CamelCaseName>
 		<ShortDescription>Spinning Top</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3156,7 +3085,6 @@ public static class FunctionDescription
 	<!-- CDLSTALLEDPATTERN -->
 	<FinancialFunction>
 		<Abbreviation>CDLSTALLEDPATTERN</Abbreviation>
-		<CamelCaseName>CdlStalledPattern</CamelCaseName>
 		<ShortDescription>Stalled Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3196,7 +3124,6 @@ public static class FunctionDescription
 	<!-- CDLSTICKSANDWICH -->
 	<FinancialFunction>
 		<Abbreviation>CDLSTICKSANDWICH</Abbreviation>
-		<CamelCaseName>CdlStickSandwich</CamelCaseName>
 		<ShortDescription>Stick Sandwich</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3236,7 +3163,6 @@ public static class FunctionDescription
 	<!-- CDLTAKURI -->
 	<FinancialFunction>
 		<Abbreviation>CDLTAKURI</Abbreviation>
-		<CamelCaseName>CdlTakuri</CamelCaseName>
 		<ShortDescription>Takuri (Dragonfly Doji with very long lower shadow)</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3276,7 +3202,6 @@ public static class FunctionDescription
 	<!-- CDLTASUKIGAP -->
 	<FinancialFunction>
 		<Abbreviation>CDLTASUKIGAP</Abbreviation>
-		<CamelCaseName>CdlTasukiGap</CamelCaseName>
 		<ShortDescription>Tasuki Gap</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3316,7 +3241,6 @@ public static class FunctionDescription
 	<!-- CDLTHRUSTING -->
 	<FinancialFunction>
 		<Abbreviation>CDLTHRUSTING</Abbreviation>
-		<CamelCaseName>CdlThrusting</CamelCaseName>
 		<ShortDescription>Thrusting Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3356,7 +3280,6 @@ public static class FunctionDescription
 	<!-- CDLTRISTAR -->
 	<FinancialFunction>
 		<Abbreviation>CDLTRISTAR</Abbreviation>
-		<CamelCaseName>CdlTristar</CamelCaseName>
 		<ShortDescription>Tristar Pattern</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3396,7 +3319,6 @@ public static class FunctionDescription
 	<!-- CDLUNIQUE3RIVER -->
 	<FinancialFunction>
 		<Abbreviation>CDLUNIQUE3RIVER</Abbreviation>
-		<CamelCaseName>CdlUnique3River</CamelCaseName>
 		<ShortDescription>Unique 3 River</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3436,7 +3358,6 @@ public static class FunctionDescription
 	<!-- CDLUPSIDEGAP2CROWS -->
 	<FinancialFunction>
 		<Abbreviation>CDLUPSIDEGAP2CROWS</Abbreviation>
-		<CamelCaseName>CdlUpsideGap2Crows</CamelCaseName>
 		<ShortDescription>Upside Gap Two Crows</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3476,7 +3397,6 @@ public static class FunctionDescription
 	<!-- CDLXSIDEGAP3METHODS -->
 	<FinancialFunction>
 		<Abbreviation>CDLXSIDEGAP3METHODS</Abbreviation>
-		<CamelCaseName>CdlXSideGap3Methods</CamelCaseName>
 		<ShortDescription>Upside/Downside Gap Three Methods</ShortDescription>
 		<GroupId>Pattern Recognition</GroupId>
 		<Flags>
@@ -3516,7 +3436,6 @@ public static class FunctionDescription
 	<!-- CEIL -->
 	<FinancialFunction>
 		<Abbreviation>CEIL</Abbreviation>
-		<CamelCaseName>Ceil</CamelCaseName>
 		<ShortDescription>Vector Ceil</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -3543,7 +3462,6 @@ public static class FunctionDescription
 	<!-- CMF -->
 	<FinancialFunction>
 		<Abbreviation>CMF</Abbreviation>
-		<CamelCaseName>Cmf</CamelCaseName>
 		<ShortDescription>Chaikin Money Flow</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -3597,7 +3515,6 @@ public static class FunctionDescription
 	<!-- CMO -->
 	<FinancialFunction>
 		<Abbreviation>CMO</Abbreviation>
-		<CamelCaseName>Cmo</CamelCaseName>
 		<ShortDescription>Chande Momentum Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -3640,7 +3557,6 @@ public static class FunctionDescription
 	<!-- CMOU -->
 	<FinancialFunction>
 		<Abbreviation>CMOU</Abbreviation>
-		<CamelCaseName>Cmou</CamelCaseName>
 		<ShortDescription>Chande Momentum Oscillator (Unsmoothed)</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -3682,7 +3598,6 @@ public static class FunctionDescription
 	<!-- CORREL -->
 	<FinancialFunction>
 		<Abbreviation>CORREL</Abbreviation>
-		<CamelCaseName>Correl</CamelCaseName>
 		<ShortDescription>Pearson&apos;s Correlation Coefficient (r)</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -3728,7 +3643,6 @@ public static class FunctionDescription
 	<!-- COS -->
 	<FinancialFunction>
 		<Abbreviation>COS</Abbreviation>
-		<CamelCaseName>Cos</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Cos</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -3755,7 +3669,6 @@ public static class FunctionDescription
 	<!-- COSH -->
 	<FinancialFunction>
 		<Abbreviation>COSH</Abbreviation>
-		<CamelCaseName>Cosh</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Cosh</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -3782,7 +3695,6 @@ public static class FunctionDescription
 	<!-- DEMA -->
 	<FinancialFunction>
 		<Abbreviation>DEMA</Abbreviation>
-		<CamelCaseName>Dema</CamelCaseName>
 		<ShortDescription>Double Exponential Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -3825,7 +3737,6 @@ public static class FunctionDescription
 	<!-- DIV -->
 	<FinancialFunction>
 		<Abbreviation>DIV</Abbreviation>
-		<CamelCaseName>Div</CamelCaseName>
 		<ShortDescription>Vector Arithmetic Div</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -3856,7 +3767,6 @@ public static class FunctionDescription
 	<!-- DX -->
 	<FinancialFunction>
 		<Abbreviation>DX</Abbreviation>
-		<CamelCaseName>Dx</CamelCaseName>
 		<ShortDescription>Directional Movement Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -3907,7 +3817,6 @@ public static class FunctionDescription
 	<!-- EMA -->
 	<FinancialFunction>
 		<Abbreviation>EMA</Abbreviation>
-		<CamelCaseName>Ema</CamelCaseName>
 		<ShortDescription>Exponential Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -3951,7 +3860,6 @@ public static class FunctionDescription
 	<!-- EXP -->
 	<FinancialFunction>
 		<Abbreviation>EXP</Abbreviation>
-		<CamelCaseName>Exp</CamelCaseName>
 		<ShortDescription>Vector Arithmetic Exp</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -3978,7 +3886,6 @@ public static class FunctionDescription
 	<!-- FLOOR -->
 	<FinancialFunction>
 		<Abbreviation>FLOOR</Abbreviation>
-		<CamelCaseName>Floor</CamelCaseName>
 		<ShortDescription>Vector Floor</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -4005,7 +3912,6 @@ public static class FunctionDescription
 	<!-- HMA -->
 	<FinancialFunction>
 		<Abbreviation>HMA</Abbreviation>
-		<CamelCaseName>Hma</CamelCaseName>
 		<ShortDescription>Hull Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4048,7 +3954,6 @@ public static class FunctionDescription
 	<!-- HT_DCPERIOD -->
 	<FinancialFunction>
 		<Abbreviation>HT_DCPERIOD</Abbreviation>
-		<CamelCaseName>HtDcPeriod</CamelCaseName>
 		<ShortDescription>Hilbert Transform - Dominant Cycle Period</ShortDescription>
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
@@ -4076,7 +3981,6 @@ public static class FunctionDescription
 	<!-- HT_DCPHASE -->
 	<FinancialFunction>
 		<Abbreviation>HT_DCPHASE</Abbreviation>
-		<CamelCaseName>HtDcPhase</CamelCaseName>
 		<ShortDescription>Hilbert Transform - Dominant Cycle Phase</ShortDescription>
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
@@ -4104,7 +4008,6 @@ public static class FunctionDescription
 	<!-- HT_PHASOR -->
 	<FinancialFunction>
 		<Abbreviation>HT_PHASOR</Abbreviation>
-		<CamelCaseName>HtPhasor</CamelCaseName>
 		<ShortDescription>Hilbert Transform - Phasor Components</ShortDescription>
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
@@ -4139,7 +4042,6 @@ public static class FunctionDescription
 	<!-- HT_SINE -->
 	<FinancialFunction>
 		<Abbreviation>HT_SINE</Abbreviation>
-		<CamelCaseName>HtSine</CamelCaseName>
 		<ShortDescription>Hilbert Transform - SineWave</ShortDescription>
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
@@ -4174,7 +4076,6 @@ public static class FunctionDescription
 	<!-- HT_TRENDLINE -->
 	<FinancialFunction>
 		<Abbreviation>HT_TRENDLINE</Abbreviation>
-		<CamelCaseName>HtTrendline</CamelCaseName>
 		<ShortDescription>Hilbert Transform - Instantaneous Trendline</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4203,7 +4104,6 @@ public static class FunctionDescription
 	<!-- HT_TRENDMODE -->
 	<FinancialFunction>
 		<Abbreviation>HT_TRENDMODE</Abbreviation>
-		<CamelCaseName>HtTrendMode</CamelCaseName>
 		<ShortDescription>Hilbert Transform - Trend vs Cycle Mode</ShortDescription>
 		<GroupId>Cycle Indicators</GroupId>
 		<Flags>
@@ -4231,7 +4131,6 @@ public static class FunctionDescription
 	<!-- IMI -->
 	<FinancialFunction>
 		<Abbreviation>IMI</Abbreviation>
-		<CamelCaseName>Imi</CamelCaseName>
 		<ShortDescription>Intraday Momentum Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -4277,7 +4176,6 @@ public static class FunctionDescription
 	<!-- KAMA -->
 	<FinancialFunction>
 		<Abbreviation>KAMA</Abbreviation>
-		<CamelCaseName>Kama</CamelCaseName>
 		<ShortDescription>Kaufman Adaptive Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4321,7 +4219,6 @@ public static class FunctionDescription
 	<!-- LINEARREG -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG</Abbreviation>
-		<CamelCaseName>LinearReg</CamelCaseName>
 		<ShortDescription>Linear Regression</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -4364,7 +4261,6 @@ public static class FunctionDescription
 	<!-- LINEARREG_ANGLE -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG_ANGLE</Abbreviation>
-		<CamelCaseName>LinearRegAngle</CamelCaseName>
 		<ShortDescription>Linear Regression Angle</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -4406,7 +4302,6 @@ public static class FunctionDescription
 	<!-- LINEARREG_INTERCEPT -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG_INTERCEPT</Abbreviation>
-		<CamelCaseName>LinearRegIntercept</CamelCaseName>
 		<ShortDescription>Linear Regression Intercept</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -4449,7 +4344,6 @@ public static class FunctionDescription
 	<!-- LINEARREG_SLOPE -->
 	<FinancialFunction>
 		<Abbreviation>LINEARREG_SLOPE</Abbreviation>
-		<CamelCaseName>LinearRegSlope</CamelCaseName>
 		<ShortDescription>Linear Regression Slope</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -4491,7 +4385,6 @@ public static class FunctionDescription
 	<!-- LN -->
 	<FinancialFunction>
 		<Abbreviation>LN</Abbreviation>
-		<CamelCaseName>Ln</CamelCaseName>
 		<ShortDescription>Vector Log Natural</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -4518,7 +4411,6 @@ public static class FunctionDescription
 	<!-- LOG10 -->
 	<FinancialFunction>
 		<Abbreviation>LOG10</Abbreviation>
-		<CamelCaseName>Log10</CamelCaseName>
 		<ShortDescription>Vector Log10</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -4545,7 +4437,6 @@ public static class FunctionDescription
 	<!-- MA -->
 	<FinancialFunction>
 		<Abbreviation>MA</Abbreviation>
-		<CamelCaseName>MovingAverage</CamelCaseName>
 		<ShortDescription>Moving average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4594,7 +4485,6 @@ public static class FunctionDescription
 	<!-- MACD -->
 	<FinancialFunction>
 		<Abbreviation>MACD</Abbreviation>
-		<CamelCaseName>Macd</CamelCaseName>
 		<ShortDescription>Moving Average Convergence/Divergence</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -4676,7 +4566,6 @@ public static class FunctionDescription
 	<!-- MACDEXT -->
 	<FinancialFunction>
 		<Abbreviation>MACDEXT</Abbreviation>
-		<CamelCaseName>MacdExt</CamelCaseName>
 		<ShortDescription>MACD with controllable MA type</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -4776,7 +4665,6 @@ public static class FunctionDescription
 	<!-- MACDFIX -->
 	<FinancialFunction>
 		<Abbreviation>MACDFIX</Abbreviation>
-		<CamelCaseName>MacdFix</CamelCaseName>
 		<ShortDescription>Moving Average Convergence/Divergence Fix 12/26</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -4832,7 +4720,6 @@ public static class FunctionDescription
 	<!-- MAMA -->
 	<FinancialFunction>
 		<Abbreviation>MAMA</Abbreviation>
-		<CamelCaseName>Mama</CamelCaseName>
 		<ShortDescription>MESA Adaptive Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4899,7 +4786,6 @@ public static class FunctionDescription
 	<!-- MAVP -->
 	<FinancialFunction>
 		<Abbreviation>MAVP</Abbreviation>
-		<CamelCaseName>MovingAverageVariablePeriod</CamelCaseName>
 		<ShortDescription>Moving average with variable period</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -4965,7 +4851,6 @@ public static class FunctionDescription
 	<!-- MAX -->
 	<FinancialFunction>
 		<Abbreviation>MAX</Abbreviation>
-		<CamelCaseName>Max</CamelCaseName>
 		<ShortDescription>Highest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5008,7 +4893,6 @@ public static class FunctionDescription
 	<!-- MAXINDEX -->
 	<FinancialFunction>
 		<Abbreviation>MAXINDEX</Abbreviation>
-		<CamelCaseName>MaxIndex</CamelCaseName>
 		<ShortDescription>Index of highest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5050,7 +4934,6 @@ public static class FunctionDescription
 	<!-- MEDPRICE -->
 	<FinancialFunction>
 		<Abbreviation>MEDPRICE</Abbreviation>
-		<CamelCaseName>MedPrice</CamelCaseName>
 		<ShortDescription>Median Price</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
@@ -5082,7 +4965,6 @@ public static class FunctionDescription
 	<!-- MFI -->
 	<FinancialFunction>
 		<Abbreviation>MFI</Abbreviation>
-		<CamelCaseName>Mfi</CamelCaseName>
 		<ShortDescription>Money Flow Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5136,7 +5018,6 @@ public static class FunctionDescription
 	<!-- MIDPOINT -->
 	<FinancialFunction>
 		<Abbreviation>MIDPOINT</Abbreviation>
-		<CamelCaseName>MidPoint</CamelCaseName>
 		<ShortDescription>MidPoint over period</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -5179,7 +5060,6 @@ public static class FunctionDescription
 	<!-- MIDPRICE -->
 	<FinancialFunction>
 		<Abbreviation>MIDPRICE</Abbreviation>
-		<CamelCaseName>MidPrice</CamelCaseName>
 		<ShortDescription>Midpoint Price over period</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -5226,7 +5106,6 @@ public static class FunctionDescription
 	<!-- MIN -->
 	<FinancialFunction>
 		<Abbreviation>MIN</Abbreviation>
-		<CamelCaseName>Min</CamelCaseName>
 		<ShortDescription>Lowest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5269,7 +5148,6 @@ public static class FunctionDescription
 	<!-- MININDEX -->
 	<FinancialFunction>
 		<Abbreviation>MININDEX</Abbreviation>
-		<CamelCaseName>MinIndex</CamelCaseName>
 		<ShortDescription>Index of lowest value over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5311,7 +5189,6 @@ public static class FunctionDescription
 	<!-- MINMAX -->
 	<FinancialFunction>
 		<Abbreviation>MINMAX</Abbreviation>
-		<CamelCaseName>MinMax</CamelCaseName>
 		<ShortDescription>Lowest and highest values over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5361,7 +5238,6 @@ public static class FunctionDescription
 	<!-- MINMAXINDEX -->
 	<FinancialFunction>
 		<Abbreviation>MINMAXINDEX</Abbreviation>
-		<CamelCaseName>MinMaxIndex</CamelCaseName>
 		<ShortDescription>Indexes of lowest and highest values over a specified period</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5410,7 +5286,6 @@ public static class FunctionDescription
 	<!-- MINUS_DI -->
 	<FinancialFunction>
 		<Abbreviation>MINUS_DI</Abbreviation>
-		<CamelCaseName>MinusDI</CamelCaseName>
 		<ShortDescription>Minus Directional Indicator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5461,7 +5336,6 @@ public static class FunctionDescription
 	<!-- MINUS_DM -->
 	<FinancialFunction>
 		<Abbreviation>MINUS_DM</Abbreviation>
-		<CamelCaseName>MinusDM</CamelCaseName>
 		<ShortDescription>Minus Directional Movement</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5508,7 +5382,6 @@ public static class FunctionDescription
 	<!-- MOM -->
 	<FinancialFunction>
 		<Abbreviation>MOM</Abbreviation>
-		<CamelCaseName>Mom</CamelCaseName>
 		<ShortDescription>Momentum</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5550,7 +5423,6 @@ public static class FunctionDescription
 	<!-- MULT -->
 	<FinancialFunction>
 		<Abbreviation>MULT</Abbreviation>
-		<CamelCaseName>Mult</CamelCaseName>
 		<ShortDescription>Vector Arithmetic Mult</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -5581,7 +5453,6 @@ public static class FunctionDescription
 	<!-- NATR -->
 	<FinancialFunction>
 		<Abbreviation>NATR</Abbreviation>
-		<CamelCaseName>Natr</CamelCaseName>
 		<ShortDescription>Normalized Average True Range</ShortDescription>
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
@@ -5632,7 +5503,6 @@ public static class FunctionDescription
 	<!-- NVI -->
 	<FinancialFunction>
 		<Abbreviation>NVI</Abbreviation>
-		<CamelCaseName>Nvi</CamelCaseName>
 		<ShortDescription>Negative Volume Index</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -5664,7 +5534,6 @@ public static class FunctionDescription
 	<!-- OBV -->
 	<FinancialFunction>
 		<Abbreviation>OBV</Abbreviation>
-		<CamelCaseName>Obv</CamelCaseName>
 		<ShortDescription>On Balance Volume</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -5696,7 +5565,6 @@ public static class FunctionDescription
 	<!-- PLUS_DI -->
 	<FinancialFunction>
 		<Abbreviation>PLUS_DI</Abbreviation>
-		<CamelCaseName>PlusDI</CamelCaseName>
 		<ShortDescription>Plus Directional Indicator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5747,7 +5615,6 @@ public static class FunctionDescription
 	<!-- PLUS_DM -->
 	<FinancialFunction>
 		<Abbreviation>PLUS_DM</Abbreviation>
-		<CamelCaseName>PlusDM</CamelCaseName>
 		<ShortDescription>Plus Directional Movement</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5794,7 +5661,6 @@ public static class FunctionDescription
 	<!-- PPO -->
 	<FinancialFunction>
 		<Abbreviation>PPO</Abbreviation>
-		<CamelCaseName>Ppo</CamelCaseName>
 		<ShortDescription>Percentage Price Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5855,7 +5721,6 @@ public static class FunctionDescription
 	<!-- PVI -->
 	<FinancialFunction>
 		<Abbreviation>PVI</Abbreviation>
-		<CamelCaseName>Pvi</CamelCaseName>
 		<ShortDescription>Positive Volume Index</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -5887,7 +5752,6 @@ public static class FunctionDescription
 	<!-- PVO -->
 	<FinancialFunction>
 		<Abbreviation>PVO</Abbreviation>
-		<CamelCaseName>Pvo</CamelCaseName>
 		<ShortDescription>Percentage Volume Oscillator</ShortDescription>
 		<GroupId>Volume Indicators</GroupId>
 		<Flags>
@@ -5948,7 +5812,6 @@ public static class FunctionDescription
 	<!-- ROC -->
 	<FinancialFunction>
 		<Abbreviation>ROC</Abbreviation>
-		<CamelCaseName>Roc</CamelCaseName>
 		<ShortDescription>Rate of change : ((price/prevPrice)-1)*100</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -5990,7 +5853,6 @@ public static class FunctionDescription
 	<!-- ROCP -->
 	<FinancialFunction>
 		<Abbreviation>ROCP</Abbreviation>
-		<CamelCaseName>RocP</CamelCaseName>
 		<ShortDescription>Rate of change Percentage: (price-prevPrice)/prevPrice</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6032,7 +5894,6 @@ public static class FunctionDescription
 	<!-- ROCR -->
 	<FinancialFunction>
 		<Abbreviation>ROCR</Abbreviation>
-		<CamelCaseName>RocR</CamelCaseName>
 		<ShortDescription>Rate of change ratio: (price/prevPrice)</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6074,7 +5935,6 @@ public static class FunctionDescription
 	<!-- ROCR100 -->
 	<FinancialFunction>
 		<Abbreviation>ROCR100</Abbreviation>
-		<CamelCaseName>RocR100</CamelCaseName>
 		<ShortDescription>Rate of change ratio 100 scale: (price/prevPrice)*100</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6116,7 +5976,6 @@ public static class FunctionDescription
 	<!-- RSI -->
 	<FinancialFunction>
 		<Abbreviation>RSI</Abbreviation>
-		<CamelCaseName>Rsi</CamelCaseName>
 		<ShortDescription>Relative Strength Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6159,7 +6018,6 @@ public static class FunctionDescription
 	<!-- SAR -->
 	<FinancialFunction>
 		<Abbreviation>SAR</Abbreviation>
-		<CamelCaseName>Sar</CamelCaseName>
 		<ShortDescription>Parabolic SAR</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -6222,7 +6080,6 @@ public static class FunctionDescription
 	<!-- SAREXT -->
 	<FinancialFunction>
 		<Abbreviation>SAREXT</Abbreviation>
-		<CamelCaseName>SarExt</CamelCaseName>
 		<ShortDescription>Parabolic SAR - Extended</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -6369,7 +6226,6 @@ public static class FunctionDescription
 	<!-- SIN -->
 	<FinancialFunction>
 		<Abbreviation>SIN</Abbreviation>
-		<CamelCaseName>Sin</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Sin</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -6396,7 +6252,6 @@ public static class FunctionDescription
 	<!-- SINH -->
 	<FinancialFunction>
 		<Abbreviation>SINH</Abbreviation>
-		<CamelCaseName>Sinh</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Sinh</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -6423,7 +6278,6 @@ public static class FunctionDescription
 	<!-- SMA -->
 	<FinancialFunction>
 		<Abbreviation>SMA</Abbreviation>
-		<CamelCaseName>Sma</CamelCaseName>
 		<ShortDescription>Simple Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -6466,7 +6320,6 @@ public static class FunctionDescription
 	<!-- SQRT -->
 	<FinancialFunction>
 		<Abbreviation>SQRT</Abbreviation>
-		<CamelCaseName>Sqrt</CamelCaseName>
 		<ShortDescription>Vector Square Root</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -6493,7 +6346,6 @@ public static class FunctionDescription
 	<!-- STDDEV -->
 	<FinancialFunction>
 		<Abbreviation>STDDEV</Abbreviation>
-		<CamelCaseName>StdDev</CamelCaseName>
 		<ShortDescription>Standard Deviation</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -6549,7 +6401,6 @@ public static class FunctionDescription
 	<!-- STOCH -->
 	<FinancialFunction>
 		<Abbreviation>STOCH</Abbreviation>
-		<CamelCaseName>Stoch</CamelCaseName>
 		<ShortDescription>Stochastic</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6644,7 +6495,6 @@ public static class FunctionDescription
 	<!-- STOCHF -->
 	<FinancialFunction>
 		<Abbreviation>STOCHF</Abbreviation>
-		<CamelCaseName>StochF</CamelCaseName>
 		<ShortDescription>Stochastic Fast</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6720,7 +6570,6 @@ public static class FunctionDescription
 	<!-- STOCHRSI -->
 	<FinancialFunction>
 		<Abbreviation>STOCHRSI</Abbreviation>
-		<CamelCaseName>StochRsi</CamelCaseName>
 		<ShortDescription>Stochastic Relative Strength Index</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -6801,7 +6650,6 @@ public static class FunctionDescription
 	<!-- SUB -->
 	<FinancialFunction>
 		<Abbreviation>SUB</Abbreviation>
-		<CamelCaseName>Sub</CamelCaseName>
 		<ShortDescription>Vector Arithmetic Subtraction</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -6832,7 +6680,6 @@ public static class FunctionDescription
 	<!-- SUM -->
 	<FinancialFunction>
 		<Abbreviation>SUM</Abbreviation>
-		<CamelCaseName>Sum</CamelCaseName>
 		<ShortDescription>Summation</ShortDescription>
 		<GroupId>Math Operators</GroupId>
 		<Flags>
@@ -6874,7 +6721,6 @@ public static class FunctionDescription
 	<!-- T3 -->
 	<FinancialFunction>
 		<Abbreviation>T3</Abbreviation>
-		<CamelCaseName>T3</CamelCaseName>
 		<ShortDescription>Triple Exponential Moving Average (T3)</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -6932,7 +6778,6 @@ public static class FunctionDescription
 	<!-- TAN -->
 	<FinancialFunction>
 		<Abbreviation>TAN</Abbreviation>
-		<CamelCaseName>Tan</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Tan</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -6959,7 +6804,6 @@ public static class FunctionDescription
 	<!-- TANH -->
 	<FinancialFunction>
 		<Abbreviation>TANH</Abbreviation>
-		<CamelCaseName>Tanh</CamelCaseName>
 		<ShortDescription>Vector Trigonometric Tanh</ShortDescription>
 		<GroupId>Math Transform</GroupId>
 		<Flags>
@@ -6986,7 +6830,6 @@ public static class FunctionDescription
 	<!-- TEMA -->
 	<FinancialFunction>
 		<Abbreviation>TEMA</Abbreviation>
-		<CamelCaseName>Tema</CamelCaseName>
 		<ShortDescription>Triple Exponential Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -7029,7 +6872,6 @@ public static class FunctionDescription
 	<!-- TRANGE -->
 	<FinancialFunction>
 		<Abbreviation>TRANGE</Abbreviation>
-		<CamelCaseName>TrueRange</CamelCaseName>
 		<ShortDescription>True Range</ShortDescription>
 		<GroupId>Volatility Indicators</GroupId>
 		<Flags>
@@ -7064,7 +6906,6 @@ public static class FunctionDescription
 	<!-- TRIMA -->
 	<FinancialFunction>
 		<Abbreviation>TRIMA</Abbreviation>
-		<CamelCaseName>Trima</CamelCaseName>
 		<ShortDescription>Triangular Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -7107,7 +6948,6 @@ public static class FunctionDescription
 	<!-- TRIX -->
 	<FinancialFunction>
 		<Abbreviation>TRIX</Abbreviation>
-		<CamelCaseName>Trix</CamelCaseName>
 		<ShortDescription>1-day Rate-Of-Change (ROC) of a Triple Smooth EMA</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -7149,7 +6989,6 @@ public static class FunctionDescription
 	<!-- TSF -->
 	<FinancialFunction>
 		<Abbreviation>TSF</Abbreviation>
-		<CamelCaseName>Tsf</CamelCaseName>
 		<ShortDescription>Time Series Forecast</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -7192,7 +7031,6 @@ public static class FunctionDescription
 	<!-- TYPPRICE -->
 	<FinancialFunction>
 		<Abbreviation>TYPPRICE</Abbreviation>
-		<CamelCaseName>TypPrice</CamelCaseName>
 		<ShortDescription>Typical Price</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
@@ -7228,7 +7066,6 @@ public static class FunctionDescription
 	<!-- ULTOSC -->
 	<FinancialFunction>
 		<Abbreviation>ULTOSC</Abbreviation>
-		<CamelCaseName>UltOsc</CamelCaseName>
 		<ShortDescription>Ultimate Oscillator</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -7304,7 +7141,6 @@ public static class FunctionDescription
 	<!-- VAR -->
 	<FinancialFunction>
 		<Abbreviation>VAR</Abbreviation>
-		<CamelCaseName>Variance</CamelCaseName>
 		<ShortDescription>Variance</ShortDescription>
 		<GroupId>Statistic Functions</GroupId>
 		<Flags>
@@ -7360,7 +7196,6 @@ public static class FunctionDescription
 	<!-- VWMA -->
 	<FinancialFunction>
 		<Abbreviation>VWMA</Abbreviation>
-		<CamelCaseName>Vwma</CamelCaseName>
 		<ShortDescription>Volume Weighted Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
@@ -7407,7 +7242,6 @@ public static class FunctionDescription
 	<!-- WCLPRICE -->
 	<FinancialFunction>
 		<Abbreviation>WCLPRICE</Abbreviation>
-		<CamelCaseName>WclPrice</CamelCaseName>
 		<ShortDescription>Weighted Close Price</ShortDescription>
 		<GroupId>Price Transform</GroupId>
 		<Flags>
@@ -7443,7 +7277,6 @@ public static class FunctionDescription
 	<!-- WILLR -->
 	<FinancialFunction>
 		<Abbreviation>WILLR</Abbreviation>
-		<CamelCaseName>WillR</CamelCaseName>
 		<ShortDescription>Williams&apos; %R</ShortDescription>
 		<GroupId>Momentum Indicators</GroupId>
 		<Flags>
@@ -7493,7 +7326,6 @@ public static class FunctionDescription
 	<!-- WMA -->
 	<FinancialFunction>
 		<Abbreviation>WMA</Abbreviation>
-		<CamelCaseName>Wma</CamelCaseName>
 		<ShortDescription>Weighted Moving Average</ShortDescription>
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>

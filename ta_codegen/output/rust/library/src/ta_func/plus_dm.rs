@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::plus_dm`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::PLUS_DM`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -75,14 +75,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn plus_dm_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn PLUS_DM_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         if optInTimePeriod > 1 {
-            return (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            return (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
         } else {
             return (1) as usize;
         }
@@ -137,7 +137,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.plus_dm(
+    /// let ret = core.PLUS_DM(
     ///     0, high.len() - 1, &high, &low, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,18 +148,18 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::minus_dm`] · [`Core::plus_di`] · [`Core::minus_di`] · [`Core::dx`] ·
-    /// [`Core::adx`] · [`Core::adxr`]
+    /// [`Core::MINUS_DM`] · [`Core::PLUS_DI`] · [`Core::MINUS_DI`] · [`Core::DX`] ·
+    /// [`Core::ADX`] · [`Core::ADXR`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/plus_dm](https://ta-lib.org/functions/plus_dm/)
+    /// Further reading: [ta-lib.org/functions/PLUS_DM](https://ta-lib.org/functions/PLUS_DM/)
     #[doc(alias = "DM")]
     #[doc(alias = "PlusDirectionalMovement")]
-    pub fn plus_dm(
+    pub fn PLUS_DM(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -181,7 +181,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.plus_dm_lookback(optInTimePeriod);
+        let _assertLb = self.PLUS_DM_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -262,7 +262,7 @@ impl Core {
         // Reference:
         //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
         if optInTimePeriod > 1 {
-            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+            lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
         } else {
             lookbackTotal = 1;
         }
@@ -333,7 +333,7 @@ impl Core {
         }
         // Process subsequent DM
         // Skip the unstable period.
-        i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
+        i = (self.unstable_period[FuncUnstId::PLUS_DM as usize]) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
             today += 1;
             tempReal = inHigh[today];
@@ -382,20 +382,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::plus_dm`]
-/// over the same series. Open with [`Core::plus_dm_open`]; dropping the handle
+/// Live PLUS_DM stream: one value per closed bar, bit-identical to [`Core::PLUS_DM`]
+/// over the same series. Open with [`Core::PLUS_DM_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PLUS_DM_Stream")]
-pub struct PlusDMStream {
+pub struct PLUS_DM_Stream {
     core: Core,
-    state: PlusDMStreamState,
+    state: PLUS_DM_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PlusDMStreamState {
+struct PLUS_DM_StreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
@@ -412,7 +412,7 @@ struct PlusDMStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn plus_dm_step_internal(&self, sp: &mut PlusDMStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn PLUS_DM_step_internal(&self, sp: &mut PLUS_DM_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         if sp.optInTimePeriod <= 1 {
             sp.tempReal = inHigh;
             sp.diffP = sp.tempReal - sp.prevHigh;
@@ -448,10 +448,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::plus_dm_open`] (composition seam).
-    pub(crate) fn plus_dm_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::PLUS_DM_Open`] (composition seam).
+    pub(crate) fn PLUS_DM_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(PlusDMStream, f64), RetCode> {
+    ) -> Result<(PLUS_DM_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -545,7 +545,7 @@ impl Core {
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -589,7 +589,7 @@ impl Core {
             dummyNBElement = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = PlusDMStreamState {
+            let state = PLUS_DM_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -598,7 +598,7 @@ impl Core {
                 diffM,
                 prevPlusDM,
             };
-            Ok((PlusDMStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((PLUS_DM_Stream { core: self.clone(), state }, lastValue_outReal))
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -675,7 +675,7 @@ impl Core {
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -717,7 +717,7 @@ impl Core {
             }
             // Process subsequent DM
             // Skip the unstable period.
-            i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
+            i = (self.unstable_period[FuncUnstId::PLUS_DM as usize]) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 today += 1;
                 tempReal = inHigh[today];
@@ -762,7 +762,7 @@ impl Core {
             dummyNBElement = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = PlusDMStreamState {
+            let state = PLUS_DM_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -771,12 +771,12 @@ impl Core {
                 diffM,
                 prevPlusDM,
             };
-            Ok((PlusDMStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((PLUS_DM_Stream { core: self.clone(), state }, lastValue_outReal))
         }
     }
 
     /// Open a live PLUS_DM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::plus_dm`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::PLUS_DM`] at that bar.
     ///
     /// # Errors
     ///
@@ -789,23 +789,23 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.plus_dm_open(&high, &low, 14).expect("enough history");
+    /// let (mut s, _last) = core.PLUS_DM_Open(&high, &low, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1);
     /// let updated = s.update(101.4, 99.1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PLUS_DM_Open")]
-    pub fn plus_dm_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(PlusDMStream, f64), RetCode> {
-        self.plus_dm_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    pub fn PLUS_DM_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(PLUS_DM_Stream, f64), RetCode> {
+        self.PLUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
-    /// [`Core::plus_dm_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::plus_dm`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::PLUS_DM_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::PLUS_DM`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PLUS_DM_OpenAndFill")]
-    pub fn plus_dm_open_and_fill(
+    pub fn PLUS_DM_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PlusDMStream, RetCode> {
+    ) -> Result<PLUS_DM_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -898,7 +898,7 @@ impl Core {
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -944,7 +944,7 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = PlusDMStreamState {
+            let state = PLUS_DM_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -953,7 +953,7 @@ impl Core {
                 diffM,
                 prevPlusDM,
             };
-            Ok(PlusDMStream { core: self.clone(), state })
+            Ok(PLUS_DM_Stream { core: self.clone(), state })
         } else {
             let mut today: usize = 0_usize;
             let mut lookbackTotal: usize = 0_usize;
@@ -1030,7 +1030,7 @@ impl Core {
             // Reference:
             //    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
             if optInTimePeriod > 1 {
-                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PlusDM as usize] - 1) as usize;
+                lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::PLUS_DM as usize] - 1) as usize;
             } else {
                 lookbackTotal = 1;
             }
@@ -1072,7 +1072,7 @@ impl Core {
             }
             // Process subsequent DM
             // Skip the unstable period.
-            i = (self.unstable_period[FuncUnstId::PlusDM as usize]) as usize;
+            i = (self.unstable_period[FuncUnstId::PLUS_DM as usize]) as usize;
             while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
                 today += 1;
                 tempReal = inHigh[today];
@@ -1118,7 +1118,7 @@ impl Core {
             (*outNBElement) = outIdx;
 
             // Capture the live batch state into the handle.
-            let state = PlusDMStreamState {
+            let state = PLUS_DM_StreamState {
                 optInTimePeriod,
                 prevHigh,
                 prevLow,
@@ -1127,7 +1127,7 @@ impl Core {
                 diffM,
                 prevPlusDM,
             };
-            Ok(PlusDMStream { core: self.clone(), state })
+            Ok(PLUS_DM_Stream { core: self.clone(), state })
         }
     }
 
@@ -1135,12 +1135,12 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PlusDMStream {
+impl PLUS_DM_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_PLUS_DM_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.plus_dm_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.PLUS_DM_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
         outReal
     }
 
@@ -1158,7 +1158,7 @@ impl PlusDMStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PlusDMStream>();
+    _assert_auto::<PLUS_DM_Stream>();
 };
 
 /***************/

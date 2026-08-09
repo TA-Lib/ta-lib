@@ -62,7 +62,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::maxindex`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::MAXINDEX`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -73,7 +73,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn maxindex_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn MAXINDEX_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -132,20 +132,20 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.maxindex(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.MAXINDEX(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// ```
     ///
     /// # See also
     ///
-    /// [`Core::max`] · [`Core::minindex`] · [`Core::min`] · [`Core::minmaxindex`]
+    /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MIN`] · [`Core::MINMAXINDEX`]
     ///
-    /// Further reading: [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex/)
+    /// Further reading: [ta-lib.org/functions/MAXINDEX](https://ta-lib.org/functions/MAXINDEX/)
     #[doc(alias = "IndexofHighestValue")]
     #[doc(alias = "HighestValueIndex")]
     #[doc(alias = "argmax")]
-    pub fn maxindex(
+    pub fn MAXINDEX(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -166,7 +166,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.maxindex_lookback(optInTimePeriod);
+        let _assertLb = self.MAXINDEX_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
@@ -233,20 +233,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MAXINDEX stream: one value per closed bar, bit-identical to [`Core::maxindex`]
-/// over the same series. Open with [`Core::maxindex_open`]; dropping the handle
+/// Live MAXINDEX stream: one value per closed bar, bit-identical to [`Core::MAXINDEX`]
+/// over the same series. Open with [`Core::MAXINDEX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAXINDEX_Stream")]
-pub struct MaxindexStream {
+pub struct MAXINDEX_Stream {
     core: Core,
-    state: MaxindexStreamState,
+    state: MAXINDEX_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MaxindexStreamState {
+struct MAXINDEX_StreamState {
     optInTimePeriod: i32,
     highest: f64,
     trailingIdx: i32,
@@ -264,7 +264,7 @@ struct MaxindexStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn maxindex_step_internal(&self, sp: &mut MaxindexStreamState, inReal: f64, outInteger: &mut i32) {
+    fn MAXINDEX_step_internal(&self, sp: &mut MAXINDEX_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -295,10 +295,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::maxindex_open`] (composition seam).
-    pub(crate) fn maxindex_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MAXINDEX_Open`] (composition seam).
+    pub(crate) fn MAXINDEX_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MaxindexStream, i32), RetCode> {
+    ) -> Result<(MAXINDEX_Stream, i32), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -386,7 +386,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MaxindexStreamState {
+        let state = MAXINDEX_StreamState {
             optInTimePeriod,
             highest,
             trailingIdx: (trailingIdx) as i32,
@@ -396,11 +396,11 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok((MaxindexStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((MAXINDEX_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live MAXINDEX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::maxindex`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MAXINDEX`] at that bar.
     ///
     /// # Errors
     ///
@@ -412,23 +412,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.maxindex_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.MAXINDEX_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_MAXINDEX_Open")]
-    pub fn maxindex_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MaxindexStream, i32), RetCode> {
-        self.maxindex_open_internal(inReal, 0, optInTimePeriod)
+    pub fn MAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MAXINDEX_Stream, i32), RetCode> {
+        self.MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::maxindex_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::maxindex`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MAXINDEX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MAXINDEX`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAXINDEX_OpenAndFill")]
-    pub fn maxindex_open_and_fill(
+    pub fn MAXINDEX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<MaxindexStream, RetCode> {
+    ) -> Result<MAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -516,7 +516,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MaxindexStreamState {
+        let state = MAXINDEX_StreamState {
             optInTimePeriod,
             highest,
             trailingIdx: (trailingIdx) as i32,
@@ -526,19 +526,19 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok(MaxindexStream { core: self.clone(), state })
+        Ok(MAXINDEX_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MaxindexStream {
+impl MAXINDEX_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MAXINDEX_Update")]
     pub fn update(&mut self, inReal: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.maxindex_step_internal(&mut self.state, inReal, &mut outInteger);
+        self.core.MAXINDEX_step_internal(&mut self.state, inReal, &mut outInteger);
         outInteger
     }
 
@@ -556,7 +556,7 @@ impl MaxindexStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MaxindexStream>();
+    _assert_auto::<MAXINDEX_Stream>();
 };
 
 /***************/

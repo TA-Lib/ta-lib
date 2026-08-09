@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlhammer`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::CDLHAMMER`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn cdlhammer_lookback(&self) -> usize {
+    pub fn CDLHAMMER_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -144,7 +144,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlhammer(
+    /// let ret = core.CDLHAMMER(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -154,11 +154,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlinvertedhammer`] · [`Core::cdlhangingman`] · [`Core::cdltakuri`]
+    /// [`Core::CDLINVERTEDHAMMER`] · [`Core::CDLHANGINGMAN`] · [`Core::CDLTAKURI`]
     ///
-    /// Further reading: [ta-lib.org/functions/cdlhammer](https://ta-lib.org/functions/cdlhammer/)
+    /// Further reading: [ta-lib.org/functions/CDLHAMMER](https://ta-lib.org/functions/CDLHAMMER/)
     #[doc(alias = "Hammer")]
-    pub fn cdlhammer(
+    pub fn CDLHAMMER(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -176,7 +176,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlhammer_lookback();
+        let _assertLb = self.CDLHAMMER_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -221,7 +221,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhammer_lookback();
+        lookbackTotal = self.CDLHAMMER_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -487,20 +487,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHAMMER stream: one value per closed bar, bit-identical to [`Core::cdlhammer`]
-/// over the same series. Open with [`Core::cdlhammer_open`]; dropping the handle
+/// Live CDLHAMMER stream: one value per closed bar, bit-identical to [`Core::CDLHAMMER`]
+/// over the same series. Open with [`Core::CDLHAMMER_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHAMMER_Stream")]
-pub struct CdlhammerStream {
+pub struct CDLHAMMER_Stream {
     core: Core,
-    state: CdlhammerStreamState,
+    state: CDLHAMMER_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlhammerStreamState {
+struct CDLHAMMER_StreamState {
     BodyPeriodTotal: f64,
     ShadowLongPeriodTotal: f64,
     ShadowVeryShortPeriodTotal: f64,
@@ -542,7 +542,7 @@ struct CdlhammerStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlhammer_step_internal(&self, sp: &mut CdlhammerStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHAMMER_step_internal(&self, sp: &mut CDLHAMMER_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -764,10 +764,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlhammer_open`] (composition seam).
-    pub(crate) fn cdlhammer_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLHAMMER_Open`] (composition seam).
+    pub(crate) fn CDLHAMMER_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlhammerStream, i32), RetCode> {
+    ) -> Result<(CDLHAMMER_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -817,7 +817,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhammer_lookback();
+        lookbackTotal = self.CDLHAMMER_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1146,7 +1146,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdlhammerStreamState {
+        let state = CDLHAMMER_StreamState {
             BodyPeriodTotal,
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
@@ -1180,11 +1180,11 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok((CdlhammerStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLHAMMER_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLHAMMER stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlhammer`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLHAMMER`] at that bar.
     ///
     /// # Errors
     ///
@@ -1203,23 +1203,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlhammer_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLHAMMER_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHAMMER_Open")]
-    pub fn cdlhammer_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhammerStream, i32), RetCode> {
-        self.cdlhammer_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLHAMMER_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHAMMER_Stream, i32), RetCode> {
+        self.CDLHAMMER_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlhammer_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlhammer`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLHAMMER_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHAMMER`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLHAMMER_OpenAndFill")]
-    pub fn cdlhammer_open_and_fill(
+    pub fn CDLHAMMER_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlhammerStream, RetCode> {
+    ) -> Result<CDLHAMMER_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1268,7 +1268,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhammer_lookback();
+        lookbackTotal = self.CDLHAMMER_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1599,7 +1599,7 @@ impl Core {
         let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
         ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CdlhammerStreamState {
+        let state = CDLHAMMER_StreamState {
             BodyPeriodTotal,
             ShadowLongPeriodTotal,
             ShadowVeryShortPeriodTotal,
@@ -1633,19 +1633,19 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inLow,
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
-        Ok(CdlhammerStream { core: self.clone(), state })
+        Ok(CDLHAMMER_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlhammerStream {
+impl CDLHAMMER_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLHAMMER_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlhammer_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHAMMER_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1663,7 +1663,7 @@ impl CdlhammerStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlhammerStream>();
+    _assert_auto::<CDLHAMMER_Stream>();
 };
 
 /***************/

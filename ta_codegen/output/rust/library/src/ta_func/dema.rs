@@ -66,7 +66,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::dema`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::DEMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -76,7 +76,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn dema_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn DEMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -84,7 +84,7 @@ impl Core {
         }
         // Get lookback for one EMA.
         // Multiply by two (because double smoothing).
-        return (self.ema_lookback(optInTimePeriod) * 2) as usize;
+        return (self.EMA_Lookback(optInTimePeriod) * 2) as usize;
     }
     /// Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to reduce lag versus a
     /// plain EMA. Overlap Studies overlay on price.
@@ -136,7 +136,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.dema(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.DEMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -144,16 +144,16 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ema`] · [`Core::tema`] · [`Core::ma`]
+    /// [`Core::EMA`] · [`Core::TEMA`] · [`Core::MA`]
     ///
     /// # References
     ///
     /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
     ///   Stocks & Commodities, V.12:1 (January 1994)
     ///
-    /// Further reading: [ta-lib.org/functions/dema](https://ta-lib.org/functions/dema/)
+    /// Further reading: [ta-lib.org/functions/DEMA](https://ta-lib.org/functions/DEMA/)
     #[doc(alias = "DoubleExponentialMovingAverage")]
-    pub fn dema(
+    pub fn DEMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,13 +164,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, dema_fma, dema_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, DEMA_fma, DEMA_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.dema_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.DEMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn dema_fma(
+    fn DEMA_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -180,10 +180,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.dema_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.DEMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn dema_impl(
+    fn DEMA_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -204,7 +204,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.dema_lookback(optInTimePeriod);
+        let _assertLb = self.DEMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -244,7 +244,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 2;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -333,20 +333,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live DEMA stream: one value per closed bar, bit-identical to [`Core::dema`]
-/// over the same series. Open with [`Core::dema_open`]; dropping the handle
+/// Live DEMA stream: one value per closed bar, bit-identical to [`Core::DEMA`]
+/// over the same series. Open with [`Core::DEMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_DEMA_Stream")]
-pub struct DemaStream {
+pub struct DEMA_Stream {
     core: Core,
-    state: DemaStreamState,
+    state: DEMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct DemaStreamState {
+struct DEMA_StreamState {
     optInTimePeriod: i32,
     prevEMA1: f64,
     prevEMA2: f64,
@@ -360,16 +360,16 @@ struct DemaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn dema_step_internal(&self, sp: &mut DemaStreamState, inReal: f64, outReal: &mut f64) {
+    fn DEMA_step_internal(&self, sp: &mut DEMA_StreamState, inReal: f64, outReal: &mut f64) {
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
         sp.prevEMA2 = (sp.prevEMA1 - sp.prevEMA2 as f64).mul_add(sp.optInK_1, sp.prevEMA2);
         (*outReal) = 2.0 * sp.prevEMA1 - sp.prevEMA2;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::dema_open`] (composition seam).
-    pub(crate) fn dema_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::DEMA_Open`] (composition seam).
+    pub(crate) fn DEMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(DemaStream, f64), RetCode> {
+    ) -> Result<(DEMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -422,7 +422,7 @@ impl Core {
         dummyNBElement = 0;
         dummyBegIdx = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 2;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -507,17 +507,17 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = DemaStreamState {
+        let state = DEMA_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             optInK_1,
         };
-        Ok((DemaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((DEMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live DEMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::dema`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::DEMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -529,23 +529,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.dema_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.DEMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_DEMA_Open")]
-    pub fn dema_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(DemaStream, f64), RetCode> {
-        self.dema_open_internal(inReal, 0, optInTimePeriod)
+    pub fn DEMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(DEMA_Stream, f64), RetCode> {
+        self.DEMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::dema_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::dema`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::DEMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::DEMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_DEMA_OpenAndFill")]
-    pub fn dema_open_and_fill(
+    pub fn DEMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<DemaStream, RetCode> {
+    ) -> Result<DEMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -597,7 +597,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 2;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -683,25 +683,25 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = DemaStreamState {
+        let state = DEMA_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             optInK_1,
         };
-        Ok(DemaStream { core: self.clone(), state })
+        Ok(DEMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl DemaStream {
+impl DEMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_DEMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.dema_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.DEMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -719,7 +719,7 @@ impl DemaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<DemaStream>();
+    _assert_auto::<DEMA_Stream>();
 };
 
 /***************/

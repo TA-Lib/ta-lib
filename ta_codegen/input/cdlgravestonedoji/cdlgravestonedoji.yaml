@@ -1,5 +1,4 @@
 name: CDLGRAVESTONEDOJI
-camel_case: CdlGravestoneDoji
 group: Pattern Recognition
 hint: Gravestone Doji
 flags: [candlestick, stream]

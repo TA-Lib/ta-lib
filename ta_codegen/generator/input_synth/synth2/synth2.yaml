@@ -1,5 +1,4 @@
 name: SYNTH2
-camel_case: Synth2
 group: Math Operators
 hint: Synthetic gate function 2 - negative double-to-int casts, both use classes (never shipped)
 flags: [stream]

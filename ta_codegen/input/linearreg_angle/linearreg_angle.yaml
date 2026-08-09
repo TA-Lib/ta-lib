@@ -1,5 +1,4 @@
 name: LINEARREG_ANGLE
-camel_case: LinearRegAngle
 group: Statistic Functions
 hint: Linear Regression Angle
 flags: [stream]

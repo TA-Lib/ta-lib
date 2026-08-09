@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlmathold`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::CDLMATHOLD`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn cdlmathold_lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLMATHOLD_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 5e-1;
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
@@ -153,7 +153,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlmathold(
+    /// let ret = core.CDLMATHOLD(
     ///     0, open.len() - 1, &open, &high, &low, &close, 0.5,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -163,11 +163,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlrisefall3methods`] · [`Core::cdlxsidegap3methods`]
+    /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
-    /// Further reading: [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold/)
+    /// Further reading: [ta-lib.org/functions/CDLMATHOLD](https://ta-lib.org/functions/CDLMATHOLD/)
     #[doc(alias = "MatHold")]
-    pub fn cdlmathold(
+    pub fn CDLMATHOLD(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -191,7 +191,7 @@ impl Core {
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cdlmathold_lookback(optInPenetration);
+        let _assertLb = self.CDLMATHOLD_Lookback(optInPenetration);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -220,7 +220,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmathold_lookback(optInPenetration);
+        lookbackTotal = self.CDLMATHOLD_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -436,20 +436,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLMATHOLD stream: one value per closed bar, bit-identical to [`Core::cdlmathold`]
-/// over the same series. Open with [`Core::cdlmathold_open`]; dropping the handle
+/// Live CDLMATHOLD stream: one value per closed bar, bit-identical to [`Core::CDLMATHOLD`]
+/// over the same series. Open with [`Core::CDLMATHOLD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMATHOLD_Stream")]
-pub struct CdlmatholdStream {
+pub struct CDLMATHOLD_Stream {
     core: Core,
-    state: CdlmatholdStreamState,
+    state: CDLMATHOLD_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlmatholdStreamState {
+struct CDLMATHOLD_StreamState {
     optInPenetration: f64,
     BodyPeriodTotal: [f64; 5 as usize],
     totIdx: usize,
@@ -498,7 +498,7 @@ struct CdlmatholdStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlmathold_step_internal(&self, sp: &mut CdlmatholdStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMATHOLD_step_internal(&self, sp: &mut CDLMATHOLD_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -652,10 +652,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlmathold_open`] (composition seam).
-    pub(crate) fn cdlmathold_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLMATHOLD_Open`] (composition seam).
+    pub(crate) fn CDLMATHOLD_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CdlmatholdStream, i32), RetCode> {
+    ) -> Result<(CDLMATHOLD_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -694,7 +694,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmathold_lookback(optInPenetration);
+        lookbackTotal = self.CDLMATHOLD_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -993,7 +993,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlmatholdStreamState {
+        let state = CDLMATHOLD_StreamState {
             optInPenetration,
             BodyPeriodTotal,
             totIdx,
@@ -1034,11 +1034,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((CdlmatholdStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLMATHOLD_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLMATHOLD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlmathold`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLMATHOLD`] at that bar.
     ///
     /// # Errors
     ///
@@ -1057,23 +1057,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlmathold_open(&open, &high, &low, &close, 0.5).expect("enough history");
+    /// let (mut s, _last) = core.CDLMATHOLD_Open(&open, &high, &low, &close, 0.5).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLMATHOLD_Open")]
-    pub fn cdlmathold_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdlmatholdStream, i32), RetCode> {
-        self.cdlmathold_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn CDLMATHOLD_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLMATHOLD_Stream, i32), RetCode> {
+        self.CDLMATHOLD_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::cdlmathold_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlmathold`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLMATHOLD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLMATHOLD`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLMATHOLD_OpenAndFill")]
-    pub fn cdlmathold_open_and_fill(
+    pub fn CDLMATHOLD_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlmatholdStream, RetCode> {
+    ) -> Result<CDLMATHOLD_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1111,7 +1111,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmathold_lookback(optInPenetration);
+        lookbackTotal = self.CDLMATHOLD_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1412,7 +1412,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlmatholdStreamState {
+        let state = CDLMATHOLD_StreamState {
             optInPenetration,
             BodyPeriodTotal,
             totIdx,
@@ -1453,19 +1453,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(CdlmatholdStream { core: self.clone(), state })
+        Ok(CDLMATHOLD_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlmatholdStream {
+impl CDLMATHOLD_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLMATHOLD_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlmathold_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLMATHOLD_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1483,7 +1483,7 @@ impl CdlmatholdStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlmatholdStream>();
+    _assert_auto::<CDLMATHOLD_Stream>();
 };
 
 /***************/

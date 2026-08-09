@@ -60,7 +60,7 @@ public partial class Core
     *  062704 MF   Fix #965557. Div by zero bug reported by MIF.
     */
    /// <summary>
-   /// Number of leading input bars <c>Dx</c> consumes before it can produce its
+   /// Number of leading input bars <c>DX</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -75,7 +75,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period for the DM and TR sums (default 14; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int DxLookback( int optInTimePeriod )
+   public int DX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -83,13 +83,13 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Dx] ;
+         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.DX] ;
       } else {
          return 2 ;
       }
 
    }
-   internal RetCode Dx( int startIdx,
+   internal RetCode DX( int startIdx,
                         int endIdx,
                         double[] inHigh,
                         double[] inLow,
@@ -228,7 +228,7 @@ public partial class Core
        * you can comment out the following #undef/#define and rebuild the library.
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Dx];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.DX];
       } else {
          lookbackTotal = 2;
       }
@@ -292,7 +292,7 @@ public partial class Core
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[(int)FuncUnstId.Dx] + 1;
+      i = this.unstablePeriod[(int)FuncUnstId.DX] + 1;
       while( i-- != 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -397,7 +397,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Dx( int startIdx,
+   internal RetCode DX( int startIdx,
                         int endIdx,
                         float[] inHigh,
                         float[] inLow,
@@ -437,7 +437,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Dx];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.DX];
       } else {
          lookbackTotal = 2;
       }
@@ -488,7 +488,7 @@ public partial class Core
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[(int)FuncUnstId.Dx] + 1;
+      i = this.unstablePeriod[(int)FuncUnstId.DX] + 1;
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -597,7 +597,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>DxLookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>DX_Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -618,7 +618,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Dx( int startIdx,
+   public OutRange DX( int startIdx,
                        int endIdx,
                        double[] inHigh,
                        double[] inLow,
@@ -626,7 +626,7 @@ public partial class Core
                        int optInTimePeriod,
                        double[] outReal )
    {
-      RetCode retCode = Dx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DX", retCode);
       }
@@ -657,7 +657,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>DxLookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>DX_Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -678,7 +678,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Dx( int startIdx,
+   public OutRange DX( int startIdx,
                        int endIdx,
                        float[] inHigh,
                        float[] inLow,
@@ -686,7 +686,7 @@ public partial class Core
                        int optInTimePeriod,
                        double[] outReal )
    {
-      RetCode retCode = Dx(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = DX(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("DX", retCode);
       }

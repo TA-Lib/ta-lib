@@ -39,8 +39,7 @@ ta_codegen/input/
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | yes | Uppercase function name (e.g., `SMA`, `RSI`) |
-| `camel_case` | string | no | PascalCase name for Java/.NET (e.g., `Sma`) |
+| `name` | string | yes | The function's sole identity (e.g., `SMA`, `RSI`), spelled verbatim in every backend (see [Naming](#naming)) |
 | `group` | string | yes | Functional category (see [Groups](#groups)) |
 | `hint` | string | no | Short description |
 | `description` | string | no | Longer description (used if `hint` is absent) |
@@ -48,6 +47,20 @@ ta_codegen/input/
 | `inputs` | list | yes | Required input parameters |
 | `optional_inputs` | list | no | Optional parameters with defaults |
 | `outputs` | list | yes | Output parameters |
+
+### Naming
+
+`name` is the only spelling there is. Rust, Java and C# use it verbatim; C alone
+prefixes `TA_`. Generated variants append an underscore-separated suffix that
+mirrors C minus that prefix:
+
+| C | Rust / Java | C# |
+|---|---|---|
+| `TA_SMA`, `TA_SMA_Lookback`, `TA_SMA_Open`, `TA_SMA_Stream` | `SMA`, `SMA_Lookback`, `SMA_Open`, `SMA_Stream` | `SMA`, `SMA_Lookback` |
+
+One spelling means nothing can drift out of sync, so pick `name` carefully: it is
+the public API in four languages at once. Rust file and module names stay
+lower-case (`sma.rs`, `mod sma`) — only public identifiers are verbatim.
 
 ### Input parameters
 
@@ -114,8 +127,8 @@ optional_inputs:
 Each backend renders enums appropriately:
 - **C**: `TA_MAType` (typedef'd enum)
 - **Java**: `MAType` (Java enum)
-- **Rust**: `i32` (integer constants)
-- **.NET**: `int`
+- **Rust**: `i32` (the raw variant value)
+- **.NET**: `MAType` (C# enum)
 
 ## Flags
 
@@ -214,24 +227,30 @@ Shared enum definitions used by `enum:` type references:
 
 ```yaml
 MAType:
-  - { c_name: TA_MAType_SMA,   pascal_name: Sma,   value: 0 }
-  - { c_name: TA_MAType_EMA,   pascal_name: Ema,   value: 1 }
-  - { c_name: TA_MAType_WMA,   pascal_name: Wma,   value: 2 }
-  - { c_name: TA_MAType_DEMA,  pascal_name: Dema,  value: 3 }
-  - { c_name: TA_MAType_TEMA,  pascal_name: Tema,  value: 4 }
-  - { c_name: TA_MAType_TRIMA, pascal_name: Trima, value: 5 }
-  - { c_name: TA_MAType_KAMA,  pascal_name: Kama,  value: 6 }
-  - { c_name: TA_MAType_MAMA,  pascal_name: Mama,  value: 7 }
-  - { c_name: TA_MAType_T3,    pascal_name: T3,    value: 8 }
-  - { c_name: TA_MAType_HMA,   pascal_name: Hma,   value: 9 }
+  c_prefix: TA_MAType_
+  variants:
+    - { name: SMA,   value: 0 }
+    - { name: EMA,   value: 1 }
+    - { name: WMA,   value: 2 }
+    - { name: DEMA,  value: 3 }
+    - { name: TEMA,  value: 4 }
+    - { name: TRIMA, value: 5 }
+    - { name: KAMA,  value: 6 }
+    - { name: MAMA,  value: 7 }
+    - { name: T3,    value: 8 }
+    - { name: HMA,   value: 9 }
+    - { name: DISABLED, value: 10 }
 ```
 
-Each variant has:
-- `c_name` — C constant (e.g., `TA_MAType_SMA`)
-- `pascal_name` — PascalCase for Java/.NET (e.g., `Sma`)
-- `value` — Integer value
+Each enum declares a `c_prefix` — the C constant prefix — plus its `variants`.
+A variant has:
 
-The `short_name` (uppercase, e.g., `SMA`) is derived automatically from the `c_name` by stripping the `{EnumName}_` prefix.
+- `name` — the variant identity. Used verbatim wherever a backend renders the
+  enum as a type (`MAType.SMA` in Java and C#, `FuncUnstId::HT_DCPERIOD` in
+  Rust), and appended to `c_prefix` for C (`TA_MAType_SMA`).
+- `value` — the pinned integer. Part of the ABI: identical in every backend, and
+  append-only. Retire a variant by reserving its slot (`UNUSED_<n>`), never by
+  deleting or renumbering it.
 
 ## C Logic Files
 
@@ -242,7 +261,6 @@ The `.c` file in each function directory contains the actual computation logic, 
 ```yaml
 # ta_codegen/input/sma/sma.yaml
 name: SMA
-camel_case: Sma
 group: Overlap Studies
 hint: Simple Moving Average
 flags: [overlap]

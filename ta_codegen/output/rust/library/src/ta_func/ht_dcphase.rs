@@ -64,9 +64,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_dcphase`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::HT_DCPHASE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn ht_dcphase_lookback(&self) -> usize {
+    pub fn HT_DCPHASE_Lookback(&self) -> usize {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -74,7 +74,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return (63 + self.unstable_period[FuncUnstId::HtDcPhase as usize]) as usize;
+        return (63 + self.unstable_period[FuncUnstId::HT_DCPHASE as usize]) as usize;
     }
     /// Hilbert Transform Dominant Cycle Phase: the instantaneous phase (in degrees) of the dominant
     /// market cycle, derived from a homodyne discriminator on a Hilbert-transformed, smoothed
@@ -113,7 +113,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ht_dcphase(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.HT_DCPHASE(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -121,17 +121,17 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ht_dcperiod`] · [`Core::ht_phasor`] · [`Core::ht_sine`] · [`Core::ht_trendline`]
-    /// · [`Core::ht_trendmode`] · [`Core::mama`] · [`Core::wma`]
+    /// [`Core::HT_DCPERIOD`] · [`Core::HT_PHASOR`] · [`Core::HT_SINE`] · [`Core::HT_TRENDLINE`]
+    /// · [`Core::HT_TRENDMODE`] · [`Core::MAMA`] · [`Core::WMA`]
     ///
     /// # References
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/ht_dcphase](https://ta-lib.org/functions/ht_dcphase/)
+    /// Further reading: [ta-lib.org/functions/HT_DCPHASE](https://ta-lib.org/functions/HT_DCPHASE/)
     #[doc(alias = "HilbertTransformDominantCyclePhase")]
-    pub fn ht_dcphase(
+    pub fn HT_DCPHASE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -141,13 +141,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_dcphase_fma, ht_dcphase_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_DCPHASE_fma, HT_DCPHASE_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_dcphase_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_DCPHASE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_dcphase_fma(
+    fn HT_DCPHASE_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -156,10 +156,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ht_dcphase_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_DCPHASE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ht_dcphase_impl(
+    fn HT_DCPHASE_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -174,7 +174,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ht_dcphase_lookback();
+        let _assertLb = self.HT_DCPHASE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -265,7 +265,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtDcPhase as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_DCPHASE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -575,20 +575,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_DCPHASE stream: one value per closed bar, bit-identical to [`Core::ht_dcphase`]
-/// over the same series. Open with [`Core::ht_dcphase_open`]; dropping the handle
+/// Live HT_DCPHASE stream: one value per closed bar, bit-identical to [`Core::HT_DCPHASE`]
+/// over the same series. Open with [`Core::HT_DCPHASE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_DCPHASE_Stream")]
-pub struct HtDcPhaseStream {
+pub struct HT_DCPHASE_Stream {
     core: Core,
-    state: HtDcPhaseStreamState,
+    state: HT_DCPHASE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtDcPhaseStreamState {
+struct HT_DCPHASE_StreamState {
     i: usize,
     tempReal: f64,
     tempReal2: f64,
@@ -665,7 +665,7 @@ struct HtDcPhaseStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_dcphase_step_internal(&self, sp: &mut HtDcPhaseStreamState, inReal: f64, outReal: &mut f64) {
+    fn HT_DCPHASE_step_internal(&self, sp: &mut HT_DCPHASE_StreamState, inReal: f64, outReal: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -859,10 +859,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_dcphase_open`] (composition seam).
-    pub(crate) fn ht_dcphase_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_DCPHASE_Open`] (composition seam).
+    pub(crate) fn HT_DCPHASE_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtDcPhaseStream, f64), RetCode> {
+    ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -960,7 +960,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtDcPhase as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_DCPHASE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1278,7 +1278,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtDcPhaseStreamState {
+        let state = HT_DCPHASE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1347,11 +1347,11 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok((HtDcPhaseStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((HT_DCPHASE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live HT_DCPHASE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_dcphase`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_DCPHASE`] at that bar.
     ///
     /// # Errors
     ///
@@ -1363,23 +1363,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_dcphase_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_DCPHASE_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HT_DCPHASE_Open")]
-    pub fn ht_dcphase_open(&self, inReal: &[f64], ) -> Result<(HtDcPhaseStream, f64), RetCode> {
-        self.ht_dcphase_open_internal(inReal, 0)
+    pub fn HT_DCPHASE_Open(&self, inReal: &[f64], ) -> Result<(HT_DCPHASE_Stream, f64), RetCode> {
+        self.HT_DCPHASE_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_dcphase_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_dcphase`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_DCPHASE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_DCPHASE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_DCPHASE_OpenAndFill")]
-    pub fn ht_dcphase_open_and_fill(
+    pub fn HT_DCPHASE_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<HtDcPhaseStream, RetCode> {
+    ) -> Result<HT_DCPHASE_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1476,7 +1476,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtDcPhase as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_DCPHASE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1795,7 +1795,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtDcPhaseStreamState {
+        let state = HT_DCPHASE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1864,19 +1864,19 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok(HtDcPhaseStream { core: self.clone(), state })
+        Ok(HT_DCPHASE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtDcPhaseStream {
+impl HT_DCPHASE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_DCPHASE_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ht_dcphase_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.HT_DCPHASE_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -1894,7 +1894,7 @@ impl HtDcPhaseStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtDcPhaseStream>();
+    _assert_auto::<HT_DCPHASE_Stream>();
 };
 
 /***************/

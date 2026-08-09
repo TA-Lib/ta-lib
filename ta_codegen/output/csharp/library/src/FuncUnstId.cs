@@ -40,64 +40,64 @@ namespace TALib;
 public enum FuncUnstId
 {
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_ADX</c>.</summary>
-    Adx = 0,
+    ADX = 0,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_UNUSED_1</c>.</summary>
-    Unused1 = 1,
+    UNUSED_1 = 1,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_ATR</c>.</summary>
-    Atr = 2,
+    ATR = 2,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_CMO</c>.</summary>
-    Cmo = 3,
+    CMO = 3,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_DX</c>.</summary>
-    Dx = 4,
+    DX = 4,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_EMA</c>.</summary>
-    Ema = 5,
+    EMA = 5,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_DCPERIOD</c>.</summary>
-    HtDcPeriod = 6,
+    HT_DCPERIOD = 6,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_DCPHASE</c>.</summary>
-    HtDcPhase = 7,
+    HT_DCPHASE = 7,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_PHASOR</c>.</summary>
-    HtPhasor = 8,
+    HT_PHASOR = 8,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_SINE</c>.</summary>
-    HtSine = 9,
+    HT_SINE = 9,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_TRENDLINE</c>.</summary>
-    HtTrendline = 10,
+    HT_TRENDLINE = 10,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_HT_TRENDMODE</c>.</summary>
-    HtTrendMode = 11,
+    HT_TRENDMODE = 11,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_UNUSED_12</c>.</summary>
-    Unused12 = 12,
+    UNUSED_12 = 12,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_KAMA</c>.</summary>
-    Kama = 13,
+    KAMA = 13,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_MAMA</c>.</summary>
-    Mama = 14,
+    MAMA = 14,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_UNUSED_15</c>.</summary>
-    Unused15 = 15,
+    UNUSED_15 = 15,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_MINUS_DI</c>.</summary>
-    MinusDI = 16,
+    MINUS_DI = 16,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_MINUS_DM</c>.</summary>
-    MinusDM = 17,
+    MINUS_DM = 17,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_NATR</c>.</summary>
-    Natr = 18,
+    NATR = 18,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_PLUS_DI</c>.</summary>
-    PlusDI = 19,
+    PLUS_DI = 19,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_PLUS_DM</c>.</summary>
-    PlusDM = 20,
+    PLUS_DM = 20,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_RSI</c>.</summary>
-    Rsi = 21,
+    RSI = 21,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_UNUSED_22</c>.</summary>
-    Unused22 = 22,
+    UNUSED_22 = 22,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_T3</c>.</summary>
     T3 = 23,
 
     /// <summary>Wildcard: sets the unstable period for every function at
     /// once. Pinned, so adding an indicator can never move it.</summary>
-    All = 65535,
+    ALL = 65535,
 }
 
 /// <summary>Companion constants for <see cref="FuncUnstId"/>.</summary>
 public static class FuncUnstIds
 {
     /// <summary>Number of function ids — the size of the unstable-period
-    /// table. Not an id, and not <see cref="FuncUnstId.All"/>. Mirrors C's
+    /// table. Not an id, and not <see cref="FuncUnstId.ALL"/>. Mirrors C's
     /// TA_FUNC_UNST_COUNT.</summary>
     public const int Count = 24;
 }

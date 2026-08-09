@@ -71,7 +71,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::trima`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TRIMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn trima_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn TRIMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -144,7 +144,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.trima(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TRIMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -152,11 +152,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::wma`] · [`Core::ma`]
+    /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`]
     ///
-    /// Further reading: [ta-lib.org/functions/trima](https://ta-lib.org/functions/trima/)
+    /// Further reading: [ta-lib.org/functions/TRIMA](https://ta-lib.org/functions/TRIMA/)
     #[doc(alias = "TriangularMovingAverage")]
-    pub fn trima(
+    pub fn TRIMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -177,7 +177,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.trima_lookback(optInTimePeriod);
+        let _assertLb = self.TRIMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -451,20 +451,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TRIMA stream: one value per closed bar, bit-identical to [`Core::trima`]
-/// over the same series. Open with [`Core::trima_open`]; dropping the handle
+/// Live TRIMA stream: one value per closed bar, bit-identical to [`Core::TRIMA`]
+/// over the same series. Open with [`Core::TRIMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRIMA_Stream")]
-pub struct TrimaStream {
+pub struct TRIMA_Stream {
     core: Core,
-    state: TrimaStreamState,
+    state: TRIMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TrimaStreamState {
+struct TRIMA_StreamState {
     optInTimePeriod: i32,
     numerator: f64,
     numeratorSub: f64,
@@ -486,7 +486,7 @@ struct TrimaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn trima_step_internal(&self, sp: &mut TrimaStreamState, inReal: f64, outReal: &mut f64) {
+    fn TRIMA_step_internal(&self, sp: &mut TRIMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod % 2 == 1 {
             if sp.ringCap_middleIdx == 0 {
                 sp.ring_middleIdx_inReal[0] = inReal;
@@ -554,10 +554,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::trima_open`] (composition seam).
-    pub(crate) fn trima_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TRIMA_Open`] (composition seam).
+    pub(crate) fn TRIMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TrimaStream, f64), RetCode> {
+    ) -> Result<(TRIMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -789,7 +789,7 @@ impl Core {
             let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
             ring_trailingIdx_inReal[..cap_trailingIdx as usize]
                 .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TrimaStreamState {
+            let state = TRIMA_StreamState {
                 optInTimePeriod,
                 numerator,
                 numeratorSub,
@@ -803,7 +803,7 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok((TrimaStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((TRIMA_Stream { core: self.clone(), state }, lastValue_outReal))
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut numerator: f64 = 0.0_f64;
@@ -997,7 +997,7 @@ impl Core {
             let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
             ring_trailingIdx_inReal[..cap_trailingIdx as usize]
                 .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TrimaStreamState {
+            let state = TRIMA_StreamState {
                 optInTimePeriod,
                 numerator,
                 numeratorSub,
@@ -1011,12 +1011,12 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok((TrimaStream { core: self.clone(), state }, lastValue_outReal))
+            Ok((TRIMA_Stream { core: self.clone(), state }, lastValue_outReal))
         }
     }
 
     /// Open a live TRIMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::trima`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TRIMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -1028,23 +1028,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.trima_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.TRIMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TRIMA_Open")]
-    pub fn trima_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TrimaStream, f64), RetCode> {
-        self.trima_open_internal(inReal, 0, optInTimePeriod)
+    pub fn TRIMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TRIMA_Stream, f64), RetCode> {
+        self.TRIMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::trima_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::trima`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TRIMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TRIMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TRIMA_OpenAndFill")]
-    pub fn trima_open_and_fill(
+    pub fn TRIMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TrimaStream, RetCode> {
+    ) -> Result<TRIMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1277,7 +1277,7 @@ impl Core {
             let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
             ring_trailingIdx_inReal[..cap_trailingIdx as usize]
                 .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TrimaStreamState {
+            let state = TRIMA_StreamState {
                 optInTimePeriod,
                 numerator,
                 numeratorSub,
@@ -1291,7 +1291,7 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok(TrimaStream { core: self.clone(), state })
+            Ok(TRIMA_Stream { core: self.clone(), state })
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut numerator: f64 = 0.0_f64;
@@ -1487,7 +1487,7 @@ impl Core {
             let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
             ring_trailingIdx_inReal[..cap_trailingIdx as usize]
                 .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TrimaStreamState {
+            let state = TRIMA_StreamState {
                 optInTimePeriod,
                 numerator,
                 numeratorSub,
@@ -1501,7 +1501,7 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok(TrimaStream { core: self.clone(), state })
+            Ok(TRIMA_Stream { core: self.clone(), state })
         }
     }
 
@@ -1509,12 +1509,12 @@ impl Core {
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TrimaStream {
+impl TRIMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TRIMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.trima_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TRIMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -1532,7 +1532,7 @@ impl TrimaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TrimaStream>();
+    _assert_auto::<TRIMA_Stream>();
 };
 
 /***************/

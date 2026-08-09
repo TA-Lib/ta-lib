@@ -25,7 +25,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#htTrendline} consumes before it
+    * Number of leading input bars {@link Core#HT_TRENDLINE} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -36,7 +36,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int htTrendlineLookback( )
+   public int HT_TRENDLINE_Lookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -46,15 +46,15 @@
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()] ;
+      return 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()] ;
 
    }
-   RetCode htTrendlineInternal( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode HT_TRENDLINE_Internal( int startIdx,
+                                  int endIdx,
+                                  double inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -141,7 +141,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -429,12 +429,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode htTrendlineInternal( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                MInteger outBegIdx,
-                                MInteger outNBElement,
-                                double outReal[] )
+   RetCode HT_TRENDLINE_Internal( int startIdx,
+                                  int endIdx,
+                                  float inReal[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -512,7 +512,7 @@
       iTrend1 = iTrend2;
       tempReal = Math.atan(1);
       rad2Deg = 45.0 / tempReal;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -748,8 +748,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htTrendlineLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#HT_TRENDLINE_Lookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -764,19 +764,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htTrendline( int startIdx,
-                                int endIdx,
-                                double inReal[],
-                                double outReal[] )
+   public OutRange HT_TRENDLINE( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htTrendlineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDLINE", retCode);
       }
@@ -792,8 +792,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htTrendlineLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#HT_TRENDLINE_Lookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -808,19 +808,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htTrendline( int startIdx,
-                                int endIdx,
-                                float inReal[],
-                                double outReal[] )
+   public OutRange HT_TRENDLINE( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htTrendlineInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_TRENDLINE", retCode);
       }
@@ -830,8 +830,8 @@
 
    /**
     * A live HT_TRENDLINE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#htTrendline} over the same series.
-    * Open with {@link Core#htTrendlineOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#HT_TRENDLINE} over the same series.
+    * Open with {@link Core#HT_TRENDLINE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -842,7 +842,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HtTrendlineStream {
+   public static final class HT_TRENDLINE_Stream {
       final Core core;
       int i;
       double tempReal;
@@ -911,10 +911,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      HtTrendlineStream( Core core ) { this.core = core; }
+      HT_TRENDLINE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#htTrendlineOpenAndFill}, or
+       * The range filled by {@link Core#HT_TRENDLINE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -922,7 +922,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      HtTrendlineStream( HtTrendlineStream other ) {
+      HT_TRENDLINE_Stream( HT_TRENDLINE_Stream other ) {
          this.core = other.core;
          this.i = other.i;
          this.tempReal = other.tempReal;
@@ -997,7 +997,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.htTrendlineStreamStep(this, inReal);
+         core.HT_TRENDLINE_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -1009,8 +1009,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         HtTrendlineStream scratch = new HtTrendlineStream(this);
-         core.htTrendlineStreamStep(scratch, inReal);
+         HT_TRENDLINE_Stream scratch = new HT_TRENDLINE_Stream(this);
+         core.HT_TRENDLINE_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1027,11 +1027,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HtTrendlineStream copy() {
-         return new HtTrendlineStream(this);
+      public HT_TRENDLINE_Stream copy() {
+         return new HT_TRENDLINE_Stream(this);
       }
    }
-   void htTrendlineStreamStep( HtTrendlineStream sp, double inReal )
+   void HT_TRENDLINE_StreamStep( HT_TRENDLINE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;
@@ -1212,7 +1212,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode htTrendlineOpenBody( HtTrendlineStream sp, double inReal[], int startIdx )
+   private RetCode HT_TRENDLINE_OpenBody( HT_TRENDLINE_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -1304,7 +1304,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1671,7 +1671,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode htTrendlineOpenAndFillBody( HtTrendlineStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_TRENDLINE_OpenAndFillBody( HT_TRENDLINE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1764,7 +1764,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtTrendline.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_TRENDLINE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -2131,11 +2131,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind htTrendlineOpen (composition seam). */
-   HtTrendlineStream htTrendlineOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind HT_TRENDLINE_Open (composition seam). */
+   HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
    {
-      HtTrendlineStream sp = new HtTrendlineStream(this);
-      RetCode retCode = htTrendlineOpenBody(sp, inReal, startIdx);
+      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      RetCode retCode = HT_TRENDLINE_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2150,32 +2150,32 @@
    /**
     * Open a live HT_TRENDLINE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#htTrendline} at that bar.
-    * <p>The history must hold at least {@code htTrendlineLookback(...) + 1} bars
+    * to {@link Core#HT_TRENDLINE} at that bar.
+    * <p>The history must hold at least {@code HT_TRENDLINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public HtTrendlineStream htTrendlineOpen( double inReal[] )
+   public HT_TRENDLINE_Stream HT_TRENDLINE_Open( double inReal[] )
    {
-      return htTrendlineOpenInternal(inReal, 0);
+      return HT_TRENDLINE_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#htTrendlineOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#htTrendline} over the whole history in the same single pass
+    * {@link Core#HT_TRENDLINE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#HT_TRENDLINE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HtTrendlineStream#fillRange()}.
+    * {@link HT_TRENDLINE_Stream#fillRange()}.
     */
-   public HtTrendlineStream htTrendlineOpenAndFill( double inReal[], double outReal[] )
+   public HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HtTrendlineStream sp = new HtTrendlineStream(this);
+      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htTrendlineOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_TRENDLINE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdl3outside`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDL3OUTSIDE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdl3outside_lookback(&self) -> usize {
+    pub fn CDL3OUTSIDE_Lookback(&self) -> usize {
         return (3) as usize;
     }
     /// A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body)
@@ -121,7 +121,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdl3outside(
+    /// let ret = core.CDL3OUTSIDE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -131,13 +131,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl3inside`] · [`Core::cdlengulfing`] · [`Core::cdl3linestrike`]
+    /// [`Core::CDL3INSIDE`] · [`Core::CDLENGULFING`] · [`Core::CDL3LINESTRIKE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdl3outside](https://ta-lib.org/functions/cdl3outside/)
+    /// [ta-lib.org/functions/CDL3OUTSIDE](https://ta-lib.org/functions/CDL3OUTSIDE/)
     #[doc(alias = "ThreeOutsideUpDown")]
     #[doc(alias = "ThreeOutside")]
-    pub fn cdl3outside(
+    pub fn CDL3OUTSIDE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -155,7 +155,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdl3outside_lookback();
+        let _assertLb = self.CDL3OUTSIDE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
@@ -166,7 +166,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3outside_lookback();
+        lookbackTotal = self.CDL3OUTSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -213,20 +213,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3OUTSIDE stream: one value per closed bar, bit-identical to [`Core::cdl3outside`]
-/// over the same series. Open with [`Core::cdl3outside_open`]; dropping the handle
+/// Live CDL3OUTSIDE stream: one value per closed bar, bit-identical to [`Core::CDL3OUTSIDE`]
+/// over the same series. Open with [`Core::CDL3OUTSIDE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL3OUTSIDE_Stream")]
-pub struct Cdl3outsideStream {
+pub struct CDL3OUTSIDE_Stream {
     core: Core,
-    state: Cdl3outsideStreamState,
+    state: CDL3OUTSIDE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdl3outsideStreamState {
+struct CDL3OUTSIDE_StreamState {
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag1_inClose: f64,
@@ -240,7 +240,7 @@ struct Cdl3outsideStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdl3outside_step_internal(&self, sp: &mut Cdl3outsideStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3OUTSIDE_step_internal(&self, sp: &mut CDL3OUTSIDE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose {
             // white engulfs black
             // third candle higher
@@ -256,10 +256,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdl3outside_open`] (composition seam).
-    pub(crate) fn cdl3outside_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDL3OUTSIDE_Open`] (composition seam).
+    pub(crate) fn CDL3OUTSIDE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdl3outsideStream, i32), RetCode> {
+    ) -> Result<(CDL3OUTSIDE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -277,7 +277,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3outside_lookback();
+        lookbackTotal = self.CDL3OUTSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -319,17 +319,17 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = Cdl3outsideStreamState {
+        let state = CDL3OUTSIDE_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],
             lag2_inClose: inClose[historyLen - 2],
         };
-        Ok((Cdl3outsideStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDL3OUTSIDE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDL3OUTSIDE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdl3outside`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDL3OUTSIDE`] at that bar.
     ///
     /// # Errors
     ///
@@ -348,23 +348,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdl3outside_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDL3OUTSIDE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDL3OUTSIDE_Open")]
-    pub fn cdl3outside_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdl3outsideStream, i32), RetCode> {
-        self.cdl3outside_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDL3OUTSIDE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3OUTSIDE_Stream, i32), RetCode> {
+        self.CDL3OUTSIDE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdl3outside_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdl3outside`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDL3OUTSIDE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDL3OUTSIDE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDL3OUTSIDE_OpenAndFill")]
-    pub fn cdl3outside_open_and_fill(
+    pub fn CDL3OUTSIDE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdl3outsideStream, RetCode> {
+    ) -> Result<CDL3OUTSIDE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -381,7 +381,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3outside_lookback();
+        lookbackTotal = self.CDL3OUTSIDE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -425,25 +425,25 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = Cdl3outsideStreamState {
+        let state = CDL3OUTSIDE_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],
             lag2_inClose: inClose[historyLen - 2],
         };
-        Ok(Cdl3outsideStream { core: self.clone(), state })
+        Ok(CDL3OUTSIDE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdl3outsideStream {
+impl CDL3OUTSIDE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDL3OUTSIDE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdl3outside_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDL3OUTSIDE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -461,7 +461,7 @@ impl Cdl3outsideStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdl3outsideStream>();
+    _assert_auto::<CDL3OUTSIDE_Stream>();
 };
 
 /***************/

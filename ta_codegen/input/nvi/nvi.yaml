@@ -1,5 +1,4 @@
 name: NVI
-camel_case: Nvi
 group: Volume Indicators
 hint: Negative Volume Index
 flags: [stream, path_dependent]

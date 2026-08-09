@@ -1,5 +1,4 @@
 name: AVGDEV
-camel_case: AvgDev
 group: Price Transform
 hint: Average Deviation
 flags: [overlap, stream]

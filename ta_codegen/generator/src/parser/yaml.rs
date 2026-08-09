@@ -9,7 +9,6 @@ struct YamlFunc {
     name: String,
     group: String,
     description: Option<String>,
-    camel_case: Option<String>,
     hint: Option<String>,
     #[serde(default)]
     flags: YamlFlags,
@@ -191,7 +190,6 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         name: yaml.name,
         group: yaml.group,
         description: yaml.description,
-        camel_case: yaml.camel_case,
         hint: yaml.hint,
         flags,
         inputs,

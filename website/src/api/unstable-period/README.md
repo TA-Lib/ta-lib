@@ -59,19 +59,19 @@ use ta_lib::{Core, FuncUnstId};
 
 // Strip 30 extra bars from every EMA-based calculation:
 let core = Core::builder()
-    .unstable_period(FuncUnstId::Ema, 30)
+    .unstable_period(FuncUnstId::EMA, 30)
     .build();
 
 // Apply the same unstable period to ALL affected functions at once:
 let core = Core::builder()
-    .unstable_period(FuncUnstId::FuncUnstAll, 30)
+    .unstable_period(FuncUnstId::ALL, 30)
     .build();
 
-let n = core.get_unstable_period(FuncUnstId::Ema);   // read it back
+let n = core.get_unstable_period(FuncUnstId::EMA);   // read it back
 ```
 
-Ids are spelled `FuncUnstId::<CamelCase>`, so `TA_FUNC_UNST_HT_DCPERIOD` is
-`FuncUnstId::HtDcPeriod`.
+Ids are spelled `FuncUnstId::<NAME>`, so `TA_FUNC_UNST_HT_DCPERIOD` is
+`FuncUnstId::HT_DCPERIOD`.
 
 There is no global to guard here: the period is fixed when the [`Core`](/api/rust/)
 is built and cannot change afterwards, which is what makes a `Core` `Send + Sync`.
@@ -81,9 +81,9 @@ To use a different period, build another `Core` (or derive one with `to_builder(
 
 ## Functions with an unstable period
 
-These are the functions with an unstable period. Every binding covers the same set;
-only the spelling of the id differs (see the tabs above). Each language also has a
-wildcard that targets all of them at once.
+These are the functions with an unstable period. Every binding covers the same set
+and spells each id the same way; C alone prefixes it with `TA_FUNC_UNST_`. Each
+language also has a wildcard that targets all of them at once.
 
 <!-- ta_codegen:begin unstable-func-list -->
 `ADX`, `ATR`, `CMO`, `DX`, `EMA`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE`, `KAMA`, `MAMA`, `MINUS_DI`, `MINUS_DM`, `NATR`, `PLUS_DI`, `PLUS_DM`, `RSI`, `T3`.

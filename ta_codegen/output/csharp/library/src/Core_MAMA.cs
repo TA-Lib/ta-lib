@@ -58,7 +58,7 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>Mama</c> consumes before it can produce
+   /// Number of leading input bars <c>MAMA</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -75,7 +75,7 @@ public partial class Core
    /// <param name="optInSlowLimit">Lower bound on the adaptive smoothing factor (default 0.05; range
    /// 0.01..0.99; <c>-4e37</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MamaLookback( double optInFastLimit, double optInSlowLimit )
+   public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
    {
       if( optInFastLimit == TA_REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
@@ -107,10 +107,10 @@ public partial class Core
        *        -------
        *         32 Total
        */
-      return 32 + this.unstablePeriod[(int)FuncUnstId.Mama] ;
+      return 32 + this.unstablePeriod[(int)FuncUnstId.MAMA] ;
 
    }
-   internal RetCode Mama( int startIdx,
+   internal RetCode MAMA( int startIdx,
                           int endIdx,
                           double[] inReal,
                           double optInFastLimit,
@@ -210,7 +210,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.Mama];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.MAMA];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -507,7 +507,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Mama( int startIdx,
+   internal RetCode MAMA( int startIdx,
                           int endIdx,
                           float[] inReal,
                           double optInFastLimit,
@@ -601,7 +601,7 @@ public partial class Core
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.Atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.Mama];
+      lookbackTotal = 32 + this.unstablePeriod[(int)FuncUnstId.MAMA];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -861,7 +861,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MamaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>MAMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -884,7 +884,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Mama( int startIdx,
+   public OutRange MAMA( int startIdx,
                          int endIdx,
                          double[] inReal,
                          double optInFastLimit,
@@ -892,7 +892,7 @@ public partial class Core
                          double[] outMAMA,
                          double[] outFAMA )
    {
-      RetCode retCode = Mama(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
       }
@@ -922,7 +922,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MamaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>MAMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -945,7 +945,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Mama( int startIdx,
+   public OutRange MAMA( int startIdx,
                          int endIdx,
                          float[] inReal,
                          double optInFastLimit,
@@ -953,7 +953,7 @@ public partial class Core
                          double[] outMAMA,
                          double[] outFAMA )
    {
-      RetCode retCode = Mama(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
+      RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
       }

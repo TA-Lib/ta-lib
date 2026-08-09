@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlHomingPigeon} consumes before
+    * Number of leading input bars {@link Core#CDLHOMINGPIGEON} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlHomingPigeonLookback( )
+   public int CDLHOMINGPIGEON_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   RetCode cdlHomingPigeonInternal( int startIdx,
-                                    int endIdx,
-                                    double inOpen[],
-                                    double inHigh[],
-                                    double inLow[],
-                                    double inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLHOMINGPIGEON_Internal( int startIdx,
+                                     int endIdx,
+                                     double inOpen[],
+                                     double inHigh[],
+                                     double inLow[],
+                                     double inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHomingPigeonLookback();
+      lookbackTotal = CDLHOMINGPIGEON_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -130,15 +130,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlHomingPigeonInternal( int startIdx,
-                                    int endIdx,
-                                    float inOpen[],
-                                    float inHigh[],
-                                    float inLow[],
-                                    float inClose[],
-                                    MInteger outBegIdx,
-                                    MInteger outNBElement,
-                                    int outInteger[] )
+   RetCode CDLHOMINGPIGEON_Internal( int startIdx,
+                                     int endIdx,
+                                     float inOpen[],
+                                     float inHigh[],
+                                     float inLow[],
+                                     float inClose[],
+                                     MInteger outBegIdx,
+                                     MInteger outNBElement,
+                                     int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -159,7 +159,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlHomingPigeonLookback();
+      lookbackTotal = CDLHOMINGPIGEON_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -216,7 +216,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHomingPigeonLookback} is a
+    * valid range shorter than {@link Core#CDLHOMINGPIGEON_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -236,10 +236,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlHarami
-    * @see Core#cdlMatchingLow
+    * @see Core#CDLHARAMI
+    * @see Core#CDLMATCHINGLOW
     */
-   public OutRange cdlHomingPigeon( int startIdx,
+   public OutRange CDLHOMINGPIGEON( int startIdx,
                                     int endIdx,
                                     double inOpen[],
                                     double inHigh[],
@@ -249,7 +249,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHomingPigeonInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHOMINGPIGEON", retCode);
       }
@@ -274,7 +274,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHomingPigeonLookback} is a
+    * valid range shorter than {@link Core#CDLHOMINGPIGEON_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -294,10 +294,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlHarami
-    * @see Core#cdlMatchingLow
+    * @see Core#CDLHARAMI
+    * @see Core#CDLMATCHINGLOW
     */
-   public OutRange cdlHomingPigeon( int startIdx,
+   public OutRange CDLHOMINGPIGEON( int startIdx,
                                     int endIdx,
                                     float inOpen[],
                                     float inHigh[],
@@ -307,7 +307,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHomingPigeonInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHOMINGPIGEON_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHOMINGPIGEON", retCode);
       }
@@ -317,8 +317,8 @@
 
    /**
     * A live CDLHOMINGPIGEON stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlHomingPigeon} over the same series.
-    * Open with {@link Core#cdlHomingPigeonOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLHOMINGPIGEON} over the same series.
+    * Open with {@link Core#CDLHOMINGPIGEON_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -329,7 +329,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlHomingPigeonStream {
+   public static final class CDLHOMINGPIGEON_Stream {
       final Core core;
       double BodyShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -359,10 +359,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlHomingPigeonStream( Core core ) { this.core = core; }
+      CDLHOMINGPIGEON_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlHomingPigeonOpenAndFill}, or
+       * The range filled by {@link Core#CDLHOMINGPIGEON_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -370,7 +370,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlHomingPigeonStream( CdlHomingPigeonStream other ) {
+      CDLHOMINGPIGEON_Stream( CDLHOMINGPIGEON_Stream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -406,7 +406,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlHomingPigeonStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHOMINGPIGEON_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -418,8 +418,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlHomingPigeonStream scratch = new CdlHomingPigeonStream(this);
-         core.cdlHomingPigeonStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLHOMINGPIGEON_Stream scratch = new CDLHOMINGPIGEON_Stream(this);
+         core.CDLHOMINGPIGEON_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -436,11 +436,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlHomingPigeonStream copy() {
-         return new CdlHomingPigeonStream(this);
+      public CDLHOMINGPIGEON_Stream copy() {
+         return new CDLHOMINGPIGEON_Stream(this);
       }
    }
-   void cdlHomingPigeonStreamStep( CdlHomingPigeonStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHOMINGPIGEON_StreamStep( CDLHOMINGPIGEON_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -495,7 +495,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode cdlHomingPigeonOpenBody( CdlHomingPigeonStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLHOMINGPIGEON_OpenBody( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -524,7 +524,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHomingPigeonLookback();
+      lookbackTotal = CDLHOMINGPIGEON_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -652,7 +652,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlHomingPigeonOpenAndFillBody( CdlHomingPigeonStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLHOMINGPIGEON_OpenAndFillBody( CDLHOMINGPIGEON_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -682,7 +682,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHomingPigeonLookback();
+      lookbackTotal = CDLHOMINGPIGEON_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -810,11 +810,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlHomingPigeonOpen (composition seam). */
-   CdlHomingPigeonStream cdlHomingPigeonOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLHOMINGPIGEON_Open (composition seam). */
+   CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlHomingPigeonStream sp = new CdlHomingPigeonStream(this);
-      RetCode retCode = cdlHomingPigeonOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
+      RetCode retCode = CDLHOMINGPIGEON_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -829,32 +829,32 @@
    /**
     * Open a live CDLHOMINGPIGEON stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlHomingPigeon} at that bar.
-    * <p>The history must hold at least {@code cdlHomingPigeonLookback(...) + 1} bars
+    * to {@link Core#CDLHOMINGPIGEON} at that bar.
+    * <p>The history must hold at least {@code CDLHOMINGPIGEON_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlHomingPigeonStream cdlHomingPigeonOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlHomingPigeonOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlHomingPigeonOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlHomingPigeon} over the whole history in the same single pass
+    * {@link Core#CDLHOMINGPIGEON_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLHOMINGPIGEON} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlHomingPigeonStream#fillRange()}.
+    * {@link CDLHOMINGPIGEON_Stream#fillRange()}.
     */
-   public CdlHomingPigeonStream cdlHomingPigeonOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLHOMINGPIGEON_Stream CDLHOMINGPIGEON_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlHomingPigeonStream sp = new CdlHomingPigeonStream(this);
+      CDLHOMINGPIGEON_Stream sp = new CDLHOMINGPIGEON_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHomingPigeonOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHOMINGPIGEON_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

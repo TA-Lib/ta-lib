@@ -5,9 +5,9 @@
 //! Only the `public enum FuncUnstId { ... }` body is regenerated; the hand-written
 //! license header + package line are preserved verbatim (there are no GENCODE
 //! markers in this file, so the `public enum FuncUnstId` declaration is the split
-//! point). The Java sentinels are named `All` / `None` — referenced as
-//! `FuncUnstId.All` by `Core.java` — distinct from the C enum's
-//! `FuncUnstAll` / `FuncUnstNone`.
+//! point). The wildcard sentinel is `ALL`, referenced as `FuncUnstId.ALL`
+//! by `Core.java` — C's `TA_FUNC_UNST_ALL` minus the prefix, like every
+//! other variant.
 
 use crate::ir::EnumDef;
 use std::collections::HashMap;
@@ -31,23 +31,23 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
     let head = &existing[..split];
 
     // Each variant's ordinal IS the index into unstablePeriod[], and for the
-    // function ids the ordinal equals the C value. `All` is the one exception:
+    // function ids the ordinal equals the C value. `ALL` is the one exception:
     // it carries C's pinned 0x7FFFFFFF, which no ordinal can express, so every
     // constant declares its value explicitly and `value()` exposes it.
-    // `COUNT` sizes the table -- it is what `All` used to be worth.
+    // `COUNT` sizes the table -- it is what `ALL` used to be worth.
     let mut body = String::from("public enum FuncUnstId {\n");
     body.push('\t');
     body.push('\n');
     for (i, v) in fu.variants.iter().enumerate() {
-        body.push_str(&format!("\t  /* {i:03} */  {}({i}),\n", v.pascal_name));
+        body.push_str(&format!("\t  /* {i:03} */  {}({i}),\n", v.name));
     }
     body.push('\n');
     body.push_str("\t  /** Wildcard: sets the unstable period for every function at once.\n");
     body.push_str("\t   *  Pinned, so adding an indicator can never move it. */\n");
-    body.push_str("\t             All(65535);\n");
+    body.push_str("\t             ALL(65535);\n");
     body.push('\n');
     body.push_str("\t/** Number of function ids — the size of the unstable-period table.\n");
-    body.push_str("\t *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
+    body.push_str("\t *  Not an id, and not {@link #ALL}. Mirrors C's TA_FUNC_UNST_COUNT. */\n");
     body.push_str(&format!("\tpublic static final int COUNT = {};\n", fu.variants.len()));
     body.push('\n');
     body.push_str("\tprivate final int value;\n");
@@ -96,7 +96,7 @@ pub fn generate_matype(enums: &HashMap<String, EnumDef>, path: &Path) {
             v.c_name
         );
         let comma = if i + 1 == ma.variants.len() { "" } else { "," };
-        body.push_str(&format!("   {}{comma}\n", v.pascal_name));
+        body.push_str(&format!("   {}{comma}\n", v.name));
     }
     body.push_str("};\n");
 

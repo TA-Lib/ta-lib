@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_ROC_OptInputs[] =
 DEF_FUNCTION( ROC,
               TA_GroupId_MomentumIndicators,
               "Rate of change : ((price/prevPrice)-1)*100",
-              "Roc",
               TA_FUNC_FLG_STREAM
              );
 /* ROC END */
@@ -85,7 +84,6 @@ static const TA_OptInputParameterInfo *TA_ROCP_OptInputs[] =
 DEF_FUNCTION( ROCP,
               TA_GroupId_MomentumIndicators,
               "Rate of change Percentage: (price-prevPrice)/prevPrice",
-              "RocP",
               TA_FUNC_FLG_STREAM
              );
 /* ROCP END */
@@ -111,7 +109,6 @@ static const TA_OptInputParameterInfo *TA_ROCR_OptInputs[] =
 DEF_FUNCTION( ROCR,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio: (price/prevPrice)",
-              "RocR",
               TA_FUNC_FLG_STREAM
              );
 /* ROCR END */
@@ -137,7 +134,6 @@ static const TA_OptInputParameterInfo *TA_ROCR100_OptInputs[] =
 DEF_FUNCTION( ROCR100,
               TA_GroupId_MomentumIndicators,
               "Rate of change ratio 100 scale: (price/prevPrice)*100",
-              "RocR100",
               TA_FUNC_FLG_STREAM
              );
 /* ROCR100 END */
@@ -163,7 +159,6 @@ static const TA_OptInputParameterInfo *TA_RSI_OptInputs[] =
 DEF_FUNCTION( RSI,
               TA_GroupId_MomentumIndicators,
               "Relative Strength Index",
-              "Rsi",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* RSI END */

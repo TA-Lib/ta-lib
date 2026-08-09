@@ -1,5 +1,4 @@
 name: VWMA
-camel_case: Vwma
 group: Overlap Studies
 hint: Volume Weighted Moving Average
 flags: [overlap, stream]

@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_EMA_OptInputs[] =
 DEF_FUNCTION( EMA,
               TA_GroupId_OverlapStudies,
               "Exponential Moving Average",
-              "Ema",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* EMA END */
@@ -83,7 +82,6 @@ static const TA_OptInputParameterInfo *TA_EXP_OptInputs[] =
 DEF_FUNCTION( EXP,
               TA_GroupId_MathTransform,
               "Vector Arithmetic Exp",
-              "Exp",
               TA_FUNC_FLG_STREAM
              );
 /* EXP END */

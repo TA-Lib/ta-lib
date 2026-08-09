@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlEveningStar} consumes before
+    * Number of leading input bars {@link Core#CDLEVENINGSTAR} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlEveningStarLookback( double optInPenetration )
+   public int CDLEVENINGSTAR_Lookback( double optInPenetration )
    {
       if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 3e-1;
@@ -40,16 +40,16 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 2 ;
 
    }
-   RetCode cdlEveningStarInternal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   double optInPenetration,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLEVENINGSTAR_Internal( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    double optInPenetration,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -79,7 +79,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlEveningStarLookback(optInPenetration);
+      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -153,16 +153,16 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlEveningStarInternal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   double optInPenetration,
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLEVENINGSTAR_Internal( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    double optInPenetration,
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -189,7 +189,7 @@
       } else if( optInPenetration < 0e0 || optInPenetration > REAL_MAX ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = cdlEveningStarLookback(optInPenetration);
+      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -246,7 +246,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlEveningStarLookback} is a
+    * valid range shorter than {@link Core#CDLEVENINGSTAR_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -268,11 +268,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlEveningDojiStar
-    * @see Core#cdlMorningStar
-    * @see Core#cdlMorningDojiStar
+    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#CDLMORNINGSTAR
+    * @see Core#CDLMORNINGDOJISTAR
     */
-   public OutRange cdlEveningStar( int startIdx,
+   public OutRange CDLEVENINGSTAR( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -283,7 +283,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlEveningStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -305,7 +305,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlEveningStarLookback} is a
+    * valid range shorter than {@link Core#CDLEVENINGSTAR_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -327,11 +327,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlEveningDojiStar
-    * @see Core#cdlMorningStar
-    * @see Core#cdlMorningDojiStar
+    * @see Core#CDLEVENINGDOJISTAR
+    * @see Core#CDLMORNINGSTAR
+    * @see Core#CDLMORNINGDOJISTAR
     */
-   public OutRange cdlEveningStar( int startIdx,
+   public OutRange CDLEVENINGSTAR( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -342,7 +342,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlEveningStarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLEVENINGSTAR", retCode);
       }
@@ -352,8 +352,8 @@
 
    /**
     * A live CDLEVENINGSTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlEveningStar} over the same series.
-    * Open with {@link Core#cdlEveningStarOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLEVENINGSTAR} over the same series.
+    * Open with {@link Core#CDLEVENINGSTAR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -364,7 +364,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlEveningStarStream {
+   public static final class CDLEVENINGSTAR_Stream {
       final Core core;
       double optInPenetration;
       double BodyShortPeriodTotal;
@@ -400,10 +400,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlEveningStarStream( Core core ) { this.core = core; }
+      CDLEVENINGSTAR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlEveningStarOpenAndFill}, or
+       * The range filled by {@link Core#CDLEVENINGSTAR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -411,7 +411,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlEveningStarStream( CdlEveningStarStream other ) {
+      CDLEVENINGSTAR_Stream( CDLEVENINGSTAR_Stream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -453,7 +453,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlEveningStarStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLEVENINGSTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -465,8 +465,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlEveningStarStream scratch = new CdlEveningStarStream(this);
-         core.cdlEveningStarStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLEVENINGSTAR_Stream scratch = new CDLEVENINGSTAR_Stream(this);
+         core.CDLEVENINGSTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -483,11 +483,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlEveningStarStream copy() {
-         return new CdlEveningStarStream(this);
+      public CDLEVENINGSTAR_Stream copy() {
+         return new CDLEVENINGSTAR_Stream(this);
       }
    }
-   void cdlEveningStarStreamStep( CdlEveningStarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLEVENINGSTAR_StreamStep( CDLEVENINGSTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -548,7 +548,7 @@
          sp.ringPos_BodyShortTrailingIdx = 0;
       }
    }
-   private RetCode cdlEveningStarOpenBody( CdlEveningStarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   private RetCode CDLEVENINGSTAR_OpenBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -583,7 +583,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlEveningStarLookback(optInPenetration);
+      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -725,7 +725,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlEveningStarOpenAndFillBody( CdlEveningStarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLEVENINGSTAR_OpenAndFillBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -761,7 +761,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlEveningStarLookback(optInPenetration);
+      lookbackTotal = CDLEVENINGSTAR_Lookback(optInPenetration);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -903,11 +903,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlEveningStarOpen (composition seam). */
-   CdlEveningStarStream cdlEveningStarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
+   /* Internal startIdx-anchored open behind CDLEVENINGSTAR_Open (composition seam). */
+   CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {
-      CdlEveningStarStream sp = new CdlEveningStarStream(this);
-      RetCode retCode = cdlEveningStarOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
+      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
+      RetCode retCode = CDLEVENINGSTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -922,32 +922,32 @@
    /**
     * Open a live CDLEVENINGSTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlEveningStar} at that bar.
-    * <p>The history must hold at least {@code cdlEveningStarLookback(...) + 1} bars
+    * to {@link Core#CDLEVENINGSTAR} at that bar.
+    * <p>The history must hold at least {@code CDLEVENINGSTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlEveningStarStream cdlEveningStarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
+   public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration )
    {
-      return cdlEveningStarOpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
+      return CDLEVENINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
    /**
-    * {@link Core#cdlEveningStarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlEveningStar} over the whole history in the same single pass
+    * {@link Core#CDLEVENINGSTAR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLEVENINGSTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlEveningStarStream#fillRange()}.
+    * {@link CDLEVENINGSTAR_Stream#fillRange()}.
     */
-   public CdlEveningStarStream cdlEveningStarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
+   public CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double optInPenetration, int outInteger[] )
    {
-      CdlEveningStarStream sp = new CdlEveningStarStream(this);
+      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlEveningStarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

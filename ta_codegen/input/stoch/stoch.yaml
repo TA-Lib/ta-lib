@@ -1,5 +1,4 @@
 name: STOCH
-camel_case: Stoch
 group: Momentum Indicators
 hint: Stochastic
 flags: [stream]

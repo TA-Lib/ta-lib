@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::rsi`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::RSI`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,14 +75,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn rsi_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn RSI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         let mut retValue: usize = 0_usize;
-        retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::RSI as usize]) as usize;
         if self.compatibility == Compatibility::Metastock {
             retValue = retValue - 1;
         }
@@ -151,7 +151,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.rsi(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.RSI(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -159,16 +159,16 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cmo`] · [`Core::stochrsi`]
+    /// [`Core::CMO`] · [`Core::STOCHRSI`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/rsi](https://ta-lib.org/functions/rsi/)
+    /// Further reading: [ta-lib.org/functions/RSI](https://ta-lib.org/functions/RSI/)
     #[doc(alias = "relativestrengthindex")]
-    pub fn rsi(
+    pub fn RSI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -189,7 +189,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.rsi_lookback(optInTimePeriod);
+        let _assertLb = self.RSI_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -219,7 +219,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (self.rsi_lookback(optInTimePeriod) as usize) as usize;
+        lookbackTotal = (self.RSI_Lookback(optInTimePeriod) as usize) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -252,7 +252,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today] as f64;
-        unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::RSI as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -400,20 +400,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live RSI stream: one value per closed bar, bit-identical to [`Core::rsi`]
-/// over the same series. Open with [`Core::rsi_open`]; dropping the handle
+/// Live RSI stream: one value per closed bar, bit-identical to [`Core::RSI`]
+/// over the same series. Open with [`Core::RSI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_RSI_Stream")]
-pub struct RsiStream {
+pub struct RSI_Stream {
     core: Core,
-    state: RsiStreamState,
+    state: RSI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct RsiStreamState {
+struct RSI_StreamState {
     optInTimePeriod: i32,
     prevGain: f64,
     prevLoss: f64,
@@ -427,7 +427,7 @@ struct RsiStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn rsi_step_internal(&self, sp: &mut RsiStreamState, inReal: f64, outReal: &mut f64) {
+    fn RSI_step_internal(&self, sp: &mut RSI_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
@@ -454,10 +454,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::rsi_open`] (composition seam).
-    pub(crate) fn rsi_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::RSI_Open`] (composition seam).
+    pub(crate) fn RSI_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(RsiStream, f64), RetCode> {
+    ) -> Result<(RSI_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -476,16 +476,16 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
-            if historyLen < self.rsi_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.RSI_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = RsiStreamState {
+            let state = RSI_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
                 prevValue: 0.0_f64,
             };
-            return Ok((RsiStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((RSI_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -512,7 +512,7 @@ impl Core {
         dummyBegIdx = 0;
         dummyNBElement = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (self.rsi_lookback(optInTimePeriod) as usize) as usize;
+        lookbackTotal = (self.RSI_Lookback(optInTimePeriod) as usize) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -529,7 +529,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today] as f64;
-        unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::RSI as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -674,17 +674,17 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = RsiStreamState {
+        let state = RSI_StreamState {
             optInTimePeriod,
             prevGain,
             prevLoss,
             prevValue,
         };
-        Ok((RsiStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((RSI_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live RSI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::rsi`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::RSI`] at that bar.
     ///
     /// # Errors
     ///
@@ -696,23 +696,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.rsi_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.RSI_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_RSI_Open")]
-    pub fn rsi_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(RsiStream, f64), RetCode> {
-        self.rsi_open_internal(inReal, 0, optInTimePeriod)
+    pub fn RSI_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(RSI_Stream, f64), RetCode> {
+        self.RSI_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::rsi_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::rsi`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::RSI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::RSI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_RSI_OpenAndFill")]
-    pub fn rsi_open_and_fill(
+    pub fn RSI_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<RsiStream, RetCode> {
+    ) -> Result<RSI_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -730,16 +730,16 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.rsi_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.RSI_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = RsiStreamState {
+            let state = RSI_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevGain: 0.0_f64,
                 prevLoss: 0.0_f64,
                 prevValue: 0.0_f64,
             };
-            let fillLb: usize = self.rsi_lookback(optInTimePeriod);
+            let fillLb: usize = self.RSI_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -747,7 +747,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            return Ok(RsiStream { core: self.clone(), state });
+            return Ok(RSI_Stream { core: self.clone(), state });
         }
         let mut outIdx: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -774,7 +774,7 @@ impl Core {
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = (self.rsi_lookback(optInTimePeriod) as usize) as usize;
+        lookbackTotal = (self.RSI_Lookback(optInTimePeriod) as usize) as usize;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -791,7 +791,7 @@ impl Core {
         // among the initial period.
         today = startIdx - lookbackTotal;
         prevValue = inReal[today] as f64;
-        unstablePeriod = (self.unstable_period[FuncUnstId::Rsi as usize]) as usize;
+        unstablePeriod = (self.unstable_period[FuncUnstId::RSI as usize]) as usize;
         // If there is no unstable period,
         // calculate the 'additional' initial
         // price bar who is particuliar to
@@ -936,25 +936,25 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = RsiStreamState {
+        let state = RSI_StreamState {
             optInTimePeriod,
             prevGain,
             prevLoss,
             prevValue,
         };
-        Ok(RsiStream { core: self.clone(), state })
+        Ok(RSI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl RsiStream {
+impl RSI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_RSI_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.rsi_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.RSI_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -972,7 +972,7 @@ impl RsiStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<RsiStream>();
+    _assert_auto::<RSI_Stream>();
 };
 
 /***************/

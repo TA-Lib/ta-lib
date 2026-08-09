@@ -460,11 +460,10 @@ static ErrorNumber abstract_verify_func_metadata(
     int srvNbOutput = abstract_json_get_int(g_abstractRespBuf, "nbOutput");
     int srvFlags = abstract_json_get_int(g_abstractRespBuf, "flags");
     char srvName[128] = {0}, srvGroup[128] = {0};
-    char srvHint[256] = {0}, srvCamelCase[128] = {0};
+    char srvHint[256] = {0};
     abstract_json_get_string(g_abstractRespBuf, "name", srvName, sizeof(srvName));
     abstract_json_get_string(g_abstractRespBuf, "group", srvGroup, sizeof(srvGroup));
     abstract_json_get_string(g_abstractRespBuf, "hint", srvHint, sizeof(srvHint));
-    abstract_json_get_string(g_abstractRespBuf, "camelCaseName", srvCamelCase, sizeof(srvCamelCase));
 
     if( fi->name && strcmp(srvName, fi->name) != 0 ) {
         printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo name C=%s server=%s\n",
@@ -479,11 +478,6 @@ static ErrorNumber abstract_verify_func_metadata(
     if( fi->hint && strcmp(srvHint, fi->hint) != 0 ) {
         printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo hint C=%s server=%s\n",
                funcName, fi->hint, srvHint);
-        return TA_ABSTRACT_CALL_MISMATCH;
-    }
-    if( fi->camelCaseName && strcmp(srvCamelCase, fi->camelCaseName) != 0 ) {
-        printf("  ABSTRACT ERROR [%s]: TA_GetFuncInfo camelCaseName C=%s server=%s\n",
-               funcName, fi->camelCaseName, srvCamelCase);
         return TA_ABSTRACT_CALL_MISMATCH;
     }
     if( srvNbInput != (int)fi->nbInput ) {

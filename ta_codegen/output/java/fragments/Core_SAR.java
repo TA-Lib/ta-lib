@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#sar} consumes before it can
+    * Number of leading input bars {@link Core#SAR} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -28,7 +28,7 @@
     *        minimum 0; {@code -4e37} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int sarLookback( double optInAcceleration, double optInMaximum )
+   public int SAR_Lookback( double optInAcceleration, double optInMaximum )
    {
       if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
@@ -46,15 +46,15 @@
       return 1 ;
 
    }
-   RetCode sarInternal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double optInAcceleration,
-                        double optInMaximum,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode SAR_Internal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double optInAcceleration,
+                         double optInMaximum,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -153,7 +153,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -301,15 +301,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode sarInternal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        double optInAcceleration,
-                        double optInMaximum,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode SAR_Internal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         double optInAcceleration,
+                         double optInMaximum,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -353,7 +353,7 @@
          optInAcceleration = optInMaximum;
          af = optInAcceleration;
       }
-      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -475,7 +475,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sarLookback} is a <b>success with no
+    * valid range shorter than {@link Core#SAR_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -497,11 +497,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sarExt
-    * @see Core#minusDM
-    * @see Core#plusDM
+    * @see Core#SAREXT
+    * @see Core#MINUS_DM
+    * @see Core#PLUS_DM
     */
-   public OutRange sar( int startIdx,
+   public OutRange SAR( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -511,7 +511,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = sarInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAR", retCode);
       }
@@ -534,7 +534,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#sarLookback} is a <b>success with no
+    * valid range shorter than {@link Core#SAR_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -556,11 +556,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sarExt
-    * @see Core#minusDM
-    * @see Core#plusDM
+    * @see Core#SAREXT
+    * @see Core#MINUS_DM
+    * @see Core#PLUS_DM
     */
-   public OutRange sar( int startIdx,
+   public OutRange SAR( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -570,7 +570,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = sarInternal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_Internal(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("SAR", retCode);
       }
@@ -580,8 +580,8 @@
 
    /**
     * A live SAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#sar} over the same series.
-    * Open with {@link Core#sarOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#SAR} over the same series.
+    * Open with {@link Core#SAR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -592,7 +592,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class SarStream {
+   public static final class SAR_Stream {
       final Core core;
       double optInAcceleration;
       double optInMaximum;
@@ -605,10 +605,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      SarStream( Core core ) { this.core = core; }
+      SAR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#sarOpenAndFill}, or
+       * The range filled by {@link Core#SAR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -616,7 +616,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      SarStream( SarStream other ) {
+      SAR_Stream( SAR_Stream other ) {
          this.core = other.core;
          this.optInAcceleration = other.optInAcceleration;
          this.optInMaximum = other.optInMaximum;
@@ -635,7 +635,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow ) {
-         core.sarStreamStep(this, inHigh, inLow);
+         core.SAR_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
 
@@ -647,8 +647,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow ) {
-         SarStream scratch = new SarStream(this);
-         core.sarStreamStep(scratch, inHigh, inLow);
+         SAR_Stream scratch = new SAR_Stream(this);
+         core.SAR_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -665,11 +665,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public SarStream copy() {
-         return new SarStream(this);
+      public SAR_Stream copy() {
+         return new SAR_Stream(this);
       }
    }
-   void sarStreamStep( SarStream sp, double inHigh, double inLow )
+   void SAR_StreamStep( SAR_Stream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -787,7 +787,7 @@
          }
       }
    }
-   private RetCode sarOpenBody( SarStream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
+   private RetCode SAR_OpenBody( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
    {
       RetCode retCode;
       int isLong = 0;
@@ -891,7 +891,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1049,7 +1049,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode sarOpenAndFillBody( SarStream sp, double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode SAR_OpenAndFillBody( SAR_Stream sp, double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       RetCode retCode;
       int isLong = 0;
@@ -1154,7 +1154,7 @@
        * (ep is just used as a temp buffer here, the name
        *  of the parameter is not significant).
        */
-      retCode = minusDMInternal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
+      retCode = MINUS_DM_Internal(startIdx, startIdx, inHigh, inLow, 1, tempInt, tempInt, ep_temp);
       if( ep_temp[0] > 0 ) {
          isLong = 0;
       } else {
@@ -1312,11 +1312,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind sarOpen (composition seam). */
-   SarStream sarOpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
+   /* Internal startIdx-anchored open behind SAR_Open (composition seam). */
+   SAR_Stream SAR_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
    {
-      SarStream sp = new SarStream(this);
-      RetCode retCode = sarOpenBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
+      SAR_Stream sp = new SAR_Stream(this);
+      RetCode retCode = SAR_OpenBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1331,32 +1331,32 @@
    /**
     * Open a live SAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#sar} at that bar.
-    * <p>The history must hold at least {@code sarLookback(...) + 1} bars
+    * to {@link Core#SAR} at that bar.
+    * <p>The history must hold at least {@code SAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public SarStream sarOpen( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
+   public SAR_Stream SAR_Open( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum )
    {
-      return sarOpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
+      return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
    /**
-    * {@link Core#sarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#sar} over the whole history in the same single pass
+    * {@link Core#SAR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#SAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link SarStream#fillRange()}.
+    * {@link SAR_Stream#fillRange()}.
     */
-   public SarStream sarOpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
+   public SAR_Stream SAR_OpenAndFill( double inHigh[], double inLow[], double optInAcceleration, double optInMaximum, double outReal[] )
    {
-      SarStream sp = new SarStream(this);
+      SAR_Stream sp = new SAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = sarOpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      RetCode retCode = SAR_OpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

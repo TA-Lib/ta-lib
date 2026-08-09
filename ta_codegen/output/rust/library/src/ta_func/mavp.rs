@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::mavp`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MAVP`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn mavp_lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32) -> usize {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
         } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
@@ -96,7 +96,7 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 0;
         }
-        return self.ma_lookback(optInMaxPeriod, optInMAType);
+        return self.MA_Lookback(optInMaxPeriod, optInMAType);
     }
     /// Moving average whose period varies per bar, driven by a companion period series. For each
     /// bar it computes an MA of the selected type over the (clamped) period given by inPeriods.
@@ -155,7 +155,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.mavp(
+    /// let ret = core.MAVP(
     ///     0, data.len() - 1, &data, &periods, 2, 30, 0,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -166,12 +166,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ma`] · [`Core::sma`] · [`Core::mama`] · [`Core::t3`]
+    /// [`Core::MA`] · [`Core::SMA`] · [`Core::MAMA`] · [`Core::T3`]
     ///
-    /// Further reading: [ta-lib.org/functions/mavp](https://ta-lib.org/functions/mavp/)
+    /// Further reading: [ta-lib.org/functions/MAVP](https://ta-lib.org/functions/MAVP/)
     #[doc(alias = "MovingAverageVariablePeriod")]
     #[doc(alias = "VariablePeriodMovingAverage")]
-    pub fn mavp(
+    pub fn MAVP(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -203,7 +203,7 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 0;
         }
-        let _assertLb = self.mavp_lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+        let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inPeriods.len());
@@ -241,7 +241,7 @@ impl Core {
         }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.ma_lookback(optInMaxPeriod, optInMAType);
+        lookbackTotal = self.MA_Lookback(optInMaxPeriod, optInMAType);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -352,7 +352,7 @@ impl Core {
         if minUsed == maxUsed {
             // Single distinct period: one MA pass, written straight into the
             // destination buffer. Nothing to group or copy.
-            retCode = self.ma(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
+            retCode = self.MA(startIdx, endIdx, inReal, (minUsed) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localFinalArray[..]);
             if retCode != RetCode::Success {
                 if finalIsAllocated != 0 {
                 }
@@ -409,7 +409,7 @@ impl Core {
                     firstOccurrence = (sortedIdx[bucketStart]) as usize;
                     lastOccurrence = (sortedIdx[bucketEnd - 1]) as usize;
                     // Calculation of the MA required.
-                    retCode = self.ma(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
+                    retCode = self.MA(startIdx, startIdx + lastOccurrence, inReal, (curPeriod) as i32, optInMAType, &mut localBegIdx, &mut localNbElement, &mut localOutputArray[..]);
                     if retCode != RetCode::Success {
                         if finalIsAllocated != 0 {
                         }
@@ -460,25 +460,25 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MAVP stream: one value per closed bar, bit-identical to [`Core::mavp`]
-/// over the same series. Open with [`Core::mavp_open`]; dropping the handle
+/// Live MAVP stream: one value per closed bar, bit-identical to [`Core::MAVP`]
+/// over the same series. Open with [`Core::MAVP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAVP_Stream")]
-pub struct MavpStream {
+pub struct MAVP_Stream {
     core: Core,
-    state: MavpStreamState,
+    state: MAVP_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MavpStreamState {
+struct MAVP_StreamState {
     optInMinPeriod: i32,
     optInMaxPeriod: i32,
     optInMAType: i32,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-    bank: Vec<MaStream>,
+    bank: Vec<MA_Stream>,
 }
 
 #[allow(non_snake_case)]
@@ -488,7 +488,7 @@ struct MavpStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn mavp_step_internal(&self, sp: &mut MavpStreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {
+    fn MAVP_step_internal(&self, sp: &mut MAVP_StreamState, inReal: f64, inPeriods: f64, outReal: &mut f64) {
         let mut cp: i32 = inPeriods as i32;
         if cp < sp.optInMinPeriod {
             cp = sp.optInMinPeriod;
@@ -504,10 +504,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::mavp_open`] (composition seam).
-    pub(crate) fn mavp_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MAVP_Open`] (composition seam).
+    pub(crate) fn MAVP_OpenInternal(
         &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32,
-    ) -> Result<(MavpStream, f64), RetCode> {
+    ) -> Result<(MAVP_Stream, f64), RetCode> {
         if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -538,13 +538,13 @@ impl Core {
         // OWN (smaller) lookback would seed the recurrence from a different bar
         // and diverge for every period < maxPeriod (order-1 for recursive MAs,
         // running-sum residue for stable ones).
-        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType);
+        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
         let subStart: usize = if startIdx < lookbackTotal { lookbackTotal } else { startIdx };
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
-        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
+        let mut bank: Vec<MA_Stream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.ma_open_internal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (sub, subValue) = self.MA_OpenInternal(inReal, subStart, optInMinPeriod + (bankIdx as i32), optInMAType)?;
             bank.push(sub);
             scratch.push(subValue);
         }
@@ -555,12 +555,12 @@ impl Core {
             cp = optInMaxPeriod;
         }
         let lastValue_outReal: f64 = scratch[(cp - optInMinPeriod) as usize];
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok((MavpStream { core: self.clone(), state }, lastValue_outReal))
+        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok((MAVP_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live MAVP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::mavp`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MAVP`] at that bar.
     ///
     /// # Errors
     ///
@@ -573,23 +573,23 @@ impl Core {
     /// let periods: Vec<f64> = (0..252).map(|i| 5.0 + (i % 10) as f64).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.mavp_open(&data, &periods, 2, 30, 0).expect("enough history");
+    /// let (mut s, _last) = core.MAVP_Open(&data, &periods, 2, 30, 0).expect("enough history");
     /// let peeked = s.peek(100.9, 14.0);
     /// let updated = s.update(100.9, 14.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MAVP_Open")]
-    pub fn mavp_open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: i32) -> Result<(MavpStream, f64), RetCode> {
-        self.mavp_open_internal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
+    pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: i32) -> Result<(MAVP_Stream, f64), RetCode> {
+        self.MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
     }
 
-    /// [`Core::mavp_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::mavp`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MAVP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MAVP`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAVP_OpenAndFill")]
-    pub fn mavp_open_and_fill(
+    pub fn MAVP_OpenAndFill(
         &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MavpStream, RetCode> {
+    ) -> Result<MAVP_Stream, RetCode> {
         if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -614,16 +614,16 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let historyLen: usize = inReal.len();
-        let lookbackTotal: usize = self.ma_lookback(optInMaxPeriod, optInMAType);
+        let lookbackTotal: usize = self.MA_Lookback(optInMaxPeriod, optInMAType);
         if historyLen < lookbackTotal + 1 {
             return Err(RetCode::BadParam);
         }
         let nBank: usize = (optInMaxPeriod - optInMinPeriod + 1) as usize;
         // Seed each sub-MA at the first output bar (lookbackTotal), NOT the last.
-        let mut bank: Vec<MaStream> = Vec::with_capacity(nBank);
+        let mut bank: Vec<MA_Stream> = Vec::with_capacity(nBank);
         let mut scratch: Vec<f64> = Vec::with_capacity(nBank);
         for bankIdx in 0..nBank {
-            let (sub, subValue) = self.ma_open_internal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
+            let (sub, subValue) = self.MA_OpenInternal(&inReal[..lookbackTotal + 1], lookbackTotal, optInMinPeriod + (bankIdx as i32), optInMAType)?;
             bank.push(sub);
             scratch.push(subValue);
         }
@@ -651,20 +651,20 @@ impl Core {
         }
         (*outBegIdx) = lookbackTotal;
         (*outNBElement) = historyLen - lookbackTotal;
-        let state = MavpStreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
-        Ok(MavpStream { core: self.clone(), state })
+        let state = MAVP_StreamState { optInMinPeriod, optInMaxPeriod, optInMAType, bank };
+        Ok(MAVP_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MavpStream {
+impl MAVP_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MAVP_Update")]
     pub fn update(&mut self, inReal: f64, inPeriods: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.mavp_step_internal(&mut self.state, inReal, inPeriods, &mut outReal);
+        self.core.MAVP_step_internal(&mut self.state, inReal, inPeriods, &mut outReal);
         outReal
     }
 
@@ -682,7 +682,7 @@ impl MavpStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MavpStream>();
+    _assert_auto::<MAVP_Stream>();
 };
 
 /***************/

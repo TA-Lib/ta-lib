@@ -126,7 +126,7 @@ pub fn guarded_docs(
             .iter()
             .map(|n| {
                 if registry.contains(&n.to_lowercase()) {
-                    format!("[`Core::{}`]", n.to_lowercase())
+                    format!("[`Core::{}`]", registry.name_of(&n.to_lowercase()))
                 } else {
                     escape_prose(n)
                 }

@@ -48,15 +48,15 @@ package io.github.talib;
 
 public enum MAType 
 {
-   Sma,
-   Ema,
-   Wma,
-   Dema,
-   Tema,
-   Trima,
-   Kama,
-   Mama,
+   SMA,
+   EMA,
+   WMA,
+   DEMA,
+   TEMA,
+   TRIMA,
+   KAMA,
+   MAMA,
    T3,
-   Hma,
-   Disabled
+   HMA,
+   DISABLED
 };

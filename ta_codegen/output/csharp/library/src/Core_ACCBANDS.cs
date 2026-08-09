@@ -64,7 +64,7 @@ public partial class Core
     *                v0.6.4).
     */
    /// <summary>
-   /// Number of leading input bars <c>Accbands</c> consumes before it can
+   /// Number of leading input bars <c>ACCBANDS</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -75,17 +75,17 @@ public partial class Core
    /// <param name="optInTimePeriod">SMA smoothing period for all three bands (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AccbandsLookback( int optInTimePeriod )
+   public int ACCBANDS_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return SmaLookback(optInTimePeriod) ;
+      return SMA_Lookback(optInTimePeriod) ;
 
    }
-   internal RetCode Accbands( int startIdx,
+   internal RetCode ACCBANDS( int startIdx,
                               int endIdx,
                               double[] inHigh,
                               double[] inLow,
@@ -127,7 +127,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = SmaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -217,7 +217,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Accbands( int startIdx,
+   internal RetCode ACCBANDS( int startIdx,
                               int endIdx,
                               float[] inHigh,
                               float[] inLow,
@@ -256,7 +256,7 @@ public partial class Core
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = SmaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -335,7 +335,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AccbandsLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>ACCBANDS_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -359,7 +359,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Accbands( int startIdx,
+   public OutRange ACCBANDS( int startIdx,
                              int endIdx,
                              double[] inHigh,
                              double[] inLow,
@@ -369,7 +369,7 @@ public partial class Core
                              double[] outRealMiddleBand,
                              double[] outRealLowerBand )
    {
-      RetCode retCode = Accbands(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("ACCBANDS", retCode);
       }
@@ -397,7 +397,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AccbandsLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>ACCBANDS_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -421,7 +421,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Accbands( int startIdx,
+   public OutRange ACCBANDS( int startIdx,
                              int endIdx,
                              float[] inHigh,
                              float[] inLow,
@@ -431,7 +431,7 @@ public partial class Core
                              double[] outRealMiddleBand,
                              double[] outRealLowerBand )
    {
-      RetCode retCode = Accbands(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("ACCBANDS", retCode);
       }

@@ -40,25 +40,25 @@ namespace TALib;
 public enum MAType
 {
     /// <summary>The <c>TA_MAType_SMA</c> moving average.</summary>
-    Sma = 0,
+    SMA = 0,
     /// <summary>The <c>TA_MAType_EMA</c> moving average.</summary>
-    Ema = 1,
+    EMA = 1,
     /// <summary>The <c>TA_MAType_WMA</c> moving average.</summary>
-    Wma = 2,
+    WMA = 2,
     /// <summary>The <c>TA_MAType_DEMA</c> moving average.</summary>
-    Dema = 3,
+    DEMA = 3,
     /// <summary>The <c>TA_MAType_TEMA</c> moving average.</summary>
-    Tema = 4,
+    TEMA = 4,
     /// <summary>The <c>TA_MAType_TRIMA</c> moving average.</summary>
-    Trima = 5,
+    TRIMA = 5,
     /// <summary>The <c>TA_MAType_KAMA</c> moving average.</summary>
-    Kama = 6,
+    KAMA = 6,
     /// <summary>The <c>TA_MAType_MAMA</c> moving average.</summary>
-    Mama = 7,
+    MAMA = 7,
     /// <summary>The <c>TA_MAType_T3</c> moving average.</summary>
     T3 = 8,
     /// <summary>The <c>TA_MAType_HMA</c> moving average.</summary>
-    Hma = 9,
+    HMA = 9,
     /// <summary>The <c>TA_MAType_DISABLED</c> moving average.</summary>
-    Disabled = 10,
+    DISABLED = 10,
 }

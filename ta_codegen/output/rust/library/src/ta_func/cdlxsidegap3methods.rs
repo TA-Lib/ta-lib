@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlxsidegap3methods`]: the number of leading input values
+    /// Lookback period for [`Core::CDLXSIDEGAP3METHODS`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlxsidegap3methods_lookback(&self) -> usize {
+    pub fn CDLXSIDEGAP3METHODS_Lookback(&self) -> usize {
         return (2) as usize;
     }
     /// A three-candle continuation pattern: two same-color candles separated by a real-body gap,
@@ -122,7 +122,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlxsidegap3methods(
+    /// let ret = core.CDLXSIDEGAP3METHODS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -132,14 +132,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlgapsidesidewhite`] · [`Core::cdltasukigap`] · [`Core::cdlrisefall3methods`]
+    /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLTASUKIGAP`] · [`Core::CDLRISEFALL3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlxsidegap3methods](https://ta-lib.org/functions/cdlxsidegap3methods/)
+    /// [ta-lib.org/functions/CDLXSIDEGAP3METHODS](https://ta-lib.org/functions/CDLXSIDEGAP3METHODS/)
     #[doc(alias = "UpsideDownsideGapThreeMethods")]
     #[doc(alias = "UpsideGapThreeMethods")]
     #[doc(alias = "DownsideGapThreeMethods")]
-    pub fn cdlxsidegap3methods(
+    pub fn CDLXSIDEGAP3METHODS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -157,7 +157,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlxsidegap3methods_lookback();
+        let _assertLb = self.CDLXSIDEGAP3METHODS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
@@ -168,7 +168,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlxsidegap3methods_lookback();
+        lookbackTotal = self.CDLXSIDEGAP3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -221,20 +221,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLXSIDEGAP3METHODS stream: one value per closed bar, bit-identical to [`Core::cdlxsidegap3methods`]
-/// over the same series. Open with [`Core::cdlxsidegap3methods_open`]; dropping the handle
+/// Live CDLXSIDEGAP3METHODS stream: one value per closed bar, bit-identical to [`Core::CDLXSIDEGAP3METHODS`]
+/// over the same series. Open with [`Core::CDLXSIDEGAP3METHODS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Stream")]
-pub struct Cdlxsidegap3methodsStream {
+pub struct CDLXSIDEGAP3METHODS_Stream {
     core: Core,
-    state: Cdlxsidegap3methodsStreamState,
+    state: CDLXSIDEGAP3METHODS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdlxsidegap3methodsStreamState {
+struct CDLXSIDEGAP3METHODS_StreamState {
     lag1_inOpen: f64,
     lag2_inOpen: f64,
     lag1_inClose: f64,
@@ -248,7 +248,7 @@ struct Cdlxsidegap3methodsStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlxsidegap3methods_step_internal(&self, sp: &mut Cdlxsidegap3methodsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLXSIDEGAP3METHODS_step_internal(&self, sp: &mut CDLXSIDEGAP3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if sp.lag2_inClose >= sp.lag2_inOpen { 1 } else { 0 - 1 }) == (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) && // 1st and 2nd of same color
            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 0 - (if inClose >= inOpen { 1 } else { 0 - 1 }) && // 3rd opposite color
            inOpen < (sp.lag1_inClose).max(sp.lag1_inOpen) &&  // 3rd opens within 2nd rb
@@ -269,10 +269,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlxsidegap3methods_open`] (composition seam).
-    pub(crate) fn cdlxsidegap3methods_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLXSIDEGAP3METHODS_Open`] (composition seam).
+    pub(crate) fn CDLXSIDEGAP3METHODS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdlxsidegap3methodsStream, i32), RetCode> {
+    ) -> Result<(CDLXSIDEGAP3METHODS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -290,7 +290,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlxsidegap3methods_lookback();
+        lookbackTotal = self.CDLXSIDEGAP3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -338,17 +338,17 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = Cdlxsidegap3methodsStreamState {
+        let state = CDLXSIDEGAP3METHODS_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],
             lag2_inClose: inClose[historyLen - 2],
         };
-        Ok((Cdlxsidegap3methodsStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLXSIDEGAP3METHODS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLXSIDEGAP3METHODS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlxsidegap3methods`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLXSIDEGAP3METHODS`] at that bar.
     ///
     /// # Errors
     ///
@@ -367,23 +367,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlxsidegap3methods_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLXSIDEGAP3METHODS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Open")]
-    pub fn cdlxsidegap3methods_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlxsidegap3methodsStream, i32), RetCode> {
-        self.cdlxsidegap3methods_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLXSIDEGAP3METHODS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLXSIDEGAP3METHODS_Stream, i32), RetCode> {
+        self.CDLXSIDEGAP3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlxsidegap3methods_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlxsidegap3methods`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLXSIDEGAP3METHODS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLXSIDEGAP3METHODS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLXSIDEGAP3METHODS_OpenAndFill")]
-    pub fn cdlxsidegap3methods_open_and_fill(
+    pub fn CDLXSIDEGAP3METHODS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdlxsidegap3methodsStream, RetCode> {
+    ) -> Result<CDLXSIDEGAP3METHODS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -400,7 +400,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlxsidegap3methods_lookback();
+        lookbackTotal = self.CDLXSIDEGAP3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -450,25 +450,25 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = Cdlxsidegap3methodsStreamState {
+        let state = CDLXSIDEGAP3METHODS_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
             lag1_inClose: inClose[historyLen - 1],
             lag2_inClose: inClose[historyLen - 2],
         };
-        Ok(Cdlxsidegap3methodsStream { core: self.clone(), state })
+        Ok(CDLXSIDEGAP3METHODS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdlxsidegap3methodsStream {
+impl CDLXSIDEGAP3METHODS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLXSIDEGAP3METHODS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlxsidegap3methods_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLXSIDEGAP3METHODS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -486,7 +486,7 @@ impl Cdlxsidegap3methodsStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdlxsidegap3methodsStream>();
+    _assert_auto::<CDLXSIDEGAP3METHODS_Stream>();
 };
 
 /***************/

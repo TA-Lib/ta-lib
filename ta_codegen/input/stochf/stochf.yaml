@@ -1,5 +1,4 @@
 name: STOCHF
-camel_case: StochF
 group: Momentum Indicators
 hint: Stochastic Fast
 flags: [stream]

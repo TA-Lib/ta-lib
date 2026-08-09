@@ -1,5 +1,4 @@
 name: CDLHIGHWAVE
-camel_case: CdlHignWave
 group: Pattern Recognition
 hint: High-Wave Candle
 flags: [candlestick, stream]

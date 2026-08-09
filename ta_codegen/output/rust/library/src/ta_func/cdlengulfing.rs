@@ -65,9 +65,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlengulfing`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLENGULFING`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlengulfing_lookback(&self) -> usize {
+    pub fn CDLENGULFING_Lookback(&self) -> usize {
         return (2) as usize;
     }
     /// A two-candle reversal pattern where the second candle's real body engulfs the first candle's
@@ -124,7 +124,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlengulfing(
+    /// let ret = core.CDLENGULFING(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -134,14 +134,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlharami`] · [`Core::cdlcounterattack`] · [`Core::cdlharamicross`]
+    /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing/)
+    /// [ta-lib.org/functions/CDLENGULFING](https://ta-lib.org/functions/CDLENGULFING/)
     #[doc(alias = "EngulfingPattern")]
     #[doc(alias = "Engulfing")]
     #[doc(alias = "BullishBearishEngulfing")]
-    pub fn cdlengulfing(
+    pub fn CDLENGULFING(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -159,7 +159,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlengulfing_lookback();
+        let _assertLb = self.CDLENGULFING_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
@@ -170,7 +170,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlengulfing_lookback();
+        lookbackTotal = self.CDLENGULFING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -222,20 +222,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLENGULFING stream: one value per closed bar, bit-identical to [`Core::cdlengulfing`]
-/// over the same series. Open with [`Core::cdlengulfing_open`]; dropping the handle
+/// Live CDLENGULFING stream: one value per closed bar, bit-identical to [`Core::CDLENGULFING`]
+/// over the same series. Open with [`Core::CDLENGULFING_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLENGULFING_Stream")]
-pub struct CdlengulfingStream {
+pub struct CDLENGULFING_Stream {
     core: Core,
-    state: CdlengulfingStreamState,
+    state: CDLENGULFING_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlengulfingStreamState {
+struct CDLENGULFING_StreamState {
     lag1_inOpen: f64,
     lag1_inClose: f64,
 }
@@ -247,7 +247,7 @@ struct CdlengulfingStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlengulfing_step_internal(&self, sp: &mut CdlengulfingStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLENGULFING_step_internal(&self, sp: &mut CDLENGULFING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) {
             // white engulfs black
             // black engulfs white
@@ -263,10 +263,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlengulfing_open`] (composition seam).
-    pub(crate) fn cdlengulfing_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLENGULFING_Open`] (composition seam).
+    pub(crate) fn CDLENGULFING_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlengulfingStream, i32), RetCode> {
+    ) -> Result<(CDLENGULFING_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -284,7 +284,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlengulfing_lookback();
+        lookbackTotal = self.CDLENGULFING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -330,15 +330,15 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CdlengulfingStreamState {
+        let state = CDLENGULFING_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inClose: inClose[historyLen - 1],
         };
-        Ok((CdlengulfingStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLENGULFING_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLENGULFING stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlengulfing`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLENGULFING`] at that bar.
     ///
     /// # Errors
     ///
@@ -357,23 +357,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlengulfing_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLENGULFING_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLENGULFING_Open")]
-    pub fn cdlengulfing_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlengulfingStream, i32), RetCode> {
-        self.cdlengulfing_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLENGULFING_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLENGULFING_Stream, i32), RetCode> {
+        self.CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlengulfing_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlengulfing`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLENGULFING_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLENGULFING`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLENGULFING_OpenAndFill")]
-    pub fn cdlengulfing_open_and_fill(
+    pub fn CDLENGULFING_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlengulfingStream, RetCode> {
+    ) -> Result<CDLENGULFING_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -390,7 +390,7 @@ impl Core {
         let mut lookbackTotal: usize = 0_usize;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlengulfing_lookback();
+        lookbackTotal = self.CDLENGULFING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -439,23 +439,23 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CdlengulfingStreamState {
+        let state = CDLENGULFING_StreamState {
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inClose: inClose[historyLen - 1],
         };
-        Ok(CdlengulfingStream { core: self.clone(), state })
+        Ok(CDLENGULFING_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlengulfingStream {
+impl CDLENGULFING_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLENGULFING_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlengulfing_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLENGULFING_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -473,7 +473,7 @@ impl CdlengulfingStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlengulfingStream>();
+    _assert_auto::<CDLENGULFING_Stream>();
 };
 
 /***************/

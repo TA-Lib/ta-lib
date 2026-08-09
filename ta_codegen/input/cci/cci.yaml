@@ -1,5 +1,4 @@
 name: CCI
-camel_case: Cci
 group: Momentum Indicators
 hint: Commodity Channel Index
 flags: [stream]

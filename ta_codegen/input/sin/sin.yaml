@@ -1,5 +1,4 @@
 name: SIN
-camel_case: Sin
 group: Math Transform
 hint: Vector Trigonometric Sin
 flags: [stream]

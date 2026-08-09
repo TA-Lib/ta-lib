@@ -1,5 +1,4 @@
 name: CDLADVANCEBLOCK
-camel_case: CdlAdvanceBlock
 group: Pattern Recognition
 hint: Advance Block
 flags: [candlestick, stream]

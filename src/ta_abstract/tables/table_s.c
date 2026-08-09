@@ -108,7 +108,6 @@ static const TA_OptInputParameterInfo *TA_SAR_OptInputs[] =
 DEF_FUNCTION( SAR,
               TA_GroupId_OverlapStudies,
               "Parabolic SAR",
-              "Sar",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* SAR END */
@@ -333,7 +332,6 @@ static const TA_OptInputParameterInfo *TA_SAREXT_OptInputs[] =
 DEF_FUNCTION( SAREXT,
               TA_GroupId_OverlapStudies,
               "Parabolic SAR - Extended",
-              "SarExt",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* SAREXT END */
@@ -357,7 +355,6 @@ static const TA_OptInputParameterInfo *TA_SIN_OptInputs[] =
 DEF_FUNCTION( SIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Sin",
-              "Sin",
               TA_FUNC_FLG_STREAM
              );
 /* SIN END */
@@ -381,7 +378,6 @@ static const TA_OptInputParameterInfo *TA_SINH_OptInputs[] =
 DEF_FUNCTION( SINH,
               TA_GroupId_MathTransform,
               "Vector Trigonometric Sinh",
-              "Sinh",
               TA_FUNC_FLG_STREAM
              );
 /* SINH END */
@@ -407,7 +403,6 @@ static const TA_OptInputParameterInfo *TA_SMA_OptInputs[] =
 DEF_FUNCTION( SMA,
               TA_GroupId_OverlapStudies,
               "Simple Moving Average",
-              "Sma",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* SMA END */
@@ -431,7 +426,6 @@ static const TA_OptInputParameterInfo *TA_SQRT_OptInputs[] =
 DEF_FUNCTION( SQRT,
               TA_GroupId_MathTransform,
               "Vector Square Root",
-              "Sqrt",
               TA_FUNC_FLG_STREAM
              );
 /* SQRT END */
@@ -458,7 +452,6 @@ static const TA_OptInputParameterInfo *TA_STDDEV_OptInputs[] =
 DEF_FUNCTION( STDDEV,
               TA_GroupId_Statistic,
               "Standard Deviation",
-              "StdDev",
               TA_FUNC_FLG_STREAM
              );
 /* STDDEV END */
@@ -565,7 +558,6 @@ static const TA_OptInputParameterInfo *TA_STOCH_OptInputs[] =
 DEF_FUNCTION( STOCH,
               TA_GroupId_MomentumIndicators,
               "Stochastic",
-              "Stoch",
               TA_FUNC_FLG_STREAM
              );
 /* STOCH END */
@@ -642,7 +634,6 @@ static const TA_OptInputParameterInfo *TA_STOCHF_OptInputs[] =
 DEF_FUNCTION( STOCHF,
               TA_GroupId_MomentumIndicators,
               "Stochastic Fast",
-              "StochF",
               TA_FUNC_FLG_STREAM
              );
 /* STOCHF END */
@@ -720,7 +711,6 @@ static const TA_OptInputParameterInfo *TA_STOCHRSI_OptInputs[] =
 DEF_FUNCTION( STOCHRSI,
               TA_GroupId_MomentumIndicators,
               "Stochastic Relative Strength Index",
-              "StochRsi",
               TA_FUNC_FLG_STREAM
              );
 /* STOCHRSI END */
@@ -745,7 +735,6 @@ static const TA_OptInputParameterInfo *TA_SUB_OptInputs[] =
 DEF_FUNCTION( SUB,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Subtraction",
-              "Sub",
               TA_FUNC_FLG_STREAM
              );
 /* SUB END */
@@ -771,7 +760,6 @@ static const TA_OptInputParameterInfo *TA_SUM_OptInputs[] =
 DEF_FUNCTION( SUM,
               TA_GroupId_MathOperators,
               "Summation",
-              "Sum",
               TA_FUNC_FLG_STREAM
              );
 /* SUM END */

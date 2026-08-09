@@ -1,5 +1,4 @@
 name: MINUS_DM
-camel_case: MinusDM
 group: Momentum Indicators
 hint: Minus Directional Movement
 flags: [unstable_period, stream]

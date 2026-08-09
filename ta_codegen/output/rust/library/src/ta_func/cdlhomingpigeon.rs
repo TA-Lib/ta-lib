@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlhomingpigeon`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLHOMINGPIGEON`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlhomingpigeon_lookback(&self) -> usize {
+    pub fn CDLHOMINGPIGEON_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -137,7 +137,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlhomingpigeon(
+    /// let ret = core.CDLHOMINGPIGEON(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -147,12 +147,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlharami`] · [`Core::cdlmatchinglow`]
+    /// [`Core::CDLHARAMI`] · [`Core::CDLMATCHINGLOW`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlhomingpigeon](https://ta-lib.org/functions/cdlhomingpigeon/)
+    /// [ta-lib.org/functions/CDLHOMINGPIGEON](https://ta-lib.org/functions/CDLHOMINGPIGEON/)
     #[doc(alias = "HomingPigeon")]
-    pub fn cdlhomingpigeon(
+    pub fn CDLHOMINGPIGEON(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -170,7 +170,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlhomingpigeon_lookback();
+        let _assertLb = self.CDLHOMINGPIGEON_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -199,7 +199,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhomingpigeon_lookback();
+        lookbackTotal = self.CDLHOMINGPIGEON_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -358,20 +358,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLHOMINGPIGEON stream: one value per closed bar, bit-identical to [`Core::cdlhomingpigeon`]
-/// over the same series. Open with [`Core::cdlhomingpigeon_open`]; dropping the handle
+/// Live CDLHOMINGPIGEON stream: one value per closed bar, bit-identical to [`Core::CDLHOMINGPIGEON`]
+/// over the same series. Open with [`Core::CDLHOMINGPIGEON_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLHOMINGPIGEON_Stream")]
-pub struct CdlhomingpigeonStream {
+pub struct CDLHOMINGPIGEON_Stream {
     core: Core,
-    state: CdlhomingpigeonStreamState,
+    state: CDLHOMINGPIGEON_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlhomingpigeonStreamState {
+struct CDLHOMINGPIGEON_StreamState {
     BodyShortPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -400,7 +400,7 @@ struct CdlhomingpigeonStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlhomingpigeon_step_internal(&self, sp: &mut CdlhomingpigeonStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLHOMINGPIGEON_step_internal(&self, sp: &mut CDLHOMINGPIGEON_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -520,10 +520,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlhomingpigeon_open`] (composition seam).
-    pub(crate) fn cdlhomingpigeon_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLHOMINGPIGEON_Open`] (composition seam).
+    pub(crate) fn CDLHOMINGPIGEON_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlhomingpigeonStream, i32), RetCode> {
+    ) -> Result<(CDLHOMINGPIGEON_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -557,7 +557,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhomingpigeon_lookback();
+        lookbackTotal = self.CDLHOMINGPIGEON_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -766,7 +766,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlhomingpigeonStreamState {
+        let state = CDLHOMINGPIGEON_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -787,11 +787,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((CdlhomingpigeonStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLHOMINGPIGEON_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLHOMINGPIGEON stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlhomingpigeon`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLHOMINGPIGEON`] at that bar.
     ///
     /// # Errors
     ///
@@ -810,23 +810,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlhomingpigeon_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLHOMINGPIGEON_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLHOMINGPIGEON_Open")]
-    pub fn cdlhomingpigeon_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlhomingpigeonStream, i32), RetCode> {
-        self.cdlhomingpigeon_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLHOMINGPIGEON_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHOMINGPIGEON_Stream, i32), RetCode> {
+        self.CDLHOMINGPIGEON_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlhomingpigeon_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlhomingpigeon`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLHOMINGPIGEON_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHOMINGPIGEON`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLHOMINGPIGEON_OpenAndFill")]
-    pub fn cdlhomingpigeon_open_and_fill(
+    pub fn CDLHOMINGPIGEON_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlhomingpigeonStream, RetCode> {
+    ) -> Result<CDLHOMINGPIGEON_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -859,7 +859,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlhomingpigeon_lookback();
+        lookbackTotal = self.CDLHOMINGPIGEON_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1070,7 +1070,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdlhomingpigeonStreamState {
+        let state = CDLHOMINGPIGEON_StreamState {
             BodyShortPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1091,19 +1091,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(CdlhomingpigeonStream { core: self.clone(), state })
+        Ok(CDLHOMINGPIGEON_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlhomingpigeonStream {
+impl CDLHOMINGPIGEON_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLHOMINGPIGEON_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlhomingpigeon_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLHOMINGPIGEON_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1121,7 +1121,7 @@ impl CdlhomingpigeonStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlhomingpigeonStream>();
+    _assert_auto::<CDLHOMINGPIGEON_Stream>();
 };
 
 /***************/

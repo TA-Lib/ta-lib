@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlinneck`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::CDLINNECK`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn cdlinneck_lookback(&self) -> usize {
+    pub fn CDLINNECK_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlinneck(
+    /// let ret = core.CDLINNECK(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,12 +148,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlonneck`] · [`Core::cdlthrusting`] · [`Core::cdlmatchinglow`]
+    /// [`Core::CDLONNECK`] · [`Core::CDLTHRUSTING`] · [`Core::CDLMATCHINGLOW`]
     ///
-    /// Further reading: [ta-lib.org/functions/cdlinneck](https://ta-lib.org/functions/cdlinneck/)
+    /// Further reading: [ta-lib.org/functions/CDLINNECK](https://ta-lib.org/functions/CDLINNECK/)
     #[doc(alias = "In-NeckPattern")]
     #[doc(alias = "In-NeckLine")]
-    pub fn cdlinneck(
+    pub fn CDLINNECK(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -171,7 +171,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlinneck_lookback();
+        let _assertLb = self.CDLINNECK_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -200,7 +200,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlinneck_lookback();
+        lookbackTotal = self.CDLINNECK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -359,20 +359,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLINNECK stream: one value per closed bar, bit-identical to [`Core::cdlinneck`]
-/// over the same series. Open with [`Core::cdlinneck_open`]; dropping the handle
+/// Live CDLINNECK stream: one value per closed bar, bit-identical to [`Core::CDLINNECK`]
+/// over the same series. Open with [`Core::CDLINNECK_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLINNECK_Stream")]
-pub struct CdlinneckStream {
+pub struct CDLINNECK_Stream {
     core: Core,
-    state: CdlinneckStreamState,
+    state: CDLINNECK_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlinneckStreamState {
+struct CDLINNECK_StreamState {
     EqualPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -402,7 +402,7 @@ struct CdlinneckStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlinneck_step_internal(&self, sp: &mut CdlinneckStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLINNECK_step_internal(&self, sp: &mut CDLINNECK_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -520,10 +520,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlinneck_open`] (composition seam).
-    pub(crate) fn cdlinneck_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLINNECK_Open`] (composition seam).
+    pub(crate) fn CDLINNECK_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlinneckStream, i32), RetCode> {
+    ) -> Result<(CDLINNECK_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -557,7 +557,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlinneck_lookback();
+        lookbackTotal = self.CDLINNECK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -787,7 +787,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlinneckStreamState {
+        let state = CDLINNECK_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -809,11 +809,11 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok((CdlinneckStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLINNECK_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLINNECK stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlinneck`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLINNECK`] at that bar.
     ///
     /// # Errors
     ///
@@ -832,23 +832,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlinneck_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLINNECK_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLINNECK_Open")]
-    pub fn cdlinneck_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlinneckStream, i32), RetCode> {
-        self.cdlinneck_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLINNECK_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLINNECK_Stream, i32), RetCode> {
+        self.CDLINNECK_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlinneck_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlinneck`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLINNECK_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLINNECK`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLINNECK_OpenAndFill")]
-    pub fn cdlinneck_open_and_fill(
+    pub fn CDLINNECK_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlinneckStream, RetCode> {
+    ) -> Result<CDLINNECK_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -881,7 +881,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlinneck_lookback();
+        lookbackTotal = self.CDLINNECK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1113,7 +1113,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlinneckStreamState {
+        let state = CDLINNECK_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1135,19 +1135,19 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok(CdlinneckStream { core: self.clone(), state })
+        Ok(CDLINNECK_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlinneckStream {
+impl CDLINNECK_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLINNECK_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlinneck_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLINNECK_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1165,7 +1165,7 @@ impl CdlinneckStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlinneckStream>();
+    _assert_auto::<CDLINNECK_Stream>();
 };
 
 /***************/

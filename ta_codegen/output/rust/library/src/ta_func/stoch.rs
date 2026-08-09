@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::stoch`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::STOCH`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -88,7 +88,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn stoch_lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32) -> usize {
+    pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32) -> usize {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -114,9 +114,9 @@ impl Core {
         // Account for the initial data needed for Fast-K.
         retValue = (optInFastK_Period - 1) as usize;
         // Add the smoothing being done for %K slow
-        retValue += self.ma_lookback(optInSlowK_Period, optInSlowK_MAType);
+        retValue += self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
         // Add the smoothing being done for %D slow.
-        retValue += self.ma_lookback(optInSlowD_Period, optInSlowD_MAType);
+        retValue += self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
         return retValue;
     }
     /// Slow Stochastic oscillator: locates the close within the high-low range over a lookback
@@ -189,7 +189,7 @@ impl Core {
     /// let mut slow_k = vec![0.0; 252];
     /// let mut slow_d = vec![0.0; 252];
     ///
-    /// let ret = core.stoch(
+    /// let ret = core.STOCH(
     ///     0, high.len() - 1, &high, &low, &close, 5, 3, 0, 3, 0,
     ///     &mut out_beg, &mut out_nb, &mut slow_k, &mut slow_d,
     /// );
@@ -200,13 +200,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::stochf`] · [`Core::stochrsi`] · [`Core::ma`]
+    /// [`Core::STOCHF`] · [`Core::STOCHRSI`] · [`Core::MA`]
     ///
-    /// Further reading: [ta-lib.org/functions/stoch](https://ta-lib.org/functions/stoch/)
+    /// Further reading: [ta-lib.org/functions/STOCH](https://ta-lib.org/functions/STOCH/)
     #[doc(alias = "Stochastic")]
     #[doc(alias = "StochasticOscillator")]
     #[doc(alias = "SlowStochastic")]
-    pub fn stoch(
+    pub fn STOCH(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -253,7 +253,7 @@ impl Core {
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.stoch_lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        let _assertLb = self.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -309,8 +309,8 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.ma_lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.ma_lookback(optInSlowD_Period, optInSlowD_MAType);
+        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
         lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
         // Move up the start index if there is not
         // enough initial data.
@@ -418,7 +418,7 @@ impl Core {
         // to the caller. It is always smoothed and then return.
         // Some documentation will refer to the smoothed version as being
         // "K-Slow", but often this end up to be shorten to "K".
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -429,7 +429,7 @@ impl Core {
         }
         // Calculate the %D which is simply a moving average of
         // the already smoothed %K.
-        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
+        retCode = self.MA(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowD);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -459,20 +459,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live STOCH stream: one value per closed bar, bit-identical to [`Core::stoch`]
-/// over the same series. Open with [`Core::stoch_open`]; dropping the handle
+/// Live STOCH stream: one value per closed bar, bit-identical to [`Core::STOCH`]
+/// over the same series. Open with [`Core::STOCH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_STOCH_Stream")]
-pub struct StochStream {
+pub struct STOCH_Stream {
     core: Core,
-    state: StochStreamState,
+    state: STOCH_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct StochStreamState {
+struct STOCH_StreamState {
     optInFastK_Period: i32,
     optInSlowK_Period: i32,
     optInSlowK_MAType: i32,
@@ -490,8 +490,8 @@ struct StochStreamState {
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
-    sub0: MaStream,
-    sub1: MaStream,
+    sub0: MA_Stream,
+    sub1: MA_Stream,
 }
 
 #[allow(non_snake_case)]
@@ -501,7 +501,7 @@ struct StochStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn stoch_step_internal(&self, sp: &mut StochStreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) {
+    fn STOCH_step_internal(&self, sp: &mut STOCH_StreamState, inHigh: f64, inLow: f64, inClose: f64, outSlowK: &mut f64, outSlowD: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outSlowD: f64 = 0.0_f64;
@@ -572,10 +572,10 @@ impl Core {
         (*outSlowD) = cur_outSlowD;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::stoch_open`] (composition seam).
-    pub(crate) fn stoch_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
+    pub(crate) fn STOCH_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32,
-    ) -> Result<(StochStream, (f64, f64)), RetCode> {
+    ) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -664,8 +664,8 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.ma_lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.ma_lookback(optInSlowD_Period, optInSlowD_MAType);
+        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
         lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
         // Move up the start index if there is not
         // enough initial data.
@@ -775,8 +775,8 @@ impl Core {
         // "K-Slow", but often this end up to be shorten to "K".
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -789,8 +789,8 @@ impl Core {
         // the already smoothed %K.
         // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
-        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
+        let (sub1, _) = self.MA_OpenInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
+        retCode = self.MA(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -836,7 +836,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = StochStreamState {
+        let state = STOCH_StreamState {
             optInFastK_Period,
             optInSlowK_Period,
             optInSlowK_MAType,
@@ -857,11 +857,11 @@ impl Core {
             sub0,
             sub1,
         };
-        Ok((StochStream { core: self.clone(), state }, (sc_outSlowK[*outNBElement - 1], sc_outSlowD[*outNBElement - 1])))
+        Ok((STOCH_Stream { core: self.clone(), state }, (sc_outSlowK[*outNBElement - 1], sc_outSlowD[*outNBElement - 1])))
     }
 
     /// Open a live STOCH stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::stoch`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::STOCH`] at that bar.
     ///
     /// # Errors
     ///
@@ -877,24 +877,24 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.stoch_open(&high, &low, &close, 5, 3, 0, 3, 0).expect("enough history");
+    /// let (mut s, _last) = core.STOCH_Open(&high, &low, &close, 5, 3, 0, 3, 0).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCH_Open")]
-    pub fn stoch_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: i32, optInSlowD_Period: i32, optInSlowD_MAType: i32) -> Result<(StochStream, (f64, f64)), RetCode> {
-        self.stoch_open_internal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
+    pub fn STOCH_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: i32, optInSlowD_Period: i32, optInSlowD_MAType: i32) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
+        self.STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
     }
 
-    /// [`Core::stoch_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::stoch`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::STOCH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::STOCH`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCH_OpenAndFill")]
-    pub fn stoch_open_and_fill(
+    pub fn STOCH_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
-    ) -> Result<StochStream, RetCode> {
+    ) -> Result<STOCH_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -980,8 +980,8 @@ impl Core {
         // used because its higher volatility cause often whipsaws.
         // Identify the lookback needed.
         lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.ma_lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.ma_lookback(optInSlowD_Period, optInSlowD_MAType);
+        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
         lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
         // Move up the start index if there is not
         // enough initial data.
@@ -1091,8 +1091,8 @@ impl Core {
         // "K-Slow", but often this end up to be shorten to "K".
         // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.ma(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
+        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
+        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             if bufferIsAllocated != 0 {
             }
@@ -1105,8 +1105,8 @@ impl Core {
         // the already smoothed %K.
         // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
-        retCode = self.ma(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
+        let (sub1, _) = self.MA_OpenInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
+        retCode = self.MA(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
         // Copy tempBuffer into the caller buffer.
         // (Calculation could not be done directly in the
         //  caller buffer because more input data then the
@@ -1152,7 +1152,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = StochStreamState {
+        let state = STOCH_StreamState {
             optInFastK_Period,
             optInSlowK_Period,
             optInSlowK_MAType,
@@ -1175,20 +1175,20 @@ impl Core {
         };
         outSlowK[..*outNBElement].copy_from_slice(&sc_outSlowK[..*outNBElement]);
         outSlowD[..*outNBElement].copy_from_slice(&sc_outSlowD[..*outNBElement]);
-        Ok(StochStream { core: self.clone(), state })
+        Ok(STOCH_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl StochStream {
+impl STOCH_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_STOCH_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64) {
         let mut outSlowK: f64 = 0.0_f64;
         let mut outSlowD: f64 = 0.0_f64;
-        self.core.stoch_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD);
+        self.core.STOCH_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outSlowK, &mut outSlowD);
         (outSlowK, outSlowD)
     }
 
@@ -1206,7 +1206,7 @@ impl StochStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<StochStream>();
+    _assert_auto::<STOCH_Stream>();
 };
 
 /***************/

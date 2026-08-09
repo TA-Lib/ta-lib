@@ -69,12 +69,11 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
 fn emit_func_registration(s: &mut String, f: &FuncRow) {
     let _ = writeln!(
         s,
-        "        ABSTRACT.put({}, new AbsFunc({}, {}, {}, {}, {},",
+        "        ABSTRACT.put({}, new AbsFunc({}, {}, {}, {},",
         js(&f.name),
         js(&f.name),
         js(f.group.as_str()),
         js(&f.hint),
-        js(f.camel_case_name()),
         f.flags
     );
     let _ = writeln!(s, "            new AbsIn[]{{ {} }},", emit_inputs(&f.inputs));
@@ -179,11 +178,11 @@ const META_CLASSES: &str = r"    // ---- ta_abstract metadata (issue #114) ----
         }
     }
     static final class AbsFunc {
-        final String name, group, hint, camelCaseName; final int flags;
+        final String name, group, hint; final int flags;
         final AbsIn[] inputs; final AbsOpt[] optInputs; final AbsOut[] outputs;
-        AbsFunc(String name, String group, String hint, String camelCaseName, int flags,
+        AbsFunc(String name, String group, String hint, int flags,
                 AbsIn[] inputs, AbsOpt[] optInputs, AbsOut[] outputs) {
-            this.name = name; this.group = group; this.hint = hint; this.camelCaseName = camelCaseName;
+            this.name = name; this.group = group; this.hint = hint;
             this.flags = flags; this.inputs = inputs; this.optInputs = optInputs; this.outputs = outputs;
         }
     }
@@ -228,7 +227,7 @@ fn emit_handlers() -> String {
         AbsFunc f = ABSTRACT.get(jsonString(json, "funcName"));
         if (f == null) return "{\"retCode\":2}";
         return "{\"name\":" + absStr(f.name) + ",\"group\":" + absStr(f.group)
-             + ",\"hint\":" + absStr(f.hint) + ",\"camelCaseName\":" + absStr(f.camelCaseName)
+             + ",\"hint\":" + absStr(f.hint)
              + ",\"flags\":" + f.flags + ",\"nbInput\":" + f.inputs.length
              + ",\"nbOptInput\":" + f.optInputs.length + ",\"nbOutput\":" + f.outputs.length + "}";
     }

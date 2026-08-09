@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#linearReg} consumes before it can
+    * Number of leading input bars {@link Core#LINEARREG} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int linearRegLookback( int optInTimePeriod )
+   public int LINEARREG_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode linearRegInternal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode LINEARREG_Internal( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -87,7 +87,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -143,13 +143,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode linearRegInternal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              int optInTimePeriod,
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode LINEARREG_Internal( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               int optInTimePeriod,
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -176,7 +176,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = linearRegLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -223,7 +223,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearRegLookback} is a <b>success
+    * valid range shorter than {@link Core#LINEARREG_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -241,12 +241,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#linearRegSlope
-    * @see Core#linearRegAngle
-    * @see Core#linearRegIntercept
-    * @see Core#tsf
+    * @see Core#LINEARREG_SLOPE
+    * @see Core#LINEARREG_ANGLE
+    * @see Core#LINEARREG_INTERCEPT
+    * @see Core#TSF
     */
-   public OutRange linearReg( int startIdx,
+   public OutRange LINEARREG( int startIdx,
                               int endIdx,
                               double inReal[],
                               int optInTimePeriod,
@@ -254,7 +254,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG", retCode);
       }
@@ -270,7 +270,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearRegLookback} is a <b>success
+    * valid range shorter than {@link Core#LINEARREG_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -288,12 +288,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#linearRegSlope
-    * @see Core#linearRegAngle
-    * @see Core#linearRegIntercept
-    * @see Core#tsf
+    * @see Core#LINEARREG_SLOPE
+    * @see Core#LINEARREG_ANGLE
+    * @see Core#LINEARREG_INTERCEPT
+    * @see Core#TSF
     */
-   public OutRange linearReg( int startIdx,
+   public OutRange LINEARREG( int startIdx,
                               int endIdx,
                               float inReal[],
                               int optInTimePeriod,
@@ -301,7 +301,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG", retCode);
       }
@@ -311,8 +311,8 @@
 
    /**
     * A live LINEARREG stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#linearReg} over the same series.
-    * Open with {@link Core#linearRegOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#LINEARREG} over the same series.
+    * Open with {@link Core#LINEARREG_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -323,7 +323,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class LinearRegStream {
+   public static final class LINEARREG_Stream {
       final Core core;
       int optInTimePeriod;
       double SumX;
@@ -337,10 +337,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      LinearRegStream( Core core ) { this.core = core; }
+      LINEARREG_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#linearRegOpenAndFill}, or
+       * The range filled by {@link Core#LINEARREG_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -348,7 +348,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      LinearRegStream( LinearRegStream other ) {
+      LINEARREG_Stream( LINEARREG_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.SumX = other.SumX;
@@ -368,7 +368,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.linearRegStreamStep(this, inReal);
+         core.LINEARREG_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -380,8 +380,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         LinearRegStream scratch = new LinearRegStream(this);
-         core.linearRegStreamStep(scratch, inReal);
+         LINEARREG_Stream scratch = new LINEARREG_Stream(this);
+         core.LINEARREG_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -398,11 +398,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public LinearRegStream copy() {
-         return new LinearRegStream(this);
+      public LINEARREG_Stream copy() {
+         return new LINEARREG_Stream(this);
       }
    }
-   void linearRegStreamStep( LinearRegStream sp, double inReal )
+   void LINEARREG_StreamStep( LINEARREG_Stream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -421,7 +421,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode linearRegOpenBody( LinearRegStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_OpenBody( LINEARREG_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int outIdx = 0;
       int today = 0;
@@ -470,7 +470,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -544,7 +544,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode linearRegOpenAndFillBody( LinearRegStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_OpenAndFillBody( LINEARREG_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -594,7 +594,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -668,11 +668,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind linearRegOpen (composition seam). */
-   LinearRegStream linearRegOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind LINEARREG_Open (composition seam). */
+   LINEARREG_Stream LINEARREG_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      LinearRegStream sp = new LinearRegStream(this);
-      RetCode retCode = linearRegOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      LINEARREG_Stream sp = new LINEARREG_Stream(this);
+      RetCode retCode = LINEARREG_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -687,32 +687,32 @@
    /**
     * Open a live LINEARREG stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#linearReg} at that bar.
-    * <p>The history must hold at least {@code linearRegLookback(...) + 1} bars
+    * to {@link Core#LINEARREG} at that bar.
+    * <p>The history must hold at least {@code LINEARREG_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public LinearRegStream linearRegOpen( double inReal[], int optInTimePeriod )
+   public LINEARREG_Stream LINEARREG_Open( double inReal[], int optInTimePeriod )
    {
-      return linearRegOpenInternal(inReal, 0, optInTimePeriod);
+      return LINEARREG_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#linearRegOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#linearReg} over the whole history in the same single pass
+    * {@link Core#LINEARREG_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#LINEARREG} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link LinearRegStream#fillRange()}.
+    * {@link LINEARREG_Stream#fillRange()}.
     */
-   public LinearRegStream linearRegOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public LINEARREG_Stream LINEARREG_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LinearRegStream sp = new LinearRegStream(this);
+      LINEARREG_Stream sp = new LINEARREG_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

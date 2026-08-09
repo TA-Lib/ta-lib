@@ -56,7 +56,7 @@ public partial class Core
     *  071626 MF,CC  Template creation.
     */
    /// <summary>
-   /// Number of leading input bars <c>Pvo</c> consumes before it can produce its
+   /// Number of leading input bars <c>PVO</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -72,7 +72,7 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int PvoLookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public int PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       if( optInFastPeriod == int.MinValue ) {
          optInFastPeriod = 12;
@@ -85,13 +85,13 @@ public partial class Core
          return -1;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Ema;
+         optInMAType = MAType.EMA;
       }
       /* Lookback is driven by the slowest MA. */
-      return MovingAverageLookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
+      return MA_Lookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
 
    }
-   internal RetCode Pvo( int startIdx,
+   internal RetCode PVO( int startIdx,
                          int endIdx,
                          double[] inVolume,
                          int optInFastPeriod,
@@ -128,7 +128,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Ema;
+         optInMAType = MAType.EMA;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -142,12 +142,12 @@ public partial class Core
          optInFastPeriod = tempInteger;
       }
       /* Calculate the fast MA into the tempBuffer. */
-      retCode = MovingAverage(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
       /* Calculate the slow MA into the output. */
-      retCode = MovingAverage(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -167,7 +167,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode Pvo( int startIdx,
+   internal RetCode PVO( int startIdx,
                          int endIdx,
                          float[] inVolume,
                          int optInFastPeriod,
@@ -204,7 +204,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Ema;
+         optInMAType = MAType.EMA;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {
@@ -212,11 +212,11 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      retCode = MovingAverage(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
+      retCode = MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, out fastBeg, out fastNb, tempBuffer);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
-      retCode = MovingAverage(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
+      retCode = MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -250,8 +250,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PvoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PVO_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -274,7 +274,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Pvo( int startIdx,
+   public OutRange PVO( int startIdx,
                         int endIdx,
                         double[] inVolume,
                         int optInFastPeriod,
@@ -282,7 +282,7 @@ public partial class Core
                         MAType optInMAType,
                         double[] outReal )
    {
-      RetCode retCode = Pvo(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
       }
@@ -313,8 +313,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PvoLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PVO_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -337,7 +337,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Pvo( int startIdx,
+   public OutRange PVO( int startIdx,
                         int endIdx,
                         float[] inVolume,
                         int optInFastPeriod,
@@ -345,7 +345,7 @@ public partial class Core
                         MAType optInMAType,
                         double[] outReal )
    {
-      RetCode retCode = Pvo(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
       }

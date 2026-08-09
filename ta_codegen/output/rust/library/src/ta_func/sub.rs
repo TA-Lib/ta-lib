@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::sub`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::SUB`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn sub_lookback(&self) -> usize {
+    pub fn SUB_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Element-wise vector subtraction of two input series. Outputs inReal0 minus inReal1 at each
@@ -112,7 +112,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.sub(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.SUB(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -120,12 +120,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::add`] · [`Core::mult`] · [`Core::div`]
+    /// [`Core::ADD`] · [`Core::MULT`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/sub](https://ta-lib.org/functions/sub/)
+    /// Further reading: [ta-lib.org/functions/SUB](https://ta-lib.org/functions/SUB/)
     #[doc(alias = "Subtract")]
     #[doc(alias = "VectorSubtraction")]
-    pub fn sub(
+    pub fn SUB(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -141,7 +141,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.sub_lookback();
+        let _assertLb = self.SUB_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -165,20 +165,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SUB stream: one value per closed bar, bit-identical to [`Core::sub`]
-/// over the same series. Open with [`Core::sub_open`]; dropping the handle
+/// Live SUB stream: one value per closed bar, bit-identical to [`Core::SUB`]
+/// over the same series. Open with [`Core::SUB_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SUB_Stream")]
-pub struct SubStream {
+pub struct SUB_Stream {
     core: Core,
-    state: SubStreamState,
+    state: SUB_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SubStreamState {
+struct SUB_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -188,14 +188,14 @@ struct SubStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn sub_step_internal(&self, sp: &mut SubStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn SUB_step_internal(&self, sp: &mut SUB_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 - inReal1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::sub_open`] (composition seam).
-    pub(crate) fn sub_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::SUB_Open`] (composition seam).
+    pub(crate) fn SUB_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(SubStream, f64), RetCode> {
+    ) -> Result<(SUB_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -223,13 +223,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = SubStreamState {
+        let state = SUB_StreamState {
         };
-        Ok((SubStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((SUB_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live SUB stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::sub`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::SUB`] at that bar.
     ///
     /// # Errors
     ///
@@ -244,23 +244,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.sub_open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.SUB_Open(&data0, &data1).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SUB_Open")]
-    pub fn sub_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(SubStream, f64), RetCode> {
-        self.sub_open_internal(inReal0, inReal1, 0)
+    pub fn SUB_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(SUB_Stream, f64), RetCode> {
+        self.SUB_OpenInternal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::sub_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::sub`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::SUB_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SUB`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_SUB_OpenAndFill")]
-    pub fn sub_open_and_fill(
+    pub fn SUB_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SubStream, RetCode> {
+    ) -> Result<SUB_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -287,21 +287,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = SubStreamState {
+        let state = SUB_StreamState {
         };
-        Ok(SubStream { core: self.clone(), state })
+        Ok(SUB_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SubStream {
+impl SUB_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_SUB_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.sub_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.SUB_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -319,7 +319,7 @@ impl SubStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SubStream>();
+    _assert_auto::<SUB_Stream>();
 };
 
 /***************/

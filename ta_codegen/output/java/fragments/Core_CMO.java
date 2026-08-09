@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cmo} consumes before it can
+    * Number of leading input bars {@link Core#CMO} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cmoLookback( int optInTimePeriod )
+   public int CMO_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -35,17 +35,17 @@
          return -1;
       }
       int retValue;
-      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
+      retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       return retValue ;
 
    }
-   RetCode cmoInternal( int startIdx,
-                        int endIdx,
-                        double inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode CMO_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -84,7 +84,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = cmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -117,7 +117,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -212,13 +212,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode cmoInternal( int startIdx,
-                        int endIdx,
-                        float inReal[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode CMO_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -246,7 +246,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = cmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -266,7 +266,7 @@
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -346,7 +346,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmoLookback} is a <b>success with no
+    * valid range shorter than {@link Core#CMO_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -364,9 +364,9 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#rsi
+    * @see Core#RSI
     */
-   public OutRange cmo( int startIdx,
+   public OutRange CMO( int startIdx,
                         int endIdx,
                         double inReal[],
                         int optInTimePeriod,
@@ -374,7 +374,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmoInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMO", retCode);
       }
@@ -399,7 +399,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmoLookback} is a <b>success with no
+    * valid range shorter than {@link Core#CMO_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -417,9 +417,9 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#rsi
+    * @see Core#RSI
     */
-   public OutRange cmo( int startIdx,
+   public OutRange CMO( int startIdx,
                         int endIdx,
                         float inReal[],
                         int optInTimePeriod,
@@ -427,7 +427,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmoInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMO", retCode);
       }
@@ -437,8 +437,8 @@
 
    /**
     * A live CMO stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cmo} over the same series.
-    * Open with {@link Core#cmoOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CMO} over the same series.
+    * Open with {@link Core#CMO_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -449,7 +449,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CmoStream {
+   public static final class CMO_Stream {
       final Core core;
       int optInTimePeriod;
       double prevGain;
@@ -458,10 +458,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      CmoStream( Core core ) { this.core = core; }
+      CMO_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cmoOpenAndFill}, or
+       * The range filled by {@link Core#CMO_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -469,7 +469,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CmoStream( CmoStream other ) {
+      CMO_Stream( CMO_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -484,7 +484,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.cmoStreamStep(this, inReal);
+         core.CMO_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -496,8 +496,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         CmoStream scratch = new CmoStream(this);
-         core.cmoStreamStep(scratch, inReal);
+         CMO_Stream scratch = new CMO_Stream(this);
+         core.CMO_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -514,11 +514,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CmoStream copy() {
-         return new CmoStream(this);
+      public CMO_Stream copy() {
+         return new CMO_Stream(this);
       }
    }
-   void cmoStreamStep( CmoStream sp, double inReal )
+   void CMO_StreamStep( CMO_Stream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -545,7 +545,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode cmoOpenBody( CmoStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode CMO_OpenBody( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int outIdx = 0;
       int today = 0;
@@ -577,7 +577,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < cmoLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < CMO_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
@@ -600,7 +600,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = cmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -619,7 +619,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -720,7 +720,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode cmoOpenAndFillBody( CmoStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CMO_OpenAndFillBody( CMO_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -753,14 +753,14 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
-         if( historyLen < cmoLookback(optInTimePeriod) + 1 ) {
+         if( historyLen < CMO_Lookback(optInTimePeriod) + 1 ) {
             return RetCode.OutOfRangeEndIndex;
          }
          sp.optInTimePeriod = optInTimePeriod;
          sp.prevGain = 0.0;
          sp.prevLoss = 0.0;
          sp.prevValue = 0.0;
-         int fillLb = cmoLookback(optInTimePeriod);
+         int fillLb = CMO_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
@@ -782,7 +782,7 @@
       outBegIdx.value = 0;
       outNBElement.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = cmoLookback(optInTimePeriod);
+      lookbackTotal = CMO_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -801,7 +801,7 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.Cmo.ordinal()];
+      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -902,11 +902,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cmoOpen (composition seam). */
-   CmoStream cmoOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
+   CMO_Stream CMO_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      CmoStream sp = new CmoStream(this);
-      RetCode retCode = cmoOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      CMO_Stream sp = new CMO_Stream(this);
+      RetCode retCode = CMO_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -921,32 +921,32 @@
    /**
     * Open a live CMO stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cmo} at that bar.
-    * <p>The history must hold at least {@code cmoLookback(...) + 1} bars
+    * to {@link Core#CMO} at that bar.
+    * <p>The history must hold at least {@code CMO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CmoStream cmoOpen( double inReal[], int optInTimePeriod )
+   public CMO_Stream CMO_Open( double inReal[], int optInTimePeriod )
    {
-      return cmoOpenInternal(inReal, 0, optInTimePeriod);
+      return CMO_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#cmoOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cmo} over the whole history in the same single pass
+    * {@link Core#CMO_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CMO} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CmoStream#fillRange()}.
+    * {@link CMO_Stream#fillRange()}.
     */
-   public CmoStream cmoOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public CMO_Stream CMO_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      CmoStream sp = new CmoStream(this);
+      CMO_Stream sp = new CMO_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmoOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMO_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -64,11 +64,11 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_phasor`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::HT_PHASOR`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn ht_phasor_lookback(&self) -> usize {
+    pub fn HT_PHASOR_Lookback(&self) -> usize {
         // See mama_lookback for an explanation of these
-        return (32 + self.unstable_period[FuncUnstId::HtPhasor as usize]) as usize;
+        return (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
     }
     /// Hilbert Transform indicator that decomposes the price series into its in-phase (I) and
     /// quadrature (Q) phasor components. Shares the same detrend/Hilbert machinery as the other
@@ -114,7 +114,7 @@ impl Core {
     /// let mut in_phase = vec![0.0; 252];
     /// let mut quadrature = vec![0.0; 252];
     ///
-    /// let ret = core.ht_phasor(
+    /// let ret = core.HT_PHASOR(
     ///     0, data.len() - 1, &data,
     ///     &mut out_beg, &mut out_nb, &mut in_phase, &mut quadrature,
     /// );
@@ -125,18 +125,18 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ht_dcperiod`] · [`Core::ht_dcphase`] · [`Core::ht_sine`] · [`Core::ht_trendmode`]
-    /// · [`Core::mama`] · [`Core::wma`]
+    /// [`Core::HT_DCPERIOD`] · [`Core::HT_DCPHASE`] · [`Core::HT_SINE`] · [`Core::HT_TRENDMODE`]
+    /// · [`Core::MAMA`] · [`Core::WMA`]
     ///
     /// # References
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor/)
+    /// Further reading: [ta-lib.org/functions/HT_PHASOR](https://ta-lib.org/functions/HT_PHASOR/)
     #[doc(alias = "HilbertTransformPhasor")]
     #[doc(alias = "InPhaseQuadrature")]
-    pub fn ht_phasor(
+    pub fn HT_PHASOR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -147,13 +147,13 @@ impl Core {
         outQuadrature: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_phasor_fma, ht_phasor_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_PHASOR_fma, HT_PHASOR_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_phasor_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_phasor_fma(
+    fn HT_PHASOR_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -163,10 +163,10 @@ impl Core {
         outInPhase: &mut [f64],
         outQuadrature: &mut [f64],
     ) -> RetCode {
-        self.ht_phasor_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
+        self.HT_PHASOR_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInPhase, outQuadrature)
     }
     #[inline(always)]
-    fn ht_phasor_impl(
+    fn HT_PHASOR_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -185,7 +185,7 @@ impl Core {
         if outInPhase.as_ptr() == outQuadrature.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ht_phasor_lookback();
+        let _assertLb = self.HT_PHASOR_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInPhase.len());
@@ -256,7 +256,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtPhasor as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -518,20 +518,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_PHASOR stream: one value per closed bar, bit-identical to [`Core::ht_phasor`]
-/// over the same series. Open with [`Core::ht_phasor_open`]; dropping the handle
+/// Live HT_PHASOR stream: one value per closed bar, bit-identical to [`Core::HT_PHASOR`]
+/// over the same series. Open with [`Core::HT_PHASOR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_PHASOR_Stream")]
-pub struct HtPhasorStream {
+pub struct HT_PHASOR_Stream {
     core: Core,
-    state: HtPhasorStreamState,
+    state: HT_PHASOR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtPhasorStreamState {
+struct HT_PHASOR_StreamState {
     tempReal: f64,
     tempReal2: f64,
     period: f64,
@@ -595,7 +595,7 @@ struct HtPhasorStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_phasor_step_internal(&self, sp: &mut HtPhasorStreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
+    fn HT_PHASOR_step_internal(&self, sp: &mut HT_PHASOR_StreamState, inReal: f64, outInPhase: &mut f64, outQuadrature: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -743,10 +743,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_phasor_open`] (composition seam).
-    pub(crate) fn ht_phasor_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_PHASOR_Open`] (composition seam).
+    pub(crate) fn HT_PHASOR_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtPhasorStream, (f64, f64)), RetCode> {
+    ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -825,7 +825,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtPhasor as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1090,7 +1090,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = HtPhasorStreamState {
+        let state = HT_PHASOR_StreamState {
             tempReal,
             tempReal2,
             period,
@@ -1146,11 +1146,11 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok((HtPhasorStream { core: self.clone(), state }, (lastValue_outInPhase, lastValue_outQuadrature)))
+        Ok((HT_PHASOR_Stream { core: self.clone(), state }, (lastValue_outInPhase, lastValue_outQuadrature)))
     }
 
     /// Open a live HT_PHASOR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_phasor`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_PHASOR`] at that bar.
     ///
     /// # Errors
     ///
@@ -1162,24 +1162,24 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_phasor_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_PHASOR_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_HT_PHASOR_Open")]
-    pub fn ht_phasor_open(&self, inReal: &[f64], ) -> Result<(HtPhasorStream, (f64, f64)), RetCode> {
-        self.ht_phasor_open_internal(inReal, 0)
+    pub fn HT_PHASOR_Open(&self, inReal: &[f64], ) -> Result<(HT_PHASOR_Stream, (f64, f64)), RetCode> {
+        self.HT_PHASOR_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_phasor_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_phasor`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_PHASOR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_PHASOR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_PHASOR_OpenAndFill")]
-    pub fn ht_phasor_open_and_fill(
+    pub fn HT_PHASOR_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
-    ) -> Result<HtPhasorStream, RetCode> {
+    ) -> Result<HT_PHASOR_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1259,7 +1259,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtPhasor as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_PHASOR as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1526,7 +1526,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = HtPhasorStreamState {
+        let state = HT_PHASOR_StreamState {
             tempReal,
             tempReal2,
             period,
@@ -1582,20 +1582,20 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(HtPhasorStream { core: self.clone(), state })
+        Ok(HT_PHASOR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtPhasorStream {
+impl HT_PHASOR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_PHASOR_Update")]
     pub fn update(&mut self, inReal: f64) -> (f64, f64) {
         let mut outInPhase: f64 = 0.0_f64;
         let mut outQuadrature: f64 = 0.0_f64;
-        self.core.ht_phasor_step_internal(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
+        self.core.HT_PHASOR_step_internal(&mut self.state, inReal, &mut outInPhase, &mut outQuadrature);
         (outInPhase, outQuadrature)
     }
 
@@ -1613,7 +1613,7 @@ impl HtPhasorStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtPhasorStream>();
+    _assert_auto::<HT_PHASOR_Stream>();
 };
 
 /***************/

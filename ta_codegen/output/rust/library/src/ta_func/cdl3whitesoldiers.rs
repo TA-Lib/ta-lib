@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdl3whitesoldiers`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDL3WHITESOLDIERS`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdl3whitesoldiers_lookback(&self) -> usize {
+    pub fn CDL3WHITESOLDIERS_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -144,7 +144,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdl3whitesoldiers(
+    /// let ret = core.CDL3WHITESOLDIERS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -154,13 +154,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl3blackcrows`] · [`Core::cdladvanceblock`] · [`Core::cdlidentical3crows`]
+    /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLADVANCEBLOCK`] · [`Core::CDLIDENTICAL3CROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdl3whitesoldiers](https://ta-lib.org/functions/cdl3whitesoldiers/)
+    /// [ta-lib.org/functions/CDL3WHITESOLDIERS](https://ta-lib.org/functions/CDL3WHITESOLDIERS/)
     #[doc(alias = "ThreeAdvancingWhiteSoldiers")]
     #[doc(alias = "ThreeWhiteSoldiers")]
-    pub fn cdl3whitesoldiers(
+    pub fn CDL3WHITESOLDIERS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -178,7 +178,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdl3whitesoldiers_lookback();
+        let _assertLb = self.CDL3WHITESOLDIERS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -224,7 +224,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3whitesoldiers_lookback();
+        lookbackTotal = self.CDL3WHITESOLDIERS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -586,20 +586,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDL3WHITESOLDIERS stream: one value per closed bar, bit-identical to [`Core::cdl3whitesoldiers`]
-/// over the same series. Open with [`Core::cdl3whitesoldiers_open`]; dropping the handle
+/// Live CDL3WHITESOLDIERS stream: one value per closed bar, bit-identical to [`Core::CDL3WHITESOLDIERS`]
+/// over the same series. Open with [`Core::CDL3WHITESOLDIERS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDL3WHITESOLDIERS_Stream")]
-pub struct Cdl3whitesoldiersStream {
+pub struct CDL3WHITESOLDIERS_Stream {
     core: Core,
-    state: Cdl3whitesoldiersStreamState,
+    state: CDL3WHITESOLDIERS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdl3whitesoldiersStreamState {
+struct CDL3WHITESOLDIERS_StreamState {
     ShadowVeryShortPeriodTotal: [f64; 3 as usize],
     NearPeriodTotal: [f64; 3 as usize],
     FarPeriodTotal: [f64; 3 as usize],
@@ -655,7 +655,7 @@ struct Cdl3whitesoldiersStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdl3whitesoldiers_step_internal(&self, sp: &mut Cdl3whitesoldiersStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDL3WHITESOLDIERS_step_internal(&self, sp: &mut CDL3WHITESOLDIERS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -906,10 +906,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdl3whitesoldiers_open`] (composition seam).
-    pub(crate) fn cdl3whitesoldiers_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDL3WHITESOLDIERS_Open`] (composition seam).
+    pub(crate) fn CDL3WHITESOLDIERS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdl3whitesoldiersStream, i32), RetCode> {
+    ) -> Result<(CDL3WHITESOLDIERS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -960,7 +960,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3whitesoldiers_lookback();
+        lookbackTotal = self.CDL3WHITESOLDIERS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1460,7 +1460,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdl3whitesoldiersStreamState {
+        let state = CDL3WHITESOLDIERS_StreamState {
             ShadowVeryShortPeriodTotal,
             NearPeriodTotal,
             FarPeriodTotal,
@@ -1508,11 +1508,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((Cdl3whitesoldiersStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDL3WHITESOLDIERS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDL3WHITESOLDIERS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdl3whitesoldiers`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDL3WHITESOLDIERS`] at that bar.
     ///
     /// # Errors
     ///
@@ -1531,23 +1531,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdl3whitesoldiers_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDL3WHITESOLDIERS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDL3WHITESOLDIERS_Open")]
-    pub fn cdl3whitesoldiers_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdl3whitesoldiersStream, i32), RetCode> {
-        self.cdl3whitesoldiers_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDL3WHITESOLDIERS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3WHITESOLDIERS_Stream, i32), RetCode> {
+        self.CDL3WHITESOLDIERS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdl3whitesoldiers_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdl3whitesoldiers`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDL3WHITESOLDIERS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDL3WHITESOLDIERS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDL3WHITESOLDIERS_OpenAndFill")]
-    pub fn cdl3whitesoldiers_open_and_fill(
+    pub fn CDL3WHITESOLDIERS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdl3whitesoldiersStream, RetCode> {
+    ) -> Result<CDL3WHITESOLDIERS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1597,7 +1597,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdl3whitesoldiers_lookback();
+        lookbackTotal = self.CDL3WHITESOLDIERS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -2099,7 +2099,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdl3whitesoldiersStreamState {
+        let state = CDL3WHITESOLDIERS_StreamState {
             ShadowVeryShortPeriodTotal,
             NearPeriodTotal,
             FarPeriodTotal,
@@ -2147,19 +2147,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(Cdl3whitesoldiersStream { core: self.clone(), state })
+        Ok(CDL3WHITESOLDIERS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdl3whitesoldiersStream {
+impl CDL3WHITESOLDIERS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDL3WHITESOLDIERS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdl3whitesoldiers_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDL3WHITESOLDIERS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -2177,7 +2177,7 @@ impl Cdl3whitesoldiersStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdl3whitesoldiersStream>();
+    _assert_auto::<CDL3WHITESOLDIERS_Stream>();
 };
 
 /***************/

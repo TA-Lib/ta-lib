@@ -1,5 +1,4 @@
 name: CDLLONGLEGGEDDOJI
-camel_case: CdlLongLeggedDoji
 group: Pattern Recognition
 hint: Long Legged Doji
 flags: [candlestick, stream]

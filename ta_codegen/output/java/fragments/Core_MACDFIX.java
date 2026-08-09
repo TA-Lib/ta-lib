@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#macdFix} consumes before it can
+    * Number of leading input bars {@link Core#MACDFIX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int macdFixLookback( int optInSignalPeriod )
+   public int MACDFIX_Lookback( int optInSignalPeriod )
    {
       if( optInSignalPeriod == Integer.MIN_VALUE ) {
          optInSignalPeriod = 9;
@@ -38,18 +38,18 @@
        * (must also account for the initial data consume
        *  by the fix 26 period EMA).
        */
-      return emaLookback(26) + emaLookback(optInSignalPeriod) ;
+      return EMA_Lookback(26) + EMA_Lookback(optInSignalPeriod) ;
 
    }
-   RetCode macdFixInternal( int startIdx,
-                            int endIdx,
-                            double inReal[],
-                            int optInSignalPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outMACD[],
-                            double outMACDSignal[],
-                            double outMACDHist[] )
+   RetCode MACDFIX_Internal( int startIdx,
+                             int endIdx,
+                             double inReal[],
+                             int optInSignalPeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -92,12 +92,12 @@
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
       lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       /* fixed slow period */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -207,15 +207,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode macdFixInternal( int startIdx,
-                            int endIdx,
-                            float inReal[],
-                            int optInSignalPeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outMACD[],
-                            double outMACDSignal[],
-                            double outMACDHist[] )
+   RetCode MACDFIX_Internal( int startIdx,
+                             int endIdx,
+                             float inReal[],
+                             int optInSignalPeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outMACD[],
+                             double outMACDSignal[],
+                             double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -251,9 +251,9 @@
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -336,8 +336,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdFixLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MACDFIX_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -358,12 +358,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#macd
-    * @see Core#macdExt
-    * @see Core#ema
-    * @see Core#apo
+    * @see Core#MACD
+    * @see Core#MACDEXT
+    * @see Core#EMA
+    * @see Core#APO
     */
-   public OutRange macdFix( int startIdx,
+   public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             double inReal[],
                             int optInSignalPeriod,
@@ -373,7 +373,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = macdFixInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDFIX", retCode);
       }
@@ -399,8 +399,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#macdFixLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MACDFIX_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -421,12 +421,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#macd
-    * @see Core#macdExt
-    * @see Core#ema
-    * @see Core#apo
+    * @see Core#MACD
+    * @see Core#MACDEXT
+    * @see Core#EMA
+    * @see Core#APO
     */
-   public OutRange macdFix( int startIdx,
+   public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             float inReal[],
                             int optInSignalPeriod,
@@ -436,7 +436,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = macdFixInternal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_Internal(startIdx, endIdx, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw failure("MACDFIX", retCode);
       }
@@ -446,8 +446,8 @@
 
    /**
     * A live MACDFIX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#macdFix} over the same series.
-    * Open with {@link Core#macdFixOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MACDFIX} over the same series.
+    * Open with {@link Core#MACDFIX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -458,7 +458,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MacdFixStream {
+   public static final class MACDFIX_Stream {
       final Core core;
       int optInSignalPeriod;
       double prevFast;
@@ -473,10 +473,10 @@
       Value cachedValue;
       OutRange fillRange = OutRange.EMPTY;
 
-      MacdFixStream( Core core ) { this.core = core; }
+      MACDFIX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#macdFixOpenAndFill}, or
+       * The range filled by {@link Core#MACDFIX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -484,7 +484,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MacdFixStream( MacdFixStream other ) {
+      MACDFIX_Stream( MACDFIX_Stream other ) {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
          this.prevFast = other.prevFast;
@@ -519,7 +519,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public Value update( double inReal ) {
-         core.macdFixStreamStep(this, inReal);
+         core.MACDFIX_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMACD, this.cur_outMACDSignal, this.cur_outMACDHist);
          return this.cachedValue;
       }
@@ -532,8 +532,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public Value peek( double inReal ) {
-         MacdFixStream scratch = new MacdFixStream(this);
-         core.macdFixStreamStep(scratch, inReal);
+         MACDFIX_Stream scratch = new MACDFIX_Stream(this);
+         core.MACDFIX_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }
 
@@ -550,11 +550,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MacdFixStream copy() {
-         return new MacdFixStream(this);
+      public MACDFIX_Stream copy() {
+         return new MACDFIX_Stream(this);
       }
    }
-   void macdFixStreamStep( MacdFixStream sp, double inReal )
+   void MACDFIX_StreamStep( MACDFIX_Stream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;
@@ -567,7 +567,7 @@
       sp.cur_outMACDSignal = sp.prevSignal;
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
-   private RetCode macdFixOpenBody( MacdFixStream sp, double inReal[], int startIdx, int optInSignalPeriod )
+   private RetCode MACDFIX_OpenBody( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -614,12 +614,12 @@
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
       lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       /* fixed slow period */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -738,10 +738,10 @@
       sp.cur_outMACD = lastValue_outMACD;
       sp.cur_outMACDSignal = lastValue_outMACDSignal;
       sp.cur_outMACDHist = lastValue_outMACDHist;
-      sp.cachedValue = new MacdFixStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
+      sp.cachedValue = new MACDFIX_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   private RetCode macdFixOpenAndFillBody( MacdFixStream sp, double inReal[], int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   private RetCode MACDFIX_OpenAndFillBody( MACDFIX_Stream sp, double inReal[], int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
       double prevFast = 0;
       double prevSlow = 0;
@@ -787,12 +787,12 @@
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = emaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
       lookbackTotal = lookbackSignal;
-      lookbackTotal += emaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       /* fixed slow period */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -911,14 +911,14 @@
       sp.cur_outMACD = outMACD[outNBElement.value - 1];
       sp.cur_outMACDSignal = outMACDSignal[outNBElement.value - 1];
       sp.cur_outMACDHist = outMACDHist[outNBElement.value - 1];
-      sp.cachedValue = new MacdFixStream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
+      sp.cachedValue = new MACDFIX_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind macdFixOpen (composition seam). */
-   MacdFixStream macdFixOpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
+   /* Internal startIdx-anchored open behind MACDFIX_Open (composition seam). */
+   MACDFIX_Stream MACDFIX_OpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
    {
-      MacdFixStream sp = new MacdFixStream(this);
-      RetCode retCode = macdFixOpenBody(sp, inReal, startIdx, optInSignalPeriod);
+      MACDFIX_Stream sp = new MACDFIX_Stream(this);
+      RetCode retCode = MACDFIX_OpenBody(sp, inReal, startIdx, optInSignalPeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -933,32 +933,32 @@
    /**
     * Open a live MACDFIX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#macdFix} at that bar.
-    * <p>The history must hold at least {@code macdFixLookback(...) + 1} bars
+    * to {@link Core#MACDFIX} at that bar.
+    * <p>The history must hold at least {@code MACDFIX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MacdFixStream macdFixOpen( double inReal[], int optInSignalPeriod )
+   public MACDFIX_Stream MACDFIX_Open( double inReal[], int optInSignalPeriod )
    {
-      return macdFixOpenInternal(inReal, 0, optInSignalPeriod);
+      return MACDFIX_OpenInternal(inReal, 0, optInSignalPeriod);
    }
    /**
-    * {@link Core#macdFixOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#macdFix} over the whole history in the same single pass
+    * {@link Core#MACDFIX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MACDFIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MacdFixStream#fillRange()}.
+    * {@link MACDFIX_Stream#fillRange()}.
     */
-   public MacdFixStream macdFixOpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   public MACDFIX_Stream MACDFIX_OpenAndFill( double inReal[], int optInSignalPeriod, double outMACD[], double outMACDSignal[], double outMACDHist[] )
    {
-      MacdFixStream sp = new MacdFixStream(this);
+      MACDFIX_Stream sp = new MACDFIX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = macdFixOpenAndFillBody(sp, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX_OpenAndFillBody(sp, inReal, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

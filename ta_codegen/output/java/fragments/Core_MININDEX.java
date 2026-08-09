@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#minIndex} consumes before it can
+    * Number of leading input bars {@link Core#MININDEX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,7 +23,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int minIndexLookback( int optInTimePeriod )
+   public int MININDEX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -33,13 +33,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode minIndexInternal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode MININDEX_Internal( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -114,13 +114,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode minIndexInternal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             int outInteger[] )
+   RetCode MININDEX_Internal( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              int outInteger[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -195,7 +195,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minIndexLookback} is a <b>success
+    * valid range shorter than {@link Core#MININDEX_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -214,12 +214,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#maxIndex
-    * @see Core#minMaxIndex
-    * @see Core#minMax
+    * @see Core#MIN
+    * @see Core#MAXINDEX
+    * @see Core#MINMAXINDEX
+    * @see Core#MINMAX
     */
-   public OutRange minIndex( int startIdx,
+   public OutRange MININDEX( int startIdx,
                              int endIdx,
                              double inReal[],
                              int optInTimePeriod,
@@ -227,7 +227,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("MININDEX", retCode);
       }
@@ -251,7 +251,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minIndexLookback} is a <b>success
+    * valid range shorter than {@link Core#MININDEX_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -270,12 +270,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#maxIndex
-    * @see Core#minMaxIndex
-    * @see Core#minMax
+    * @see Core#MIN
+    * @see Core#MAXINDEX
+    * @see Core#MINMAXINDEX
+    * @see Core#MINMAX
     */
-   public OutRange minIndex( int startIdx,
+   public OutRange MININDEX( int startIdx,
                              int endIdx,
                              float inReal[],
                              int optInTimePeriod,
@@ -283,7 +283,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minIndexInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MININDEX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("MININDEX", retCode);
       }
@@ -293,8 +293,8 @@
 
    /**
     * A live MININDEX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#minIndex} over the same series.
-    * Open with {@link Core#minIndexOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MININDEX} over the same series.
+    * Open with {@link Core#MININDEX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -305,7 +305,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MinIndexStream {
+   public static final class MININDEX_Stream {
       final Core core;
       int optInTimePeriod;
       double lowest;
@@ -318,10 +318,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      MinIndexStream( Core core ) { this.core = core; }
+      MININDEX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#minIndexOpenAndFill}, or
+       * The range filled by {@link Core#MININDEX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -329,7 +329,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MinIndexStream( MinIndexStream other ) {
+      MININDEX_Stream( MININDEX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -348,7 +348,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inReal ) {
-         core.minIndexStreamStep(this, inReal);
+         core.MININDEX_StreamStep(this, inReal);
          return this.cur_outInteger;
       }
 
@@ -360,8 +360,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inReal ) {
-         MinIndexStream scratch = new MinIndexStream(this);
-         core.minIndexStreamStep(scratch, inReal);
+         MININDEX_Stream scratch = new MININDEX_Stream(this);
+         core.MININDEX_StreamStep(scratch, inReal);
          return scratch.cur_outInteger;
       }
 
@@ -378,11 +378,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MinIndexStream copy() {
-         return new MinIndexStream(this);
+      public MININDEX_Stream copy() {
+         return new MININDEX_Stream(this);
       }
    }
-   void minIndexStreamStep( MinIndexStream sp, double inReal )
+   void MININDEX_StreamStep( MININDEX_Stream sp, double inReal )
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
@@ -413,7 +413,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode minIndexOpenBody( MinIndexStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MININDEX_OpenBody( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double lowest = 0;
       double tmp = 0;
@@ -511,7 +511,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode minIndexOpenAndFillBody( MinIndexStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode MININDEX_OpenAndFillBody( MININDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double lowest = 0;
       double tmp = 0;
@@ -610,11 +610,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind minIndexOpen (composition seam). */
-   MinIndexStream minIndexOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MININDEX_Open (composition seam). */
+   MININDEX_Stream MININDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MinIndexStream sp = new MinIndexStream(this);
-      RetCode retCode = minIndexOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      MININDEX_Stream sp = new MININDEX_Stream(this);
+      RetCode retCode = MININDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -629,32 +629,32 @@
    /**
     * Open a live MININDEX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#minIndex} at that bar.
-    * <p>The history must hold at least {@code minIndexLookback(...) + 1} bars
+    * to {@link Core#MININDEX} at that bar.
+    * <p>The history must hold at least {@code MININDEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MinIndexStream minIndexOpen( double inReal[], int optInTimePeriod )
+   public MININDEX_Stream MININDEX_Open( double inReal[], int optInTimePeriod )
    {
-      return minIndexOpenInternal(inReal, 0, optInTimePeriod);
+      return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#minIndexOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#minIndex} over the whole history in the same single pass
+    * {@link Core#MININDEX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MININDEX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MinIndexStream#fillRange()}.
+    * {@link MININDEX_Stream#fillRange()}.
     */
-   public MinIndexStream minIndexOpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
+   public MININDEX_Stream MININDEX_OpenAndFill( double inReal[], int optInTimePeriod, int outInteger[] )
    {
-      MinIndexStream sp = new MinIndexStream(this);
+      MININDEX_Stream sp = new MININDEX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minIndexOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = MININDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

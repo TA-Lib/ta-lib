@@ -21,7 +21,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#accbands} consumes before it can
+    * Number of leading input bars {@link Core#ACCBANDS} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,27 +31,27 @@
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int accbandsLookback( int optInTimePeriod )
+   public int ACCBANDS_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return smaLookback(optInTimePeriod) ;
+      return SMA_Lookback(optInTimePeriod) ;
 
    }
-   RetCode accbandsInternal( int startIdx,
-                             int endIdx,
-                             double inHigh[],
-                             double inLow[],
-                             double inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outRealUpperBand[],
-                             double outRealMiddleBand[],
-                             double outRealLowerBand[] )
+   RetCode ACCBANDS_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              double inClose[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outRealUpperBand[],
+                              double outRealMiddleBand[],
+                              double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -81,7 +81,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = smaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -171,17 +171,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode accbandsInternal( int startIdx,
-                             int endIdx,
-                             float inHigh[],
-                             float inLow[],
-                             float inClose[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outRealUpperBand[],
-                             double outRealMiddleBand[],
-                             double outRealLowerBand[] )
+   RetCode ACCBANDS_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              float inClose[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outRealUpperBand[],
+                              double outRealMiddleBand[],
+                              double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -208,7 +208,7 @@
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
-      lookbackTotal = smaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -284,7 +284,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * valid range shorter than {@link Core#ACCBANDS_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -308,10 +308,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#bbands
+    * @see Core#SMA
+    * @see Core#BBANDS
     */
-   public OutRange accbands( int startIdx,
+   public OutRange ACCBANDS( int startIdx,
                              int endIdx,
                              double inHigh[],
                              double inLow[],
@@ -323,7 +323,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = accbandsInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw failure("ACCBANDS", retCode);
       }
@@ -345,7 +345,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#accbandsLookback} is a <b>success
+    * valid range shorter than {@link Core#ACCBANDS_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -369,10 +369,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#bbands
+    * @see Core#SMA
+    * @see Core#BBANDS
     */
-   public OutRange accbands( int startIdx,
+   public OutRange ACCBANDS( int startIdx,
                              int endIdx,
                              float inHigh[],
                              float inLow[],
@@ -384,7 +384,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = accbandsInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw failure("ACCBANDS", retCode);
       }
@@ -394,8 +394,8 @@
 
    /**
     * A live ACCBANDS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#accbands} over the same series.
-    * Open with {@link Core#accbandsOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ACCBANDS} over the same series.
+    * Open with {@link Core#ACCBANDS_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -406,7 +406,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AccbandsStream {
+   public static final class ACCBANDS_Stream {
       final Core core;
       int optInTimePeriod;
       double periodTotalUpper;
@@ -426,10 +426,10 @@
       Value cachedValue;
       OutRange fillRange = OutRange.EMPTY;
 
-      AccbandsStream( Core core ) { this.core = core; }
+      ACCBANDS_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#accbandsOpenAndFill}, or
+       * The range filled by {@link Core#ACCBANDS_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -437,7 +437,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AccbandsStream( AccbandsStream other ) {
+      ACCBANDS_Stream( ACCBANDS_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotalUpper = other.periodTotalUpper;
@@ -477,7 +477,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public Value update( double inHigh, double inLow, double inClose ) {
-         core.accbandsStreamStep(this, inHigh, inLow, inClose);
+         core.ACCBANDS_StreamStep(this, inHigh, inLow, inClose);
          this.cachedValue = new Value(this.cur_outRealUpperBand, this.cur_outRealMiddleBand, this.cur_outRealLowerBand);
          return this.cachedValue;
       }
@@ -490,8 +490,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
-         AccbandsStream scratch = new AccbandsStream(this);
-         core.accbandsStreamStep(scratch, inHigh, inLow, inClose);
+         ACCBANDS_Stream scratch = new ACCBANDS_Stream(this);
+         core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }
 
@@ -508,11 +508,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AccbandsStream copy() {
-         return new AccbandsStream(this);
+      public ACCBANDS_Stream copy() {
+         return new ACCBANDS_Stream(this);
       }
    }
-   void accbandsStreamStep( AccbandsStream sp, double inHigh, double inLow, double inClose )
+   void ACCBANDS_StreamStep( ACCBANDS_Stream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -558,7 +558,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode accbandsOpenBody( AccbandsStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -592,7 +592,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = smaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -707,10 +707,10 @@
       sp.cur_outRealUpperBand = lastValue_outRealUpperBand;
       sp.cur_outRealMiddleBand = lastValue_outRealMiddleBand;
       sp.cur_outRealLowerBand = lastValue_outRealLowerBand;
-      sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
-   private RetCode accbandsOpenAndFillBody( AccbandsStream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   private RetCode ACCBANDS_OpenAndFillBody( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -743,7 +743,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = smaLookback(optInTimePeriod);
+      lookbackTotal = SMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -858,14 +858,14 @@
       sp.cur_outRealUpperBand = outRealUpperBand[outNBElement.value - 1];
       sp.cur_outRealMiddleBand = outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new AccbandsStream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind accbandsOpen (composition seam). */
-   AccbandsStream accbandsOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind ACCBANDS_Open (composition seam). */
+   ACCBANDS_Stream ACCBANDS_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      AccbandsStream sp = new AccbandsStream(this);
-      RetCode retCode = accbandsOpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
+      RetCode retCode = ACCBANDS_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -880,32 +880,32 @@
    /**
     * Open a live ACCBANDS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#accbands} at that bar.
-    * <p>The history must hold at least {@code accbandsLookback(...) + 1} bars
+    * to {@link Core#ACCBANDS} at that bar.
+    * <p>The history must hold at least {@code ACCBANDS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AccbandsStream accbandsOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public ACCBANDS_Stream ACCBANDS_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      return accbandsOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#accbandsOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#accbands} over the whole history in the same single pass
+    * {@link Core#ACCBANDS_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ACCBANDS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AccbandsStream#fillRange()}.
+    * {@link ACCBANDS_Stream#fillRange()}.
     */
-   public AccbandsStream accbandsOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+   public ACCBANDS_Stream ACCBANDS_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      AccbandsStream sp = new AccbandsStream(this);
+      ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = accbandsOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = ACCBANDS_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

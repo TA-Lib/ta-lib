@@ -1,5 +1,4 @@
 name: CDLTHRUSTING
-camel_case: CdlThrusting
 group: Pattern Recognition
 hint: Thrusting Pattern
 flags: [candlestick, stream]

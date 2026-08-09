@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlSeperatingLines} consumes
+    * Number of leading input bars {@link Core#CDLSEPARATINGLINES} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlSeperatingLinesLookback( )
+   public int CDLSEPARATINGLINES_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -35,15 +35,15 @@
       return Math.max(Math.max(ShadowVeryShort_avgPeriod, BodyLong_avgPeriod), Equal_avgPeriod) + 1 ;
 
    }
-   RetCode cdlSeperatingLinesInternal( int startIdx,
-                                       int endIdx,
-                                       double inOpen[],
-                                       double inHigh[],
-                                       double inLow[],
-                                       double inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode CDLSEPARATINGLINES_Internal( int startIdx,
+                                        int endIdx,
+                                        double inOpen[],
+                                        double inHigh[],
+                                        double inLow[],
+                                        double inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double ShadowVeryShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -72,7 +72,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlSeperatingLinesLookback();
+      lookbackTotal = CDLSEPARATINGLINES_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -146,15 +146,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlSeperatingLinesInternal( int startIdx,
-                                       int endIdx,
-                                       float inOpen[],
-                                       float inHigh[],
-                                       float inLow[],
-                                       float inClose[],
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       int outInteger[] )
+   RetCode CDLSEPARATINGLINES_Internal( int startIdx,
+                                        int endIdx,
+                                        float inOpen[],
+                                        float inHigh[],
+                                        float inLow[],
+                                        float inClose[],
+                                        MInteger outBegIdx,
+                                        MInteger outNBElement,
+                                        int outInteger[] )
    {
       double ShadowVeryShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -180,7 +180,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlSeperatingLinesLookback();
+      lookbackTotal = CDLSEPARATINGLINES_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -247,7 +247,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlSeperatingLinesLookback} is a
+    * valid range shorter than {@link Core#CDLSEPARATINGLINES_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -267,9 +267,9 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlBeltHold
+    * @see Core#CDLBELTHOLD
     */
-   public OutRange cdlSeperatingLines( int startIdx,
+   public OutRange CDLSEPARATINGLINES( int startIdx,
                                        int endIdx,
                                        double inOpen[],
                                        double inHigh[],
@@ -279,7 +279,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlSeperatingLinesInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSEPARATINGLINES", retCode);
       }
@@ -305,7 +305,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlSeperatingLinesLookback} is a
+    * valid range shorter than {@link Core#CDLSEPARATINGLINES_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -325,9 +325,9 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlBeltHold
+    * @see Core#CDLBELTHOLD
     */
-   public OutRange cdlSeperatingLines( int startIdx,
+   public OutRange CDLSEPARATINGLINES( int startIdx,
                                        int endIdx,
                                        float inOpen[],
                                        float inHigh[],
@@ -337,7 +337,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlSeperatingLinesInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSEPARATINGLINES_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLSEPARATINGLINES", retCode);
       }
@@ -347,8 +347,8 @@
 
    /**
     * A live CDLSEPARATINGLINES stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlSeperatingLines} over the same series.
-    * Open with {@link Core#cdlSeperatingLinesOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLSEPARATINGLINES} over the same series.
+    * Open with {@link Core#CDLSEPARATINGLINES_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -359,7 +359,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlSeperatingLinesStream {
+   public static final class CDLSEPARATINGLINES_Stream {
       final Core core;
       double ShadowVeryShortPeriodTotal;
       double BodyLongPeriodTotal;
@@ -399,10 +399,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlSeperatingLinesStream( Core core ) { this.core = core; }
+      CDLSEPARATINGLINES_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlSeperatingLinesOpenAndFill}, or
+       * The range filled by {@link Core#CDLSEPARATINGLINES_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -410,7 +410,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlSeperatingLinesStream( CdlSeperatingLinesStream other ) {
+      CDLSEPARATINGLINES_Stream( CDLSEPARATINGLINES_Stream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -456,7 +456,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlSeperatingLinesStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLSEPARATINGLINES_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -468,8 +468,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlSeperatingLinesStream scratch = new CdlSeperatingLinesStream(this);
-         core.cdlSeperatingLinesStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLSEPARATINGLINES_Stream scratch = new CDLSEPARATINGLINES_Stream(this);
+         core.CDLSEPARATINGLINES_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -486,11 +486,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlSeperatingLinesStream copy() {
-         return new CdlSeperatingLinesStream(this);
+      public CDLSEPARATINGLINES_Stream copy() {
+         return new CDLSEPARATINGLINES_Stream(this);
       }
    }
-   void cdlSeperatingLinesStreamStep( CdlSeperatingLinesStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLSEPARATINGLINES_StreamStep( CDLSEPARATINGLINES_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -562,7 +562,7 @@
          sp.ringPos_ShadowVeryShortTrailingIdx = 0;
       }
    }
-   private RetCode cdlSeperatingLinesOpenBody( CdlSeperatingLinesStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLSEPARATINGLINES_OpenBody( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double ShadowVeryShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -596,7 +596,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlSeperatingLinesLookback();
+      lookbackTotal = CDLSEPARATINGLINES_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -755,7 +755,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlSeperatingLinesOpenAndFillBody( CdlSeperatingLinesStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLSEPARATINGLINES_OpenAndFillBody( CDLSEPARATINGLINES_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double ShadowVeryShortPeriodTotal = 0;
       double BodyLongPeriodTotal = 0;
@@ -790,7 +790,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlSeperatingLinesLookback();
+      lookbackTotal = CDLSEPARATINGLINES_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -949,11 +949,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlSeperatingLinesOpen (composition seam). */
-   CdlSeperatingLinesStream cdlSeperatingLinesOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLSEPARATINGLINES_Open (composition seam). */
+   CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlSeperatingLinesStream sp = new CdlSeperatingLinesStream(this);
-      RetCode retCode = cdlSeperatingLinesOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
+      RetCode retCode = CDLSEPARATINGLINES_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -968,32 +968,32 @@
    /**
     * Open a live CDLSEPARATINGLINES stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlSeperatingLines} at that bar.
-    * <p>The history must hold at least {@code cdlSeperatingLinesLookback(...) + 1} bars
+    * to {@link Core#CDLSEPARATINGLINES} at that bar.
+    * <p>The history must hold at least {@code CDLSEPARATINGLINES_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlSeperatingLinesStream cdlSeperatingLinesOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlSeperatingLinesOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLSEPARATINGLINES_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlSeperatingLinesOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlSeperatingLines} over the whole history in the same single pass
+    * {@link Core#CDLSEPARATINGLINES_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLSEPARATINGLINES} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlSeperatingLinesStream#fillRange()}.
+    * {@link CDLSEPARATINGLINES_Stream#fillRange()}.
     */
-   public CdlSeperatingLinesStream cdlSeperatingLinesOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLSEPARATINGLINES_Stream CDLSEPARATINGLINES_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlSeperatingLinesStream sp = new CdlSeperatingLinesStream(this);
+      CDLSEPARATINGLINES_Stream sp = new CDLSEPARATINGLINES_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlSeperatingLinesOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLSEPARATINGLINES_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

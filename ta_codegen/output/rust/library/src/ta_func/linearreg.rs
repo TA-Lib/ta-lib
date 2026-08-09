@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::linearreg`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::LINEARREG`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn linearreg_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn LINEARREG_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -126,7 +126,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.linearreg(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.LINEARREG(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -134,14 +134,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::linearreg_slope`] · [`Core::linearreg_angle`] · [`Core::linearreg_intercept`] ·
-    /// [`Core::tsf`]
+    /// [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_ANGLE`] · [`Core::LINEARREG_INTERCEPT`] ·
+    /// [`Core::TSF`]
     ///
-    /// Further reading: [ta-lib.org/functions/linearreg](https://ta-lib.org/functions/linearreg/)
+    /// Further reading: [ta-lib.org/functions/LINEARREG](https://ta-lib.org/functions/LINEARREG/)
     #[doc(alias = "LinearRegression")]
     #[doc(alias = "LeastSquares")]
     #[doc(alias = "BestFitLine")]
-    pub fn linearreg(
+    pub fn LINEARREG(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -152,13 +152,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, linearreg_fma, linearreg_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, LINEARREG_fma, LINEARREG_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.linearreg_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.LINEARREG_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn linearreg_fma(
+    fn LINEARREG_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -168,10 +168,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.linearreg_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.LINEARREG_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn linearreg_impl(
+    fn LINEARREG_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -192,7 +192,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.linearreg_lookback(optInTimePeriod);
+        let _assertLb = self.LINEARREG_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -227,7 +227,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -288,20 +288,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live LINEARREG stream: one value per closed bar, bit-identical to [`Core::linearreg`]
-/// over the same series. Open with [`Core::linearreg_open`]; dropping the handle
+/// Live LINEARREG stream: one value per closed bar, bit-identical to [`Core::LINEARREG`]
+/// over the same series. Open with [`Core::LINEARREG_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LINEARREG_Stream")]
-pub struct LinearregStream {
+pub struct LINEARREG_Stream {
     core: Core,
-    state: LinearregStreamState,
+    state: LINEARREG_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LinearregStreamState {
+struct LINEARREG_StreamState {
     optInTimePeriod: i32,
     SumX: f64,
     SumXY: f64,
@@ -320,7 +320,7 @@ struct LinearregStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn linearreg_step_internal(&self, sp: &mut LinearregStreamState, inReal: f64, outReal: &mut f64) {
+    fn LINEARREG_step_internal(&self, sp: &mut LINEARREG_StreamState, inReal: f64, outReal: &mut f64) {
         let mut m: f64 = 0.0_f64;
         let mut b: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
@@ -339,10 +339,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::linearreg_open`] (composition seam).
-    pub(crate) fn linearreg_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::LINEARREG_Open`] (composition seam).
+    pub(crate) fn LINEARREG_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(LinearregStream, f64), RetCode> {
+    ) -> Result<(LINEARREG_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -390,7 +390,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -454,7 +454,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = LinearregStreamState {
+        let state = LINEARREG_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -465,11 +465,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((LinearregStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((LINEARREG_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live LINEARREG stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::linearreg`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::LINEARREG`] at that bar.
     ///
     /// # Errors
     ///
@@ -481,23 +481,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.linearreg_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.LINEARREG_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LINEARREG_Open")]
-    pub fn linearreg_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LinearregStream, f64), RetCode> {
-        self.linearreg_open_internal(inReal, 0, optInTimePeriod)
+    pub fn LINEARREG_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LINEARREG_Stream, f64), RetCode> {
+        self.LINEARREG_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::linearreg_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::linearreg`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::LINEARREG_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::LINEARREG`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_LINEARREG_OpenAndFill")]
-    pub fn linearreg_open_and_fill(
+    pub fn LINEARREG_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LinearregStream, RetCode> {
+    ) -> Result<LINEARREG_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -544,7 +544,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -610,7 +610,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = LinearregStreamState {
+        let state = LINEARREG_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -621,19 +621,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(LinearregStream { core: self.clone(), state })
+        Ok(LINEARREG_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LinearregStream {
+impl LINEARREG_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_LINEARREG_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.linearreg_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.LINEARREG_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -651,7 +651,7 @@ impl LinearregStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LinearregStream>();
+    _assert_auto::<LINEARREG_Stream>();
 };
 
 /***************/

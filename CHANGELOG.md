@@ -34,6 +34,20 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~10%: ATR and NATR
 
 ### Changed
+- (#179) API: every function is now spelled the same way in every language. The name in
+  the definition is the identity, used verbatim; C alone prefixes `TA_`, and suffixed
+  variants are separated by an underscore. So `TA_SMA` / `TA_SMA_Lookback` in C are `SMA` /
+  `SMA_Lookback` in Rust, Java and C#, where they were `sma` / `sma_lookback`, `sma` /
+  `smaLookback` and `Sma` / `SmaLookback`. Enum members follow the same rule: `MAType.SMA`
+  and `FuncUnstId.EMA`, not `MAType.Sma` and `FuncUnstId.Ema`. The unstable-period wildcard
+  is `ALL` in all three (`TA_FUNC_UNST_ALL` in C), where each had spelled it differently.
+  The C library is unaffected. Rust, Java and C# are unpublished, so no released package
+  changes — this is the last version in which the spelling can settle without a migration.
+- (#179) C API: `TA_FuncInfo` no longer carries `camelCaseName`, and `ta_func_api.xml` no
+  longer emits `<CamelCaseName>`. It held a second, hand-authored spelling of a name the
+  struct already carries in `name`, and it had frozen two typos (`CdlHignWave`,
+  `CdlSeperatingLines`) into the field. Read `name`. This changes the layout of a public
+  struct: recompile against the new `ta_abstract.h` rather than relinking.
 - (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);
   above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX` instead
   of computing. 100 million bars is ~190 years of 24/7 one-minute data; series longer than
@@ -90,7 +104,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   that take a penetration.
 
 ### Removed
-- (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` functions, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents. Introduced in 0.7.1 as a faster tier that skipped parameter validation; measurement across four toolchains found it is not measurably faster at any range size (one was 20-45% slower) while costing 15.5% of the library's `.text`. Use the ordinary function — `TA_SMA`, `core.sma(..)`, `Sma(..)` — which returns the same values for the same valid inputs.
+- (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` functions, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents. Introduced in 0.7.1 as a faster tier that skipped parameter validation; measurement across four toolchains found it is not measurably faster at any range size (one was 20-45% slower) while costing 15.5% of the library's `.text`. Use the ordinary function — `TA_SMA`, `core.SMA(..)`, `SMA(..)` — which returns the same values for the same valid inputs.
 - (#166) `include/ta_func_unguarded.h`. Half of it declared the functions above and the rest was never public API. `include/ta_func.h` already carries the complete stream surface.
 - (#166) `TA_EMA_Private` and `TA_S_EMA_Private` are no longer exported.
 

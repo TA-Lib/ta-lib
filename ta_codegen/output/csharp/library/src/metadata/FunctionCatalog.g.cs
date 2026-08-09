@@ -321,8 +321,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ACCBANDS",
         group: FunctionGroup.OverlapStudies,
         hint: "Acceleration Bands",
-        camelCaseName: "Accbands",
-        methodName: "Accbands",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -339,10 +337,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outRealMiddleBand", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outRealLowerBand", OutputFlags.LowerLimit),
         ],
-        lookback: static (core, c) => core.AccbandsLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ACCBANDS_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Accbands(
+            RetCode rc = core.ACCBANDS(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -351,8 +349,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ACOS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ACos",
-        camelCaseName: "Acos",
-        methodName: "Acos",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -364,10 +360,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AcosLookback(),
+        lookback: static (core, c) => core.ACOS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Acos(
+            RetCode rc = core.ACOS(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -376,8 +372,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "AD",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin A/D Line",
-        camelCaseName: "Ad",
-        methodName: "Ad",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -389,10 +383,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AdLookback(),
+        lookback: static (core, c) => core.AD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Ad(
+            RetCode rc = core.AD(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -401,8 +395,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ADD",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Add",
-        camelCaseName: "Add",
-        methodName: "Add",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -415,10 +407,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AddLookback(),
+        lookback: static (core, c) => core.ADD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Add(
+            RetCode rc = core.ADD(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -427,8 +419,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ADOSC",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin A/D Oscillator",
-        camelCaseName: "AdOsc",
-        methodName: "AdOsc",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -444,10 +434,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AdOscLookback(c.IntOpt(0), c.IntOpt(1)),
+        lookback: static (core, c) => core.ADOSC_Lookback(c.IntOpt(0), c.IntOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AdOsc(
+            RetCode rc = core.ADOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -456,10 +446,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ADX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Average Directional Movement Index",
-        camelCaseName: "Adx",
-        methodName: "Adx",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Adx,
+        unstableId: FuncUnstId.ADX,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -472,10 +460,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AdxLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ADX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Adx(
+            RetCode rc = core.ADX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -484,8 +472,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ADXR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Average Directional Movement Index Rating",
-        camelCaseName: "Adxr",
-        methodName: "Adxr",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -500,10 +486,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AdxrLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ADXR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Adxr(
+            RetCode rc = core.ADXR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -512,8 +498,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "APO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Absolute Price Oscillator",
-        camelCaseName: "Apo",
-        methodName: "Apo",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -530,10 +514,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.ApoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        lookback: static (core, c) => core.APO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Apo(
+            RetCode rc = core.APO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -542,8 +526,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "AROON",
         group: FunctionGroup.MomentumIndicators,
         hint: "Aroon",
-        camelCaseName: "Aroon",
-        methodName: "Aroon",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -559,10 +541,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outAroonDown", OutputFlags.DashLine),
             new OutputInfo(OutputKind.Real, "outAroonUp", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AroonLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.AROON_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Aroon(
+            RetCode rc = core.AROON(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -571,8 +553,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "AROONOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Aroon Oscillator",
-        camelCaseName: "AroonOsc",
-        methodName: "AroonOsc",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -587,10 +567,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AroonOscLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.AROONOSC_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AroonOsc(
+            RetCode rc = core.AROONOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -599,8 +579,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ASIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ASin",
-        camelCaseName: "Asin",
-        methodName: "Asin",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -612,10 +590,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AsinLookback(),
+        lookback: static (core, c) => core.ASIN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Asin(
+            RetCode rc = core.ASIN(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -624,8 +602,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ATAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ATan",
-        camelCaseName: "Atan",
-        methodName: "Atan",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -637,10 +613,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AtanLookback(),
+        lookback: static (core, c) => core.ATAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Atan(
+            RetCode rc = core.ATAN(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -649,10 +625,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ATR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Average True Range",
-        camelCaseName: "Atr",
-        methodName: "Atr",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Atr,
+        unstableId: FuncUnstId.ATR,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -665,10 +639,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AtrLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ATR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Atr(
+            RetCode rc = core.ATR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -677,8 +651,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "AVGDEV",
         group: FunctionGroup.PriceTransform,
         hint: "Average Deviation",
-        camelCaseName: "AvgDev",
-        methodName: "AvgDev",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -693,10 +665,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AvgDevLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.AVGDEV_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AvgDev(
+            RetCode rc = core.AVGDEV(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -705,8 +677,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "AVGPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Average Price",
-        camelCaseName: "AvgPrice",
-        methodName: "AvgPrice",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -718,10 +688,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.AvgPriceLookback(),
+        lookback: static (core, c) => core.AVGPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.AvgPrice(
+            RetCode rc = core.AVGPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -730,8 +700,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "BBANDS",
         group: FunctionGroup.OverlapStudies,
         hint: "Bollinger Bands",
-        camelCaseName: "Bbands",
-        methodName: "Bbands",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -751,10 +719,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outRealMiddleBand", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outRealLowerBand", OutputFlags.LowerLimit),
         ],
-        lookback: static (core, c) => core.BbandsLookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
+        lookback: static (core, c) => core.BBANDS_Lookback(c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Bbands(
+            RetCode rc = core.BBANDS(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -763,8 +731,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "BETA",
         group: FunctionGroup.StatisticFunctions,
         hint: "Beta",
-        camelCaseName: "Beta",
-        methodName: "Beta",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -780,10 +746,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.BetaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.BETA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Beta(
+            RetCode rc = core.BETA(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -792,8 +758,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "BOP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Balance Of Power",
-        camelCaseName: "Bop",
-        methodName: "Bop",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -805,10 +769,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.BopLookback(),
+        lookback: static (core, c) => core.BOP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Bop(
+            RetCode rc = core.BOP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -817,8 +781,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CCI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Commodity Channel Index",
-        camelCaseName: "Cci",
-        methodName: "Cci",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -833,10 +795,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CciLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.CCI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cci(
+            RetCode rc = core.CCI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -845,8 +807,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL2CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Two Crows",
-        camelCaseName: "Cdl2Crows",
-        methodName: "Cdl2Crows",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -858,10 +818,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl2CrowsLookback(),
+        lookback: static (core, c) => core.CDL2CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl2Crows(
+            RetCode rc = core.CDL2CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -870,8 +830,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3BLACKCROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Black Crows",
-        camelCaseName: "Cdl3BlackCrows",
-        methodName: "Cdl3BlackCrows",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -883,10 +841,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3BlackCrowsLookback(),
+        lookback: static (core, c) => core.CDL3BLACKCROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3BlackCrows(
+            RetCode rc = core.CDL3BLACKCROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -895,8 +853,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3INSIDE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Inside Up/Down",
-        camelCaseName: "Cdl3Inside",
-        methodName: "Cdl3Inside",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -908,10 +864,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3InsideLookback(),
+        lookback: static (core, c) => core.CDL3INSIDE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3Inside(
+            RetCode rc = core.CDL3INSIDE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -920,8 +876,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3LINESTRIKE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three-Line Strike",
-        camelCaseName: "Cdl3LineStrike",
-        methodName: "Cdl3LineStrike",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -933,10 +887,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3LineStrikeLookback(),
+        lookback: static (core, c) => core.CDL3LINESTRIKE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3LineStrike(
+            RetCode rc = core.CDL3LINESTRIKE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -945,8 +899,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3OUTSIDE",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Outside Up/Down",
-        camelCaseName: "Cdl3Outside",
-        methodName: "Cdl3Outside",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -958,10 +910,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3OutsideLookback(),
+        lookback: static (core, c) => core.CDL3OUTSIDE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3Outside(
+            RetCode rc = core.CDL3OUTSIDE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -970,8 +922,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3STARSINSOUTH",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Stars In The South",
-        camelCaseName: "Cdl3StarsInSouth",
-        methodName: "Cdl3StarsInSouth",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -983,10 +933,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3StarsInSouthLookback(),
+        lookback: static (core, c) => core.CDL3STARSINSOUTH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3StarsInSouth(
+            RetCode rc = core.CDL3STARSINSOUTH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -995,8 +945,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDL3WHITESOLDIERS",
         group: FunctionGroup.PatternRecognition,
         hint: "Three Advancing White Soldiers",
-        camelCaseName: "Cdl3WhiteSoldiers",
-        methodName: "Cdl3WhiteSoldiers",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1008,10 +956,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Cdl3WhiteSoldiersLookback(),
+        lookback: static (core, c) => core.CDL3WHITESOLDIERS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cdl3WhiteSoldiers(
+            RetCode rc = core.CDL3WHITESOLDIERS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1020,8 +968,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLABANDONEDBABY",
         group: FunctionGroup.PatternRecognition,
         hint: "Abandoned Baby",
-        camelCaseName: "CdlAbandonedBaby",
-        methodName: "CdlAbandonedBaby",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1036,10 +982,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlAbandonedBabyLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLABANDONEDBABY_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlAbandonedBaby(
+            RetCode rc = core.CDLABANDONEDBABY(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1048,8 +994,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLADVANCEBLOCK",
         group: FunctionGroup.PatternRecognition,
         hint: "Advance Block",
-        camelCaseName: "CdlAdvanceBlock",
-        methodName: "CdlAdvanceBlock",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1061,10 +1005,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlAdvanceBlockLookback(),
+        lookback: static (core, c) => core.CDLADVANCEBLOCK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlAdvanceBlock(
+            RetCode rc = core.CDLADVANCEBLOCK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1073,8 +1017,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLBELTHOLD",
         group: FunctionGroup.PatternRecognition,
         hint: "Belt-hold",
-        camelCaseName: "CdlBeltHold",
-        methodName: "CdlBeltHold",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1086,10 +1028,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlBeltHoldLookback(),
+        lookback: static (core, c) => core.CDLBELTHOLD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlBeltHold(
+            RetCode rc = core.CDLBELTHOLD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1098,8 +1040,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLBREAKAWAY",
         group: FunctionGroup.PatternRecognition,
         hint: "Breakaway",
-        camelCaseName: "CdlBreakaway",
-        methodName: "CdlBreakaway",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1111,10 +1051,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlBreakawayLookback(),
+        lookback: static (core, c) => core.CDLBREAKAWAY_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlBreakaway(
+            RetCode rc = core.CDLBREAKAWAY(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1123,8 +1063,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLCLOSINGMARUBOZU",
         group: FunctionGroup.PatternRecognition,
         hint: "Closing Marubozu",
-        camelCaseName: "CdlClosingMarubozu",
-        methodName: "CdlClosingMarubozu",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1136,10 +1074,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlClosingMarubozuLookback(),
+        lookback: static (core, c) => core.CDLCLOSINGMARUBOZU_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlClosingMarubozu(
+            RetCode rc = core.CDLCLOSINGMARUBOZU(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1148,8 +1086,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLCONCEALBABYSWALL",
         group: FunctionGroup.PatternRecognition,
         hint: "Concealing Baby Swallow",
-        camelCaseName: "CdlConcealBabysWall",
-        methodName: "CdlConcealBabysWall",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1161,10 +1097,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlConcealBabysWallLookback(),
+        lookback: static (core, c) => core.CDLCONCEALBABYSWALL_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlConcealBabysWall(
+            RetCode rc = core.CDLCONCEALBABYSWALL(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1173,8 +1109,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLCOUNTERATTACK",
         group: FunctionGroup.PatternRecognition,
         hint: "Counterattack",
-        camelCaseName: "CdlCounterAttack",
-        methodName: "CdlCounterAttack",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1186,10 +1120,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlCounterAttackLookback(),
+        lookback: static (core, c) => core.CDLCOUNTERATTACK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlCounterAttack(
+            RetCode rc = core.CDLCOUNTERATTACK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1198,8 +1132,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLDARKCLOUDCOVER",
         group: FunctionGroup.PatternRecognition,
         hint: "Dark Cloud Cover",
-        camelCaseName: "CdlDarkCloudCover",
-        methodName: "CdlDarkCloudCover",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1214,10 +1146,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlDarkCloudCoverLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLDARKCLOUDCOVER_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlDarkCloudCover(
+            RetCode rc = core.CDLDARKCLOUDCOVER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1226,8 +1158,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Doji",
-        camelCaseName: "CdlDoji",
-        methodName: "CdlDoji",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1239,10 +1169,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlDojiLookback(),
+        lookback: static (core, c) => core.CDLDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlDoji(
+            RetCode rc = core.CDLDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1251,8 +1181,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Doji Star",
-        camelCaseName: "CdlDojiStar",
-        methodName: "CdlDojiStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1264,10 +1192,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlDojiStarLookback(),
+        lookback: static (core, c) => core.CDLDOJISTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlDojiStar(
+            RetCode rc = core.CDLDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1276,8 +1204,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLDRAGONFLYDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Dragonfly Doji",
-        camelCaseName: "CdlDragonflyDoji",
-        methodName: "CdlDragonflyDoji",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1289,10 +1215,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlDragonflyDojiLookback(),
+        lookback: static (core, c) => core.CDLDRAGONFLYDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlDragonflyDoji(
+            RetCode rc = core.CDLDRAGONFLYDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1301,8 +1227,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLENGULFING",
         group: FunctionGroup.PatternRecognition,
         hint: "Engulfing Pattern",
-        camelCaseName: "CdlEngulfing",
-        methodName: "CdlEngulfing",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1314,10 +1238,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlEngulfingLookback(),
+        lookback: static (core, c) => core.CDLENGULFING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlEngulfing(
+            RetCode rc = core.CDLENGULFING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1326,8 +1250,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLEVENINGDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Evening Doji Star",
-        camelCaseName: "CdlEveningDojiStar",
-        methodName: "CdlEveningDojiStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1342,10 +1264,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlEveningDojiStarLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLEVENINGDOJISTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlEveningDojiStar(
+            RetCode rc = core.CDLEVENINGDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1354,8 +1276,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLEVENINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Evening Star",
-        camelCaseName: "CdlEveningStar",
-        methodName: "CdlEveningStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1370,10 +1290,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlEveningStarLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLEVENINGSTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlEveningStar(
+            RetCode rc = core.CDLEVENINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1382,8 +1302,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLGAPSIDESIDEWHITE",
         group: FunctionGroup.PatternRecognition,
         hint: "Up/Down-gap side-by-side white lines",
-        camelCaseName: "CdlGapSideSideWhite",
-        methodName: "CdlGapSideSideWhite",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1395,10 +1313,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlGapSideSideWhiteLookback(),
+        lookback: static (core, c) => core.CDLGAPSIDESIDEWHITE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlGapSideSideWhite(
+            RetCode rc = core.CDLGAPSIDESIDEWHITE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1407,8 +1325,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLGRAVESTONEDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Gravestone Doji",
-        camelCaseName: "CdlGravestoneDoji",
-        methodName: "CdlGravestoneDoji",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1420,10 +1336,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlGravestoneDojiLookback(),
+        lookback: static (core, c) => core.CDLGRAVESTONEDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlGravestoneDoji(
+            RetCode rc = core.CDLGRAVESTONEDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1432,8 +1348,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHAMMER",
         group: FunctionGroup.PatternRecognition,
         hint: "Hammer",
-        camelCaseName: "CdlHammer",
-        methodName: "CdlHammer",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1445,10 +1359,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHammerLookback(),
+        lookback: static (core, c) => core.CDLHAMMER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHammer(
+            RetCode rc = core.CDLHAMMER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1457,8 +1371,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHANGINGMAN",
         group: FunctionGroup.PatternRecognition,
         hint: "Hanging Man",
-        camelCaseName: "CdlHangingMan",
-        methodName: "CdlHangingMan",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1470,10 +1382,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHangingManLookback(),
+        lookback: static (core, c) => core.CDLHANGINGMAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHangingMan(
+            RetCode rc = core.CDLHANGINGMAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1482,8 +1394,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHARAMI",
         group: FunctionGroup.PatternRecognition,
         hint: "Harami Pattern",
-        camelCaseName: "CdlHarami",
-        methodName: "CdlHarami",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1495,10 +1405,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHaramiLookback(),
+        lookback: static (core, c) => core.CDLHARAMI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHarami(
+            RetCode rc = core.CDLHARAMI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1507,8 +1417,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHARAMICROSS",
         group: FunctionGroup.PatternRecognition,
         hint: "Harami Cross Pattern",
-        camelCaseName: "CdlHaramiCross",
-        methodName: "CdlHaramiCross",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1520,10 +1428,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHaramiCrossLookback(),
+        lookback: static (core, c) => core.CDLHARAMICROSS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHaramiCross(
+            RetCode rc = core.CDLHARAMICROSS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1532,8 +1440,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHIGHWAVE",
         group: FunctionGroup.PatternRecognition,
         hint: "High-Wave Candle",
-        camelCaseName: "CdlHignWave",
-        methodName: "CdlHignWave",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1545,10 +1451,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHignWaveLookback(),
+        lookback: static (core, c) => core.CDLHIGHWAVE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHignWave(
+            RetCode rc = core.CDLHIGHWAVE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1557,8 +1463,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHIKKAKE",
         group: FunctionGroup.PatternRecognition,
         hint: "Hikkake Pattern",
-        camelCaseName: "CdlHikkake",
-        methodName: "CdlHikkake",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1570,10 +1474,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHikkakeLookback(),
+        lookback: static (core, c) => core.CDLHIKKAKE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHikkake(
+            RetCode rc = core.CDLHIKKAKE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1582,8 +1486,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHIKKAKEMOD",
         group: FunctionGroup.PatternRecognition,
         hint: "Modified Hikkake Pattern",
-        camelCaseName: "CdlHikkakeMod",
-        methodName: "CdlHikkakeMod",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1595,10 +1497,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHikkakeModLookback(),
+        lookback: static (core, c) => core.CDLHIKKAKEMOD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHikkakeMod(
+            RetCode rc = core.CDLHIKKAKEMOD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1607,8 +1509,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLHOMINGPIGEON",
         group: FunctionGroup.PatternRecognition,
         hint: "Homing Pigeon",
-        camelCaseName: "CdlHomingPigeon",
-        methodName: "CdlHomingPigeon",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1620,10 +1520,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlHomingPigeonLookback(),
+        lookback: static (core, c) => core.CDLHOMINGPIGEON_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlHomingPigeon(
+            RetCode rc = core.CDLHOMINGPIGEON(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1632,8 +1532,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLIDENTICAL3CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Identical Three Crows",
-        camelCaseName: "CdlIdentical3Crows",
-        methodName: "CdlIdentical3Crows",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1645,10 +1543,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlIdentical3CrowsLookback(),
+        lookback: static (core, c) => core.CDLIDENTICAL3CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlIdentical3Crows(
+            RetCode rc = core.CDLIDENTICAL3CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1657,8 +1555,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLINNECK",
         group: FunctionGroup.PatternRecognition,
         hint: "In-Neck Pattern",
-        camelCaseName: "CdlInNeck",
-        methodName: "CdlInNeck",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1670,10 +1566,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlInNeckLookback(),
+        lookback: static (core, c) => core.CDLINNECK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlInNeck(
+            RetCode rc = core.CDLINNECK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1682,8 +1578,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLINVERTEDHAMMER",
         group: FunctionGroup.PatternRecognition,
         hint: "Inverted Hammer",
-        camelCaseName: "CdlInvertedHammer",
-        methodName: "CdlInvertedHammer",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1695,10 +1589,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlInvertedHammerLookback(),
+        lookback: static (core, c) => core.CDLINVERTEDHAMMER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlInvertedHammer(
+            RetCode rc = core.CDLINVERTEDHAMMER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1707,8 +1601,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLKICKING",
         group: FunctionGroup.PatternRecognition,
         hint: "Kicking",
-        camelCaseName: "CdlKicking",
-        methodName: "CdlKicking",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1720,10 +1612,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlKickingLookback(),
+        lookback: static (core, c) => core.CDLKICKING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlKicking(
+            RetCode rc = core.CDLKICKING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1732,8 +1624,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLKICKINGBYLENGTH",
         group: FunctionGroup.PatternRecognition,
         hint: "Kicking - bull/bear determined by the longer marubozu",
-        camelCaseName: "CdlKickingByLength",
-        methodName: "CdlKickingByLength",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1745,10 +1635,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlKickingByLengthLookback(),
+        lookback: static (core, c) => core.CDLKICKINGBYLENGTH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlKickingByLength(
+            RetCode rc = core.CDLKICKINGBYLENGTH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1757,8 +1647,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLLADDERBOTTOM",
         group: FunctionGroup.PatternRecognition,
         hint: "Ladder Bottom",
-        camelCaseName: "CdlLadderBottom",
-        methodName: "CdlLadderBottom",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1770,10 +1658,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlLadderBottomLookback(),
+        lookback: static (core, c) => core.CDLLADDERBOTTOM_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlLadderBottom(
+            RetCode rc = core.CDLLADDERBOTTOM(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1782,8 +1670,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLLONGLEGGEDDOJI",
         group: FunctionGroup.PatternRecognition,
         hint: "Long Legged Doji",
-        camelCaseName: "CdlLongLeggedDoji",
-        methodName: "CdlLongLeggedDoji",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1795,10 +1681,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlLongLeggedDojiLookback(),
+        lookback: static (core, c) => core.CDLLONGLEGGEDDOJI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlLongLeggedDoji(
+            RetCode rc = core.CDLLONGLEGGEDDOJI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1807,8 +1693,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLLONGLINE",
         group: FunctionGroup.PatternRecognition,
         hint: "Long Line Candle",
-        camelCaseName: "CdlLongLine",
-        methodName: "CdlLongLine",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1820,10 +1704,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlLongLineLookback(),
+        lookback: static (core, c) => core.CDLLONGLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlLongLine(
+            RetCode rc = core.CDLLONGLINE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1832,8 +1716,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLMARUBOZU",
         group: FunctionGroup.PatternRecognition,
         hint: "Marubozu",
-        camelCaseName: "CdlMarubozu",
-        methodName: "CdlMarubozu",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1845,10 +1727,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlMarubozuLookback(),
+        lookback: static (core, c) => core.CDLMARUBOZU_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlMarubozu(
+            RetCode rc = core.CDLMARUBOZU(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1857,8 +1739,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLMATCHINGLOW",
         group: FunctionGroup.PatternRecognition,
         hint: "Matching Low",
-        camelCaseName: "CdlMatchingLow",
-        methodName: "CdlMatchingLow",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1870,10 +1750,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlMatchingLowLookback(),
+        lookback: static (core, c) => core.CDLMATCHINGLOW_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlMatchingLow(
+            RetCode rc = core.CDLMATCHINGLOW(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1882,8 +1762,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLMATHOLD",
         group: FunctionGroup.PatternRecognition,
         hint: "Mat Hold",
-        camelCaseName: "CdlMatHold",
-        methodName: "CdlMatHold",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1898,10 +1776,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlMatHoldLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLMATHOLD_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlMatHold(
+            RetCode rc = core.CDLMATHOLD(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1910,8 +1788,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLMORNINGDOJISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Morning Doji Star",
-        camelCaseName: "CdlMorningDojiStar",
-        methodName: "CdlMorningDojiStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1926,10 +1802,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlMorningDojiStarLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLMORNINGDOJISTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlMorningDojiStar(
+            RetCode rc = core.CDLMORNINGDOJISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1938,8 +1814,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLMORNINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Morning Star",
-        camelCaseName: "CdlMorningStar",
-        methodName: "CdlMorningStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1954,10 +1828,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlMorningStarLookback(c.RealOpt(0)),
+        lookback: static (core, c) => core.CDLMORNINGSTAR_Lookback(c.RealOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlMorningStar(
+            RetCode rc = core.CDLMORNINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.RealOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1966,8 +1840,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLONNECK",
         group: FunctionGroup.PatternRecognition,
         hint: "On-Neck Pattern",
-        camelCaseName: "CdlOnNeck",
-        methodName: "CdlOnNeck",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -1979,10 +1851,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlOnNeckLookback(),
+        lookback: static (core, c) => core.CDLONNECK_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlOnNeck(
+            RetCode rc = core.CDLONNECK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -1991,8 +1863,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLPIERCING",
         group: FunctionGroup.PatternRecognition,
         hint: "Piercing Pattern",
-        camelCaseName: "CdlPiercing",
-        methodName: "CdlPiercing",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2004,10 +1874,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlPiercingLookback(),
+        lookback: static (core, c) => core.CDLPIERCING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlPiercing(
+            RetCode rc = core.CDLPIERCING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2016,8 +1886,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLRICKSHAWMAN",
         group: FunctionGroup.PatternRecognition,
         hint: "Rickshaw Man",
-        camelCaseName: "CdlRickshawMan",
-        methodName: "CdlRickshawMan",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2029,10 +1897,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlRickshawManLookback(),
+        lookback: static (core, c) => core.CDLRICKSHAWMAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlRickshawMan(
+            RetCode rc = core.CDLRICKSHAWMAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2041,8 +1909,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLRISEFALL3METHODS",
         group: FunctionGroup.PatternRecognition,
         hint: "Rising/Falling Three Methods",
-        camelCaseName: "CdlRiseFall3Methods",
-        methodName: "CdlRiseFall3Methods",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2054,10 +1920,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlRiseFall3MethodsLookback(),
+        lookback: static (core, c) => core.CDLRISEFALL3METHODS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlRiseFall3Methods(
+            RetCode rc = core.CDLRISEFALL3METHODS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2066,8 +1932,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSEPARATINGLINES",
         group: FunctionGroup.PatternRecognition,
         hint: "Separating Lines",
-        camelCaseName: "CdlSeperatingLines",
-        methodName: "CdlSeperatingLines",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2079,10 +1943,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlSeperatingLinesLookback(),
+        lookback: static (core, c) => core.CDLSEPARATINGLINES_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlSeperatingLines(
+            RetCode rc = core.CDLSEPARATINGLINES(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2091,8 +1955,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSHOOTINGSTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Shooting Star",
-        camelCaseName: "CdlShootingStar",
-        methodName: "CdlShootingStar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2104,10 +1966,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlShootingStarLookback(),
+        lookback: static (core, c) => core.CDLSHOOTINGSTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlShootingStar(
+            RetCode rc = core.CDLSHOOTINGSTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2116,8 +1978,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSHORTLINE",
         group: FunctionGroup.PatternRecognition,
         hint: "Short Line Candle",
-        camelCaseName: "CdlShortLine",
-        methodName: "CdlShortLine",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2129,10 +1989,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlShortLineLookback(),
+        lookback: static (core, c) => core.CDLSHORTLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlShortLine(
+            RetCode rc = core.CDLSHORTLINE(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2141,8 +2001,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSPINNINGTOP",
         group: FunctionGroup.PatternRecognition,
         hint: "Spinning Top",
-        camelCaseName: "CdlSpinningTop",
-        methodName: "CdlSpinningTop",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2154,10 +2012,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlSpinningTopLookback(),
+        lookback: static (core, c) => core.CDLSPINNINGTOP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlSpinningTop(
+            RetCode rc = core.CDLSPINNINGTOP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2166,8 +2024,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSTALLEDPATTERN",
         group: FunctionGroup.PatternRecognition,
         hint: "Stalled Pattern",
-        camelCaseName: "CdlStalledPattern",
-        methodName: "CdlStalledPattern",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2179,10 +2035,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlStalledPatternLookback(),
+        lookback: static (core, c) => core.CDLSTALLEDPATTERN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlStalledPattern(
+            RetCode rc = core.CDLSTALLEDPATTERN(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2191,8 +2047,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLSTICKSANDWICH",
         group: FunctionGroup.PatternRecognition,
         hint: "Stick Sandwich",
-        camelCaseName: "CdlStickSandwich",
-        methodName: "CdlStickSandwich",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2204,10 +2058,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlStickSandwichLookback(),
+        lookback: static (core, c) => core.CDLSTICKSANDWICH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlStickSandwich(
+            RetCode rc = core.CDLSTICKSANDWICH(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2216,8 +2070,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLTAKURI",
         group: FunctionGroup.PatternRecognition,
         hint: "Takuri (Dragonfly Doji with very long lower shadow)",
-        camelCaseName: "CdlTakuri",
-        methodName: "CdlTakuri",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2229,10 +2081,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlTakuriLookback(),
+        lookback: static (core, c) => core.CDLTAKURI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlTakuri(
+            RetCode rc = core.CDLTAKURI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2241,8 +2093,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLTASUKIGAP",
         group: FunctionGroup.PatternRecognition,
         hint: "Tasuki Gap",
-        camelCaseName: "CdlTasukiGap",
-        methodName: "CdlTasukiGap",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2254,10 +2104,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlTasukiGapLookback(),
+        lookback: static (core, c) => core.CDLTASUKIGAP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlTasukiGap(
+            RetCode rc = core.CDLTASUKIGAP(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2266,8 +2116,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLTHRUSTING",
         group: FunctionGroup.PatternRecognition,
         hint: "Thrusting Pattern",
-        camelCaseName: "CdlThrusting",
-        methodName: "CdlThrusting",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2279,10 +2127,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlThrustingLookback(),
+        lookback: static (core, c) => core.CDLTHRUSTING_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlThrusting(
+            RetCode rc = core.CDLTHRUSTING(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2291,8 +2139,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLTRISTAR",
         group: FunctionGroup.PatternRecognition,
         hint: "Tristar Pattern",
-        camelCaseName: "CdlTristar",
-        methodName: "CdlTristar",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2304,10 +2150,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlTristarLookback(),
+        lookback: static (core, c) => core.CDLTRISTAR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlTristar(
+            RetCode rc = core.CDLTRISTAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2316,8 +2162,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLUNIQUE3RIVER",
         group: FunctionGroup.PatternRecognition,
         hint: "Unique 3 River",
-        camelCaseName: "CdlUnique3River",
-        methodName: "CdlUnique3River",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2329,10 +2173,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlUnique3RiverLookback(),
+        lookback: static (core, c) => core.CDLUNIQUE3RIVER_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlUnique3River(
+            RetCode rc = core.CDLUNIQUE3RIVER(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2341,8 +2185,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLUPSIDEGAP2CROWS",
         group: FunctionGroup.PatternRecognition,
         hint: "Upside Gap Two Crows",
-        camelCaseName: "CdlUpsideGap2Crows",
-        methodName: "CdlUpsideGap2Crows",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2354,10 +2196,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlUpsideGap2CrowsLookback(),
+        lookback: static (core, c) => core.CDLUPSIDEGAP2CROWS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlUpsideGap2Crows(
+            RetCode rc = core.CDLUPSIDEGAP2CROWS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2366,8 +2208,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CDLXSIDEGAP3METHODS",
         group: FunctionGroup.PatternRecognition,
         hint: "Upside/Downside Gap Three Methods",
-        camelCaseName: "CdlXSideGap3Methods",
-        methodName: "CdlXSideGap3Methods",
         flags: FunctionFlags.Stream | FunctionFlags.Candlestick,
         unstableId: null,
         inputs:
@@ -2379,10 +2219,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CdlXSideGap3MethodsLookback(),
+        lookback: static (core, c) => core.CDLXSIDEGAP3METHODS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.CdlXSideGap3Methods(
+            RetCode rc = core.CDLXSIDEGAP3METHODS(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2391,8 +2231,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CEIL",
         group: FunctionGroup.MathTransform,
         hint: "Vector Ceil",
-        camelCaseName: "Ceil",
-        methodName: "Ceil",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2404,10 +2242,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CeilLookback(),
+        lookback: static (core, c) => core.CEIL_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Ceil(
+            RetCode rc = core.CEIL(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2416,8 +2254,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CMF",
         group: FunctionGroup.VolumeIndicators,
         hint: "Chaikin Money Flow",
-        camelCaseName: "Cmf",
-        methodName: "Cmf",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2432,10 +2268,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CmfLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.CMF_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cmf(
+            RetCode rc = core.CMF(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2444,10 +2280,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CMO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Chande Momentum Oscillator",
-        camelCaseName: "Cmo",
-        methodName: "Cmo",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Cmo,
+        unstableId: FuncUnstId.CMO,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2460,10 +2294,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CmoLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.CMO_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cmo(
+            RetCode rc = core.CMO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2472,8 +2306,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CMOU",
         group: FunctionGroup.MomentumIndicators,
         hint: "Chande Momentum Oscillator (Unsmoothed)",
-        camelCaseName: "Cmou",
-        methodName: "Cmou",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2488,10 +2320,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CmouLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.CMOU_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cmou(
+            RetCode rc = core.CMOU(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2500,8 +2332,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "CORREL",
         group: FunctionGroup.StatisticFunctions,
         hint: "Pearson's Correlation Coefficient (r)",
-        camelCaseName: "Correl",
-        methodName: "Correl",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2517,10 +2347,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CorrelLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.CORREL_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Correl(
+            RetCode rc = core.CORREL(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2529,8 +2359,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "COS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cos",
-        camelCaseName: "Cos",
-        methodName: "Cos",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2542,10 +2370,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CosLookback(),
+        lookback: static (core, c) => core.COS_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cos(
+            RetCode rc = core.COS(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2554,8 +2382,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "COSH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Cosh",
-        camelCaseName: "Cosh",
-        methodName: "Cosh",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2567,10 +2393,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.CoshLookback(),
+        lookback: static (core, c) => core.COSH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Cosh(
+            RetCode rc = core.COSH(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2579,8 +2405,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Double Exponential Moving Average",
-        camelCaseName: "Dema",
-        methodName: "Dema",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2595,10 +2419,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.DemaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.DEMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Dema(
+            RetCode rc = core.DEMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2607,8 +2431,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DIV",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Div",
-        camelCaseName: "Div",
-        methodName: "Div",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2621,10 +2443,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.DivLookback(),
+        lookback: static (core, c) => core.DIV_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Div(
+            RetCode rc = core.DIV(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2633,10 +2455,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Directional Movement Index",
-        camelCaseName: "Dx",
-        methodName: "Dx",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Dx,
+        unstableId: FuncUnstId.DX,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -2649,10 +2469,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.DxLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.DX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Dx(
+            RetCode rc = core.DX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2661,10 +2481,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "EMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Exponential Moving Average",
-        camelCaseName: "Ema",
-        methodName: "Ema",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Ema,
+        unstableId: FuncUnstId.EMA,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2677,10 +2495,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.EmaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.EMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Ema(
+            RetCode rc = core.EMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2689,8 +2507,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "EXP",
         group: FunctionGroup.MathTransform,
         hint: "Vector Arithmetic Exp",
-        camelCaseName: "Exp",
-        methodName: "Exp",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2702,10 +2518,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.ExpLookback(),
+        lookback: static (core, c) => core.EXP_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Exp(
+            RetCode rc = core.EXP(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2714,8 +2530,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "FLOOR",
         group: FunctionGroup.MathTransform,
         hint: "Vector Floor",
-        camelCaseName: "Floor",
-        methodName: "Floor",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2727,10 +2541,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.FloorLookback(),
+        lookback: static (core, c) => core.FLOOR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Floor(
+            RetCode rc = core.FLOOR(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2739,8 +2553,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Hull Moving Average",
-        camelCaseName: "Hma",
-        methodName: "Hma",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2755,10 +2567,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.HmaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.HMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Hma(
+            RetCode rc = core.HMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2767,10 +2579,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_DCPERIOD",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Period",
-        camelCaseName: "HtDcPeriod",
-        methodName: "HtDcPeriod",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtDcPeriod,
+        unstableId: FuncUnstId.HT_DCPERIOD,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2780,10 +2590,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.HtDcPeriodLookback(),
+        lookback: static (core, c) => core.HT_DCPERIOD_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtDcPeriod(
+            RetCode rc = core.HT_DCPERIOD(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2792,10 +2602,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_DCPHASE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Phase",
-        camelCaseName: "HtDcPhase",
-        methodName: "HtDcPhase",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtDcPhase,
+        unstableId: FuncUnstId.HT_DCPHASE,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2805,10 +2613,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.HtDcPhaseLookback(),
+        lookback: static (core, c) => core.HT_DCPHASE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtDcPhase(
+            RetCode rc = core.HT_DCPHASE(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2817,10 +2625,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_PHASOR",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Phasor Components",
-        camelCaseName: "HtPhasor",
-        methodName: "HtPhasor",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtPhasor,
+        unstableId: FuncUnstId.HT_PHASOR,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2831,10 +2637,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outInPhase", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outQuadrature", OutputFlags.DashLine),
         ],
-        lookback: static (core, c) => core.HtPhasorLookback(),
+        lookback: static (core, c) => core.HT_PHASOR_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtPhasor(
+            RetCode rc = core.HT_PHASOR(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -2843,10 +2649,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_SINE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - SineWave",
-        camelCaseName: "HtSine",
-        methodName: "HtSine",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtSine,
+        unstableId: FuncUnstId.HT_SINE,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2857,10 +2661,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outSine", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outLeadSine", OutputFlags.DashLine),
         ],
-        lookback: static (core, c) => core.HtSineLookback(),
+        lookback: static (core, c) => core.HT_SINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtSine(
+            RetCode rc = core.HT_SINE(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -2869,10 +2673,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_TRENDLINE",
         group: FunctionGroup.OverlapStudies,
         hint: "Hilbert Transform - Instantaneous Trendline",
-        camelCaseName: "HtTrendline",
-        methodName: "HtTrendline",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtTrendline,
+        unstableId: FuncUnstId.HT_TRENDLINE,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2882,10 +2684,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.HtTrendlineLookback(),
+        lookback: static (core, c) => core.HT_TRENDLINE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtTrendline(
+            RetCode rc = core.HT_TRENDLINE(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2894,10 +2696,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HT_TRENDMODE",
         group: FunctionGroup.CycleIndicators,
         hint: "Hilbert Transform - Trend vs Cycle Mode",
-        camelCaseName: "HtTrendMode",
-        methodName: "HtTrendMode",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.HtTrendMode,
+        unstableId: FuncUnstId.HT_TRENDMODE,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2907,10 +2707,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.HtTrendModeLookback(),
+        lookback: static (core, c) => core.HT_TRENDMODE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.HtTrendMode(
+            RetCode rc = core.HT_TRENDMODE(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2919,8 +2719,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "IMI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Intraday Momentum Index",
-        camelCaseName: "Imi",
-        methodName: "Imi",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2935,10 +2733,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.ImiLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.IMI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Imi(
+            RetCode rc = core.IMI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2947,10 +2745,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "KAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Kaufman Adaptive Moving Average",
-        camelCaseName: "Kama",
-        methodName: "Kama",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Kama,
+        unstableId: FuncUnstId.KAMA,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -2963,10 +2759,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.KamaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.KAMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Kama(
+            RetCode rc = core.KAMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -2975,8 +2771,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LINEARREG",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression",
-        camelCaseName: "LinearReg",
-        methodName: "LinearReg",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -2991,10 +2785,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.LinearRegLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.LINEARREG_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LinearReg(
+            RetCode rc = core.LINEARREG(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3003,8 +2797,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LINEARREG_ANGLE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Angle",
-        camelCaseName: "LinearRegAngle",
-        methodName: "LinearRegAngle",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3019,10 +2811,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.LinearRegAngleLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.LINEARREG_ANGLE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LinearRegAngle(
+            RetCode rc = core.LINEARREG_ANGLE(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3031,8 +2823,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LINEARREG_INTERCEPT",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Intercept",
-        camelCaseName: "LinearRegIntercept",
-        methodName: "LinearRegIntercept",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3047,10 +2837,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.LinearRegInterceptLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.LINEARREG_INTERCEPT_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LinearRegIntercept(
+            RetCode rc = core.LINEARREG_INTERCEPT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3059,8 +2849,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LINEARREG_SLOPE",
         group: FunctionGroup.StatisticFunctions,
         hint: "Linear Regression Slope",
-        camelCaseName: "LinearRegSlope",
-        methodName: "LinearRegSlope",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3075,10 +2863,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.LinearRegSlopeLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.LINEARREG_SLOPE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.LinearRegSlope(
+            RetCode rc = core.LINEARREG_SLOPE(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3087,8 +2875,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log Natural",
-        camelCaseName: "Ln",
-        methodName: "Ln",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3100,10 +2886,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.LnLookback(),
+        lookback: static (core, c) => core.LN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Ln(
+            RetCode rc = core.LN(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3112,8 +2898,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LOG10",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log10",
-        camelCaseName: "Log10",
-        methodName: "Log10",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3125,10 +2909,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.Log10Lookback(),
+        lookback: static (core, c) => core.LOG10_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Log10(
+            RetCode rc = core.LOG10(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3137,8 +2921,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MA",
         group: FunctionGroup.OverlapStudies,
         hint: "Moving average",
-        camelCaseName: "MovingAverage",
-        methodName: "MovingAverage",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3154,10 +2936,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MovingAverageLookback(c.IntOpt(0), (MAType)c.IntOpt(1)),
+        lookback: static (core, c) => core.MA_Lookback(c.IntOpt(0), (MAType)c.IntOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MovingAverage(
+            RetCode rc = core.MA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3166,8 +2948,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MACD",
         group: FunctionGroup.MomentumIndicators,
         hint: "Moving Average Convergence/Divergence",
-        camelCaseName: "Macd",
-        methodName: "Macd",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3186,10 +2966,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
             new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
         ],
-        lookback: static (core, c) => core.MacdLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        lookback: static (core, c) => core.MACD_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Macd(
+            RetCode rc = core.MACD(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3198,8 +2978,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MACDEXT",
         group: FunctionGroup.MomentumIndicators,
         hint: "MACD with controllable MA type",
-        camelCaseName: "MacdExt",
-        methodName: "MacdExt",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3221,10 +2999,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
             new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
         ],
-        lookback: static (core, c) => core.MacdExtLookback(c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5)),
+        lookback: static (core, c) => core.MACDEXT_Lookback(c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MacdExt(
+            RetCode rc = core.MACDEXT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), (MAType)c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), c.IntOpt(4), (MAType)c.IntOpt(5), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3233,8 +3011,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MACDFIX",
         group: FunctionGroup.MomentumIndicators,
         hint: "Moving Average Convergence/Divergence Fix 12/26",
-        camelCaseName: "MacdFix",
-        methodName: "MacdFix",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3251,10 +3027,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outMACDSignal", OutputFlags.DashLine),
             new OutputInfo(OutputKind.Real, "outMACDHist", OutputFlags.Histogram),
         ],
-        lookback: static (core, c) => core.MacdFixLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MACDFIX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MacdFix(
+            RetCode rc = core.MACDFIX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         });
@@ -3263,10 +3039,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "MESA Adaptive Moving Average",
-        camelCaseName: "Mama",
-        methodName: "Mama",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Mama,
+        unstableId: FuncUnstId.MAMA,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -3281,10 +3055,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outMAMA", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outFAMA", OutputFlags.DashLine | OutputFlags.Nullable),
         ],
-        lookback: static (core, c) => core.MamaLookback(c.RealOpt(0), c.RealOpt(1)),
+        lookback: static (core, c) => core.MAMA_Lookback(c.RealOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Mama(
+            RetCode rc = core.MAMA(
                 startIdx, endIdx, c.Series(0), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3293,8 +3067,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MAVP",
         group: FunctionGroup.OverlapStudies,
         hint: "Moving average with variable period",
-        camelCaseName: "MovingAverageVariablePeriod",
-        methodName: "MovingAverageVariablePeriod",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3312,10 +3084,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MovingAverageVariablePeriodLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        lookback: static (core, c) => core.MAVP_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MovingAverageVariablePeriod(
+            RetCode rc = core.MAVP(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3324,8 +3096,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MAX",
         group: FunctionGroup.MathOperators,
         hint: "Highest value over a specified period",
-        camelCaseName: "Max",
-        methodName: "Max",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3340,10 +3110,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MaxLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MAX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Max(
+            RetCode rc = core.MAX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3352,8 +3122,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MAXINDEX",
         group: FunctionGroup.MathOperators,
         hint: "Index of highest value over a specified period",
-        camelCaseName: "MaxIndex",
-        methodName: "MaxIndex",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3368,10 +3136,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MaxIndexLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MAXINDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MaxIndex(
+            RetCode rc = core.MAXINDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3380,8 +3148,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MEDPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Median Price",
-        camelCaseName: "MedPrice",
-        methodName: "MedPrice",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3393,10 +3159,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MedPriceLookback(),
+        lookback: static (core, c) => core.MEDPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MedPrice(
+            RetCode rc = core.MEDPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3405,8 +3171,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MFI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Money Flow Index",
-        camelCaseName: "Mfi",
-        methodName: "Mfi",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3421,10 +3185,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MfiLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MFI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Mfi(
+            RetCode rc = core.MFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3433,8 +3197,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MIDPOINT",
         group: FunctionGroup.OverlapStudies,
         hint: "MidPoint over period",
-        camelCaseName: "MidPoint",
-        methodName: "MidPoint",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3449,10 +3211,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MidPointLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MIDPOINT_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MidPoint(
+            RetCode rc = core.MIDPOINT(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3461,8 +3223,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MIDPRICE",
         group: FunctionGroup.OverlapStudies,
         hint: "Midpoint Price over period",
-        camelCaseName: "MidPrice",
-        methodName: "MidPrice",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3477,10 +3237,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MidPriceLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MIDPRICE_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MidPrice(
+            RetCode rc = core.MIDPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3489,8 +3249,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MIN",
         group: FunctionGroup.MathOperators,
         hint: "Lowest value over a specified period",
-        camelCaseName: "Min",
-        methodName: "Min",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3505,10 +3263,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MIN_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Min(
+            RetCode rc = core.MIN(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3517,8 +3275,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MININDEX",
         group: FunctionGroup.MathOperators,
         hint: "Index of lowest value over a specified period",
-        camelCaseName: "MinIndex",
-        methodName: "MinIndex",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3533,10 +3289,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinIndexLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MININDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MinIndex(
+            RetCode rc = core.MININDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3545,8 +3301,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MINMAX",
         group: FunctionGroup.MathOperators,
         hint: "Lowest and highest values over a specified period",
-        camelCaseName: "MinMax",
-        methodName: "MinMax",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3562,10 +3316,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outMin", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outMax", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinMaxLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MINMAX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MinMax(
+            RetCode rc = core.MINMAX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3574,8 +3328,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MINMAXINDEX",
         group: FunctionGroup.MathOperators,
         hint: "Indexes of lowest and highest values over a specified period",
-        camelCaseName: "MinMaxIndex",
-        methodName: "MinMaxIndex",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3591,10 +3343,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Integer, "outMinIdx", OutputFlags.Line),
             new OutputInfo(OutputKind.Integer, "outMaxIdx", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinMaxIndexLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MINMAXINDEX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MinMaxIndex(
+            RetCode rc = core.MINMAXINDEX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.IntOut(0), c.IntOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -3603,10 +3355,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MINUS_DI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Minus Directional Indicator",
-        camelCaseName: "MinusDI",
-        methodName: "MinusDI",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.MinusDI,
+        unstableId: FuncUnstId.MINUS_DI,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -3619,10 +3369,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinusDILookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MINUS_DI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MinusDI(
+            RetCode rc = core.MINUS_DI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3631,10 +3381,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MINUS_DM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Minus Directional Movement",
-        camelCaseName: "MinusDM",
-        methodName: "MinusDM",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.MinusDM,
+        unstableId: FuncUnstId.MINUS_DM,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
@@ -3647,10 +3395,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MinusDMLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MINUS_DM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.MinusDM(
+            RetCode rc = core.MINUS_DM(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3659,8 +3407,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MOM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Momentum",
-        camelCaseName: "Mom",
-        methodName: "Mom",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3675,10 +3421,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MomLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.MOM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Mom(
+            RetCode rc = core.MOM(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3687,8 +3433,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MULT",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Mult",
-        camelCaseName: "Mult",
-        methodName: "Mult",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3701,10 +3445,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.MultLookback(),
+        lookback: static (core, c) => core.MULT_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Mult(
+            RetCode rc = core.MULT(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3713,10 +3457,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "NATR",
         group: FunctionGroup.VolatilityIndicators,
         hint: "Normalized Average True Range",
-        camelCaseName: "Natr",
-        methodName: "Natr",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Natr,
+        unstableId: FuncUnstId.NATR,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -3729,10 +3471,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.NatrLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.NATR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Natr(
+            RetCode rc = core.NATR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3741,8 +3483,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "NVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Negative Volume Index",
-        camelCaseName: "Nvi",
-        methodName: "Nvi",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -3754,10 +3494,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.NviLookback(),
+        lookback: static (core, c) => core.NVI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Nvi(
+            RetCode rc = core.NVI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3766,8 +3506,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "OBV",
         group: FunctionGroup.VolumeIndicators,
         hint: "On Balance Volume",
-        camelCaseName: "Obv",
-        methodName: "Obv",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -3780,10 +3518,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.ObvLookback(),
+        lookback: static (core, c) => core.OBV_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Obv(
+            RetCode rc = core.OBV(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3792,10 +3530,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "PLUS_DI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Plus Directional Indicator",
-        camelCaseName: "PlusDI",
-        methodName: "PlusDI",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.PlusDI,
+        unstableId: FuncUnstId.PLUS_DI,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
@@ -3808,10 +3544,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.PlusDILookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.PLUS_DI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PlusDI(
+            RetCode rc = core.PLUS_DI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3820,10 +3556,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "PLUS_DM",
         group: FunctionGroup.MomentumIndicators,
         hint: "Plus Directional Movement",
-        camelCaseName: "PlusDM",
-        methodName: "PlusDM",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.PlusDM,
+        unstableId: FuncUnstId.PLUS_DM,
         inputs:
         [
             new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
@@ -3836,10 +3570,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.PlusDMLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.PLUS_DM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.PlusDM(
+            RetCode rc = core.PLUS_DM(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3848,8 +3582,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "PPO",
         group: FunctionGroup.MomentumIndicators,
         hint: "Percentage Price Oscillator",
-        camelCaseName: "Ppo",
-        methodName: "Ppo",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3866,10 +3598,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.PpoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        lookback: static (core, c) => core.PPO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Ppo(
+            RetCode rc = core.PPO(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3878,8 +3610,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "PVI",
         group: FunctionGroup.VolumeIndicators,
         hint: "Positive Volume Index",
-        camelCaseName: "Pvi",
-        methodName: "Pvi",
         flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -3891,10 +3621,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.PviLookback(),
+        lookback: static (core, c) => core.PVI_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Pvi(
+            RetCode rc = core.PVI(
                 startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3903,8 +3633,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "PVO",
         group: FunctionGroup.VolumeIndicators,
         hint: "Percentage Volume Oscillator",
-        camelCaseName: "Pvo",
-        methodName: "Pvo",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3921,10 +3649,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.PvoLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        lookback: static (core, c) => core.PVO_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Pvo(
+            RetCode rc = core.PVO(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3933,8 +3661,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ROC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change : ((price/prevPrice)-1)*100",
-        camelCaseName: "Roc",
-        methodName: "Roc",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3949,10 +3675,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.RocLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ROC_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Roc(
+            RetCode rc = core.ROC(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3961,8 +3687,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ROCP",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change Percentage: (price-prevPrice)/prevPrice",
-        camelCaseName: "RocP",
-        methodName: "RocP",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -3977,10 +3701,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.RocPLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ROCP_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RocP(
+            RetCode rc = core.ROCP(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -3989,8 +3713,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ROCR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio: (price/prevPrice)",
-        camelCaseName: "RocR",
-        methodName: "RocR",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4005,10 +3727,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.RocRLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ROCR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RocR(
+            RetCode rc = core.ROCR(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4017,8 +3739,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ROCR100",
         group: FunctionGroup.MomentumIndicators,
         hint: "Rate of change ratio 100 scale: (price/prevPrice)*100",
-        camelCaseName: "RocR100",
-        methodName: "RocR100",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4033,10 +3753,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.RocR100Lookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.ROCR100_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.RocR100(
+            RetCode rc = core.ROCR100(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4045,10 +3765,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "RSI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Relative Strength Index",
-        camelCaseName: "Rsi",
-        methodName: "Rsi",
         flags: FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
-        unstableId: FuncUnstId.Rsi,
+        unstableId: FuncUnstId.RSI,
         inputs:
         [
             new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
@@ -4061,10 +3779,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.RsiLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.RSI_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Rsi(
+            RetCode rc = core.RSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4073,8 +3791,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SAR",
         group: FunctionGroup.OverlapStudies,
         hint: "Parabolic SAR",
-        camelCaseName: "Sar",
-        methodName: "Sar",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -4090,10 +3806,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SarLookback(c.RealOpt(0), c.RealOpt(1)),
+        lookback: static (core, c) => core.SAR_Lookback(c.RealOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sar(
+            RetCode rc = core.SAR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4102,8 +3818,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SAREXT",
         group: FunctionGroup.OverlapStudies,
         hint: "Parabolic SAR - Extended",
-        camelCaseName: "SarExt",
-        methodName: "SarExt",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.PathDependent,
         unstableId: null,
         inputs:
@@ -4125,10 +3839,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SarExtLookback(c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
+        lookback: static (core, c) => core.SAREXT_Lookback(c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.SarExt(
+            RetCode rc = core.SAREXT(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.RealOpt(0), c.RealOpt(1), c.RealOpt(2), c.RealOpt(3), c.RealOpt(4), c.RealOpt(5), c.RealOpt(6), c.RealOpt(7), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4137,8 +3851,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sin",
-        camelCaseName: "Sin",
-        methodName: "Sin",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4150,10 +3862,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SinLookback(),
+        lookback: static (core, c) => core.SIN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sin(
+            RetCode rc = core.SIN(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4162,8 +3874,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SINH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Sinh",
-        camelCaseName: "Sinh",
-        methodName: "Sinh",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4175,10 +3885,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SinhLookback(),
+        lookback: static (core, c) => core.SINH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sinh(
+            RetCode rc = core.SINH(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4187,8 +3897,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Simple Moving Average",
-        camelCaseName: "Sma",
-        methodName: "Sma",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4203,10 +3911,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SmaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.SMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sma(
+            RetCode rc = core.SMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4215,8 +3923,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SQRT",
         group: FunctionGroup.MathTransform,
         hint: "Vector Square Root",
-        camelCaseName: "Sqrt",
-        methodName: "Sqrt",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4228,10 +3934,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SqrtLookback(),
+        lookback: static (core, c) => core.SQRT_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sqrt(
+            RetCode rc = core.SQRT(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4240,8 +3946,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "STDDEV",
         group: FunctionGroup.StatisticFunctions,
         hint: "Standard Deviation",
-        camelCaseName: "StdDev",
-        methodName: "StdDev",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4257,10 +3961,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.StdDevLookback(c.IntOpt(0), c.RealOpt(1)),
+        lookback: static (core, c) => core.STDDEV_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.StdDev(
+            RetCode rc = core.STDDEV(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4269,8 +3973,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "STOCH",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic",
-        camelCaseName: "Stoch",
-        methodName: "Stoch",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4290,10 +3992,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outSlowK", OutputFlags.DashLine),
             new OutputInfo(OutputKind.Real, "outSlowD", OutputFlags.DashLine),
         ],
-        lookback: static (core, c) => core.StochLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
+        lookback: static (core, c) => core.STOCH_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Stoch(
+            RetCode rc = core.STOCH(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4302,8 +4004,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "STOCHF",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic Fast",
-        camelCaseName: "StochF",
-        methodName: "StochF",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4321,10 +4021,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.StochFLookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
+        lookback: static (core, c) => core.STOCHF_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.StochF(
+            RetCode rc = core.STOCHF(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4333,8 +4033,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "STOCHRSI",
         group: FunctionGroup.MomentumIndicators,
         hint: "Stochastic Relative Strength Index",
-        camelCaseName: "StochRsi",
-        methodName: "StochRsi",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4353,10 +4051,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outFastK", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outFastD", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.StochRsiLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3)),
+        lookback: static (core, c) => core.STOCHRSI_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.StochRsi(
+            RetCode rc = core.STOCHRSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), (MAType)c.IntOpt(3), out int b, out int n, c.RealOut(0), c.RealOut(1));
             return new CallOutcome(rc, b, n);
         });
@@ -4365,8 +4063,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SUB",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Subtraction",
-        camelCaseName: "Sub",
-        methodName: "Sub",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4379,10 +4075,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SubLookback(),
+        lookback: static (core, c) => core.SUB_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sub(
+            RetCode rc = core.SUB(
                 startIdx, endIdx, c.Series(0), c.Series(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4391,8 +4087,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SUM",
         group: FunctionGroup.MathOperators,
         hint: "Summation",
-        camelCaseName: "Sum",
-        methodName: "Sum",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4407,10 +4101,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.SumLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.SUM_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Sum(
+            RetCode rc = core.SUM(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4419,8 +4113,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "T3",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average (T3)",
-        camelCaseName: "T3",
-        methodName: "T3",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
         unstableId: FuncUnstId.T3,
         inputs:
@@ -4436,7 +4128,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.T3Lookback(c.IntOpt(0), c.RealOpt(1)),
+        lookback: static (core, c) => core.T3_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.T3(
@@ -4448,8 +4140,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TAN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tan",
-        camelCaseName: "Tan",
-        methodName: "Tan",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4461,10 +4151,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TanLookback(),
+        lookback: static (core, c) => core.TAN_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Tan(
+            RetCode rc = core.TAN(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4473,8 +4163,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TANH",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric Tanh",
-        camelCaseName: "Tanh",
-        methodName: "Tanh",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4486,10 +4174,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TanhLookback(),
+        lookback: static (core, c) => core.TANH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Tanh(
+            RetCode rc = core.TANH(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4498,8 +4186,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average",
-        camelCaseName: "Tema",
-        methodName: "Tema",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4514,10 +4200,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TemaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.TEMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Tema(
+            RetCode rc = core.TEMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4526,8 +4212,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TRANGE",
         group: FunctionGroup.VolatilityIndicators,
         hint: "True Range",
-        camelCaseName: "TrueRange",
-        methodName: "TrueRange",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4539,10 +4223,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TrueRangeLookback(),
+        lookback: static (core, c) => core.TRANGE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TrueRange(
+            RetCode rc = core.TRANGE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4551,8 +4235,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TRIMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triangular Moving Average",
-        camelCaseName: "Trima",
-        methodName: "Trima",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4567,10 +4249,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TrimaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.TRIMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Trima(
+            RetCode rc = core.TRIMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4579,8 +4261,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TRIX",
         group: FunctionGroup.MomentumIndicators,
         hint: "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
-        camelCaseName: "Trix",
-        methodName: "Trix",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4595,10 +4275,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TrixLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.TRIX_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Trix(
+            RetCode rc = core.TRIX(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4607,8 +4287,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TSF",
         group: FunctionGroup.StatisticFunctions,
         hint: "Time Series Forecast",
-        camelCaseName: "Tsf",
-        methodName: "Tsf",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4623,10 +4301,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TsfLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.TSF_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Tsf(
+            RetCode rc = core.TSF(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4635,8 +4313,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TYPPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Typical Price",
-        camelCaseName: "TypPrice",
-        methodName: "TypPrice",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4648,10 +4324,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.TypPriceLookback(),
+        lookback: static (core, c) => core.TYPPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.TypPrice(
+            RetCode rc = core.TYPPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4660,8 +4336,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ULTOSC",
         group: FunctionGroup.MomentumIndicators,
         hint: "Ultimate Oscillator",
-        camelCaseName: "UltOsc",
-        methodName: "UltOsc",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4678,10 +4352,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.UltOscLookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        lookback: static (core, c) => core.ULTOSC_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.UltOsc(
+            RetCode rc = core.ULTOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4690,8 +4364,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "VAR",
         group: FunctionGroup.StatisticFunctions,
         hint: "Variance",
-        camelCaseName: "Variance",
-        methodName: "Variance",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4707,10 +4379,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.VarianceLookback(c.IntOpt(0), c.RealOpt(1)),
+        lookback: static (core, c) => core.VAR_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Variance(
+            RetCode rc = core.VAR(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4719,8 +4391,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "VWMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Volume Weighted Moving Average",
-        camelCaseName: "Vwma",
-        methodName: "Vwma",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4736,10 +4406,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.VwmaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.VWMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Vwma(
+            RetCode rc = core.VWMA(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4748,8 +4418,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "WCLPRICE",
         group: FunctionGroup.PriceTransform,
         hint: "Weighted Close Price",
-        camelCaseName: "WclPrice",
-        methodName: "WclPrice",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4761,10 +4429,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.WclPriceLookback(),
+        lookback: static (core, c) => core.WCLPRICE_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WclPrice(
+            RetCode rc = core.WCLPRICE(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4773,8 +4441,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "WILLR",
         group: FunctionGroup.MomentumIndicators,
         hint: "Williams' %R",
-        camelCaseName: "WillR",
-        methodName: "WillR",
         flags: FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4789,10 +4455,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.WillRLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.WILLR_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.WillR(
+            RetCode rc = core.WILLR(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
@@ -4801,8 +4467,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "WMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Weighted Moving Average",
-        camelCaseName: "Wma",
-        methodName: "Wma",
         flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
@@ -4817,10 +4481,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         [
             new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
         ],
-        lookback: static (core, c) => core.WmaLookback(c.IntOpt(0)),
+        lookback: static (core, c) => core.WMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
         {
-            RetCode rc = core.Wma(
+            RetCode rc = core.WMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });

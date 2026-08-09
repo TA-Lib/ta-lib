@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::add`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ADD`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn add_lookback(&self) -> usize {
+    pub fn ADD_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector arithmetic addition. Outputs the element-wise sum of two input series.
@@ -111,7 +111,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.add(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.ADD(0, data0.len() - 1, &data0, &data1, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -119,12 +119,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sub`] · [`Core::mult`] · [`Core::div`]
+    /// [`Core::SUB`] · [`Core::MULT`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/add](https://ta-lib.org/functions/add/)
+    /// Further reading: [ta-lib.org/functions/ADD](https://ta-lib.org/functions/ADD/)
     #[doc(alias = "VectorAdd")]
     #[doc(alias = "VectorArithmeticAdd")]
-    pub fn add(
+    pub fn ADD(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -140,7 +140,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.add_lookback();
+        let _assertLb = self.ADD_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -163,20 +163,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ADD stream: one value per closed bar, bit-identical to [`Core::add`]
-/// over the same series. Open with [`Core::add_open`]; dropping the handle
+/// Live ADD stream: one value per closed bar, bit-identical to [`Core::ADD`]
+/// over the same series. Open with [`Core::ADD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADD_Stream")]
-pub struct AddStream {
+pub struct ADD_Stream {
     core: Core,
-    state: AddStreamState,
+    state: ADD_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AddStreamState {
+struct ADD_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -186,14 +186,14 @@ struct AddStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn add_step_internal(&self, sp: &mut AddStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn ADD_step_internal(&self, sp: &mut ADD_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 + inReal1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::add_open`] (composition seam).
-    pub(crate) fn add_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ADD_Open`] (composition seam).
+    pub(crate) fn ADD_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(AddStream, f64), RetCode> {
+    ) -> Result<(ADD_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -220,13 +220,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AddStreamState {
+        let state = ADD_StreamState {
         };
-        Ok((AddStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ADD_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ADD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::add`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ADD`] at that bar.
     ///
     /// # Errors
     ///
@@ -241,23 +241,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.add_open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.ADD_Open(&data0, &data1).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ADD_Open")]
-    pub fn add_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(AddStream, f64), RetCode> {
-        self.add_open_internal(inReal0, inReal1, 0)
+    pub fn ADD_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(ADD_Stream, f64), RetCode> {
+        self.ADD_OpenInternal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::add_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::add`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ADD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ADD`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ADD_OpenAndFill")]
-    pub fn add_open_and_fill(
+    pub fn ADD_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AddStream, RetCode> {
+    ) -> Result<ADD_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -283,21 +283,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AddStreamState {
+        let state = ADD_StreamState {
         };
-        Ok(AddStream { core: self.clone(), state })
+        Ok(ADD_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AddStream {
+impl ADD_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ADD_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.add_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.ADD_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -315,7 +315,7 @@ impl AddStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AddStream>();
+    _assert_auto::<ADD_Stream>();
 };
 
 /***************/

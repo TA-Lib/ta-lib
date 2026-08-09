@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlrisefall3methods`]: the number of leading input values
+    /// Lookback period for [`Core::CDLRISEFALL3METHODS`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlrisefall3methods_lookback(&self) -> usize {
+    pub fn CDLRISEFALL3METHODS_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlrisefall3methods(
+    /// let ret = core.CDLRISEFALL3METHODS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,14 +148,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlxsidegap3methods`] · [`Core::cdl3inside`] · [`Core::cdl3outside`]
+    /// [`Core::CDLXSIDEGAP3METHODS`] · [`Core::CDL3INSIDE`] · [`Core::CDL3OUTSIDE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlrisefall3methods](https://ta-lib.org/functions/cdlrisefall3methods/)
+    /// [ta-lib.org/functions/CDLRISEFALL3METHODS](https://ta-lib.org/functions/CDLRISEFALL3METHODS/)
     #[doc(alias = "RisingFallingThreeMethods")]
     #[doc(alias = "RisingThreeMethods")]
     #[doc(alias = "FallingThreeMethods")]
-    pub fn cdlrisefall3methods(
+    pub fn CDLRISEFALL3METHODS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -173,7 +173,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlrisefall3methods_lookback();
+        let _assertLb = self.CDLRISEFALL3METHODS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -202,7 +202,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrisefall3methods_lookback();
+        lookbackTotal = self.CDLRISEFALL3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -464,20 +464,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLRISEFALL3METHODS stream: one value per closed bar, bit-identical to [`Core::cdlrisefall3methods`]
-/// over the same series. Open with [`Core::cdlrisefall3methods_open`]; dropping the handle
+/// Live CDLRISEFALL3METHODS stream: one value per closed bar, bit-identical to [`Core::CDLRISEFALL3METHODS`]
+/// over the same series. Open with [`Core::CDLRISEFALL3METHODS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLRISEFALL3METHODS_Stream")]
-pub struct Cdlrisefall3methodsStream {
+pub struct CDLRISEFALL3METHODS_Stream {
     core: Core,
-    state: Cdlrisefall3methodsStreamState,
+    state: CDLRISEFALL3METHODS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdlrisefall3methodsStreamState {
+struct CDLRISEFALL3METHODS_StreamState {
     BodyPeriodTotal: [f64; 5 as usize],
     totIdx: usize,
     lag1_inOpen: f64,
@@ -525,7 +525,7 @@ struct Cdlrisefall3methodsStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlrisefall3methods_step_internal(&self, sp: &mut Cdlrisefall3methodsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLRISEFALL3METHODS_step_internal(&self, sp: &mut CDLRISEFALL3METHODS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -713,10 +713,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlrisefall3methods_open`] (composition seam).
-    pub(crate) fn cdlrisefall3methods_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLRISEFALL3METHODS_Open`] (composition seam).
+    pub(crate) fn CDLRISEFALL3METHODS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdlrisefall3methodsStream, i32), RetCode> {
+    ) -> Result<(CDLRISEFALL3METHODS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -750,7 +750,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrisefall3methods_lookback();
+        lookbackTotal = self.CDLRISEFALL3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1095,7 +1095,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdlrisefall3methodsStreamState {
+        let state = CDLRISEFALL3METHODS_StreamState {
             BodyPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1135,11 +1135,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((Cdlrisefall3methodsStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLRISEFALL3METHODS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLRISEFALL3METHODS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlrisefall3methods`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLRISEFALL3METHODS`] at that bar.
     ///
     /// # Errors
     ///
@@ -1158,23 +1158,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlrisefall3methods_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLRISEFALL3METHODS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLRISEFALL3METHODS_Open")]
-    pub fn cdlrisefall3methods_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlrisefall3methodsStream, i32), RetCode> {
-        self.cdlrisefall3methods_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLRISEFALL3METHODS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLRISEFALL3METHODS_Stream, i32), RetCode> {
+        self.CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlrisefall3methods_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlrisefall3methods`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLRISEFALL3METHODS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLRISEFALL3METHODS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLRISEFALL3METHODS_OpenAndFill")]
-    pub fn cdlrisefall3methods_open_and_fill(
+    pub fn CDLRISEFALL3METHODS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdlrisefall3methodsStream, RetCode> {
+    ) -> Result<CDLRISEFALL3METHODS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1207,7 +1207,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrisefall3methods_lookback();
+        lookbackTotal = self.CDLRISEFALL3METHODS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1554,7 +1554,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdlrisefall3methodsStreamState {
+        let state = CDLRISEFALL3METHODS_StreamState {
             BodyPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1594,19 +1594,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(Cdlrisefall3methodsStream { core: self.clone(), state })
+        Ok(CDLRISEFALL3METHODS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdlrisefall3methodsStream {
+impl CDLRISEFALL3METHODS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLRISEFALL3METHODS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlrisefall3methods_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLRISEFALL3METHODS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1624,7 +1624,7 @@ impl Cdlrisefall3methodsStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdlrisefall3methodsStream>();
+    _assert_auto::<CDLRISEFALL3METHODS_Stream>();
 };
 
 /***************/

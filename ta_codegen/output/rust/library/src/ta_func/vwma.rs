@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::vwma`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::VWMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn vwma_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn VWMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -153,7 +153,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.vwma(
+    /// let ret = core.VWMA(
     ///     0, data.len() - 1, &data, &volume, 30,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -164,7 +164,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::wma`] · [`Core::ma`] · [`Core::obv`]
+    /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::OBV`]
     ///
     /// # References
     ///
@@ -175,9 +175,9 @@ impl Core {
     /// * TradingView, *Volume Weighted Moving Average (VWMA)* — documents the equivalence with
     ///   SMA(price * volume) / SMA(volume).
     ///
-    /// Further reading: [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma/)
+    /// Further reading: [ta-lib.org/functions/VWMA](https://ta-lib.org/functions/VWMA/)
     #[doc(alias = "VolumeWeightedMovingAverage")]
-    pub fn vwma(
+    pub fn VWMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -199,7 +199,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.vwma_lookback(optInTimePeriod);
+        let _assertLb = self.VWMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
@@ -277,20 +277,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live VWMA stream: one value per closed bar, bit-identical to [`Core::vwma`]
-/// over the same series. Open with [`Core::vwma_open`]; dropping the handle
+/// Live VWMA stream: one value per closed bar, bit-identical to [`Core::VWMA`]
+/// over the same series. Open with [`Core::VWMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_VWMA_Stream")]
-pub struct VwmaStream {
+pub struct VWMA_Stream {
     core: Core,
-    state: VwmaStreamState,
+    state: VWMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct VwmaStreamState {
+struct VWMA_StreamState {
     optInTimePeriod: i32,
     sumPV: f64,
     sumV: f64,
@@ -309,7 +309,7 @@ struct VwmaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn vwma_step_internal(&self, sp: &mut VwmaStreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
+    fn VWMA_step_internal(&self, sp: &mut VWMA_StreamState, inReal: f64, inVolume: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -337,10 +337,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::vwma_open`] (composition seam).
-    pub(crate) fn vwma_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::VWMA_Open`] (composition seam).
+    pub(crate) fn VWMA_OpenInternal(
         &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(VwmaStream, f64), RetCode> {
+    ) -> Result<(VWMA_Stream, f64), RetCode> {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -438,7 +438,7 @@ impl Core {
         let mut ring_trailingIdx_inVolume: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inVolume[..cap_trailingIdx as usize]
             .copy_from_slice(&inVolume[historyLen - cap_trailingIdx as usize..]);
-        let state = VwmaStreamState {
+        let state = VWMA_StreamState {
             optInTimePeriod,
             sumPV,
             sumV,
@@ -449,11 +449,11 @@ impl Core {
             ring_trailingIdx_inReal,
             ring_trailingIdx_inVolume,
         };
-        Ok((VwmaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((VWMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live VWMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::vwma`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::VWMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -468,23 +468,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.vwma_open(&data, &volume, 30).expect("enough history");
+    /// let (mut s, _last) = core.VWMA_Open(&data, &volume, 30).expect("enough history");
     /// let peeked = s.peek(100.9, 12_345.0);
     /// let updated = s.update(100.9, 12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_VWMA_Open")]
-    pub fn vwma_open(&self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(VwmaStream, f64), RetCode> {
-        self.vwma_open_internal(inReal, inVolume, 0, optInTimePeriod)
+    pub fn VWMA_Open(&self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(VWMA_Stream, f64), RetCode> {
+        self.VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod)
     }
 
-    /// [`Core::vwma_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::vwma`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::VWMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::VWMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_VWMA_OpenAndFill")]
-    pub fn vwma_open_and_fill(
+    pub fn VWMA_OpenAndFill(
         &self, inReal: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<VwmaStream, RetCode> {
+    ) -> Result<VWMA_Stream, RetCode> {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -581,7 +581,7 @@ impl Core {
         let mut ring_trailingIdx_inVolume: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inVolume[..cap_trailingIdx as usize]
             .copy_from_slice(&inVolume[historyLen - cap_trailingIdx as usize..]);
-        let state = VwmaStreamState {
+        let state = VWMA_StreamState {
             optInTimePeriod,
             sumPV,
             sumV,
@@ -592,19 +592,19 @@ impl Core {
             ring_trailingIdx_inReal,
             ring_trailingIdx_inVolume,
         };
-        Ok(VwmaStream { core: self.clone(), state })
+        Ok(VWMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl VwmaStream {
+impl VWMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_VWMA_Update")]
     pub fn update(&mut self, inReal: f64, inVolume: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.vwma_step_internal(&mut self.state, inReal, inVolume, &mut outReal);
+        self.core.VWMA_step_internal(&mut self.state, inReal, inVolume, &mut outReal);
         outReal
     }
 
@@ -622,7 +622,7 @@ impl VwmaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<VwmaStream>();
+    _assert_auto::<VWMA_Stream>();
 };
 
 /***************/

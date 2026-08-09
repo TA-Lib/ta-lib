@@ -65,7 +65,7 @@ public partial class Core
     *                call. Guard the divide, returning IMI's neutral center 50.0.
     */
    /// <summary>
-   /// Number of leading input bars <c>Imi</c> consumes before it can produce its
+   /// Number of leading input bars <c>IMI</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -76,7 +76,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Rolling window length for the up/down body sums (default 14; range
    /// 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int ImiLookback( int optInTimePeriod )
+   public int IMI_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -86,7 +86,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode Imi( int startIdx,
+   internal RetCode IMI( int startIdx,
                          int endIdx,
                          double[] inOpen,
                          double[] inClose,
@@ -111,7 +111,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       outIdx = 0;
-      lookback = ImiLookback(optInTimePeriod);
+      lookback = IMI_Lookback(optInTimePeriod);
       if( startIdx < lookback ) {
          startIdx = lookback;
       }
@@ -146,7 +146,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Imi( int startIdx,
+   internal RetCode IMI( int startIdx,
                          int endIdx,
                          float[] inOpen,
                          float[] inClose,
@@ -171,7 +171,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       outIdx = 0;
-      lookback = ImiLookback(optInTimePeriod);
+      lookback = IMI_Lookback(optInTimePeriod);
       if( startIdx < lookback ) {
          startIdx = lookback;
       }
@@ -215,8 +215,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ImiLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>IMI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -235,14 +235,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Imi( int startIdx,
+   public OutRange IMI( int startIdx,
                         int endIdx,
                         double[] inOpen,
                         double[] inClose,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Imi(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
       }
@@ -268,8 +268,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>ImiLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>IMI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -288,14 +288,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Imi( int startIdx,
+   public OutRange IMI( int startIdx,
                         int endIdx,
                         float[] inOpen,
                         float[] inClose,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Imi(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
       }

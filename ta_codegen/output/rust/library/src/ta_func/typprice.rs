@@ -65,9 +65,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::typprice`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::TYPPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn typprice_lookback(&self) -> usize {
+    pub fn TYPPRICE_Lookback(&self) -> usize {
         // This function have no lookback needed.
         return (0) as usize;
     }
@@ -118,7 +118,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.typprice(
+    /// let ret = core.TYPPRICE(
     ///     0, high.len() - 1, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -129,11 +129,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::medprice`] · [`Core::wclprice`] · [`Core::avgprice`]
+    /// [`Core::MEDPRICE`] · [`Core::WCLPRICE`] · [`Core::AVGPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/typprice](https://ta-lib.org/functions/typprice/)
+    /// Further reading: [ta-lib.org/functions/TYPPRICE](https://ta-lib.org/functions/TYPPRICE/)
     #[doc(alias = "TypicalPrice")]
-    pub fn typprice(
+    pub fn TYPPRICE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -150,7 +150,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.typprice_lookback();
+        let _assertLb = self.TYPPRICE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -173,20 +173,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TYPPRICE stream: one value per closed bar, bit-identical to [`Core::typprice`]
-/// over the same series. Open with [`Core::typprice_open`]; dropping the handle
+/// Live TYPPRICE stream: one value per closed bar, bit-identical to [`Core::TYPPRICE`]
+/// over the same series. Open with [`Core::TYPPRICE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TYPPRICE_Stream")]
-pub struct TyppriceStream {
+pub struct TYPPRICE_Stream {
     core: Core,
-    state: TyppriceStreamState,
+    state: TYPPRICE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TyppriceStreamState {
+struct TYPPRICE_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -196,14 +196,14 @@ struct TyppriceStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn typprice_step_internal(&self, sp: &mut TyppriceStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn TYPPRICE_step_internal(&self, sp: &mut TYPPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow + inClose) / 3.0;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::typprice_open`] (composition seam).
-    pub(crate) fn typprice_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TYPPRICE_Open`] (composition seam).
+    pub(crate) fn TYPPRICE_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(TyppriceStream, f64), RetCode> {
+    ) -> Result<(TYPPRICE_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -228,13 +228,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TyppriceStreamState {
+        let state = TYPPRICE_StreamState {
         };
-        Ok((TyppriceStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TYPPRICE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TYPPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::typprice`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TYPPRICE`] at that bar.
     ///
     /// # Errors
     ///
@@ -250,23 +250,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.typprice_open(&high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.TYPPRICE_Open(&high, &low, &close).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TYPPRICE_Open")]
-    pub fn typprice_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TyppriceStream, f64), RetCode> {
-        self.typprice_open_internal(inHigh, inLow, inClose, 0)
+    pub fn TYPPRICE_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TYPPRICE_Stream, f64), RetCode> {
+        self.TYPPRICE_OpenInternal(inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::typprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::typprice`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TYPPRICE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TYPPRICE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TYPPRICE_OpenAndFill")]
-    pub fn typprice_open_and_fill(
+    pub fn TYPPRICE_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TyppriceStream, RetCode> {
+    ) -> Result<TYPPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -291,21 +291,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TyppriceStreamState {
+        let state = TYPPRICE_StreamState {
         };
-        Ok(TyppriceStream { core: self.clone(), state })
+        Ok(TYPPRICE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TyppriceStream {
+impl TYPPRICE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TYPPRICE_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.typprice_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.TYPPRICE_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -323,7 +323,7 @@ impl TyppriceStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TyppriceStream>();
+    _assert_auto::<TYPPRICE_Stream>();
 };
 
 /***************/

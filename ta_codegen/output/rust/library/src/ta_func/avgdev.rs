@@ -62,7 +62,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::avgdev`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::AVGDEV`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -72,7 +72,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn avgdev_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn AVGDEV_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -126,7 +126,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.avgdev(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.AVGDEV(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -134,13 +134,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::stddev`] · [`Core::var`] · [`Core::sma`]
+    /// [`Core::STDDEV`] · [`Core::VAR`] · [`Core::SMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/avgdev](https://ta-lib.org/functions/avgdev/)
+    /// Further reading: [ta-lib.org/functions/AVGDEV](https://ta-lib.org/functions/AVGDEV/)
     #[doc(alias = "AverageDeviation")]
     #[doc(alias = "MeanAbsoluteDeviation")]
     #[doc(alias = "MAD")]
-    pub fn avgdev(
+    pub fn AVGDEV(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -161,7 +161,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.avgdev_lookback(optInTimePeriod);
+        let _assertLb = self.AVGDEV_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -211,20 +211,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live AVGDEV stream: one value per closed bar, bit-identical to [`Core::avgdev`]
-/// over the same series. Open with [`Core::avgdev_open`]; dropping the handle
+/// Live AVGDEV stream: one value per closed bar, bit-identical to [`Core::AVGDEV`]
+/// over the same series. Open with [`Core::AVGDEV_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AVGDEV_Stream")]
-pub struct AvgdevStream {
+pub struct AVGDEV_Stream {
     core: Core,
-    state: AvgdevStreamState,
+    state: AVGDEV_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AvgdevStreamState {
+struct AVGDEV_StreamState {
     optInTimePeriod: i32,
     winPos_i: usize,
     winCap_i: usize,
@@ -238,7 +238,7 @@ struct AvgdevStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn avgdev_step_internal(&self, sp: &mut AvgdevStreamState, inReal: f64, outReal: &mut f64) {
+    fn AVGDEV_step_internal(&self, sp: &mut AVGDEV_StreamState, inReal: f64, outReal: &mut f64) {
         let mut todaySum: f64 = 0.0_f64;
         let mut todayDev: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -264,10 +264,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::avgdev_open`] (composition seam).
-    pub(crate) fn avgdev_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::AVGDEV_Open`] (composition seam).
+    pub(crate) fn AVGDEV_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AvgdevStream, f64), RetCode> {
+    ) -> Result<(AVGDEV_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -333,17 +333,17 @@ impl Core {
         }
         let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
         win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
-        let state = AvgdevStreamState {
+        let state = AVGDEV_StreamState {
             optInTimePeriod,
             winPos_i: 0_usize,
             winCap_i: cap_i as usize,
             win_i_inReal,
         };
-        Ok((AvgdevStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((AVGDEV_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live AVGDEV stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::avgdev`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::AVGDEV`] at that bar.
     ///
     /// # Errors
     ///
@@ -355,23 +355,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.avgdev_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.AVGDEV_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_AVGDEV_Open")]
-    pub fn avgdev_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(AvgdevStream, f64), RetCode> {
-        self.avgdev_open_internal(inReal, 0, optInTimePeriod)
+    pub fn AVGDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(AVGDEV_Stream, f64), RetCode> {
+        self.AVGDEV_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::avgdev_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::avgdev`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AVGDEV_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::AVGDEV`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AVGDEV_OpenAndFill")]
-    pub fn avgdev_open_and_fill(
+    pub fn AVGDEV_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AvgdevStream, RetCode> {
+    ) -> Result<AVGDEV_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -436,25 +436,25 @@ impl Core {
         }
         let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
         win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
-        let state = AvgdevStreamState {
+        let state = AVGDEV_StreamState {
             optInTimePeriod,
             winPos_i: 0_usize,
             winCap_i: cap_i as usize,
             win_i_inReal,
         };
-        Ok(AvgdevStream { core: self.clone(), state })
+        Ok(AVGDEV_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AvgdevStream {
+impl AVGDEV_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_AVGDEV_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.avgdev_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.AVGDEV_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -472,7 +472,7 @@ impl AvgdevStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AvgdevStream>();
+    _assert_auto::<AVGDEV_Stream>();
 };
 
 /***************/

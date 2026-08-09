@@ -1,5 +1,4 @@
 name: CMOU
-camel_case: Cmou
 group: Momentum Indicators
 hint: Chande Momentum Oscillator (Unsmoothed)
 flags: [stream]

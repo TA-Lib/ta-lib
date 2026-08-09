@@ -1,5 +1,4 @@
 name: CDLXSIDEGAP3METHODS
-camel_case: CdlXSideGap3Methods
 group: Pattern Recognition
 hint: Upside/Downside Gap Three Methods
 flags: [candlestick, stream]

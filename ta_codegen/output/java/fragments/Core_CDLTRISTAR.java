@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlTristar} consumes before it
+    * Number of leading input bars {@link Core#CDLTRISTAR} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlTristarLookback( )
+   public int CDLTRISTAR_Lookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -30,15 +30,15 @@
       return BodyDoji_avgPeriod + 2 ;
 
    }
-   RetCode cdlTristarInternal( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode CDLTRISTAR_Internal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -57,7 +57,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlTristarLookback();
+      lookbackTotal = CDLTRISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -121,15 +121,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlTristarInternal( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode CDLTRISTAR_Internal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -145,7 +145,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlTristarLookback();
+      lookbackTotal = CDLTRISTAR_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -196,7 +196,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlTristarLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLTRISTAR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -216,12 +216,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlDoji
-    * @see Core#cdlDojiStar
-    * @see Core#cdlMorningDojiStar
-    * @see Core#cdlEveningDojiStar
+    * @see Core#CDLDOJI
+    * @see Core#CDLDOJISTAR
+    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#CDLEVENINGDOJISTAR
     */
-   public OutRange cdlTristar( int startIdx,
+   public OutRange CDLTRISTAR( int startIdx,
                                int endIdx,
                                double inOpen[],
                                double inHigh[],
@@ -231,7 +231,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlTristarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLTRISTAR", retCode);
       }
@@ -252,7 +252,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlTristarLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLTRISTAR_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -272,12 +272,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlDoji
-    * @see Core#cdlDojiStar
-    * @see Core#cdlMorningDojiStar
-    * @see Core#cdlEveningDojiStar
+    * @see Core#CDLDOJI
+    * @see Core#CDLDOJISTAR
+    * @see Core#CDLMORNINGDOJISTAR
+    * @see Core#CDLEVENINGDOJISTAR
     */
-   public OutRange cdlTristar( int startIdx,
+   public OutRange CDLTRISTAR( int startIdx,
                                int endIdx,
                                float inOpen[],
                                float inHigh[],
@@ -287,7 +287,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlTristarInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLTRISTAR", retCode);
       }
@@ -297,8 +297,8 @@
 
    /**
     * A live CDLTRISTAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlTristar} over the same series.
-    * Open with {@link Core#cdlTristarOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLTRISTAR} over the same series.
+    * Open with {@link Core#CDLTRISTAR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -309,7 +309,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlTristarStream {
+   public static final class CDLTRISTAR_Stream {
       final Core core;
       double BodyPeriodTotal;
       double lag1_inOpen;
@@ -332,10 +332,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlTristarStream( Core core ) { this.core = core; }
+      CDLTRISTAR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlTristarOpenAndFill}, or
+       * The range filled by {@link Core#CDLTRISTAR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -343,7 +343,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlTristarStream( CdlTristarStream other ) {
+      CDLTRISTAR_Stream( CDLTRISTAR_Stream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -372,7 +372,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlTristarStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLTRISTAR_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -384,8 +384,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlTristarStream scratch = new CdlTristarStream(this);
-         core.cdlTristarStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLTRISTAR_Stream scratch = new CDLTRISTAR_Stream(this);
+         core.CDLTRISTAR_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -402,11 +402,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlTristarStream copy() {
-         return new CdlTristarStream(this);
+      public CDLTRISTAR_Stream copy() {
+         return new CDLTRISTAR_Stream(this);
       }
    }
-   void cdlTristarStreamStep( CdlTristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLTRISTAR_StreamStep( CDLTRISTAR_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -457,7 +457,7 @@
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode cdlTristarOpenBody( CdlTristarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLTRISTAR_OpenBody( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -481,7 +481,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlTristarLookback();
+      lookbackTotal = CDLTRISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -578,7 +578,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlTristarOpenAndFillBody( CdlTristarStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLTRISTAR_OpenAndFillBody( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
@@ -603,7 +603,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlTristarLookback();
+      lookbackTotal = CDLTRISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -700,11 +700,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlTristarOpen (composition seam). */
-   CdlTristarStream cdlTristarOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLTRISTAR_Open (composition seam). */
+   CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlTristarStream sp = new CdlTristarStream(this);
-      RetCode retCode = cdlTristarOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
+      RetCode retCode = CDLTRISTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -719,32 +719,32 @@
    /**
     * Open a live CDLTRISTAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlTristar} at that bar.
-    * <p>The history must hold at least {@code cdlTristarLookback(...) + 1} bars
+    * to {@link Core#CDLTRISTAR} at that bar.
+    * <p>The history must hold at least {@code CDLTRISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlTristarStream cdlTristarOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLTRISTAR_Stream CDLTRISTAR_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlTristarOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLTRISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlTristarOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlTristar} over the whole history in the same single pass
+    * {@link Core#CDLTRISTAR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLTRISTAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlTristarStream#fillRange()}.
+    * {@link CDLTRISTAR_Stream#fillRange()}.
     */
-   public CdlTristarStream cdlTristarOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLTRISTAR_Stream CDLTRISTAR_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlTristarStream sp = new CdlTristarStream(this);
+      CDLTRISTAR_Stream sp = new CDLTRISTAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlTristarOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLTRISTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

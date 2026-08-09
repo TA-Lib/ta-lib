@@ -146,7 +146,6 @@ typedef struct
    #define DEF_FUNCTION( name, \
                          groupId, \
                          hint, \
-                         camelCaseName, \
                          flags ) \
    \
    TA_FuncInfo TA_INFO_##name; \
@@ -167,7 +166,6 @@ typedef struct
       (const char * const)#name, \
       (const char * const)groupId##String, \
       (const char * const)hint, \
-      (const char * const)camelCaseName, \
       (const int)flags, \
       (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \
       (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \
@@ -178,7 +176,6 @@ typedef struct
    #define DEF_FUNCTION( name, \
                          groupId, \
                          hint, \
-                         camelCaseName, \
                          flags ) \
    \
    TA_FuncInfo TA_INFO_##name; \
@@ -199,7 +196,6 @@ typedef struct
       (const char * const)#name, \
       (const char * const)groupId##String, \
       (const char * const)hint, \
-      (const char * const)camelCaseName, \
       (const int)flags, \
       (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \
       (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \
@@ -210,7 +206,7 @@ typedef struct
 
 #define ADD_TO_TABLE(name) &TA_DEF_##name
 
-#define DEF_MATH_UNARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
+#define DEF_MATH_UNARY_OPERATOR(NAME,HINT) \
 	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
 { \
   &TA_DEF_UI_Input_Real, \
@@ -225,11 +221,10 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
 DEF_FUNCTION( NAME, \
               TA_GroupId_MathTransform, \
               HINT, \
-              CAMELCASENAME, \
               0 \
              );
 
-#define DEF_MATH_BINARY_OPERATOR(NAME,HINT,CAMELCASENAME) \
+#define DEF_MATH_BINARY_OPERATOR(NAME,HINT) \
 	static const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \
 { \
   &TA_DEF_UI_Input_Real0, \
@@ -245,7 +240,6 @@ static const TA_OutputParameterInfo   *TA_##NAME##_Outputs[]   = \
 DEF_FUNCTION( NAME, \
               TA_GroupId_MathOperators, \
               HINT, \
-              CAMELCASENAME, \
               0 \
              );
 

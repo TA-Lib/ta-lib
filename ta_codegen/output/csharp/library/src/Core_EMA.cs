@@ -57,7 +57,7 @@ public partial class Core
     *  052603 MF   Adapt code to compile with .NET Managed C++
     */
    /// <summary>
-   /// Number of leading input bars <c>Ema</c> consumes before it can produce its
+   /// Number of leading input bars <c>EMA</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -72,24 +72,24 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the average; sets smoothing k = 2/(period+1) (default
    /// 30; range 1..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int EmaLookback( int optInTimePeriod )
+   public int EMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      return optInTimePeriod - 1 + this.unstablePeriod[(int)FuncUnstId.Ema] ;
+      return optInTimePeriod - 1 + this.unstablePeriod[(int)FuncUnstId.EMA] ;
 
    }
-   internal RetCode EmaPrivate( int startIdx,
-                                int endIdx,
-                                double[] inReal,
-                                int optInTimePeriod,
-                                double optInK_1,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                double[] outReal )
+   internal RetCode EMA_Private( int startIdx,
+                                 int endIdx,
+                                 double[] inReal,
+                                 int optInTimePeriod,
+                                 double optInK_1,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -114,7 +114,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = EmaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -168,14 +168,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode EmaPrivate( int startIdx,
-                                int endIdx,
-                                float[] inReal,
-                                int optInTimePeriod,
-                                double optInK_1,
-                                out int outBegIdx,
-                                out int outNBElement,
-                                double[] outReal )
+   internal RetCode EMA_Private( int startIdx,
+                                 int endIdx,
+                                 float[] inReal,
+                                 int optInTimePeriod,
+                                 double optInK_1,
+                                 out int outBegIdx,
+                                 out int outNBElement,
+                                 double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -185,7 +185,7 @@ public partial class Core
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      lookbackTotal = EmaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -214,7 +214,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Ema( int startIdx,
+   internal RetCode EMA( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
@@ -238,9 +238,9 @@ public partial class Core
       }
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       /* Simply call the internal implementation of the EMA. */
-      return EmaPrivate(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, out outBegIdx, out outNBElement, outReal) ;
+      return EMA_Private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, out outBegIdx, out outNBElement, outReal) ;
    }
-   internal RetCode Ema( int startIdx,
+   internal RetCode EMA( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
@@ -269,7 +269,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       optInK_1 = (2.0/(double)((optInTimePeriod+1)));
-      lookbackTotal = EmaLookback(optInTimePeriod);
+      lookbackTotal = EMA_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -316,8 +316,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>EmaLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>EMA_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -335,13 +335,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Ema( int startIdx,
+   public OutRange EMA( int startIdx,
                         int endIdx,
                         double[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EMA", retCode);
       }
@@ -371,8 +371,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>EmaLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>EMA_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -390,13 +390,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Ema( int startIdx,
+   public OutRange EMA( int startIdx,
                         int endIdx,
                         float[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Ema(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = EMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EMA", retCode);
       }

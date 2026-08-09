@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#trix} consumes before it can
+    * Number of leading input bars {@link Core#TRIX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int trixLookback( int optInTimePeriod )
+   public int TRIX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -38,17 +38,17 @@
          return -1;
       }
       int emaLookback;
-      emaLookback = emaLookback(optInTimePeriod);
-      return emaLookback * 3 + rocRLookback(1) ;
+      emaLookback = EMA_Lookback(optInTimePeriod);
+      return emaLookback * 3 + ROCR_Lookback(1) ;
 
    }
-   RetCode trixInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TRIX_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -76,8 +76,8 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -170,13 +170,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode trixInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TRIX_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -201,8 +201,8 @@
       }
       outNBElement.value = 0;
       outBegIdx.value = 0;
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -278,8 +278,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trixLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TRIX_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -297,12 +297,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#roc
-    * @see Core#rocR
-    * @see Core#tema
+    * @see Core#EMA
+    * @see Core#ROC
+    * @see Core#ROCR
+    * @see Core#TEMA
     */
-   public OutRange trix( int startIdx,
+   public OutRange TRIX( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
@@ -310,7 +310,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trixInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIX", retCode);
       }
@@ -335,8 +335,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trixLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TRIX_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -354,12 +354,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ema
-    * @see Core#roc
-    * @see Core#rocR
-    * @see Core#tema
+    * @see Core#EMA
+    * @see Core#ROC
+    * @see Core#ROCR
+    * @see Core#TEMA
     */
-   public OutRange trix( int startIdx,
+   public OutRange TRIX( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
@@ -367,7 +367,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trixInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRIX", retCode);
       }
@@ -377,8 +377,8 @@
 
    /**
     * A live TRIX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#trix} over the same series.
-    * Open with {@link Core#trixOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TRIX} over the same series.
+    * Open with {@link Core#TRIX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -389,7 +389,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TrixStream {
+   public static final class TRIX_Stream {
       final Core core;
       int optInTimePeriod;
       double prevEMA1;
@@ -399,10 +399,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TrixStream( Core core ) { this.core = core; }
+      TRIX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#trixOpenAndFill}, or
+       * The range filled by {@link Core#TRIX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -410,7 +410,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TrixStream( TrixStream other ) {
+      TRIX_Stream( TRIX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -426,7 +426,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.trixStreamStep(this, inReal);
+         core.TRIX_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -438,8 +438,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         TrixStream scratch = new TrixStream(this);
-         core.trixStreamStep(scratch, inReal);
+         TRIX_Stream scratch = new TRIX_Stream(this);
+         core.TRIX_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -456,11 +456,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TrixStream copy() {
-         return new TrixStream(this);
+      public TRIX_Stream copy() {
+         return new TRIX_Stream(this);
       }
    }
-   void trixStreamStep( TrixStream sp, double inReal )
+   void TRIX_StreamStep( TRIX_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;
@@ -473,7 +473,7 @@
          sp.cur_outReal = 0.0;
       }
    }
-   private RetCode trixOpenBody( TrixStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode TRIX_OpenBody( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -506,8 +506,8 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -607,7 +607,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode trixOpenAndFillBody( TrixStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TRIX_OpenAndFillBody( TRIX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double prevEMA1 = 0;
       double prevEMA2 = 0;
@@ -641,8 +641,8 @@
       outNBElement.value = 0;
       outBegIdx.value = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = emaLookback(optInTimePeriod);
-      lookbackTotal = lookbackEMA * 3 + rocRLookback(1);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
+      lookbackTotal = lookbackEMA * 3 + ROCR_Lookback(1);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -742,11 +742,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind trixOpen (composition seam). */
-   TrixStream trixOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
+   TRIX_Stream TRIX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      TrixStream sp = new TrixStream(this);
-      RetCode retCode = trixOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      TRIX_Stream sp = new TRIX_Stream(this);
+      RetCode retCode = TRIX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -761,32 +761,32 @@
    /**
     * Open a live TRIX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#trix} at that bar.
-    * <p>The history must hold at least {@code trixLookback(...) + 1} bars
+    * to {@link Core#TRIX} at that bar.
+    * <p>The history must hold at least {@code TRIX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TrixStream trixOpen( double inReal[], int optInTimePeriod )
+   public TRIX_Stream TRIX_Open( double inReal[], int optInTimePeriod )
    {
-      return trixOpenInternal(inReal, 0, optInTimePeriod);
+      return TRIX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#trixOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#trix} over the whole history in the same single pass
+    * {@link Core#TRIX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TRIX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TrixStream#fillRange()}.
+    * {@link TRIX_Stream#fillRange()}.
     */
-   public TrixStream trixOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public TRIX_Stream TRIX_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      TrixStream sp = new TrixStream(this);
+      TRIX_Stream sp = new TRIX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trixOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRIX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

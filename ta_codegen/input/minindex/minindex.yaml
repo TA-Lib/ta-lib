@@ -1,5 +1,4 @@
 name: MININDEX
-camel_case: MinIndex
 group: Math Operators
 hint: Index of lowest value over a specified period
 flags: [stream]

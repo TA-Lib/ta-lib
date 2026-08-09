@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlBreakaway} consumes before it
+    * Number of leading input bars {@link Core#CDLBREAKAWAY} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlBreakawayLookback( )
+   public int CDLBREAKAWAY_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return BodyLong_avgPeriod + 4 ;
 
    }
-   RetCode cdlBreakawayInternal( int startIdx,
-                                 int endIdx,
-                                 double inOpen[],
-                                 double inHigh[],
-                                 double inLow[],
-                                 double inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode CDLBREAKAWAY_Internal( int startIdx,
+                                  int endIdx,
+                                  double inOpen[],
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlBreakawayLookback();
+      lookbackTotal = CDLBREAKAWAY_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -115,15 +115,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlBreakawayInternal( int startIdx,
-                                 int endIdx,
-                                 float inOpen[],
-                                 float inHigh[],
-                                 float inLow[],
-                                 float inClose[],
-                                 MInteger outBegIdx,
-                                 MInteger outNBElement,
-                                 int outInteger[] )
+   RetCode CDLBREAKAWAY_Internal( int startIdx,
+                                  int endIdx,
+                                  float inOpen[],
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inClose[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -139,7 +139,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlBreakawayLookback();
+      lookbackTotal = CDLBREAKAWAY_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -185,8 +185,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlBreakawayLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#CDLBREAKAWAY_Lookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -205,11 +205,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlGapSideSideWhite
-    * @see Core#cdlRiseFall3Methods
-    * @see Core#cdl3LineStrike
+    * @see Core#CDLGAPSIDESIDEWHITE
+    * @see Core#CDLRISEFALL3METHODS
+    * @see Core#CDL3LINESTRIKE
     */
-   public OutRange cdlBreakaway( int startIdx,
+   public OutRange CDLBREAKAWAY( int startIdx,
                                  int endIdx,
                                  double inOpen[],
                                  double inHigh[],
@@ -219,7 +219,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlBreakawayInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLBREAKAWAY", retCode);
       }
@@ -242,8 +242,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlBreakawayLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#CDLBREAKAWAY_Lookback} is a
+    * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -262,11 +262,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlGapSideSideWhite
-    * @see Core#cdlRiseFall3Methods
-    * @see Core#cdl3LineStrike
+    * @see Core#CDLGAPSIDESIDEWHITE
+    * @see Core#CDLRISEFALL3METHODS
+    * @see Core#CDL3LINESTRIKE
     */
-   public OutRange cdlBreakaway( int startIdx,
+   public OutRange CDLBREAKAWAY( int startIdx,
                                  int endIdx,
                                  float inOpen[],
                                  float inHigh[],
@@ -276,7 +276,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlBreakawayInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLBREAKAWAY_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLBREAKAWAY", retCode);
       }
@@ -286,8 +286,8 @@
 
    /**
     * A live CDLBREAKAWAY stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlBreakaway} over the same series.
-    * Open with {@link Core#cdlBreakawayOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLBREAKAWAY} over the same series.
+    * Open with {@link Core#CDLBREAKAWAY_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -298,7 +298,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlBreakawayStream {
+   public static final class CDLBREAKAWAY_Stream {
       final Core core;
       double BodyLongPeriodTotal;
       double lag1_inOpen;
@@ -330,10 +330,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlBreakawayStream( Core core ) { this.core = core; }
+      CDLBREAKAWAY_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlBreakawayOpenAndFill}, or
+       * The range filled by {@link Core#CDLBREAKAWAY_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -341,7 +341,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlBreakawayStream( CdlBreakawayStream other ) {
+      CDLBREAKAWAY_Stream( CDLBREAKAWAY_Stream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -379,7 +379,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlBreakawayStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLBREAKAWAY_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -391,8 +391,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlBreakawayStream scratch = new CdlBreakawayStream(this);
-         core.cdlBreakawayStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLBREAKAWAY_Stream scratch = new CDLBREAKAWAY_Stream(this);
+         core.CDLBREAKAWAY_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -409,11 +409,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlBreakawayStream copy() {
-         return new CdlBreakawayStream(this);
+      public CDLBREAKAWAY_Stream copy() {
+         return new CDLBREAKAWAY_Stream(this);
       }
    }
-   void cdlBreakawayStreamStep( CdlBreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLBREAKAWAY_StreamStep( CDLBREAKAWAY_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -461,7 +461,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode cdlBreakawayOpenBody( CdlBreakawayStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLBREAKAWAY_OpenBody( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -485,7 +485,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlBreakawayLookback();
+      lookbackTotal = CDLBREAKAWAY_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -595,7 +595,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlBreakawayOpenAndFillBody( CdlBreakawayStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLBREAKAWAY_OpenAndFillBody( CDLBREAKAWAY_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -620,7 +620,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlBreakawayLookback();
+      lookbackTotal = CDLBREAKAWAY_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -730,11 +730,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlBreakawayOpen (composition seam). */
-   CdlBreakawayStream cdlBreakawayOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLBREAKAWAY_Open (composition seam). */
+   CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlBreakawayStream sp = new CdlBreakawayStream(this);
-      RetCode retCode = cdlBreakawayOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
+      RetCode retCode = CDLBREAKAWAY_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -749,32 +749,32 @@
    /**
     * Open a live CDLBREAKAWAY stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlBreakaway} at that bar.
-    * <p>The history must hold at least {@code cdlBreakawayLookback(...) + 1} bars
+    * to {@link Core#CDLBREAKAWAY} at that bar.
+    * <p>The history must hold at least {@code CDLBREAKAWAY_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlBreakawayStream cdlBreakawayOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLBREAKAWAY_Stream CDLBREAKAWAY_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlBreakawayOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlBreakawayOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlBreakaway} over the whole history in the same single pass
+    * {@link Core#CDLBREAKAWAY_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLBREAKAWAY} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlBreakawayStream#fillRange()}.
+    * {@link CDLBREAKAWAY_Stream#fillRange()}.
     */
-   public CdlBreakawayStream cdlBreakawayOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLBREAKAWAY_Stream CDLBREAKAWAY_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlBreakawayStream sp = new CdlBreakawayStream(this);
+      CDLBREAKAWAY_Stream sp = new CDLBREAKAWAY_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlBreakawayOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLBREAKAWAY_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

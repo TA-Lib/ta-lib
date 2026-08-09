@@ -1,5 +1,4 @@
 name: WMA
-camel_case: Wma
 group: Overlap Studies
 hint: Weighted Moving Average
 flags: [overlap, stream]

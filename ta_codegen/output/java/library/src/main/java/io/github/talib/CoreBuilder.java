@@ -55,7 +55,7 @@ package io.github.talib;
  * value-affecting settings, then call {@link #build()}:
  * <pre>{@code
  * Core core = Core.builder()
- *     .unstablePeriod(FuncUnstId.Ema, 10)
+ *     .unstablePeriod(FuncUnstId.EMA, 10)
  *     .build();
  * }</pre>
  *
@@ -85,7 +85,7 @@ public final class CoreBuilder {
    /**
     * Sets the unstable period for one function.
     *
-    * <p>Passing {@link FuncUnstId#All} sets it for <i>every</i> function at once,
+    * <p>Passing {@link FuncUnstId#ALL} sets it for <i>every</i> function at once,
     * mirroring the C {@code TA_SetUnstablePeriod} wildcard.
     *
     * @throws NullPointerException if {@code id} is null
@@ -98,7 +98,7 @@ public final class CoreBuilder {
       if (period < 0) {
          throw new IllegalArgumentException("unstablePeriod must be >= 0, got " + period);
       }
-      if (id == FuncUnstId.All) {
+      if (id == FuncUnstId.ALL) {
          java.util.Arrays.fill(unstablePeriod, period);
       } else {
          unstablePeriod[id.ordinal()] = period;

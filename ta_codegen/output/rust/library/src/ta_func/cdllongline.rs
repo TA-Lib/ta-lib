@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdllongline`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLLONGLINE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdllongline_lookback(&self) -> usize {
+    pub fn CDLLONGLINE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdllongline(
+    /// let ret = core.CDLLONGLINE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -138,14 +138,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlshortline`] · [`Core::cdlclosingmarubozu`] · [`Core::cdlmarubozu`] ·
-    /// [`Core::cdllongleggeddoji`]
+    /// [`Core::CDLSHORTLINE`] · [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLMARUBOZU`] ·
+    /// [`Core::CDLLONGLEGGEDDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdllongline](https://ta-lib.org/functions/cdllongline/)
+    /// [ta-lib.org/functions/CDLLONGLINE](https://ta-lib.org/functions/CDLLONGLINE/)
     #[doc(alias = "LongLineCandle")]
     #[doc(alias = "LongLine")]
-    pub fn cdllongline(
+    pub fn CDLLONGLINE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -163,7 +163,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdllongline_lookback();
+        let _assertLb = self.CDLLONGLINE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -192,7 +192,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongline_lookback();
+        lookbackTotal = self.CDLLONGLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -342,20 +342,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLLONGLINE stream: one value per closed bar, bit-identical to [`Core::cdllongline`]
-/// over the same series. Open with [`Core::cdllongline_open`]; dropping the handle
+/// Live CDLLONGLINE stream: one value per closed bar, bit-identical to [`Core::CDLLONGLINE`]
+/// over the same series. Open with [`Core::CDLLONGLINE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLLONGLINE_Stream")]
-pub struct CdllonglineStream {
+pub struct CDLLONGLINE_Stream {
     core: Core,
-    state: CdllonglineStreamState,
+    state: CDLLONGLINE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdllonglineStreamState {
+struct CDLLONGLINE_StreamState {
     BodyPeriodTotal: f64,
     ShadowPeriodTotal: f64,
     ringPos_BodyTrailingIdx: usize,
@@ -379,7 +379,7 @@ struct CdllonglineStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdllongline_step_internal(&self, sp: &mut CdllonglineStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLLONGLINE_step_internal(&self, sp: &mut CDLLONGLINE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -491,10 +491,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdllongline_open`] (composition seam).
-    pub(crate) fn cdllongline_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLLONGLINE_Open`] (composition seam).
+    pub(crate) fn CDLLONGLINE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdllonglineStream, i32), RetCode> {
+    ) -> Result<(CDLLONGLINE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -528,7 +528,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongline_lookback();
+        lookbackTotal = self.CDLLONGLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -707,7 +707,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdllonglineStreamState {
+        let state = CDLLONGLINE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -723,11 +723,11 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok((CdllonglineStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLLONGLINE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLLONGLINE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdllongline`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLLONGLINE`] at that bar.
     ///
     /// # Errors
     ///
@@ -746,23 +746,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdllongline_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLLONGLINE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLLONGLINE_Open")]
-    pub fn cdllongline_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdllonglineStream, i32), RetCode> {
-        self.cdllongline_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLLONGLINE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLLONGLINE_Stream, i32), RetCode> {
+        self.CDLLONGLINE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdllongline_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdllongline`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLLONGLINE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLLONGLINE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLLONGLINE_OpenAndFill")]
-    pub fn cdllongline_open_and_fill(
+    pub fn CDLLONGLINE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdllonglineStream, RetCode> {
+    ) -> Result<CDLLONGLINE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -795,7 +795,7 @@ impl Core {
         let ShadowShort_factor: f64 = self.candle_settings.shadow_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongline_lookback();
+        lookbackTotal = self.CDLLONGLINE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -976,7 +976,7 @@ impl Core {
         let mut ring_ShadowTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowTrailingIdx];
         ring_ShadowTrailingIdx_inClose[..cap_ShadowTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowTrailingIdx as usize..]);
-        let state = CdllonglineStreamState {
+        let state = CDLLONGLINE_StreamState {
             BodyPeriodTotal,
             ShadowPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
@@ -992,19 +992,19 @@ impl Core {
             ring_ShadowTrailingIdx_inLow,
             ring_ShadowTrailingIdx_inClose,
         };
-        Ok(CdllonglineStream { core: self.clone(), state })
+        Ok(CDLLONGLINE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdllonglineStream {
+impl CDLLONGLINE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLLONGLINE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdllongline_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLLONGLINE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1022,7 +1022,7 @@ impl CdllonglineStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdllonglineStream>();
+    _assert_auto::<CDLLONGLINE_Stream>();
 };
 
 /***************/

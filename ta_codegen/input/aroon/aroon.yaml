@@ -1,5 +1,4 @@
 name: AROON
-camel_case: Aroon
 group: Momentum Indicators
 hint: Aroon
 flags: [stream]

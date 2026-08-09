@@ -26,7 +26,7 @@
 //! [`LanguageBackend::reserved_words`]: crate::backends::LanguageBackend::reserved_words
 //! [`LanguageBackend::rendered_name`]: crate::backends::LanguageBackend::rendered_name
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::backends;
 use crate::helper_registry::HelperRegistry;
@@ -34,11 +34,10 @@ use crate::ir::{CircBuf, CircBufLayout, FuncDef, LookbackExpr, Statement};
 
 /// Where a name appears, which is what decides how each backend spells it.
 #[derive(Debug, Clone, Copy)]
-pub enum NameKind<'a> {
-    /// An indicator function name (`FuncDef.name`), carrying the YAML
-    /// `camel_case` override when the function declares one — that field, not
-    /// the directory name, is what Java and C# render.
-    Function { camel_case: Option<&'a str> },
+pub enum NameKind {
+    /// An indicator function name (`FuncDef.name`). Every backend spells it
+    /// verbatim; C alone prefixes `TA_`.
+    Function,
     /// A generated-signature argument: an input, an optional input or an output.
     /// Emitted verbatim by every backend.
     Argument,
@@ -52,11 +51,11 @@ pub enum NameKind<'a> {
     Helper,
 }
 
-impl NameKind<'_> {
+impl NameKind {
     /// How the name reads in an error message ("local variable `base`").
     fn label(self) -> &'static str {
         match self {
-            NameKind::Function { .. } => "function name",
+            NameKind::Function => "function name",
             NameKind::Argument => "argument",
             NameKind::Variable => "local variable",
             NameKind::Helper => "helper name",
@@ -68,7 +67,7 @@ impl NameKind<'_> {
 ///
 /// The boolean form of [`check_name`], for callers that only need the verdict.
 #[must_use]
-pub fn is_valid_name(name: &str, kind: NameKind<'_>) -> bool {
+pub fn is_valid_name(name: &str, kind: NameKind) -> bool {
     check_name(name, kind).is_ok()
 }
 
@@ -79,13 +78,12 @@ pub fn is_valid_name(name: &str, kind: NameKind<'_>) -> bool {
 /// clear reason reads better than four.
 ///
 /// [`check_syntax`] runs on each backend's *rendered* spelling too, not only on
-/// the authored one: a function's Java and C# names come from the YAML
-/// `camel_case` field, which nothing else checks, so `camel_case: My Func` would
-/// otherwise reach `javac` before anything noticed.
+/// the authored one, so a backend that renders a name into something the target
+/// cannot spell is caught here rather than by that target's compiler.
 ///
 /// The returned string is a reason clause, phrased to follow the name:
 /// `` `base` is a reserved word in the csharp backend ``.
-pub fn check_name(name: &str, kind: NameKind<'_>) -> Result<(), String> {
+pub fn check_name(name: &str, kind: NameKind) -> Result<(), String> {
     check_syntax(name)?;
     for backend in backends::all() {
         let rendered = backend.rendered_name(name, kind);
@@ -172,10 +170,47 @@ pub fn validate_all(funcs: &[FuncDef], helpers: &HelperRegistry) -> Result<(), V
             check(name, NameKind::Variable, &scope, &mut errors);
         }
     }
+    check_uniqueness(funcs, helpers, &mut errors);
     if errors.is_empty() {
         Ok(())
     } else {
         Err(errors)
+    }
+}
+
+/// Every backend spells an indicator with the one name `input/` gives it, so
+/// that name is the cross-language identity and has to be unique on its own.
+///
+/// Case-folded, because the identity has to survive a checkout: `input/sma/` and
+/// `input/smA/` coexist on Linux but are the *same path* on APFS and NTFS, where
+/// git silently collapses one of them. The failure is therefore invisible to
+/// Linux CI, which is exactly why the rule lives here and not in the filesystem.
+///
+/// Helpers get the same rule for a sharper reason: `HelperRegistry` keys them in
+/// a map, so a duplicate silently wins by `read_dir` order and inlines the wrong
+/// arithmetic into a generated indicator — wrong numbers, not a build error.
+fn check_uniqueness(funcs: &[FuncDef], helpers: &HelperRegistry, errors: &mut Vec<String>) {
+    let mut seen: BTreeMap<String, &str> = BTreeMap::new();
+    for func in funcs {
+        let key = func.name.to_ascii_lowercase();
+        if let Some(prev) = seen.insert(key, &func.name) {
+            errors.push(format!(
+                "{}: duplicate function name — `{}` and `{}` differ only by case, \
+                 and are the same file on a case-insensitive filesystem",
+                func.name, prev, func.name
+            ));
+        }
+    }
+    let mut seen_helpers: BTreeMap<String, &str> = BTreeMap::new();
+    for helper in helpers.iter() {
+        let key = helper.name.to_ascii_lowercase();
+        if let Some(prev) = seen_helpers.insert(key, &helper.name) {
+            errors.push(format!(
+                "helpers/{}: duplicate helper name — `{}` and `{}` collide; the \
+                 registry keeps one of them, chosen by directory-read order",
+                helper.name, prev, helper.name
+            ));
+        }
     }
 }
 
@@ -184,9 +219,7 @@ fn validate_func(func: &FuncDef, errors: &mut Vec<String>) {
     let scope = &func.name;
     check(
         &func.name,
-        NameKind::Function {
-            camel_case: func.camel_case.as_deref(),
-        },
+        NameKind::Function,
         scope,
         errors,
     );
@@ -219,7 +252,7 @@ fn validate_func(func: &FuncDef, errors: &mut Vec<String>) {
 }
 
 /// Run one check, pushing a scoped message on failure.
-fn check(name: &str, kind: NameKind<'_>, scope: &str, errors: &mut Vec<String>) {
+fn check(name: &str, kind: NameKind, scope: &str, errors: &mut Vec<String>) {
     if let Err(reason) = check_name(name, kind) {
         errors.push(format!("{scope}: {} `{name}`: {reason}", kind.label()));
     }
@@ -300,8 +333,8 @@ mod tests {
     use super::*;
     use std::path::Path;
 
-    const VAR: NameKind<'static> = NameKind::Variable;
-    const FUNC: NameKind<'static> = NameKind::Function { camel_case: None };
+    const VAR: NameKind = NameKind::Variable;
+    const FUNC: NameKind = NameKind::Function;
 
     #[test]
     fn accepts_ordinary_names() {
@@ -369,50 +402,24 @@ mod tests {
         }
     }
 
-    /// A function name is mangled before it is checked, so the verdict can
-    /// differ from that of the same word used as a variable.
+    /// A function name is spelled verbatim by Rust, Java and C#, so it is the
+    /// authored spelling that has to clear all three; C's `TA_` prefix puts its
+    /// own rendering out of every keyword's reach.
     #[test]
-    fn function_names_are_checked_after_mangling() {
-        // `BASE` -> TA_BASE / base / base / Base. Rust's `base` is not a
-        // keyword, so unlike the local variable this is fine.
+    fn function_names_are_checked_in_their_rendered_spelling() {
+        // `BASE` is fine everywhere: C prefixes it, Rust's module is `base`,
+        // and Java/C# spell it verbatim. None of those is a keyword.
         assert!(is_valid_name("BASE", FUNC));
-        // `LOOP` -> TA_LOOP / loop / loop / Loop. Rust's is.
-        let err = check_name("LOOP", FUNC).expect_err("`loop` is a Rust keyword");
+        // `LOOP` is not. Rust carries the function as `mod loop;` / `loop.rs`,
+        // and the lower-cased module path is what collides — the verbatim method
+        // `LOOP` would have been fine. C would be fine too (`TA_LOOP`), which is
+        // exactly why the check asks every backend rather than trusting the one
+        // it happens to build first.
+        let err = check_name("LOOP", FUNC).expect_err("`loop` is a Rust module keyword");
         assert!(err.contains("rust") && err.contains("`loop`"), "got: {err}");
-        // `NEW` -> TA_NEW / new / new / New. Java's is (and C's C++ half).
-        assert!(check_name("NEW", FUNC).is_err());
-    }
-
-    /// The YAML `camel_case` override is what Java and C# actually emit, so it
-    /// is the spelling that has to be legal.
-    #[test]
-    fn camel_case_override_is_checked() {
-        let kind = NameKind::Function {
-            camel_case: Some("Base"),
-        };
-        // `Base` is a fine C# method name...
-        assert!(is_valid_name("SOMETHING", kind));
-        let kind = NameKind::Function {
-            camel_case: Some("Switch"),
-        };
-        // ...but Java lower-cases the first letter, giving the keyword `switch`.
-        let err = check_name("SOMETHING", kind).expect_err("`switch` is a Java keyword");
-        assert!(
-            err.contains("java") && err.contains("`switch`"),
-            "got: {err}"
-        );
-    }
-
-    /// `camel_case` is authored by hand and is what Java and C# emit verbatim,
-    /// so the rendered spelling gets the syntax check too — the authored name
-    /// alone would have been fine here.
-    #[test]
-    fn a_malformed_camel_case_override_is_caught() {
-        let kind = NameKind::Function {
-            camel_case: Some("My Func"),
-        };
-        let err = check_name("MYFUNC", kind).expect_err("`My Func` is not an identifier");
-        assert!(err.contains("space"), "got: {err}");
+        // Authored lower-case, the keyword reaches Java and C# directly too.
+        assert!(check_name("new", FUNC).is_err());
+        assert!(check_name("base", FUNC).is_err());
     }
 
     /// Contextual keywords are legal identifiers and must not be rejected —

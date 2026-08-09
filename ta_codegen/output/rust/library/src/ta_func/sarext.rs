@@ -68,7 +68,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::sarext`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::SAREXT`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -91,7 +91,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn sarext_lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
+    pub fn SAREXT_Lookback(&self, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64) -> usize {
         if optInStartValue == REAL_DEFAULT {
             optInStartValue = 0e0;
         } else if (optInStartValue < REAL_MIN) || (optInStartValue > REAL_MAX) {
@@ -198,7 +198,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.sarext(
+    /// let ret = core.SAREXT(
     ///     0, high.len() - 1, &high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -209,12 +209,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sar`] · [`Core::minus_dm`]
+    /// [`Core::SAR`] · [`Core::MINUS_DM`]
     ///
-    /// Further reading: [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext/)
+    /// Further reading: [ta-lib.org/functions/SAREXT](https://ta-lib.org/functions/SAREXT/)
     #[doc(alias = "ParabolicSARExtended")]
     #[doc(alias = "ExtendedParabolicStopandReverse")]
-    pub fn sarext(
+    pub fn SAREXT(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -233,13 +233,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, sarext_fma, sarext_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, SAREXT_fma, SAREXT_impl, (startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.sarext_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+        self.SAREXT_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn sarext_fma(
+    fn SAREXT_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -257,10 +257,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.sarext_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
+        self.SAREXT_impl(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn sarext_impl(
+    fn SAREXT_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -324,7 +324,7 @@ impl Core {
         } else if (optInAccelerationMaxShort < 0e0) || (optInAccelerationMaxShort > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.sarext_lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+        let _assertLb = self.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -441,7 +441,7 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let mut _dup_out: usize = 0_usize;
-            retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -613,20 +613,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live SAREXT stream: one value per closed bar, bit-identical to [`Core::sarext`]
-/// over the same series. Open with [`Core::sarext_open`]; dropping the handle
+/// Live SAREXT stream: one value per closed bar, bit-identical to [`Core::SAREXT`]
+/// over the same series. Open with [`Core::SAREXT_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_SAREXT_Stream")]
-pub struct SarextStream {
+pub struct SAREXT_Stream {
     core: Core,
-    state: SarextStreamState,
+    state: SAREXT_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct SarextStreamState {
+struct SAREXT_StreamState {
     optInStartValue: f64,
     optInOffsetOnReverse: f64,
     optInAccelerationInitLong: f64,
@@ -651,7 +651,7 @@ struct SarextStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn sarext_step_internal(&self, sp: &mut SarextStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn SAREXT_step_internal(&self, sp: &mut SAREXT_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut prevHigh: f64 = 0.0_f64;
         let mut prevLow: f64 = 0.0_f64;
         prevLow = sp.newLow;
@@ -769,10 +769,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::sarext_open`] (composition seam).
-    pub(crate) fn sarext_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::SAREXT_Open`] (composition seam).
+    pub(crate) fn SAREXT_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64,
-    ) -> Result<(SarextStream, f64), RetCode> {
+    ) -> Result<(SAREXT_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -936,7 +936,7 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let mut _dup_out: usize = 0_usize;
-            retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -1101,7 +1101,7 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = SarextStreamState {
+        let state = SAREXT_StreamState {
             optInStartValue,
             optInOffsetOnReverse,
             optInAccelerationInitLong,
@@ -1118,11 +1118,11 @@ impl Core {
             ep,
             sar,
         };
-        Ok((SarextStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((SAREXT_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live SAREXT stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::sarext`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::SAREXT`] at that bar.
     ///
     /// # Errors
     ///
@@ -1135,23 +1135,23 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.sarext_open(&high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2).expect("enough history");
+    /// let (mut s, _last) = core.SAREXT_Open(&high, &low, 0.0, 0.0, 0.02, 0.02, 0.2, 0.02, 0.02, 0.2).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1);
     /// let updated = s.update(101.4, 99.1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_SAREXT_Open")]
-    pub fn sarext_open(&self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<(SarextStream, f64), RetCode> {
-        self.sarext_open_internal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
+    pub fn SAREXT_Open(&self, inHigh: &[f64], inLow: &[f64], optInStartValue: f64, optInOffsetOnReverse: f64, optInAccelerationInitLong: f64, optInAccelerationLong: f64, optInAccelerationMaxLong: f64, optInAccelerationInitShort: f64, optInAccelerationShort: f64, optInAccelerationMaxShort: f64) -> Result<(SAREXT_Stream, f64), RetCode> {
+        self.SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort)
     }
 
-    /// [`Core::sarext_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::sarext`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::SAREXT_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SAREXT`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_SAREXT_OpenAndFill")]
-    pub fn sarext_open_and_fill(
+    pub fn SAREXT_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInStartValue: f64, mut optInOffsetOnReverse: f64, mut optInAccelerationInitLong: f64, mut optInAccelerationLong: f64, mut optInAccelerationMaxLong: f64, mut optInAccelerationInitShort: f64, mut optInAccelerationShort: f64, mut optInAccelerationMaxShort: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<SarextStream, RetCode> {
+    ) -> Result<SAREXT_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1314,7 +1314,7 @@ impl Core {
             // (ep is just used as a temp buffer here, the name
             //  of the parameter is not significant).
             let mut _dup_out: usize = 0_usize;
-            retCode = self.minus_dm(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
+            retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
             if ep_temp[0] > 0_f64 {
                 isLong = 0;
             } else {
@@ -1483,7 +1483,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = SarextStreamState {
+        let state = SAREXT_StreamState {
             optInStartValue,
             optInOffsetOnReverse,
             optInAccelerationInitLong,
@@ -1500,19 +1500,19 @@ impl Core {
             ep,
             sar,
         };
-        Ok(SarextStream { core: self.clone(), state })
+        Ok(SAREXT_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl SarextStream {
+impl SAREXT_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_SAREXT_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.sarext_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.SAREXT_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
         outReal
     }
 
@@ -1530,7 +1530,7 @@ impl SarextStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<SarextStream>();
+    _assert_auto::<SAREXT_Stream>();
 };
 
 /***************/

@@ -1,5 +1,4 @@
 name: WCLPRICE
-camel_case: WclPrice
 group: Price Transform
 hint: Weighted Close Price
 flags: [overlap, stream]

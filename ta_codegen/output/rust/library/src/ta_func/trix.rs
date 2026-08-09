@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::trix`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TRIX`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -80,15 +80,15 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn trix_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn TRIX_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         let mut emaLookback: usize = 0_usize;
-        emaLookback = self.ema_lookback(optInTimePeriod);
-        return (emaLookback * 3 + self.rocr_lookback(1)) as usize;
+        emaLookback = self.EMA_Lookback(optInTimePeriod);
+        return (emaLookback * 3 + self.ROCR_Lookback(1)) as usize;
     }
     /// 1-day Rate-Of-Change of a triple-smoothed EMA of the input. Momentum oscillator that filters
     /// out price moves shorter than the chosen period. Oscillates around zero; sign, zero-crossings
@@ -142,7 +142,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.trix(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TRIX(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -150,15 +150,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ema`] · [`Core::roc`] · [`Core::rocr`] · [`Core::tema`]
+    /// [`Core::EMA`] · [`Core::ROC`] · [`Core::ROCR`] · [`Core::TEMA`]
     ///
     /// # References
     ///
     /// * Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
     ///
-    /// Further reading: [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix/)
+    /// Further reading: [ta-lib.org/functions/TRIX](https://ta-lib.org/functions/TRIX/)
     #[doc(alias = "TripleExponentialAverage")]
-    pub fn trix(
+    pub fn TRIX(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,13 +169,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, trix_fma, trix_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, TRIX_fma, TRIX_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.trix_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TRIX_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn trix_fma(
+    fn TRIX_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -185,10 +185,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.trix_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TRIX_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn trix_impl(
+    fn TRIX_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -209,7 +209,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.trix_lookback(optInTimePeriod);
+        let _assertLb = self.TRIX_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -229,8 +229,8 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
-        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.ROCR_Lookback(1);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -336,20 +336,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TRIX stream: one value per closed bar, bit-identical to [`Core::trix`]
-/// over the same series. Open with [`Core::trix_open`]; dropping the handle
+/// Live TRIX stream: one value per closed bar, bit-identical to [`Core::TRIX`]
+/// over the same series. Open with [`Core::TRIX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TRIX_Stream")]
-pub struct TrixStream {
+pub struct TRIX_Stream {
     core: Core,
-    state: TrixStreamState,
+    state: TRIX_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TrixStreamState {
+struct TRIX_StreamState {
     optInTimePeriod: i32,
     prevEMA1: f64,
     prevEMA2: f64,
@@ -364,7 +364,7 @@ struct TrixStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn trix_step_internal(&self, sp: &mut TrixStreamState, inReal: f64, outReal: &mut f64) {
+    fn TRIX_step_internal(&self, sp: &mut TRIX_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = sp.prevEMA3;
         sp.prevEMA1 = (inReal - sp.prevEMA1 as f64).mul_add(sp.optInK_1, sp.prevEMA1);
@@ -377,10 +377,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::trix_open`] (composition seam).
-    pub(crate) fn trix_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TRIX_Open`] (composition seam).
+    pub(crate) fn TRIX_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TrixStream, f64), RetCode> {
+    ) -> Result<(TRIX_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -413,8 +413,8 @@ impl Core {
         dummyNBElement = 0;
         dummyBegIdx = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
-        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.ROCR_Lookback(1);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -515,18 +515,18 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = TrixStreamState {
+        let state = TRIX_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok((TrixStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TRIX_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TRIX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::trix`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TRIX`] at that bar.
     ///
     /// # Errors
     ///
@@ -538,23 +538,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.trix_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.TRIX_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TRIX_Open")]
-    pub fn trix_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TrixStream, f64), RetCode> {
-        self.trix_open_internal(inReal, 0, optInTimePeriod)
+    pub fn TRIX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TRIX_Stream, f64), RetCode> {
+        self.TRIX_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::trix_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::trix`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TRIX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TRIX`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TRIX_OpenAndFill")]
-    pub fn trix_open_and_fill(
+    pub fn TRIX_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TrixStream, RetCode> {
+    ) -> Result<TRIX_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -586,8 +586,8 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
-        lookbackTotal = lookbackEMA * 3 + self.rocr_lookback(1);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
+        lookbackTotal = lookbackEMA * 3 + self.ROCR_Lookback(1);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -690,26 +690,26 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = TrixStreamState {
+        let state = TRIX_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok(TrixStream { core: self.clone(), state })
+        Ok(TRIX_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TrixStream {
+impl TRIX_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TRIX_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.trix_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TRIX_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -727,7 +727,7 @@ impl TrixStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TrixStream>();
+    _assert_auto::<TRIX_Stream>();
 };
 
 /***************/

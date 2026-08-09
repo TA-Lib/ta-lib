@@ -72,9 +72,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_trendmode`]: the number of leading input values consumed
+    /// Lookback period for [`Core::HT_TRENDMODE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn ht_trendmode_lookback(&self) -> usize {
+    pub fn HT_TRENDMODE_Lookback(&self) -> usize {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -82,7 +82,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return (63 + self.unstable_period[FuncUnstId::HtTrendMode as usize]) as usize;
+        return (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
     }
     /// Hilbert Transform classifier that labels each bar as trending (1) or cycling (0). Reuses the
     /// MAMA dominant-cycle/phase DSP plus a SineWave/trendline test to decide the market mode. 1 =
@@ -120,15 +120,15 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.ht_trendmode(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.HT_TRENDMODE(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// ```
     ///
     /// # See also
     ///
-    /// [`Core::ht_trendline`] · [`Core::ht_sine`] · [`Core::ht_dcphase`] · [`Core::ht_dcperiod`]
-    /// · [`Core::mama`]
+    /// [`Core::HT_TRENDLINE`] · [`Core::HT_SINE`] · [`Core::HT_DCPHASE`] · [`Core::HT_DCPERIOD`]
+    /// · [`Core::MAMA`]
     ///
     /// # References
     ///
@@ -136,10 +136,10 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/ht_trendmode](https://ta-lib.org/functions/ht_trendmode/)
+    /// [ta-lib.org/functions/HT_TRENDMODE](https://ta-lib.org/functions/HT_TRENDMODE/)
     #[doc(alias = "HilbertTransformTrendvsCycleMode")]
     #[doc(alias = "TrendMode")]
-    pub fn ht_trendmode(
+    pub fn HT_TRENDMODE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -149,13 +149,13 @@ impl Core {
         outInteger: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_trendmode_fma, ht_trendmode_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_TRENDMODE_fma, HT_TRENDMODE_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_trendmode_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.HT_TRENDMODE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_trendmode_fma(
+    fn HT_TRENDMODE_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,10 +164,10 @@ impl Core {
         outNBElement: &mut usize,
         outInteger: &mut [i32],
     ) -> RetCode {
-        self.ht_trendmode_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
+        self.HT_TRENDMODE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outInteger)
     }
     #[inline(always)]
-    fn ht_trendmode_impl(
+    fn HT_TRENDMODE_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -182,7 +182,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ht_trendmode_lookback();
+        let _assertLb = self.HT_TRENDMODE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
@@ -299,7 +299,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendMode as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -663,20 +663,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_TRENDMODE stream: one value per closed bar, bit-identical to [`Core::ht_trendmode`]
-/// over the same series. Open with [`Core::ht_trendmode_open`]; dropping the handle
+/// Live HT_TRENDMODE stream: one value per closed bar, bit-identical to [`Core::HT_TRENDMODE`]
+/// over the same series. Open with [`Core::HT_TRENDMODE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_TRENDMODE_Stream")]
-pub struct HtTrendModeStream {
+pub struct HT_TRENDMODE_Stream {
     core: Core,
-    state: HtTrendModeStreamState,
+    state: HT_TRENDMODE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtTrendModeStreamState {
+struct HT_TRENDMODE_StreamState {
     i: usize,
     j: usize,
     tempReal: f64,
@@ -769,7 +769,7 @@ struct HtTrendModeStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_trendmode_step_internal(&self, sp: &mut HtTrendModeStreamState, inReal: f64, outInteger: &mut i32) {
+    fn HT_TRENDMODE_step_internal(&self, sp: &mut HT_TRENDMODE_StreamState, inReal: f64, outInteger: &mut i32) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -1022,10 +1022,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_trendmode_open`] (composition seam).
-    pub(crate) fn ht_trendmode_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_TRENDMODE_Open`] (composition seam).
+    pub(crate) fn HT_TRENDMODE_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtTrendModeStream, i32), RetCode> {
+    ) -> Result<(HT_TRENDMODE_Stream, i32), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1149,7 +1149,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendMode as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1527,7 +1527,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtTrendModeStreamState {
+        let state = HT_TRENDMODE_StreamState {
             i,
             j,
             tempReal,
@@ -1612,11 +1612,11 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok((HtTrendModeStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((HT_TRENDMODE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live HT_TRENDMODE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_trendmode`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_TRENDMODE`] at that bar.
     ///
     /// # Errors
     ///
@@ -1628,23 +1628,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_trendmode_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_TRENDMODE_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_HT_TRENDMODE_Open")]
-    pub fn ht_trendmode_open(&self, inReal: &[f64], ) -> Result<(HtTrendModeStream, i32), RetCode> {
-        self.ht_trendmode_open_internal(inReal, 0)
+    pub fn HT_TRENDMODE_Open(&self, inReal: &[f64], ) -> Result<(HT_TRENDMODE_Stream, i32), RetCode> {
+        self.HT_TRENDMODE_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_trendmode_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_trendmode`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_TRENDMODE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_TRENDMODE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_TRENDMODE_OpenAndFill")]
-    pub fn ht_trendmode_open_and_fill(
+    pub fn HT_TRENDMODE_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<HtTrendModeStream, RetCode> {
+    ) -> Result<HT_TRENDMODE_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1767,7 +1767,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendMode as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDMODE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -2146,7 +2146,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtTrendModeStreamState {
+        let state = HT_TRENDMODE_StreamState {
             i,
             j,
             tempReal,
@@ -2231,19 +2231,19 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok(HtTrendModeStream { core: self.clone(), state })
+        Ok(HT_TRENDMODE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtTrendModeStream {
+impl HT_TRENDMODE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_TRENDMODE_Update")]
     pub fn update(&mut self, inReal: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.ht_trendmode_step_internal(&mut self.state, inReal, &mut outInteger);
+        self.core.HT_TRENDMODE_step_internal(&mut self.state, inReal, &mut outInteger);
         outInteger
     }
 
@@ -2261,7 +2261,7 @@ impl HtTrendModeStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtTrendModeStream>();
+    _assert_auto::<HT_TRENDMODE_Stream>();
 };
 
 /***************/

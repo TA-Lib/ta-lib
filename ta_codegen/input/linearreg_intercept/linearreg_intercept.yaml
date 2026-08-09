@@ -1,5 +1,4 @@
 name: LINEARREG_INTERCEPT
-camel_case: LinearRegIntercept
 group: Statistic Functions
 hint: Linear Regression Intercept
 flags: [overlap, stream]

@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#minusDM} consumes before it can
+    * Number of leading input bars {@link Core#MINUS_DM} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int minusDMLookback( int optInTimePeriod )
+   public int MINUS_DM_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -35,20 +35,20 @@
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1 ;
+         return optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1 ;
       } else {
          return 1 ;
       }
 
    }
-   RetCode minusDMInternal( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode MINUS_DM_Internal( int startIdx,
+                              int endIdx,
+                              double inHigh[],
+                              double inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -137,7 +137,7 @@
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
       } else {
          lookbackTotal = 1;
       }
@@ -208,7 +208,7 @@
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -254,14 +254,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode minusDMInternal( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            int optInTimePeriod,
-                            MInteger outBegIdx,
-                            MInteger outNBElement,
-                            double outReal[] )
+   RetCode MINUS_DM_Internal( int startIdx,
+                              int endIdx,
+                              float inHigh[],
+                              float inLow[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -285,7 +285,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
       } else {
          lookbackTotal = 1;
       }
@@ -338,7 +338,7 @@
             prevMinusDM += diffM;
          }
       }
-      i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
+      i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -388,8 +388,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minusDMLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MINUS_DM_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -407,23 +407,23 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#plusDM
-    * @see Core#minusDI
-    * @see Core#plusDI
-    * @see Core#dx
-    * @see Core#adx
-    * @see Core#adxr
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DI
+    * @see Core#DX
+    * @see Core#ADX
+    * @see Core#ADXR
     */
-   public OutRange minusDM( int startIdx,
-                            int endIdx,
-                            double inHigh[],
-                            double inLow[],
-                            int optInTimePeriod,
-                            double outReal[] )
+   public OutRange MINUS_DM( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             int optInTimePeriod,
+                             double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minusDMInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DM", retCode);
       }
@@ -447,8 +447,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minusDMLookback} is a <b>success with
-    * no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#MINUS_DM_Lookback} is a <b>success
+    * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -466,23 +466,23 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#plusDM
-    * @see Core#minusDI
-    * @see Core#plusDI
-    * @see Core#dx
-    * @see Core#adx
-    * @see Core#adxr
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DI
+    * @see Core#DX
+    * @see Core#ADX
+    * @see Core#ADXR
     */
-   public OutRange minusDM( int startIdx,
-                            int endIdx,
-                            float inHigh[],
-                            float inLow[],
-                            int optInTimePeriod,
-                            double outReal[] )
+   public OutRange MINUS_DM( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             int optInTimePeriod,
+                             double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minusDMInternal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DM_Internal(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MINUS_DM", retCode);
       }
@@ -492,8 +492,8 @@
 
    /**
     * A live MINUS_DM stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#minusDM} over the same series.
-    * Open with {@link Core#minusDMOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MINUS_DM} over the same series.
+    * Open with {@link Core#MINUS_DM_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -504,7 +504,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MinusDMStream {
+   public static final class MINUS_DM_Stream {
       final Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -516,10 +516,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MinusDMStream( Core core ) { this.core = core; }
+      MINUS_DM_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#minusDMOpenAndFill}, or
+       * The range filled by {@link Core#MINUS_DM_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -527,7 +527,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MinusDMStream( MinusDMStream other ) {
+      MINUS_DM_Stream( MINUS_DM_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -545,7 +545,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow ) {
-         core.minusDMStreamStep(this, inHigh, inLow);
+         core.MINUS_DM_StreamStep(this, inHigh, inLow);
          return this.cur_outReal;
       }
 
@@ -557,8 +557,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow ) {
-         MinusDMStream scratch = new MinusDMStream(this);
-         core.minusDMStreamStep(scratch, inHigh, inLow);
+         MINUS_DM_Stream scratch = new MINUS_DM_Stream(this);
+         core.MINUS_DM_StreamStep(scratch, inHigh, inLow);
          return scratch.cur_outReal;
       }
 
@@ -575,11 +575,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MinusDMStream copy() {
-         return new MinusDMStream(this);
+      public MINUS_DM_Stream copy() {
+         return new MINUS_DM_Stream(this);
       }
    }
-   void minusDMStreamStep( MinusDMStream sp, double inHigh, double inLow )
+   void MINUS_DM_StreamStep( MINUS_DM_Stream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          sp.tempReal = inHigh;
@@ -615,7 +615,7 @@
          sp.cur_outReal = sp.prevMinusDM;
       }
    }
-   private RetCode minusDMOpenBody( MinusDMStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   private RetCode MINUS_DM_OpenBody( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
@@ -710,7 +710,7 @@
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
          if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
          } else {
             lookbackTotal = 1;
          }
@@ -841,7 +841,7 @@
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
          if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
          } else {
             lookbackTotal = 1;
          }
@@ -884,7 +884,7 @@
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
+         i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];
@@ -940,7 +940,7 @@
          return RetCode.Success;
       }
    }
-   private RetCode minusDMOpenAndFillBody( MinusDMStream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MINUS_DM_OpenAndFillBody( MINUS_DM_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
@@ -1036,7 +1036,7 @@
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
          if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
          } else {
             lookbackTotal = 1;
          }
@@ -1167,7 +1167,7 @@
           *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
           */
          if( optInTimePeriod > 1 ) {
-            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MinusDM.ordinal()] - 1;
+            lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()] - 1;
          } else {
             lookbackTotal = 1;
          }
@@ -1210,7 +1210,7 @@
          }
          /* Process subsequent DM */
          /* Skip the unstable period. */
-         i = this.unstablePeriod[FuncUnstId.MinusDM.ordinal()];
+         i = this.unstablePeriod[FuncUnstId.MINUS_DM.ordinal()];
          while( i-- != 0 ) {
             today += 1;
             tempReal = inHigh[today];
@@ -1266,11 +1266,11 @@
          return RetCode.Success;
       }
    }
-   /* Internal startIdx-anchored open behind minusDMOpen (composition seam). */
-   MinusDMStream minusDMOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
+   MINUS_DM_Stream MINUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {
-      MinusDMStream sp = new MinusDMStream(this);
-      RetCode retCode = minusDMOpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      RetCode retCode = MINUS_DM_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1285,32 +1285,32 @@
    /**
     * Open a live MINUS_DM stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#minusDM} at that bar.
-    * <p>The history must hold at least {@code minusDMLookback(...) + 1} bars
+    * to {@link Core#MINUS_DM} at that bar.
+    * <p>The history must hold at least {@code MINUS_DM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MinusDMStream minusDMOpen( double inHigh[], double inLow[], int optInTimePeriod )
+   public MINUS_DM_Stream MINUS_DM_Open( double inHigh[], double inLow[], int optInTimePeriod )
    {
-      return minusDMOpenInternal(inHigh, inLow, 0, optInTimePeriod);
+      return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#minusDMOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#minusDM} over the whole history in the same single pass
+    * {@link Core#MINUS_DM_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MINUS_DM} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MinusDMStream#fillRange()}.
+    * {@link MINUS_DM_Stream#fillRange()}.
     */
-   public MinusDMStream minusDMOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
+   public MINUS_DM_Stream MINUS_DM_OpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outReal[] )
    {
-      MinusDMStream sp = new MinusDMStream(this);
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minusDMOpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MINUS_DM_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

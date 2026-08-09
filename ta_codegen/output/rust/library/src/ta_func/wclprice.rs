@@ -65,9 +65,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::wclprice`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::WCLPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn wclprice_lookback(&self) -> usize {
+    pub fn WCLPRICE_Lookback(&self) -> usize {
         // This function have no lookback needed.
         return (0) as usize;
     }
@@ -118,7 +118,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.wclprice(
+    /// let ret = core.WCLPRICE(
     ///     0, high.len() - 1, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -129,12 +129,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::typprice`] · [`Core::medprice`] · [`Core::avgprice`]
+    /// [`Core::TYPPRICE`] · [`Core::MEDPRICE`] · [`Core::AVGPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/wclprice](https://ta-lib.org/functions/wclprice/)
+    /// Further reading: [ta-lib.org/functions/WCLPRICE](https://ta-lib.org/functions/WCLPRICE/)
     #[doc(alias = "WeightedClosePrice")]
     #[doc(alias = "WeightedClose")]
-    pub fn wclprice(
+    pub fn WCLPRICE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -146,13 +146,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, wclprice_fma, wclprice_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, WCLPRICE_fma, WCLPRICE_impl, (startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.wclprice_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.WCLPRICE_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn wclprice_fma(
+    fn WCLPRICE_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -163,10 +163,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.wclprice_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
+        self.WCLPRICE_impl(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn wclprice_impl(
+    fn WCLPRICE_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -183,7 +183,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.wclprice_lookback();
+        let _assertLb = self.WCLPRICE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -206,20 +206,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live WCLPRICE stream: one value per closed bar, bit-identical to [`Core::wclprice`]
-/// over the same series. Open with [`Core::wclprice_open`]; dropping the handle
+/// Live WCLPRICE stream: one value per closed bar, bit-identical to [`Core::WCLPRICE`]
+/// over the same series. Open with [`Core::WCLPRICE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WCLPRICE_Stream")]
-pub struct WclpriceStream {
+pub struct WCLPRICE_Stream {
     core: Core,
-    state: WclpriceStreamState,
+    state: WCLPRICE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct WclpriceStreamState {
+struct WCLPRICE_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -229,14 +229,14 @@ struct WclpriceStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn wclprice_step_internal(&self, sp: &mut WclpriceStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn WCLPRICE_step_internal(&self, sp: &mut WCLPRICE_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::wclprice_open`] (composition seam).
-    pub(crate) fn wclprice_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::WCLPRICE_Open`] (composition seam).
+    pub(crate) fn WCLPRICE_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(WclpriceStream, f64), RetCode> {
+    ) -> Result<(WCLPRICE_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -261,13 +261,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = WclpriceStreamState {
+        let state = WCLPRICE_StreamState {
         };
-        Ok((WclpriceStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((WCLPRICE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live WCLPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::wclprice`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::WCLPRICE`] at that bar.
     ///
     /// # Errors
     ///
@@ -283,23 +283,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.wclprice_open(&high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.WCLPRICE_Open(&high, &low, &close).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_WCLPRICE_Open")]
-    pub fn wclprice_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(WclpriceStream, f64), RetCode> {
-        self.wclprice_open_internal(inHigh, inLow, inClose, 0)
+    pub fn WCLPRICE_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(WCLPRICE_Stream, f64), RetCode> {
+        self.WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::wclprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::wclprice`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::WCLPRICE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::WCLPRICE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_WCLPRICE_OpenAndFill")]
-    pub fn wclprice_open_and_fill(
+    pub fn WCLPRICE_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<WclpriceStream, RetCode> {
+    ) -> Result<WCLPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -324,21 +324,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = WclpriceStreamState {
+        let state = WCLPRICE_StreamState {
         };
-        Ok(WclpriceStream { core: self.clone(), state })
+        Ok(WCLPRICE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl WclpriceStream {
+impl WCLPRICE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_WCLPRICE_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.wclprice_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.WCLPRICE_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -356,7 +356,7 @@ impl WclpriceStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<WclpriceStream>();
+    _assert_auto::<WCLPRICE_Stream>();
 };
 
 /***************/

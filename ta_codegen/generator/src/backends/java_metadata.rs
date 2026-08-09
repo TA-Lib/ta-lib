@@ -155,7 +155,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, lib_src: &P
     // so a list with a gap silently bound the wrong member (issue #164).
     let matype: Vec<&str> = enums
         .get("MAType")
-        .map(|e| e.variants.iter().map(|v| v.short_name.as_str()).collect())
+        .map(|e| e.variants.iter().map(|v| v.name.as_str()).collect())
         .unwrap_or_default();
     for f in &rows {
         for opt in &f.opt_inputs {
@@ -538,11 +538,6 @@ fn function_info_record() -> String {
          \x20* @param name          the canonical upper-case name, e.g. {@code SMA}\n\
          \x20* @param group         the functional group, e.g. {@code Overlap Studies}\n\
          \x20* @param hint          a one-line description ({@code \"\"} when none)\n\
-         \x20* @param camelCaseName C's {@code TA_FuncInfo.camelCaseName}, kept for\n\
-         \x20*                      cross-backend parity. Pascal-cased for some functions\n\
-         \x20*                      ({@code Accbands}) -- use {@link #javaMethodName()} to\n\
-         \x20*                      name the Java method\n\
-         \x20* @param javaMethodName the method on {@code Core}, e.g. {@code sma}, {@code accbands}\n\
          \x20* @param flags         see {@link FuncFlags}\n\
          \x20* @param inputs        inputs in call order\n\
          \x20* @param optInputs     optional parameters in call order\n\
@@ -552,8 +547,6 @@ fn function_info_record() -> String {
          \x20      String name,\n\
          \x20      String group,\n\
          \x20      String hint,\n\
-         \x20      String camelCaseName,\n\
-         \x20      String javaMethodName,\n\
          \x20      int flags,\n\
          \x20      List<InputInfo> inputs,\n\
          \x20      List<OptInputInfo> optInputs,\n\
@@ -677,15 +670,10 @@ fn emit_function_factory(s: &mut String, f: &FuncRow) {
     let _ = writeln!(s, "      return new FunctionInfo(");
     let _ = writeln!(
         s,
-        "         {}, {}, {}, {}, {}, 0x{:08X},",
+        "         {}, {}, {}, 0x{:08X},",
         js(&f.name),
         js(f.group.as_str()),
         js(&f.hint),
-        js(f.camel_case_name()),
-        // Derived here, with the very helper `java.rs` names the method with, so
-        // it cannot drift from the real signature — which is why it is not a
-        // field on the backend-neutral row.
-        js(&super::java::to_java_method_name(&f.name, f.camel_case.as_deref())),
         f.flags
     );
 
@@ -1146,7 +1134,7 @@ final class Dispatch {
     );
 
     for f in rows {
-        let camel = super::java::to_java_method_name(&f.name, f.camel_case.as_deref());
+        let camel = f.name.clone();
 
         // Argument order comes STRAIGHT from the row the registry publishes:
         // a price bundle is one slot, and `signature_components` is the order
@@ -1208,7 +1196,7 @@ final class Dispatch {
     );
 
     for f in rows {
-        let camel = super::java::to_java_method_name(&f.name, f.camel_case.as_deref());
+        let camel = f.name.clone();
         let mut args: Vec<String> = Vec::new();
         for (k, opt) in f.opt_inputs.iter().enumerate() {
             match &opt.domain {
@@ -1220,7 +1208,7 @@ final class Dispatch {
             }
         }
         let _ = writeln!(s, "         case {}:", js(&f.name));
-        let _ = writeln!(s, "            return core.{camel}Lookback({});", args.join(", "));
+        let _ = writeln!(s, "            return core.{camel}_Lookback({});", args.join(", "));
     }
 
     s.push_str(

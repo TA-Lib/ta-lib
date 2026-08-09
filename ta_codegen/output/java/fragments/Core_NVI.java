@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#nvi} consumes before it can
+    * Number of leading input bars {@link Core#NVI} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,19 +22,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int nviLookback( )
+   public int NVI_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode nviInternal( int startIdx,
-                        int endIdx,
-                        double inClose[],
-                        double inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode NVI_Internal( int startIdx,
+                         int endIdx,
+                         double inClose[],
+                         double inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -74,13 +74,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode nviInternal( int startIdx,
-                        int endIdx,
-                        float inClose[],
-                        float inVolume[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode NVI_Internal( int startIdx,
+                         int endIdx,
+                         float inClose[],
+                         float inVolume[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -132,7 +132,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#nviLookback} is a <b>success with no
+    * valid range shorter than {@link Core#NVI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -149,7 +149,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange nvi( int startIdx,
+   public OutRange NVI( int startIdx,
                         int endIdx,
                         double inClose[],
                         double inVolume[],
@@ -157,7 +157,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = nviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
@@ -185,7 +185,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#nviLookback} is a <b>success with no
+    * valid range shorter than {@link Core#NVI_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -202,7 +202,7 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     */
-   public OutRange nvi( int startIdx,
+   public OutRange NVI( int startIdx,
                         int endIdx,
                         float inClose[],
                         float inVolume[],
@@ -210,7 +210,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = nviInternal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_Internal(startIdx, endIdx, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("NVI", retCode);
       }
@@ -220,8 +220,8 @@
 
    /**
     * A live NVI stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#nvi} over the same series.
-    * Open with {@link Core#nviOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#NVI} over the same series.
+    * Open with {@link Core#NVI_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -232,7 +232,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class NviStream {
+   public static final class NVI_Stream {
       final Core core;
       double prevNVI;
       double prevClose;
@@ -240,10 +240,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      NviStream( Core core ) { this.core = core; }
+      NVI_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#nviOpenAndFill}, or
+       * The range filled by {@link Core#NVI_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -251,7 +251,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      NviStream( NviStream other ) {
+      NVI_Stream( NVI_Stream other ) {
          this.core = other.core;
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
@@ -265,7 +265,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inClose, double inVolume ) {
-         core.nviStreamStep(this, inClose, inVolume);
+         core.NVI_StreamStep(this, inClose, inVolume);
          return this.cur_outReal;
       }
 
@@ -277,8 +277,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inClose, double inVolume ) {
-         NviStream scratch = new NviStream(this);
-         core.nviStreamStep(scratch, inClose, inVolume);
+         NVI_Stream scratch = new NVI_Stream(this);
+         core.NVI_StreamStep(scratch, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -295,11 +295,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public NviStream copy() {
-         return new NviStream(this);
+      public NVI_Stream copy() {
+         return new NVI_Stream(this);
       }
    }
-   void nviStreamStep( NviStream sp, double inClose, double inVolume )
+   void NVI_StreamStep( NVI_Stream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -316,7 +316,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode nviOpenBody( NviStream sp, double inClose[], double inVolume[], int startIdx )
+   private RetCode NVI_OpenBody( NVI_Stream sp, double inClose[], double inVolume[], int startIdx )
    {
       int i = 0;
       int outIdx = 0;
@@ -366,7 +366,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode nviOpenAndFillBody( NviStream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode NVI_OpenAndFillBody( NVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -417,11 +417,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind nviOpen (composition seam). */
-   NviStream nviOpenInternal( double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind NVI_Open (composition seam). */
+   NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {
-      NviStream sp = new NviStream(this);
-      RetCode retCode = nviOpenBody(sp, inClose, inVolume, startIdx);
+      NVI_Stream sp = new NVI_Stream(this);
+      RetCode retCode = NVI_OpenBody(sp, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -436,32 +436,32 @@
    /**
     * Open a live NVI stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#nvi} at that bar.
-    * <p>The history must hold at least {@code nviLookback(...) + 1} bars
+    * to {@link Core#NVI} at that bar.
+    * <p>The history must hold at least {@code NVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public NviStream nviOpen( double inClose[], double inVolume[] )
+   public NVI_Stream NVI_Open( double inClose[], double inVolume[] )
    {
-      return nviOpenInternal(inClose, inVolume, 0);
+      return NVI_OpenInternal(inClose, inVolume, 0);
    }
    /**
-    * {@link Core#nviOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#nvi} over the whole history in the same single pass
+    * {@link Core#NVI_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#NVI} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link NviStream#fillRange()}.
+    * {@link NVI_Stream#fillRange()}.
     */
-   public NviStream nviOpenAndFill( double inClose[], double inVolume[], double outReal[] )
+   public NVI_Stream NVI_OpenAndFill( double inClose[], double inVolume[], double outReal[] )
    {
-      NviStream sp = new NviStream(this);
+      NVI_Stream sp = new NVI_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = nviOpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = NVI_OpenAndFillBody(sp, inClose, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -47,10 +47,10 @@ fn rust_stream_section(name: &str) -> String {
 fn test_rust_sma_ring_stream_section() {
     let s = rust_stream_section("sma");
     // Handle + state struct shapes.
-    assert!(s.contains("pub struct SmaStream {"));
+    assert!(s.contains("pub struct SMA_Stream {"));
     assert!(s.contains("core: Core,"));
-    assert!(s.contains("state: SmaStreamState,"));
-    assert!(s.contains("struct SmaStreamState {"));
+    assert!(s.contains("state: SMA_StreamState,"));
+    assert!(s.contains("struct SMA_StreamState {"));
     assert!(s.contains("ring_trailingIdx_inReal: Vec<f64>,"));
     assert!(s.contains("ringPos_trailingIdx: usize,"));
     // The C mirror/peekMode machinery is deleted by design (clone-peek).
@@ -58,20 +58,20 @@ fn test_rust_sma_ring_stream_section() {
     assert!(!s.contains("peekMode"), "no peekMode in the Rust tier");
     assert!(!s.contains("unsafe"), "stream sections are safe Rust");
     // Step: ring read-old-then-push order, `(*outReal)` write.
-    assert!(s.contains("fn sma_step_internal(&self, sp: &mut SmaStreamState, inReal: f64, outReal: &mut f64)"));
+    assert!(s.contains("fn SMA_step_internal(&self, sp: &mut SMA_StreamState, inReal: f64, outReal: &mut f64)"));
     assert!(s.contains("(*outReal) = sp.tempReal / (sp.optInTimePeriod as f64);"));
     assert!(s.contains("sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;"));
     // Open family: internal seam + thin wrapper + fill in batch param order.
-    assert!(s.contains("pub(crate) fn sma_open_internal("));
-    assert!(s.contains("self.sma_open_internal(inReal, 0, optInTimePeriod)"));
-    assert!(s.contains("pub fn sma_open_and_fill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],"));
+    assert!(s.contains("pub(crate) fn SMA_OpenInternal("));
+    assert!(s.contains("self.SMA_OpenInternal(inReal, 0, optInTimePeriod)"));
+    assert!(s.contains("pub fn SMA_OpenAndFill(\n        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],"));
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
     assert!(s.contains(".copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);"));
     // Handle impl: infallible update, clone-peek, auto-trait pin.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> f64 {"));
     assert!(s.contains("let mut scratch = self.clone();"));
-    assert!(s.contains("_assert_auto::<SmaStream>();"));
+    assert!(s.contains("_assert_auto::<SMA_Stream>();"));
     // Short history is an error, not batch's empty success.
     assert!(s.contains("return Err(RetCode::BadParam);"));
 }
@@ -80,7 +80,7 @@ fn test_rust_sma_ring_stream_section() {
 fn test_rust_ema_scalar_recurrence_stream_section() {
     let s = rust_stream_section("ema");
     // T2 scalar state incl. the private K factor; no heap buffers at all.
-    assert!(s.contains("struct EmaStreamState {"));
+    assert!(s.contains("struct EMA_StreamState {"));
     assert!(s.contains("prevMA: f64,"));
     assert!(s.contains("optInK_1: f64,"));
     assert!(!s.contains("Vec<f64>,"), "EMA carries only scalars");
@@ -93,7 +93,7 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
 #[test]
 fn test_rust_macd_three_output_tuple() {
     let s = rust_stream_section("macd");
-    assert!(s.contains("-> Result<(MacdStream, (f64, f64, f64)), RetCode>"));
+    assert!(s.contains("-> Result<(MACD_Stream, (f64, f64, f64)), RetCode>"));
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> (f64, f64, f64) {"));
     assert!(s.contains(", outMACD: &mut f64, outMACDSignal: &mut f64, outMACDHist: &mut f64)"));
     // Tuple assembled in batch output order.
@@ -135,7 +135,7 @@ fn test_rust_ht_dcperiod_parity_stream_section() {
     assert!(s.contains("sp.streamParity"));
     // The gate strip + parity carry leave no cursor/startIdx leak in the step.
     let step = s
-        .split("fn ht_dcperiod_step_internal")
+        .split("fn HT_DCPERIOD_step_internal")
         .nth(1)
         .and_then(|t| t.split("/// Internal startIdx-anchored open").next())
         .expect("step body");
@@ -157,7 +157,7 @@ fn test_rust_identity_fast_path_t3() {
     let s = rust_stream_section("t3");
     // param==1 identity short-circuit before the transcribed body: min-history
     // check via lookback, passthrough value, default state.
-    assert!(s.contains("if historyLen < self.t3_lookback(optInTimePeriod, optInVFactor) + 1 {"));
+    assert!(s.contains("if historyLen < self.T3_Lookback(optInTimePeriod, optInVFactor) + 1 {"));
     assert!(s.contains("inReal[historyLen - 1]"));
 }
 

@@ -172,8 +172,8 @@ public class MetadataTest {
 
         // Every row must be internally coherent.
         for (FunctionInfo f : Functions.all()) {
-            check(!f.name().isEmpty() && !f.group().isEmpty() && !f.javaMethodName().isEmpty(),
-                  f.name() + ": name/group/camelCase populated");
+            check(!f.name().isEmpty() && !f.group().isEmpty(),
+                  f.name() + ": name/group populated");
             check(!f.outputs().isEmpty(), f.name() + ": has at least one output");
             check(Functions.byName(f.name()) == f, f.name() + ": byName round-trips");
         }
@@ -404,7 +404,7 @@ public class MetadataTest {
         }
 
         java.lang.reflect.Method m =
-            Core.class.getMethod(f.javaMethodName(), types.toArray(new Class<?>[0]));
+            Core.class.getMethod(f.name(), types.toArray(new Class<?>[0]));
         return (OutRange) m.invoke(Core.DEFAULT, args.toArray());
     }
 
@@ -459,7 +459,7 @@ public class MetadataTest {
 
         // And against the typed call, bit for bit.
         double[] c = new double[N];
-        OutRange rc = Core.DEFAULT.sma(0, N - 1, CLOSE, 5, c);
+        OutRange rc = Core.DEFAULT.SMA(0, N - 1, CLOSE, 5, c);
         check(rc.equals(ra), "explicit-parameter range matches the typed call");
         boolean same = true;
         for (int i = 0; i < rc.count(); i++) {
@@ -568,7 +568,7 @@ public class MetadataTest {
                         h.setOptInput(p, v);
                         distinct = true;
                     }
-                    /* MAType.Disabled short-circuits to a zero lookback and would
+                    /* MAType.DISABLED short-circuits to a zero lookback and would
                        mask a mis-mapped slot, so stay inside the real algorithms. */
                     case INTEGER_LIST -> h.setOptInput(p, MAType.values()[p % 3]);
                     default -> { }
@@ -653,16 +653,16 @@ public class MetadataTest {
      * API, and this asserts the metadata path reaches the same place.
      */
     static void newCallCarriesTheGivenCore() {
-        Core tuned = Core.builder().unstablePeriod(io.github.talib.FuncUnstId.Rsi, 9).build();
+        Core tuned = Core.builder().unstablePeriod(io.github.talib.FuncUnstId.RSI, 9).build();
         FunctionInfo rsi = Functions.byName("RSI");
 
         int viaDefault = rsi.newCall().setOptInput(0, 14).lookback();
         int viaTuned = rsi.newCall(tuned).setOptInput(0, 14).lookback();
 
-        check(viaDefault == Core.DEFAULT.rsiLookback(14),
+        check(viaDefault == Core.DEFAULT.RSI_Lookback(14),
               "newCall() uses Core.DEFAULT (" + viaDefault + ")");
-        check(viaTuned == tuned.rsiLookback(14),
-              "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.rsiLookback(14) + ")");
+        check(viaTuned == tuned.RSI_Lookback(14),
+              "newCall(core) uses the given Core (" + viaTuned + " vs " + tuned.RSI_Lookback(14) + ")");
         check(viaTuned == viaDefault + 9,
               "the unstable period reaches the binder: " + viaDefault + " + 9 == " + viaTuned);
     }

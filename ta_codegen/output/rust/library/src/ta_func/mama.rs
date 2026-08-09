@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::mama`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MAMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn mama_lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
+    pub fn MAMA_Lookback(&self, mut optInFastLimit: f64, mut optInSlowLimit: f64) -> usize {
         if optInFastLimit == REAL_DEFAULT {
             optInFastLimit = 5e-1;
         } else if (optInFastLimit < 1e-2) || (optInFastLimit > 9.9e-1) {
@@ -107,7 +107,7 @@ impl Core {
         //          1 price bar for the Delta Phase
         //        -------
         //         32 Total
-        return (32 + self.unstable_period[FuncUnstId::Mama as usize]) as usize;
+        return (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
     }
     /// MESA Adaptive Moving Average: an adaptive EMA whose smoothing factor is driven by the
     /// dominant-cycle phase rate measured with a Hilbert transform. Emits two lines, MAMA and its
@@ -163,7 +163,7 @@ impl Core {
     /// let mut mama = vec![0.0; 252];
     /// let mut fama = vec![0.0; 252];
     ///
-    /// let ret = core.mama(
+    /// let ret = core.MAMA(
     ///     0, data.len() - 1, &data, 0.5, 0.05,
     ///     &mut out_beg, &mut out_nb, &mut mama, &mut fama,
     /// );
@@ -174,17 +174,17 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ma`] · [`Core::wma`] · [`Core::ht_dcperiod`]
+    /// [`Core::MA`] · [`Core::WMA`] · [`Core::HT_DCPERIOD`]
     ///
     /// # References
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama/)
+    /// Further reading: [ta-lib.org/functions/MAMA](https://ta-lib.org/functions/MAMA/)
     #[doc(alias = "MESAAdaptiveMovingAverage")]
     #[doc(alias = "EhlersMAMA")]
-    pub fn mama(
+    pub fn MAMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -197,13 +197,13 @@ impl Core {
         outFAMA: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, mama_fma, mama_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
+        return ta_lib_dispatch::dispatch_fma!(self, MAMA_fma, MAMA_impl, (startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA));
         #[cfg(not(target_arch = "x86_64"))]
-        self.mama_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.MAMA_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn mama_fma(
+    fn MAMA_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -215,10 +215,10 @@ impl Core {
         outMAMA: &mut [f64],
         outFAMA: &mut [f64],
     ) -> RetCode {
-        self.mama_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
+        self.MAMA_impl(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA)
     }
     #[inline(always)]
-    fn mama_impl(
+    fn MAMA_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -249,7 +249,7 @@ impl Core {
         if outMAMA.as_ptr() == outFAMA.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.mama_lookback(optInFastLimit, optInSlowLimit);
+        let _assertLb = self.MAMA_Lookback(optInFastLimit, optInSlowLimit);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outMAMA.len());
@@ -323,7 +323,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::Mama as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -616,20 +616,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MAMA stream: one value per closed bar, bit-identical to [`Core::mama`]
-/// over the same series. Open with [`Core::mama_open`]; dropping the handle
+/// Live MAMA stream: one value per closed bar, bit-identical to [`Core::MAMA`]
+/// over the same series. Open with [`Core::MAMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MAMA_Stream")]
-pub struct MamaStream {
+pub struct MAMA_Stream {
     core: Core,
-    state: MamaStreamState,
+    state: MAMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MamaStreamState {
+struct MAMA_StreamState {
     optInFastLimit: f64,
     optInSlowLimit: f64,
     tempReal: f64,
@@ -698,7 +698,7 @@ struct MamaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn mama_step_internal(&self, sp: &mut MamaStreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
+    fn MAMA_step_internal(&self, sp: &mut MAMA_StreamState, inReal: f64, outMAMA: &mut f64, outFAMA: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -877,10 +877,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::mama_open`] (composition seam).
-    pub(crate) fn mama_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MAMA_Open`] (composition seam).
+    pub(crate) fn MAMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64,
-    ) -> Result<(MamaStream, (f64, f64)), RetCode> {
+    ) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -972,7 +972,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::Mama as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1269,7 +1269,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = MamaStreamState {
+        let state = MAMA_StreamState {
             optInFastLimit,
             optInSlowLimit,
             tempReal,
@@ -1330,11 +1330,11 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok((MamaStream { core: self.clone(), state }, (lastValue_outMAMA, lastValue_outFAMA)))
+        Ok((MAMA_Stream { core: self.clone(), state }, (lastValue_outMAMA, lastValue_outFAMA)))
     }
 
     /// Open a live MAMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::mama`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MAMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -1346,24 +1346,24 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.mama_open(&data, 0.5, 0.05).expect("enough history");
+    /// let (mut s, _last) = core.MAMA_Open(&data, 0.5, 0.05).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_MAMA_Open")]
-    pub fn mama_open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MamaStream, (f64, f64)), RetCode> {
-        self.mama_open_internal(inReal, 0, optInFastLimit, optInSlowLimit)
+    pub fn MAMA_Open(&self, inReal: &[f64], optInFastLimit: f64, optInSlowLimit: f64) -> Result<(MAMA_Stream, (f64, f64)), RetCode> {
+        self.MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit)
     }
 
-    /// [`Core::mama_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::mama`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MAMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MAMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAMA_OpenAndFill")]
-    pub fn mama_open_and_fill(
+    pub fn MAMA_OpenAndFill(
         &self, inReal: &[f64], mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
-    ) -> Result<MamaStream, RetCode> {
+    ) -> Result<MAMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1456,7 +1456,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::Mama as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::MAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1754,7 +1754,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = MamaStreamState {
+        let state = MAMA_StreamState {
             optInFastLimit,
             optInSlowLimit,
             tempReal,
@@ -1815,20 +1815,20 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(MamaStream { core: self.clone(), state })
+        Ok(MAMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MamaStream {
+impl MAMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MAMA_Update")]
     pub fn update(&mut self, inReal: f64) -> (f64, f64) {
         let mut outMAMA: f64 = 0.0_f64;
         let mut outFAMA: f64 = 0.0_f64;
-        self.core.mama_step_internal(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
+        self.core.MAMA_step_internal(&mut self.state, inReal, &mut outMAMA, &mut outFAMA);
         (outMAMA, outFAMA)
     }
 
@@ -1846,7 +1846,7 @@ impl MamaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MamaStream>();
+    _assert_auto::<MAMA_Stream>();
 };
 
 /***************/

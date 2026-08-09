@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#tanh} consumes before it can
+    * Number of leading input bars {@link Core#TANH} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,17 +20,17 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int tanhLookback( )
+   public int TANH_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode tanhInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TANH_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -47,12 +47,12 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode tanhInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode TANH_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -78,8 +78,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#tanhLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TANH_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -94,18 +94,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sinh
-    * @see Core#cosh
-    * @see Core#tan
+    * @see Core#SINH
+    * @see Core#COSH
+    * @see Core#TAN
     */
-   public OutRange tanh( int startIdx,
+   public OutRange TANH( int startIdx,
                          int endIdx,
                          double inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanhInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TANH", retCode);
       }
@@ -123,8 +123,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#tanhLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TANH_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -139,18 +139,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sinh
-    * @see Core#cosh
-    * @see Core#tan
+    * @see Core#SINH
+    * @see Core#COSH
+    * @see Core#TAN
     */
-   public OutRange tanh( int startIdx,
+   public OutRange TANH( int startIdx,
                          int endIdx,
                          float inReal[],
                          double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanhInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TANH", retCode);
       }
@@ -160,8 +160,8 @@
 
    /**
     * A live TANH stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#tanh} over the same series.
-    * Open with {@link Core#tanhOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TANH} over the same series.
+    * Open with {@link Core#TANH_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -172,15 +172,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TanhStream {
+   public static final class TANH_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TanhStream( Core core ) { this.core = core; }
+      TANH_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#tanhOpenAndFill}, or
+       * The range filled by {@link Core#TANH_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -188,7 +188,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TanhStream( TanhStream other ) {
+      TANH_Stream( TANH_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -199,7 +199,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.tanhStreamStep(this, inReal);
+         core.TANH_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -211,8 +211,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         TanhStream scratch = new TanhStream(this);
-         core.tanhStreamStep(scratch, inReal);
+         TANH_Stream scratch = new TANH_Stream(this);
+         core.TANH_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -229,15 +229,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TanhStream copy() {
-         return new TanhStream(this);
+      public TANH_Stream copy() {
+         return new TANH_Stream(this);
       }
    }
-   void tanhStreamStep( TanhStream sp, double inReal )
+   void TANH_StreamStep( TANH_Stream sp, double inReal )
    {
       sp.cur_outReal = Math.tanh(inReal);
    }
-   private RetCode tanhOpenBody( TanhStream sp, double inReal[], int startIdx )
+   private RetCode TANH_OpenBody( TANH_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -261,7 +261,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode tanhOpenAndFillBody( TanhStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TANH_OpenAndFillBody( TANH_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -286,11 +286,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind tanhOpen (composition seam). */
-   TanhStream tanhOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind TANH_Open (composition seam). */
+   TANH_Stream TANH_OpenInternal( double inReal[], int startIdx )
    {
-      TanhStream sp = new TanhStream(this);
-      RetCode retCode = tanhOpenBody(sp, inReal, startIdx);
+      TANH_Stream sp = new TANH_Stream(this);
+      RetCode retCode = TANH_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -305,32 +305,32 @@
    /**
     * Open a live TANH stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#tanh} at that bar.
-    * <p>The history must hold at least {@code tanhLookback(...) + 1} bars
+    * to {@link Core#TANH} at that bar.
+    * <p>The history must hold at least {@code TANH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TanhStream tanhOpen( double inReal[] )
+   public TANH_Stream TANH_Open( double inReal[] )
    {
-      return tanhOpenInternal(inReal, 0);
+      return TANH_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#tanhOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#tanh} over the whole history in the same single pass
+    * {@link Core#TANH_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TANH} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TanhStream#fillRange()}.
+    * {@link TANH_Stream#fillRange()}.
     */
-   public TanhStream tanhOpenAndFill( double inReal[], double outReal[] )
+   public TANH_Stream TANH_OpenAndFill( double inReal[], double outReal[] )
    {
-      TanhStream sp = new TanhStream(this);
+      TANH_Stream sp = new TANH_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = tanhOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TANH_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

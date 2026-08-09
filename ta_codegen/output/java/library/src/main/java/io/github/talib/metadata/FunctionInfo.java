@@ -48,11 +48,6 @@ import java.util.List;
  * @param name          the canonical upper-case name, e.g. {@code SMA}
  * @param group         the functional group, e.g. {@code Overlap Studies}
  * @param hint          a one-line description ({@code ""} when none)
- * @param camelCaseName C's {@code TA_FuncInfo.camelCaseName}, kept for
- *                      cross-backend parity. Pascal-cased for some functions
- *                      ({@code Accbands}) -- use {@link #javaMethodName()} to
- *                      name the Java method
- * @param javaMethodName the method on {@code Core}, e.g. {@code sma}, {@code accbands}
  * @param flags         see {@link FuncFlags}
  * @param inputs        inputs in call order
  * @param optInputs     optional parameters in call order
@@ -62,8 +57,6 @@ public record FunctionInfo(
        String name,
        String group,
        String hint,
-       String camelCaseName,
-       String javaMethodName,
        int flags,
        List<InputInfo> inputs,
        List<OptInputInfo> optInputs,

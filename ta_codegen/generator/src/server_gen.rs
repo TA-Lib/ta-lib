@@ -7,7 +7,6 @@
 use crate::backends::builtins::SpecialBuiltin;
 use crate::backends::c::c_predicate_expr;
 use crate::backends::java::java_predicate_expr;
-use crate::backends::java::to_java_method_name;
 use crate::backends::rust_lang::rust_predicate_expr;
 use crate::ir::{EnumDef, FuncDef, Input, Output, ParamType};
 use std::collections::HashMap;
@@ -21,10 +20,10 @@ use std::path::Path;
 
 /// The comma-separated `FuncUnstId` variant names from enums.yaml (the source of
 /// truth), in ordinal order. Empty if the enum is somehow missing.
-fn func_unst_pascal_names(enums: &HashMap<String, EnumDef>) -> Vec<String> {
+fn func_unst_variant_names(enums: &HashMap<String, EnumDef>) -> Vec<String> {
     enums
         .get("FuncUnstId")
-        .map(|fu| fu.variants.iter().map(|v| v.pascal_name.clone()).collect())
+        .map(|fu| fu.variants.iter().map(|v| v.name.clone()).collect())
         .unwrap_or_default()
 }
 
@@ -1984,7 +1983,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // COUNT sizes the table (#144).
     s.push_str("enum FuncUnstId {\n");
     {
-        let names = func_unst_pascal_names(enums);
+        let names = func_unst_variant_names(enums);
         let nchunks = names.chunks(6).count().max(1);
         for (idx, chunk) in names.chunks(6).enumerate() {
             if idx + 1 == nchunks {
@@ -1995,9 +1994,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             }
         }
     }
-    s.push_str("    All;\n");
-    s.push_str(&format!("    static final int COUNT = {};\n", func_unst_pascal_names(enums).len()));
-    s.push_str("    int value() { return this == All ? 65535 : ordinal(); }\n");
+    s.push_str("    ALL;\n");
+    s.push_str(&format!("    static final int COUNT = {};\n", func_unst_variant_names(enums).len()));
+    s.push_str("    int value() { return this == ALL ? 65535 : ordinal(); }\n");
     s.push_str("}\n\n");
 
     // No Compatibility enum: the Java backend constant-folds the Metastock arms
@@ -2008,7 +2007,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("enum MAType {\n");
     {
         let ma = enums.get("MAType").expect("MAType enum required");
-        let names: Vec<&str> = ma.variants.iter().map(|v| v.pascal_name.as_str()).collect();
+        let names: Vec<&str> = ma.variants.iter().map(|v| v.name.as_str()).collect();
         s.push_str(&format!("    {};\n", names.join(", ")));
     }
     s.push_str("}\n\n");
@@ -2259,8 +2258,8 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"set_unstable_period\\\"\")) {\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
-    // FuncUnstId.All is the "set all" sentinel (matches C TA_SetUnstablePeriod).
-    s.push_str("            if (id == FuncUnstId.All.value()) {\n");
+    // FuncUnstId.ALL is the "set all" sentinel (matches C TA_SetUnstablePeriod).
+    s.push_str("            if (id == FuncUnstId.ALL.value()) {\n");
     s.push_str("                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;\n");
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
     s.push_str("            }\n");
@@ -2329,7 +2328,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // Per-function handler methods — each is small enough for C2 JIT compilation.
     for func in funcs {
-        let func_lower = to_java_method_name(&func.name, func.camel_case.as_deref());
+        let func_base = func.name.clone();
 
         s.push_str(&format!(
             "    static String handle_{}(String json) {{\n",
@@ -2431,7 +2430,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
 
         // Call
-        s.push_str(&format!("        rc = core.{func_lower}Internal(\n"));
+        s.push_str(&format!("        rc = core.{func_base}_Internal(\n"));
         s.push_str("            startIdx, endIdx,\n");
         for name in &input_names {
             s.push_str(&format!("            {name},\n"));
@@ -2461,7 +2460,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                  \x20           for (int _fi = 0; _fi < {name}.length; _fi++) f_{name}[_fi] = (float){name}[_fi];\n"
             ));
         }
-        s.push_str(&format!("            rc = core.{func_lower}Internal(\n"));
+        s.push_str(&format!("            rc = core.{func_base}_Internal(\n"));
         s.push_str("                startIdx, endIdx,\n");
         for name in &input_names {
             s.push_str(&format!("                f_{name},\n"));
@@ -2885,12 +2884,12 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                return sb.ToString();\n");
     s.push_str("            }\n");
 
-    // set_unstable_period — FuncUnstId.All is the "set all" sentinel (matches
+    // set_unstable_period — FuncUnstId.ALL is the "set all" sentinel (matches
     // C's TA_SetUnstablePeriod and the Java server).
     s.push_str("            else if (method == \"set_unstable_period\") {\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
-    s.push_str("                if (id == (int)FuncUnstId.All) {\n");
+    s.push_str("                if (id == (int)FuncUnstId.ALL) {\n");
     s.push_str("                    for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;\n");
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("                }\n");
@@ -2994,10 +2993,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("    static long ComputeLookback(string funcName, JsonElement p) {\n");
     s.push_str("        switch (funcName) {\n");
     for func in funcs {
-        let base = crate::backends::csharp::to_csharp_method_name(
-            &func.name,
-            func.camel_case.as_deref(),
-        );
+        let base = func.name.clone();
         s.push_str(&format!("        case \"{}\": {{\n", func.name));
         for opt in &func.optional_inputs {
             match &opt.param_type {
@@ -3018,7 +3014,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         }
         let args: Vec<&str> = func.optional_inputs.iter().map(|o| o.name.as_str()).collect();
         s.push_str(&format!(
-            "            return core.{base}Lookback({});\n",
+            "            return core.{base}_Lookback({});\n",
             args.join(", ")
         ));
         s.push_str("        }\n");
@@ -3029,10 +3025,7 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
 
     // Per-function handler methods.
     for func in funcs {
-        let base = crate::backends::csharp::to_csharp_method_name(
-            &func.name,
-            func.camel_case.as_deref(),
-        );
+        let base = func.name.clone();
         let input_names = expand_input_names(&func.inputs);
         let outputs = &func.outputs;
 
@@ -3430,7 +3423,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {\n");
     s.push_str("    match id {\n");
     // Generated from enums.yaml (source of truth), in ordinal order.
-    for (i, name) in func_unst_pascal_names(enums).iter().enumerate() {
+    for (i, name) in func_unst_variant_names(enums).iter().enumerate() {
         s.push_str(&format!("        {i} => Some(FuncUnstId::{name}),\n"));
     }
     s.push_str("        _ => None,\n");
@@ -3439,12 +3432,12 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // apply_unstable_period — rebuild the immutable `*core` with one function's
     // unstable period changed, going through the public builder API (`Core` has no
-    // setters). Handles the FuncUnstAll "set all" wildcard (id == FuncUnstAll as
+    // setters). Handles the `ALL` "set all" wildcard (id == ALL as
     // usize); returns false on an out-of-range id. Shared by the `set_unstable_period`
     // RPC and the inline per-function `unstablePeriod` override.
     s.push_str("fn apply_unstable_period(core: &mut Core, id: usize, period: i32) -> bool {\n");
-    s.push_str("    if id == FuncUnstId::FuncUnstAll as usize {\n");
-    s.push_str("        *core = core.to_builder().unstable_period(FuncUnstId::FuncUnstAll, period).build();\n");
+    s.push_str("    if id == FuncUnstId::ALL as usize {\n");
+    s.push_str("        *core = core.to_builder().unstable_period(FuncUnstId::ALL, period).build();\n");
     s.push_str("        true\n");
     s.push_str("    } else if let Some(uid) = func_unst_id_from_int(id) {\n");
     s.push_str("        *core = core.to_builder().unstable_period(uid, period).build();\n");
@@ -3499,7 +3492,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // Per-function dispatch
     for func in funcs {
         let method_name = format!("TA_{}", func.name);
-        let fn_name = func.name.to_lowercase();
+        let fn_name = func.name.clone();
 
         s.push_str(&format!("        \"{method_name}\" => {{\n"));
 
@@ -3718,7 +3711,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // abstract_call reroute returns the `lookback` field the C ta_abstract path
         // exposes; harmless extra field for the regular per-function path. Computed
         // after the unstable-period assignment above so it reflects that state.
-        s.push_str(&format!("            let lookback = core.{fn_name}_lookback("));
+        s.push_str(&format!("            let lookback = core.{fn_name}_Lookback("));
         let lb_args: Vec<String> = func
             .optional_inputs
             .iter()
@@ -3778,7 +3771,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         "            let period = params[\"period\"].as_i64().unwrap_or(0) as i32;\n",
     );
     // apply_unstable_period rebuilds the immutable Core via the builder and handles
-    // the FuncUnstAll "set all" sentinel (matches C TA_SetUnstablePeriod).
+    // the `ALL` "set all" sentinel (matches C TA_SetUnstablePeriod).
     s.push_str("            if apply_unstable_period(core, id, period) {\n");
     s.push_str(
         "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
@@ -3924,7 +3917,6 @@ const RUST_ABSTRACT_METADATA_HANDLERS: &str = r#"        "TA_GetFuncInfo" => {
                         "name": fi.name,
                         "group": fi.group.as_str(),
                         "hint": fi.hint,
-                        "camelCaseName": fi.camel_case_name,
                         "flags": fi.flags.bits(),
                         "nbInput": fi.nb_input(),
                         "nbOptInput": fi.nb_opt_input(),
@@ -4315,7 +4307,10 @@ fn sv_rust_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 #[allow(clippy::too_many_lines)]
 fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
+    // The server-local verify fn stays snake_case (`sv_sma`); library calls use
+    // the verbatim function name.
     let sn = func.name.to_lowercase();
+    let fname = &func.name;
     let candle = func.name.starts_with("CDL");
     let inputs = crate::streaming::input_array_names(func);
     let mut gi = 0usize;
@@ -4470,13 +4465,13 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         let _ = writeln!(s, "        if {guard} {{");
         let _ = writeln!(
             s,
-            "            let r1 = c2.{sn}_open({full_ins}{opts_tail}).is_err();"
+            "            let r1 = c2.{fname}_Open({full_ins}{opts_tail}).is_err();"
         );
         s.push_str(&fdecls.replace("        ", "            "));
         s.push_str("            let mut fBeg = 0usize;\n            let mut fNb = 0usize;\n");
         let _ = writeln!(
             s,
-            "            let r2 = c2.{sn}_open_and_fill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}).is_err();"
+            "            let r2 = c2.{fname}_OpenAndFill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}).is_err();"
         );
         s.push_str("            let okr = r1 && r2;\n");
         s.push_str("            return format!(\"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":{},\\\"peek_ok\\\":1}}\", i32::from(okr));\n");
@@ -4486,13 +4481,13 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Batch leg.
     let _ = writeln!(
         s,
-        "        let rc = c2.{sn}(0, svN - 1, {full_ins}, {opts_lead}&mut beg, &mut nb{bargs});"
+        "        let rc = c2.{fname}(0, svN - 1, {full_ins}, {opts_lead}&mut beg, &mut nb{bargs});"
     );
-    let _ = writeln!(s, "        let lb = c2.{sn}_lookback({opts});");
+    let _ = writeln!(s, "        let lb = c2.{fname}_Lookback({opts});");
     s.push_str("        if rc != RetCode::Success || nb == 0 {\n");
     let _ = writeln!(
         s,
-        "            let open_rejects = c2.{sn}_open({full_ins}{opts_tail}).is_err();"
+        "            let open_rejects = c2.{fname}_Open({full_ins}{opts_tail}).is_err();"
     );
     if candle {
         s.push_str("            if !open_rejects { all_ok = false; }\n");
@@ -4509,7 +4504,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        let mut fBeg = 0usize;\n        let mut fNb = 0usize;\n");
     let _ = writeln!(
         s,
-        "        match c2.{sn}_open_and_fill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}) {{"
+        "        match c2.{fname}_OpenAndFill({full_ins}{opts_tail}, &mut fBeg, &mut fNb{fargs}) {{"
     );
     s.push_str("            Err(_) => { fill_ok = false; }\n");
     s.push_str("            Ok(_h) => {\n                if fBeg != beg || fNb != nb { fill_ok = false; }\n                else {\n");
@@ -4534,7 +4529,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);\n");
     s.push_str("        pcs.sort_unstable();\n        pcs.dedup();\n");
     s.push_str("        for &p in &pcs {\n");
-    let _ = writeln!(s, "            match c2.{sn}_open({pfx_ins}{opts_tail}) {{");
+    let _ = writeln!(s, "            match c2.{fname}_Open({pfx_ins}{opts_tail}) {{");
     s.push_str("                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(\",\\\"openRejectP\\\":{}\", p); } }\n");
     s.push_str("                Ok((mut st, v0)) => {\n                    legs += 1;\n");
     // open-value compare
@@ -4599,7 +4594,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         .join(", ");
     let _ = writeln!(
         s,
-        "            if c2.{sn}_open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
+        "            if c2.{fname}_Open({short_ins}{opts_tail}).is_ok() {{ all_ok = false; if diag.is_empty() {{ diag = \",\\\"shortHistoryAccepted\\\":1\".to_string(); }} }}"
     );
     s.push_str("        }\n");
 
@@ -4698,7 +4693,7 @@ fn sv_java_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
 #[allow(clippy::too_many_lines, clippy::cast_possible_truncation, clippy::cognitive_complexity)]
 fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     use std::fmt::Write as _;
-    let base = crate::backends::java::to_java_method_name(&func.name, func.camel_case.as_deref());
+    let base = func.name.clone();
     let class = crate::backends::java_stream::stream_class_name(func);
     let candle = func.name.starts_with("CDL");
     let inputs = crate::streaming::input_array_names(func);
@@ -4881,13 +4876,13 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("                boolean r1;\n");
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}Open({full_ins}{opts_tail}); r1 = false; }} catch (IllegalArgumentException _e) {{ r1 = true; }}"
+            "                try {{ c2.{base}_Open({full_ins}{opts_tail}); r1 = false; }} catch (IllegalArgumentException _e) {{ r1 = true; }}"
         );
         s.push_str(&fdecls.replace("            ", "                "));
         s.push_str("                boolean r2;\n");
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }} catch (IllegalArgumentException _e) {{ r2 = true; }}"
+            "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs}); r2 = false; }} catch (IllegalArgumentException _e) {{ r2 = true; }}"
         );
         s.push_str("                boolean okr = r1 && r2;\n");
         s.push_str("                return \"{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":\" + (okr ? 1 : 0) + \",\\\"peek_ok\\\":1}\";\n");
@@ -4897,14 +4892,14 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // Batch leg.
     let _ = writeln!(
         s,
-        "            RetCode rc = c2.{base}Internal(0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs});"
+        "            RetCode rc = c2.{base}_Internal(0, svN - 1, {full_ins}, {opts_lead}beg, nb{bargs});"
     );
-    let _ = writeln!(s, "            int lb = c2.{base}Lookback({opts});");
+    let _ = writeln!(s, "            int lb = c2.{base}_Lookback({opts});");
     s.push_str("            if (rc != RetCode.Success || nb.value == 0) {\n");
     s.push_str("                boolean openRejects;\n");
     let _ = writeln!(
         s,
-        "                try {{ c2.{base}Open({full_ins}{opts_tail}); openRejects = false; }} catch (IllegalArgumentException _e) {{ openRejects = true; }}"
+        "                try {{ c2.{base}_Open({full_ins}{opts_tail}); openRejects = false; }} catch (IllegalArgumentException _e) {{ openRejects = true; }}"
     );
     if candle {
         s.push_str("                if (!openRejects) allOk = false;\n");
@@ -4920,7 +4915,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&fdecls.replace("            ", "                "));
     let _ = writeln!(
         s,
-        "                Core.{class} _fh = c2.{base}OpenAndFill({full_ins}{opts_tail}{fargs});"
+        "                Core.{class} _fh = c2.{base}_OpenAndFill({full_ins}{opts_tail}{fargs});"
     );
     s.push_str("                OutRange _fr = _fh.fillRange();\n");
     s.push_str("                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;\n                else {\n");
@@ -4949,7 +4944,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         };
         let _ = writeln!(
             s,
-            "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}{alias_args}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases input */ }}"
+            "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{alias_args}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases input */ }}"
         );
         if multi && !out_is_int[1] {
             let alias_args2 = {
@@ -4965,7 +4960,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             };
             let _ = writeln!(
                 s,
-                "                try {{ c2.{base}OpenAndFill({full_ins}{opts_tail}{alias_args2}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases output */ }}"
+                "                try {{ c2.{base}_OpenAndFill({full_ins}{opts_tail}{alias_args2}); fillOk = false; }} catch (IllegalArgumentException _e) {{ /* expected: output aliases output */ }}"
             );
         }
     }
@@ -4987,7 +4982,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     let _ = writeln!(s, "                Core.{class} st;");
     let _ = writeln!(
         s,
-        "                try {{ st = c2.{base}Open({}{opts_tail}); }}",
+        "                try {{ st = c2.{base}_Open({}{opts_tail}); }}",
         pfx_ins("p")
     );
     s.push_str("                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = \",\\\"openRejectP\\\":\" + p; continue; }\n");
@@ -5068,7 +5063,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("                    try {\n");
     let _ = writeln!(
         s,
-        "                        Core.{class} sA = c2.{base}Open({}{opts_tail});",
+        "                        Core.{class} sA = c2.{base}_Open({}{opts_tail});",
         pfx_ins("p0")
     );
     s.push_str("                        int mid = (p0 + svN) / 2;\n");
@@ -5100,7 +5095,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("            if (lb >= 1 && lb < svN) {\n");
     let _ = writeln!(
         s,
-        "                try {{ c2.{base}Open({}{opts_tail}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
+        "                try {{ c2.{base}_Open({}{opts_tail}); allOk = false; if (diag.isEmpty()) diag = \",\\\"shortHistoryAccepted\\\":1\"; }}",
         pfx_ins("lb")
     );
     s.push_str("                catch (InsufficientHistoryException _e) { /* expected, typed */ }\n");
@@ -5129,12 +5124,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         s.push_str("            try {\n");
         let _ = writeln!(
             s,
-            "                Core.{class} sD = c2.{base}Open({full_ins}, {});",
+            "                Core.{class} sD = c2.{base}_Open({full_ins}, {});",
             sent_args.join(", ")
         );
         let _ = writeln!(
             s,
-            "                Core.{class} sE = c2.{base}Open({full_ins}, {});",
+            "                Core.{class} sE = c2.{base}_Open({full_ins}, {});",
             expl_args.join(", ")
         );
         if multi {
@@ -5306,7 +5301,7 @@ const CSHARP_ABSTRACT_HANDLERS: &str = r#"    static string AbsStr(string? v) {
         var f = AbsLookup(p);
         if (f is null) return "{\"retCode\":2}";
         return $"{{\"name\":{AbsStr(f.Name)},\"group\":{AbsStr(f.Group.ToDisplayName())}"
-             + $",\"hint\":{AbsStr(f.Hint)},\"camelCaseName\":{AbsStr(f.CamelCaseName)}"
+             + $",\"hint\":{AbsStr(f.Hint)}"
              + $",\"flags\":{(uint)f.Flags},\"nbInput\":{f.Inputs.Length}"
              + $",\"nbOptInput\":{f.OptInputs.Length},\"nbOutput\":{f.Outputs.Length}}}";
     }

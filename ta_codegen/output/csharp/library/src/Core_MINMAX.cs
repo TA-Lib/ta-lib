@@ -55,7 +55,7 @@ public partial class Core
     *  120906 AC   Creation
     */
    /// <summary>
-   /// Number of leading input bars <c>MinMax</c> consumes before it can produce
+   /// Number of leading input bars <c>MINMAX</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -66,7 +66,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Rolling window length (default 30; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MinMaxLookback( int optInTimePeriod )
+   public int MINMAX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -76,7 +76,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MinMax( int startIdx,
+   internal RetCode MINMAX( int startIdx,
                             int endIdx,
                             double[] inReal,
                             int optInTimePeriod,
@@ -186,7 +186,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MinMax( int startIdx,
+   internal RetCode MINMAX( int startIdx,
                             int endIdx,
                             float[] inReal,
                             int optInTimePeriod,
@@ -291,8 +291,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MinMaxLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MINMAX_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -312,14 +312,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MinMax( int startIdx,
+   public OutRange MINMAX( int startIdx,
                            int endIdx,
                            double[] inReal,
                            int optInTimePeriod,
                            double[] outMin,
                            double[] outMax )
    {
-      RetCode retCode = MinMax(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
       }
@@ -341,8 +341,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MinMaxLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>MINMAX_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -362,14 +362,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MinMax( int startIdx,
+   public OutRange MINMAX( int startIdx,
                            int endIdx,
                            float[] inReal,
                            int optInTimePeriod,
                            double[] outMin,
                            double[] outMax )
    {
-      RetCode retCode = MinMax(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
       }

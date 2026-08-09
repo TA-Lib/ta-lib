@@ -142,7 +142,7 @@ test files** (`test/TestAbstractClosure.java`, `test/TestCoreMetaData.java`).
 
 **Why modern Java users rarely touch it (the claim, substantiated):**
 1. **Direct calls are simpler and type-safe.** The common path is
-   `new Core().rsi(startIdx, endIdx, in, period, outBeg, outN, out)` — a normal typed method with
+   `new Core().RSI(startIdx, endIdx, in, period, out)` — a normal typed method with
    compile-time checking. The abstract layer only earns its keep when the function is chosen *at
    runtime from a string* (charting GUIs, backtesters with user-selectable indicators, param-sweep
    tooling). Most apps hardcode the handful of indicators they need.
@@ -244,7 +244,7 @@ Nothing is published under `com.tictactec` (green field, and §7 is now closed).
 4. `mvn -Prelease deploy` from `ta_codegen/output/java/library/`. `autoPublish` is **false**: the
    upload validates and sits pending in the Portal.
 5. **Checkpoint:** resolve `io.github.ta-lib:ta-lib:<version>` from a clean consumer project and call
-   `sma`/`rsi`. **Rollback:** drop the pending deployment in the Portal — nothing is public until
+   `SMA`/`RSI`. **Rollback:** drop the pending deployment in the Portal — nothing is public until
    promoted by hand. Central is immutable, so a released bad artifact cannot be withdrawn; that is
    the whole reason `autoPublish` is off.
 6. Drop the "Not yet released — estimated Q1 2027" banner from `website/src/api/java/README.md` and

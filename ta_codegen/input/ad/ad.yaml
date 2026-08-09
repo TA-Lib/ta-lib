@@ -1,5 +1,4 @@
 name: AD
-camel_case: Ad
 group: Volume Indicators
 hint: Chaikin A/D Line
 flags: [stream, path_dependent]

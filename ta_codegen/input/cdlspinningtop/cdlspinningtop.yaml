@@ -1,5 +1,4 @@
 name: CDLSPINNINGTOP
-camel_case: CdlSpinningTop
 group: Pattern Recognition
 hint: Spinning Top
 flags: [candlestick, stream]

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlrickshawman`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLRICKSHAWMAN`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlrickshawman_lookback(&self) -> usize {
+    pub fn CDLRICKSHAWMAN_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlrickshawman(
+    /// let ret = core.CDLRICKSHAWMAN(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -143,12 +143,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdllongleggeddoji`] · [`Core::cdldoji`] · [`Core::cdlhighwave`]
+    /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlrickshawman](https://ta-lib.org/functions/cdlrickshawman/)
+    /// [ta-lib.org/functions/CDLRICKSHAWMAN](https://ta-lib.org/functions/CDLRICKSHAWMAN/)
     #[doc(alias = "RickshawMan")]
-    pub fn cdlrickshawman(
+    pub fn CDLRICKSHAWMAN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -166,7 +166,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlrickshawman_lookback();
+        let _assertLb = self.CDLRICKSHAWMAN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -203,7 +203,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrickshawman_lookback();
+        lookbackTotal = self.CDLRICKSHAWMAN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -413,20 +413,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLRICKSHAWMAN stream: one value per closed bar, bit-identical to [`Core::cdlrickshawman`]
-/// over the same series. Open with [`Core::cdlrickshawman_open`]; dropping the handle
+/// Live CDLRICKSHAWMAN stream: one value per closed bar, bit-identical to [`Core::CDLRICKSHAWMAN`]
+/// over the same series. Open with [`Core::CDLRICKSHAWMAN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLRICKSHAWMAN_Stream")]
-pub struct CdlrickshawmanStream {
+pub struct CDLRICKSHAWMAN_Stream {
     core: Core,
-    state: CdlrickshawmanStreamState,
+    state: CDLRICKSHAWMAN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlrickshawmanStreamState {
+struct CDLRICKSHAWMAN_StreamState {
     BodyDojiPeriodTotal: f64,
     ShadowLongPeriodTotal: f64,
     NearPeriodTotal: f64,
@@ -457,7 +457,7 @@ struct CdlrickshawmanStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlrickshawman_step_internal(&self, sp: &mut CdlrickshawmanStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLRICKSHAWMAN_step_internal(&self, sp: &mut CDLRICKSHAWMAN_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -624,10 +624,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlrickshawman_open`] (composition seam).
-    pub(crate) fn cdlrickshawman_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLRICKSHAWMAN_Open`] (composition seam).
+    pub(crate) fn CDLRICKSHAWMAN_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlrickshawmanStream, i32), RetCode> {
+    ) -> Result<(CDLRICKSHAWMAN_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -669,7 +669,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrickshawman_lookback();
+        lookbackTotal = self.CDLRICKSHAWMAN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -925,7 +925,7 @@ impl Core {
         let mut ring_ShadowLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
         ring_ShadowLongTrailingIdx_inClose[..cap_ShadowLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let state = CdlrickshawmanStreamState {
+        let state = CDLRICKSHAWMAN_StreamState {
             BodyDojiPeriodTotal,
             ShadowLongPeriodTotal,
             NearPeriodTotal,
@@ -948,11 +948,11 @@ impl Core {
             ring_ShadowLongTrailingIdx_inLow,
             ring_ShadowLongTrailingIdx_inClose,
         };
-        Ok((CdlrickshawmanStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLRICKSHAWMAN_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLRICKSHAWMAN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlrickshawman`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLRICKSHAWMAN`] at that bar.
     ///
     /// # Errors
     ///
@@ -971,23 +971,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlrickshawman_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLRICKSHAWMAN_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLRICKSHAWMAN_Open")]
-    pub fn cdlrickshawman_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlrickshawmanStream, i32), RetCode> {
-        self.cdlrickshawman_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLRICKSHAWMAN_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLRICKSHAWMAN_Stream, i32), RetCode> {
+        self.CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlrickshawman_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlrickshawman`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLRICKSHAWMAN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLRICKSHAWMAN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLRICKSHAWMAN_OpenAndFill")]
-    pub fn cdlrickshawman_open_and_fill(
+    pub fn CDLRICKSHAWMAN_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlrickshawmanStream, RetCode> {
+    ) -> Result<CDLRICKSHAWMAN_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1028,7 +1028,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlrickshawman_lookback();
+        lookbackTotal = self.CDLRICKSHAWMAN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1286,7 +1286,7 @@ impl Core {
         let mut ring_ShadowLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
         ring_ShadowLongTrailingIdx_inClose[..cap_ShadowLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let state = CdlrickshawmanStreamState {
+        let state = CDLRICKSHAWMAN_StreamState {
             BodyDojiPeriodTotal,
             ShadowLongPeriodTotal,
             NearPeriodTotal,
@@ -1309,19 +1309,19 @@ impl Core {
             ring_ShadowLongTrailingIdx_inLow,
             ring_ShadowLongTrailingIdx_inClose,
         };
-        Ok(CdlrickshawmanStream { core: self.clone(), state })
+        Ok(CDLRICKSHAWMAN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlrickshawmanStream {
+impl CDLRICKSHAWMAN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLRICKSHAWMAN_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlrickshawman_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLRICKSHAWMAN_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1339,7 +1339,7 @@ impl CdlrickshawmanStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlrickshawmanStream>();
+    _assert_auto::<CDLRICKSHAWMAN_Stream>();
 };
 
 /***************/

@@ -1,5 +1,4 @@
 name: FLOOR
-camel_case: Floor
 group: Math Transform
 hint: Vector Floor
 flags: [stream]

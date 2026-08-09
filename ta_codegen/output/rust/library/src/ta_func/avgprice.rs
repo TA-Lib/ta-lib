@@ -65,9 +65,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::avgprice`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::AVGPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn avgprice_lookback(&self) -> usize {
+    pub fn AVGPRICE_Lookback(&self) -> usize {
         // This function have no lookback needed.
         return (0) as usize;
     }
@@ -122,7 +122,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.avgprice(
+    /// let ret = core.AVGPRICE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -133,11 +133,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::medprice`] · [`Core::typprice`] · [`Core::wclprice`]
+    /// [`Core::MEDPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/avgprice](https://ta-lib.org/functions/avgprice/)
+    /// Further reading: [ta-lib.org/functions/AVGPRICE](https://ta-lib.org/functions/AVGPRICE/)
     #[doc(alias = "AveragePrice")]
-    pub fn avgprice(
+    pub fn AVGPRICE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -155,7 +155,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.avgprice_lookback();
+        let _assertLb = self.AVGPRICE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -179,20 +179,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live AVGPRICE stream: one value per closed bar, bit-identical to [`Core::avgprice`]
-/// over the same series. Open with [`Core::avgprice_open`]; dropping the handle
+/// Live AVGPRICE stream: one value per closed bar, bit-identical to [`Core::AVGPRICE`]
+/// over the same series. Open with [`Core::AVGPRICE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_AVGPRICE_Stream")]
-pub struct AvgpriceStream {
+pub struct AVGPRICE_Stream {
     core: Core,
-    state: AvgpriceStreamState,
+    state: AVGPRICE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AvgpriceStreamState {
+struct AVGPRICE_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -202,14 +202,14 @@ struct AvgpriceStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn avgprice_step_internal(&self, sp: &mut AvgpriceStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn AVGPRICE_step_internal(&self, sp: &mut AVGPRICE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         (*outReal) = (inHigh + inLow + inClose + inOpen) / 4_f64;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::avgprice_open`] (composition seam).
-    pub(crate) fn avgprice_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::AVGPRICE_Open`] (composition seam).
+    pub(crate) fn AVGPRICE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(AvgpriceStream, f64), RetCode> {
+    ) -> Result<(AVGPRICE_Stream, f64), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -234,13 +234,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AvgpriceStreamState {
+        let state = AVGPRICE_StreamState {
         };
-        Ok((AvgpriceStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((AVGPRICE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live AVGPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::avgprice`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::AVGPRICE`] at that bar.
     ///
     /// # Errors
     ///
@@ -259,23 +259,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.avgprice_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.AVGPRICE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_AVGPRICE_Open")]
-    pub fn avgprice_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(AvgpriceStream, f64), RetCode> {
-        self.avgprice_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn AVGPRICE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(AVGPRICE_Stream, f64), RetCode> {
+        self.AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::avgprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::avgprice`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::AVGPRICE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::AVGPRICE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_AVGPRICE_OpenAndFill")]
-    pub fn avgprice_open_and_fill(
+    pub fn AVGPRICE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AvgpriceStream, RetCode> {
+    ) -> Result<AVGPRICE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -300,21 +300,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = AvgpriceStreamState {
+        let state = AVGPRICE_StreamState {
         };
-        Ok(AvgpriceStream { core: self.clone(), state })
+        Ok(AVGPRICE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AvgpriceStream {
+impl AVGPRICE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_AVGPRICE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.avgprice_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        self.core.AVGPRICE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -332,7 +332,7 @@ impl AvgpriceStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AvgpriceStream>();
+    _assert_auto::<AVGPRICE_Stream>();
 };
 
 /***************/

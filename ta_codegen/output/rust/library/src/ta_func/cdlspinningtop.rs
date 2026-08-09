@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlspinningtop`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLSPINNINGTOP`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlspinningtop_lookback(&self) -> usize {
+    pub fn CDLSPINNINGTOP_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlspinningtop(
+    /// let ret = core.CDLSPINNINGTOP(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -138,12 +138,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdldoji`] · [`Core::cdlhighwave`] · [`Core::cdllongleggeddoji`]
+    /// [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`] · [`Core::CDLLONGLEGGEDDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlspinningtop](https://ta-lib.org/functions/cdlspinningtop/)
+    /// [ta-lib.org/functions/CDLSPINNINGTOP](https://ta-lib.org/functions/CDLSPINNINGTOP/)
     #[doc(alias = "SpinningTop")]
-    pub fn cdlspinningtop(
+    pub fn CDLSPINNINGTOP(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -161,7 +161,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlspinningtop_lookback();
+        let _assertLb = self.CDLSPINNINGTOP_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -182,7 +182,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlspinningtop_lookback();
+        lookbackTotal = self.CDLSPINNINGTOP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -279,20 +279,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLSPINNINGTOP stream: one value per closed bar, bit-identical to [`Core::cdlspinningtop`]
-/// over the same series. Open with [`Core::cdlspinningtop_open`]; dropping the handle
+/// Live CDLSPINNINGTOP stream: one value per closed bar, bit-identical to [`Core::CDLSPINNINGTOP`]
+/// over the same series. Open with [`Core::CDLSPINNINGTOP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSPINNINGTOP_Stream")]
-pub struct CdlspinningtopStream {
+pub struct CDLSPINNINGTOP_Stream {
     core: Core,
-    state: CdlspinningtopStreamState,
+    state: CDLSPINNINGTOP_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlspinningtopStreamState {
+struct CDLSPINNINGTOP_StreamState {
     BodyPeriodTotal: f64,
     ringPos_BodyTrailingIdx: usize,
     ringCap_BodyTrailingIdx: usize,
@@ -309,7 +309,7 @@ struct CdlspinningtopStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlspinningtop_step_internal(&self, sp: &mut CdlspinningtopStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSPINNINGTOP_step_internal(&self, sp: &mut CDLSPINNINGTOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
         #[allow(non_snake_case)]
@@ -370,10 +370,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlspinningtop_open`] (composition seam).
-    pub(crate) fn cdlspinningtop_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLSPINNINGTOP_Open`] (composition seam).
+    pub(crate) fn CDLSPINNINGTOP_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlspinningtopStream, i32), RetCode> {
+    ) -> Result<(CDLSPINNINGTOP_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -399,7 +399,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlspinningtop_lookback();
+        lookbackTotal = self.CDLSPINNINGTOP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -508,7 +508,7 @@ impl Core {
         let mut ring_BodyTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
         ring_BodyTrailingIdx_inClose[..cap_BodyTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyTrailingIdx as usize..]);
-        let state = CdlspinningtopStreamState {
+        let state = CDLSPINNINGTOP_StreamState {
             BodyPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
@@ -517,11 +517,11 @@ impl Core {
             ring_BodyTrailingIdx_inLow,
             ring_BodyTrailingIdx_inClose,
         };
-        Ok((CdlspinningtopStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLSPINNINGTOP_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLSPINNINGTOP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlspinningtop`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLSPINNINGTOP`] at that bar.
     ///
     /// # Errors
     ///
@@ -540,23 +540,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlspinningtop_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLSPINNINGTOP_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSPINNINGTOP_Open")]
-    pub fn cdlspinningtop_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlspinningtopStream, i32), RetCode> {
-        self.cdlspinningtop_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLSPINNINGTOP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSPINNINGTOP_Stream, i32), RetCode> {
+        self.CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlspinningtop_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlspinningtop`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLSPINNINGTOP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLSPINNINGTOP`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLSPINNINGTOP_OpenAndFill")]
-    pub fn cdlspinningtop_open_and_fill(
+    pub fn CDLSPINNINGTOP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlspinningtopStream, RetCode> {
+    ) -> Result<CDLSPINNINGTOP_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -581,7 +581,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlspinningtop_lookback();
+        lookbackTotal = self.CDLSPINNINGTOP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -692,7 +692,7 @@ impl Core {
         let mut ring_BodyTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyTrailingIdx];
         ring_BodyTrailingIdx_inClose[..cap_BodyTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyTrailingIdx as usize..]);
-        let state = CdlspinningtopStreamState {
+        let state = CDLSPINNINGTOP_StreamState {
             BodyPeriodTotal,
             ringPos_BodyTrailingIdx: 0_usize,
             ringCap_BodyTrailingIdx: cap_BodyTrailingIdx as usize,
@@ -701,19 +701,19 @@ impl Core {
             ring_BodyTrailingIdx_inLow,
             ring_BodyTrailingIdx_inClose,
         };
-        Ok(CdlspinningtopStream { core: self.clone(), state })
+        Ok(CDLSPINNINGTOP_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlspinningtopStream {
+impl CDLSPINNINGTOP_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLSPINNINGTOP_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlspinningtop_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLSPINNINGTOP_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -731,7 +731,7 @@ impl CdlspinningtopStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlspinningtopStream>();
+    _assert_auto::<CDLSPINNINGTOP_Stream>();
 };
 
 /***************/

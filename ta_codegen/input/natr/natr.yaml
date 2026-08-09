@@ -1,5 +1,4 @@
 name: NATR
-camel_case: Natr
 group: Volatility Indicators
 hint: Normalized Average True Range
 flags: [unstable_period, stream]

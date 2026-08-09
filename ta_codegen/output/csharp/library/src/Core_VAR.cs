@@ -60,8 +60,8 @@ public partial class Core
     *  071726 MF,CC  #118 cancellation-free variance (shifted sums + reseed); fixes bug 90.
     */
    /// <summary>
-   /// Number of leading input bars <c>Variance</c> consumes before it can
-   /// produce its first value.
+   /// Number of leading input bars <c>VAR</c> consumes before it can produce its
+   /// first value.
    /// </summary>
    /// <remarks>
    /// Equivalently, the index of the first bar with a value when the whole
@@ -73,7 +73,7 @@ public partial class Core
    /// <param name="optInNbDev">Deviation count accepted by the API but never used in the computation
    /// (default 1; <c>-4e37</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int VarianceLookback( int optInTimePeriod, double optInNbDev )
+   public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 5;
@@ -88,14 +88,14 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode Variance( int startIdx,
-                              int endIdx,
-                              double[] inReal,
-                              int optInTimePeriod,
-                              double optInNbDev,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              double[] outReal )
+   internal RetCode VAR( int startIdx,
+                         int endIdx,
+                         double[] inReal,
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -228,14 +228,14 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode Variance( int startIdx,
-                              int endIdx,
-                              float[] inReal,
-                              int optInTimePeriod,
-                              double optInNbDev,
-                              out int outBegIdx,
-                              out int outNBElement,
-                              double[] outReal )
+   internal RetCode VAR( int startIdx,
+                         int endIdx,
+                         float[] inReal,
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         out int outBegIdx,
+                         out int outNBElement,
+                         double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -353,8 +353,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>VarianceLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>VAR_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -374,14 +374,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Variance( int startIdx,
-                             int endIdx,
-                             double[] inReal,
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             double[] outReal )
+   public OutRange VAR( int startIdx,
+                        int endIdx,
+                        double[] inReal,
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        double[] outReal )
    {
-      RetCode retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }
@@ -411,8 +411,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>VarianceLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>VAR_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -432,14 +432,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Variance( int startIdx,
-                             int endIdx,
-                             float[] inReal,
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             double[] outReal )
+   public OutRange VAR( int startIdx,
+                        int endIdx,
+                        float[] inReal,
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        double[] outReal )
    {
-      RetCode retCode = Variance(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = VAR(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VAR", retCode);
       }

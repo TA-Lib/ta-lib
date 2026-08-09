@@ -1,5 +1,4 @@
 name: MAXINDEX
-camel_case: MaxIndex
 group: Math Operators
 hint: Index of highest value over a specified period
 flags: [stream]

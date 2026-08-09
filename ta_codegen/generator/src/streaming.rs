@@ -5841,7 +5841,6 @@ mod tests {
             name: "TEST".into(),
             group: "Test".into(),
             description: None,
-            camel_case: None,
             hint: None,
             flags: vec![],
             inputs: vec![Input::new("inReal", ParamType::Real)],

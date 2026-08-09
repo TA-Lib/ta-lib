@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdl2Crows} consumes before it can
+    * Number of leading input bars {@link Core#CDL2CROWS} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdl2CrowsLookback( )
+   public int CDL2CROWS_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -29,15 +29,15 @@
       return BodyLong_avgPeriod + 2 ;
 
    }
-   RetCode cdl2CrowsInternal( int startIdx,
-                              int endIdx,
-                              double inOpen[],
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode CDL2CROWS_Internal( int startIdx,
+                               int endIdx,
+                               double inOpen[],
+                               double inHigh[],
+                               double inLow[],
+                               double inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -56,7 +56,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdl2CrowsLookback();
+      lookbackTotal = CDL2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -118,15 +118,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdl2CrowsInternal( int startIdx,
-                              int endIdx,
-                              float inOpen[],
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              int outInteger[] )
+   RetCode CDL2CROWS_Internal( int startIdx,
+                               int endIdx,
+                               float inOpen[],
+                               float inHigh[],
+                               float inLow[],
+                               float inClose[],
+                               MInteger outBegIdx,
+                               MInteger outNBElement,
+                               int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -142,7 +142,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdl2CrowsLookback();
+      lookbackTotal = CDL2CROWS_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -187,7 +187,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdl2CrowsLookback} is a <b>success
+    * valid range shorter than {@link Core#CDL2CROWS_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -207,10 +207,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlUpsideGap2Crows
-    * @see Core#cdlIdentical3Crows
+    * @see Core#CDLUPSIDEGAP2CROWS
+    * @see Core#CDLIDENTICAL3CROWS
     */
-   public OutRange cdl2Crows( int startIdx,
+   public OutRange CDL2CROWS( int startIdx,
                               int endIdx,
                               double inOpen[],
                               double inHigh[],
@@ -220,7 +220,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdl2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDL2CROWS", retCode);
       }
@@ -242,7 +242,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdl2CrowsLookback} is a <b>success
+    * valid range shorter than {@link Core#CDL2CROWS_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -262,10 +262,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlUpsideGap2Crows
-    * @see Core#cdlIdentical3Crows
+    * @see Core#CDLUPSIDEGAP2CROWS
+    * @see Core#CDLIDENTICAL3CROWS
     */
-   public OutRange cdl2Crows( int startIdx,
+   public OutRange CDL2CROWS( int startIdx,
                               int endIdx,
                               float inOpen[],
                               float inHigh[],
@@ -275,7 +275,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdl2CrowsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL2CROWS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDL2CROWS", retCode);
       }
@@ -285,8 +285,8 @@
 
    /**
     * A live CDL2CROWS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdl2Crows} over the same series.
-    * Open with {@link Core#cdl2CrowsOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDL2CROWS} over the same series.
+    * Open with {@link Core#CDL2CROWS_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -297,7 +297,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class Cdl2CrowsStream {
+   public static final class CDL2CROWS_Stream {
       final Core core;
       double BodyLongPeriodTotal;
       double lag1_inOpen;
@@ -320,10 +320,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      Cdl2CrowsStream( Core core ) { this.core = core; }
+      CDL2CROWS_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdl2CrowsOpenAndFill}, or
+       * The range filled by {@link Core#CDL2CROWS_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -331,7 +331,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      Cdl2CrowsStream( Cdl2CrowsStream other ) {
+      CDL2CROWS_Stream( CDL2CROWS_Stream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -360,7 +360,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdl2CrowsStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDL2CROWS_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -372,8 +372,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         Cdl2CrowsStream scratch = new Cdl2CrowsStream(this);
-         core.cdl2CrowsStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDL2CROWS_Stream scratch = new CDL2CROWS_Stream(this);
+         core.CDL2CROWS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -390,11 +390,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public Cdl2CrowsStream copy() {
-         return new Cdl2CrowsStream(this);
+      public CDL2CROWS_Stream copy() {
+         return new CDL2CROWS_Stream(this);
       }
    }
-   void cdl2CrowsStreamStep( Cdl2CrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDL2CROWS_StreamStep( CDL2CROWS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -440,7 +440,7 @@
          sp.ringPos_BodyLongTrailingIdx = 0;
       }
    }
-   private RetCode cdl2CrowsOpenBody( Cdl2CrowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDL2CROWS_OpenBody( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -464,7 +464,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdl2CrowsLookback();
+      lookbackTotal = CDL2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -559,7 +559,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdl2CrowsOpenAndFillBody( Cdl2CrowsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDL2CROWS_OpenAndFillBody( CDL2CROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyLongPeriodTotal = 0;
       int i = 0;
@@ -584,7 +584,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdl2CrowsLookback();
+      lookbackTotal = CDL2CROWS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -679,11 +679,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdl2CrowsOpen (composition seam). */
-   Cdl2CrowsStream cdl2CrowsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDL2CROWS_Open (composition seam). */
+   CDL2CROWS_Stream CDL2CROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      Cdl2CrowsStream sp = new Cdl2CrowsStream(this);
-      RetCode retCode = cdl2CrowsOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
+      RetCode retCode = CDL2CROWS_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -698,32 +698,32 @@
    /**
     * Open a live CDL2CROWS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdl2Crows} at that bar.
-    * <p>The history must hold at least {@code cdl2CrowsLookback(...) + 1} bars
+    * to {@link Core#CDL2CROWS} at that bar.
+    * <p>The history must hold at least {@code CDL2CROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public Cdl2CrowsStream cdl2CrowsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDL2CROWS_Stream CDL2CROWS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdl2CrowsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDL2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdl2CrowsOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdl2Crows} over the whole history in the same single pass
+    * {@link Core#CDL2CROWS_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDL2CROWS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link Cdl2CrowsStream#fillRange()}.
+    * {@link CDL2CROWS_Stream#fillRange()}.
     */
-   public Cdl2CrowsStream cdl2CrowsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDL2CROWS_Stream CDL2CROWS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      Cdl2CrowsStream sp = new Cdl2CrowsStream(this);
+      CDL2CROWS_Stream sp = new CDL2CROWS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdl2CrowsOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDL2CROWS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

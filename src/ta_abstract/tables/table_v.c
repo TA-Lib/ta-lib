@@ -60,7 +60,6 @@ static const TA_OptInputParameterInfo *TA_VAR_OptInputs[] =
 DEF_FUNCTION( VAR,
               TA_GroupId_Statistic,
               "Variance",
-              "Variance",
               TA_FUNC_FLG_STREAM
              );
 /* VAR END */
@@ -87,7 +86,6 @@ static const TA_OptInputParameterInfo *TA_VWMA_OptInputs[] =
 DEF_FUNCTION( VWMA,
               TA_GroupId_OverlapStudies,
               "Volume Weighted Moving Average",
-              "Vwma",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* VWMA END */

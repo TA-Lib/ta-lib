@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlkicking`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::CDLKICKING`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn cdlkicking_lookback(&self) -> usize {
+    pub fn CDLKICKING_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlkicking(
+    /// let ret = core.CDLKICKING(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -138,11 +138,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlkickingbylength`] · [`Core::cdlmarubozu`] · [`Core::cdlgapsidesidewhite`]
+    /// [`Core::CDLKICKINGBYLENGTH`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
-    /// Further reading: [ta-lib.org/functions/cdlkicking](https://ta-lib.org/functions/cdlkicking/)
+    /// Further reading: [ta-lib.org/functions/CDLKICKING](https://ta-lib.org/functions/CDLKICKING/)
     #[doc(alias = "Kicking")]
-    pub fn cdlkicking(
+    pub fn CDLKICKING(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -160,7 +160,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlkicking_lookback();
+        let _assertLb = self.CDLKICKING_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -190,7 +190,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlkicking_lookback();
+        lookbackTotal = self.CDLKICKING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -390,20 +390,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLKICKING stream: one value per closed bar, bit-identical to [`Core::cdlkicking`]
-/// over the same series. Open with [`Core::cdlkicking_open`]; dropping the handle
+/// Live CDLKICKING stream: one value per closed bar, bit-identical to [`Core::CDLKICKING`]
+/// over the same series. Open with [`Core::CDLKICKING_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLKICKING_Stream")]
-pub struct CdlkickingStream {
+pub struct CDLKICKING_Stream {
     core: Core,
-    state: CdlkickingStreamState,
+    state: CDLKICKING_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlkickingStreamState {
+struct CDLKICKING_StreamState {
     ShadowVeryShortPeriodTotal: [f64; 2 as usize],
     BodyLongPeriodTotal: [f64; 2 as usize],
     totIdx: usize,
@@ -440,7 +440,7 @@ struct CdlkickingStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlkicking_step_internal(&self, sp: &mut CdlkickingStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLKICKING_step_internal(&self, sp: &mut CDLKICKING_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -574,10 +574,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlkicking_open`] (composition seam).
-    pub(crate) fn cdlkicking_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLKICKING_Open`] (composition seam).
+    pub(crate) fn CDLKICKING_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlkickingStream, i32), RetCode> {
+    ) -> Result<(CDLKICKING_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -612,7 +612,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlkicking_lookback();
+        lookbackTotal = self.CDLKICKING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -895,7 +895,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlkickingStreamState {
+        let state = CDLKICKING_StreamState {
             ShadowVeryShortPeriodTotal,
             BodyLongPeriodTotal,
             totIdx,
@@ -924,11 +924,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((CdlkickingStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLKICKING_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLKICKING stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlkicking`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLKICKING`] at that bar.
     ///
     /// # Errors
     ///
@@ -947,23 +947,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlkicking_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLKICKING_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLKICKING_Open")]
-    pub fn cdlkicking_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlkickingStream, i32), RetCode> {
-        self.cdlkicking_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLKICKING_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLKICKING_Stream, i32), RetCode> {
+        self.CDLKICKING_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlkicking_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlkicking`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLKICKING_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLKICKING`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLKICKING_OpenAndFill")]
-    pub fn cdlkicking_open_and_fill(
+    pub fn CDLKICKING_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlkickingStream, RetCode> {
+    ) -> Result<CDLKICKING_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -997,7 +997,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlkicking_lookback();
+        lookbackTotal = self.CDLKICKING_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1282,7 +1282,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlkickingStreamState {
+        let state = CDLKICKING_StreamState {
             ShadowVeryShortPeriodTotal,
             BodyLongPeriodTotal,
             totIdx,
@@ -1311,19 +1311,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(CdlkickingStream { core: self.clone(), state })
+        Ok(CDLKICKING_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlkickingStream {
+impl CDLKICKING_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLKICKING_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlkicking_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLKICKING_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1341,7 +1341,7 @@ impl CdlkickingStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlkickingStream>();
+    _assert_auto::<CDLKICKING_Stream>();
 };
 
 /***************/

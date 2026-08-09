@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#linearRegIntercept} consumes
+    * Number of leading input bars {@link Core#LINEARREG_INTERCEPT} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int linearRegInterceptLookback( int optInTimePeriod )
+   public int LINEARREG_INTERCEPT_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode linearRegInterceptInternal( int startIdx,
-                                       int endIdx,
-                                       double inReal[],
-                                       int optInTimePeriod,
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
+   RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
+                                         int endIdx,
+                                         double inReal[],
+                                         int optInTimePeriod,
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -86,7 +86,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -140,13 +140,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode linearRegInterceptInternal( int startIdx,
-                                       int endIdx,
-                                       float inReal[],
-                                       int optInTimePeriod,
-                                       MInteger outBegIdx,
-                                       MInteger outNBElement,
-                                       double outReal[] )
+   RetCode LINEARREG_INTERCEPT_Internal( int startIdx,
+                                         int endIdx,
+                                         float inReal[],
+                                         int optInTimePeriod,
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -172,7 +172,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -223,7 +223,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearRegInterceptLookback} is a
+    * valid range shorter than {@link Core#LINEARREG_INTERCEPT_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -241,20 +241,20 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#linearReg
-    * @see Core#linearRegSlope
-    * @see Core#linearRegAngle
-    * @see Core#tsf
+    * @see Core#LINEARREG
+    * @see Core#LINEARREG_SLOPE
+    * @see Core#LINEARREG_ANGLE
+    * @see Core#TSF
     */
-   public OutRange linearRegIntercept( int startIdx,
-                                       int endIdx,
-                                       double inReal[],
-                                       int optInTimePeriod,
-                                       double outReal[] )
+   public OutRange LINEARREG_INTERCEPT( int startIdx,
+                                        int endIdx,
+                                        double inReal[],
+                                        int optInTimePeriod,
+                                        double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegInterceptInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_INTERCEPT", retCode);
       }
@@ -276,7 +276,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#linearRegInterceptLookback} is a
+    * valid range shorter than {@link Core#LINEARREG_INTERCEPT_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -294,20 +294,20 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#linearReg
-    * @see Core#linearRegSlope
-    * @see Core#linearRegAngle
-    * @see Core#tsf
+    * @see Core#LINEARREG
+    * @see Core#LINEARREG_SLOPE
+    * @see Core#LINEARREG_ANGLE
+    * @see Core#TSF
     */
-   public OutRange linearRegIntercept( int startIdx,
-                                       int endIdx,
-                                       float inReal[],
-                                       int optInTimePeriod,
-                                       double outReal[] )
+   public OutRange LINEARREG_INTERCEPT( int startIdx,
+                                        int endIdx,
+                                        float inReal[],
+                                        int optInTimePeriod,
+                                        double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegInterceptInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("LINEARREG_INTERCEPT", retCode);
       }
@@ -317,8 +317,8 @@
 
    /**
     * A live LINEARREG_INTERCEPT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#linearRegIntercept} over the same series.
-    * Open with {@link Core#linearRegInterceptOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#LINEARREG_INTERCEPT} over the same series.
+    * Open with {@link Core#LINEARREG_INTERCEPT_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -329,7 +329,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class LinearRegInterceptStream {
+   public static final class LINEARREG_INTERCEPT_Stream {
       final Core core;
       int optInTimePeriod;
       double SumX;
@@ -343,10 +343,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      LinearRegInterceptStream( Core core ) { this.core = core; }
+      LINEARREG_INTERCEPT_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#linearRegInterceptOpenAndFill}, or
+       * The range filled by {@link Core#LINEARREG_INTERCEPT_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -354,7 +354,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      LinearRegInterceptStream( LinearRegInterceptStream other ) {
+      LINEARREG_INTERCEPT_Stream( LINEARREG_INTERCEPT_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.SumX = other.SumX;
@@ -374,7 +374,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.linearRegInterceptStreamStep(this, inReal);
+         core.LINEARREG_INTERCEPT_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -386,8 +386,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         LinearRegInterceptStream scratch = new LinearRegInterceptStream(this);
-         core.linearRegInterceptStreamStep(scratch, inReal);
+         LINEARREG_INTERCEPT_Stream scratch = new LINEARREG_INTERCEPT_Stream(this);
+         core.LINEARREG_INTERCEPT_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -404,11 +404,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public LinearRegInterceptStream copy() {
-         return new LinearRegInterceptStream(this);
+      public LINEARREG_INTERCEPT_Stream copy() {
+         return new LINEARREG_INTERCEPT_Stream(this);
       }
    }
-   void linearRegInterceptStreamStep( LinearRegInterceptStream sp, double inReal )
+   void LINEARREG_INTERCEPT_StreamStep( LINEARREG_INTERCEPT_Stream sp, double inReal )
    {
       double m = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -425,7 +425,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode linearRegInterceptOpenBody( LinearRegInterceptStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_INTERCEPT_OpenBody( LINEARREG_INTERCEPT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int outIdx = 0;
       int today = 0;
@@ -473,7 +473,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -545,7 +545,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode linearRegInterceptOpenAndFillBody( LinearRegInterceptStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode LINEARREG_INTERCEPT_OpenAndFillBody( LINEARREG_INTERCEPT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -594,7 +594,7 @@
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = linearRegInterceptLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -666,11 +666,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind linearRegInterceptOpen (composition seam). */
-   LinearRegInterceptStream linearRegInterceptOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind LINEARREG_INTERCEPT_Open (composition seam). */
+   LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      LinearRegInterceptStream sp = new LinearRegInterceptStream(this);
-      RetCode retCode = linearRegInterceptOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -685,32 +685,32 @@
    /**
     * Open a live LINEARREG_INTERCEPT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#linearRegIntercept} at that bar.
-    * <p>The history must hold at least {@code linearRegInterceptLookback(...) + 1} bars
+    * to {@link Core#LINEARREG_INTERCEPT} at that bar.
+    * <p>The history must hold at least {@code LINEARREG_INTERCEPT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public LinearRegInterceptStream linearRegInterceptOpen( double inReal[], int optInTimePeriod )
+   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_Open( double inReal[], int optInTimePeriod )
    {
-      return linearRegInterceptOpenInternal(inReal, 0, optInTimePeriod);
+      return LINEARREG_INTERCEPT_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#linearRegInterceptOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#linearRegIntercept} over the whole history in the same single pass
+    * {@link Core#LINEARREG_INTERCEPT_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#LINEARREG_INTERCEPT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link LinearRegInterceptStream#fillRange()}.
+    * {@link LINEARREG_INTERCEPT_Stream#fillRange()}.
     */
-   public LinearRegInterceptStream linearRegInterceptOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public LINEARREG_INTERCEPT_Stream LINEARREG_INTERCEPT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      LinearRegInterceptStream sp = new LinearRegInterceptStream(this);
+      LINEARREG_INTERCEPT_Stream sp = new LINEARREG_INTERCEPT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = linearRegInterceptOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = LINEARREG_INTERCEPT_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -1,5 +1,4 @@
 name: SUB
-camel_case: Sub
 group: Math Operators
 hint: Vector Arithmetic Subtraction
 flags: [stream]

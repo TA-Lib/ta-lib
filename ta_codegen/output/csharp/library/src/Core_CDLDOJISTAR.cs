@@ -56,7 +56,7 @@ public partial class Core
     *  100204 AC   Creation
     */
    /// <summary>
-   /// Number of leading input bars <c>CdlDojiStar</c> consumes before it can
+   /// Number of leading input bars <c>CDLDOJISTAR</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -65,7 +65,7 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CdlDojiStarLookback( )
+   public int CDLDOJISTAR_Lookback( )
    {
       int BodyDoji_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyDoji].rangeType;
       int BodyDoji_avgPeriod = this.candleSettings[(int)CandleSettingType.BodyDoji].avgPeriod;
@@ -76,7 +76,7 @@ public partial class Core
       return Math.Max(BodyDoji_avgPeriod, BodyLong_avgPeriod) + 1 ;
 
    }
-   internal RetCode CdlDojiStar( int startIdx,
+   internal RetCode CDLDOJISTAR( int startIdx,
                                  int endIdx,
                                  double[] inOpen,
                                  double[] inHigh,
@@ -110,7 +110,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -174,7 +174,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlDojiStar( int startIdx,
+   internal RetCode CDLDOJISTAR( int startIdx,
                                  int endIdx,
                                  float[] inOpen,
                                  float[] inHigh,
@@ -205,7 +205,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlDojiStarLookback();
+      lookbackTotal = CDLDOJISTAR_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -265,8 +265,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlDojiStarLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CDLDOJISTAR_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -287,7 +287,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlDojiStar( int startIdx,
+   public OutRange CDLDOJISTAR( int startIdx,
                                 int endIdx,
                                 double[] inOpen,
                                 double[] inHigh,
@@ -295,7 +295,7 @@ public partial class Core
                                 double[] inClose,
                                 int[] outInteger )
    {
-      RetCode retCode = CdlDojiStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDOJISTAR", retCode);
       }
@@ -327,8 +327,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlDojiStarLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CDLDOJISTAR_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -349,7 +349,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlDojiStar( int startIdx,
+   public OutRange CDLDOJISTAR( int startIdx,
                                 int endIdx,
                                 float[] inOpen,
                                 float[] inHigh,
@@ -357,7 +357,7 @@ public partial class Core
                                 float[] inClose,
                                 int[] outInteger )
    {
-      RetCode retCode = CdlDojiStar(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLDOJISTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDOJISTAR", retCode);
       }

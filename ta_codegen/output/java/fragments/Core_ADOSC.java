@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#adOsc} consumes before it can
+    * Number of leading input bars {@link Core#ADOSC} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -26,7 +26,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int adOscLookback( int optInFastPeriod, int optInSlowPeriod )
+   public int ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
    {
       if( optInFastPeriod == Integer.MIN_VALUE ) {
          optInFastPeriod = 3;
@@ -46,20 +46,20 @@
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      return emaLookback(slowestPeriod) ;
+      return EMA_Lookback(slowestPeriod) ;
 
    }
-   RetCode adOscInternal( int startIdx,
-                          int endIdx,
-                          double inHigh[],
-                          double inLow[],
-                          double inClose[],
-                          double inVolume[],
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ADOSC_Internal( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           double inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -124,7 +124,7 @@
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = emaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -193,17 +193,17 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode adOscInternal( int startIdx,
-                          int endIdx,
-                          float inHigh[],
-                          float inLow[],
-                          float inClose[],
-                          float inVolume[],
-                          int optInFastPeriod,
-                          int optInSlowPeriod,
-                          MInteger outBegIdx,
-                          MInteger outNBElement,
-                          double outReal[] )
+   RetCode ADOSC_Internal( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           float inVolume[],
+                           int optInFastPeriod,
+                           int optInSlowPeriod,
+                           MInteger outBegIdx,
+                           MInteger outNBElement,
+                           double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -241,7 +241,7 @@
       } else {
          slowestPeriod = optInFastPeriod;
       }
-      lookbackTotal = emaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -311,7 +311,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adOscLookback} is a <b>success with
+    * valid range shorter than {@link Core#ADOSC_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -334,10 +334,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ad
-    * @see Core#ema
+    * @see Core#AD
+    * @see Core#EMA
     */
-   public OutRange adOsc( int startIdx,
+   public OutRange ADOSC( int startIdx,
                           int endIdx,
                           double inHigh[],
                           double inLow[],
@@ -349,7 +349,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adOscInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADOSC", retCode);
       }
@@ -373,7 +373,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adOscLookback} is a <b>success with
+    * valid range shorter than {@link Core#ADOSC_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -396,10 +396,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ad
-    * @see Core#ema
+    * @see Core#AD
+    * @see Core#EMA
     */
-   public OutRange adOsc( int startIdx,
+   public OutRange ADOSC( int startIdx,
                           int endIdx,
                           float inHigh[],
                           float inLow[],
@@ -411,7 +411,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adOscInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADOSC", retCode);
       }
@@ -421,8 +421,8 @@
 
    /**
     * A live ADOSC stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#adOsc} over the same series.
-    * Open with {@link Core#adOscOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ADOSC} over the same series.
+    * Open with {@link Core#ADOSC_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -433,7 +433,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AdOscStream {
+   public static final class ADOSC_Stream {
       final Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
@@ -447,10 +447,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      AdOscStream( Core core ) { this.core = core; }
+      ADOSC_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#adOscOpenAndFill}, or
+       * The range filled by {@link Core#ADOSC_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -458,7 +458,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AdOscStream( AdOscStream other ) {
+      ADOSC_Stream( ADOSC_Stream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -478,7 +478,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
-         core.adOscStreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.ADOSC_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
 
@@ -490,8 +490,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
-         AdOscStream scratch = new AdOscStream(this);
-         core.adOscStreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         ADOSC_Stream scratch = new ADOSC_Stream(this);
+         core.ADOSC_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -508,11 +508,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AdOscStream copy() {
-         return new AdOscStream(this);
+      public ADOSC_Stream copy() {
+         return new ADOSC_Stream(this);
       }
    }
-   void adOscStreamStep( AdOscStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void ADOSC_StreamStep( ADOSC_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -529,7 +529,7 @@
       sp.slowEMA = Math.fma(sp.one_minus_slowk, sp.slowEMA, sp.slowk * sp.ad);
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
-   private RetCode adOscOpenBody( AdOscStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       int today = 0;
       int outIdx = 0;
@@ -599,7 +599,7 @@
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = emaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -679,7 +679,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode adOscOpenAndFillBody( AdOscStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ADOSC_OpenAndFillBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -750,7 +750,7 @@
          slowestPeriod = optInFastPeriod;
       }
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = emaLookback(slowestPeriod);
+      lookbackTotal = EMA_Lookback(slowestPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -830,11 +830,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind adOscOpen (composition seam). */
-   AdOscStream adOscOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
+   ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
-      AdOscStream sp = new AdOscStream(this);
-      RetCode retCode = adOscOpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
+      ADOSC_Stream sp = new ADOSC_Stream(this);
+      RetCode retCode = ADOSC_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -849,32 +849,32 @@
    /**
     * Open a live ADOSC stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#adOsc} at that bar.
-    * <p>The history must hold at least {@code adOscLookback(...) + 1} bars
+    * to {@link Core#ADOSC} at that bar.
+    * <p>The history must hold at least {@code ADOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AdOscStream adOscOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
+   public ADOSC_Stream ADOSC_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod )
    {
-      return adOscOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
+      return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
    /**
-    * {@link Core#adOscOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#adOsc} over the whole history in the same single pass
+    * {@link Core#ADOSC_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ADOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AdOscStream#fillRange()}.
+    * {@link ADOSC_Stream#fillRange()}.
     */
-   public AdOscStream adOscOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
+   public ADOSC_Stream ADOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, double outReal[] )
    {
-      AdOscStream sp = new AdOscStream(this);
+      ADOSC_Stream sp = new ADOSC_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adOscOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

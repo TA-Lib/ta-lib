@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::adx`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ADX`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -80,13 +80,13 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn adx_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ADX_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        return (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        return (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
     }
     /// Wilder's Average Directional Movement Index, a smoothed measure of trend strength derived
     /// from the directional indicators (+DI/-DI). Quantifies how strongly a market is trending,
@@ -146,7 +146,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.adx(
+    /// let ret = core.ADX(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -157,18 +157,18 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::adxr`] · [`Core::dx`] · [`Core::plus_di`] · [`Core::minus_di`] ·
-    /// [`Core::plus_dm`] · [`Core::minus_dm`] · [`Core::trange`]
+    /// [`Core::ADXR`] · [`Core::DX`] · [`Core::PLUS_DI`] · [`Core::MINUS_DI`] ·
+    /// [`Core::PLUS_DM`] · [`Core::MINUS_DM`] · [`Core::TRANGE`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/adx](https://ta-lib.org/functions/adx/)
+    /// Further reading: [ta-lib.org/functions/ADX](https://ta-lib.org/functions/ADX/)
     #[doc(alias = "AverageDirectionalMovementIndex")]
     #[doc(alias = "AverageDirectionalIndex")]
-    pub fn adx(
+    pub fn ADX(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -191,7 +191,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.adx_lookback(optInTimePeriod);
+        let _assertLb = self.ADX_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -327,7 +327,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -437,7 +437,7 @@ impl Core {
         // Calculate the first ADX
         prevADX = (sumDX / ((optInTimePeriod) as f64));
         // Skip the unstable period
-        i = (self.unstable_period[FuncUnstId::Adx as usize]) as usize;
+        i = (self.unstable_period[FuncUnstId::ADX as usize]) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -545,20 +545,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ADX stream: one value per closed bar, bit-identical to [`Core::adx`]
-/// over the same series. Open with [`Core::adx_open`]; dropping the handle
+/// Live ADX stream: one value per closed bar, bit-identical to [`Core::ADX`]
+/// over the same series. Open with [`Core::ADX_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADX_Stream")]
-pub struct AdxStream {
+pub struct ADX_Stream {
     core: Core,
-    state: AdxStreamState,
+    state: ADX_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AdxStreamState {
+struct ADX_StreamState {
     optInTimePeriod: i32,
     prevHigh: f64,
     prevLow: f64,
@@ -581,7 +581,7 @@ struct AdxStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn adx_step_internal(&self, sp: &mut AdxStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ADX_step_internal(&self, sp: &mut ADX_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         // Calculate the prevMinusDM and prevPlusDM
         sp.tempReal = inHigh;
         sp.diffP = sp.tempReal - sp.prevHigh;
@@ -630,10 +630,10 @@ impl Core {
         (*outReal) = sp.prevADX;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::adx_open`] (composition seam).
-    pub(crate) fn adx_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ADX_Open`] (composition seam).
+    pub(crate) fn ADX_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AdxStream, f64), RetCode> {
+    ) -> Result<(ADX_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -780,7 +780,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -890,7 +890,7 @@ impl Core {
         // Calculate the first ADX
         prevADX = (sumDX / ((optInTimePeriod) as f64));
         // Skip the unstable period
-        i = (self.unstable_period[FuncUnstId::Adx as usize]) as usize;
+        i = (self.unstable_period[FuncUnstId::ADX as usize]) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -994,7 +994,7 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = AdxStreamState {
+        let state = ADX_StreamState {
             optInTimePeriod,
             prevHigh,
             prevLow,
@@ -1009,11 +1009,11 @@ impl Core {
             plusDI,
             prevADX,
         };
-        Ok((AdxStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ADX_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ADX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::adx`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ADX`] at that bar.
     ///
     /// # Errors
     ///
@@ -1029,23 +1029,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.adx_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.ADX_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ADX_Open")]
-    pub fn adx_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AdxStream, f64), RetCode> {
-        self.adx_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn ADX_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ADX_Stream, f64), RetCode> {
+        self.ADX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::adx_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::adx`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ADX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ADX`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ADX_OpenAndFill")]
-    pub fn adx_open_and_fill(
+    pub fn ADX_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AdxStream, RetCode> {
+    ) -> Result<ADX_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -1191,7 +1191,7 @@ impl Core {
         //
         // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
         // you can comment out the following #undef/#define and rebuild the library.
-        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::Adx as usize] - 1) as usize;
+        lookbackTotal = (2 * optInTimePeriod + self.unstable_period[FuncUnstId::ADX as usize] - 1) as usize;
         // Adjust startIdx to account for the lookback period.
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -1301,7 +1301,7 @@ impl Core {
         // Calculate the first ADX
         prevADX = (sumDX / ((optInTimePeriod) as f64));
         // Skip the unstable period
-        i = (self.unstable_period[FuncUnstId::Adx as usize]) as usize;
+        i = (self.unstable_period[FuncUnstId::ADX as usize]) as usize;
         while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
             // Calculate the prevMinusDM and prevPlusDM
             today += 1;
@@ -1406,7 +1406,7 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = AdxStreamState {
+        let state = ADX_StreamState {
             optInTimePeriod,
             prevHigh,
             prevLow,
@@ -1421,19 +1421,19 @@ impl Core {
             plusDI,
             prevADX,
         };
-        Ok(AdxStream { core: self.clone(), state })
+        Ok(ADX_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AdxStream {
+impl ADX_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ADX_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.adx_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.ADX_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -1451,7 +1451,7 @@ impl AdxStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AdxStream>();
+    _assert_auto::<ADX_Stream>();
 };
 
 /***************/

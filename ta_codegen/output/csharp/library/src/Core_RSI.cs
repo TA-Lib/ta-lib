@@ -58,7 +58,7 @@ public partial class Core
     *  062804 MF   Resolve div by zero bug on limit case.
     */
    /// <summary>
-   /// Number of leading input bars <c>Rsi</c> consumes before it can produce its
+   /// Number of leading input bars <c>RSI</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -73,7 +73,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Lookback for the gain/loss averaging (default 14; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int RsiLookback( int optInTimePeriod )
+   public int RSI_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -81,11 +81,11 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
-      retValue = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Rsi];
+      retValue = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.RSI];
       return retValue ;
 
    }
-   internal RetCode Rsi( int startIdx,
+   internal RetCode RSI( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
@@ -133,7 +133,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = (int)RsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -166,7 +166,7 @@ public partial class Core
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.Rsi];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.RSI];
       /* If there is no unstable period,
        * calculate the 'additional' initial
        * price bar who is particuliar to
@@ -267,7 +267,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Rsi( int startIdx,
+   internal RetCode RSI( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
@@ -301,7 +301,7 @@ public partial class Core
       }
       outBegIdx = 0;
       outNBElement = 0;
-      lookbackTotal = (int)RsiLookback(optInTimePeriod);
+      lookbackTotal = (int)RSI_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -321,7 +321,7 @@ public partial class Core
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.Rsi];
+      unstablePeriod = this.unstablePeriod[(int)FuncUnstId.RSI];
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -421,8 +421,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>RsiLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>RSI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -439,13 +439,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Rsi( int startIdx,
+   public OutRange RSI( int startIdx,
                         int endIdx,
                         double[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Rsi(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = RSI(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("RSI", retCode);
       }
@@ -487,8 +487,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>RsiLookback</c> is a <b>success with no
-   /// values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>RSI_Lookback</c> is a <b>success with
+   /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -505,13 +505,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Rsi( int startIdx,
+   public OutRange RSI( int startIdx,
                         int endIdx,
                         float[] inReal,
                         int optInTimePeriod,
                         double[] outReal )
    {
-      RetCode retCode = Rsi(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = RSI(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("RSI", retCode);
       }

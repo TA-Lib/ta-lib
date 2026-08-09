@@ -1,5 +1,4 @@
 name: CDLHANGINGMAN
-camel_case: CdlHangingMan
 group: Pattern Recognition
 hint: Hanging Man
 flags: [candlestick, stream]

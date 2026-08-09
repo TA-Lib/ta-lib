@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#vwma} consumes before it can
+    * Number of leading input bars {@link Core#VWMA} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -24,7 +24,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int vwmaLookback( int optInTimePeriod )
+   public int VWMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -34,14 +34,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode vwmaInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         double inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode VWMA_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          double inVolume[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -129,14 +129,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode vwmaInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         float inVolume[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode VWMA_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          float inVolume[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -221,8 +221,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vwmaLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#VWMA_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -240,12 +240,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#wma
-    * @see Core#movingAverage
-    * @see Core#obv
+    * @see Core#SMA
+    * @see Core#WMA
+    * @see Core#MA
+    * @see Core#OBV
     */
-   public OutRange vwma( int startIdx,
+   public OutRange VWMA( int startIdx,
                          int endIdx,
                          double inReal[],
                          double inVolume[],
@@ -254,7 +254,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = vwmaInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VWMA", retCode);
       }
@@ -286,8 +286,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#vwmaLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#VWMA_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -305,12 +305,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sma
-    * @see Core#wma
-    * @see Core#movingAverage
-    * @see Core#obv
+    * @see Core#SMA
+    * @see Core#WMA
+    * @see Core#MA
+    * @see Core#OBV
     */
-   public OutRange vwma( int startIdx,
+   public OutRange VWMA( int startIdx,
                          int endIdx,
                          float inReal[],
                          float inVolume[],
@@ -319,7 +319,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = vwmaInternal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_Internal(startIdx, endIdx, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VWMA", retCode);
       }
@@ -329,8 +329,8 @@
 
    /**
     * A live VWMA stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#vwma} over the same series.
-    * Open with {@link Core#vwmaOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#VWMA} over the same series.
+    * Open with {@link Core#VWMA_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -341,7 +341,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class VwmaStream {
+   public static final class VWMA_Stream {
       final Core core;
       int optInTimePeriod;
       double sumPV;
@@ -355,10 +355,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      VwmaStream( Core core ) { this.core = core; }
+      VWMA_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#vwmaOpenAndFill}, or
+       * The range filled by {@link Core#VWMA_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -366,7 +366,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      VwmaStream( VwmaStream other ) {
+      VWMA_Stream( VWMA_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
@@ -386,7 +386,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal, double inVolume ) {
-         core.vwmaStreamStep(this, inReal, inVolume);
+         core.VWMA_StreamStep(this, inReal, inVolume);
          return this.cur_outReal;
       }
 
@@ -398,8 +398,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal, double inVolume ) {
-         VwmaStream scratch = new VwmaStream(this);
-         core.vwmaStreamStep(scratch, inReal, inVolume);
+         VWMA_Stream scratch = new VWMA_Stream(this);
+         core.VWMA_StreamStep(scratch, inReal, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -416,11 +416,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public VwmaStream copy() {
-         return new VwmaStream(this);
+      public VWMA_Stream copy() {
+         return new VWMA_Stream(this);
       }
    }
-   void vwmaStreamStep( VwmaStream sp, double inReal, double inVolume )
+   void VWMA_StreamStep( VWMA_Stream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -450,7 +450,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode vwmaOpenBody( VwmaStream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+   private RetCode VWMA_OpenBody( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -563,7 +563,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode vwmaOpenAndFillBody( VwmaStream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode VWMA_OpenAndFillBody( VWMA_Stream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -677,11 +677,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind vwmaOpen (composition seam). */
-   VwmaStream vwmaOpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
+   VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      VwmaStream sp = new VwmaStream(this);
-      RetCode retCode = vwmaOpenBody(sp, inReal, inVolume, startIdx, optInTimePeriod);
+      VWMA_Stream sp = new VWMA_Stream(this);
+      RetCode retCode = VWMA_OpenBody(sp, inReal, inVolume, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -696,32 +696,32 @@
    /**
     * Open a live VWMA stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#vwma} at that bar.
-    * <p>The history must hold at least {@code vwmaLookback(...) + 1} bars
+    * to {@link Core#VWMA} at that bar.
+    * <p>The history must hold at least {@code VWMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public VwmaStream vwmaOpen( double inReal[], double inVolume[], int optInTimePeriod )
+   public VWMA_Stream VWMA_Open( double inReal[], double inVolume[], int optInTimePeriod )
    {
-      return vwmaOpenInternal(inReal, inVolume, 0, optInTimePeriod);
+      return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#vwmaOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#vwma} over the whole history in the same single pass
+    * {@link Core#VWMA_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#VWMA} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link VwmaStream#fillRange()}.
+    * {@link VWMA_Stream#fillRange()}.
     */
-   public VwmaStream vwmaOpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public VWMA_Stream VWMA_OpenAndFill( double inReal[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      VwmaStream sp = new VwmaStream(this);
+      VWMA_Stream sp = new VWMA_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = vwmaOpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VWMA_OpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

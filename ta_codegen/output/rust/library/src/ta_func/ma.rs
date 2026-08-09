@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ma`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn ma_lookback(&self, mut optInTimePeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -97,34 +97,34 @@ impl Core {
         }
         match optInMAType {
             0 => {
-                retValue = self.sma_lookback(optInTimePeriod);
+                retValue = self.SMA_Lookback(optInTimePeriod);
             }
             1 => {
-                retValue = self.ema_lookback(optInTimePeriod);
+                retValue = self.EMA_Lookback(optInTimePeriod);
             }
             2 => {
-                retValue = self.wma_lookback(optInTimePeriod);
+                retValue = self.WMA_Lookback(optInTimePeriod);
             }
             3 => {
-                retValue = self.dema_lookback(optInTimePeriod);
+                retValue = self.DEMA_Lookback(optInTimePeriod);
             }
             4 => {
-                retValue = self.tema_lookback(optInTimePeriod);
+                retValue = self.TEMA_Lookback(optInTimePeriod);
             }
             5 => {
-                retValue = self.trima_lookback(optInTimePeriod);
+                retValue = self.TRIMA_Lookback(optInTimePeriod);
             }
             6 => {
-                retValue = self.kama_lookback(optInTimePeriod);
+                retValue = self.KAMA_Lookback(optInTimePeriod);
             }
             7 => {
-                retValue = self.mama_lookback(0.5, 0.05);
+                retValue = self.MAMA_Lookback(0.5, 0.05);
             }
             8 => {
-                retValue = self.t3_lookback(optInTimePeriod, 0.7);
+                retValue = self.T3_Lookback(optInTimePeriod, 0.7);
             }
             9 => {
-                retValue = self.hma_lookback(optInTimePeriod);
+                retValue = self.HMA_Lookback(optInTimePeriod);
             }
             _ => {
                 retValue = 0;
@@ -186,7 +186,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ma(0, data.len() - 1, &data, 30, 0, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.MA(0, data.len() - 1, &data, 30, 0, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -194,12 +194,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::ema`] · [`Core::wma`] · [`Core::dema`] · [`Core::tema`] ·
-    /// [`Core::trima`] · [`Core::kama`] · [`Core::mama`] · [`Core::t3`] · [`Core::hma`]
+    /// [`Core::SMA`] · [`Core::EMA`] · [`Core::WMA`] · [`Core::DEMA`] · [`Core::TEMA`] ·
+    /// [`Core::TRIMA`] · [`Core::KAMA`] · [`Core::MAMA`] · [`Core::T3`] · [`Core::HMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma/)
+    /// Further reading: [ta-lib.org/functions/MA](https://ta-lib.org/functions/MA/)
     #[doc(alias = "MovingAverage")]
-    pub fn ma(
+    pub fn MA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -224,7 +224,7 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 0;
         }
-        let _assertLb = self.ma_lookback(optInTimePeriod, optInMAType);
+        let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -252,36 +252,36 @@ impl Core {
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
             0 => {
-                retCode = self.sma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.SMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             1 => {
-                retCode = self.ema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.EMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             2 => {
-                retCode = self.wma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.WMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             3 => {
-                retCode = self.dema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             4 => {
-                retCode = self.tema(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             5 => {
-                retCode = self.trima(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             6 => {
-                retCode = self.kama(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             7 => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
-                retCode = self.mama(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
+                retCode = self.MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
             8 => {
-                retCode = self.t3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+                retCode = self.T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
             }
             9 => {
-                retCode = self.hma(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+                retCode = self.HMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
                 retCode = RetCode::BadParam;
@@ -292,39 +292,39 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MA stream: one value per closed bar, bit-identical to [`Core::ma`]
-/// over the same series. Open with [`Core::ma_open`]; dropping the handle
+/// Live MA stream: one value per closed bar, bit-identical to [`Core::MA`]
+/// over the same series. Open with [`Core::MA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MA_Stream")]
-pub struct MaStream {
+pub struct MA_Stream {
     core: Core,
-    state: MaStreamState,
+    state: MA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MaStreamState {
+struct MA_StreamState {
     optInTimePeriod: i32,
     optInMAType: i32,
-    // Sub-stream, tagged by optInMAType; `MaSub::Identity` on the identity path.
-    sub: MaSub,
+    // Sub-stream, tagged by optInMAType; `MA_Sub::Identity` on the identity path.
+    sub: MA_Sub,
 }
 
 #[derive(Debug, Clone)]
-enum MaSub {
+enum MA_Sub {
     Identity,
-    Sma(SmaStream),
-    Ema(EmaStream),
-    Wma(WmaStream),
-    Dema(DemaStream),
-    Tema(TemaStream),
-    Trima(TrimaStream),
-    Kama(KamaStream),
-    Mama(MamaStream),
-    T3(T3Stream),
-    Hma(HmaStream),
+    SMA(SMA_Stream),
+    EMA(EMA_Stream),
+    WMA(WMA_Stream),
+    DEMA(DEMA_Stream),
+    TEMA(TEMA_Stream),
+    TRIMA(TRIMA_Stream),
+    KAMA(KAMA_Stream),
+    MAMA(MAMA_Stream),
+    T3(T3_Stream),
+    HMA(HMA_Stream),
 }
 
 #[allow(non_snake_case)]
@@ -334,53 +334,53 @@ enum MaSub {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ma_step_internal(&self, sp: &mut MaStreamState, inReal: f64, outReal: &mut f64) {
+    fn MA_step_internal(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 || ((sp.optInMAType) as usize) == 10 {
             (*outReal) = inReal;
             return;
         }
         match &mut sp.sub {
-            MaSub::Identity => {
+            MA_Sub::Identity => {
                 (*outReal) = inReal;
             }
-            MaSub::Sma(sub) => {
+            MA_Sub::SMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Ema(sub) => {
+            MA_Sub::EMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Wma(sub) => {
+            MA_Sub::WMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Dema(sub) => {
+            MA_Sub::DEMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Tema(sub) => {
+            MA_Sub::TEMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Trima(sub) => {
+            MA_Sub::TRIMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Kama(sub) => {
+            MA_Sub::KAMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Mama(sub) => {
+            MA_Sub::MAMA(sub) => {
                 let subValue = sub.update(inReal);
                 (*outReal) = subValue.0;
             }
-            MaSub::T3(sub) => {
+            MA_Sub::T3(sub) => {
                 (*outReal) = sub.update(inReal);
             }
-            MaSub::Hma(sub) => {
+            MA_Sub::HMA(sub) => {
                 (*outReal) = sub.update(inReal);
             }
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ma_open`] (composition seam).
-    pub(crate) fn ma_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MA_Open`] (composition seam).
+    pub(crate) fn MA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: i32,
-    ) -> Result<(MaStream, f64), RetCode> {
+    ) -> Result<(MA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -397,61 +397,61 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
-            if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
-            return Ok((MaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
+            return Ok((MA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let (sub, value) = match optInMAType {
             0 => {
-                let (sub, subValue) = self.sma_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Sma(sub), subValue)
+                let (sub, subValue) = self.SMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::SMA(sub), subValue)
             }
             1 => {
-                let (sub, subValue) = self.ema_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Ema(sub), subValue)
+                let (sub, subValue) = self.EMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::EMA(sub), subValue)
             }
             2 => {
-                let (sub, subValue) = self.wma_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Wma(sub), subValue)
+                let (sub, subValue) = self.WMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::WMA(sub), subValue)
             }
             3 => {
-                let (sub, subValue) = self.dema_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Dema(sub), subValue)
+                let (sub, subValue) = self.DEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::DEMA(sub), subValue)
             }
             4 => {
-                let (sub, subValue) = self.tema_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Tema(sub), subValue)
+                let (sub, subValue) = self.TEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::TEMA(sub), subValue)
             }
             5 => {
-                let (sub, subValue) = self.trima_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Trima(sub), subValue)
+                let (sub, subValue) = self.TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::TRIMA(sub), subValue)
             }
             6 => {
-                let (sub, subValue) = self.kama_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Kama(sub), subValue)
+                let (sub, subValue) = self.KAMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::KAMA(sub), subValue)
             }
             7 => {
-                let (sub, subValue) = self.mama_open_internal(inReal, startIdx, 0.5, 0.05)?;
-                (MaSub::Mama(sub), subValue.0)
+                let (sub, subValue) = self.MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05)?;
+                (MA_Sub::MAMA(sub), subValue.0)
             }
             8 => {
-                let (sub, subValue) = self.t3_open_internal(inReal, startIdx, optInTimePeriod, 0.7)?;
-                (MaSub::T3(sub), subValue)
+                let (sub, subValue) = self.T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7)?;
+                (MA_Sub::T3(sub), subValue)
             }
             9 => {
-                let (sub, subValue) = self.hma_open_internal(inReal, startIdx, optInTimePeriod)?;
-                (MaSub::Hma(sub), subValue)
+                let (sub, subValue) = self.HMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
+                (MA_Sub::HMA(sub), subValue)
             }
             _ => return Err(RetCode::BadParam),
         };
-        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
-        Ok((MaStream { core: self.clone(), state }, value))
+        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
+        Ok((MA_Stream { core: self.clone(), state }, value))
     }
 
     /// Open a live MA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ma`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MA`] at that bar.
     ///
     /// # Errors
     ///
@@ -463,23 +463,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ma_open(&data, 30, 0).expect("enough history");
+    /// let (mut s, _last) = core.MA_Open(&data, 30, 0).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MA_Open")]
-    pub fn ma_open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: i32) -> Result<(MaStream, f64), RetCode> {
-        self.ma_open_internal(inReal, 0, optInTimePeriod, optInMAType)
+    pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: i32) -> Result<(MA_Stream, f64), RetCode> {
+        self.MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType)
     }
 
-    /// [`Core::ma_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ma`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MA_OpenAndFill")]
-    pub fn ma_open_and_fill(
+    pub fn MA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MaStream, RetCode> {
+    ) -> Result<MA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -496,10 +496,10 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
-            if historyLen < self.ma_lookback(optInTimePeriod, optInMAType) + 1 {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let fillLb: usize = self.ma_lookback(optInTimePeriod, optInMAType);
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -507,56 +507,56 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            let state = MaStreamState { optInTimePeriod, optInMAType, sub: MaSub::Identity };
-            return Ok(MaStream { core: self.clone(), state });
+            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
+            return Ok(MA_Stream { core: self.clone(), state });
         }
         let sub = match optInMAType {
-            0 => MaSub::Sma(
-                self.sma_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            0 => MA_Sub::SMA(
+                self.SMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            1 => MaSub::Ema(
-                self.ema_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            1 => MA_Sub::EMA(
+                self.EMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            2 => MaSub::Wma(
-                self.wma_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            2 => MA_Sub::WMA(
+                self.WMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            3 => MaSub::Dema(
-                self.dema_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            3 => MA_Sub::DEMA(
+                self.DEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            4 => MaSub::Tema(
-                self.tema_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            4 => MA_Sub::TEMA(
+                self.TEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            5 => MaSub::Trima(
-                self.trima_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            5 => MA_Sub::TRIMA(
+                self.TRIMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            6 => MaSub::Kama(
-                self.kama_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            6 => MA_Sub::KAMA(
+                self.KAMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            7 => MaSub::Mama(
-                self.mama_open_and_fill(inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
+            7 => MA_Sub::MAMA(
+                self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
             ),
-            8 => MaSub::T3(
-                self.t3_open_and_fill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
+            8 => MA_Sub::T3(
+                self.T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),
-            9 => MaSub::Hma(
-                self.hma_open_and_fill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            9 => MA_Sub::HMA(
+                self.HMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
             _ => return Err(RetCode::BadParam),
         };
-        let state = MaStreamState { optInTimePeriod, optInMAType, sub };
-        Ok(MaStream { core: self.clone(), state })
+        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
+        Ok(MA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MaStream {
+impl MA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ma_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.MA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -574,7 +574,7 @@ impl MaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MaStream>();
+    _assert_auto::<MA_Stream>();
 };
 
 /***************/

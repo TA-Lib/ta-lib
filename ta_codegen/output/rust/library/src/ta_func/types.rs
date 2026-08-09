@@ -29,7 +29,7 @@ impl std::fmt::Display for RetCode {
     }
 }
 
-/// `RetCode` is the error type of the stream tier's `Result`s (`sma_open` and
+/// `RetCode` is the error type of the stream tier's `Result`s (`SMA_Open` and
 /// friends), so it composes with `?` into `Box<dyn Error>`/anyhow contexts.
 impl std::error::Error for RetCode {}
 
@@ -49,43 +49,43 @@ pub(crate) enum Compatibility {
 /// Identifies functions that have an unstable period.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FuncUnstId {
-    Adx,
+    ADX,
     /// Reserved: was ADXR, knob was inert (#129); kept for ABI, reusable.
-    Unused1,
-    Atr,
-    Cmo,
-    Dx,
-    Ema,
-    HtDcPeriod,
-    HtDcPhase,
-    HtPhasor,
-    HtSine,
-    HtTrendline,
-    HtTrendMode,
+    UNUSED_1,
+    ATR,
+    CMO,
+    DX,
+    EMA,
+    HT_DCPERIOD,
+    HT_DCPHASE,
+    HT_PHASOR,
+    HT_SINE,
+    HT_TRENDLINE,
+    HT_TRENDMODE,
     /// Reserved: was IMI, reclassified stable (#14); kept for ABI, reusable.
-    Unused12,
-    Kama,
-    Mama,
+    UNUSED_12,
+    KAMA,
+    MAMA,
     /// Reserved: was MFI, reclassified stable (#4); kept for ABI, reusable.
-    Unused15,
-    MinusDI,
-    MinusDM,
-    Natr,
-    PlusDI,
-    PlusDM,
-    Rsi,
+    UNUSED_15,
+    MINUS_DI,
+    MINUS_DM,
+    NATR,
+    PLUS_DI,
+    PLUS_DM,
+    RSI,
     /// Reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable.
-    Unused22,
+    UNUSED_22,
     T3,
     /// Wildcard: set the unstable period for all functions at once.
     ///
     /// Pinned rather than sitting one past the last function id, so that adding
     /// an indicator can never move it. Mirrors C's `TA_FUNC_UNST_ALL`.
-    FuncUnstAll = 65535,
+    ALL = 65535,
 }
 
 /// Number of [`FuncUnstId`] function ids — the size of the unstable-period
-/// table. Not an id, and not [`FuncUnstId::FuncUnstAll`]. Mirrors C's
+/// table. Not an id, and not [`FuncUnstId::ALL`]. Mirrors C's
 /// `TA_FUNC_UNST_COUNT`.
 pub const FUNC_UNST_COUNT: usize = 24;
 
@@ -192,7 +192,7 @@ pub enum CandleSettingType {
 /// every indicator method takes `&self` and only *reads* them. That makes
 /// `Core` deeply immutable and `Send + Sync`, so a single instance can be shared
 /// read-only across threads (e.g. wrapped in an `Arc` with concurrent
-/// `core.sma(...)` calls) with no locking and no risk of configuration changing
+/// `core.SMA(...)` calls) with no locking and no risk of configuration changing
 /// mid-computation.
 ///
 /// Construct one with [`Core::new()`] for all-defaults, or with
@@ -202,7 +202,7 @@ pub enum CandleSettingType {
 /// use ta_lib::{Core, FuncUnstId};
 ///
 /// let core = Core::builder()
-///     .unstable_period(FuncUnstId::Ema, 10)
+///     .unstable_period(FuncUnstId::EMA, 10)
 ///     .build();
 /// ```
 ///
@@ -253,7 +253,7 @@ impl Core {
     ///
     /// # Panics
     ///
-    /// Panics if `id` is [`FuncUnstId::FuncUnstAll`]. That variant is the
+    /// Panics if `id` is [`FuncUnstId::ALL`]. That variant is the
     /// set-all wildcard accepted by [`CoreBuilder::unstable_period`]; it names
     /// no single function, so there is no value to return.
     pub fn get_unstable_period(&self, id: FuncUnstId) -> i32 {
@@ -308,7 +308,7 @@ impl Default for Core {
 /// use ta_lib::{Core, FuncUnstId};
 ///
 /// let core = Core::builder()
-///     .unstable_period(FuncUnstId::Ema, 10)
+///     .unstable_period(FuncUnstId::EMA, 10)
 ///     .build();
 /// ```
 #[derive(Debug, Clone)]
@@ -330,11 +330,11 @@ impl CoreBuilder {
 
     /// Set the unstable period for a specific function.
     ///
-    /// Passing [`FuncUnstId::FuncUnstAll`] sets the unstable period for *every*
+    /// Passing [`FuncUnstId::ALL`] sets the unstable period for *every*
     /// function at once (mirroring the C `TA_SetUnstablePeriod` wildcard).
     #[must_use]
     pub fn unstable_period(mut self, id: FuncUnstId, period: i32) -> Self {
-        if id == FuncUnstId::FuncUnstAll {
+        if id == FuncUnstId::ALL {
             for slot in self.unstable_period.iter_mut() {
                 *slot = period;
             }
@@ -412,40 +412,40 @@ mod tests {
         // clone-and-modify one — must leave the mode at Default, so the variant
         // branches in the generated indicators stay unreachable.
         let derived = Core::builder()
-            .unstable_period(FuncUnstId::Ema, 10)
+            .unstable_period(FuncUnstId::EMA, 10)
             .build()
             .to_builder()
-            .unstable_period(FuncUnstId::Rsi, 5)
+            .unstable_period(FuncUnstId::RSI, 5)
             .build();
         assert_eq!(derived.compatibility, Compatibility::Default);
     }
 
     #[test]
     fn builder_sets_a_single_unstable_period() {
-        let core = Core::builder().unstable_period(FuncUnstId::Ema, 10).build();
-        assert_eq!(core.get_unstable_period(FuncUnstId::Ema), 10);
-        assert_eq!(core.get_unstable_period(FuncUnstId::Rsi), 0);
+        let core = Core::builder().unstable_period(FuncUnstId::EMA, 10).build();
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 10);
+        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), 0);
         // Exactly one slot changed.
         let changed: Vec<usize> = (0..core.unstable_period.len())
             .filter(|&i| core.unstable_period[i] != 0)
             .collect();
-        assert_eq!(changed, vec![FuncUnstId::Ema as usize]);
+        assert_eq!(changed, vec![FuncUnstId::EMA as usize]);
     }
 
     #[test]
     fn builder_unstable_period_wildcard_sets_every_function() {
-        let core = Core::builder().unstable_period(FuncUnstId::FuncUnstAll, 7).build();
+        let core = Core::builder().unstable_period(FuncUnstId::ALL, 7).build();
         assert!(core.unstable_period.iter().all(|&p| p == 7));
-        assert_eq!(core.get_unstable_period(FuncUnstId::Ema), 7);
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 7);
         assert_eq!(core.get_unstable_period(FuncUnstId::T3), 7);
     }
 
     #[test]
-    #[should_panic(expected = "FuncUnstAll is a wildcard")]
+    #[should_panic(expected = "ALL is a wildcard")]
     fn get_unstable_period_rejects_the_wildcard() {
         // The wildcard is one past the end of the backing array, so an unguarded
         // read indexed out of bounds instead of reporting the misuse (#144).
-        Core::new().get_unstable_period(FuncUnstId::FuncUnstAll);
+        Core::new().get_unstable_period(FuncUnstId::ALL);
     }
 
     #[test]
@@ -454,8 +454,8 @@ mod tests {
         // one below the wildcard, so a guard tightened by one rejects it here.
         // Reads go through the getter on purpose -- indexing the array directly
         // would exercise the field, not the check.
-        let core = Core::builder().unstable_period(FuncUnstId::FuncUnstAll, 4).build();
-        for id in [FuncUnstId::Adx, FuncUnstId::Ema, FuncUnstId::Rsi, FuncUnstId::T3] {
+        let core = Core::builder().unstable_period(FuncUnstId::ALL, 4).build();
+        for id in [FuncUnstId::ADX, FuncUnstId::EMA, FuncUnstId::RSI, FuncUnstId::T3] {
             assert_eq!(core.get_unstable_period(id), 4);
         }
     }
@@ -463,11 +463,11 @@ mod tests {
     #[test]
     fn builder_chains_and_last_write_wins() {
         let core = Core::builder()
-            .unstable_period(FuncUnstId::FuncUnstAll, 7) // all -> 7
-            .unstable_period(FuncUnstId::Ema, 3)         // then EMA -> 3
+            .unstable_period(FuncUnstId::ALL, 7) // all -> 7
+            .unstable_period(FuncUnstId::EMA, 3)         // then EMA -> 3
             .build();
-        assert_eq!(core.get_unstable_period(FuncUnstId::Ema), 3);
-        assert_eq!(core.get_unstable_period(FuncUnstId::Rsi), 7);
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 3);
+        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), 7);
     }
 
     #[test]
@@ -516,7 +516,7 @@ mod tests {
         let run = |core: &Core| {
             let mut out = vec![0_i32; n];
             let (mut beg, mut nb) = (0usize, 0usize);
-            let rc = core.cdldoji(0, n - 1, &open, &high, &low, &close, &mut beg, &mut nb, &mut out);
+            let rc = core.CDLDOJI(0, n - 1, &open, &high, &low, &close, &mut beg, &mut nb, &mut out);
             assert_eq!(rc, RetCode::Success);
             out[..nb].to_vec()
         };
@@ -542,21 +542,21 @@ mod tests {
     #[test]
     fn to_builder_round_trips_and_leaves_original_untouched() {
         let original = Core::builder()
-            .unstable_period(FuncUnstId::Rsi, 5)
+            .unstable_period(FuncUnstId::RSI, 5)
             .candle_setting(
                 CandleSettingType::BodyLong,
                 CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 },
             )
             .build();
         // Clone-and-modify: derive a Core that additionally tunes EMA.
-        let derived = original.to_builder().unstable_period(FuncUnstId::Ema, 9).build();
+        let derived = original.to_builder().unstable_period(FuncUnstId::EMA, 9).build();
         // The original is immutable and unchanged.
-        assert_eq!(original.get_unstable_period(FuncUnstId::Ema), 0);
-        assert_eq!(original.get_unstable_period(FuncUnstId::Rsi), 5);
+        assert_eq!(original.get_unstable_period(FuncUnstId::EMA), 0);
+        assert_eq!(original.get_unstable_period(FuncUnstId::RSI), 5);
         // The derived Core inherits the settings (candle_settings included, which
         // guards against to_builder dropping a field), plus the new one.
-        assert_eq!(derived.get_unstable_period(FuncUnstId::Rsi), 5);
-        assert_eq!(derived.get_unstable_period(FuncUnstId::Ema), 9);
+        assert_eq!(derived.get_unstable_period(FuncUnstId::RSI), 5);
+        assert_eq!(derived.get_unstable_period(FuncUnstId::EMA), 9);
         // candle_settings survived the round-trip (default avg_period would be 10).
         assert_eq!(derived.candle_settings.body_long.avg_period, 20);
         assert_eq!(derived.candle_settings.body_long.factor, 1.5);
@@ -566,9 +566,9 @@ mod tests {
     #[test]
     fn unstable_period_setting_changes_lookback() {
         let base = Core::new();
-        let tuned = Core::builder().unstable_period(FuncUnstId::Ema, 5).build();
+        let tuned = Core::builder().unstable_period(FuncUnstId::EMA, 5).build();
         // The unstable period is added to the function's lookback.
-        assert_eq!(tuned.ema_lookback(10), base.ema_lookback(10) + 5);
+        assert_eq!(tuned.EMA_Lookback(10), base.EMA_Lookback(10) + 5);
     }
 
     #[test]
@@ -584,7 +584,7 @@ mod tests {
         use std::thread;
         // A single immutable Core shared read-only across threads (the concurrency
         // contract this design enables): every thread computes the same result.
-        let core = Arc::new(Core::builder().unstable_period(FuncUnstId::Ema, 2).build());
+        let core = Arc::new(Core::builder().unstable_period(FuncUnstId::EMA, 2).build());
         let close: Vec<f64> = (0..64).map(|i| 100.0 + f64::from(i % 7)).collect();
         let mut handles = Vec::new();
         for _ in 0..4 {
@@ -593,7 +593,7 @@ mod tests {
             handles.push(thread::spawn(move || {
                 let mut out = vec![0.0; close.len()];
                 let (mut beg, mut n) = (0usize, 0usize);
-                let rc = core.ema(0, close.len() - 1, &close, 10, &mut beg, &mut n, &mut out);
+                let rc = core.EMA(0, close.len() - 1, &close, 10, &mut beg, &mut n, &mut out);
                 assert_eq!(rc, RetCode::Success);
                 out[0]
             }));

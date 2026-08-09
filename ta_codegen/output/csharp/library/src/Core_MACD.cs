@@ -62,7 +62,7 @@ public partial class Core
     *                pass (bit-exact, no temporary buffers).
     */
    /// <summary>
-   /// Number of leading input bars <c>Macd</c> consumes before it can produce
+   /// Number of leading input bars <c>MACD</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -77,7 +77,7 @@ public partial class Core
    /// <param name="optInSignalPeriod">Smoothing period of the signal line (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MacdLookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public int MACD_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       if( optInFastPeriod == int.MinValue ) {
          optInFastPeriod = 12;
@@ -109,10 +109,10 @@ public partial class Core
          optInSlowPeriod = optInFastPeriod;
          optInFastPeriod = tempInteger;
       }
-      return EmaLookback(optInSlowPeriod) + EmaLookback(optInSignalPeriod) ;
+      return EMA_Lookback(optInSlowPeriod) + EMA_Lookback(optInSignalPeriod) ;
 
    }
-   internal RetCode Macd( int startIdx,
+   internal RetCode MACD( int startIdx,
                           int endIdx,
                           double[] inReal,
                           int optInFastPeriod,
@@ -191,12 +191,12 @@ public partial class Core
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = EmaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
       lookbackTotal = lookbackSignal;
-      lookbackTotal += EmaLookback(optInSlowPeriod);
+      lookbackTotal += EMA_Lookback(optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -305,7 +305,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Macd( int startIdx,
+   internal RetCode MACD( int startIdx,
                           int endIdx,
                           float[] inReal,
                           int optInFastPeriod,
@@ -375,9 +375,9 @@ public partial class Core
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = EmaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
-      lookbackTotal += EmaLookback(optInSlowPeriod);
+      lookbackTotal += EMA_Lookback(optInSlowPeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -462,7 +462,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>MACD_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -489,7 +489,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Macd( int startIdx,
+   public OutRange MACD( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInFastPeriod,
@@ -499,7 +499,7 @@ public partial class Core
                          double[] outMACDSignal,
                          double[] outMACDHist )
    {
-      RetCode retCode = Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
       }
@@ -530,7 +530,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>MACD_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -557,7 +557,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Macd( int startIdx,
+   public OutRange MACD( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInFastPeriod,
@@ -567,7 +567,7 @@ public partial class Core
                          double[] outMACDSignal,
                          double[] outMACDHist )
    {
-      RetCode retCode = Macd(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
       }

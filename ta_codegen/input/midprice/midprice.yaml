@@ -1,5 +1,4 @@
 name: MIDPRICE
-camel_case: MidPrice
 group: Overlap Studies
 hint: Midpoint Price over period
 flags: [overlap, stream]

@@ -57,7 +57,6 @@ static const TA_OptInputParameterInfo *TA_WCLPRICE_OptInputs[] =
 DEF_FUNCTION( WCLPRICE,
               TA_GroupId_PriceTransform,
               "Weighted Close Price",
-              "WclPrice",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* WCLPRICE END */
@@ -83,7 +82,6 @@ static const TA_OptInputParameterInfo *TA_WILLR_OptInputs[] =
 DEF_FUNCTION( WILLR,
               TA_GroupId_MomentumIndicators,
               "Williams' %R",
-              "WillR",
               TA_FUNC_FLG_STREAM
              );
 /* WILLR END */
@@ -109,7 +107,6 @@ static const TA_OptInputParameterInfo *TA_WMA_OptInputs[] =
 DEF_FUNCTION( WMA,
               TA_GroupId_OverlapStudies,
               "Weighted Moving Average",
-              "Wma",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* WMA END */

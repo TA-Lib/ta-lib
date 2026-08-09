@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlmatchinglow`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLMATCHINGLOW`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlmatchinglow_lookback(&self) -> usize {
+    pub fn CDLMATCHINGLOW_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -131,7 +131,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlmatchinglow(
+    /// let ret = core.CDLMATCHINGLOW(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -141,12 +141,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// CDLMATCHINGHIGH · [`Core::cdlhomingpigeon`]
+    /// CDLMATCHINGHIGH · [`Core::CDLHOMINGPIGEON`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlmatchinglow](https://ta-lib.org/functions/cdlmatchinglow/)
+    /// [ta-lib.org/functions/CDLMATCHINGLOW](https://ta-lib.org/functions/CDLMATCHINGLOW/)
     #[doc(alias = "MatchingLow")]
-    pub fn cdlmatchinglow(
+    pub fn CDLMATCHINGLOW(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,7 +164,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlmatchinglow_lookback();
+        let _assertLb = self.CDLMATCHINGLOW_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -185,7 +185,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmatchinglow_lookback();
+        lookbackTotal = self.CDLMATCHINGLOW_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -286,20 +286,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLMATCHINGLOW stream: one value per closed bar, bit-identical to [`Core::cdlmatchinglow`]
-/// over the same series. Open with [`Core::cdlmatchinglow_open`]; dropping the handle
+/// Live CDLMATCHINGLOW stream: one value per closed bar, bit-identical to [`Core::CDLMATCHINGLOW`]
+/// over the same series. Open with [`Core::CDLMATCHINGLOW_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLMATCHINGLOW_Stream")]
-pub struct CdlmatchinglowStream {
+pub struct CDLMATCHINGLOW_Stream {
     core: Core,
-    state: CdlmatchinglowStreamState,
+    state: CDLMATCHINGLOW_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlmatchinglowStreamState {
+struct CDLMATCHINGLOW_StreamState {
     EqualPeriodTotal: f64,
     lag1_inOpen: f64,
     lag1_inHigh: f64,
@@ -321,7 +321,7 @@ struct CdlmatchinglowStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlmatchinglow_step_internal(&self, sp: &mut CdlmatchinglowStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLMATCHINGLOW_step_internal(&self, sp: &mut CDLMATCHINGLOW_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -388,10 +388,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlmatchinglow_open`] (composition seam).
-    pub(crate) fn cdlmatchinglow_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLMATCHINGLOW_Open`] (composition seam).
+    pub(crate) fn CDLMATCHINGLOW_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlmatchinglowStream, i32), RetCode> {
+    ) -> Result<(CDLMATCHINGLOW_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -417,7 +417,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmatchinglow_lookback();
+        lookbackTotal = self.CDLMATCHINGLOW_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -551,7 +551,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlmatchinglowStreamState {
+        let state = CDLMATCHINGLOW_StreamState {
             EqualPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
@@ -565,11 +565,11 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok((CdlmatchinglowStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLMATCHINGLOW_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLMATCHINGLOW stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlmatchinglow`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLMATCHINGLOW`] at that bar.
     ///
     /// # Errors
     ///
@@ -588,23 +588,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlmatchinglow_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLMATCHINGLOW_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLMATCHINGLOW_Open")]
-    pub fn cdlmatchinglow_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlmatchinglowStream, i32), RetCode> {
-        self.cdlmatchinglow_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLMATCHINGLOW_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLMATCHINGLOW_Stream, i32), RetCode> {
+        self.CDLMATCHINGLOW_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlmatchinglow_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlmatchinglow`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLMATCHINGLOW_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLMATCHINGLOW`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLMATCHINGLOW_OpenAndFill")]
-    pub fn cdlmatchinglow_open_and_fill(
+    pub fn CDLMATCHINGLOW_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlmatchinglowStream, RetCode> {
+    ) -> Result<CDLMATCHINGLOW_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -629,7 +629,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlmatchinglow_lookback();
+        lookbackTotal = self.CDLMATCHINGLOW_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -765,7 +765,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlmatchinglowStreamState {
+        let state = CDLMATCHINGLOW_StreamState {
             EqualPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag1_inHigh: inHigh[historyLen - 1],
@@ -779,19 +779,19 @@ impl Core {
             ring_EqualTrailingIdx_inLow,
             ring_EqualTrailingIdx_inClose,
         };
-        Ok(CdlmatchinglowStream { core: self.clone(), state })
+        Ok(CDLMATCHINGLOW_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlmatchinglowStream {
+impl CDLMATCHINGLOW_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLMATCHINGLOW_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlmatchinglow_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLMATCHINGLOW_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -809,7 +809,7 @@ impl CdlmatchinglowStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlmatchinglowStream>();
+    _assert_auto::<CDLMATCHINGLOW_Stream>();
 };
 
 /***************/

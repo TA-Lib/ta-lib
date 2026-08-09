@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#trueRange} consumes before it can
+    * Number of leading input bars {@link Core#TRANGE} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,19 +22,19 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int trueRangeLookback( )
+   public int TRANGE_Lookback( )
    {
       return 1 ;
 
    }
-   RetCode trueRangeInternal( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode TRANGE_Internal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -99,14 +99,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode trueRangeInternal( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode TRANGE_Internal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -168,8 +168,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trueRangeLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TRANGE_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -186,19 +186,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atr
-    * @see Core#natr
+    * @see Core#ATR
+    * @see Core#NATR
     */
-   public OutRange trueRange( int startIdx,
-                              int endIdx,
-                              double inHigh[],
-                              double inLow[],
-                              double inClose[],
-                              double outReal[] )
+   public OutRange TRANGE( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trueRangeInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRANGE", retCode);
       }
@@ -223,8 +223,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#trueRangeLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#TRANGE_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -241,19 +241,19 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atr
-    * @see Core#natr
+    * @see Core#ATR
+    * @see Core#NATR
     */
-   public OutRange trueRange( int startIdx,
-                              int endIdx,
-                              float inHigh[],
-                              float inLow[],
-                              float inClose[],
-                              double outReal[] )
+   public OutRange TRANGE( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trueRangeInternal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_Internal(startIdx, endIdx, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("TRANGE", retCode);
       }
@@ -263,8 +263,8 @@
 
    /**
     * A live TRANGE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#trueRange} over the same series.
-    * Open with {@link Core#trueRangeOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#TRANGE} over the same series.
+    * Open with {@link Core#TRANGE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -275,17 +275,17 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class TrueRangeStream {
+   public static final class TRANGE_Stream {
       final Core core;
       double val3;
       double lag1_inClose;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      TrueRangeStream( Core core ) { this.core = core; }
+      TRANGE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#trueRangeOpenAndFill}, or
+       * The range filled by {@link Core#TRANGE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -293,7 +293,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      TrueRangeStream( TrueRangeStream other ) {
+      TRANGE_Stream( TRANGE_Stream other ) {
          this.core = other.core;
          this.val3 = other.val3;
          this.lag1_inClose = other.lag1_inClose;
@@ -306,7 +306,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose ) {
-         core.trueRangeStreamStep(this, inHigh, inLow, inClose);
+         core.TRANGE_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -318,8 +318,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         TrueRangeStream scratch = new TrueRangeStream(this);
-         core.trueRangeStreamStep(scratch, inHigh, inLow, inClose);
+         TRANGE_Stream scratch = new TRANGE_Stream(this);
+         core.TRANGE_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -336,11 +336,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public TrueRangeStream copy() {
-         return new TrueRangeStream(this);
+      public TRANGE_Stream copy() {
+         return new TRANGE_Stream(this);
       }
    }
-   void trueRangeStreamStep( TrueRangeStream sp, double inHigh, double inLow, double inClose )
+   void TRANGE_StreamStep( TRANGE_Stream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double greatest = 0.0;
@@ -364,7 +364,7 @@
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
    }
-   private RetCode trueRangeOpenBody( TrueRangeStream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       int today = 0;
       int outIdx = 0;
@@ -438,7 +438,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode trueRangeOpenAndFillBody( TrueRangeStream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode TRANGE_OpenAndFillBody( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int today = 0;
       int outIdx = 0;
@@ -513,11 +513,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind trueRangeOpen (composition seam). */
-   TrueRangeStream trueRangeOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
+   TRANGE_Stream TRANGE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      TrueRangeStream sp = new TrueRangeStream(this);
-      RetCode retCode = trueRangeOpenBody(sp, inHigh, inLow, inClose, startIdx);
+      TRANGE_Stream sp = new TRANGE_Stream(this);
+      RetCode retCode = TRANGE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -532,32 +532,32 @@
    /**
     * Open a live TRANGE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#trueRange} at that bar.
-    * <p>The history must hold at least {@code trueRangeLookback(...) + 1} bars
+    * to {@link Core#TRANGE} at that bar.
+    * <p>The history must hold at least {@code TRANGE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public TrueRangeStream trueRangeOpen( double inHigh[], double inLow[], double inClose[] )
+   public TRANGE_Stream TRANGE_Open( double inHigh[], double inLow[], double inClose[] )
    {
-      return trueRangeOpenInternal(inHigh, inLow, inClose, 0);
+      return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#trueRangeOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#trueRange} over the whole history in the same single pass
+    * {@link Core#TRANGE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#TRANGE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link TrueRangeStream#fillRange()}.
+    * {@link TRANGE_Stream#fillRange()}.
     */
-   public TrueRangeStream trueRangeOpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
+   public TRANGE_Stream TRANGE_OpenAndFill( double inHigh[], double inLow[], double inClose[], double outReal[] )
    {
-      TrueRangeStream sp = new TrueRangeStream(this);
+      TRANGE_Stream sp = new TRANGE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = trueRangeOpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
+      RetCode retCode = TRANGE_OpenAndFillBody(sp, inHigh, inLow, inClose, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

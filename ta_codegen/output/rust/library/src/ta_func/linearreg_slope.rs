@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::linearreg_slope`]: the number of leading input values consumed
+    /// Lookback period for [`Core::LINEARREG_SLOPE`]: the number of leading input values consumed
     /// before the first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn linearreg_slope_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn LINEARREG_SLOPE_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -135,7 +135,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.linearreg_slope(
+    /// let ret = core.LINEARREG_SLOPE(
     ///     0, data.len() - 1, &data, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -146,15 +146,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::linearreg`] · [`Core::linearreg_intercept`] · [`Core::linearreg_angle`] ·
-    /// [`Core::tsf`]
+    /// [`Core::LINEARREG`] · [`Core::LINEARREG_INTERCEPT`] · [`Core::LINEARREG_ANGLE`] ·
+    /// [`Core::TSF`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/linearreg_slope](https://ta-lib.org/functions/linearreg_slope/)
+    /// [ta-lib.org/functions/LINEARREG_SLOPE](https://ta-lib.org/functions/LINEARREG_SLOPE/)
     #[doc(alias = "LinearRegressionSlope")]
     #[doc(alias = "LSMAslope")]
     #[doc(alias = "leastsquaresslope")]
-    pub fn linearreg_slope(
+    pub fn LINEARREG_SLOPE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -175,7 +175,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.linearreg_slope_lookback(optInTimePeriod);
+        let _assertLb = self.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -208,7 +208,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_slope_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -265,20 +265,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live LINEARREG_SLOPE stream: one value per closed bar, bit-identical to [`Core::linearreg_slope`]
-/// over the same series. Open with [`Core::linearreg_slope_open`]; dropping the handle
+/// Live LINEARREG_SLOPE stream: one value per closed bar, bit-identical to [`Core::LINEARREG_SLOPE`]
+/// over the same series. Open with [`Core::LINEARREG_SLOPE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_LINEARREG_SLOPE_Stream")]
-pub struct LinearregSlopeStream {
+pub struct LINEARREG_SLOPE_Stream {
     core: Core,
-    state: LinearregSlopeStreamState,
+    state: LINEARREG_SLOPE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct LinearregSlopeStreamState {
+struct LINEARREG_SLOPE_StreamState {
     optInTimePeriod: i32,
     SumX: f64,
     SumXY: f64,
@@ -297,7 +297,7 @@ struct LinearregSlopeStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn linearreg_slope_step_internal(&self, sp: &mut LinearregSlopeStreamState, inReal: f64, outReal: &mut f64) {
+    fn LINEARREG_SLOPE_step_internal(&self, sp: &mut LINEARREG_SLOPE_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -312,10 +312,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::linearreg_slope_open`] (composition seam).
-    pub(crate) fn linearreg_slope_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::LINEARREG_SLOPE_Open`] (composition seam).
+    pub(crate) fn LINEARREG_SLOPE_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(LinearregSlopeStream, f64), RetCode> {
+    ) -> Result<(LINEARREG_SLOPE_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -361,7 +361,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_slope_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -421,7 +421,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = LinearregSlopeStreamState {
+        let state = LINEARREG_SLOPE_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -432,11 +432,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((LinearregSlopeStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((LINEARREG_SLOPE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live LINEARREG_SLOPE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::linearreg_slope`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::LINEARREG_SLOPE`] at that bar.
     ///
     /// # Errors
     ///
@@ -448,23 +448,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.linearreg_slope_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.LINEARREG_SLOPE_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_LINEARREG_SLOPE_Open")]
-    pub fn linearreg_slope_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LinearregSlopeStream, f64), RetCode> {
-        self.linearreg_slope_open_internal(inReal, 0, optInTimePeriod)
+    pub fn LINEARREG_SLOPE_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(LINEARREG_SLOPE_Stream, f64), RetCode> {
+        self.LINEARREG_SLOPE_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::linearreg_slope_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::linearreg_slope`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::LINEARREG_SLOPE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::LINEARREG_SLOPE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_LINEARREG_SLOPE_OpenAndFill")]
-    pub fn linearreg_slope_open_and_fill(
+    pub fn LINEARREG_SLOPE_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<LinearregSlopeStream, RetCode> {
+    ) -> Result<LINEARREG_SLOPE_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -509,7 +509,7 @@ impl Core {
         // TA_LINEARREG_INTERCEPT: Returns 'b'
         // TA_TSF                : Returns b+m*(period)
         // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.linearreg_slope_lookback(optInTimePeriod);
+        lookbackTotal = self.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
         }
@@ -571,7 +571,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = LinearregSlopeStreamState {
+        let state = LINEARREG_SLOPE_StreamState {
             optInTimePeriod,
             SumX,
             SumXY,
@@ -582,19 +582,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(LinearregSlopeStream { core: self.clone(), state })
+        Ok(LINEARREG_SLOPE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl LinearregSlopeStream {
+impl LINEARREG_SLOPE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_LINEARREG_SLOPE_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.linearreg_slope_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.LINEARREG_SLOPE_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -612,7 +612,7 @@ impl LinearregSlopeStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<LinearregSlopeStream>();
+    _assert_auto::<LINEARREG_SLOPE_Stream>();
 };
 
 /***************/

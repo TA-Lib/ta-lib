@@ -65,7 +65,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::correl`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CORREL`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn correl_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CORREL_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.correl(
+    /// let ret = core.CORREL(
     ///     0, data0.len() - 1, &data0, &data1, 30,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -149,17 +149,17 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::beta`] · [`Core::stddev`] · [`Core::var`]
+    /// [`Core::BETA`] · [`Core::STDDEV`] · [`Core::VAR`]
     ///
     /// # References
     ///
     /// * Karl Pearson
     ///
-    /// Further reading: [ta-lib.org/functions/correl](https://ta-lib.org/functions/correl/)
+    /// Further reading: [ta-lib.org/functions/CORREL](https://ta-lib.org/functions/CORREL/)
     #[doc(alias = "PearsonCorrelation")]
     #[doc(alias = "CorrelationCoefficient")]
     #[doc(alias = "r")]
-    pub fn correl(
+    pub fn CORREL(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -181,7 +181,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.correl_lookback(optInTimePeriod);
+        let _assertLb = self.CORREL_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -279,20 +279,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CORREL stream: one value per closed bar, bit-identical to [`Core::correl`]
-/// over the same series. Open with [`Core::correl_open`]; dropping the handle
+/// Live CORREL stream: one value per closed bar, bit-identical to [`Core::CORREL`]
+/// over the same series. Open with [`Core::CORREL_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CORREL_Stream")]
-pub struct CorrelStream {
+pub struct CORREL_Stream {
     core: Core,
-    state: CorrelStreamState,
+    state: CORREL_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CorrelStreamState {
+struct CORREL_StreamState {
     optInTimePeriod: i32,
     sumXY: f64,
     sumX: f64,
@@ -317,7 +317,7 @@ struct CorrelStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn correl_step_internal(&self, sp: &mut CorrelStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn CORREL_step_internal(&self, sp: &mut CORREL_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal0[0] = inReal0;
             sp.ring_trailingIdx_inReal1[0] = inReal1;
@@ -355,10 +355,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::correl_open`] (composition seam).
-    pub(crate) fn correl_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CORREL_Open`] (composition seam).
+    pub(crate) fn CORREL_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CorrelStream, f64), RetCode> {
+    ) -> Result<(CORREL_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -474,7 +474,7 @@ impl Core {
         let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
-        let state = CorrelStreamState {
+        let state = CORREL_StreamState {
             optInTimePeriod,
             sumXY,
             sumX,
@@ -491,11 +491,11 @@ impl Core {
             ring_trailingIdx_inReal0,
             ring_trailingIdx_inReal1,
         };
-        Ok((CorrelStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CORREL_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CORREL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::correl`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CORREL`] at that bar.
     ///
     /// # Errors
     ///
@@ -510,23 +510,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.correl_open(&data0, &data1, 30).expect("enough history");
+    /// let (mut s, _last) = core.CORREL_Open(&data0, &data1, 30).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CORREL_Open")]
-    pub fn correl_open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(CorrelStream, f64), RetCode> {
-        self.correl_open_internal(inReal0, inReal1, 0, optInTimePeriod)
+    pub fn CORREL_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(CORREL_Stream, f64), RetCode> {
+        self.CORREL_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
     }
 
-    /// [`Core::correl_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::correl`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CORREL_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CORREL`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CORREL_OpenAndFill")]
-    pub fn correl_open_and_fill(
+    pub fn CORREL_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CorrelStream, RetCode> {
+    ) -> Result<CORREL_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -643,7 +643,7 @@ impl Core {
         let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
-        let state = CorrelStreamState {
+        let state = CORREL_StreamState {
             optInTimePeriod,
             sumXY,
             sumX,
@@ -660,19 +660,19 @@ impl Core {
             ring_trailingIdx_inReal0,
             ring_trailingIdx_inReal1,
         };
-        Ok(CorrelStream { core: self.clone(), state })
+        Ok(CORREL_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CorrelStream {
+impl CORREL_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CORREL_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.correl_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.CORREL_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -690,7 +690,7 @@ impl CorrelStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CorrelStream>();
+    _assert_auto::<CORREL_Stream>();
 };
 
 /***************/

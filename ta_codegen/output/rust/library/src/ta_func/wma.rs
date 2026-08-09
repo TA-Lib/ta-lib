@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::wma`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::WMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn wma_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn WMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.wma(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.WMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -142,13 +142,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::ema`] · [`Core::ma`] · [`Core::dema`] · [`Core::tema`]
+    /// [`Core::SMA`] · [`Core::EMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/wma](https://ta-lib.org/functions/wma/)
+    /// Further reading: [ta-lib.org/functions/WMA](https://ta-lib.org/functions/WMA/)
     #[doc(alias = "WeightedMovingAverage")]
     #[doc(alias = "LinearlyWeightedMovingAverage")]
     #[doc(alias = "LWMA")]
-    pub fn wma(
+    pub fn WMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.wma_lookback(optInTimePeriod);
+        let _assertLb = self.WMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -285,20 +285,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live WMA stream: one value per closed bar, bit-identical to [`Core::wma`]
-/// over the same series. Open with [`Core::wma_open`]; dropping the handle
+/// Live WMA stream: one value per closed bar, bit-identical to [`Core::WMA`]
+/// over the same series. Open with [`Core::WMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_WMA_Stream")]
-pub struct WmaStream {
+pub struct WMA_Stream {
     core: Core,
-    state: WmaStreamState,
+    state: WMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct WmaStreamState {
+struct WMA_StreamState {
     optInTimePeriod: i32,
     periodSum: f64,
     periodSub: f64,
@@ -316,7 +316,7 @@ struct WmaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn wma_step_internal(&self, sp: &mut WmaStreamState, inReal: f64, outReal: &mut f64) {
+    fn WMA_step_internal(&self, sp: &mut WMA_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
@@ -347,10 +347,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::wma_open`] (composition seam).
-    pub(crate) fn wma_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::WMA_Open`] (composition seam).
+    pub(crate) fn WMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(WmaStream, f64), RetCode> {
+    ) -> Result<(WMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -369,10 +369,10 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
-            if historyLen < self.wma_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.WMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = WmaStreamState {
+            let state = WMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 periodSum: 0.0_f64,
                 periodSub: 0.0_f64,
@@ -382,7 +382,7 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            return Ok((WmaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((WMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -484,7 +484,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = WmaStreamState {
+        let state = WMA_StreamState {
             optInTimePeriod,
             periodSum,
             periodSub,
@@ -494,11 +494,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((WmaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((WMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live WMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::wma`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::WMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -510,23 +510,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.wma_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.WMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_WMA_Open")]
-    pub fn wma_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(WmaStream, f64), RetCode> {
-        self.wma_open_internal(inReal, 0, optInTimePeriod)
+    pub fn WMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(WMA_Stream, f64), RetCode> {
+        self.WMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::wma_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::wma`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::WMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::WMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_WMA_OpenAndFill")]
-    pub fn wma_open_and_fill(
+    pub fn WMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<WmaStream, RetCode> {
+    ) -> Result<WMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -544,10 +544,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.wma_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.WMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = WmaStreamState {
+            let state = WMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 periodSum: 0.0_f64,
                 periodSub: 0.0_f64,
@@ -557,7 +557,7 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            let fillLb: usize = self.wma_lookback(optInTimePeriod);
+            let fillLb: usize = self.WMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -565,7 +565,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            return Ok(WmaStream { core: self.clone(), state });
+            return Ok(WMA_Stream { core: self.clone(), state });
         }
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -668,7 +668,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = WmaStreamState {
+        let state = WMA_StreamState {
             optInTimePeriod,
             periodSum,
             periodSub,
@@ -678,19 +678,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(WmaStream { core: self.clone(), state })
+        Ok(WMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl WmaStream {
+impl WMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_WMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.wma_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.WMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -708,7 +708,7 @@ impl WmaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<WmaStream>();
+    _assert_auto::<WMA_Stream>();
 };
 
 /***************/

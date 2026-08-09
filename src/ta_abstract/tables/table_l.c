@@ -59,7 +59,6 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_OptInputs[] =
 DEF_FUNCTION( LINEARREG,
               TA_GroupId_Statistic,
               "Linear Regression",
-              "LinearReg",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* LINEARREG END */
@@ -85,7 +84,6 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_ANGLE_OptInputs[] =
 DEF_FUNCTION( LINEARREG_ANGLE,
               TA_GroupId_Statistic,
               "Linear Regression Angle",
-              "LinearRegAngle",
               TA_FUNC_FLG_STREAM
              );
 /* LINEARREG_ANGLE END */
@@ -111,7 +109,6 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_INTERCEPT_OptInputs[] =
 DEF_FUNCTION( LINEARREG_INTERCEPT,
               TA_GroupId_Statistic,
               "Linear Regression Intercept",
-              "LinearRegIntercept",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* LINEARREG_INTERCEPT END */
@@ -137,7 +134,6 @@ static const TA_OptInputParameterInfo *TA_LINEARREG_SLOPE_OptInputs[] =
 DEF_FUNCTION( LINEARREG_SLOPE,
               TA_GroupId_Statistic,
               "Linear Regression Slope",
-              "LinearRegSlope",
               TA_FUNC_FLG_STREAM
              );
 /* LINEARREG_SLOPE END */
@@ -161,7 +157,6 @@ static const TA_OptInputParameterInfo *TA_LN_OptInputs[] =
 DEF_FUNCTION( LN,
               TA_GroupId_MathTransform,
               "Vector Log Natural",
-              "Ln",
               TA_FUNC_FLG_STREAM
              );
 /* LN END */
@@ -185,7 +180,6 @@ static const TA_OptInputParameterInfo *TA_LOG10_OptInputs[] =
 DEF_FUNCTION( LOG10,
               TA_GroupId_MathTransform,
               "Vector Log10",
-              "Log10",
               TA_FUNC_FLG_STREAM
              );
 /* LOG10 END */

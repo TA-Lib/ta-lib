@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlstalledpattern`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLSTALLEDPATTERN`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlstalledpattern_lookback(&self) -> usize {
+    pub fn CDLSTALLEDPATTERN_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -145,7 +145,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlstalledpattern(
+    /// let ret = core.CDLSTALLEDPATTERN(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -155,13 +155,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdladvanceblock`] · [`Core::cdl3whitesoldiers`] · [`Core::cdlxsidegap3methods`]
+    /// [`Core::CDLADVANCEBLOCK`] · [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlstalledpattern](https://ta-lib.org/functions/cdlstalledpattern/)
+    /// [ta-lib.org/functions/CDLSTALLEDPATTERN](https://ta-lib.org/functions/CDLSTALLEDPATTERN/)
     #[doc(alias = "StalledPattern")]
     #[doc(alias = "DeliberationPattern")]
-    pub fn cdlstalledpattern(
+    pub fn CDLSTALLEDPATTERN(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -179,7 +179,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlstalledpattern_lookback();
+        let _assertLb = self.CDLSTALLEDPATTERN_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -225,7 +225,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlstalledpattern_lookback();
+        lookbackTotal = self.CDLSTALLEDPATTERN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -544,20 +544,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLSTALLEDPATTERN stream: one value per closed bar, bit-identical to [`Core::cdlstalledpattern`]
-/// over the same series. Open with [`Core::cdlstalledpattern_open`]; dropping the handle
+/// Live CDLSTALLEDPATTERN stream: one value per closed bar, bit-identical to [`Core::CDLSTALLEDPATTERN`]
+/// over the same series. Open with [`Core::CDLSTALLEDPATTERN_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLSTALLEDPATTERN_Stream")]
-pub struct CdlstalledpatternStream {
+pub struct CDLSTALLEDPATTERN_Stream {
     core: Core,
-    state: CdlstalledpatternStreamState,
+    state: CDLSTALLEDPATTERN_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlstalledpatternStreamState {
+struct CDLSTALLEDPATTERN_StreamState {
     BodyLongPeriodTotal: [f64; 3 as usize],
     NearPeriodTotal: [f64; 3 as usize],
     BodyShortPeriodTotal: f64,
@@ -613,7 +613,7 @@ struct CdlstalledpatternStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlstalledpattern_step_internal(&self, sp: &mut CdlstalledpatternStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLSTALLEDPATTERN_step_internal(&self, sp: &mut CDLSTALLEDPATTERN_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -855,10 +855,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlstalledpattern_open`] (composition seam).
-    pub(crate) fn cdlstalledpattern_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLSTALLEDPATTERN_Open`] (composition seam).
+    pub(crate) fn CDLSTALLEDPATTERN_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlstalledpatternStream, i32), RetCode> {
+    ) -> Result<(CDLSTALLEDPATTERN_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -909,7 +909,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlstalledpattern_lookback();
+        lookbackTotal = self.CDLSTALLEDPATTERN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1366,7 +1366,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlstalledpatternStreamState {
+        let state = CDLSTALLEDPATTERN_StreamState {
             BodyLongPeriodTotal,
             NearPeriodTotal,
             BodyShortPeriodTotal,
@@ -1414,11 +1414,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((CdlstalledpatternStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLSTALLEDPATTERN_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLSTALLEDPATTERN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlstalledpattern`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLSTALLEDPATTERN`] at that bar.
     ///
     /// # Errors
     ///
@@ -1437,23 +1437,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlstalledpattern_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLSTALLEDPATTERN_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLSTALLEDPATTERN_Open")]
-    pub fn cdlstalledpattern_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlstalledpatternStream, i32), RetCode> {
-        self.cdlstalledpattern_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLSTALLEDPATTERN_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLSTALLEDPATTERN_Stream, i32), RetCode> {
+        self.CDLSTALLEDPATTERN_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlstalledpattern_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlstalledpattern`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLSTALLEDPATTERN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLSTALLEDPATTERN`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLSTALLEDPATTERN_OpenAndFill")]
-    pub fn cdlstalledpattern_open_and_fill(
+    pub fn CDLSTALLEDPATTERN_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlstalledpatternStream, RetCode> {
+    ) -> Result<CDLSTALLEDPATTERN_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1503,7 +1503,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlstalledpattern_lookback();
+        lookbackTotal = self.CDLSTALLEDPATTERN_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1962,7 +1962,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlstalledpatternStreamState {
+        let state = CDLSTALLEDPATTERN_StreamState {
             BodyLongPeriodTotal,
             NearPeriodTotal,
             BodyShortPeriodTotal,
@@ -2010,19 +2010,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(CdlstalledpatternStream { core: self.clone(), state })
+        Ok(CDLSTALLEDPATTERN_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlstalledpatternStream {
+impl CDLSTALLEDPATTERN_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLSTALLEDPATTERN_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlstalledpattern_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLSTALLEDPATTERN_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -2040,7 +2040,7 @@ impl CdlstalledpatternStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlstalledpatternStream>();
+    _assert_auto::<CDLSTALLEDPATTERN_Stream>();
 };
 
 /***************/

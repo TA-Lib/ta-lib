@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::midpoint`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::MIDPOINT`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -77,7 +77,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn midpoint_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn MIDPOINT_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -131,7 +131,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.midpoint(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.MIDPOINT(0, data.len() - 1, &data, 14, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -139,10 +139,10 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::midprice`] · [`Core::max`] · [`Core::min`]
+    /// [`Core::MIDPRICE`] · [`Core::MAX`] · [`Core::MIN`]
     ///
-    /// Further reading: [ta-lib.org/functions/midpoint](https://ta-lib.org/functions/midpoint/)
-    pub fn midpoint(
+    /// Further reading: [ta-lib.org/functions/MIDPOINT](https://ta-lib.org/functions/MIDPOINT/)
+    pub fn MIDPOINT(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -163,7 +163,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.midpoint_lookback(optInTimePeriod);
+        let _assertLb = self.MIDPOINT_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -273,20 +273,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MIDPOINT stream: one value per closed bar, bit-identical to [`Core::midpoint`]
-/// over the same series. Open with [`Core::midpoint_open`]; dropping the handle
+/// Live MIDPOINT stream: one value per closed bar, bit-identical to [`Core::MIDPOINT`]
+/// over the same series. Open with [`Core::MIDPOINT_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MIDPOINT_Stream")]
-pub struct MidpointStream {
+pub struct MIDPOINT_Stream {
     core: Core,
-    state: MidpointStreamState,
+    state: MIDPOINT_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MidpointStreamState {
+struct MIDPOINT_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -308,7 +308,7 @@ struct MidpointStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn midpoint_step_internal(&self, sp: &mut MidpointStreamState, inReal: f64, outReal: &mut f64) {
+    fn MIDPOINT_step_internal(&self, sp: &mut MIDPOINT_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
             sp.today -= rebaseShift;
@@ -355,10 +355,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::midpoint_open`] (composition seam).
-    pub(crate) fn midpoint_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MIDPOINT_Open`] (composition seam).
+    pub(crate) fn MIDPOINT_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MidpointStream, f64), RetCode> {
+    ) -> Result<(MIDPOINT_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -489,7 +489,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MidpointStreamState {
+        let state = MIDPOINT_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -503,11 +503,11 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok((MidpointStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((MIDPOINT_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live MIDPOINT stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::midpoint`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MIDPOINT`] at that bar.
     ///
     /// # Errors
     ///
@@ -519,23 +519,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.midpoint_open(&data, 14).expect("enough history");
+    /// let (mut s, _last) = core.MIDPOINT_Open(&data, 14).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MIDPOINT_Open")]
-    pub fn midpoint_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MidpointStream, f64), RetCode> {
-        self.midpoint_open_internal(inReal, 0, optInTimePeriod)
+    pub fn MIDPOINT_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MIDPOINT_Stream, f64), RetCode> {
+        self.MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::midpoint_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::midpoint`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MIDPOINT_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MIDPOINT`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MIDPOINT_OpenAndFill")]
-    pub fn midpoint_open_and_fill(
+    pub fn MIDPOINT_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MidpointStream, RetCode> {
+    ) -> Result<MIDPOINT_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -666,7 +666,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MidpointStreamState {
+        let state = MIDPOINT_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -680,19 +680,19 @@ impl Core {
             xCap: capX as i32,
             x_inReal,
         };
-        Ok(MidpointStream { core: self.clone(), state })
+        Ok(MIDPOINT_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MidpointStream {
+impl MIDPOINT_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MIDPOINT_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.midpoint_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.MIDPOINT_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -710,7 +710,7 @@ impl MidpointStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MidpointStream>();
+    _assert_auto::<MIDPOINT_Stream>();
 };
 
 /***************/

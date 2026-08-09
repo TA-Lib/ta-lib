@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#midPoint} consumes before it can
+    * Number of leading input bars {@link Core#MIDPOINT} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,7 +27,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int midPointLookback( int optInTimePeriod )
+   public int MIDPOINT_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -37,13 +37,13 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode midPointInternal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MIDPOINT_Internal( int startIdx,
+                              int endIdx,
+                              double inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -162,13 +162,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode midPointInternal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode MIDPOINT_Internal( int startIdx,
+                              int endIdx,
+                              float inReal[],
+                              int optInTimePeriod,
+                              MInteger outBegIdx,
+                              MInteger outNBElement,
+                              double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -260,7 +260,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midPointLookback} is a <b>success
+    * valid range shorter than {@link Core#MIDPOINT_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -278,11 +278,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPrice
-    * @see Core#max
-    * @see Core#min
+    * @see Core#MIDPRICE
+    * @see Core#MAX
+    * @see Core#MIN
     */
-   public OutRange midPoint( int startIdx,
+   public OutRange MIDPOINT( int startIdx,
                              int endIdx,
                              double inReal[],
                              int optInTimePeriod,
@@ -290,7 +290,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPointInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -310,7 +310,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#midPointLookback} is a <b>success
+    * valid range shorter than {@link Core#MIDPOINT_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -328,11 +328,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#midPrice
-    * @see Core#max
-    * @see Core#min
+    * @see Core#MIDPRICE
+    * @see Core#MAX
+    * @see Core#MIN
     */
-   public OutRange midPoint( int startIdx,
+   public OutRange MIDPOINT( int startIdx,
                              int endIdx,
                              float inReal[],
                              int optInTimePeriod,
@@ -340,7 +340,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPointInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("MIDPOINT", retCode);
       }
@@ -350,8 +350,8 @@
 
    /**
     * A live MIDPOINT stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#midPoint} over the same series.
-    * Open with {@link Core#midPointOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MIDPOINT} over the same series.
+    * Open with {@link Core#MIDPOINT_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -362,7 +362,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MidPointStream {
+   public static final class MIDPOINT_Stream {
       final Core core;
       int optInTimePeriod;
       double lowest;
@@ -379,10 +379,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      MidPointStream( Core core ) { this.core = core; }
+      MIDPOINT_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#midPointOpenAndFill}, or
+       * The range filled by {@link Core#MIDPOINT_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -390,7 +390,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MidPointStream( MidPointStream other ) {
+      MIDPOINT_Stream( MIDPOINT_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -413,7 +413,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.midPointStreamStep(this, inReal);
+         core.MIDPOINT_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -425,8 +425,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         MidPointStream scratch = new MidPointStream(this);
-         core.midPointStreamStep(scratch, inReal);
+         MIDPOINT_Stream scratch = new MIDPOINT_Stream(this);
+         core.MIDPOINT_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -443,11 +443,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MidPointStream copy() {
-         return new MidPointStream(this);
+      public MIDPOINT_Stream copy() {
+         return new MIDPOINT_Stream(this);
       }
    }
-   void midPointStreamStep( MidPointStream sp, double inReal )
+   void MIDPOINT_StreamStep( MIDPOINT_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -494,7 +494,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode midPointOpenBody( MidPointStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MIDPOINT_OpenBody( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double lowest = 0;
       double highest = 0;
@@ -640,7 +640,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode midPointOpenAndFillBody( MidPointStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode MIDPOINT_OpenAndFillBody( MIDPOINT_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double lowest = 0;
       double highest = 0;
@@ -787,11 +787,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind midPointOpen (composition seam). */
-   MidPointStream midPointOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MIDPOINT_Open (composition seam). */
+   MIDPOINT_Stream MIDPOINT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MidPointStream sp = new MidPointStream(this);
-      RetCode retCode = midPointOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
+      RetCode retCode = MIDPOINT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -806,32 +806,32 @@
    /**
     * Open a live MIDPOINT stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#midPoint} at that bar.
-    * <p>The history must hold at least {@code midPointLookback(...) + 1} bars
+    * to {@link Core#MIDPOINT} at that bar.
+    * <p>The history must hold at least {@code MIDPOINT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MidPointStream midPointOpen( double inReal[], int optInTimePeriod )
+   public MIDPOINT_Stream MIDPOINT_Open( double inReal[], int optInTimePeriod )
    {
-      return midPointOpenInternal(inReal, 0, optInTimePeriod);
+      return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#midPointOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#midPoint} over the whole history in the same single pass
+    * {@link Core#MIDPOINT_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MIDPOINT} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MidPointStream#fillRange()}.
+    * {@link MIDPOINT_Stream#fillRange()}.
     */
-   public MidPointStream midPointOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public MIDPOINT_Stream MIDPOINT_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      MidPointStream sp = new MidPointStream(this);
+      MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = midPointOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = MIDPOINT_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

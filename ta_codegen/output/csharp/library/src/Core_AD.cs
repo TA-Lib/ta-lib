@@ -58,7 +58,7 @@ public partial class Core
     *  111705 MF,JD  Fix#1359452 for handling properly start/end range.
     */
    /// <summary>
-   /// Number of leading input bars <c>Ad</c> consumes before it can produce its
+   /// Number of leading input bars <c>AD</c> consumes before it can produce its
    /// first value.
    /// </summary>
    /// <remarks>
@@ -67,13 +67,13 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AdLookback( )
+   public int AD_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   internal RetCode Ad( int startIdx,
+   internal RetCode AD( int startIdx,
                         int endIdx,
                         double[] inHigh,
                         double[] inLow,
@@ -134,7 +134,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode Ad( int startIdx,
+   internal RetCode AD( int startIdx,
                         int endIdx,
                         float[] inHigh,
                         float[] inLow,
@@ -195,7 +195,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdLookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>AD_Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -215,7 +215,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Ad( int startIdx,
+   public OutRange AD( int startIdx,
                        int endIdx,
                        double[] inHigh,
                        double[] inLow,
@@ -223,7 +223,7 @@ public partial class Core
                        double[] inVolume,
                        double[] outReal )
    {
-      RetCode retCode = Ad(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
       }
@@ -250,7 +250,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdLookback</c> is a <b>success with no
+   /// NaN. A valid range shorter than <c>AD_Lookback</c> is a <b>success with no
    /// values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -270,7 +270,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Ad( int startIdx,
+   public OutRange AD( int startIdx,
                        int endIdx,
                        float[] inHigh,
                        float[] inLow,
@@ -278,7 +278,7 @@ public partial class Core
                        float[] inVolume,
                        double[] outReal )
    {
-      RetCode retCode = Ad(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
       }

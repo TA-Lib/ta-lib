@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlRiseFall3Methods} consumes
+    * Number of leading input bars {@link Core#CDLRISEFALL3METHODS} consumes
     * before it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlRiseFall3MethodsLookback( )
+   public int CDLRISEFALL3METHODS_Lookback( )
    {
       int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
       int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
@@ -32,15 +32,15 @@
       return Math.max(BodyShort_avgPeriod, BodyLong_avgPeriod) + 4 ;
 
    }
-   RetCode cdlRiseFall3MethodsInternal( int startIdx,
-                                        int endIdx,
-                                        double inOpen[],
-                                        double inHigh[],
-                                        double inLow[],
-                                        double inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLRISEFALL3METHODS_Internal( int startIdx,
+                                         int endIdx,
+                                         double inOpen[],
+                                         double inHigh[],
+                                         double inLow[],
+                                         double inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -64,7 +64,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRiseFall3MethodsLookback();
+      lookbackTotal = CDLRISEFALL3METHODS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -154,15 +154,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlRiseFall3MethodsInternal( int startIdx,
-                                        int endIdx,
-                                        float inOpen[],
-                                        float inHigh[],
-                                        float inLow[],
-                                        float inClose[],
-                                        MInteger outBegIdx,
-                                        MInteger outNBElement,
-                                        int outInteger[] )
+   RetCode CDLRISEFALL3METHODS_Internal( int startIdx,
+                                         int endIdx,
+                                         float inOpen[],
+                                         float inHigh[],
+                                         float inLow[],
+                                         float inClose[],
+                                         MInteger outBegIdx,
+                                         MInteger outNBElement,
+                                         int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -183,7 +183,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlRiseFall3MethodsLookback();
+      lookbackTotal = CDLRISEFALL3METHODS_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -249,7 +249,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlRiseFall3MethodsLookback} is a
+    * valid range shorter than {@link Core#CDLRISEFALL3METHODS_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -270,11 +270,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlXSideGap3Methods
-    * @see Core#cdl3Inside
-    * @see Core#cdl3Outside
+    * @see Core#CDLXSIDEGAP3METHODS
+    * @see Core#CDL3INSIDE
+    * @see Core#CDL3OUTSIDE
     */
-   public OutRange cdlRiseFall3Methods( int startIdx,
+   public OutRange CDLRISEFALL3METHODS( int startIdx,
                                         int endIdx,
                                         double inOpen[],
                                         double inHigh[],
@@ -284,7 +284,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRiseFall3MethodsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLRISEFALL3METHODS", retCode);
       }
@@ -309,7 +309,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlRiseFall3MethodsLookback} is a
+    * valid range shorter than {@link Core#CDLRISEFALL3METHODS_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -330,11 +330,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlXSideGap3Methods
-    * @see Core#cdl3Inside
-    * @see Core#cdl3Outside
+    * @see Core#CDLXSIDEGAP3METHODS
+    * @see Core#CDL3INSIDE
+    * @see Core#CDL3OUTSIDE
     */
-   public OutRange cdlRiseFall3Methods( int startIdx,
+   public OutRange CDLRISEFALL3METHODS( int startIdx,
                                         int endIdx,
                                         float inOpen[],
                                         float inHigh[],
@@ -344,7 +344,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRiseFall3MethodsInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLRISEFALL3METHODS", retCode);
       }
@@ -354,8 +354,8 @@
 
    /**
     * A live CDLRISEFALL3METHODS stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlRiseFall3Methods} over the same series.
-    * Open with {@link Core#cdlRiseFall3MethodsOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLRISEFALL3METHODS} over the same series.
+    * Open with {@link Core#CDLRISEFALL3METHODS_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -366,7 +366,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlRiseFall3MethodsStream {
+   public static final class CDLRISEFALL3METHODS_Stream {
       final Core core;
       double[] BodyPeriodTotal;
       int totIdx;
@@ -415,10 +415,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlRiseFall3MethodsStream( Core core ) { this.core = core; }
+      CDLRISEFALL3METHODS_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlRiseFall3MethodsOpenAndFill}, or
+       * The range filled by {@link Core#CDLRISEFALL3METHODS_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -426,7 +426,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlRiseFall3MethodsStream( CdlRiseFall3MethodsStream other ) {
+      CDLRISEFALL3METHODS_Stream( CDLRISEFALL3METHODS_Stream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
          this.totIdx = other.totIdx;
@@ -481,7 +481,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlRiseFall3MethodsStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLRISEFALL3METHODS_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -493,8 +493,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlRiseFall3MethodsStream scratch = new CdlRiseFall3MethodsStream(this);
-         core.cdlRiseFall3MethodsStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLRISEFALL3METHODS_Stream scratch = new CDLRISEFALL3METHODS_Stream(this);
+         core.CDLRISEFALL3METHODS_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -511,11 +511,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlRiseFall3MethodsStream copy() {
-         return new CdlRiseFall3MethodsStream(this);
+      public CDLRISEFALL3METHODS_Stream copy() {
+         return new CDLRISEFALL3METHODS_Stream(this);
       }
    }
-   void cdlRiseFall3MethodsStreamStep( CdlRiseFall3MethodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLRISEFALL3METHODS_StreamStep( CDLRISEFALL3METHODS_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -604,7 +604,7 @@
          sp.winPos_totIdx = 0;
       }
    }
-   private RetCode cdlRiseFall3MethodsOpenBody( CdlRiseFall3MethodsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLRISEFALL3METHODS_OpenBody( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -633,7 +633,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRiseFall3MethodsLookback();
+      lookbackTotal = CDLRISEFALL3METHODS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -825,7 +825,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlRiseFall3MethodsOpenAndFillBody( CdlRiseFall3MethodsStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLRISEFALL3METHODS_OpenAndFillBody( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double[] BodyPeriodTotal = new double[5];
       int i = 0;
@@ -855,7 +855,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRiseFall3MethodsLookback();
+      lookbackTotal = CDLRISEFALL3METHODS_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1047,11 +1047,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlRiseFall3MethodsOpen (composition seam). */
-   CdlRiseFall3MethodsStream cdlRiseFall3MethodsOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLRISEFALL3METHODS_Open (composition seam). */
+   CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlRiseFall3MethodsStream sp = new CdlRiseFall3MethodsStream(this);
-      RetCode retCode = cdlRiseFall3MethodsOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1066,32 +1066,32 @@
    /**
     * Open a live CDLRISEFALL3METHODS stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlRiseFall3Methods} at that bar.
-    * <p>The history must hold at least {@code cdlRiseFall3MethodsLookback(...) + 1} bars
+    * to {@link Core#CDLRISEFALL3METHODS} at that bar.
+    * <p>The history must hold at least {@code CDLRISEFALL3METHODS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlRiseFall3MethodsStream cdlRiseFall3MethodsOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlRiseFall3MethodsOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLRISEFALL3METHODS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlRiseFall3MethodsOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlRiseFall3Methods} over the whole history in the same single pass
+    * {@link Core#CDLRISEFALL3METHODS_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLRISEFALL3METHODS} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlRiseFall3MethodsStream#fillRange()}.
+    * {@link CDLRISEFALL3METHODS_Stream#fillRange()}.
     */
-   public CdlRiseFall3MethodsStream cdlRiseFall3MethodsOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlRiseFall3MethodsStream sp = new CdlRiseFall3MethodsStream(this);
+      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRiseFall3MethodsOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

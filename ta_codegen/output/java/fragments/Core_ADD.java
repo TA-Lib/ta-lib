@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#add} consumes before it can
+    * Number of leading input bars {@link Core#ADD} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -20,18 +20,18 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int addLookback( )
+   public int ADD_Lookback( )
    {
       return 0 ;
 
    }
-   RetCode addInternal( int startIdx,
-                        int endIdx,
-                        double inReal0[],
-                        double inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ADD_Internal( int startIdx,
+                         int endIdx,
+                         double inReal0[],
+                         double inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -48,13 +48,13 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode addInternal( int startIdx,
-                        int endIdx,
-                        float inReal0[],
-                        float inReal1[],
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode ADD_Internal( int startIdx,
+                         int endIdx,
+                         float inReal0[],
+                         float inReal1[],
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -81,7 +81,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#addLookback} is a <b>success with no
+    * valid range shorter than {@link Core#ADD_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -98,11 +98,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sub
-    * @see Core#mult
-    * @see Core#div
+    * @see Core#SUB
+    * @see Core#MULT
+    * @see Core#DIV
     */
-   public OutRange add( int startIdx,
+   public OutRange ADD( int startIdx,
                         int endIdx,
                         double inReal0[],
                         double inReal1[],
@@ -110,7 +110,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = addInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADD", retCode);
       }
@@ -129,7 +129,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#addLookback} is a <b>success with no
+    * valid range shorter than {@link Core#ADD_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -146,11 +146,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#sub
-    * @see Core#mult
-    * @see Core#div
+    * @see Core#SUB
+    * @see Core#MULT
+    * @see Core#DIV
     */
-   public OutRange add( int startIdx,
+   public OutRange ADD( int startIdx,
                         int endIdx,
                         float inReal0[],
                         float inReal1[],
@@ -158,7 +158,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = addInternal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_Internal(startIdx, endIdx, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADD", retCode);
       }
@@ -168,8 +168,8 @@
 
    /**
     * A live ADD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#add} over the same series.
-    * Open with {@link Core#addOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ADD} over the same series.
+    * Open with {@link Core#ADD_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -180,15 +180,15 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AddStream {
+   public static final class ADD_Stream {
       final Core core;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      AddStream( Core core ) { this.core = core; }
+      ADD_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#addOpenAndFill}, or
+       * The range filled by {@link Core#ADD_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -196,7 +196,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AddStream( AddStream other ) {
+      ADD_Stream( ADD_Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -207,7 +207,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal0, double inReal1 ) {
-         core.addStreamStep(this, inReal0, inReal1);
+         core.ADD_StreamStep(this, inReal0, inReal1);
          return this.cur_outReal;
       }
 
@@ -219,8 +219,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal0, double inReal1 ) {
-         AddStream scratch = new AddStream(this);
-         core.addStreamStep(scratch, inReal0, inReal1);
+         ADD_Stream scratch = new ADD_Stream(this);
+         core.ADD_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }
 
@@ -237,15 +237,15 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AddStream copy() {
-         return new AddStream(this);
+      public ADD_Stream copy() {
+         return new ADD_Stream(this);
       }
    }
-   void addStreamStep( AddStream sp, double inReal0, double inReal1 )
+   void ADD_StreamStep( ADD_Stream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 + inReal1;
    }
-   private RetCode addOpenBody( AddStream sp, double inReal0[], double inReal1[], int startIdx )
+   private RetCode ADD_OpenBody( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -269,7 +269,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode addOpenAndFillBody( AddStream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ADD_OpenAndFillBody( ADD_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -294,11 +294,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind addOpen (composition seam). */
-   AddStream addOpenInternal( double inReal0[], double inReal1[], int startIdx )
+   /* Internal startIdx-anchored open behind ADD_Open (composition seam). */
+   ADD_Stream ADD_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {
-      AddStream sp = new AddStream(this);
-      RetCode retCode = addOpenBody(sp, inReal0, inReal1, startIdx);
+      ADD_Stream sp = new ADD_Stream(this);
+      RetCode retCode = ADD_OpenBody(sp, inReal0, inReal1, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -313,32 +313,32 @@
    /**
     * Open a live ADD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#add} at that bar.
-    * <p>The history must hold at least {@code addLookback(...) + 1} bars
+    * to {@link Core#ADD} at that bar.
+    * <p>The history must hold at least {@code ADD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AddStream addOpen( double inReal0[], double inReal1[] )
+   public ADD_Stream ADD_Open( double inReal0[], double inReal1[] )
    {
-      return addOpenInternal(inReal0, inReal1, 0);
+      return ADD_OpenInternal(inReal0, inReal1, 0);
    }
    /**
-    * {@link Core#addOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#add} over the whole history in the same single pass
+    * {@link Core#ADD_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ADD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AddStream#fillRange()}.
+    * {@link ADD_Stream#fillRange()}.
     */
-   public AddStream addOpenAndFill( double inReal0[], double inReal1[], double outReal[] )
+   public ADD_Stream ADD_OpenAndFill( double inReal0[], double inReal1[], double outReal[] )
    {
-      AddStream sp = new AddStream(this);
+      ADD_Stream sp = new ADD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = addOpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADD_OpenAndFillBody(sp, inReal0, inReal1, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

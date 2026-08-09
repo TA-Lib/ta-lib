@@ -1,5 +1,4 @@
 name: MACDFIX
-camel_case: MacdFix
 group: Momentum Indicators
 hint: Moving Average Convergence/Divergence Fix 12/26
 flags: [stream]

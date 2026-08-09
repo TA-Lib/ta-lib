@@ -14,7 +14,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#htDcPeriod} consumes before it
+    * Number of leading input bars {@link Core#HT_DCPERIOD} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -25,18 +25,18 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int htDcPeriodLookback( )
+   public int HT_DCPERIOD_Lookback( )
    {
       /* See mama_lookback for an explanation of these */
-      return 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()] ;
+      return 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()] ;
 
    }
-   RetCode htDcPeriodInternal( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode HT_DCPERIOD_Internal( int startIdx,
+                                 int endIdx,
+                                 double inReal[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -111,7 +111,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -371,12 +371,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode htDcPeriodInternal( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               double outReal[] )
+   RetCode HT_DCPERIOD_Internal( int startIdx,
+                                 int endIdx,
+                                 float inReal[],
+                                 MInteger outBegIdx,
+                                 MInteger outNBElement,
+                                 double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -445,7 +445,7 @@
       a = 0.0962;
       b = 0.5769;
       rad2Deg = 180.0 / (4.0 * Math.atan(1));
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -666,7 +666,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htDcPeriodLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_DCPERIOD_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -682,21 +682,21 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPhase
-    * @see Core#htPhasor
-    * @see Core#htSine
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_PHASOR
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htDcPeriod( int startIdx,
-                               int endIdx,
-                               double inReal[],
-                               double outReal[] )
+   public OutRange HT_DCPERIOD( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPeriodInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPERIOD", retCode);
       }
@@ -712,7 +712,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htDcPeriodLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_DCPERIOD_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -728,21 +728,21 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPhase
-    * @see Core#htPhasor
-    * @see Core#htSine
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPHASE
+    * @see Core#HT_PHASOR
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htDcPeriod( int startIdx,
-                               int endIdx,
-                               float inReal[],
-                               double outReal[] )
+   public OutRange HT_DCPERIOD( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPeriodInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPERIOD", retCode);
       }
@@ -752,8 +752,8 @@
 
    /**
     * A live HT_DCPERIOD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#htDcPeriod} over the same series.
-    * Open with {@link Core#htDcPeriodOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#HT_DCPERIOD} over the same series.
+    * Open with {@link Core#HT_DCPERIOD_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -764,7 +764,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HtDcPeriodStream {
+   public static final class HT_DCPERIOD_Stream {
       final Core core;
       double tempReal;
       double tempReal2;
@@ -824,10 +824,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      HtDcPeriodStream( Core core ) { this.core = core; }
+      HT_DCPERIOD_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#htDcPeriodOpenAndFill}, or
+       * The range filled by {@link Core#HT_DCPERIOD_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -835,7 +835,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      HtDcPeriodStream( HtDcPeriodStream other ) {
+      HT_DCPERIOD_Stream( HT_DCPERIOD_Stream other ) {
          this.core = other.core;
          this.tempReal = other.tempReal;
          this.tempReal2 = other.tempReal2;
@@ -901,7 +901,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.htDcPeriodStreamStep(this, inReal);
+         core.HT_DCPERIOD_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -913,8 +913,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         HtDcPeriodStream scratch = new HtDcPeriodStream(this);
-         core.htDcPeriodStreamStep(scratch, inReal);
+         HT_DCPERIOD_Stream scratch = new HT_DCPERIOD_Stream(this);
+         core.HT_DCPERIOD_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -931,11 +931,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HtDcPeriodStream copy() {
-         return new HtDcPeriodStream(this);
+      public HT_DCPERIOD_Stream copy() {
+         return new HT_DCPERIOD_Stream(this);
       }
    }
-   void htDcPeriodStreamStep( HtDcPeriodStream sp, double inReal )
+   void HT_DCPERIOD_StreamStep( HT_DCPERIOD_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;
@@ -1083,7 +1083,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode htDcPeriodOpenBody( HtDcPeriodStream sp, double inReal[], int startIdx )
+   private RetCode HT_DCPERIOD_OpenBody( HT_DCPERIOD_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -1163,7 +1163,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1487,7 +1487,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode htDcPeriodOpenAndFillBody( HtDcPeriodStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPERIOD_OpenAndFillBody( HT_DCPERIOD_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1568,7 +1568,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HtDcPeriod.ordinal()];
+      lookbackTotal = 32 + this.unstablePeriod[FuncUnstId.HT_DCPERIOD.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1892,11 +1892,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind htDcPeriodOpen (composition seam). */
-   HtDcPeriodStream htDcPeriodOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind HT_DCPERIOD_Open (composition seam). */
+   HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( double inReal[], int startIdx )
    {
-      HtDcPeriodStream sp = new HtDcPeriodStream(this);
-      RetCode retCode = htDcPeriodOpenBody(sp, inReal, startIdx);
+      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
+      RetCode retCode = HT_DCPERIOD_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1911,32 +1911,32 @@
    /**
     * Open a live HT_DCPERIOD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#htDcPeriod} at that bar.
-    * <p>The history must hold at least {@code htDcPeriodLookback(...) + 1} bars
+    * to {@link Core#HT_DCPERIOD} at that bar.
+    * <p>The history must hold at least {@code HT_DCPERIOD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public HtDcPeriodStream htDcPeriodOpen( double inReal[] )
+   public HT_DCPERIOD_Stream HT_DCPERIOD_Open( double inReal[] )
    {
-      return htDcPeriodOpenInternal(inReal, 0);
+      return HT_DCPERIOD_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#htDcPeriodOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#htDcPeriod} over the whole history in the same single pass
+    * {@link Core#HT_DCPERIOD_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#HT_DCPERIOD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HtDcPeriodStream#fillRange()}.
+    * {@link HT_DCPERIOD_Stream#fillRange()}.
     */
-   public HtDcPeriodStream htDcPeriodOpenAndFill( double inReal[], double outReal[] )
+   public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double inReal[], double outReal[] )
    {
-      HtDcPeriodStream sp = new HtDcPeriodStream(this);
+      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPeriodOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPERIOD_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

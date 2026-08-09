@@ -59,7 +59,7 @@ public partial class Core
     *                delegation to macd(...,0,0,...)); bit-exact, streamable.
     */
    /// <summary>
-   /// Number of leading input bars <c>MacdFix</c> consumes before it can produce
+   /// Number of leading input bars <c>MACDFIX</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -70,7 +70,7 @@ public partial class Core
    /// <param name="optInSignalPeriod">Smoothing period for the signal line (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MacdFixLookback( int optInSignalPeriod )
+   public int MACDFIX_Lookback( int optInSignalPeriod )
    {
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -82,10 +82,10 @@ public partial class Core
        * (must also account for the initial data consume
        *  by the fix 26 period EMA).
        */
-      return EmaLookback(26) + EmaLookback(optInSignalPeriod) ;
+      return EMA_Lookback(26) + EMA_Lookback(optInSignalPeriod) ;
 
    }
-   internal RetCode MacdFix( int startIdx,
+   internal RetCode MACDFIX( int startIdx,
                              int endIdx,
                              double[] inReal,
                              int optInSignalPeriod,
@@ -138,12 +138,12 @@ public partial class Core
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = EmaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
        * enough initial data.
        */
       lookbackTotal = lookbackSignal;
-      lookbackTotal += EmaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       /* fixed slow period */
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -253,7 +253,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MacdFix( int startIdx,
+   internal RetCode MACDFIX( int startIdx,
                              int endIdx,
                              float[] inReal,
                              int optInSignalPeriod,
@@ -299,9 +299,9 @@ public partial class Core
       fastK = 0.15;
       slowK = 0.075;
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = EmaLookback(optInSignalPeriod);
+      lookbackSignal = EMA_Lookback(optInSignalPeriod);
       lookbackTotal = lookbackSignal;
-      lookbackTotal += EmaLookback(26);
+      lookbackTotal += EMA_Lookback(26);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -386,7 +386,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdFixLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MACDFIX_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -408,7 +408,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MacdFix( int startIdx,
+   public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             double[] inReal,
                             int optInSignalPeriod,
@@ -416,7 +416,7 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
-      RetCode retCode = MacdFix(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDFIX", retCode);
       }
@@ -447,7 +447,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MacdFixLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MACDFIX_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -469,7 +469,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MacdFix( int startIdx,
+   public OutRange MACDFIX( int startIdx,
                             int endIdx,
                             float[] inReal,
                             int optInSignalPeriod,
@@ -477,7 +477,7 @@ public partial class Core
                             double[] outMACDSignal,
                             double[] outMACDHist )
    {
-      RetCode retCode = MacdFix(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
+      RetCode retCode = MACDFIX(startIdx, endIdx, inReal, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDFIX", retCode);
       }

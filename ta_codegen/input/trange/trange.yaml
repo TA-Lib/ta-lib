@@ -1,5 +1,4 @@
 name: TRANGE
-camel_case: TrueRange
 group: Volatility Indicators
 hint: True Range
 flags: [stream]

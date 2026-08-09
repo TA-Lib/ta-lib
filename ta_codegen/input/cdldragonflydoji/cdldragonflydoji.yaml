@@ -1,5 +1,4 @@
 name: CDLDRAGONFLYDOJI
-camel_case: CdlDragonflyDoji
 group: Pattern Recognition
 hint: Dragonfly Doji
 flags: [candlestick, stream]

@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cosh`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::COSH`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn cosh_lookback(&self) -> usize {
+    pub fn COSH_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector hyperbolic cosine: applies cosh element-wise to each input value. A Math Transform
@@ -108,7 +108,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.cosh(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.COSH(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -116,11 +116,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sinh`] · [`Core::tanh`] · [`Core::cos`]
+    /// [`Core::SINH`] · [`Core::TANH`] · [`Core::COS`]
     ///
-    /// Further reading: [ta-lib.org/functions/cosh](https://ta-lib.org/functions/cosh/)
+    /// Further reading: [ta-lib.org/functions/COSH](https://ta-lib.org/functions/COSH/)
     #[doc(alias = "HyperbolicCosine")]
-    pub fn cosh(
+    pub fn COSH(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -135,7 +135,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cosh_lookback();
+        let _assertLb = self.COSH_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -157,20 +157,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live COSH stream: one value per closed bar, bit-identical to [`Core::cosh`]
-/// over the same series. Open with [`Core::cosh_open`]; dropping the handle
+/// Live COSH stream: one value per closed bar, bit-identical to [`Core::COSH`]
+/// over the same series. Open with [`Core::COSH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_COSH_Stream")]
-pub struct CoshStream {
+pub struct COSH_Stream {
     core: Core,
-    state: CoshStreamState,
+    state: COSH_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CoshStreamState {
+struct COSH_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -180,14 +180,14 @@ struct CoshStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cosh_step_internal(&self, sp: &mut CoshStreamState, inReal: f64, outReal: &mut f64) {
+    fn COSH_step_internal(&self, sp: &mut COSH_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).cosh();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cosh_open`] (composition seam).
-    pub(crate) fn cosh_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::COSH_Open`] (composition seam).
+    pub(crate) fn COSH_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(CoshStream, f64), RetCode> {
+    ) -> Result<(COSH_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -214,13 +214,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CoshStreamState {
+        let state = COSH_StreamState {
         };
-        Ok((CoshStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((COSH_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live COSH stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cosh`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::COSH`] at that bar.
     ///
     /// # Errors
     ///
@@ -232,23 +232,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cosh_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.COSH_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_COSH_Open")]
-    pub fn cosh_open(&self, inReal: &[f64], ) -> Result<(CoshStream, f64), RetCode> {
-        self.cosh_open_internal(inReal, 0)
+    pub fn COSH_Open(&self, inReal: &[f64], ) -> Result<(COSH_Stream, f64), RetCode> {
+        self.COSH_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::cosh_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cosh`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::COSH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::COSH`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_COSH_OpenAndFill")]
-    pub fn cosh_open_and_fill(
+    pub fn COSH_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CoshStream, RetCode> {
+    ) -> Result<COSH_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -274,21 +274,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = CoshStreamState {
+        let state = COSH_StreamState {
         };
-        Ok(CoshStream { core: self.clone(), state })
+        Ok(COSH_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CoshStream {
+impl COSH_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_COSH_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.cosh_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.COSH_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -306,7 +306,7 @@ impl CoshStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CoshStream>();
+    _assert_auto::<COSH_Stream>();
 };
 
 /***************/

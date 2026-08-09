@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlcounterattack`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLCOUNTERATTACK`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdlcounterattack_lookback(&self) -> usize {
+    pub fn CDLCOUNTERATTACK_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlcounterattack(
+    /// let ret = core.CDLCOUNTERATTACK(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -143,14 +143,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlpiercing`] · [`Core::cdldarkcloudcover`] · [`Core::cdlgapsidesidewhite`]
+    /// [`Core::CDLPIERCING`] · [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlcounterattack](https://ta-lib.org/functions/cdlcounterattack/)
+    /// [ta-lib.org/functions/CDLCOUNTERATTACK](https://ta-lib.org/functions/CDLCOUNTERATTACK/)
     #[doc(alias = "Counterattack")]
     #[doc(alias = "CounterattackLines")]
     #[doc(alias = "MeetingLines")]
-    pub fn cdlcounterattack(
+    pub fn CDLCOUNTERATTACK(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -168,7 +168,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlcounterattack_lookback();
+        let _assertLb = self.CDLCOUNTERATTACK_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -198,7 +198,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlcounterattack_lookback();
+        lookbackTotal = self.CDLCOUNTERATTACK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -378,20 +378,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLCOUNTERATTACK stream: one value per closed bar, bit-identical to [`Core::cdlcounterattack`]
-/// over the same series. Open with [`Core::cdlcounterattack_open`]; dropping the handle
+/// Live CDLCOUNTERATTACK stream: one value per closed bar, bit-identical to [`Core::CDLCOUNTERATTACK`]
+/// over the same series. Open with [`Core::CDLCOUNTERATTACK_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLCOUNTERATTACK_Stream")]
-pub struct CdlcounterattackStream {
+pub struct CDLCOUNTERATTACK_Stream {
     core: Core,
-    state: CdlcounterattackStreamState,
+    state: CDLCOUNTERATTACK_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlcounterattackStreamState {
+struct CDLCOUNTERATTACK_StreamState {
     EqualPeriodTotal: f64,
     BodyLongPeriodTotal: [f64; 2 as usize],
     totIdx: usize,
@@ -428,7 +428,7 @@ struct CdlcounterattackStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlcounterattack_step_internal(&self, sp: &mut CdlcounterattackStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLCOUNTERATTACK_step_internal(&self, sp: &mut CDLCOUNTERATTACK_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -559,10 +559,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlcounterattack_open`] (composition seam).
-    pub(crate) fn cdlcounterattack_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLCOUNTERATTACK_Open`] (composition seam).
+    pub(crate) fn CDLCOUNTERATTACK_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlcounterattackStream, i32), RetCode> {
+    ) -> Result<(CDLCOUNTERATTACK_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -597,7 +597,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlcounterattack_lookback();
+        lookbackTotal = self.CDLCOUNTERATTACK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -860,7 +860,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlcounterattackStreamState {
+        let state = CDLCOUNTERATTACK_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             totIdx,
@@ -889,11 +889,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((CdlcounterattackStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLCOUNTERATTACK_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLCOUNTERATTACK stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlcounterattack`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLCOUNTERATTACK`] at that bar.
     ///
     /// # Errors
     ///
@@ -912,23 +912,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlcounterattack_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLCOUNTERATTACK_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLCOUNTERATTACK_Open")]
-    pub fn cdlcounterattack_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlcounterattackStream, i32), RetCode> {
-        self.cdlcounterattack_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLCOUNTERATTACK_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLCOUNTERATTACK_Stream, i32), RetCode> {
+        self.CDLCOUNTERATTACK_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlcounterattack_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlcounterattack`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLCOUNTERATTACK_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLCOUNTERATTACK`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLCOUNTERATTACK_OpenAndFill")]
-    pub fn cdlcounterattack_open_and_fill(
+    pub fn CDLCOUNTERATTACK_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlcounterattackStream, RetCode> {
+    ) -> Result<CDLCOUNTERATTACK_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -962,7 +962,7 @@ impl Core {
         let Equal_factor: f64 = self.candle_settings.equal.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlcounterattack_lookback();
+        lookbackTotal = self.CDLCOUNTERATTACK_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1227,7 +1227,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlcounterattackStreamState {
+        let state = CDLCOUNTERATTACK_StreamState {
             EqualPeriodTotal,
             BodyLongPeriodTotal,
             totIdx,
@@ -1256,19 +1256,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(CdlcounterattackStream { core: self.clone(), state })
+        Ok(CDLCOUNTERATTACK_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlcounterattackStream {
+impl CDLCOUNTERATTACK_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLCOUNTERATTACK_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlcounterattack_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLCOUNTERATTACK_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1286,7 +1286,7 @@ impl CdlcounterattackStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlcounterattackStream>();
+    _assert_auto::<CDLCOUNTERATTACK_Stream>();
 };
 
 /***************/

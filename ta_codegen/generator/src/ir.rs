@@ -4,7 +4,6 @@ pub struct FuncDef {
     pub name: String,
     pub group: String,
     pub description: Option<String>,
-    pub camel_case: Option<String>,
     pub hint: Option<String>,
     pub flags: Vec<String>,
     pub inputs: Vec<Input>,
@@ -309,19 +308,23 @@ pub enum ParamType {
 #[derive(Debug, Clone)]
 pub struct EnumDef {
     pub name: String,
+    /// C constant prefix, e.g. `TA_MAType_`. C is the only backend that adds
+    /// anything to a variant's name.
+    pub c_prefix: String,
     pub variants: Vec<EnumVariant>,
 }
 
 /// A single variant of an enum type.
 #[derive(Debug, Clone)]
 pub struct EnumVariant {
-    /// C constant name, e.g. `TA_MAType_SMA`
+    /// The variant identity, e.g. `SMA` or `HT_DCPERIOD`. Spelled verbatim by
+    /// Rust, Java and C#, and used as the source case label (`MAType_SMA`).
+    pub name: String,
+    /// C constant name, e.g. `TA_MAType_SMA`. Composed from the enum's
+    /// `c_prefix` — derived, never authored.
     pub c_name: String,
-    /// `PascalCase` name used in Java/C#, e.g. `Sma`
-    pub pascal_name: String,
-    /// `UPPER_CASE` short name used in source labels, e.g. `SMA`
-    pub short_name: String,
-    /// Integer value
+    /// Pinned integer value. Part of the ABI: identical in every backend and
+    /// append-only.
     pub value: i32,
 }
 

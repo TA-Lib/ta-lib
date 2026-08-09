@@ -40,8 +40,6 @@ fn write_function(out: &mut String, func: &FuncDef) {
     out.push_str("\t<FinancialFunction>\n");
 
     let _ = writeln!(out, "\t\t<Abbreviation>{}</Abbreviation>", func.name);
-    let camel = func.camel_case.as_deref().unwrap_or(&func.name);
-    let _ = writeln!(out, "\t\t<CamelCaseName>{camel}</CamelCaseName>");
     let hint = func.hint.as_deref().unwrap_or("");
     let _ = writeln!(
         out,

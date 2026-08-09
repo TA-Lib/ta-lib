@@ -35,7 +35,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     o.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
     o.push_str("#[repr(u16)]\n#[allow(non_camel_case_types)]\npub enum FuncId {\n");
     for f in &sorted {
-        let _ = writeln!(o, "    {},", pascal_ident(&f.name));
+        let _ = writeln!(o, "    {},", f.name);
     }
     o.push_str("}\n\n");
 
@@ -81,9 +81,8 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
 
 fn emit_func(o: &mut String, f: &FuncRow) {
     o.push_str("    FuncInfo {\n");
-    let _ = writeln!(o, "        id: FuncId::{},", pascal_ident(&f.name));
+    let _ = writeln!(o, "        id: FuncId::{},", f.name);
     let _ = writeln!(o, "        name: {:?},", f.name);
-    let _ = writeln!(o, "        camel_case_name: {:?},", f.camel_case_name());
     let _ = writeln!(o, "        group: Group::{},", f.group.ident());
     let _ = writeln!(o, "        hint: {:?},", f.hint);
     let _ = writeln!(o, "        flags: FuncFlags({:#010x}),", f.flags);
@@ -108,7 +107,7 @@ fn emit_func(o: &mut String, f: &FuncRow) {
 
     match &f.unst {
         Some(u) => {
-            let _ = writeln!(o, "        unst_id: Some(FuncUnstId::{}),", u.pascal_name);
+            let _ = writeln!(o, "        unst_id: Some(FuncUnstId::{}),", u.name);
         }
         None => o.push_str("        unst_id: None,\n"),
     }
@@ -214,7 +213,7 @@ fn emit_api(o: &mut String, sorted: &[FuncRow]) {
     );
     o.push_str("pub fn get_func_handle(name: &str) -> Option<FuncId> {\n    Some(match name {\n");
     for f in sorted {
-        let _ = writeln!(o, "        {:?} => FuncId::{},", f.name, pascal_ident(&f.name));
+        let _ = writeln!(o, "        {:?} => FuncId::{},", f.name, f.name);
     }
     o.push_str("        _ => return None,\n    })\n}\n\n");
 
@@ -317,7 +316,7 @@ impl OptValue for f64 {
 /// let core = Core::new();
 /// let close = vec![1.0f64; 64];
 /// let mut out = vec![0.0f64; 64];
-/// let mut call = FuncId::Sma.new_call(&core);
+/// let mut call = FuncId::SMA.new_call(&core);
 /// call.set_input(0, &close)?;
 /// call.set_opt(0, 30_i32)?;
 /// call.set_output(0, &mut out)?;
@@ -597,7 +596,7 @@ mod binder_tests {
         let core = Core::new();
         let close = series(0.0);
         let mut tiny = vec![0.0; 4];
-        let mut h = FuncId::Sma.new_call(&core);
+        let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();
         h.set_opt(0, 30_i32).unwrap();
         h.set_output(0, &mut tiny).unwrap();
@@ -610,7 +609,7 @@ mod binder_tests {
         let core = Core::new();
         let close = series(0.0);
         let mut out = vec![0.0; N];
-        let mut h = FuncId::Sma.new_call(&core);
+        let mut h = FuncId::SMA.new_call(&core);
         assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
         assert_eq!(h.set_opt(0, 1.5_f64).err(), Some(RetCode::BadParam));
         assert_eq!(h.set_opt(9, 30_i32).err(), Some(RetCode::BadParam));
@@ -672,12 +671,12 @@ fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
          \x20       let lb = match self.func {\n",
     );
     for f in sorted {
-        let snake = f.name.to_lowercase();
+        let snake = f.name.clone();
         let args = opt_args(f);
         let _ = writeln!(
             o,
-            "            FuncId::{} => self.core.{snake}_lookback({args}),",
-            pascal_ident(&f.name)
+            "            FuncId::{} => self.core.{snake}_Lookback({args}),",
+            f.name
         );
     }
     o.push_str(
@@ -747,8 +746,8 @@ fn opt_args(f: &FuncRow) -> String {
 /// with `&self`, reborrowed into the call, and put straight back — so a holder
 /// stays reusable, as C's does.
 fn emit_call_arm(o: &mut String, f: &FuncRow) {
-    let snake = f.name.to_lowercase();
-    let _ = writeln!(o, "            FuncId::{} => {{", pascal_ident(&f.name));
+    let snake = f.name.clone();
+    let _ = writeln!(o, "            FuncId::{} => {{", f.name);
 
     let mut args: Vec<String> = vec!["start_idx".into(), "end_idx".into()];
     for (slot, inp) in f.inputs.iter().enumerate() {
@@ -819,21 +818,6 @@ fn emit_call_arm(o: &mut String, f: &FuncRow) {
 }
 
 // --- name → identifier / variant helpers ---
-
-/// Convert a TA name (`HT_DCPERIOD`, `CDL2CROWS`, `T3`) into a valid, unique
-/// UpperCamelCase Rust identifier for a `FuncId` variant.
-fn pascal_ident(name: &str) -> String {
-    name.split('_')
-        .map(|seg| {
-            let lower = seg.to_lowercase();
-            let mut chars = lower.chars();
-            match chars.next() {
-                Some(c) => c.to_uppercase().collect::<String>() + chars.as_str(),
-                None => String::new(),
-            }
-        })
-        .collect()
-}
 
 /// Format an f64 as a valid Rust literal (Debug yields e.g. `2.0`, `0.1`, `3e37`).
 fn fl(v: f64) -> String {
@@ -1116,7 +1100,6 @@ pub struct OptInputInfo {
 pub struct FuncInfo {
     pub id: FuncId,
     pub name: &'static str,
-    pub camel_case_name: &'static str,
     pub group: Group,
     pub hint: &'static str,
     pub flags: FuncFlags,

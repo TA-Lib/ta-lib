@@ -94,7 +94,7 @@ fn bbands(
     let mut lower = vec![fill; cap];
     let mut beg = 0usize;
     let mut nb = 0usize;
-    let rc = core.bbands(
+    let rc = core.BBANDS(
         0,
         input.len() - 1,
         input,
@@ -129,7 +129,7 @@ fn bbands_from_ma_and_stddev(
     let mut ma = vec![f64::NAN; n];
     let mut ma_beg = 0usize;
     let mut ma_nb = 0usize;
-    if core.ma(0, n - 1, input, period, matype, &mut ma_beg, &mut ma_nb, &mut ma) != RetCode::Success
+    if core.MA(0, n - 1, input, period, matype, &mut ma_beg, &mut ma_nb, &mut ma) != RetCode::Success
     {
         return None;
     }
@@ -139,7 +139,7 @@ fn bbands_from_ma_and_stddev(
     let mut sd = vec![f64::NAN; n];
     let mut sd_beg = 0usize;
     let mut sd_nb = 0usize;
-    if core.stddev(ma_beg, n - 1, input, period, 1.0, &mut sd_beg, &mut sd_nb, &mut sd)
+    if core.STDDEV(ma_beg, n - 1, input, period, 1.0, &mut sd_beg, &mut sd_nb, &mut sd)
         != RetCode::Success
     {
         return None;

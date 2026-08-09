@@ -1,5 +1,4 @@
 name: CDLDARKCLOUDCOVER
-camel_case: CdlDarkCloudCover
 group: Pattern Recognition
 hint: Dark Cloud Cover
 flags: [candlestick, stream]

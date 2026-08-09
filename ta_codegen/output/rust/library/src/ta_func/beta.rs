@@ -67,7 +67,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::beta`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::BETA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -78,7 +78,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn beta_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn BETA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 5;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.beta(
+    /// let ret = core.BETA(
     ///     0, data0.len() - 1, &data0, &data1, 5,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -149,11 +149,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::correl`] · [`Core::linearreg_slope`] · [`Core::var`] · [`Core::stddev`]
+    /// [`Core::CORREL`] · [`Core::LINEARREG_SLOPE`] · [`Core::VAR`] · [`Core::STDDEV`]
     ///
-    /// Further reading: [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta/)
+    /// Further reading: [ta-lib.org/functions/BETA](https://ta-lib.org/functions/BETA/)
     #[doc(alias = "Betacoefficient")]
-    pub fn beta(
+    pub fn BETA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -175,7 +175,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.beta_lookback(optInTimePeriod);
+        let _assertLb = self.BETA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -332,20 +332,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live BETA stream: one value per closed bar, bit-identical to [`Core::beta`]
-/// over the same series. Open with [`Core::beta_open`]; dropping the handle
+/// Live BETA stream: one value per closed bar, bit-identical to [`Core::BETA`]
+/// over the same series. Open with [`Core::BETA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BETA_Stream")]
-pub struct BetaStream {
+pub struct BETA_Stream {
     core: Core,
-    state: BetaStreamState,
+    state: BETA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct BetaStreamState {
+struct BETA_StreamState {
     optInTimePeriod: i32,
     S_xx: f64,
     S_xy: f64,
@@ -371,7 +371,7 @@ struct BetaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn beta_step_internal(&self, sp: &mut BetaStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn BETA_step_internal(&self, sp: &mut BETA_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         let mut tmp_real: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal0[0] = inReal0;
@@ -431,10 +431,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::beta_open`] (composition seam).
-    pub(crate) fn beta_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
+    pub(crate) fn BETA_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(BetaStream, f64), RetCode> {
+    ) -> Result<(BETA_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -609,7 +609,7 @@ impl Core {
         let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
-        let state = BetaStreamState {
+        let state = BETA_StreamState {
             optInTimePeriod,
             S_xx,
             S_xy,
@@ -627,11 +627,11 @@ impl Core {
             ring_trailingIdx_inReal0,
             ring_trailingIdx_inReal1,
         };
-        Ok((BetaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((BETA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live BETA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::beta`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::BETA`] at that bar.
     ///
     /// # Errors
     ///
@@ -646,23 +646,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.beta_open(&data0, &data1, 5).expect("enough history");
+    /// let (mut s, _last) = core.BETA_Open(&data0, &data1, 5).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_BETA_Open")]
-    pub fn beta_open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BetaStream, f64), RetCode> {
-        self.beta_open_internal(inReal0, inReal1, 0, optInTimePeriod)
+    pub fn BETA_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BETA_Stream, f64), RetCode> {
+        self.BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
     }
 
-    /// [`Core::beta_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::beta`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::BETA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::BETA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_BETA_OpenAndFill")]
-    pub fn beta_open_and_fill(
+    pub fn BETA_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<BetaStream, RetCode> {
+    ) -> Result<BETA_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -838,7 +838,7 @@ impl Core {
         let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
-        let state = BetaStreamState {
+        let state = BETA_StreamState {
             optInTimePeriod,
             S_xx,
             S_xy,
@@ -856,19 +856,19 @@ impl Core {
             ring_trailingIdx_inReal0,
             ring_trailingIdx_inReal1,
         };
-        Ok(BetaStream { core: self.clone(), state })
+        Ok(BETA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl BetaStream {
+impl BETA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_BETA_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.beta_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.BETA_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -886,7 +886,7 @@ impl BetaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<BetaStream>();
+    _assert_auto::<BETA_Stream>();
 };
 
 /***************/

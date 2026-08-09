@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cmou} consumes before it can
+    * Number of leading input bars {@link Core#CMOU} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,7 +23,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cmouLookback( int optInTimePeriod )
+   public int CMOU_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -40,13 +40,13 @@
       return optInTimePeriod ;
 
    }
-   RetCode cmouInternal( int startIdx,
-                         int endIdx,
-                         double inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMOU_Internal( int startIdx,
+                          int endIdx,
+                          double inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -84,7 +84,7 @@
        */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
+      lookbackTotal = CMOU_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -169,13 +169,13 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode cmouInternal( int startIdx,
-                         int endIdx,
-                         float inReal[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode CMOU_Internal( int startIdx,
+                          int endIdx,
+                          float inReal[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -202,7 +202,7 @@
       }
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
+      lookbackTotal = CMOU_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -280,8 +280,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmouLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#CMOU_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -298,10 +298,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cmo
-    * @see Core#rsi
+    * @see Core#CMO
+    * @see Core#RSI
     */
-   public OutRange cmou( int startIdx,
+   public OutRange CMOU( int startIdx,
                          int endIdx,
                          double inReal[],
                          int optInTimePeriod,
@@ -309,7 +309,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmouInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMOU", retCode);
       }
@@ -334,8 +334,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmouLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#CMOU_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -352,10 +352,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cmo
-    * @see Core#rsi
+    * @see Core#CMO
+    * @see Core#RSI
     */
-   public OutRange cmou( int startIdx,
+   public OutRange CMOU( int startIdx,
                          int endIdx,
                          float inReal[],
                          int optInTimePeriod,
@@ -363,7 +363,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmouInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMOU", retCode);
       }
@@ -373,8 +373,8 @@
 
    /**
     * A live CMOU stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cmou} over the same series.
-    * Open with {@link Core#cmouOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CMOU} over the same series.
+    * Open with {@link Core#CMOU_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -385,7 +385,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CmouStream {
+   public static final class CMOU_Stream {
       final Core core;
       int optInTimePeriod;
       double upSum;
@@ -399,10 +399,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      CmouStream( Core core ) { this.core = core; }
+      CMOU_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cmouOpenAndFill}, or
+       * The range filled by {@link Core#CMOU_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -410,7 +410,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CmouStream( CmouStream other ) {
+      CMOU_Stream( CMOU_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.upSum = other.upSum;
@@ -430,7 +430,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.cmouStreamStep(this, inReal);
+         core.CMOU_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -442,8 +442,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         CmouStream scratch = new CmouStream(this);
-         core.cmouStreamStep(scratch, inReal);
+         CMOU_Stream scratch = new CMOU_Stream(this);
+         core.CMOU_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -460,11 +460,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CmouStream copy() {
-         return new CmouStream(this);
+      public CMOU_Stream copy() {
+         return new CMOU_Stream(this);
       }
    }
-   void cmouStreamStep( CmouStream sp, double inReal )
+   void CMOU_StreamStep( CMOU_Stream sp, double inReal )
    {
       double diff = 0.0;
       double tempReal = 0.0;
@@ -505,7 +505,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode cmouOpenBody( CmouStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode CMOU_OpenBody( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       int outIdx = 0;
       int today = 0;
@@ -548,7 +548,7 @@
        */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
+      lookbackTotal = CMOU_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -651,7 +651,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode cmouOpenAndFillBody( CmouStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CMOU_OpenAndFillBody( CMOU_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int today = 0;
@@ -695,7 +695,7 @@
        */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      lookbackTotal = cmouLookback(optInTimePeriod);
+      lookbackTotal = CMOU_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -798,11 +798,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cmouOpen (composition seam). */
-   CmouStream cmouOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CMOU_Open (composition seam). */
+   CMOU_Stream CMOU_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      CmouStream sp = new CmouStream(this);
-      RetCode retCode = cmouOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      CMOU_Stream sp = new CMOU_Stream(this);
+      RetCode retCode = CMOU_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -817,32 +817,32 @@
    /**
     * Open a live CMOU stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cmou} at that bar.
-    * <p>The history must hold at least {@code cmouLookback(...) + 1} bars
+    * to {@link Core#CMOU} at that bar.
+    * <p>The history must hold at least {@code CMOU_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CmouStream cmouOpen( double inReal[], int optInTimePeriod )
+   public CMOU_Stream CMOU_Open( double inReal[], int optInTimePeriod )
    {
-      return cmouOpenInternal(inReal, 0, optInTimePeriod);
+      return CMOU_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#cmouOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cmou} over the whole history in the same single pass
+    * {@link Core#CMOU_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CMOU} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CmouStream#fillRange()}.
+    * {@link CMOU_Stream#fillRange()}.
     */
-   public CmouStream cmouOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   public CMOU_Stream CMOU_OpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
    {
-      CmouStream sp = new CmouStream(this);
+      CMOU_Stream sp = new CMOU_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmouOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMOU_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::roc`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ROC`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn roc_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ROC_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 10;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.roc(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.ROC(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -136,12 +136,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::mom`] · [`Core::rocp`] · [`Core::rocr`] · [`Core::rocr100`]
+    /// [`Core::MOM`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
     ///
-    /// Further reading: [ta-lib.org/functions/roc](https://ta-lib.org/functions/roc/)
+    /// Further reading: [ta-lib.org/functions/ROC](https://ta-lib.org/functions/ROC/)
     #[doc(alias = "RateofChange")]
     #[doc(alias = "PriceRateofChange")]
-    pub fn roc(
+    pub fn ROC(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -162,7 +162,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.roc_lookback(optInTimePeriod);
+        let _assertLb = self.ROC_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -235,20 +235,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ROC stream: one value per closed bar, bit-identical to [`Core::roc`]
-/// over the same series. Open with [`Core::roc_open`]; dropping the handle
+/// Live ROC stream: one value per closed bar, bit-identical to [`Core::ROC`]
+/// over the same series. Open with [`Core::ROC_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ROC_Stream")]
-pub struct RocStream {
+pub struct ROC_Stream {
     core: Core,
-    state: RocStreamState,
+    state: ROC_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct RocStreamState {
+struct ROC_StreamState {
     optInTimePeriod: i32,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
@@ -262,7 +262,7 @@ struct RocStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn roc_step_internal(&self, sp: &mut RocStreamState, inReal: f64, outReal: &mut f64) {
+    fn ROC_step_internal(&self, sp: &mut ROC_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -280,10 +280,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::roc_open`] (composition seam).
-    pub(crate) fn roc_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ROC_Open`] (composition seam).
+    pub(crate) fn ROC_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(RocStream, f64), RetCode> {
+    ) -> Result<(ROC_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -372,17 +372,17 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = RocStreamState {
+        let state = ROC_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((RocStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ROC_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ROC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::roc`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ROC`] at that bar.
     ///
     /// # Errors
     ///
@@ -394,23 +394,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.roc_open(&data, 10).expect("enough history");
+    /// let (mut s, _last) = core.ROC_Open(&data, 10).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ROC_Open")]
-    pub fn roc_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(RocStream, f64), RetCode> {
-        self.roc_open_internal(inReal, 0, optInTimePeriod)
+    pub fn ROC_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(ROC_Stream, f64), RetCode> {
+        self.ROC_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::roc_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::roc`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ROC_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ROC`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ROC_OpenAndFill")]
-    pub fn roc_open_and_fill(
+    pub fn ROC_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<RocStream, RetCode> {
+    ) -> Result<ROC_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -500,25 +500,25 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = RocStreamState {
+        let state = ROC_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(RocStream { core: self.clone(), state })
+        Ok(ROC_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl RocStream {
+impl ROC_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ROC_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.roc_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.ROC_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -536,7 +536,7 @@ impl RocStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<RocStream>();
+    _assert_auto::<ROC_Stream>();
 };
 
 /***************/

@@ -305,7 +305,7 @@ public sealed class FunctionCall
     public FunctionCall SetOption(int index, MAType value)
     {
         /* Not a delegation to SetOption(int, int): that accepts an
-           IntegerRange too, so `SetOption(0, MAType.Ema)` on SMA would bind a
+           IntegerRange too, so `SetOption(0, MAType.EMA)` on SMA would bind a
            period of 1 and return Success with silently wrong output. Java's
            ParamHolder.setOptInput(int, MAType) checks INTEGER_LIST for the same
            reason, and no moving-average parameter is an IntegerRange, so this

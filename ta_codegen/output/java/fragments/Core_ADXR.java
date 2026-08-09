@@ -20,7 +20,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#adxr} consumes before it can
+    * Number of leading input bars {@link Core#ADXR} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -31,7 +31,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int adxrLookback( int optInTimePeriod )
+   public int ADXR_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -39,21 +39,21 @@
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + adxLookback(optInTimePeriod) - 1 ;
+         return optInTimePeriod + ADX_Lookback(optInTimePeriod) - 1 ;
       } else {
          return 3 ;
       }
 
    }
-   RetCode adxrInternal( int startIdx,
-                         int endIdx,
-                         double inHigh[],
-                         double inLow[],
-                         double inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ADXR_Internal( int startIdx,
+                          int endIdx,
+                          double inHigh[],
+                          double inLow[],
+                          double inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -87,7 +87,7 @@
        * enough initial data.
        * Always one price bar gets consumed.
        */
-      adxrLookback = adxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -101,7 +101,7 @@
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      retCode = adxInternal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
+      retCode = ADX_Internal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -117,15 +117,15 @@
       outNBElement.value = nbElement;
       return RetCode.Success ;
    }
-   RetCode adxrInternal( int startIdx,
-                         int endIdx,
-                         float inHigh[],
-                         float inLow[],
-                         float inClose[],
-                         int optInTimePeriod,
-                         MInteger outBegIdx,
-                         MInteger outNBElement,
-                         double outReal[] )
+   RetCode ADXR_Internal( int startIdx,
+                          int endIdx,
+                          float inHigh[],
+                          float inLow[],
+                          float inClose[],
+                          int optInTimePeriod,
+                          MInteger outBegIdx,
+                          MInteger outNBElement,
+                          double outReal[] )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -143,7 +143,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      adxrLookback = adxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -153,7 +153,7 @@
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = adxInternal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
+      retCode = ADX_Internal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -181,8 +181,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adxrLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ADXR_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -202,12 +202,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adx
-    * @see Core#dx
-    * @see Core#plusDI
-    * @see Core#minusDI
+    * @see Core#ADX
+    * @see Core#DX
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
     */
-   public OutRange adxr( int startIdx,
+   public OutRange ADXR( int startIdx,
                          int endIdx,
                          double inHigh[],
                          double inLow[],
@@ -217,7 +217,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADXR", retCode);
       }
@@ -242,8 +242,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adxrLookback} is a <b>success with no
-    * values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#ADXR_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -263,12 +263,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adx
-    * @see Core#dx
-    * @see Core#plusDI
-    * @see Core#minusDI
+    * @see Core#ADX
+    * @see Core#DX
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
     */
-   public OutRange adxr( int startIdx,
+   public OutRange ADXR( int startIdx,
                          int endIdx,
                          float inHigh[],
                          float inLow[],
@@ -278,7 +278,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxrInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADXR_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ADXR", retCode);
       }
@@ -288,8 +288,8 @@
 
    /**
     * A live ADXR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#adxr} over the same series.
-    * Open with {@link Core#adxrOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ADXR} over the same series.
+    * Open with {@link Core#ADXR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -300,20 +300,20 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AdxrStream {
+   public static final class ADXR_Stream {
       final Core core;
       int optInTimePeriod;
       double cur_outReal;
       int lagRingPos_adx;
       int lagRingCap_adx;
       double[] lagRing_adx;
-      AdxStream sub0;
+      ADX_Stream sub0;
       OutRange fillRange = OutRange.EMPTY;
 
-      AdxrStream( Core core ) { this.core = core; }
+      ADXR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#adxrOpenAndFill}, or
+       * The range filled by {@link Core#ADXR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -321,14 +321,14 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AdxrStream( AdxrStream other ) {
+      ADXR_Stream( ADXR_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
          this.lagRingPos_adx = other.lagRingPos_adx;
          this.lagRingCap_adx = other.lagRingCap_adx;
          this.lagRing_adx = other.lagRing_adx.clone();
-         this.sub0 = new AdxStream(other.sub0);
+         this.sub0 = new ADX_Stream(other.sub0);
          this.fillRange = other.fillRange;
       }
 
@@ -337,7 +337,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose ) {
-         core.adxrStreamStep(this, inHigh, inLow, inClose);
+         core.ADXR_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -349,8 +349,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         AdxrStream scratch = new AdxrStream(this);
-         core.adxrStreamStep(scratch, inHigh, inLow, inClose);
+         ADXR_Stream scratch = new ADXR_Stream(this);
+         core.ADXR_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -367,11 +367,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AdxrStream copy() {
-         return new AdxrStream(this);
+      public ADXR_Stream copy() {
+         return new ADXR_Stream(this);
       }
    }
-   void adxrStreamStep( AdxrStream sp, double inHigh, double inLow, double inClose )
+   void ADXR_StreamStep( ADXR_Stream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
@@ -383,7 +383,7 @@
       sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode adxrOpenBody( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ADXR_OpenBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -405,7 +405,7 @@
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+      if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
@@ -425,7 +425,7 @@
        * enough initial data.
        * Always one price bar gets consumed.
        */
-      adxrLookback = adxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -441,8 +441,8 @@
        */
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      AdxStream sub0 = adxOpenInternal(java.util.Arrays.copyOfRange(inHigh, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inLow, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inClose, 0, (endIdx) + 1), startIdx - (optInTimePeriod - 1), optInTimePeriod);
-      retCode = adxInternal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
+      ADX_Stream sub0 = ADX_OpenInternal(java.util.Arrays.copyOfRange(inHigh, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inLow, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inClose, 0, (endIdx) + 1), startIdx - (optInTimePeriod - 1), optInTimePeriod);
+      retCode = ADX_Internal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -473,7 +473,7 @@
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   private RetCode adxrOpenAndFillBody( AdxrStream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ADXR_OpenAndFillBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double[] adx;
       int adxrLookback = 0;
@@ -497,7 +497,7 @@
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      if( historyLen < adxrLookback(optInTimePeriod) + 1 ) {
+      if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
       double[] sc_outReal = new double[historyLen];
@@ -517,7 +517,7 @@
        * enough initial data.
        * Always one price bar gets consumed.
        */
-      adxrLookback = adxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -533,8 +533,8 @@
        */
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
-      AdxStream sub0 = adxOpenInternal(java.util.Arrays.copyOfRange(inHigh, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inLow, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inClose, 0, (endIdx) + 1), startIdx - (optInTimePeriod - 1), optInTimePeriod);
-      retCode = adxInternal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
+      ADX_Stream sub0 = ADX_OpenInternal(java.util.Arrays.copyOfRange(inHigh, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inLow, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inClose, 0, (endIdx) + 1), startIdx - (optInTimePeriod - 1), optInTimePeriod);
+      retCode = ADX_Internal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -566,11 +566,11 @@
       System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind adxrOpen (composition seam). */
-   AdxrStream adxrOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind ADXR_Open (composition seam). */
+   ADXR_Stream ADXR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      AdxrStream sp = new AdxrStream(this);
-      RetCode retCode = adxrOpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      ADXR_Stream sp = new ADXR_Stream(this);
+      RetCode retCode = ADXR_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -585,32 +585,32 @@
    /**
     * Open a live ADXR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#adxr} at that bar.
-    * <p>The history must hold at least {@code adxrLookback(...) + 1} bars
+    * to {@link Core#ADXR} at that bar.
+    * <p>The history must hold at least {@code ADXR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AdxrStream adxrOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public ADXR_Stream ADXR_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      return adxrOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#adxrOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#adxr} over the whole history in the same single pass
+    * {@link Core#ADXR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ADXR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AdxrStream#fillRange()}.
+    * {@link ADXR_Stream#fillRange()}.
     */
-   public AdxrStream adxrOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public ADXR_Stream ADXR_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      AdxrStream sp = new AdxrStream(this);
+      ADXR_Stream sp = new ADXR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adxrOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ADXR_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

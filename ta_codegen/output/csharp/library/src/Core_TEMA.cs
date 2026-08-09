@@ -64,7 +64,7 @@ public partial class Core
     *                lockstep pass (bit-exact, no temporary buffers).
     */
    /// <summary>
-   /// Number of leading input bars <c>Tema</c> consumes before it can produce
+   /// Number of leading input bars <c>TEMA</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -75,7 +75,7 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period used for all three passes (default 30; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int TemaLookback( int optInTimePeriod )
+   public int TEMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -84,11 +84,11 @@ public partial class Core
       }
       int retValue = 0;
       /* Get lookack for one EMA. */
-      retValue = EmaLookback(optInTimePeriod);
+      retValue = EMA_Lookback(optInTimePeriod);
       return retValue * 3 ;
 
    }
-   internal RetCode Tema( int startIdx,
+   internal RetCode TEMA( int startIdx,
                           int endIdx,
                           double[] inReal,
                           int optInTimePeriod,
@@ -146,7 +146,7 @@ public partial class Core
       outNBElement = 0;
       outBegIdx = 0;
       /* Adjust startIdx to account for the lookback period. */
-      lookbackEMA = EmaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -264,7 +264,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Tema( int startIdx,
+   internal RetCode TEMA( int startIdx,
                           int endIdx,
                           float[] inReal,
                           int optInTimePeriod,
@@ -297,7 +297,7 @@ public partial class Core
       }
       outNBElement = 0;
       outBegIdx = 0;
-      lookbackEMA = EmaLookback(optInTimePeriod);
+      lookbackEMA = EMA_Lookback(optInTimePeriod);
       lookbackTotal = lookbackEMA * 3;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -380,7 +380,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TemaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TEMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -398,13 +398,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Tema( int startIdx,
+   public OutRange TEMA( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TEMA", retCode);
       }
@@ -433,7 +433,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>TemaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>TEMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -451,13 +451,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Tema( int startIdx,
+   public OutRange TEMA( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Tema(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = TEMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TEMA", retCode);
       }

@@ -71,7 +71,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::tema`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TEMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -81,7 +81,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn tema_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn TEMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -89,7 +89,7 @@ impl Core {
         }
         let mut retValue: usize = 0_usize;
         // Get lookack for one EMA.
-        retValue = self.ema_lookback(optInTimePeriod);
+        retValue = self.EMA_Lookback(optInTimePeriod);
         return retValue * 3;
     }
     /// Triple Exponential Moving Average: a smoothed price overlay built from three
@@ -143,7 +143,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.tema(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TEMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -151,16 +151,16 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ema`] · [`Core::dema`] · [`Core::t3`]
+    /// [`Core::EMA`] · [`Core::DEMA`] · [`Core::T3`]
     ///
     /// # References
     ///
     /// * Patrick G. Mulloy, *Smoothing Data with Faster Moving Averages*, Technical Analysis of
     ///   Stocks & Commodities, V.12:1 (January 1994)
     ///
-    /// Further reading: [ta-lib.org/functions/tema](https://ta-lib.org/functions/tema/)
+    /// Further reading: [ta-lib.org/functions/TEMA](https://ta-lib.org/functions/TEMA/)
     #[doc(alias = "TripleExponentialMovingAverage")]
-    pub fn tema(
+    pub fn TEMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -171,13 +171,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, tema_fma, tema_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, TEMA_fma, TEMA_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.tema_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TEMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn tema_fma(
+    fn TEMA_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -187,10 +187,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.tema_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.TEMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn tema_impl(
+    fn TEMA_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -211,7 +211,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.tema_lookback(optInTimePeriod);
+        let _assertLb = self.TEMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -252,7 +252,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 3;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -382,20 +382,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TEMA stream: one value per closed bar, bit-identical to [`Core::tema`]
-/// over the same series. Open with [`Core::tema_open`]; dropping the handle
+/// Live TEMA stream: one value per closed bar, bit-identical to [`Core::TEMA`]
+/// over the same series. Open with [`Core::TEMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TEMA_Stream")]
-pub struct TemaStream {
+pub struct TEMA_Stream {
     core: Core,
-    state: TemaStreamState,
+    state: TEMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TemaStreamState {
+struct TEMA_StreamState {
     optInTimePeriod: i32,
     prevEMA1: f64,
     prevEMA2: f64,
@@ -410,7 +410,7 @@ struct TemaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn tema_step_internal(&self, sp: &mut TemaStreamState, inReal: f64, outReal: &mut f64) {
+    fn TEMA_step_internal(&self, sp: &mut TEMA_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.optInTimePeriod == 1 {
             (*outReal) = inReal;
             return;
@@ -421,10 +421,10 @@ impl Core {
         (*outReal) = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
     }
 
-    /// Internal startIdx-anchored open behind [`Core::tema_open`] (composition seam).
-    pub(crate) fn tema_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TEMA_Open`] (composition seam).
+    pub(crate) fn TEMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TemaStream, f64), RetCode> {
+    ) -> Result<(TEMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -443,17 +443,17 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
-            if historyLen < self.tema_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.TEMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = TemaStreamState {
+            let state = TEMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevEMA1: 0.0_f64,
                 prevEMA2: 0.0_f64,
                 prevEMA3: 0.0_f64,
                 optInK_1: 0.0_f64,
             };
-            return Ok((TemaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((TEMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -491,7 +491,7 @@ impl Core {
         dummyNBElement = 0;
         dummyBegIdx = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 3;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -607,18 +607,18 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = TemaStreamState {
+        let state = TEMA_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok((TemaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TEMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TEMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::tema`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TEMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -630,23 +630,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.tema_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.TEMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TEMA_Open")]
-    pub fn tema_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TemaStream, f64), RetCode> {
-        self.tema_open_internal(inReal, 0, optInTimePeriod)
+    pub fn TEMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TEMA_Stream, f64), RetCode> {
+        self.TEMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::tema_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::tema`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TEMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TEMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TEMA_OpenAndFill")]
-    pub fn tema_open_and_fill(
+    pub fn TEMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TemaStream, RetCode> {
+    ) -> Result<TEMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -664,17 +664,17 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.tema_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.TEMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = TemaStreamState {
+            let state = TEMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 prevEMA1: 0.0_f64,
                 prevEMA2: 0.0_f64,
                 prevEMA3: 0.0_f64,
                 optInK_1: 0.0_f64,
             };
-            let fillLb: usize = self.tema_lookback(optInTimePeriod);
+            let fillLb: usize = self.TEMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -682,7 +682,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            return Ok(TemaStream { core: self.clone(), state });
+            return Ok(TEMA_Stream { core: self.clone(), state });
         }
         let mut prevEMA1: f64 = 0.0_f64;
         let mut prevEMA2: f64 = 0.0_f64;
@@ -720,7 +720,7 @@ impl Core {
         (*outNBElement) = 0;
         (*outBegIdx) = 0;
         // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.ema_lookback(optInTimePeriod);
+        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
         lookbackTotal = lookbackEMA * 3;
         if startIdx < lookbackTotal {
             startIdx = lookbackTotal;
@@ -837,26 +837,26 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = TemaStreamState {
+        let state = TEMA_StreamState {
             optInTimePeriod,
             prevEMA1,
             prevEMA2,
             prevEMA3,
             optInK_1,
         };
-        Ok(TemaStream { core: self.clone(), state })
+        Ok(TEMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TemaStream {
+impl TEMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TEMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.tema_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TEMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -874,7 +874,7 @@ impl TemaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TemaStream>();
+    _assert_auto::<TEMA_Stream>();
 };
 
 /***************/

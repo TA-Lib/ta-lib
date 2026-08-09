@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdldarkcloudcover`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLDARKCLOUDCOVER`]: the number of leading input values consumed
     /// before the first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn cdldarkcloudcover_lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLDARKCLOUDCOVER_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 5e-1;
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
@@ -147,7 +147,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdldarkcloudcover(
+    /// let ret = core.CDLDARKCLOUDCOVER(
     ///     0, open.len() - 1, &open, &high, &low, &close, 0.5,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -157,12 +157,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlpiercing`] · [`Core::cdlengulfing`] · [`Core::cdlonneck`]
+    /// [`Core::CDLPIERCING`] · [`Core::CDLENGULFING`] · [`Core::CDLONNECK`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdldarkcloudcover](https://ta-lib.org/functions/cdldarkcloudcover/)
+    /// [ta-lib.org/functions/CDLDARKCLOUDCOVER](https://ta-lib.org/functions/CDLDARKCLOUDCOVER/)
     #[doc(alias = "DarkCloudCover")]
-    pub fn cdldarkcloudcover(
+    pub fn CDLDARKCLOUDCOVER(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -186,7 +186,7 @@ impl Core {
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cdldarkcloudcover_lookback(optInPenetration);
+        let _assertLb = self.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -207,7 +207,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldarkcloudcover_lookback(optInPenetration);
+        lookbackTotal = self.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -314,20 +314,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLDARKCLOUDCOVER stream: one value per closed bar, bit-identical to [`Core::cdldarkcloudcover`]
-/// over the same series. Open with [`Core::cdldarkcloudcover_open`]; dropping the handle
+/// Live CDLDARKCLOUDCOVER stream: one value per closed bar, bit-identical to [`Core::CDLDARKCLOUDCOVER`]
+/// over the same series. Open with [`Core::CDLDARKCLOUDCOVER_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLDARKCLOUDCOVER_Stream")]
-pub struct CdldarkcloudcoverStream {
+pub struct CDLDARKCLOUDCOVER_Stream {
     core: Core,
-    state: CdldarkcloudcoverStreamState,
+    state: CDLDARKCLOUDCOVER_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdldarkcloudcoverStreamState {
+struct CDLDARKCLOUDCOVER_StreamState {
     optInPenetration: f64,
     BodyLongPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -350,7 +350,7 @@ struct CdldarkcloudcoverStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdldarkcloudcover_step_internal(&self, sp: &mut CdldarkcloudcoverStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLDARKCLOUDCOVER_step_internal(&self, sp: &mut CDLDARKCLOUDCOVER_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
         #[allow(non_snake_case)]
@@ -419,10 +419,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdldarkcloudcover_open`] (composition seam).
-    pub(crate) fn cdldarkcloudcover_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLDARKCLOUDCOVER_Open`] (composition seam).
+    pub(crate) fn CDLDARKCLOUDCOVER_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
+    ) -> Result<(CDLDARKCLOUDCOVER_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -453,7 +453,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldarkcloudcover_lookback(optInPenetration);
+        lookbackTotal = self.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -593,7 +593,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdldarkcloudcoverStreamState {
+        let state = CDLDARKCLOUDCOVER_StreamState {
             optInPenetration,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -608,11 +608,11 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok((CdldarkcloudcoverStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLDARKCLOUDCOVER_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLDARKCLOUDCOVER stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdldarkcloudcover`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLDARKCLOUDCOVER`] at that bar.
     ///
     /// # Errors
     ///
@@ -631,23 +631,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdldarkcloudcover_open(&open, &high, &low, &close, 0.5).expect("enough history");
+    /// let (mut s, _last) = core.CDLDARKCLOUDCOVER_Open(&open, &high, &low, &close, 0.5).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLDARKCLOUDCOVER_Open")]
-    pub fn cdldarkcloudcover_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdldarkcloudcoverStream, i32), RetCode> {
-        self.cdldarkcloudcover_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn CDLDARKCLOUDCOVER_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLDARKCLOUDCOVER_Stream, i32), RetCode> {
+        self.CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::cdldarkcloudcover_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdldarkcloudcover`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLDARKCLOUDCOVER_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLDARKCLOUDCOVER`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLDARKCLOUDCOVER_OpenAndFill")]
-    pub fn cdldarkcloudcover_open_and_fill(
+    pub fn CDLDARKCLOUDCOVER_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdldarkcloudcoverStream, RetCode> {
+    ) -> Result<CDLDARKCLOUDCOVER_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -677,7 +677,7 @@ impl Core {
         let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdldarkcloudcover_lookback(optInPenetration);
+        lookbackTotal = self.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -819,7 +819,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdldarkcloudcoverStreamState {
+        let state = CDLDARKCLOUDCOVER_StreamState {
             optInPenetration,
             BodyLongPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -834,19 +834,19 @@ impl Core {
             ring_BodyLongTrailingIdx_inLow,
             ring_BodyLongTrailingIdx_inClose,
         };
-        Ok(CdldarkcloudcoverStream { core: self.clone(), state })
+        Ok(CDLDARKCLOUDCOVER_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdldarkcloudcoverStream {
+impl CDLDARKCLOUDCOVER_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLDARKCLOUDCOVER_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdldarkcloudcover_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLDARKCLOUDCOVER_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -864,7 +864,7 @@ impl CdldarkcloudcoverStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdldarkcloudcoverStream>();
+    _assert_auto::<CDLDARKCLOUDCOVER_Stream>();
 };
 
 /***************/

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlidentical3crows`]: the number of leading input values
+    /// Lookback period for [`Core::CDLIDENTICAL3CROWS`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlidentical3crows_lookback(&self) -> usize {
+    pub fn CDLIDENTICAL3CROWS_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -133,7 +133,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlidentical3crows(
+    /// let ret = core.CDLIDENTICAL3CROWS(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -143,12 +143,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdl3blackcrows`] · [`Core::cdl2crows`]
+    /// [`Core::CDL3BLACKCROWS`] · [`Core::CDL2CROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlidentical3crows](https://ta-lib.org/functions/cdlidentical3crows/)
+    /// [ta-lib.org/functions/CDLIDENTICAL3CROWS](https://ta-lib.org/functions/CDLIDENTICAL3CROWS/)
     #[doc(alias = "IdenticalThreeCrows")]
-    pub fn cdlidentical3crows(
+    pub fn CDLIDENTICAL3CROWS(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -166,7 +166,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlidentical3crows_lookback();
+        let _assertLb = self.CDLIDENTICAL3CROWS_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -196,7 +196,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlidentical3crows_lookback();
+        lookbackTotal = self.CDLIDENTICAL3CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -427,20 +427,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLIDENTICAL3CROWS stream: one value per closed bar, bit-identical to [`Core::cdlidentical3crows`]
-/// over the same series. Open with [`Core::cdlidentical3crows_open`]; dropping the handle
+/// Live CDLIDENTICAL3CROWS stream: one value per closed bar, bit-identical to [`Core::CDLIDENTICAL3CROWS`]
+/// over the same series. Open with [`Core::CDLIDENTICAL3CROWS_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLIDENTICAL3CROWS_Stream")]
-pub struct Cdlidentical3crowsStream {
+pub struct CDLIDENTICAL3CROWS_Stream {
     core: Core,
-    state: Cdlidentical3crowsStreamState,
+    state: CDLIDENTICAL3CROWS_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Cdlidentical3crowsStreamState {
+struct CDLIDENTICAL3CROWS_StreamState {
     ShadowVeryShortPeriodTotal: [f64; 3 as usize],
     EqualPeriodTotal: [f64; 3 as usize],
     totIdx: usize,
@@ -481,7 +481,7 @@ struct Cdlidentical3crowsStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlidentical3crows_step_internal(&self, sp: &mut Cdlidentical3crowsStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLIDENTICAL3CROWS_step_internal(&self, sp: &mut CDLIDENTICAL3CROWS_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -629,10 +629,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlidentical3crows_open`] (composition seam).
-    pub(crate) fn cdlidentical3crows_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLIDENTICAL3CROWS_Open`] (composition seam).
+    pub(crate) fn CDLIDENTICAL3CROWS_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(Cdlidentical3crowsStream, i32), RetCode> {
+    ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -667,7 +667,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlidentical3crows_lookback();
+        lookbackTotal = self.CDLIDENTICAL3CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -981,7 +981,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdlidentical3crowsStreamState {
+        let state = CDLIDENTICAL3CROWS_StreamState {
             ShadowVeryShortPeriodTotal,
             EqualPeriodTotal,
             totIdx,
@@ -1014,11 +1014,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((Cdlidentical3crowsStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLIDENTICAL3CROWS_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLIDENTICAL3CROWS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlidentical3crows`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLIDENTICAL3CROWS`] at that bar.
     ///
     /// # Errors
     ///
@@ -1037,23 +1037,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlidentical3crows_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLIDENTICAL3CROWS_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLIDENTICAL3CROWS_Open")]
-    pub fn cdlidentical3crows_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(Cdlidentical3crowsStream, i32), RetCode> {
-        self.cdlidentical3crows_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLIDENTICAL3CROWS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
+        self.CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlidentical3crows_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlidentical3crows`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLIDENTICAL3CROWS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLIDENTICAL3CROWS`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLIDENTICAL3CROWS_OpenAndFill")]
-    pub fn cdlidentical3crows_open_and_fill(
+    pub fn CDLIDENTICAL3CROWS_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<Cdlidentical3crowsStream, RetCode> {
+    ) -> Result<CDLIDENTICAL3CROWS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1087,7 +1087,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlidentical3crows_lookback();
+        lookbackTotal = self.CDLIDENTICAL3CROWS_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1403,7 +1403,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = Cdlidentical3crowsStreamState {
+        let state = CDLIDENTICAL3CROWS_StreamState {
             ShadowVeryShortPeriodTotal,
             EqualPeriodTotal,
             totIdx,
@@ -1436,19 +1436,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(Cdlidentical3crowsStream { core: self.clone(), state })
+        Ok(CDLIDENTICAL3CROWS_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Cdlidentical3crowsStream {
+impl CDLIDENTICAL3CROWS_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLIDENTICAL3CROWS_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlidentical3crows_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLIDENTICAL3CROWS_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1466,7 +1466,7 @@ impl Cdlidentical3crowsStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Cdlidentical3crowsStream>();
+    _assert_auto::<CDLIDENTICAL3CROWS_Stream>();
 };
 
 /***************/

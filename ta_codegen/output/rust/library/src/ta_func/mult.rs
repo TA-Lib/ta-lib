@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::mult`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MULT`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn mult_lookback(&self) -> usize {
+    pub fn MULT_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Element-wise multiplication of two input series. Produces outReal\[i] = inReal0\[i] *
@@ -112,7 +112,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.mult(
+    /// let ret = core.MULT(
     ///     0, data0.len() - 1, &data0, &data1,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -123,13 +123,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::add`] · [`Core::sub`] · [`Core::div`]
+    /// [`Core::ADD`] · [`Core::SUB`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/mult](https://ta-lib.org/functions/mult/)
+    /// Further reading: [ta-lib.org/functions/MULT](https://ta-lib.org/functions/MULT/)
     #[doc(alias = "VectorMultiply")]
     #[doc(alias = "VectorArithmeticMult")]
     #[doc(alias = "Element-wiseProduct")]
-    pub fn mult(
+    pub fn MULT(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -145,7 +145,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.mult_lookback();
+        let _assertLb = self.MULT_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal0.len());
         assert!(_assertStart > endIdx || endIdx < inReal1.len());
@@ -167,20 +167,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MULT stream: one value per closed bar, bit-identical to [`Core::mult`]
-/// over the same series. Open with [`Core::mult_open`]; dropping the handle
+/// Live MULT stream: one value per closed bar, bit-identical to [`Core::MULT`]
+/// over the same series. Open with [`Core::MULT_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MULT_Stream")]
-pub struct MultStream {
+pub struct MULT_Stream {
     core: Core,
-    state: MultStreamState,
+    state: MULT_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MultStreamState {
+struct MULT_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -190,14 +190,14 @@ struct MultStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn mult_step_internal(&self, sp: &mut MultStreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
+    fn MULT_step_internal(&self, sp: &mut MULT_StreamState, inReal0: f64, inReal1: f64, outReal: &mut f64) {
         (*outReal) = inReal0 * inReal1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::mult_open`] (composition seam).
-    pub(crate) fn mult_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MULT_Open`] (composition seam).
+    pub(crate) fn MULT_OpenInternal(
         &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(MultStream, f64), RetCode> {
+    ) -> Result<(MULT_Stream, f64), RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -223,13 +223,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = MultStreamState {
+        let state = MULT_StreamState {
         };
-        Ok((MultStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((MULT_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live MULT stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::mult`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MULT`] at that bar.
     ///
     /// # Errors
     ///
@@ -244,23 +244,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.mult_open(&data0, &data1).expect("enough history");
+    /// let (mut s, _last) = core.MULT_Open(&data0, &data1).expect("enough history");
     /// let peeked = s.peek(100.9, 101.3);
     /// let updated = s.update(100.9, 101.3);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MULT_Open")]
-    pub fn mult_open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MultStream, f64), RetCode> {
-        self.mult_open_internal(inReal0, inReal1, 0)
+    pub fn MULT_Open(&self, inReal0: &[f64], inReal1: &[f64], ) -> Result<(MULT_Stream, f64), RetCode> {
+        self.MULT_OpenInternal(inReal0, inReal1, 0)
     }
 
-    /// [`Core::mult_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::mult`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MULT_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MULT`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MULT_OpenAndFill")]
-    pub fn mult_open_and_fill(
+    pub fn MULT_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MultStream, RetCode> {
+    ) -> Result<MULT_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -285,21 +285,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = MultStreamState {
+        let state = MULT_StreamState {
         };
-        Ok(MultStream { core: self.clone(), state })
+        Ok(MULT_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MultStream {
+impl MULT_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MULT_Update")]
     pub fn update(&mut self, inReal0: f64, inReal1: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.mult_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
+        self.core.MULT_step_internal(&mut self.state, inReal0, inReal1, &mut outReal);
         outReal
     }
 
@@ -317,7 +317,7 @@ impl MultStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MultStream>();
+    _assert_auto::<MULT_Stream>();
 };
 
 /***************/

@@ -72,7 +72,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::kama`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::KAMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -83,16 +83,16 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn kama_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn KAMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         if optInTimePeriod == 1 {
-            return (self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+            return (self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
         }
-        return (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        return (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
     }
     /// Kaufman Adaptive Moving Average: an EMA whose smoothing factor adapts each bar to an
     /// efficiency ratio (directional move vs. total volatility). Reacts fast in trends and smooths
@@ -151,7 +151,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.kama(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.KAMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -159,17 +159,17 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::mama`] · [`Core::ema`] · [`Core::ma`]
+    /// [`Core::MAMA`] · [`Core::EMA`] · [`Core::MA`]
     ///
     /// # References
     ///
     /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
     ///   McGraw-Hill (1995)
     ///
-    /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama/)
+    /// Further reading: [ta-lib.org/functions/KAMA](https://ta-lib.org/functions/KAMA/)
     #[doc(alias = "KaufmanAdaptiveMovingAverage")]
     #[doc(alias = "KaufmansAdaptiveMovingAverage")]
-    pub fn kama(
+    pub fn KAMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -180,13 +180,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, kama_fma, kama_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, KAMA_fma, KAMA_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.kama_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn kama_fma(
+    fn KAMA_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -196,10 +196,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.kama_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+        self.KAMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn kama_impl(
+    fn KAMA_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -220,7 +220,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.kama_lookback(optInTimePeriod);
+        let _assertLb = self.KAMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -247,7 +247,7 @@ impl Core {
         // (same convention as TA_MA for every MAType). The unstable period
         // still delays the first output for API consistency.
         if optInTimePeriod == 1 {
-            lookbackTotal = (self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+            lookbackTotal = (self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
             if startIdx < lookbackTotal {
                 startIdx = lookbackTotal;
             }
@@ -266,7 +266,7 @@ impl Core {
         }
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -380,20 +380,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live KAMA stream: one value per closed bar, bit-identical to [`Core::kama`]
-/// over the same series. Open with [`Core::kama_open`]; dropping the handle
+/// Live KAMA stream: one value per closed bar, bit-identical to [`Core::KAMA`]
+/// over the same series. Open with [`Core::KAMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_KAMA_Stream")]
-pub struct KamaStream {
+pub struct KAMA_Stream {
     core: Core,
-    state: KamaStreamState,
+    state: KAMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct KamaStreamState {
+struct KAMA_StreamState {
     optInTimePeriod: i32,
     constMax: f64,
     constDiff: f64,
@@ -413,7 +413,7 @@ struct KamaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn kama_step_internal(&self, sp: &mut KamaStreamState, inReal: f64, outReal: &mut f64) {
+    fn KAMA_step_internal(&self, sp: &mut KAMA_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut tempReal2: f64 = 0.0_f64;
         let mut periodROC: f64 = 0.0_f64;
@@ -456,10 +456,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::kama_open`] (composition seam).
-    pub(crate) fn kama_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::KAMA_Open`] (composition seam).
+    pub(crate) fn KAMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(KamaStream, f64), RetCode> {
+    ) -> Result<(KAMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -478,10 +478,10 @@ impl Core {
         let mut dummyNBElement: usize = 0;
         let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
-            if historyLen < self.kama_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.KAMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = KamaStreamState {
+            let state = KAMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 constMax: 0.0_f64,
                 constDiff: 0.0_f64,
@@ -493,7 +493,7 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            return Ok((KamaStream { core: self.clone(), state }, inReal[historyLen - 1]));
+            return Ok((KAMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let mut constMax: f64 = 0.0_f64;
         let mut constDiff: f64 = 0.0_f64;
@@ -518,7 +518,7 @@ impl Core {
         // still delays the first output for API consistency.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -636,7 +636,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = KamaStreamState {
+        let state = KAMA_StreamState {
             optInTimePeriod,
             constMax,
             constDiff,
@@ -648,11 +648,11 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((KamaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((KAMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live KAMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::kama`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::KAMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -664,23 +664,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.kama_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.KAMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_KAMA_Open")]
-    pub fn kama_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KamaStream, f64), RetCode> {
-        self.kama_open_internal(inReal, 0, optInTimePeriod)
+    pub fn KAMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KAMA_Stream, f64), RetCode> {
+        self.KAMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::kama_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::kama`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::KAMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::KAMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_KAMA_OpenAndFill")]
-    pub fn kama_open_and_fill(
+    pub fn KAMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<KamaStream, RetCode> {
+    ) -> Result<KAMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -698,10 +698,10 @@ impl Core {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
-            if historyLen < self.kama_lookback(optInTimePeriod) + 1 {
+            if historyLen < self.KAMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
-            let state = KamaStreamState {
+            let state = KAMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
                 constMax: 0.0_f64,
                 constDiff: 0.0_f64,
@@ -713,7 +713,7 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            let fillLb: usize = self.kama_lookback(optInTimePeriod);
+            let fillLb: usize = self.KAMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
@@ -721,7 +721,7 @@ impl Core {
                 outReal[fillIdx] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
-            return Ok(KamaStream { core: self.clone(), state });
+            return Ok(KAMA_Stream { core: self.clone(), state });
         }
         let mut constMax: f64 = 0.0_f64;
         let mut constDiff: f64 = 0.0_f64;
@@ -746,7 +746,7 @@ impl Core {
         // still delays the first output for API consistency.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::Kama as usize]) as usize;
+        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -865,7 +865,7 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = KamaStreamState {
+        let state = KAMA_StreamState {
             optInTimePeriod,
             constMax,
             constDiff,
@@ -877,19 +877,19 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(KamaStream { core: self.clone(), state })
+        Ok(KAMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl KamaStream {
+impl KAMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_KAMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.kama_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.KAMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -907,7 +907,7 @@ impl KamaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<KamaStream>();
+    _assert_auto::<KAMA_Stream>();
 };
 
 /***************/

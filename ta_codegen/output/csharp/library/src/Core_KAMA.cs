@@ -65,7 +65,7 @@ public partial class Core
     *                with TA_MA's period-1 copy, so identity is explicit.
     */
    /// <summary>
-   /// Number of leading input bars <c>Kama</c> consumes before it can produce
+   /// Number of leading input bars <c>KAMA</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -80,7 +80,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Lookback window for the efficiency ratio (default 30; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int KamaLookback( int optInTimePeriod )
+   public int KAMA_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -88,12 +88,12 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod == 1 ) {
-         return this.unstablePeriod[(int)FuncUnstId.Kama] ;
+         return this.unstablePeriod[(int)FuncUnstId.KAMA] ;
       }
-      return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Kama] ;
+      return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.KAMA] ;
 
    }
-   internal RetCode Kama( int startIdx,
+   internal RetCode KAMA( int startIdx,
                           int endIdx,
                           double[] inReal,
                           int optInTimePeriod,
@@ -137,7 +137,7 @@ public partial class Core
        * still delays the first output for API consistency.
        */
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[(int)FuncUnstId.Kama];
+         lookbackTotal = this.unstablePeriod[(int)FuncUnstId.KAMA];
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -156,7 +156,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Kama];
+      lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.KAMA];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -279,7 +279,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Kama( int startIdx,
+   internal RetCode KAMA( int startIdx,
                           int endIdx,
                           float[] inReal,
                           int optInTimePeriod,
@@ -318,7 +318,7 @@ public partial class Core
       outBegIdx = 0;
       outNBElement = 0;
       if( optInTimePeriod == 1 ) {
-         lookbackTotal = this.unstablePeriod[(int)FuncUnstId.Kama];
+         lookbackTotal = this.unstablePeriod[(int)FuncUnstId.KAMA];
          if( startIdx < lookbackTotal ) {
             startIdx = lookbackTotal;
          }
@@ -334,7 +334,7 @@ public partial class Core
          outNBElement = outIdx;
          return RetCode.Success ;
       }
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.Kama];
+      lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.KAMA];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -425,7 +425,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>KamaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>KAMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -444,13 +444,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Kama( int startIdx,
+   public OutRange KAMA( int startIdx,
                          int endIdx,
                          double[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("KAMA", retCode);
       }
@@ -483,7 +483,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>KamaLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>KAMA_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -502,13 +502,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Kama( int startIdx,
+   public OutRange KAMA( int startIdx,
                          int endIdx,
                          float[] inReal,
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Kama(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = KAMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("KAMA", retCode);
       }

@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::rocr100`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::ROCR100`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -75,7 +75,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn rocr100_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ROCR100_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 10;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -130,7 +130,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.rocr100(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.ROCR100(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -138,12 +138,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::rocr`] · [`Core::roc`] · [`Core::rocp`] · [`Core::mom`]
+    /// [`Core::ROCR`] · [`Core::ROC`] · [`Core::ROCP`] · [`Core::MOM`]
     ///
-    /// Further reading: [ta-lib.org/functions/rocr100](https://ta-lib.org/functions/rocr100/)
+    /// Further reading: [ta-lib.org/functions/ROCR100](https://ta-lib.org/functions/ROCR100/)
     #[doc(alias = "RateofChangeRatio100Scale")]
     #[doc(alias = "MO")]
-    pub fn rocr100(
+    pub fn ROCR100(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,7 +164,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.rocr100_lookback(optInTimePeriod);
+        let _assertLb = self.ROCR100_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -237,20 +237,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ROCR100 stream: one value per closed bar, bit-identical to [`Core::rocr100`]
-/// over the same series. Open with [`Core::rocr100_open`]; dropping the handle
+/// Live ROCR100 stream: one value per closed bar, bit-identical to [`Core::ROCR100`]
+/// over the same series. Open with [`Core::ROCR100_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ROCR100_Stream")]
-pub struct Rocr100Stream {
+pub struct ROCR100_Stream {
     core: Core,
-    state: Rocr100StreamState,
+    state: ROCR100_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct Rocr100StreamState {
+struct ROCR100_StreamState {
     optInTimePeriod: i32,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
@@ -264,7 +264,7 @@ struct Rocr100StreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn rocr100_step_internal(&self, sp: &mut Rocr100StreamState, inReal: f64, outReal: &mut f64) {
+    fn ROCR100_step_internal(&self, sp: &mut ROCR100_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
@@ -282,10 +282,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::rocr100_open`] (composition seam).
-    pub(crate) fn rocr100_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ROCR100_Open`] (composition seam).
+    pub(crate) fn ROCR100_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(Rocr100Stream, f64), RetCode> {
+    ) -> Result<(ROCR100_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -374,17 +374,17 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = Rocr100StreamState {
+        let state = ROCR100_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((Rocr100Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok((ROCR100_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live ROCR100 stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::rocr100`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ROCR100`] at that bar.
     ///
     /// # Errors
     ///
@@ -396,23 +396,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.rocr100_open(&data, 10).expect("enough history");
+    /// let (mut s, _last) = core.ROCR100_Open(&data, 10).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ROCR100_Open")]
-    pub fn rocr100_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(Rocr100Stream, f64), RetCode> {
-        self.rocr100_open_internal(inReal, 0, optInTimePeriod)
+    pub fn ROCR100_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(ROCR100_Stream, f64), RetCode> {
+        self.ROCR100_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::rocr100_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::rocr100`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ROCR100_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ROCR100`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ROCR100_OpenAndFill")]
-    pub fn rocr100_open_and_fill(
+    pub fn ROCR100_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<Rocr100Stream, RetCode> {
+    ) -> Result<ROCR100_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -502,25 +502,25 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = Rocr100StreamState {
+        let state = ROCR100_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(Rocr100Stream { core: self.clone(), state })
+        Ok(ROCR100_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl Rocr100Stream {
+impl ROCR100_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ROCR100_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.rocr100_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.ROCR100_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -538,7 +538,7 @@ impl Rocr100Stream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<Rocr100Stream>();
+    _assert_auto::<ROCR100_Stream>();
 };
 
 /***************/

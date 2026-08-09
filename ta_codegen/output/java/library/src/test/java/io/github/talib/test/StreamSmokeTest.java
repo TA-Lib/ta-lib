@@ -90,13 +90,13 @@ public class StreamSmokeTest {
         for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
             java.lang.reflect.Method open = null;
             for (java.lang.reflect.Method m : Core.class.getMethods()) {
-                if (m.getName().equals(f.javaMethodName() + "Open")) {
+                if (m.getName().equals(f.name() + "_Open")) {
                     open = m;
                     break;
                 }
             }
             if (open == null) {
-                unexpected.add(f.name() + ": no " + f.javaMethodName() + "Open");
+                unexpected.add(f.name() + ": no " + f.name() + "_Open");
                 continue;
             }
             Class<?>[] pt = open.getParameterTypes();
@@ -109,7 +109,7 @@ public class StreamSmokeTest {
                 } else if (pt[i] == double.class) {
                     args[i] = Core.REAL_DEFAULT;
                 } else if (pt[i] == MAType.class) {
-                    args[i] = MAType.Sma;
+                    args[i] = MAType.SMA;
                 } else {
                     unexpected.add(f.name() + ": unhandled parameter " + pt[i].getName());
                 }
@@ -182,10 +182,10 @@ public class StreamSmokeTest {
 
         /* Lifecycle: open == batch at the last bar, update tracks batch. */
         double[] batch = new double[n];
-        batchRange = core.sma(0, n - 1, close, 14, batch);
+        batchRange = core.SMA(0, n - 1, close, 14, batch);
         check(!batchRange.isEmpty(), "batch SMA produced values");
-        int lb = core.smaLookback(14);
-        Core.SmaStream s = core.smaOpen(java.util.Arrays.copyOf(close, lb + 1), 14);
+        int lb = core.SMA_Lookback(14);
+        Core.SMA_Stream s = core.SMA_Open(java.util.Arrays.copyOf(close, lb + 1), 14);
         check(bitEq(s.value(), batch[0]), "open value == first batch output");
         for (int t = lb + 1; t < n; t++) {
             double peeked = s.peek(close[t]);
@@ -196,11 +196,11 @@ public class StreamSmokeTest {
         }
 
         /* peek does not commit; copy() forks independently. */
-        Core.SmaStream a = core.smaOpen(java.util.Arrays.copyOf(close, 40), 14);
+        Core.SMA_Stream a = core.SMA_Open(java.util.Arrays.copyOf(close, 40), 14);
         double before = a.value();
         a.peek(12345.0);
         check(bitEq(a.value(), before), "peek must not commit");
-        Core.SmaStream b = a.copy();
+        Core.SMA_Stream b = a.copy();
         a.update(111.0);
         check(!bitEq(a.value(), b.value()), "copy is independent (diverges)");
         b.update(111.0);
@@ -213,7 +213,7 @@ public class StreamSmokeTest {
         check(s.fillRange() != null && s.fillRange().isEmpty(),
               "plain open leaves fillRange empty, never null");
         double[] warm = new double[batchRange.count()];
-        Core.SmaStream f = core.smaOpenAndFill(close, 14, warm);
+        Core.SMA_Stream f = core.SMA_OpenAndFill(close, 14, warm);
         check(f.fillRange().equals(batchRange), "openAndFill fillRange == the batch range");
         check(bitEq(warm[batchRange.count() - 1], f.value()),
               "last filled value == the handle's value");
@@ -222,14 +222,14 @@ public class StreamSmokeTest {
         /* Exceptions: typed insufficient history; plain IAE for bad params;
          * aliasing rejection on openAndFill; update/peek never throw. */
         try {
-            core.smaOpen(java.util.Arrays.copyOf(close, lb), 14);
+            core.SMA_Open(java.util.Arrays.copyOf(close, lb), 14);
             check(false, "short history must throw");
         } catch (InsufficientHistoryException e) {
             check(e instanceof IllegalArgumentException, "IHE extends IAE");
         }
         openMessagesNameTheirOwnFunction(core);
         try {
-            core.smaOpen(close, -3);
+            core.SMA_Open(close, -3);
             check(false, "bad param must throw");
         } catch (InsufficientHistoryException e) {
             check(false, "bad param must NOT be typed as insufficient history");
@@ -237,25 +237,25 @@ public class StreamSmokeTest {
             /* expected */
         }
         try {
-            core.smaOpenAndFill(close, 14, close);
+            core.SMA_OpenAndFill(close, 14, close);
             check(false, "openAndFill output aliasing input must throw");
         } catch (IllegalArgumentException e) {
             /* expected */
         }
 
         /* Integer.MIN_VALUE keeps its batch meaning (documented default). */
-        check(bitEq(core.smaOpen(close, Integer.MIN_VALUE).value(),
-                    core.smaOpen(close, 30).value()),
+        check(bitEq(core.SMA_Open(close, Integer.MIN_VALUE).value(),
+                    core.SMA_Open(close, 30).value()),
               "MIN_VALUE selects the default");
 
         /* Multi-output Value: named components, equals/hashCode/toString. */
-        Core.MacdStream m = core.macdOpen(close, 12, 26, 9);
-        Core.MacdStream.Value v1 = m.update(close[n - 1]);
+        Core.MACD_Stream m = core.MACD_Open(close, 12, 26, 9);
+        Core.MACD_Stream.Value v1 = m.update(close[n - 1]);
         check(m.value() == v1, "multi-output value() returns the cached instance");
-        Core.MacdStream.Value v2 = m.peek(close[n - 1] + 1.0);
+        Core.MACD_Stream.Value v2 = m.peek(close[n - 1] + 1.0);
         check(!v1.equals(v2), "distinct bars produce non-equal Values");
         check(v1.toString().contains("macdSignal="), "Value toString names fields");
-        java.util.HashSet<Core.MacdStream.Value> set = new java.util.HashSet<Core.MacdStream.Value>();
+        java.util.HashSet<Core.MACD_Stream.Value> set = new java.util.HashSet<Core.MACD_Stream.Value>();
         set.add(v1);
         check(set.contains(m.value()), "Value hashCode/equals contract");
 
@@ -268,8 +268,8 @@ public class StreamSmokeTest {
          * already positions the handle at the last bar, so the update above
          * advances it past the end of what any batch call computes. */
         double[] bM = new double[n], bS = new double[n], bH = new double[n];
-        OutRange mr = core.macd(0, n - 1, close, 12, 26, 9, bM, bS, bH);
-        Core.MacdStream.Value vOpen = core.macdOpen(close, 12, 26, 9).value();
+        OutRange mr = core.MACD(0, n - 1, close, 12, 26, 9, bM, bS, bH);
+        Core.MACD_Stream.Value vOpen = core.MACD_Open(close, 12, 26, 9).value();
         int lastM = mr.count() - 1;
         check(bitEq(vOpen.macd(),       bM[lastM]), "Value.macd() == batch outMACD");
         check(bitEq(vOpen.macdSignal(), bS[lastM]), "Value.macdSignal() == batch outMACDSignal");
@@ -278,8 +278,8 @@ public class StreamSmokeTest {
          * record pattern. Asserted by reflection rather than by the pattern
          * itself: this suite compiles at --release 17, where the syntax does not
          * exist. */
-        check(Core.MacdStream.Value.class.isRecord(), "Value is a record");
-        check(Core.MacdStream.Value.class.getRecordComponents().length == 3,
+        check(Core.MACD_Stream.Value.class.isRecord(), "Value is a record");
+        check(Core.MACD_Stream.Value.class.getRecordComponents().length == 3,
               "Value has one component per batch output");
 
         /* ...and EVERY multi-output handle, not just MACD: one class checked by
@@ -305,8 +305,8 @@ public class StreamSmokeTest {
 
         /* Dispatch DX: every MAType opens through the same entry point. */
         for (MAType ty : MAType.values()) {
-            Core.MovingAverageStream ma =
-                core.movingAverageOpen(close, 14, ty);
+            Core.MA_Stream ma =
+                core.MA_Open(close, 14, ty);
             ma.update(close[n - 1]);
         }
 
@@ -316,10 +316,10 @@ public class StreamSmokeTest {
         Core tuned = Core.builder()
             .candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
             .build();
-        Core.CdlDojiStream d1 = core.cdlDojiOpen(
+        Core.CDLDOJI_Stream d1 = core.CDLDOJI_Open(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
             java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
-        Core.CdlDojiStream d2 = tuned.cdlDojiOpen(
+        Core.CDLDOJI_Stream d2 = tuned.CDLDOJI_Open(
             java.util.Arrays.copyOf(open, 30), java.util.Arrays.copyOf(high, 30),
             java.util.Arrays.copyOf(low, 30), java.util.Arrays.copyOf(close, 30));
         check(d1.value() == 0 && d2.value() == 100,

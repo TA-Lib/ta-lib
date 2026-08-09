@@ -1,5 +1,4 @@
 name: PLUS_DM
-camel_case: PlusDM
 group: Momentum Indicators
 hint: Plus Directional Movement
 flags: [unstable_period, stream]

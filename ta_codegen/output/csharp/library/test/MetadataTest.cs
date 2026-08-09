@@ -182,7 +182,6 @@ public static class MetadataTest
             Check(ReferenceEquals(c[f.Name], f), $"{f.Name}: name lookup round-trips");
             Check(f.Outputs.Length > 0, $"{f.Name}: has at least one output");
             Check(f.Hint.Length > 0, $"{f.Name}: carries a hint");
-            Check(f.MethodName.Length > 0, $"{f.Name}: names its Core method");
         }
 
         Check(string.CompareOrdinal(c[0].Name, c[c.Count - 1].Name) < 0, "catalogue is name-ordered");
@@ -356,7 +355,7 @@ public static class MetadataTest
         // The two sides come from different places — the YAML `flags:` list and
         // an enums.yaml name match — so the assertion above is not a tautology.
         Check(withId == 20, $"exactly 20 functions carry an unstable period (got {withId})");
-        Check(FunctionCatalog.Default["RSI"].UnstableId == FuncUnstId.Rsi, "RSI maps to its own id");
+        Check(FunctionCatalog.Default["RSI"].UnstableId == FuncUnstId.RSI, "RSI maps to its own id");
     }
 
     /* ------------------------------------------------- price bundles are ONE input */
@@ -402,12 +401,12 @@ public static class MetadataTest
         // Delegating this overload to SetOption(int, int) accepted it and bound
         // a period of 1.
         CheckThrows<ArgumentException>(
-            () => sma.CreateCall().SetOption(0, MAType.Ema), "a MAType on a non-choice-list parameter");
+            () => sma.CreateCall().SetOption(0, MAType.EMA), "a MAType on a non-choice-list parameter");
         FunctionInfo ma = FunctionCatalog.Default["MA"];
         CheckThrows<ArgumentException>(
             () => ma.CreateCall().SetOption(1, 1.5), "a real value on a choice-list parameter");
         // ...and the choice-list parameter still accepts what it should.
-        Check(ma.CreateCall().SetOption(1, MAType.Ema) is not null, "a MAType binds to a choice list");
+        Check(ma.CreateCall().SetOption(1, MAType.EMA) is not null, "a MAType binds to a choice list");
         CheckThrows<ArgumentException>(() => stoch.CreateCall().SetInput(0, Close), "a real series on a price input");
         CheckThrows<ArgumentException>(
             () => sma.CreateCall().SetPriceInput(0, PriceComponents.High, High), "a price component on a real input");
@@ -691,7 +690,7 @@ public static class MetadataTest
             }
         }
 
-        MethodInfo? m = typeof(Core).GetMethod(f.MethodName, BindingFlags.Public | BindingFlags.Instance,
+        MethodInfo? m = typeof(Core).GetMethod(f.Name, BindingFlags.Public | BindingFlags.Instance,
                                                binder: null, types.ToArray(), modifiers: null);
         return m is null ? null : (OutRange)m.Invoke(new Core(), args.ToArray())!;
     }

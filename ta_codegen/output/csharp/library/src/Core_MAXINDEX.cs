@@ -55,7 +55,7 @@ public partial class Core
     *  120806 AC   Creation (equal to MAX but outputs index)
     */
    /// <summary>
-   /// Number of leading input bars <c>MaxIndex</c> consumes before it can
+   /// Number of leading input bars <c>MAXINDEX</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -66,7 +66,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Window length over which the max is located (default 30; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MaxIndexLookback( int optInTimePeriod )
+   public int MAXINDEX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -76,7 +76,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MaxIndex( int startIdx,
+   internal RetCode MAXINDEX( int startIdx,
                               int endIdx,
                               double[] inReal,
                               int optInTimePeriod,
@@ -159,7 +159,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MaxIndex( int startIdx,
+   internal RetCode MAXINDEX( int startIdx,
                               int endIdx,
                               float[] inReal,
                               int optInTimePeriod,
@@ -244,7 +244,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MaxIndexLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MAXINDEX_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -263,13 +263,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MaxIndex( int startIdx,
+   public OutRange MAXINDEX( int startIdx,
                              int endIdx,
                              double[] inReal,
                              int optInTimePeriod,
                              int[] outInteger )
    {
-      RetCode retCode = MaxIndex(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
       }
@@ -298,7 +298,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MaxIndexLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MAXINDEX_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -317,13 +317,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MaxIndex( int startIdx,
+   public OutRange MAXINDEX( int startIdx,
                              int endIdx,
                              float[] inReal,
                              int optInTimePeriod,
                              int[] outInteger )
    {
-      RetCode retCode = MaxIndex(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
       }

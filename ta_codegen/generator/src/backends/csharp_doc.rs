@@ -72,7 +72,7 @@ pub fn guarded_docs(
         "Values are written only where the indicator is defined. The returned \
          <see cref=\"OutRange\"/> says where they start and how many there are; nothing \
          outside that range is touched, and the library never pads with NaN. A valid range \
-         shorter than <c>{cs_name}Lookback</c> is a <b>success with no values</b> \
+         shorter than <c>{cs_name}_Lookback</c> is a <b>success with no values</b> \
          (<c>Count == 0</c>), not an error."
     ));
     b.close("remarks");

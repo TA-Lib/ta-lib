@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::mom`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::MOM`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn mom_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn MOM_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 10;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.mom(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.MOM(0, data.len() - 1, &data, 10, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -136,11 +136,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::roc`] · [`Core::rocp`] · [`Core::rocr`] · [`Core::rocr100`]
+    /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
     ///
-    /// Further reading: [ta-lib.org/functions/mom](https://ta-lib.org/functions/mom/)
+    /// Further reading: [ta-lib.org/functions/MOM](https://ta-lib.org/functions/MOM/)
     #[doc(alias = "Momentum")]
-    pub fn mom(
+    pub fn MOM(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -161,7 +161,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.mom_lookback(optInTimePeriod);
+        let _assertLb = self.MOM_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -228,20 +228,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MOM stream: one value per closed bar, bit-identical to [`Core::mom`]
-/// over the same series. Open with [`Core::mom_open`]; dropping the handle
+/// Live MOM stream: one value per closed bar, bit-identical to [`Core::MOM`]
+/// over the same series. Open with [`Core::MOM_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MOM_Stream")]
-pub struct MomStream {
+pub struct MOM_Stream {
     core: Core,
-    state: MomStreamState,
+    state: MOM_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MomStreamState {
+struct MOM_StreamState {
     optInTimePeriod: i32,
     ringPos_trailingIdx: usize,
     ringCap_trailingIdx: usize,
@@ -255,7 +255,7 @@ struct MomStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn mom_step_internal(&self, sp: &mut MomStreamState, inReal: f64, outReal: &mut f64) {
+    fn MOM_step_internal(&self, sp: &mut MOM_StreamState, inReal: f64, outReal: &mut f64) {
         if sp.ringCap_trailingIdx == 0 {
             sp.ring_trailingIdx_inReal[0] = inReal;
         }
@@ -267,10 +267,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::mom_open`] (composition seam).
-    pub(crate) fn mom_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MOM_Open`] (composition seam).
+    pub(crate) fn MOM_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MomStream, f64), RetCode> {
+    ) -> Result<(MOM_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -354,17 +354,17 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = MomStreamState {
+        let state = MOM_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((MomStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((MOM_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live MOM stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::mom`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MOM`] at that bar.
     ///
     /// # Errors
     ///
@@ -376,23 +376,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.mom_open(&data, 10).expect("enough history");
+    /// let (mut s, _last) = core.MOM_Open(&data, 10).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MOM_Open")]
-    pub fn mom_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MomStream, f64), RetCode> {
-        self.mom_open_internal(inReal, 0, optInTimePeriod)
+    pub fn MOM_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MOM_Stream, f64), RetCode> {
+        self.MOM_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::mom_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::mom`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MOM_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MOM`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MOM_OpenAndFill")]
-    pub fn mom_open_and_fill(
+    pub fn MOM_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MomStream, RetCode> {
+    ) -> Result<MOM_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -476,25 +476,25 @@ impl Core {
         let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
         ring_trailingIdx_inReal[..cap_trailingIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = MomStreamState {
+        let state = MOM_StreamState {
             optInTimePeriod,
             ringPos_trailingIdx: 0_usize,
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok(MomStream { core: self.clone(), state })
+        Ok(MOM_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MomStream {
+impl MOM_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MOM_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.mom_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.MOM_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -512,7 +512,7 @@ impl MomStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MomStream>();
+    _assert_auto::<MOM_Stream>();
 };
 
 /***************/

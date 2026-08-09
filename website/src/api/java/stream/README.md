@@ -8,14 +8,14 @@ toc: false
 The Java API is not yet released. Estimated release: **Q1 2027**.
 :::
 
-The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/java/) (`core.sma`, `core.rsi`, …) would return by recomputing over the whole array.
+The **streaming API** is built for live feeds: open a stream once, then feed it one bar at a time. The stream carries its state from bar to bar, so each new bar costs O(1) — and every value is **bit-identical** to what the [batch method](/api/java/) (`core.SMA`, `core.RSI`, …) would return by recomputing over the whole array.
 
-Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SmaStream` — unrelated to `java.util.stream`):
+Each streamable function adds two factory methods on `Core` and a handful of methods on its stream (a class nested in `Core`, e.g. `Core.SMA_Stream` — unrelated to `java.util.stream`):
 
 | Call | When | Does |
 |------|------|------|
-| `core.<name>Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
-| `core.<name>OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
+| `core.<NAME>_Open(history, params)` | once | validate params, consume warm-up history, return a **stream** |
+| `core.<NAME>_OpenAndFill(..)` | once, instead of `Open` | like `Open`, but also fills the output for **every** history bar — see [below](#full-history-output-openandfill) |
 | `stream.update(bar)` | once per **closed** bar | commit one bar, return the new value |
 | `stream.peek(bar)` | any time on the **forming** bar | evaluate a provisional bar **without** committing |
 | `stream.value()` | any time | the most recently committed value |
@@ -30,9 +30,9 @@ import io.github.talib.Core;
 
 Core core = Core.DEFAULT;
 
-// Seed with warm-up history (>= smaLookback(period) + 1 bars).
+// Seed with warm-up history (>= SMA_Lookback(period) + 1 bars).
 double[] history = /* ...your closing prices... */;
-Core.SmaStream s = core.smaOpen(history, 30);   // value() starts at the last history bar
+Core.SMA_Stream s = core.SMA_Open(history, 30); // value() starts at the last history bar
 
 // Each time a bar closes:
 double v = s.update(newClose);                  // always a value; never throws after open
@@ -45,7 +45,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 ## Rules
 
-- **Warm-up.** `Open` succeeds only if `history.length >= <name>Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
+- **Warm-up.** `Open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `Open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same code on a throwaway deep copy (which allocates for windowed indicators — `update` is the cheaper path). `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are read from the owning `Core` at `Open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `copy()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`copy()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `copy()` results) are fully independent.
@@ -60,7 +60,7 @@ import io.github.talib.OutRange;
 
 double[] warmup = new double[history.length];
 
-Core.SmaStream s = core.smaOpenAndFill(history, 30, warmup);
+Core.SMA_Stream s = core.SMA_OpenAndFill(history, 30, warmup);
 OutRange r = s.fillRange();                     // what was written, on the handle
 
 // warmup[0 .. r.count() - 1] is the SMA over all of history; then stream on:
@@ -75,14 +75,14 @@ Inputs and outputs mirror the batch method. Multi-output functions return a smal
 
 ```java
 // MACD: one input, three outputs
-Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
-Core.MacdStream.Value out = m.update(newClose);
+Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
+Core.MACD_Stream.Value out = m.update(newClose);
 // out.macd(), out.macdSignal(), out.macdHist()
 // On JDK 21+ it also destructures:
-//   if (v instanceof Core.MacdStream.Value(double macd, double signal, double hist)) { ... }
+//   if (out instanceof Core.MACD_Stream.Value(double macd, double signal, double hist)) { ... }
 
 // A candlestick pattern returns int
-Core.CdlDojiStream c = core.cdlDojiOpen(open, high, low, close);
+Core.CDLDOJI_Stream c = core.CDLDOJI_Open(open, high, low, close);
 int pattern = c.update(o, h, l, cl);
 ```
 
@@ -90,7 +90,7 @@ int pattern = c.update(o, h, l, cl);
 
 | Call | Behaviour |
 |------|-----------|
-| `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters, or output arrays that alias the input or each other (`OpenAndFill`), throw plain `IllegalArgumentException`. |
+| `<NAME>_Open` / `<NAME>_OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters, or output arrays that alias the input or each other (`OpenAndFill`), throw plain `IllegalArgumentException`. |
 | `update` / `peek` / `value` / `copy` | Never throw after a successful `Open`. |
 
 ## Discovering streamable functions

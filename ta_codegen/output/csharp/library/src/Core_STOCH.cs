@@ -62,7 +62,7 @@ public partial class Core
     *               in-place ma() destroyed the smoothed K before the final copy.
     */
    /// <summary>
-   /// Number of leading input bars <c>Stoch</c> consumes before it can produce
+   /// Number of leading input bars <c>STOCH</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -83,7 +83,7 @@ public partial class Core
    /// 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int StochLookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+   public int STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
    {
       if( optInFastK_Period == int.MinValue ) {
          optInFastK_Period = 5;
@@ -96,7 +96,7 @@ public partial class Core
          return -1;
       }
       if( (int)optInSlowK_MAType == int.MinValue ) {
-         optInSlowK_MAType = MAType.Sma;
+         optInSlowK_MAType = MAType.SMA;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -104,19 +104,19 @@ public partial class Core
          return -1;
       }
       if( (int)optInSlowD_MAType == int.MinValue ) {
-         optInSlowD_MAType = MAType.Sma;
+         optInSlowD_MAType = MAType.SMA;
       }
       int retValue = 0;
       /* Account for the initial data needed for Fast-K. */
       retValue = optInFastK_Period - 1;
       /* Add the smoothing being done for %K slow */
-      retValue += MovingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
+      retValue += MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
       /* Add the smoothing being done for %D slow. */
-      retValue += MovingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
+      retValue += MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
       return retValue ;
 
    }
-   internal RetCode Stoch( int startIdx,
+   internal RetCode STOCH( int startIdx,
                            int endIdx,
                            double[] inHigh,
                            double[] inLow,
@@ -167,7 +167,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowK_MAType == int.MinValue ) {
-         optInSlowK_MAType = MAType.Sma;
+         optInSlowK_MAType = MAType.SMA;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -175,7 +175,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowD_MAType == int.MinValue ) {
-         optInSlowD_MAType = MAType.Sma;
+         optInSlowD_MAType = MAType.SMA;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
@@ -212,8 +212,8 @@ public partial class Core
        */
       /* Identify the lookback needed. */
       lookbackK = optInFastK_Period - 1;
-      lookbackKSlow = MovingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
-      lookbackDSlow = MovingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
+      lookbackKSlow = MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+      lookbackDSlow = MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       /* Move up the start index if there is not
        * enough initial data.
@@ -326,7 +326,7 @@ public partial class Core
        * Some documentation will refer to the smoothed version as being
        * "K-Slow", but often this end up to be shorten to "K".
        */
-      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MA(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -338,7 +338,7 @@ public partial class Core
       /* Calculate the %D which is simply a moving average of
        * the already smoothed %K.
        */
-      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MA(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -363,7 +363,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode Stoch( int startIdx,
+   internal RetCode STOCH( int startIdx,
                            int endIdx,
                            float[] inHigh,
                            float[] inLow,
@@ -414,7 +414,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowK_MAType == int.MinValue ) {
-         optInSlowK_MAType = MAType.Sma;
+         optInSlowK_MAType = MAType.SMA;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -422,14 +422,14 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInSlowD_MAType == int.MinValue ) {
-         optInSlowD_MAType = MAType.Sma;
+         optInSlowD_MAType = MAType.SMA;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
       }
       lookbackK = optInFastK_Period - 1;
-      lookbackKSlow = MovingAverageLookback(optInSlowK_Period, optInSlowK_MAType);
-      lookbackDSlow = MovingAverageLookback(optInSlowD_Period, optInSlowD_MAType);
+      lookbackKSlow = MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
+      lookbackDSlow = MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
       lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
@@ -495,7 +495,7 @@ public partial class Core
          trailingIdx += 1;
          today += 1;
       }
-      retCode = MovingAverage(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
+      retCode = MA(0, outIdx - 1, tempBuffer, optInSlowK_Period, optInSlowK_MAType, out outBegIdx, out outNBElement, tempBuffer);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          if( (bufferIsAllocated) != 0 ) {
          }
@@ -503,7 +503,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      retCode = MovingAverage(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
+      retCode = MA(0, (int)outNBElement - 1, tempBuffer, optInSlowD_Period, optInSlowD_MAType, out outBegIdx, out outNBElement, outSlowD);
       Array.Copy(tempBuffer, lookbackDSlow, outSlowK, 0, (int)outNBElement * 1);
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -535,7 +535,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StochLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>STOCH_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -568,7 +568,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Stoch( int startIdx,
+   public OutRange STOCH( int startIdx,
                           int endIdx,
                           double[] inHigh,
                           double[] inLow,
@@ -581,7 +581,7 @@ public partial class Core
                           double[] outSlowK,
                           double[] outSlowD )
    {
-      RetCode retCode = Stoch(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
       }
@@ -613,7 +613,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>StochLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>STOCH_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -646,7 +646,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Stoch( int startIdx,
+   public OutRange STOCH( int startIdx,
                           int endIdx,
                           float[] inHigh,
                           float[] inLow,
@@ -659,7 +659,7 @@ public partial class Core
                           double[] outSlowK,
                           double[] outSlowD )
    {
-      RetCode retCode = Stoch(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
+      RetCode retCode = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, out int outBegIdx, out int outNBElement, outSlowK, outSlowD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCH", retCode);
       }

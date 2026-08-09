@@ -110,25 +110,6 @@ fn generate_all(func: &ir::FuncDef, enums: &HashMap<String, ir::EnumDef>) -> All
 // Variant check functions (extracted from macros for dynamic invocation)
 // ---------------------------------------------------------------------------
 
-/// Convert snake_case to Java camelCase: "linearreg_angle" -> "linearregAngle"
-fn to_camel(name: &str) -> String {
-    let lower = name.to_lowercase();
-    let parts: Vec<&str> = lower.split('_').collect();
-    let mut result = String::new();
-    for (i, part) in parts.iter().enumerate() {
-        if i == 0 {
-            result.push_str(part);
-        } else {
-            let mut chars = part.chars();
-            if let Some(c) = chars.next() {
-                result.extend(c.to_uppercase());
-                result.push_str(chars.as_str());
-            }
-        }
-    }
-    result
-}
-
 /// Check that all C variants exist for a given indicator.
 fn check_c_variants(c: &str, upper: &str, name: &str) {
     assert!(
@@ -163,44 +144,36 @@ fn check_c_variants(c: &str, upper: &str, name: &str) {
 }
 
 /// Check that all Rust variants exist for a given indicator.
-/// `foo` (guarded) plus `foo_lookback`, and `foo_private` only for the
+/// `SMA` (guarded) plus `SMA_Lookback`, and `SMA_Private` only for the
 /// definitions that declare one. No `_unchecked` variants. Concrete f64 types,
 /// not generic.
-fn check_rust_generic_variants(r: &str, snake: &str, name: &str) {
+fn check_rust_generic_variants(r: &str, name: &str) {
     // Lookback (non-generic)
     assert!(
-        r.contains(&format!("{}_lookback", snake)),
-        "{}: Rust missing {}_lookback",
-        name,
-        snake
+        r.contains(&format!("{name}_Lookback")),
+        "{name}: Rust missing {name}_Lookback"
     );
     // Guarded (concrete f64, no generics)
     assert!(
-        r.contains(&format!("fn {}(", snake)),
-        "{}: Rust missing fn {}(",
-        name,
-        snake
+        r.contains(&format!("fn {name}(")),
+        "{name}: Rust missing fn {name}("
     );
     assert!(
-        !r.contains("_unguarded"),
+        !r.contains("_Unguarded"),
         "{name}: Rust must not emit an unguarded variant"
     );
 }
 
 /// Check that all Java variants exist for a given indicator.
-fn check_java_variants(j: &str, lower: &str, name: &str) {
+fn check_java_variants(j: &str, name: &str) {
     assert!(
-        j.contains(&format!("{}Lookback(", lower)),
-        "{}: Java missing {}Lookback",
-        name,
-        lower
+        j.contains(&format!("{name}_Lookback(")),
+        "{name}: Java missing {name}_Lookback"
     );
     assert!(
-        j.contains(&format!("RetCode {}Internal(", lower))
-            || j.contains(&format!("RetCode {}Internal (", lower)),
-        "{}: Java missing {} internal core",
-        name,
-        lower
+        j.contains(&format!("RetCode {name}_Internal("))
+            || j.contains(&format!("RetCode {name}_Internal (")),
+        "{name}: Java missing {name} internal core"
     );
     assert!(
         !j.contains("Unguarded"),
@@ -323,25 +296,14 @@ fn test_all_indicators_all_backends() {
         };
 
         // Phase 2: run variant checks (failures here are real bugs)
+        // Every backend spells the indicator exactly as `input/` names it.
         let upper = func.name.clone();
         let snake = name.clone();
-        // Java method name comes from the YAML `camel_case` field (first char
-        // lower-cased), matching the backend; this captures the historical
-        // irregular/typo names (e.g. ma -> movingAverage, willr -> willR).
-        let camel = func.camel_case.as_deref().map_or_else(
-            || to_camel(name),
-            |cc| {
-                let mut chars = cc.chars();
-                chars.next().map_or_else(String::new, |c| {
-                    c.to_lowercase().collect::<String>() + chars.as_str()
-                })
-            },
-        );
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             check_c_variants(&out.c, &upper, &snake);
-            check_rust_generic_variants(&out.rust, &snake, &snake);
-            check_java_variants(&out.java, &camel, &snake);
+            check_rust_generic_variants(&out.rust, &upper);
+            check_java_variants(&out.java, &upper);
             check_c_int_alias(&out.c, &upper, &snake);
             check_rust_cast_parens(&out.rust, &snake);
         }));
@@ -435,18 +397,18 @@ fn test_ma_java_cross_calls() {
     let j = &out.java;
 
     assert!(
-        j.contains("smaLookback("),
-        "Java: MA should call smaLookback"
+        j.contains("SMA_Lookback("),
+        "Java: MA should call SMA_Lookback"
     );
     assert!(
-        j.contains("emaLookback("),
-        "Java: MA should call emaLookback"
+        j.contains("EMA_Lookback("),
+        "Java: MA should call EMA_Lookback"
     );
     // Bare cross-indicator calls resolve to the guarded internal core, which
     // keeps the C-shaped MInteger out-params — going through the public
     // OutRange wrapper would allocate a throwaway MInteger pair per call.
-    assert!(j.contains("smaInternal("), "Java: MA should call smaInternal");
-    assert!(j.contains("emaInternal("), "Java: MA should call emaInternal");
+    assert!(j.contains("SMA_Internal("), "Java: MA should call SMA_Internal");
+    assert!(j.contains("EMA_Internal("), "Java: MA should call EMA_Internal");
     assert!(
         !j.contains("smaUnguardedInternal(") && !j.contains("emaUnguardedInternal("),
         "Java: MA must not call the unguarded cores"
@@ -461,21 +423,21 @@ fn test_ma_rust_cross_calls() {
 
     // Lookback calls remain the same.
     assert!(
-        r.contains("self.sma_lookback("),
-        "Rust: MA should call self.sma_lookback"
+        r.contains("self.SMA_Lookback("),
+        "Rust: MA should call self.SMA_Lookback"
     );
     assert!(
-        r.contains("self.ema_lookback("),
-        "Rust: MA should call self.ema_lookback"
+        r.contains("self.EMA_Lookback("),
+        "Rust: MA should call self.EMA_Lookback"
     );
     // Bare cross-indicator calls go to the guarded fn
     assert!(
-        r.contains("self.sma("),
-        "Rust: MA should call self.sma"
+        r.contains("self.SMA("),
+        "Rust: MA should call self.SMA"
     );
     assert!(
-        r.contains("self.ema("),
-        "Rust: MA should call self.ema"
+        r.contains("self.EMA("),
+        "Rust: MA should call self.EMA"
     );
     assert!(
         !r.contains("self.sma_unguarded(") && !r.contains("self.ema_unguarded("),
@@ -493,6 +455,26 @@ fn test_ma_rust_cross_calls() {
 /// a missing end marker silently turns a bounded `contains(..)` assertion into
 /// "the whole output mentions this somewhere", so a test keeps passing while
 /// checking strictly less.
+/// Does `hay` contain a CALL to `name`, as opposed to merely the substring?
+///
+/// `RSI_Lookback(` is a suffix of `STOCHRSI_Lookback(`, so a bare `contains`
+/// asserting that STOCHRSI calls RSI is satisfied by STOCHRSI's own definition
+/// and can never fail. Requiring a non-identifier character before the name is
+/// what makes the assertion mean what it says.
+fn contains_call(hay: &str, name: &str) -> bool {
+    let needle = format!("{name}(");
+    let mut from = 0;
+    while let Some(rel) = hay[from..].find(&needle) {
+        let at = from + rel;
+        let prev = hay[..at].chars().next_back();
+        if !prev.is_some_and(|c| c.is_ascii_alphanumeric() || c == '_') {
+            return true;
+        }
+        from = at + 1;
+    }
+    false
+}
+
 fn extract_section(output: &str, start_marker: &str, end_marker: &str) -> String {
     let start = output
         .find(start_marker)
@@ -552,7 +534,7 @@ fn test_java_sma_guarded_has_validation() {
     // Extract the double-precision core, bounded before the float overload
     // Bounded to the DOUBLE core alone: the float twin is an overload with the
     // same name, so a marker that spans both would let it satisfy the assertion.
-    let guarded = extract_section(&out.java, "RetCode smaInternal( int startIdx", "double inReal[]");
+    let guarded = extract_section(&out.java, "RetCode SMA_Internal( int startIdx", "double inReal[]");
     let guarded = format!("{guarded}{}", extract_section(&out.java, "double inReal[]", "float inReal[]"));
     assert!(
         guarded.contains("OutOfRangeStartIndex"),
@@ -565,10 +547,10 @@ fn test_java_ema_private_omits_validation() {
     let (func, enums) = load_indicator("ema");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.java, "RetCode emaPrivate(", "RetCode emaInternal(");
+    let private = extract_section(&out.java, "RetCode EMA_Private(", "RetCode EMA_Internal(");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Java emaPrivate should NOT have start index validation"
+        "Java EMA_Private should NOT have start index validation"
     );
 }
 
@@ -579,7 +561,7 @@ fn test_rust_sma_guarded_has_validation() {
 
     // The guarded Rust function holds the algorithm and validates first, bounded
     // by the end of the impl block.
-    let guarded = extract_section(&out.rust, "pub fn sma(", "\n}\n");
+    let guarded = extract_section(&out.rust, "pub fn SMA(", "\n}\n");
     assert!(
         guarded.contains("endIdx < startIdx"),
         "Rust guarded SMA should have endIdx < startIdx check"
@@ -593,13 +575,13 @@ fn test_rust_ema_private_omits_validation() {
 
     // `pub(crate)`, matching C's file-`static` TA_EMA_Private (#180): skipping
     // validation is only sound while the callers are the guarded bodies.
-    let private = extract_section(&out.rust, "pub(crate) fn ema_private(", "\n}\n");
+    let private = extract_section(&out.rust, "pub(crate) fn EMA_Private(", "\n}\n");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Rust ema_private should NOT have range validation"
+        "Rust EMA_Private should NOT have range validation"
     );
     assert!(
-        !out.rust.contains("pub fn ema_private("),
+        !out.rust.contains("pub fn EMA_Private("),
         "Rust ema_private must not be crate-public: it is the one entry point with no \
          validation prologue, so a `pub` here bypasses the TA_MAX_INDEX bound (#180)"
     );
@@ -766,11 +748,11 @@ fn test_ma_java_switch_statement() {
         out.java.contains("switch(") || out.java.contains("switch ("),
         "Java MA should contain a switch statement"
     );
-    // Enum switch case labels must be UNQUALIFIED ("case Sma:") — qualified
+    // Enum switch case labels must be UNQUALIFIED ("case SMA:") — qualified
     // labels are Java 21+ syntax and the shipped Core.java must compile on
     // older JDKs.
     assert!(
-        out.java.contains("case Sma:") || out.java.contains("case Ema:"),
+        out.java.contains("case SMA:") || out.java.contains("case EMA:"),
         "Java MA should use unqualified enum case labels"
     );
     assert!(
@@ -1148,8 +1130,8 @@ fn test_rust_generic_output_smoke() {
 
     // 1. Concrete f64 signatures present (no generics)
     assert!(
-        r.contains("pub fn sma("),
-        "Rust SMA should have pub fn sma("
+        r.contains("pub fn SMA("),
+        "Rust SMA should have pub fn SMA("
     );
     assert!(
         !r.contains("_unguarded"),
@@ -1187,10 +1169,10 @@ fn test_rust_generic_output_smoke() {
     // 6. Exactly 4 pub fn: guarded + lookback + the stream tier's open +
     // open_and_fill (open_internal is pub(crate), update/peek live on the handle
     // type).
-    let pub_fn_count = r.matches("pub fn sma").count();
+    let pub_fn_count = r.matches("pub fn SMA").count();
     assert_eq!(
         pub_fn_count, 4,
-        "Rust SMA should have exactly 4 pub fn (sma, sma_lookback, sma_open, sma_open_and_fill), got {}",
+        "Rust SMA should have exactly 4 pub fn (sma, SMA_Lookback, SMA_Open, SMA_OpenAndFill), got {}",
         pub_fn_count
     );
 }
@@ -1802,7 +1784,6 @@ fn backends_render_max_min_fmax_fmin_abs() {
         name: "TESTFUNC".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![Input::new("inReal", ParamType::Real)],
@@ -2302,7 +2283,6 @@ fn make_func_with_helper_call(
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -2395,7 +2375,6 @@ fn inlining_counter_avoids_name_collisions() {
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -2682,14 +2661,14 @@ fn candle_settings_unpacking_in_lookback() {
         "C lookback should contain candle settings unpacking"
     );
 
-    let rust_lookback_end = rust_out.find("pub fn cdl2crows(").unwrap();
+    let rust_lookback_end = rust_out.find("pub fn CDL2CROWS(").unwrap();
     let rust_lookback = &rust_out[..rust_lookback_end];
     assert!(
         rust_lookback.contains("self.candle_settings.body_long"),
         "Rust lookback should contain candle settings unpacking"
     );
 
-    let java_lookback_end = java_out.find("RetCode cdl2CrowsInternal(").unwrap();
+    let java_lookback_end = java_out.find("RetCode CDL2CROWS_Internal(").unwrap();
     let java_lookback = &java_out[..java_lookback_end];
     assert!(
         java_lookback.contains("this.candleSettings[CandleSettingType.BodyLong.ordinal()]"),
@@ -3698,12 +3677,12 @@ fn rust_cross_indicator_call_via_generate() {
 
     // Cross-indicator calls resolve to the guarded fn
     assert!(
-        rust_out.contains("self.sma("),
-        "MA Rust should call self.sma(): {rust_out}"
+        rust_out.contains("self.SMA("),
+        "MA Rust should call self.SMA(): {rust_out}"
     );
     assert!(
-        rust_out.contains("self.ema("),
-        "MA Rust should call self.ema(): {rust_out}"
+        rust_out.contains("self.EMA("),
+        "MA Rust should call self.EMA(): {rust_out}"
     );
     // `self.` makes this a call, not a definition, so the negative is real.
     // step 1 still emits — so the negative is real, not vacuous.
@@ -3715,17 +3694,30 @@ fn rust_cross_indicator_call_via_generate() {
 
 #[test]
 fn rust_cross_indicator_lookback_with_pascal_case() {
-    // func_call where fname ends in _Lookback: exercises the _Lookback branch
-    let (func, enums) = load_indicator("ma");
-    let registry = make_registry();
-    let helpers = make_helpers();
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-
-    // MA calls SMA_Lookback which renders as self.sma_lookback
-    assert!(
-        rust_out.contains("self.sma_lookback("),
-        "MA Rust should call self.sma_lookback(): {rust_out}"
-    );
+    // Two authored spellings name the same lookback — the prefix-free
+    // `sma_lookback`, and the legacy `TA_SMA_Lookback` whose `TA_` the parser
+    // strips. Both must render as the SAME method call on `self`.
+    //
+    // Rendered through the statement renderer, not through an indicator: every
+    // shipped input uses the lower-case spelling, so generating a real function
+    // exercises one arm and silently leaves the other unpinned. That is how the
+    // legacy arm was once lost — a build of the crate is the only thing that
+    // catches it, and only if some input happens to use the spelling.
+    for fname in ["sma_lookback", "SMA_Lookback"] {
+        let stmt = ir::Statement::Assign {
+            target: ir::Expr::Var("lookbackTotal".to_string()),
+            value: ir::Expr::FuncCall(
+                (*fname).to_string(),
+                vec![ir::Expr::Var("optInTimePeriod".to_string())],
+            ),
+            compound: false,
+        };
+        let rendered = render_rust_stmt(&stmt);
+        assert!(
+            rendered.contains("self.SMA_Lookback("),
+            "`{fname}` must render as self.SMA_Lookback(), got: {rendered}"
+        );
+    }
 }
 
 #[test]
@@ -3742,15 +3734,15 @@ fn rust_private_cross_indicator_call() {
     let (func, enums) = load_indicator("ma");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.ema("),
-        "MA Rust dispatch should call self.ema(): {rust_out}"
+        rust_out.contains("self.EMA("),
+        "MA Rust dispatch should call self.EMA(): {rust_out}"
     );
 
     let (func, enums) = load_indicator("ema");
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     assert!(
-        rust_out.contains("self.ema_private("),
-        "EMA Rust guarded body should delegate to self.ema_private(): {rust_out}"
+        rust_out.contains("self.EMA_Private("),
+        "EMA Rust guarded body should delegate to self.EMA_Private(): {rust_out}"
     );
 }
 
@@ -3766,8 +3758,8 @@ fn rust_cross_indicator_vec_input_gets_ref() {
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
     assert!(
-        rust_out.contains("self.ma(") && rust_out.contains("&tempBuffer"),
-        "STOCH Rust should pass &tempBuffer into self.ma(): {rust_out}"
+        rust_out.contains("self.MA(") && rust_out.contains("&tempBuffer"),
+        "STOCH Rust should pass &tempBuffer into self.MA(): {rust_out}"
     );
 }
 
@@ -3784,9 +3776,9 @@ fn rust_is_ta_function_renders_self_call() {
     }));
     if let Ok(rust_out) = result {
         // Should contain self.rsi or self.stochf calls
-        let has_cross_call = rust_out.contains("self.rsi")
-            || rust_out.contains("self.stochf")
-            || rust_out.contains("self.sma");
+        let has_cross_call = rust_out.contains("self.RSI")
+            || rust_out.contains("self.STOCHF")
+            || rust_out.contains("self.SMA");
         assert!(
             has_cross_call,
             "STOCHRSI Rust should contain cross-indicator self.xxx calls: {rust_out}"
@@ -3809,7 +3801,7 @@ fn rust_lookback_code_rendering_cdlkicking() {
 
     // Lookback function should exist
     assert!(
-        rust_out.contains("_lookback("),
+        rust_out.contains("_Lookback("),
         "CDL indicator should have lookback function: {rust_out}"
     );
     // Candle settings should be unpacked
@@ -3829,7 +3821,7 @@ fn rust_lookback_code_with_vars() {
 
     // CDL indicators have local vars in their lookback body (e.g., lookbackTotal)
     // They should be declared as `let mut` or `let`
-    let lookback_section = extract_section(&rust_out, "_lookback(", "pub fn cdlkicking(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn CDLKICKING(");
     assert!(
         lookback_section.contains("let ") || lookback_section.contains("let mut "),
         "Lookback code should declare local variables: {lookback_section}"
@@ -3844,7 +3836,7 @@ fn rust_lookback_literal_renders_return() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_lookback(", "pub fn mult(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn MULT(");
     assert!(
         lookback_section.contains("return"),
         "Lookback should have return statement: {lookback_section}"
@@ -4026,7 +4018,7 @@ fn rust_func_call_unstable_period() {
     };
     let rendered = render_rust_stmt(&stmt);
     assert!(
-        rendered.contains("self.unstable_period[FuncUnstId::Rsi as usize]"),
+        rendered.contains("self.unstable_period[FuncUnstId::RSI as usize]"),
         "UNSTABLE_PERIOD should render with FuncUnstId: {rendered}"
     );
 }
@@ -4520,7 +4512,6 @@ fn rust_lookback_param_minus() {
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -4575,7 +4566,6 @@ fn rust_lookback_none() {
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -4600,7 +4590,7 @@ fn rust_lookback_none() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_lookback(", "pub fn test(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn TEST(");
     assert!(
         lookback_section.contains("return 0"),
         "None lookback should return 0: {lookback_section}"
@@ -4778,7 +4768,6 @@ fn rust_lookback_code_renders_var_types_correctly() {
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -4803,7 +4792,7 @@ fn rust_lookback_code_renders_var_types_correctly() {
     let helpers = HelperRegistry::empty();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    let lookback_section = extract_section(&rust_out, "_lookback(", "pub fn test(");
+    let lookback_section = extract_section(&rust_out, "_Lookback(", "pub fn TEST(");
     // sum has no assignments in the body, so count_assignments returns 0 => `let` not `let mut`
     assert!(
         lookback_section.contains("let sum: f64 = 0.0_f64"),
@@ -4876,7 +4865,6 @@ fn rust_lookback_body_never_fuses_multiply_add() {
         name: "TEST".to_string(),
         group: "Test".to_string(),
         description: None,
-        camel_case: None,
         hint: None,
         flags: vec![],
         inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -4898,7 +4886,7 @@ fn rust_lookback_body_never_fuses_multiply_add() {
     };
     let enums = HashMap::new();
     let out = backends::rust_lang::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
-    let section = extract_section(&out, "_lookback(", "pub fn test(");
+    let section = extract_section(&out, "_Lookback(", "pub fn TEST(");
     let section = &section[..section.find("\n    }").expect("lookback body must close")];
     assert!(
         section.contains("acc = acc + scale * bias"),
@@ -4952,7 +4940,6 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
             name: "TEST".to_string(),
             group: "Test".to_string(),
             description: None,
-            camel_case: None,
             hint: None,
             flags: vec![],
             inputs: vec![ir::Input::new("inReal", ir::ParamType::Real)],
@@ -4986,7 +4973,7 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
         let registry = make_registry();
         let helpers = HelperRegistry::empty();
         let out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
-        let section = extract_section(&out, "_lookback(", "pub fn test(");
+        let section = extract_section(&out, "_Lookback(", "pub fn TEST(");
         // Stop at the lookback's own closing brace — the tail of that slice is
         // the guarded function's rustdoc, whose doctest mentions `as f64`.
         let end = section.find("\n    }").expect("lookback body must close");
@@ -5355,12 +5342,12 @@ fn java_ma_cross_indicator_calls() {
     // Anchor the call site so demaInternal(/temaInternal( (adjacent dispatch
     // arms) cannot substring-shadow the EMA arm.
     assert!(
-        j.contains("= emaInternal("),
-        "Java MA should call emaInternal(): {j}"
+        j.contains("= EMA_Internal("),
+        "Java MA should call EMA_Internal(): {j}"
     );
     assert!(
-        j.contains("= emaLookback("),
-        "Java MA should call emaLookback(): {j}"
+        j.contains("= EMA_Lookback("),
+        "Java MA should call EMA_Lookback(): {j}"
     );
 }
 
@@ -5374,14 +5361,16 @@ fn java_stochrsi_cross_indicator_calls() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    // STOCHRSI calls rsi and stochf (stochf's Java name is the irregular `stochF`)
+    // STOCHRSI composes RSI and STOCHF, and must call BOTH. `contains_call`
+    // rather than `contains`: `RSI_Lookback(` is a suffix of STOCHRSI's own
+    // `STOCHRSI_Lookback(`, so a plain substring test cannot fail here.
     assert!(
-        j.contains("rsiInternal(") || j.contains("rsiLookback("),
-        "Java STOCHRSI should call rsi: {j}"
+        contains_call(j, "RSI_Internal") && contains_call(j, "RSI_Lookback"),
+        "Java STOCHRSI should call RSI_Internal and RSI_Lookback: {j}"
     );
     assert!(
-        j.contains("stochFInternal(") || j.contains("stochFLookback("),
-        "Java STOCHRSI should call stochF: {j}"
+        contains_call(j, "STOCHF_Internal") && contains_call(j, "STOCHF_Lookback"),
+        "Java STOCHRSI should call STOCHF_Internal and STOCHF_Lookback: {j}"
     );
 }
 
@@ -5419,7 +5408,7 @@ fn java_ma_switch_variable_rendering() {
     );
     // Should render enum cases with UNQUALIFIED labels (pre-Java-21 compatible)
     assert!(
-        j.contains("case Sma:") || j.contains("case Ema:"),
+        j.contains("case SMA:") || j.contains("case EMA:"),
         "Java MA should use unqualified enum case labels in switch: {j}"
     );
     assert!(
@@ -6269,10 +6258,10 @@ fn java_macd_lookback_code_rendering() {
     let out = generate_all(&func, &enums);
     let j = &out.java;
 
-    let lookback_end = j.find("RetCode macdInternal(").unwrap();
+    let lookback_end = j.find("RetCode MACD_Internal(").unwrap();
     let lookback = &j[..lookback_end];
     assert!(
-        lookback.contains("macdLookback"),
+        lookback.contains("MACD_Lookback"),
         "Java MACD should have lookback function"
     );
 }
@@ -6293,10 +6282,11 @@ fn stochrsi_lookback_cross_calls() {
         "C STOCHRSI lookback should have cross-indicator lookback calls"
     );
 
-    // Java lookback should call rsiLookback and stochfLookback
+    // Java lookback sums both callees' lookbacks. `contains_call` for the same
+    // reason as above — `RSI_Lookback(` is a suffix of `STOCHRSI_Lookback(`.
     let j = &out.java;
     assert!(
-        j.contains("rsiLookback(") || j.contains("stochfLookback("),
+        contains_call(j, "RSI_Lookback") && contains_call(j, "STOCHF_Lookback"),
         "Java STOCHRSI lookback should have cross-indicator lookback calls"
     );
 }
@@ -6327,7 +6317,7 @@ fn java_var_name_mappings() {
     let matype = &enums["MAType"];
     assert!(!matype.variants.is_empty(), "MAType enum should be non-empty");
     for v in &matype.variants {
-        cases.push((v.c_name.clone(), format!("MAType.{}", v.pascal_name)));
+        cases.push((v.c_name.clone(), format!("MAType.{}", v.name)));
     }
 
     for (var_name, expected) in cases {
@@ -7897,7 +7887,7 @@ fn csharp_matype_emits_every_yaml_variant_with_its_value() {
     let ma = enums.get("MAType").expect("MAType in enums.yaml");
 
     for v in &ma.variants {
-        let decl = format!("    {} = {},", v.pascal_name, v.value);
+        let decl = format!("    {} = {},", v.name, v.value);
         assert!(
             src.contains(&decl),
             "MAType.cs is missing `{decl}` -- a variant silently dropped from the \
@@ -7927,8 +7917,8 @@ fn csharp_funcunstid_pins_the_all_sentinel_and_the_count() {
     // The ABI pin. C pins TA_FUNC_UNST_ALL at 65535; a renumber here silently
     // repoints every caller's set_unstable_period and nothing else catches it.
     assert!(
-        src.contains("All = 65535,"),
-        "FuncUnstId.cs must pin `All = 65535`:\n{src}"
+        src.contains("ALL = 65535,"),
+        "FuncUnstId.cs must pin `ALL = 65535`:\n{src}"
     );
     assert!(
         src.contains(&format!("public const int Count = {};", fu.variants.len())),
@@ -7937,7 +7927,7 @@ fn csharp_funcunstid_pins_the_all_sentinel_and_the_count() {
         fu.variants.len()
     );
     for v in &fu.variants {
-        let decl = format!("    {} = {},", v.pascal_name, v.value);
+        let decl = format!("    {} = {},", v.name, v.value);
         assert!(
             src.contains(&decl),
             "FuncUnstId.cs is missing `{decl}`:\n{src}"
@@ -7951,45 +7941,44 @@ fn csharp_funcunstid_pins_the_all_sentinel_and_the_count() {
 }
 
 #[test]
-fn csharp_resolve_call_agrees_with_pascal_method_naming() {
-    // If Registry::csharp_base and the emitter's method naming disagree, every
+fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
+    // If Registry::name_of and the emitter's method naming disagree, every
     // cross-indicator call targets a method that does not exist -- and that will
     // not surface until the backend emits bodies, as a wall of CS0103.
     let registry = make_registry();
-
-    // Pinned literals first. The structural checks below are self-consistent
-    // whatever csharp_base returns -- deriving it from the dir-name yields
-    // `Willr` and still satisfies every one of them. Only these catch that.
-    for (dir, want) in [
-        ("willr", "WillR"),
-        ("stochf", "StochF"),
-        ("ma", "MovingAverage"),
-    ] {
-        assert_eq!(
-            registry.resolve_call(dir, ta_codegen_lib::registry::Lang::CSharp),
-            want,
-            "{dir}: C# base must be the PascalCase of the YAML camel_case, not of \
-             the directory name"
-        );
-    }
+    let enums = load_enums();
+    let helpers = make_helpers();
 
     for name in discover_indicators() {
+        let (func, _) = load_indicator(&name);
         let bare = registry.resolve_call(&name, ta_codegen_lib::registry::Lang::CSharp);
-        let lookback = registry.resolve_call(&format!("{name}_lookback"), ta_codegen_lib::registry::Lang::CSharp);
+        let lookback = registry.resolve_call(
+            &format!("{name}_lookback"),
+            ta_codegen_lib::registry::Lang::CSharp,
+        );
         assert!(
             !bare.ends_with("Unguarded"),
             "{name}: bare cross-indicator call must resolve to the guarded \
              entry point, got {bare}"
         );
-        let base = &bare;
+        // The resolved name is the YAML `name:` verbatim, and the suffix is
+        // separated by an underscore.
+        assert_eq!(bare, func.name, "{name}: C# base must be the YAML name verbatim");
         assert_eq!(
             lookback,
-            format!("{base}Lookback"),
-            "{name}: lookback and guarded names disagree on the PascalCase base"
+            format!("{}_Lookback", func.name),
+            "{name}: lookback and guarded names disagree on the base"
+        );
+        // What the resolver promises must be what the emitter actually writes —
+        // the literal a caller in another indicator will be compiled against.
+        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        assert!(
+            src.contains(&format!("RetCode {bare}(")),
+            "{name}: emitter never defines the `{bare}` the resolver hands out"
         );
         assert!(
-            base.chars().next().is_some_and(char::is_uppercase),
-            "{name}: C# base name must be PascalCase, got {base}"
+            src.contains(&format!("public int {lookback}(")),
+            "{name}: emitter never defines the `{lookback}` the resolver hands out"
         );
     }
 }
@@ -8036,7 +8025,7 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
             // private-delegating fused function would trip the dispatcher/clone
             // balance above on purpose.)
             assert!(
-                out.contains(&format!("fn {name}_fma(")),
+                out.contains(&format!("fn {}_fma(", func.name)),
                 "{name}: guarded variant lost its FMA clone"
             );
             // The fused sites live on in the renamed portable impl.
@@ -8280,39 +8269,45 @@ fn all_abstract_rows() -> Vec<ta_codegen_lib::backends::abstract_rows::FuncRow> 
 /// pins the resulting set both ways: a lost mapping and a spurious one both fail.
 #[test]
 fn abstract_rows_unstable_period_set_is_exactly_the_twenty() {
-    const EXPECTED: &[(&str, &str)] = &[
-        ("ADX", "Adx"),
-        ("ATR", "Atr"),
-        ("CMO", "Cmo"),
-        ("DX", "Dx"),
-        ("EMA", "Ema"),
-        ("HT_DCPERIOD", "HtDcPeriod"),
-        ("HT_DCPHASE", "HtDcPhase"),
-        ("HT_PHASOR", "HtPhasor"),
-        ("HT_SINE", "HtSine"),
-        ("HT_TRENDLINE", "HtTrendline"),
-        ("HT_TRENDMODE", "HtTrendMode"),
-        ("KAMA", "Kama"),
-        ("MAMA", "Mama"),
-        ("MINUS_DI", "MinusDI"),
-        ("MINUS_DM", "MinusDM"),
-        ("NATR", "Natr"),
-        ("PLUS_DI", "PlusDI"),
-        ("PLUS_DM", "PlusDM"),
-        ("RSI", "Rsi"),
-        ("T3", "T3"),
+    // (function name, its FuncUnstId ordinal). The NAME half would be a
+    // tautology on its own — `unst_row` resolves `TA_FUNC_UNST_<name>` and hands
+    // the variant's name back, so it can only ever equal the function's. The
+    // VALUE is the half worth pinning: it is authored in enums.yaml, it is the
+    // index every backend uses into `unstablePeriod[]`, and it is ABI. A slot
+    // that silently renumbers is what this table exists to catch.
+    const EXPECTED: &[(&str, i32)] = &[
+        ("ADX", 0),
+        ("ATR", 2),
+        ("CMO", 3),
+        ("DX", 4),
+        ("EMA", 5),
+        ("HT_DCPERIOD", 6),
+        ("HT_DCPHASE", 7),
+        ("HT_PHASOR", 8),
+        ("HT_SINE", 9),
+        ("HT_TRENDLINE", 10),
+        ("HT_TRENDMODE", 11),
+        ("KAMA", 13),
+        ("MAMA", 14),
+        ("MINUS_DI", 16),
+        ("MINUS_DM", 17),
+        ("NATR", 18),
+        ("PLUS_DI", 19),
+        ("PLUS_DM", 20),
+        ("RSI", 21),
+        ("T3", 23),
     ];
 
     let rows = all_abstract_rows();
-    let mut got: Vec<(String, String)> = rows
+    let mut got: Vec<(String, i32)> = rows
         .iter()
-        .filter_map(|r| r.unst.as_ref().map(|u| (r.name.clone(), u.pascal_name.clone())))
+        .filter_map(|r| r.unst.as_ref().map(|u| (r.name.clone(), u.value)))
         .collect();
     got.sort();
-    let mut want: Vec<(String, String)> =
-        EXPECTED.iter().map(|(a, b)| ((*a).to_string(), (*b).to_string())).collect();
+    let mut want: Vec<(String, i32)> =
+        EXPECTED.iter().map(|(a, b)| ((*a).to_string(), *b)).collect();
     want.sort();
-    assert_eq!(got, want, "unstable-period set changed (name -> FuncUnstId variant)");
+    assert_eq!(got, want, "unstable-period set or ordinal changed (name -> FuncUnstId value)");
 
     // The `unstable_period` function flag and the resolved id must not disagree:
     // one without the other means a function that says it is recursive but has

@@ -19,7 +19,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlHikkake} consumes before it
+    * Number of leading input bars {@link Core#CDLHIKKAKE} consumes before it
     * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -27,20 +27,20 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlHikkakeLookback( )
+   public int CDLHIKKAKE_Lookback( )
    {
       return 5 ;
 
    }
-   RetCode cdlHikkakeInternal( int startIdx,
-                               int endIdx,
-                               double inOpen[],
-                               double inHigh[],
-                               double inLow[],
-                               double inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode CDLHIKKAKE_Internal( int startIdx,
+                                int endIdx,
+                                double inOpen[],
+                                double inHigh[],
+                                double inLow[],
+                                double inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -61,7 +61,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -140,15 +140,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlHikkakeInternal( int startIdx,
-                               int endIdx,
-                               float inOpen[],
-                               float inHigh[],
-                               float inLow[],
-                               float inClose[],
-                               MInteger outBegIdx,
-                               MInteger outNBElement,
-                               int outInteger[] )
+   RetCode CDLHIKKAKE_Internal( int startIdx,
+                                int endIdx,
+                                float inOpen[],
+                                float inHigh[],
+                                float inLow[],
+                                float inClose[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -163,7 +163,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -222,7 +222,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHikkakeLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLHIKKAKE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -242,10 +242,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlHikkakeMod
-    * @see Core#cdlHarami
+    * @see Core#CDLHIKKAKEMOD
+    * @see Core#CDLHARAMI
     */
-   public OutRange cdlHikkake( int startIdx,
+   public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                double inOpen[],
                                double inHigh[],
@@ -255,7 +255,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHikkakeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHIKKAKE", retCode);
       }
@@ -273,7 +273,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlHikkakeLookback} is a <b>success
+    * valid range shorter than {@link Core#CDLHIKKAKE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -293,10 +293,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlHikkakeMod
-    * @see Core#cdlHarami
+    * @see Core#CDLHIKKAKEMOD
+    * @see Core#CDLHARAMI
     */
-   public OutRange cdlHikkake( int startIdx,
+   public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                float inOpen[],
                                float inHigh[],
@@ -306,7 +306,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHikkakeInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLHIKKAKE", retCode);
       }
@@ -316,8 +316,8 @@
 
    /**
     * A live CDLHIKKAKE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlHikkake} over the same series.
-    * Open with {@link Core#cdlHikkakeOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLHIKKAKE} over the same series.
+    * Open with {@link Core#CDLHIKKAKE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -328,7 +328,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlHikkakeStream {
+   public static final class CDLHIKKAKE_Stream {
       final Core core;
       int patternResult;
       int cd;
@@ -341,10 +341,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlHikkakeStream( Core core ) { this.core = core; }
+      CDLHIKKAKE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlHikkakeOpenAndFill}, or
+       * The range filled by {@link Core#CDLHIKKAKE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -352,7 +352,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlHikkakeStream( CdlHikkakeStream other ) {
+      CDLHIKKAKE_Stream( CDLHIKKAKE_Stream other ) {
          this.core = other.core;
          this.patternResult = other.patternResult;
          this.cd = other.cd;
@@ -371,7 +371,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlHikkakeStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLHIKKAKE_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -383,8 +383,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlHikkakeStream scratch = new CdlHikkakeStream(this);
-         core.cdlHikkakeStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);
+         core.CDLHIKKAKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -401,11 +401,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlHikkakeStream copy() {
-         return new CdlHikkakeStream(this);
+      public CDLHIKKAKE_Stream copy() {
+         return new CDLHIKKAKE_Stream(this);
       }
    }
-   void cdlHikkakeStreamStep( CdlHikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLHIKKAKE_StreamStep( CDLHIKKAKE_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -432,7 +432,7 @@
       sp.lag2_inLow = sp.lag1_inLow;
       sp.lag1_inLow = inLow;
    }
-   private RetCode cdlHikkakeOpenBody( CdlHikkakeStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLHIKKAKE_OpenBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       int i = 0;
       int outIdx = 0;
@@ -458,7 +458,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -547,7 +547,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlHikkakeOpenAndFillBody( CdlHikkakeStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLHIKKAKE_OpenAndFillBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       int i = 0;
       int outIdx = 0;
@@ -574,7 +574,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -663,11 +663,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlHikkakeOpen (composition seam). */
-   CdlHikkakeStream cdlHikkakeOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
+   CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlHikkakeStream sp = new CdlHikkakeStream(this);
-      RetCode retCode = cdlHikkakeOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      RetCode retCode = CDLHIKKAKE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -682,32 +682,32 @@
    /**
     * Open a live CDLHIKKAKE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlHikkake} at that bar.
-    * <p>The history must hold at least {@code cdlHikkakeLookback(...) + 1} bars
+    * to {@link Core#CDLHIKKAKE} at that bar.
+    * <p>The history must hold at least {@code CDLHIKKAKE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlHikkakeStream cdlHikkakeOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLHIKKAKE_Stream CDLHIKKAKE_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlHikkakeOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLHIKKAKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlHikkakeOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlHikkake} over the whole history in the same single pass
+    * {@link Core#CDLHIKKAKE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLHIKKAKE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlHikkakeStream#fillRange()}.
+    * {@link CDLHIKKAKE_Stream#fillRange()}.
     */
-   public CdlHikkakeStream cdlHikkakeOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlHikkakeStream sp = new CdlHikkakeStream(this);
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlHikkakeOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

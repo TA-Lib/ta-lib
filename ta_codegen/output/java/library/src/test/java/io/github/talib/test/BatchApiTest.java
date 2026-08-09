@@ -111,7 +111,7 @@ public class BatchApiTest {
         double[] input = { 2.0, 1.2, 1.5 };
         double[] output = new double[3];
 
-        OutRange r = Core.DEFAULT.max(0, 2, input, 2, output);
+        OutRange r = Core.DEFAULT.MAX(0, 2, input, 2, output);
 
         check(r.begIdx() == 1, "MAX begIdx == 1 (got " + r.begIdx() + ")");
         check(r.count() == 2, "MAX count == 2 (got " + r.count() + ")");
@@ -126,8 +126,8 @@ public class BatchApiTest {
         double[] in = closes(200);
         double[] out = new double[in.length];
 
-        OutRange r = Core.DEFAULT.movingAverage(0, in.length - 1, in, 10, MAType.Sma, out);
-        check(r.begIdx() == Core.DEFAULT.movingAverageLookback(10, MAType.Sma),
+        OutRange r = Core.DEFAULT.MA(0, in.length - 1, in, 10, MAType.SMA, out);
+        check(r.begIdx() == Core.DEFAULT.MA_Lookback(10, MAType.SMA),
               "SMA begIdx == lookback");
         check(r.count() == in.length - r.begIdx(), "SMA count fills to the end");
     }
@@ -148,8 +148,8 @@ public class BatchApiTest {
         double[] out = new double[100];
         java.util.Arrays.fill(out, SENTINEL);
 
-        int lookback = Core.DEFAULT.cmoLookback(Integer.MIN_VALUE);
-        OutRange r = Core.DEFAULT.cmo(0, in.length - 1, in, Integer.MIN_VALUE, out);
+        int lookback = Core.DEFAULT.CMO_Lookback(Integer.MIN_VALUE);
+        OutRange r = Core.DEFAULT.CMO(0, in.length - 1, in, Integer.MIN_VALUE, out);
 
         check(r.begIdx() == lookback, "CMO begIdx == lookback");
         check(r.count() > 0, "CMO produced values (so the tail check is not vacuous)");
@@ -173,10 +173,10 @@ public class BatchApiTest {
         double[] in = closes(10);
         double[] out = new double[10];
 
-        check(Core.DEFAULT.smaLookback(30) > 9,
+        check(Core.DEFAULT.SMA_Lookback(30) > 9,
               "the 30-period lookback really does exceed this 10-bar range");
 
-        OutRange r = Core.DEFAULT.sma(0, in.length - 1, in, 30, out);
+        OutRange r = Core.DEFAULT.SMA(0, in.length - 1, in, 30, out);
         check(r.count() == 0, "too-short range yields count == 0");
         check(r.isEmpty(), "too-short range is isEmpty()");
         check(r.begIdx() == 0, "empty range reports begIdx 0");
@@ -188,24 +188,24 @@ public class BatchApiTest {
         final double[] out = new double[100];
 
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(-1, 50, in, 10, out), "negative startIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.SMA(-1, 50, in, 10, out), "negative startIdx -> IndexOutOfBounds");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(0, -1, in, 10, out), "negative endIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.SMA(0, -1, in, 10, out), "negative endIdx -> IndexOutOfBounds");
         checkThrows(IndexOutOfBoundsException.class,
-            () -> Core.DEFAULT.sma(50, 10, in, 10, out), "endIdx < startIdx -> IndexOutOfBounds");
+            () -> Core.DEFAULT.SMA(50, 10, in, 10, out), "endIdx < startIdx -> IndexOutOfBounds");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.sma(0, 50, in, 0, out), "period below range -> IllegalArgument");
+            () -> Core.DEFAULT.SMA(0, 50, in, 0, out), "period below range -> IllegalArgument");
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
         checkThrows(NullPointerException.class,
-            () -> Core.DEFAULT.sma(0, 50, (double[]) null, 10, out),
+            () -> Core.DEFAULT.SMA(0, 50, (double[]) null, 10, out),
             "null input -> NullPointerException");
 
         // Two outputs sharing one array has no correct answer (issue #108).
         final double[] shared = new double[100];
         final double[] third = new double[100];
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.bbands(0, 50, in, 20, 2.0, 2.0, MAType.Sma, shared, shared, third),
+            () -> Core.DEFAULT.BBANDS(0, 50, in, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
             "aliased output arrays -> IllegalArgument");
     }
 
@@ -224,11 +224,11 @@ public class BatchApiTest {
         // Non-vacuity: the reflection actually sees the surface it is asserting over.
         int sma = 0;
         for (java.lang.reflect.Method m : Core.class.getMethods()) {
-            if (m.getName().equals("sma")) {
+            if (m.getName().equals("SMA")) {
                 sma++;
             }
         }
-        check(sma >= 2, "reflection sees the sma overloads it is filtering over");
+        check(sma >= 2, "reflection sees the SMA overloads it is filtering over");
     }
 
     /** The float overload adopts the identical shape (C's TA_S_* parity). */
@@ -241,8 +241,8 @@ public class BatchApiTest {
         double[] outD = new double[100];
         double[] outF = new double[100];
 
-        OutRange rd = Core.DEFAULT.sma(0, in.length - 1, in, 10, outD);
-        OutRange rf = Core.DEFAULT.sma(0, inF.length - 1, inF, 10, outF);
+        OutRange rd = Core.DEFAULT.SMA(0, in.length - 1, in, 10, outD);
+        OutRange rf = Core.DEFAULT.SMA(0, inF.length - 1, inF, 10, outF);
 
         check(rd.equals(rf), "float overload reports the same OutRange");
         check(rf.count() > 0, "float overload produced values");

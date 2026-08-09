@@ -55,7 +55,7 @@ public partial class Core
     *  090807 MF     Initial Version
     */
    /// <summary>
-   /// Number of leading input bars <c>Sqrt</c> consumes before it can produce
+   /// Number of leading input bars <c>SQRT</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -64,12 +64,12 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int SqrtLookback( )
+   public int SQRT_Lookback( )
    {
       return 0 ;
 
    }
-   internal RetCode Sqrt( int startIdx,
+   internal RetCode SQRT( int startIdx,
                           int endIdx,
                           double[] inReal,
                           out int outBegIdx,
@@ -93,7 +93,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode Sqrt( int startIdx,
+   internal RetCode SQRT( int startIdx,
                           int endIdx,
                           float[] inReal,
                           out int outBegIdx,
@@ -130,7 +130,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SqrtLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>SQRT_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -147,12 +147,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Sqrt( int startIdx,
+   public OutRange SQRT( int startIdx,
                          int endIdx,
                          double[] inReal,
                          double[] outReal )
    {
-      RetCode retCode = Sqrt(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SQRT(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SQRT", retCode);
       }
@@ -177,7 +177,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>SqrtLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>SQRT_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -194,12 +194,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Sqrt( int startIdx,
+   public OutRange SQRT( int startIdx,
                          int endIdx,
                          float[] inReal,
                          double[] outReal )
    {
-      RetCode retCode = Sqrt(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = SQRT(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SQRT", retCode);
       }

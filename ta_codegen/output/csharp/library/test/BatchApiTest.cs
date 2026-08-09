@@ -124,7 +124,7 @@ public static class BatchApiTest
         double[] input = { 2.0, 1.2, 1.5 };
         var output = new double[3];
 
-        OutRange r = core.Max(0, 2, input, 2, output);
+        OutRange r = core.MAX(0, 2, input, 2, output);
 
         Check(r.BegIdx == 1, $"MAX BegIdx == 1 (got {r.BegIdx})");
         Check(r.Count == 2, $"MAX Count == 2 (got {r.Count})");
@@ -141,8 +141,8 @@ public static class BatchApiTest
         double[] input = Closes(200);
         var output = new double[input.Length];
 
-        OutRange r = core.MovingAverage(0, input.Length - 1, input, 10, MAType.Sma, output);
-        Check(r.BegIdx == core.MovingAverageLookback(10, MAType.Sma), "SMA BegIdx == lookback");
+        OutRange r = core.MA(0, input.Length - 1, input, 10, MAType.SMA, output);
+        Check(r.BegIdx == core.MA_Lookback(10, MAType.SMA), "SMA BegIdx == lookback");
         Check(r.Count == input.Length - r.BegIdx, "SMA Count fills to the end");
     }
 
@@ -165,8 +165,8 @@ public static class BatchApiTest
         var output = new double[100];
         Array.Fill(output, sentinel);
 
-        int lookback = core.CmoLookback(int.MinValue);
-        OutRange r = core.Cmo(0, input.Length - 1, input, int.MinValue, output);
+        int lookback = core.CMO_Lookback(int.MinValue);
+        OutRange r = core.CMO(0, input.Length - 1, input, int.MinValue, output);
 
         Check(r.BegIdx == lookback, "CMO BegIdx == lookback");
         Check(r.Count > 0, "CMO produced values (so the tail check is not vacuous)");
@@ -194,10 +194,10 @@ public static class BatchApiTest
         double[] input = Closes(10);
         var output = new double[10];
 
-        Check(core.SmaLookback(30) > 9,
+        Check(core.SMA_Lookback(30) > 9,
               "the 30-period lookback really does exceed this 10-bar range");
 
-        OutRange r = core.Sma(0, input.Length - 1, input, 30, output);
+        OutRange r = core.SMA(0, input.Length - 1, input, 30, output);
         Check(r.Count == 0, "too-short range yields Count == 0");
         Check(r.IsEmpty, "too-short range IsEmpty");
         Check(r.BegIdx == 0, "empty range reports BegIdx 0");
@@ -211,25 +211,25 @@ public static class BatchApiTest
         var output = new double[100];
 
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.Sma(-1, 50, input, 10, output), "negative startIdx -> ArgumentOutOfRange");
+            () => core.SMA(-1, 50, input, 10, output), "negative startIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.Sma(0, -1, input, 10, output), "negative endIdx -> ArgumentOutOfRange");
+            () => core.SMA(0, -1, input, 10, output), "negative endIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentOutOfRangeException>(
-            () => core.Sma(50, 10, input, 10, output), "endIdx < startIdx -> ArgumentOutOfRange");
+            () => core.SMA(50, 10, input, 10, output), "endIdx < startIdx -> ArgumentOutOfRange");
         CheckThrows<ArgumentException>(
-            () => core.Sma(0, 50, input, 0, output), "period below range -> ArgumentException");
+            () => core.SMA(0, 50, input, 0, output), "period below range -> ArgumentException");
 
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
         CheckThrows<NullReferenceException>(
-            () => core.Sma(0, 50, (double[])null!, 10, output),
+            () => core.SMA(0, 50, (double[])null!, 10, output),
             "null input -> NullReferenceException");
 
         // Two outputs sharing one array has no correct answer (issue #108).
         var shared = new double[100];
         var third = new double[100];
         CheckThrows<ArgumentException>(
-            () => core.Bbands(0, 50, input, 20, 2.0, 2.0, MAType.Sma, shared, shared, third),
+            () => core.BBANDS(0, 50, input, 20, 2.0, 2.0, MAType.SMA, shared, shared, third),
             "aliased output arrays -> ArgumentException");
     }
 
@@ -247,14 +247,14 @@ public static class BatchApiTest
             {
                 leaked++;
             }
-            if (m.Name == "Sma")
+            if (m.Name == "SMA")
             {
                 sma++;
             }
         }
         Check(leaked == 0, "no Unguarded method survives on the public Core surface");
         // Non-vacuity: the reflection actually sees the surface it is asserting over.
-        Check(sma >= 2, "reflection sees the Sma overloads it is filtering over");
+        Check(sma >= 2, "reflection sees the SMA overloads it is filtering over");
     }
 
     /// <summary>The float overload adopts the identical shape (C's TA_S_* parity).</summary>
@@ -270,8 +270,8 @@ public static class BatchApiTest
         var outputD = new double[100];
         var outputF = new double[100];
 
-        OutRange rd = core.Sma(0, input.Length - 1, input, 10, outputD);
-        OutRange rf = core.Sma(0, inputF.Length - 1, inputF, 10, outputF);
+        OutRange rd = core.SMA(0, input.Length - 1, input, 10, outputD);
+        OutRange rf = core.SMA(0, inputF.Length - 1, inputF, 10, outputF);
 
         Check(rd.BegIdx == rf.BegIdx && rd.Count == rf.Count,
               "float overload reports the same OutRange");
@@ -307,11 +307,11 @@ public static class BatchApiTest
         var outputDefault = new double[200];
         var outputExplicit = new double[200];
 
-        Check(core.SmaLookback(int.MinValue) == core.SmaLookback(30),
+        Check(core.SMA_Lookback(int.MinValue) == core.SMA_Lookback(30),
               "SMA lookback: int.MinValue == the documented default of 30");
 
-        OutRange rDefault = core.Sma(0, input.Length - 1, input, int.MinValue, outputDefault);
-        OutRange rExplicit = core.Sma(0, input.Length - 1, input, 30, outputExplicit);
+        OutRange rDefault = core.SMA(0, input.Length - 1, input, int.MinValue, outputDefault);
+        OutRange rExplicit = core.SMA(0, input.Length - 1, input, 30, outputExplicit);
 
         Check(rDefault.BegIdx == rExplicit.BegIdx && rDefault.Count == rExplicit.Count,
               "SMA: int.MinValue reports the same range as period 30");

@@ -62,7 +62,7 @@ public partial class Core
     *               batch results (verified vs v0.6.4).
     */
    /// <summary>
-   /// Number of leading input bars <c>CdlHikkakeMod</c> consumes before it can
+   /// Number of leading input bars <c>CDLHIKKAKEMOD</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -71,7 +71,7 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CdlHikkakeModLookback( )
+   public int CDLHIKKAKEMOD_Lookback( )
    {
       int Near_rangeType = (int)this.candleSettings[(int)CandleSettingType.Near].rangeType;
       int Near_avgPeriod = this.candleSettings[(int)CandleSettingType.Near].avgPeriod;
@@ -79,7 +79,7 @@ public partial class Core
       return Math.Max(1, Near_avgPeriod) + 5 ;
 
    }
-   internal RetCode CdlHikkakeMod( int startIdx,
+   internal RetCode CDLHIKKAKEMOD( int startIdx,
                                    int endIdx,
                                    double[] inOpen,
                                    double[] inHigh,
@@ -116,7 +116,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CdlHikkakeModLookback();
+      lookbackTotal = CDLHIKKAKEMOD_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -217,7 +217,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlHikkakeMod( int startIdx,
+   internal RetCode CDLHIKKAKEMOD( int startIdx,
                                    int endIdx,
                                    float[] inOpen,
                                    float[] inHigh,
@@ -247,7 +247,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlHikkakeModLookback();
+      lookbackTotal = CDLHIKKAKEMOD_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -325,7 +325,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlHikkakeModLookback</c> is a
+   /// NaN. A valid range shorter than <c>CDLHIKKAKEMOD_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -346,7 +346,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlHikkakeMod( int startIdx,
+   public OutRange CDLHIKKAKEMOD( int startIdx,
                                   int endIdx,
                                   double[] inOpen,
                                   double[] inHigh,
@@ -354,7 +354,7 @@ public partial class Core
                                   double[] inClose,
                                   int[] outInteger )
    {
-      RetCode retCode = CdlHikkakeMod(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKEMOD", retCode);
       }
@@ -381,7 +381,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlHikkakeModLookback</c> is a
+   /// NaN. A valid range shorter than <c>CDLHIKKAKEMOD_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -402,7 +402,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlHikkakeMod( int startIdx,
+   public OutRange CDLHIKKAKEMOD( int startIdx,
                                   int endIdx,
                                   float[] inOpen,
                                   float[] inHigh,
@@ -410,7 +410,7 @@ public partial class Core
                                   float[] inClose,
                                   int[] outInteger )
    {
-      RetCode retCode = CdlHikkakeMod(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKEMOD(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKEMOD", retCode);
       }

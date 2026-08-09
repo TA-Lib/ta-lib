@@ -119,7 +119,7 @@ public class CoreApiTest {
         for (Core core : new Core[] { Core.DEFAULT, new Core(), Core.builder().build() }) {
             boolean allZero = true;
             for (FuncUnstId id : FuncUnstId.values()) {
-                if (id == FuncUnstId.All) {
+                if (id == FuncUnstId.ALL) {
                     continue;   // All / None are sentinels, not functions
                 }
                 if (core.unstablePeriod(id) != 0) {
@@ -131,22 +131,22 @@ public class CoreApiTest {
     }
 
     static void builderSetsOnePeriod() {
-        Core core = Core.builder().unstablePeriod(FuncUnstId.Rsi, 10).build();
-        check(core.unstablePeriod(FuncUnstId.Rsi) == 10, "builder sets the named period");
-        check(core.unstablePeriod(FuncUnstId.Ema) == 0, "builder leaves other periods alone");
-        check(Core.DEFAULT.unstablePeriod(FuncUnstId.Rsi) == 0,
+        Core core = Core.builder().unstablePeriod(FuncUnstId.RSI, 10).build();
+        check(core.unstablePeriod(FuncUnstId.RSI) == 10, "builder sets the named period");
+        check(core.unstablePeriod(FuncUnstId.EMA) == 0, "builder leaves other periods alone");
+        check(Core.DEFAULT.unstablePeriod(FuncUnstId.RSI) == 0,
               "building does not disturb Core.DEFAULT");
     }
 
     static void builderAllIsSetAll() {
-        Core core = Core.builder().unstablePeriod(FuncUnstId.All, 7).build();
+        Core core = Core.builder().unstablePeriod(FuncUnstId.ALL, 7).build();
         boolean everySlot = true;
         for (FuncUnstId id : FuncUnstId.values()) {
-            if (id != FuncUnstId.All && core.unstablePeriod(id) != 7) {
+            if (id != FuncUnstId.ALL && core.unstablePeriod(id) != 7) {
                 everySlot = false;
             }
         }
-        check(everySlot, "FuncUnstId.All sets every unstable period (C TA_FUNC_UNST_ALL)");
+        check(everySlot, "FuncUnstId.ALL sets every unstable period (C TA_FUNC_UNST_ALL)");
     }
 
     /** The unstable period must actually move the first valid output index. */
@@ -155,15 +155,15 @@ public class CoreApiTest {
         double[] out0 = new double[in.length], out9 = new double[in.length];
 
         Core plain = Core.DEFAULT;
-        Core tuned = Core.builder().unstablePeriod(FuncUnstId.Rsi, 9).build();
+        Core tuned = Core.builder().unstablePeriod(FuncUnstId.RSI, 9).build();
 
-        OutRange r0 = plain.rsi(0, in.length - 1, in, 14, out0);
-        OutRange r9 = tuned.rsi(0, in.length - 1, in, 14, out9);
+        OutRange r0 = plain.RSI(0, in.length - 1, in, 14, out0);
+        OutRange r9 = tuned.RSI(0, in.length - 1, in, 14, out9);
         check(!r0.isEmpty() && !r9.isEmpty(), "both rsi calls produced values");
         check(r9.begIdx() == r0.begIdx() + 9,
               "unstable period shifts begIdx by exactly that many bars ("
               + r0.begIdx() + " -> " + r9.begIdx() + ")");
-        check(plain.rsiLookback(14) + 9 == tuned.rsiLookback(14),
+        check(plain.RSI_Lookback(14) + 9 == tuned.RSI_Lookback(14),
               "the lookback is unstable-period aware per Core instance");
     }
 
@@ -184,8 +184,8 @@ public class CoreApiTest {
 
         int[] outD = new int[n], outT = new int[n];
 
-        OutRange rD = Core.DEFAULT.cdlDoji(0, n - 1, open, high, low, close, outD);
-        OutRange rT = tuned.cdlDoji(0, n - 1, open, high, low, close, outT);
+        OutRange rD = Core.DEFAULT.CDLDOJI(0, n - 1, open, high, low, close, outD);
+        OutRange rT = tuned.CDLDOJI(0, n - 1, open, high, low, close, outT);
         check(!rD.isEmpty() && !rT.isEmpty(), "cdlDoji produced output on both cores");
         check(outD[rD.count() - 1] == 0, "default core: this candle is not a doji");
         check(outT[rT.count() - 1] == 100, "tuned core: a huge BodyDoji factor calls it a doji");
@@ -204,9 +204,9 @@ public class CoreApiTest {
         }
         int[] o1 = new int[n], o2 = new int[n], o3 = new int[n];
 
-        OutRange q1 = overridden.cdlDoji(0, n - 1, open, high, low, close, o1);
-        OutRange q2 = restored.cdlDoji(0, n - 1, open, high, low, close, o2);
-        OutRange q3 = Core.DEFAULT.cdlDoji(0, n - 1, open, high, low, close, o3);
+        OutRange q1 = overridden.CDLDOJI(0, n - 1, open, high, low, close, o1);
+        OutRange q2 = restored.CDLDOJI(0, n - 1, open, high, low, close, o2);
+        OutRange q3 = Core.DEFAULT.CDLDOJI(0, n - 1, open, high, low, close, o3);
 
         check(o1[q1.count() - 1] != o3[q3.count() - 1],
               "the override changed the verdict (so the restore below is not vacuous)");
@@ -216,25 +216,25 @@ public class CoreApiTest {
 
     /** A built Core must not observe later builder mutations. */
     static void builtCoreIsIsolatedFromTheBuilder() {
-        CoreBuilder b = Core.builder().unstablePeriod(FuncUnstId.Rsi, 3);
+        CoreBuilder b = Core.builder().unstablePeriod(FuncUnstId.RSI, 3);
         Core first = b.build();
-        b.unstablePeriod(FuncUnstId.Rsi, 99);
+        b.unstablePeriod(FuncUnstId.RSI, 99);
         Core second = b.build();
-        check(first.unstablePeriod(FuncUnstId.Rsi) == 3,
+        check(first.unstablePeriod(FuncUnstId.RSI) == 3,
               "reusing the builder does not mutate an already-built Core");
-        check(second.unstablePeriod(FuncUnstId.Rsi) == 99, "the second build sees the new value");
+        check(second.unstablePeriod(FuncUnstId.RSI) == 99, "the second build sees the new value");
     }
 
     static void toBuilderRoundTripsAndDoesNotAlias() {
         Core original = Core.builder()
-            .unstablePeriod(FuncUnstId.Rsi, 5)
+            .unstablePeriod(FuncUnstId.RSI, 5)
             .candleSetting(CandleSettingType.BodyLong, RangeType.HighLow, 4, 2.0)
             .build();
-        Core derived = original.toBuilder().unstablePeriod(FuncUnstId.Ema, 8).build();
+        Core derived = original.toBuilder().unstablePeriod(FuncUnstId.EMA, 8).build();
 
-        check(derived.unstablePeriod(FuncUnstId.Rsi) == 5, "toBuilder carries settings over");
-        check(derived.unstablePeriod(FuncUnstId.Ema) == 8, "the derived Core has the new setting");
-        check(original.unstablePeriod(FuncUnstId.Ema) == 0,
+        check(derived.unstablePeriod(FuncUnstId.RSI) == 5, "toBuilder carries settings over");
+        check(derived.unstablePeriod(FuncUnstId.EMA) == 8, "the derived Core has the new setting");
+        check(original.unstablePeriod(FuncUnstId.EMA) == 0,
               "deriving does not mutate the original Core");
     }
 
@@ -302,7 +302,7 @@ public class CoreApiTest {
         checkThrows(NullPointerException.class,
             () -> Core.builder().unstablePeriod(null, 1), "null FuncUnstId -> NPE");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.builder().unstablePeriod(FuncUnstId.Rsi, -1), "negative period -> IAE");
+            () -> Core.builder().unstablePeriod(FuncUnstId.RSI, -1), "negative period -> IAE");
         checkThrows(NullPointerException.class,
             () -> Core.builder().candleSetting(null, RangeType.HighLow, 1, 1.0),
             "null CandleSettingType -> NPE");
@@ -322,12 +322,12 @@ public class CoreApiTest {
         checkThrows(NullPointerException.class,
             () -> Core.DEFAULT.unstablePeriod(null), "null id on the reader -> NPE");
         checkThrows(IllegalArgumentException.class,
-            () -> Core.DEFAULT.unstablePeriod(FuncUnstId.All),
-            "FuncUnstId.All has no single value to read -> IAE");
+            () -> Core.DEFAULT.unstablePeriod(FuncUnstId.ALL),
+            "FuncUnstId.ALL has no single value to read -> IAE");
         // The writer accepts All (set-all wildcard) but must reject None the same
         // way the reader does, rather than indexing off the end of the array.
-        check(FuncUnstId.All.value() == 65535 && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
-            "FuncUnstId.All is pinned at 65535 and COUNT covers every function id");
+        check(FuncUnstId.ALL.value() == 65535 && FuncUnstId.COUNT == FuncUnstId.values().length - 1,
+            "FuncUnstId.ALL is pinned at 65535 and COUNT covers every function id");
     }
 
     /**
@@ -336,10 +336,10 @@ public class CoreApiTest {
      */
     static void sharedAcrossThreads() throws Exception {
         final double[] in = closes(500);
-        final Core shared = Core.builder().unstablePeriod(FuncUnstId.Rsi, 4).build();
+        final Core shared = Core.builder().unstablePeriod(FuncUnstId.RSI, 4).build();
 
         final double[] reference = new double[in.length];
-        final OutRange refRange = shared.rsi(0, in.length - 1, in, 14, reference);
+        final OutRange refRange = shared.RSI(0, in.length - 1, in, 14, reference);
 
         final int threads = 8;
         final CountDownLatch start = new CountDownLatch(1);
@@ -352,7 +352,7 @@ public class CoreApiTest {
                     start.await();
                     for (int rep = 0; rep < 50; rep++) {
                         double[] out = new double[in.length];
-                        OutRange r = shared.rsi(0, in.length - 1, in, 14, out);
+                        OutRange r = shared.RSI(0, in.length - 1, in, 14, out);
                         if (!r.equals(refRange)) {
                             problems.add("range diverged: " + r + " != " + refRange);
                             return;

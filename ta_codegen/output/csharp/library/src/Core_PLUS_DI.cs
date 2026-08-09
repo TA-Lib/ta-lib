@@ -62,7 +62,7 @@ public partial class Core
     *  122204 MF,CF Fix #1090231. Issues when period is 1.
     */
    /// <summary>
-   /// Number of leading input bars <c>PlusDI</c> consumes before it can produce
+   /// Number of leading input bars <c>PLUS_DI</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -77,7 +77,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Wilder smoothing period (default 14; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int PlusDILookback( int optInTimePeriod )
+   public int PLUS_DI_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -85,21 +85,21 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDI] ;
+         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DI] ;
       } else {
          return 1 ;
       }
 
    }
-   internal RetCode PlusDI( int startIdx,
-                            int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
-                            double[] inClose,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            double[] outReal )
+   internal RetCode PLUS_DI( int startIdx,
+                             int endIdx,
+                             double[] inHigh,
+                             double[] inLow,
+                             double[] inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -220,7 +220,7 @@ public partial class Core
        * you can comment out the following #undef/#define and rebuild the library.
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDI];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DI];
       } else {
          lookbackTotal = 1;
       }
@@ -331,7 +331,7 @@ public partial class Core
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[(int)FuncUnstId.PlusDI] + 1;
+      i = this.unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
       while( i-- != 0 ) {
          /* Calculate the prevPlusDM */
          today += 1;
@@ -418,15 +418,15 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode PlusDI( int startIdx,
-                            int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
-                            float[] inClose,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            double[] outReal )
+   internal RetCode PLUS_DI( int startIdx,
+                             int endIdx,
+                             float[] inHigh,
+                             float[] inLow,
+                             float[] inClose,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -455,7 +455,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDI];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DI];
       } else {
          lookbackTotal = 1;
       }
@@ -543,7 +543,7 @@ public partial class Core
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[(int)FuncUnstId.PlusDI] + 1;
+      i = this.unstablePeriod[(int)FuncUnstId.PLUS_DI] + 1;
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -636,8 +636,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PlusDILookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PLUS_DI_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -657,15 +657,15 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange PlusDI( int startIdx,
-                           int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           double[] inClose,
-                           int optInTimePeriod,
-                           double[] outReal )
+   public OutRange PLUS_DI( int startIdx,
+                            int endIdx,
+                            double[] inHigh,
+                            double[] inLow,
+                            double[] inClose,
+                            int optInTimePeriod,
+                            double[] outReal )
    {
-      RetCode retCode = PlusDI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DI", retCode);
       }
@@ -699,8 +699,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PlusDILookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PLUS_DI_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -720,15 +720,15 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange PlusDI( int startIdx,
-                           int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           float[] inClose,
-                           int optInTimePeriod,
-                           double[] outReal )
+   public OutRange PLUS_DI( int startIdx,
+                            int endIdx,
+                            float[] inHigh,
+                            float[] inLow,
+                            float[] inClose,
+                            int optInTimePeriod,
+                            double[] outReal )
    {
-      RetCode retCode = PlusDI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DI", retCode);
       }

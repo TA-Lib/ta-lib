@@ -63,7 +63,7 @@ public partial class Core
     *                output.
     */
    /// <summary>
-   /// Number of leading input bars <c>MidPrice</c> consumes before it can
+   /// Number of leading input bars <c>MIDPRICE</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -74,7 +74,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Window length over which the high/low extremes are taken (default 14;
    /// range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int MidPriceLookback( int optInTimePeriod )
+   public int MIDPRICE_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -84,7 +84,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode MidPrice( int startIdx,
+   internal RetCode MIDPRICE( int startIdx,
                               int endIdx,
                               double[] inHigh,
                               double[] inLow,
@@ -238,7 +238,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode MidPrice( int startIdx,
+   internal RetCode MIDPRICE( int startIdx,
                               int endIdx,
                               float[] inHigh,
                               float[] inLow,
@@ -362,7 +362,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MidPriceLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MIDPRICE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -382,14 +382,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MidPrice( int startIdx,
+   public OutRange MIDPRICE( int startIdx,
                              int endIdx,
                              double[] inHigh,
                              double[] inLow,
                              int optInTimePeriod,
                              double[] outReal )
    {
-      RetCode retCode = MidPrice(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
       }
@@ -415,7 +415,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>MidPriceLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>MIDPRICE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -435,14 +435,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange MidPrice( int startIdx,
+   public OutRange MIDPRICE( int startIdx,
                              int endIdx,
                              float[] inHigh,
                              float[] inLow,
                              int optInTimePeriod,
                              double[] outReal )
    {
-      RetCode retCode = MidPrice(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
       }

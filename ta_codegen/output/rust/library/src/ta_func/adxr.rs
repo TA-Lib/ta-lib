@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::adxr`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::ADXR`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -81,14 +81,14 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn adxr_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn ADXR_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
         if optInTimePeriod > 1 {
-            return (((optInTimePeriod) as usize) + self.adx_lookback(optInTimePeriod) - 1) as usize;
+            return (((optInTimePeriod) as usize) + self.ADX_Lookback(optInTimePeriod) - 1) as usize;
         } else {
             return (3) as usize;
         }
@@ -150,7 +150,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.adxr(
+    /// let ret = core.ADXR(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -161,16 +161,16 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::adx`] · [`Core::dx`] · [`Core::plus_di`] · [`Core::minus_di`]
+    /// [`Core::ADX`] · [`Core::DX`] · [`Core::PLUS_DI`] · [`Core::MINUS_DI`]
     ///
     /// # References
     ///
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/adxr](https://ta-lib.org/functions/adxr/)
+    /// Further reading: [ta-lib.org/functions/ADXR](https://ta-lib.org/functions/ADXR/)
     #[doc(alias = "AverageDirectionalMovementIndexRating")]
-    pub fn adxr(
+    pub fn ADXR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -193,7 +193,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.adxr_lookback(optInTimePeriod);
+        let _assertLb = self.ADXR_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -219,7 +219,7 @@ impl Core {
         // Move up the start index if there is not
         // enough initial data.
         // Always one price bar gets consumed.
-        adxrLookback = self.adxr_lookback(optInTimePeriod);
+        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
         if startIdx < adxrLookback {
             startIdx = adxrLookback;
         }
@@ -232,7 +232,7 @@ impl Core {
         adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
         // Compute ADX over a range that starts (period-1) bars earlier, so each
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        retCode = self.ADX((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -253,22 +253,22 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live ADXR stream: one value per closed bar, bit-identical to [`Core::adxr`]
-/// over the same series. Open with [`Core::adxr_open`]; dropping the handle
+/// Live ADXR stream: one value per closed bar, bit-identical to [`Core::ADXR`]
+/// over the same series. Open with [`Core::ADXR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_ADXR_Stream")]
-pub struct AdxrStream {
+pub struct ADXR_Stream {
     core: Core,
-    state: AdxrStreamState,
+    state: ADXR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct AdxrStreamState {
+struct ADXR_StreamState {
     optInTimePeriod: i32,
-    sub0: AdxStream,
+    sub0: ADX_Stream,
     lagRingPos_adx: usize,
     lagRingCap_adx: usize,
     lagRing_adx: Vec<f64>,
@@ -281,7 +281,7 @@ struct AdxrStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn adxr_step_internal(&self, sp: &mut AdxrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn ADXR_step_internal(&self, sp: &mut ADXR_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut cur_adx: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
 
@@ -294,10 +294,10 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::adxr_open`] (composition seam).
-    pub(crate) fn adxr_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::ADXR_Open`] (composition seam).
+    pub(crate) fn ADXR_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AdxrStream, f64), RetCode> {
+    ) -> Result<(ADXR_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -339,7 +339,7 @@ impl Core {
         // Move up the start index if there is not
         // enough initial data.
         // Always one price bar gets consumed.
-        adxrLookback = self.adxr_lookback(optInTimePeriod);
+        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
         if startIdx < adxrLookback {
             startIdx = adxrLookback;
         }
@@ -354,8 +354,8 @@ impl Core {
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        let (sub0, _) = self.ADX_OpenInternal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
+        retCode = self.ADX((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -385,18 +385,18 @@ impl Core {
                 lagI += 1;
             }
         }
-        let state = AdxrStreamState {
+        let state = ADXR_StreamState {
             optInTimePeriod,
             sub0,
             lagRingPos_adx: 0_usize,
             lagRingCap_adx: lagCap_adx,
             lagRing_adx,
         };
-        Ok((AdxrStream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        Ok((ADXR_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
     }
 
     /// Open a live ADXR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::adxr`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::ADXR`] at that bar.
     ///
     /// # Errors
     ///
@@ -412,23 +412,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.adxr_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.ADXR_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_ADXR_Open")]
-    pub fn adxr_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(AdxrStream, f64), RetCode> {
-        self.adxr_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn ADXR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ADXR_Stream, f64), RetCode> {
+        self.ADXR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::adxr_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::adxr`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::ADXR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ADXR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_ADXR_OpenAndFill")]
-    pub fn adxr_open_and_fill(
+    pub fn ADXR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<AdxrStream, RetCode> {
+    ) -> Result<ADXR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -465,7 +465,7 @@ impl Core {
         // Move up the start index if there is not
         // enough initial data.
         // Always one price bar gets consumed.
-        adxrLookback = self.adxr_lookback(optInTimePeriod);
+        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
         if startIdx < adxrLookback {
             startIdx = adxrLookback;
         }
@@ -480,8 +480,8 @@ impl Core {
         // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
         // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.adx_open_internal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.adx((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
+        let (sub0, _) = self.ADX_OpenInternal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
+        retCode = self.ADX((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -511,7 +511,7 @@ impl Core {
                 lagI += 1;
             }
         }
-        let state = AdxrStreamState {
+        let state = ADXR_StreamState {
             optInTimePeriod,
             sub0,
             lagRingPos_adx: 0_usize,
@@ -519,19 +519,19 @@ impl Core {
             lagRing_adx,
         };
         outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(AdxrStream { core: self.clone(), state })
+        Ok(ADXR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl AdxrStream {
+impl ADXR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_ADXR_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.adxr_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.ADXR_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -549,7 +549,7 @@ impl AdxrStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<AdxrStream>();
+    _assert_auto::<ADXR_Stream>();
 };
 
 /***************/

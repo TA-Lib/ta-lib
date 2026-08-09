@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#dx} consumes before it can
+    * Number of leading input bars {@link Core#DX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        14; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int dxLookback( int optInTimePeriod )
+   public int DX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 14;
@@ -38,21 +38,21 @@
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[FuncUnstId.Dx.ordinal()] ;
+         return optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()] ;
       } else {
          return 2 ;
       }
 
    }
-   RetCode dxInternal( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode DX_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -181,7 +181,7 @@
        * you can comment out the following #undef/#define and rebuild the library.
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Dx.ordinal()];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
       } else {
          lookbackTotal = 2;
       }
@@ -245,7 +245,7 @@
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.Dx.ordinal()] + 1;
+      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
       while( i-- != 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -350,15 +350,15 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode dxInternal( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       int optInTimePeriod,
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode DX_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -388,7 +388,7 @@
          return RetCode.BadParam;
       }
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Dx.ordinal()];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
       } else {
          lookbackTotal = 2;
       }
@@ -439,7 +439,7 @@
          prevTR += tempReal;
          prevClose = (double)inClose[today];
       }
-      i = this.unstablePeriod[FuncUnstId.Dx.ordinal()] + 1;
+      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -546,7 +546,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#DX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -566,15 +566,15 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adx
-    * @see Core#adxr
-    * @see Core#plusDI
-    * @see Core#minusDI
-    * @see Core#plusDM
-    * @see Core#minusDM
-    * @see Core#trueRange
+    * @see Core#ADX
+    * @see Core#ADXR
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DM
+    * @see Core#TRANGE
     */
-   public OutRange dx( int startIdx,
+   public OutRange DX( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -584,7 +584,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = dxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DX", retCode);
       }
@@ -610,7 +610,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#dxLookback} is a <b>success with no
+    * valid range shorter than {@link Core#DX_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -630,15 +630,15 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adx
-    * @see Core#adxr
-    * @see Core#plusDI
-    * @see Core#minusDI
-    * @see Core#plusDM
-    * @see Core#minusDM
-    * @see Core#trueRange
+    * @see Core#ADX
+    * @see Core#ADXR
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#PLUS_DM
+    * @see Core#MINUS_DM
+    * @see Core#TRANGE
     */
-   public OutRange dx( int startIdx,
+   public OutRange DX( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -648,7 +648,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = dxInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("DX", retCode);
       }
@@ -658,8 +658,8 @@
 
    /**
     * A live DX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#dx} over the same series.
-    * Open with {@link Core#dxOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#DX} over the same series.
+    * Open with {@link Core#DX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -670,7 +670,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class DxStream {
+   public static final class DX_Stream {
       final Core core;
       int optInTimePeriod;
       double prevHigh;
@@ -688,10 +688,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      DxStream( Core core ) { this.core = core; }
+      DX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#dxOpenAndFill}, or
+       * The range filled by {@link Core#DX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -699,7 +699,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      DxStream( DxStream other ) {
+      DX_Stream( DX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -723,7 +723,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose ) {
-         core.dxStreamStep(this, inHigh, inLow, inClose);
+         core.DX_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -735,8 +735,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         DxStream scratch = new DxStream(this);
-         core.dxStreamStep(scratch, inHigh, inLow, inClose);
+         DX_Stream scratch = new DX_Stream(this);
+         core.DX_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -753,11 +753,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public DxStream copy() {
-         return new DxStream(this);
+      public DX_Stream copy() {
+         return new DX_Stream(this);
       }
    }
-   void dxStreamStep( DxStream sp, double inHigh, double inLow, double inClose )
+   void DX_StreamStep( DX_Stream sp, double inHigh, double inLow, double inClose )
    {
       /* Calculate the prevMinusDM and prevPlusDM */
       sp.tempReal = inHigh;
@@ -808,7 +808,7 @@
       }
       sp.lastOut_outReal = sp.cur_outReal;
    }
-   private RetCode dxOpenBody( DxStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode DX_OpenBody( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -942,7 +942,7 @@
        * you can comment out the following #undef/#define and rebuild the library.
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Dx.ordinal()];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
       } else {
          lookbackTotal = 2;
       }
@@ -1006,7 +1006,7 @@
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.Dx.ordinal()] + 1;
+      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
       while( i-- != 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -1126,7 +1126,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode dxOpenAndFillBody( DxStream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode DX_OpenAndFillBody( DX_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int today = 0;
       int lookbackTotal = 0;
@@ -1261,7 +1261,7 @@
        * you can comment out the following #undef/#define and rebuild the library.
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.Dx.ordinal()];
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.DX.ordinal()];
       } else {
          lookbackTotal = 2;
       }
@@ -1325,7 +1325,7 @@
       /* Skip the unstable period. Note that this loop must be executed
        * at least ONCE to calculate the first DI.
        */
-      i = this.unstablePeriod[FuncUnstId.Dx.ordinal()] + 1;
+      i = this.unstablePeriod[FuncUnstId.DX.ordinal()] + 1;
       while( i-- != 0 ) {
          /* Calculate the prevMinusDM and prevPlusDM */
          today += 1;
@@ -1445,11 +1445,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind dxOpen (composition seam). */
-   DxStream dxOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind DX_Open (composition seam). */
+   DX_Stream DX_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {
-      DxStream sp = new DxStream(this);
-      RetCode retCode = dxOpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
+      DX_Stream sp = new DX_Stream(this);
+      RetCode retCode = DX_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1464,32 +1464,32 @@
    /**
     * Open a live DX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#dx} at that bar.
-    * <p>The history must hold at least {@code dxLookback(...) + 1} bars
+    * to {@link Core#DX} at that bar.
+    * <p>The history must hold at least {@code DX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public DxStream dxOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   public DX_Stream DX_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
    {
-      return dxOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+      return DX_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#dxOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#dx} over the whole history in the same single pass
+    * {@link Core#DX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#DX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link DxStream#fillRange()}.
+    * {@link DX_Stream#fillRange()}.
     */
-   public DxStream dxOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
+   public DX_Stream DX_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outReal[] )
    {
-      DxStream sp = new DxStream(this);
+      DX_Stream sp = new DX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = dxOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = DX_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

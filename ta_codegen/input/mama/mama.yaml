@@ -1,5 +1,4 @@
 name: MAMA
-camel_case: Mama
 group: Overlap Studies
 hint: MESA Adaptive Moving Average
 flags: [unstable_period, overlap, stream]

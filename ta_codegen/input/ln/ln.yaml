@@ -1,5 +1,4 @@
 name: LN
-camel_case: Ln
 group: Math Transform
 hint: Vector Log Natural
 flags: [stream]

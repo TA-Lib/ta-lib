@@ -1,5 +1,4 @@
 name: MAX
-camel_case: Max
 group: Math Operators
 hint: Highest value over a specified period
 flags: [overlap, stream]

@@ -1,5 +1,4 @@
 name: ACCBANDS
-camel_case: Accbands
 group: Overlap Studies
 hint: Acceleration Bands
 flags: [overlap, stream]

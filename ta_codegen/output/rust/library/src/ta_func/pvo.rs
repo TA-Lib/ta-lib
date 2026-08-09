@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::pvo`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::PVO`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -76,7 +76,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn pvo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn PVO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -91,7 +91,7 @@ impl Core {
             optInMAType = 1;
         }
         // Lookback is driven by the slowest MA.
-        return self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
+        return self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
     }
     /// Percentage Volume Oscillator: a variation of the [Percentage Price
     /// Oscillator](https://ta-lib.org/functions/ppo) (PPO, created by Gerald Appel) applied to the
@@ -149,7 +149,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.pvo(
+    /// let ret = core.PVO(
     ///     0, volume.len() - 1, &volume, 12, 26, 1,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -160,7 +160,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ppo`] · [`Core::obv`] · [`Core::macd`]
+    /// [`Core::PPO`] · [`Core::OBV`] · [`Core::MACD`]
     ///
     /// # References
     ///
@@ -171,9 +171,9 @@ impl Core {
     ///   StockCharts ChartSchool; also documented by
     ///   [TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
     ///
-    /// Further reading: [ta-lib.org/functions/pvo](https://ta-lib.org/functions/pvo/)
+    /// Further reading: [ta-lib.org/functions/PVO](https://ta-lib.org/functions/PVO/)
     #[doc(alias = "PercentageVolumeOscillator")]
-    pub fn pvo(
+    pub fn PVO(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -204,7 +204,7 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 1;
         }
-        let _assertLb = self.pvo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let _assertLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inVolume.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -228,12 +228,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -258,25 +258,25 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PVO stream: one value per closed bar, bit-identical to [`Core::pvo`]
-/// over the same series. Open with [`Core::pvo_open`]; dropping the handle
+/// Live PVO stream: one value per closed bar, bit-identical to [`Core::PVO`]
+/// over the same series. Open with [`Core::PVO_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PVO_Stream")]
-pub struct PvoStream {
+pub struct PVO_Stream {
     core: Core,
-    state: PvoStreamState,
+    state: PVO_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PvoStreamState {
+struct PVO_StreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInMAType: i32,
-    sub0: MaStream,
-    sub1: MaStream,
+    sub0: MA_Stream,
+    sub1: MA_Stream,
 }
 
 #[allow(non_snake_case)]
@@ -286,7 +286,7 @@ struct PvoStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn pvo_step_internal(&self, sp: &mut PvoStreamState, inVolume: f64, outReal: &mut f64) {
+    fn PVO_step_internal(&self, sp: &mut PVO_StreamState, inVolume: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -304,10 +304,10 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::pvo_open`] (composition seam).
-    pub(crate) fn pvo_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::PVO_Open`] (composition seam).
+    pub(crate) fn PVO_OpenInternal(
         &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32,
-    ) -> Result<(PvoStream, f64), RetCode> {
+    ) -> Result<(PVO_Stream, f64), RetCode> {
         if inVolume.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -359,16 +359,16 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let (sub0, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub1, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -393,18 +393,18 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = PvoStreamState {
+        let state = PVO_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
             sub0,
             sub1,
         };
-        Ok((PvoStream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        Ok((PVO_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
     }
 
     /// Open a live PVO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::pvo`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::PVO`] at that bar.
     ///
     /// # Errors
     ///
@@ -418,23 +418,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.pvo_open(&volume, 12, 26, 1).expect("enough history");
+    /// let (mut s, _last) = core.PVO_Open(&volume, 12, 26, 1).expect("enough history");
     /// let peeked = s.peek(12_345.0);
     /// let updated = s.update(12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVO_Open")]
-    pub fn pvo_open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PvoStream, f64), RetCode> {
-        self.pvo_open_internal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
+    pub fn PVO_Open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PVO_Stream, f64), RetCode> {
+        self.PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
-    /// [`Core::pvo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::pvo`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::PVO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::PVO`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PVO_OpenAndFill")]
-    pub fn pvo_open_and_fill(
+    pub fn PVO_OpenAndFill(
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PvoStream, RetCode> {
+    ) -> Result<PVO_Stream, RetCode> {
         if inVolume.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -481,16 +481,16 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let (sub0, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub1, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -515,7 +515,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = PvoStreamState {
+        let state = PVO_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
@@ -523,19 +523,19 @@ impl Core {
             sub1,
         };
         outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(PvoStream { core: self.clone(), state })
+        Ok(PVO_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PvoStream {
+impl PVO_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_PVO_Update")]
     pub fn update(&mut self, inVolume: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.pvo_step_internal(&mut self.state, inVolume, &mut outReal);
+        self.core.PVO_step_internal(&mut self.state, inVolume, &mut outReal);
         outReal
     }
 
@@ -553,7 +553,7 @@ impl PvoStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PvoStream>();
+    _assert_auto::<PVO_Stream>();
 };
 
 /***************/

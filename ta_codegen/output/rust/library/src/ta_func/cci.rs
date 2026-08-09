@@ -73,7 +73,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cci`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::CCI`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -84,7 +84,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn cci_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn CCI_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -148,7 +148,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.cci(
+    /// let ret = core.CCI(
     ///     0, high.len() - 1, &high, &low, &close, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -159,15 +159,15 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::typprice`] · [`Core::sma`]
+    /// [`Core::TYPPRICE`] · [`Core::SMA`]
     ///
     /// # References
     ///
     /// * Donald Lambert
     ///
-    /// Further reading: [ta-lib.org/functions/cci](https://ta-lib.org/functions/cci/)
+    /// Further reading: [ta-lib.org/functions/CCI](https://ta-lib.org/functions/CCI/)
     #[doc(alias = "CommodityChannelIndex")]
-    pub fn cci(
+    pub fn CCI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -190,7 +190,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cci_lookback(optInTimePeriod);
+        let _assertLb = self.CCI_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -298,20 +298,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CCI stream: one value per closed bar, bit-identical to [`Core::cci`]
-/// over the same series. Open with [`Core::cci_open`]; dropping the handle
+/// Live CCI stream: one value per closed bar, bit-identical to [`Core::CCI`]
+/// over the same series. Open with [`Core::CCI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CCI_Stream")]
-pub struct CciStream {
+pub struct CCI_Stream {
     core: Core,
-    state: CciStreamState,
+    state: CCI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CciStreamState {
+struct CCI_StreamState {
     optInTimePeriod: i32,
     tempReal: f64,
     tempReal2: f64,
@@ -330,7 +330,7 @@ struct CciStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cci_step_internal(&self, sp: &mut CciStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn CCI_step_internal(&self, sp: &mut CCI_StreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut lastValue: f64 = 0.0_f64;
         lastValue = (inHigh + inLow + inClose) / 3_f64;
         sp.cb_circBuffer[sp.circBuffer_Idx] = lastValue;
@@ -366,10 +366,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cci_open`] (composition seam).
-    pub(crate) fn cci_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CCI_Open`] (composition seam).
+    pub(crate) fn CCI_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CciStream, f64), RetCode> {
+    ) -> Result<(CCI_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -480,7 +480,7 @@ impl Core {
         if cbSize_circBuffer > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = CciStreamState {
+        let state = CCI_StreamState {
             optInTimePeriod,
             tempReal,
             tempReal2,
@@ -491,11 +491,11 @@ impl Core {
             cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
-        Ok((CciStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((CCI_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live CCI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cci`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CCI`] at that bar.
     ///
     /// # Errors
     ///
@@ -511,23 +511,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cci_open(&high, &low, &close, 14).expect("enough history");
+    /// let (mut s, _last) = core.CCI_Open(&high, &low, &close, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_CCI_Open")]
-    pub fn cci_open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(CciStream, f64), RetCode> {
-        self.cci_open_internal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    pub fn CCI_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(CCI_Stream, f64), RetCode> {
+        self.CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
     }
 
-    /// [`Core::cci_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cci`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CCI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CCI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CCI_OpenAndFill")]
-    pub fn cci_open_and_fill(
+    pub fn CCI_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<CciStream, RetCode> {
+    ) -> Result<CCI_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -639,7 +639,7 @@ impl Core {
         if cbSize_circBuffer > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = CciStreamState {
+        let state = CCI_StreamState {
             optInTimePeriod,
             tempReal,
             tempReal2,
@@ -650,19 +650,19 @@ impl Core {
             cbSize_circBuffer: cbSize_circBuffer,
             cb_circBuffer: circBuffer,
         };
-        Ok(CciStream { core: self.clone(), state })
+        Ok(CCI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CciStream {
+impl CCI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CCI_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.cci_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
+        self.core.CCI_step_internal(&mut self.state, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -680,7 +680,7 @@ impl CciStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CciStream>();
+    _assert_auto::<CCI_Stream>();
 };
 
 /***************/

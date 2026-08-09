@@ -8,7 +8,7 @@
 //!
 //! Two shape differences from Java are load-bearing:
 //!
-//! - C# enums carry explicit values natively, so `All = 65535` is a plain member
+//! - C# enums carry explicit values natively, so `ALL = 65535` is a plain member
 //!   rather than Java's constructor-plus-`value()` accessor.
 //! - C# enums cannot hold static members, so Java's `COUNT` field has no home
 //!   inside the enum. Emitting it *as a member* would make it an id and corrupt
@@ -60,7 +60,7 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
             "    /// <summary>The <c>{}</c> moving average.</summary>\n",
             v.c_name
         ));
-        s.push_str(&format!("    {} = {},\n", v.pascal_name, v.value));
+        s.push_str(&format!("    {} = {},\n", v.name, v.value));
     }
     s.push_str("}\n");
     s
@@ -69,7 +69,7 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
 /// Generate the shipped C# `FuncUnstId` enum plus its `FuncUnstIds.Count`.
 ///
 /// Each variant's value IS the index into the unstable-period table and equals
-/// the C value; the assert pins that. `All` carries C's pinned 65535, which no
+/// the C value; the assert pins that. `ALL` carries C's pinned 65535, which no
 /// ordinal can express, and is deliberately NOT a table index.
 #[allow(clippy::implicit_hasher)]
 pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
@@ -81,7 +81,7 @@ pub fn generate(enums: &HashMap<String, EnumDef>, path: &Path) {
 }
 
 /// Render `FuncUnstId.cs`. Split from [`generate`] so tests can assert on the
-/// emitted text — in particular the pinned `All = 65535` and the `Count`.
+/// emitted text — in particular the pinned `ALL = 65535` and the `Count`.
 #[allow(clippy::implicit_hasher)]
 #[must_use]
 pub fn render_funcunstid(enums: &HashMap<String, EnumDef>) -> String {
@@ -107,18 +107,18 @@ pub fn render_funcunstid(enums: &HashMap<String, EnumDef>) -> String {
             "    /// <summary>Unstable-period id for <c>{}</c>.</summary>\n",
             v.c_name
         ));
-        s.push_str(&format!("    {} = {},\n", v.pascal_name, v.value));
+        s.push_str(&format!("    {} = {},\n", v.name, v.value));
     }
     s.push('\n');
     s.push_str("    /// <summary>Wildcard: sets the unstable period for every function at\n");
     s.push_str("    /// once. Pinned, so adding an indicator can never move it.</summary>\n");
-    s.push_str("    All = 65535,\n");
+    s.push_str("    ALL = 65535,\n");
     s.push_str("}\n\n");
 
     s.push_str("/// <summary>Companion constants for <see cref=\"FuncUnstId\"/>.</summary>\n");
     s.push_str("public static class FuncUnstIds\n{\n");
     s.push_str("    /// <summary>Number of function ids — the size of the unstable-period\n");
-    s.push_str("    /// table. Not an id, and not <see cref=\"FuncUnstId.All\"/>. Mirrors C's\n");
+    s.push_str("    /// table. Not an id, and not <see cref=\"FuncUnstId.ALL\"/>. Mirrors C's\n");
     s.push_str("    /// TA_FUNC_UNST_COUNT.</summary>\n");
     s.push_str(&format!(
         "    public const int Count = {};\n",

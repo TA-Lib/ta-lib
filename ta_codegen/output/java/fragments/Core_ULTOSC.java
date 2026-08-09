@@ -16,7 +16,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ultOsc} consumes before it can
+    * Number of leading input bars {@link Core#ULTOSC} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -30,7 +30,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int ultOscLookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   public int ULTOSC_Lookback( int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       if( optInTimePeriod1 == Integer.MIN_VALUE ) {
          optInTimePeriod1 = 7;
@@ -52,20 +52,20 @@
        * time period, plus 1 for the True Range.
        */
       maxPeriod = Math.max(Math.max(optInTimePeriod1, optInTimePeriod2), optInTimePeriod3);
-      return smaLookback(maxPeriod) + 1 ;
+      return SMA_Lookback(maxPeriod) + 1 ;
 
    }
-   RetCode ultOscInternal( int startIdx,
-                           int endIdx,
-                           double inHigh[],
-                           double inLow[],
-                           double inClose[],
-                           int optInTimePeriod1,
-                           int optInTimePeriod2,
-                           int optInTimePeriod3,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode ULTOSC_Internal( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -153,7 +153,7 @@
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
       /* Adjust startIdx for lookback period. */
-      lookbackTotal = ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -294,17 +294,17 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode ultOscInternal( int startIdx,
-                           int endIdx,
-                           float inHigh[],
-                           float inLow[],
-                           float inClose[],
-                           int optInTimePeriod1,
-                           int optInTimePeriod2,
-                           int optInTimePeriod3,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outReal[] )
+   RetCode ULTOSC_Internal( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod1,
+                            int optInTimePeriod2,
+                            int optInTimePeriod3,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -380,7 +380,7 @@
       optInTimePeriod1 = sortedPeriods[2];
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
-      lookbackTotal = ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -515,7 +515,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ultOscLookback} is a <b>success with
+    * valid range shorter than {@link Core#ULTOSC_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -539,11 +539,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atr
-    * @see Core#trueRange
-    * @see Core#rsi
+    * @see Core#ATR
+    * @see Core#TRANGE
+    * @see Core#RSI
     */
-   public OutRange ultOsc( int startIdx,
+   public OutRange ULTOSC( int startIdx,
                            int endIdx,
                            double inHigh[],
                            double inLow[],
@@ -555,7 +555,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ultOscInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ULTOSC", retCode);
       }
@@ -584,7 +584,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#ultOscLookback} is a <b>success with
+    * valid range shorter than {@link Core#ULTOSC_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -608,11 +608,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#atr
-    * @see Core#trueRange
-    * @see Core#rsi
+    * @see Core#ATR
+    * @see Core#TRANGE
+    * @see Core#RSI
     */
-   public OutRange ultOsc( int startIdx,
+   public OutRange ULTOSC( int startIdx,
                            int endIdx,
                            float inHigh[],
                            float inLow[],
@@ -624,7 +624,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ultOscInternal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_Internal(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("ULTOSC", retCode);
       }
@@ -634,8 +634,8 @@
 
    /**
     * A live ULTOSC stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ultOsc} over the same series.
-    * Open with {@link Core#ultOscOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#ULTOSC} over the same series.
+    * Open with {@link Core#ULTOSC_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -646,7 +646,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class UltOscStream {
+   public static final class ULTOSC_Stream {
       final Core core;
       int optInTimePeriod1;
       int optInTimePeriod2;
@@ -669,10 +669,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      UltOscStream( Core core ) { this.core = core; }
+      ULTOSC_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#ultOscOpenAndFill}, or
+       * The range filled by {@link Core#ULTOSC_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -680,7 +680,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      UltOscStream( UltOscStream other ) {
+      ULTOSC_Stream( ULTOSC_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod1 = other.optInTimePeriod1;
          this.optInTimePeriod2 = other.optInTimePeriod2;
@@ -709,7 +709,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose ) {
-         core.ultOscStreamStep(this, inHigh, inLow, inClose);
+         core.ULTOSC_StreamStep(this, inHigh, inLow, inClose);
          return this.cur_outReal;
       }
 
@@ -721,8 +721,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         UltOscStream scratch = new UltOscStream(this);
-         core.ultOscStreamStep(scratch, inHigh, inLow, inClose);
+         ULTOSC_Stream scratch = new ULTOSC_Stream(this);
+         core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }
 
@@ -739,11 +739,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public UltOscStream copy() {
-         return new UltOscStream(this);
+      public ULTOSC_Stream copy() {
+         return new ULTOSC_Stream(this);
       }
    }
-   void ultOscStreamStep( UltOscStream sp, double inHigh, double inLow, double inClose )
+   void ULTOSC_StreamStep( ULTOSC_Stream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;
@@ -817,7 +817,7 @@
       /* Increment indexes */
       sp.lag1_inClose = inClose;
    }
-   private RetCode ultOscOpenBody( UltOscStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   private RetCode ULTOSC_OpenBody( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -910,7 +910,7 @@
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
       /* Adjust startIdx for lookback period. */
-      lookbackTotal = ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1075,7 +1075,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode ultOscOpenAndFillBody( UltOscStream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode ULTOSC_OpenAndFillBody( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double a1Total = 0;
       double a2Total = 0;
@@ -1169,7 +1169,7 @@
       optInTimePeriod2 = sortedPeriods[1];
       optInTimePeriod3 = sortedPeriods[0];
       /* Adjust startIdx for lookback period. */
-      lookbackTotal = ultOscLookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      lookbackTotal = ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -1334,11 +1334,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind ultOscOpen (composition seam). */
-   UltOscStream ultOscOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
+   ULTOSC_Stream ULTOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      UltOscStream sp = new UltOscStream(this);
-      RetCode retCode = ultOscOpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      RetCode retCode = ULTOSC_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -1353,32 +1353,32 @@
    /**
     * Open a live ULTOSC stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ultOsc} at that bar.
-    * <p>The history must hold at least {@code ultOscLookback(...) + 1} bars
+    * to {@link Core#ULTOSC} at that bar.
+    * <p>The history must hold at least {@code ULTOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public UltOscStream ultOscOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   public ULTOSC_Stream ULTOSC_Open( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      return ultOscOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+      return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
    /**
-    * {@link Core#ultOscOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ultOsc} over the whole history in the same single pass
+    * {@link Core#ULTOSC_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#ULTOSC} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link UltOscStream#fillRange()}.
+    * {@link ULTOSC_Stream#fillRange()}.
     */
-   public UltOscStream ultOscOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
+   public ULTOSC_Stream ULTOSC_OpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double outReal[] )
    {
-      UltOscStream sp = new UltOscStream(this);
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = ultOscOpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      RetCode retCode = ULTOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

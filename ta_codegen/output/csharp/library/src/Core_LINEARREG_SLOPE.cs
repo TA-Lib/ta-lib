@@ -60,7 +60,7 @@ public partial class Core
     *                (outReal==inReal) calls stay correct. See issue #130.
     */
    /// <summary>
-   /// Number of leading input bars <c>LinearRegSlope</c> consumes before it can
+   /// Number of leading input bars <c>LINEARREG_SLOPE</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -71,7 +71,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Number of bars in the regression window (default 14; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int LinearRegSlopeLookback( int optInTimePeriod )
+   public int LINEARREG_SLOPE_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -81,13 +81,13 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode LinearRegSlope( int startIdx,
-                                    int endIdx,
-                                    double[] inReal,
-                                    int optInTimePeriod,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    double[] outReal )
+   internal RetCode LINEARREG_SLOPE( int startIdx,
+                                     int endIdx,
+                                     double[] inReal,
+                                     int optInTimePeriod,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -131,7 +131,7 @@ public partial class Core
        * TA_TSF                : Returns b+m*(period)
        */
       /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = LinearRegSlopeLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_SLOPE_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -183,13 +183,13 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode LinearRegSlope( int startIdx,
-                                    int endIdx,
-                                    float[] inReal,
-                                    int optInTimePeriod,
-                                    out int outBegIdx,
-                                    out int outNBElement,
-                                    double[] outReal )
+   internal RetCode LINEARREG_SLOPE( int startIdx,
+                                     int endIdx,
+                                     float[] inReal,
+                                     int optInTimePeriod,
+                                     out int outBegIdx,
+                                     out int outNBElement,
+                                     double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -216,7 +216,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      lookbackTotal = LinearRegSlopeLookback(optInTimePeriod);
+      lookbackTotal = LINEARREG_SLOPE_Lookback(optInTimePeriod);
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -269,7 +269,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>LinearRegSlopeLookback</c> is a
+   /// NaN. A valid range shorter than <c>LINEARREG_SLOPE_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -288,13 +288,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange LinearRegSlope( int startIdx,
-                                   int endIdx,
-                                   double[] inReal,
-                                   int optInTimePeriod,
-                                   double[] outReal )
+   public OutRange LINEARREG_SLOPE( int startIdx,
+                                    int endIdx,
+                                    double[] inReal,
+                                    int optInTimePeriod,
+                                    double[] outReal )
    {
-      RetCode retCode = LinearRegSlope(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_SLOPE", retCode);
       }
@@ -323,7 +323,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>LinearRegSlopeLookback</c> is a
+   /// NaN. A valid range shorter than <c>LINEARREG_SLOPE_Lookback</c> is a
    /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -342,13 +342,13 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange LinearRegSlope( int startIdx,
-                                   int endIdx,
-                                   float[] inReal,
-                                   int optInTimePeriod,
-                                   double[] outReal )
+   public OutRange LINEARREG_SLOPE( int startIdx,
+                                    int endIdx,
+                                    float[] inReal,
+                                    int optInTimePeriod,
+                                    double[] outReal )
    {
-      RetCode retCode = LinearRegSlope(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = LINEARREG_SLOPE(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("LINEARREG_SLOPE", retCode);
       }

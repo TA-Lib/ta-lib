@@ -48,37 +48,37 @@ package io.github.talib;
 
 public enum FuncUnstId {
 	
-	  /* 000 */  Adx(0),
-	  /* 001 */  Unused1(1),
-	  /* 002 */  Atr(2),
-	  /* 003 */  Cmo(3),
-	  /* 004 */  Dx(4),
-	  /* 005 */  Ema(5),
-	  /* 006 */  HtDcPeriod(6),
-	  /* 007 */  HtDcPhase(7),
-	  /* 008 */  HtPhasor(8),
-	  /* 009 */  HtSine(9),
-	  /* 010 */  HtTrendline(10),
-	  /* 011 */  HtTrendMode(11),
-	  /* 012 */  Unused12(12),
-	  /* 013 */  Kama(13),
-	  /* 014 */  Mama(14),
-	  /* 015 */  Unused15(15),
-	  /* 016 */  MinusDI(16),
-	  /* 017 */  MinusDM(17),
-	  /* 018 */  Natr(18),
-	  /* 019 */  PlusDI(19),
-	  /* 020 */  PlusDM(20),
-	  /* 021 */  Rsi(21),
-	  /* 022 */  Unused22(22),
+	  /* 000 */  ADX(0),
+	  /* 001 */  UNUSED_1(1),
+	  /* 002 */  ATR(2),
+	  /* 003 */  CMO(3),
+	  /* 004 */  DX(4),
+	  /* 005 */  EMA(5),
+	  /* 006 */  HT_DCPERIOD(6),
+	  /* 007 */  HT_DCPHASE(7),
+	  /* 008 */  HT_PHASOR(8),
+	  /* 009 */  HT_SINE(9),
+	  /* 010 */  HT_TRENDLINE(10),
+	  /* 011 */  HT_TRENDMODE(11),
+	  /* 012 */  UNUSED_12(12),
+	  /* 013 */  KAMA(13),
+	  /* 014 */  MAMA(14),
+	  /* 015 */  UNUSED_15(15),
+	  /* 016 */  MINUS_DI(16),
+	  /* 017 */  MINUS_DM(17),
+	  /* 018 */  NATR(18),
+	  /* 019 */  PLUS_DI(19),
+	  /* 020 */  PLUS_DM(20),
+	  /* 021 */  RSI(21),
+	  /* 022 */  UNUSED_22(22),
 	  /* 023 */  T3(23),
 
 	  /** Wildcard: sets the unstable period for every function at once.
 	   *  Pinned, so adding an indicator can never move it. */
-	             All(65535);
+	             ALL(65535);
 
 	/** Number of function ids — the size of the unstable-period table.
-	 *  Not an id, and not {@link #All}. Mirrors C's TA_FUNC_UNST_COUNT. */
+	 *  Not an id, and not {@link #ALL}. Mirrors C's TA_FUNC_UNST_COUNT. */
 	public static final int COUNT = 24;
 
 	private final int value;

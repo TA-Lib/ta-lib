@@ -69,7 +69,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ppo`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::PPO`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -82,7 +82,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn ppo_lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn PPO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -97,7 +97,7 @@ impl Core {
             optInMAType = 1;
         }
         // Lookback is driven by the slowest MA.
-        return self.ma_lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
+        return self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
     }
     /// Percentage Price Oscillator: the difference between a fast and slow moving average expressed
     /// as a percentage of the slow MA. A normalized (scale-invariant) variant of APO. Positive when
@@ -151,7 +151,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ppo(
+    /// let ret = core.PPO(
     ///     0, data.len() - 1, &data, 12, 26, 1,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -162,7 +162,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::apo`] · [`Core::macd`] · [`Core::ma`]
+    /// [`Core::APO`] · [`Core::MACD`] · [`Core::MA`]
     ///
     /// # References
     ///
@@ -171,9 +171,9 @@ impl Core {
     ///   average. Appel's original definition uses **exponential** moving averages (periods 12,
     ///   26).
     ///
-    /// Further reading: [ta-lib.org/functions/ppo](https://ta-lib.org/functions/ppo/)
+    /// Further reading: [ta-lib.org/functions/PPO](https://ta-lib.org/functions/PPO/)
     #[doc(alias = "PercentagePriceOscillator")]
-    pub fn ppo(
+    pub fn PPO(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -204,7 +204,7 @@ impl Core {
         if ((optInMAType) as i32) == (i32::MIN) {
             optInMAType = 1;
         }
-        let _assertLb = self.ppo_lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        let _assertLb = self.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -228,12 +228,12 @@ impl Core {
             optInFastPeriod = (tempInteger) as i32;
         }
         // Calculate the fast MA into the tempBuffer.
-        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        retCode = self.MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return retCode;
         }
         // Calculate the slow MA into the output.
-        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
+        retCode = self.MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal);
         if retCode != RetCode::Success {
             return retCode;
         }
@@ -258,25 +258,25 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live PPO stream: one value per closed bar, bit-identical to [`Core::ppo`]
-/// over the same series. Open with [`Core::ppo_open`]; dropping the handle
+/// Live PPO stream: one value per closed bar, bit-identical to [`Core::PPO`]
+/// over the same series. Open with [`Core::PPO_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_PPO_Stream")]
-pub struct PpoStream {
+pub struct PPO_Stream {
     core: Core,
-    state: PpoStreamState,
+    state: PPO_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct PpoStreamState {
+struct PPO_StreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
     optInMAType: i32,
-    sub0: MaStream,
-    sub1: MaStream,
+    sub0: MA_Stream,
+    sub1: MA_Stream,
 }
 
 #[allow(non_snake_case)]
@@ -286,7 +286,7 @@ struct PpoStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ppo_step_internal(&self, sp: &mut PpoStreamState, inReal: f64, outReal: &mut f64) {
+    fn PPO_step_internal(&self, sp: &mut PPO_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outReal: f64 = 0.0_f64;
@@ -304,10 +304,10 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ppo_open`] (composition seam).
-    pub(crate) fn ppo_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::PPO_Open`] (composition seam).
+    pub(crate) fn PPO_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32,
-    ) -> Result<(PpoStream, f64), RetCode> {
+    ) -> Result<(PPO_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -359,16 +359,16 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub1, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -393,18 +393,18 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = PpoStreamState {
+        let state = PPO_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
             sub0,
             sub1,
         };
-        Ok((PpoStream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        Ok((PPO_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
     }
 
     /// Open a live PPO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ppo`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::PPO`] at that bar.
     ///
     /// # Errors
     ///
@@ -416,23 +416,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ppo_open(&data, 12, 26, 1).expect("enough history");
+    /// let (mut s, _last) = core.PPO_Open(&data, 12, 26, 1).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PPO_Open")]
-    pub fn ppo_open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PpoStream, f64), RetCode> {
-        self.ppo_open_internal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
+    pub fn PPO_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PPO_Stream, f64), RetCode> {
+        self.PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
-    /// [`Core::ppo_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ppo`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::PPO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::PPO`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PPO_OpenAndFill")]
-    pub fn ppo_open_and_fill(
+    pub fn PPO_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<PpoStream, RetCode> {
+    ) -> Result<PPO_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -479,16 +479,16 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.ma_open_internal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.ma(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let (sub1, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
+        retCode = self.MA(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -513,7 +513,7 @@ impl Core {
         if *outNBElement < 1 {
             return Err(RetCode::BadParam);
         }
-        let state = PpoStreamState {
+        let state = PPO_StreamState {
             optInFastPeriod,
             optInSlowPeriod,
             optInMAType,
@@ -521,19 +521,19 @@ impl Core {
             sub1,
         };
         outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(PpoStream { core: self.clone(), state })
+        Ok(PPO_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl PpoStream {
+impl PPO_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_PPO_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ppo_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.PPO_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -551,7 +551,7 @@ impl PpoStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<PpoStream>();
+    _assert_auto::<PPO_Stream>();
 };
 
 /***************/

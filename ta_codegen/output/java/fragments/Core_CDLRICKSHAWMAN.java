@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cdlRickshawMan} consumes before
+    * Number of leading input bars {@link Core#CDLRICKSHAWMAN} consumes before
     * it can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -21,7 +21,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cdlRickshawManLookback( )
+   public int CDLRICKSHAWMAN_Lookback( )
    {
       int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
       int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
@@ -35,15 +35,15 @@
       return Math.max(Math.max(BodyDoji_avgPeriod, ShadowLong_avgPeriod), Near_avgPeriod) ;
 
    }
-   RetCode cdlRickshawManInternal( int startIdx,
-                                   int endIdx,
-                                   double inOpen[],
-                                   double inHigh[],
-                                   double inLow[],
-                                   double inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLRICKSHAWMAN_Internal( int startIdx,
+                                    int endIdx,
+                                    double inOpen[],
+                                    double inHigh[],
+                                    double inLow[],
+                                    double inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -72,7 +72,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRickshawManLookback();
+      lookbackTotal = CDLRICKSHAWMAN_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -144,15 +144,15 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode cdlRickshawManInternal( int startIdx,
-                                   int endIdx,
-                                   float inOpen[],
-                                   float inHigh[],
-                                   float inLow[],
-                                   float inClose[],
-                                   MInteger outBegIdx,
-                                   MInteger outNBElement,
-                                   int outInteger[] )
+   RetCode CDLRICKSHAWMAN_Internal( int startIdx,
+                                    int endIdx,
+                                    float inOpen[],
+                                    float inHigh[],
+                                    float inLow[],
+                                    float inClose[],
+                                    MInteger outBegIdx,
+                                    MInteger outNBElement,
+                                    int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -178,7 +178,7 @@
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = cdlRickshawManLookback();
+      lookbackTotal = CDLRICKSHAWMAN_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -235,7 +235,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlRickshawManLookback} is a
+    * valid range shorter than {@link Core#CDLRICKSHAWMAN_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -255,11 +255,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlLongLeggedDoji
-    * @see Core#cdlDoji
-    * @see Core#cdlHignWave
+    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#CDLDOJI
+    * @see Core#CDLHIGHWAVE
     */
-   public OutRange cdlRickshawMan( int startIdx,
+   public OutRange CDLRICKSHAWMAN( int startIdx,
                                    int endIdx,
                                    double inOpen[],
                                    double inHigh[],
@@ -269,7 +269,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRickshawManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLRICKSHAWMAN", retCode);
       }
@@ -286,7 +286,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cdlRickshawManLookback} is a
+    * valid range shorter than {@link Core#CDLRICKSHAWMAN_Lookback} is a
     * <b>success with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -306,11 +306,11 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#cdlLongLeggedDoji
-    * @see Core#cdlDoji
-    * @see Core#cdlHignWave
+    * @see Core#CDLLONGLEGGEDDOJI
+    * @see Core#CDLDOJI
+    * @see Core#CDLHIGHWAVE
     */
-   public OutRange cdlRickshawMan( int startIdx,
+   public OutRange CDLRICKSHAWMAN( int startIdx,
                                    int endIdx,
                                    float inOpen[],
                                    float inHigh[],
@@ -320,7 +320,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRickshawManInternal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRICKSHAWMAN_Internal(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw failure("CDLRICKSHAWMAN", retCode);
       }
@@ -330,8 +330,8 @@
 
    /**
     * A live CDLRICKSHAWMAN stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cdlRickshawMan} over the same series.
-    * Open with {@link Core#cdlRickshawManOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CDLRICKSHAWMAN} over the same series.
+    * Open with {@link Core#CDLRICKSHAWMAN_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -342,7 +342,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CdlRickshawManStream {
+   public static final class CDLRICKSHAWMAN_Stream {
       final Core core;
       double BodyDojiPeriodTotal;
       double ShadowLongPeriodTotal;
@@ -377,10 +377,10 @@
       int cur_outInteger;
       OutRange fillRange = OutRange.EMPTY;
 
-      CdlRickshawManStream( Core core ) { this.core = core; }
+      CDLRICKSHAWMAN_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cdlRickshawManOpenAndFill}, or
+       * The range filled by {@link Core#CDLRICKSHAWMAN_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -388,7 +388,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CdlRickshawManStream( CdlRickshawManStream other ) {
+      CDLRICKSHAWMAN_Stream( CDLRICKSHAWMAN_Stream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -429,7 +429,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public int update( double inOpen, double inHigh, double inLow, double inClose ) {
-         core.cdlRickshawManStreamStep(this, inOpen, inHigh, inLow, inClose);
+         core.CDLRICKSHAWMAN_StreamStep(this, inOpen, inHigh, inLow, inClose);
          return this.cur_outInteger;
       }
 
@@ -441,8 +441,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CdlRickshawManStream scratch = new CdlRickshawManStream(this);
-         core.cdlRickshawManStreamStep(scratch, inOpen, inHigh, inLow, inClose);
+         CDLRICKSHAWMAN_Stream scratch = new CDLRICKSHAWMAN_Stream(this);
+         core.CDLRICKSHAWMAN_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
 
@@ -459,11 +459,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CdlRickshawManStream copy() {
-         return new CdlRickshawManStream(this);
+      public CDLRICKSHAWMAN_Stream copy() {
+         return new CDLRICKSHAWMAN_Stream(this);
       }
    }
-   void cdlRickshawManStreamStep( CdlRickshawManStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   void CDLRICKSHAWMAN_StreamStep( CDLRICKSHAWMAN_Stream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -532,7 +532,7 @@
          sp.ringPos_ShadowLongTrailingIdx = 0;
       }
    }
-   private RetCode cdlRickshawManOpenBody( CdlRickshawManStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLRICKSHAWMAN_OpenBody( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -566,7 +566,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRickshawManLookback();
+      lookbackTotal = CDLRICKSHAWMAN_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -709,7 +709,7 @@
       sp.cur_outInteger = lastValue_outInteger;
       return RetCode.Success;
    }
-   private RetCode cdlRickshawManOpenAndFillBody( CdlRickshawManStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   private RetCode CDLRICKSHAWMAN_OpenAndFillBody( CDLRICKSHAWMAN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
       double BodyDojiPeriodTotal = 0;
       double ShadowLongPeriodTotal = 0;
@@ -744,7 +744,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = cdlRickshawManLookback();
+      lookbackTotal = CDLRICKSHAWMAN_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -887,11 +887,11 @@
       sp.cur_outInteger = outInteger[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cdlRickshawManOpen (composition seam). */
-   CdlRickshawManStream cdlRickshawManOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   /* Internal startIdx-anchored open behind CDLRICKSHAWMAN_Open (composition seam). */
+   CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {
-      CdlRickshawManStream sp = new CdlRickshawManStream(this);
-      RetCode retCode = cdlRickshawManOpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
+      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
+      RetCode retCode = CDLRICKSHAWMAN_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -906,32 +906,32 @@
    /**
     * Open a live CDLRICKSHAWMAN stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cdlRickshawMan} at that bar.
-    * <p>The history must hold at least {@code cdlRickshawManLookback(...) + 1} bars
+    * to {@link Core#CDLRICKSHAWMAN} at that bar.
+    * <p>The history must hold at least {@code CDLRICKSHAWMAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CdlRickshawManStream cdlRickshawManOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+   public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_Open( double inOpen[], double inHigh[], double inLow[], double inClose[] )
    {
-      return cdlRickshawManOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+      return CDLRICKSHAWMAN_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
    /**
-    * {@link Core#cdlRickshawManOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cdlRickshawMan} over the whole history in the same single pass
+    * {@link Core#CDLRICKSHAWMAN_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CDLRICKSHAWMAN} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CdlRickshawManStream#fillRange()}.
+    * {@link CDLRICKSHAWMAN_Stream#fillRange()}.
     */
-   public CdlRickshawManStream cdlRickshawManOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
+   public CDLRICKSHAWMAN_Stream CDLRICKSHAWMAN_OpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], int outInteger[] )
    {
-      CdlRickshawManStream sp = new CdlRickshawManStream(this);
+      CDLRICKSHAWMAN_Stream sp = new CDLRICKSHAWMAN_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cdlRickshawManOpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
+      RetCode retCode = CDLRICKSHAWMAN_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -75,9 +75,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_trendline`]: the number of leading input values consumed
+    /// Lookback period for [`Core::HT_TRENDLINE`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn ht_trendline_lookback(&self) -> usize {
+    pub fn HT_TRENDLINE_Lookback(&self) -> usize {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -85,7 +85,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return (63 + self.unstable_period[FuncUnstId::HtTrendline as usize]) as usize;
+        return (63 + self.unstable_period[FuncUnstId::HT_TRENDLINE as usize]) as usize;
     }
     /// Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay whose
     /// averaging window adapts to the dominant cycle period measured via Hilbert-transform
@@ -123,7 +123,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ht_trendline(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.HT_TRENDLINE(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -131,7 +131,7 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ht_dcperiod`] · [`Core::ht_phasor`] · [`Core::mama`] · [`Core::wma`]
+    /// [`Core::HT_DCPERIOD`] · [`Core::HT_PHASOR`] · [`Core::MAMA`] · [`Core::WMA`]
     ///
     /// # References
     ///
@@ -139,10 +139,10 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/ht_trendline](https://ta-lib.org/functions/ht_trendline/)
+    /// [ta-lib.org/functions/HT_TRENDLINE](https://ta-lib.org/functions/HT_TRENDLINE/)
     #[doc(alias = "HilbertTransformInstantaneousTrendline")]
     #[doc(alias = "InstantaneousTrendline")]
-    pub fn ht_trendline(
+    pub fn HT_TRENDLINE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -152,13 +152,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_trendline_fma, ht_trendline_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_TRENDLINE_fma, HT_TRENDLINE_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_trendline_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_TRENDLINE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_trendline_fma(
+    fn HT_TRENDLINE_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -167,10 +167,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ht_trendline_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_TRENDLINE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ht_trendline_impl(
+    fn HT_TRENDLINE_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -185,7 +185,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ht_trendline_lookback();
+        let _assertLb = self.HT_TRENDLINE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -268,7 +268,7 @@ impl Core {
         rad2Deg = 45.0 / tempReal;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendline as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDLINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -554,20 +554,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_TRENDLINE stream: one value per closed bar, bit-identical to [`Core::ht_trendline`]
-/// over the same series. Open with [`Core::ht_trendline_open`]; dropping the handle
+/// Live HT_TRENDLINE stream: one value per closed bar, bit-identical to [`Core::HT_TRENDLINE`]
+/// over the same series. Open with [`Core::HT_TRENDLINE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_TRENDLINE_Stream")]
-pub struct HtTrendlineStream {
+pub struct HT_TRENDLINE_Stream {
     core: Core,
-    state: HtTrendlineStreamState,
+    state: HT_TRENDLINE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtTrendlineStreamState {
+struct HT_TRENDLINE_StreamState {
     i: usize,
     tempReal: f64,
     tempReal2: f64,
@@ -641,7 +641,7 @@ struct HtTrendlineStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_trendline_step_internal(&self, sp: &mut HtTrendlineStreamState, inReal: f64, outReal: &mut f64) {
+    fn HT_TRENDLINE_step_internal(&self, sp: &mut HT_TRENDLINE_StreamState, inReal: f64, outReal: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -821,10 +821,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_trendline_open`] (composition seam).
-    pub(crate) fn ht_trendline_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_TRENDLINE_Open`] (composition seam).
+    pub(crate) fn HT_TRENDLINE_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtTrendlineStream, f64), RetCode> {
+    ) -> Result<(HT_TRENDLINE_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -915,7 +915,7 @@ impl Core {
         rad2Deg = 45.0 / tempReal;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendline as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDLINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1211,7 +1211,7 @@ impl Core {
         }
         let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
         win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
-        let state = HtTrendlineStreamState {
+        let state = HT_TRENDLINE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1277,11 +1277,11 @@ impl Core {
             winCap_i: cap_i as usize,
             win_i_inReal,
         };
-        Ok((HtTrendlineStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((HT_TRENDLINE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live HT_TRENDLINE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_trendline`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_TRENDLINE`] at that bar.
     ///
     /// # Errors
     ///
@@ -1293,23 +1293,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_trendline_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_TRENDLINE_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HT_TRENDLINE_Open")]
-    pub fn ht_trendline_open(&self, inReal: &[f64], ) -> Result<(HtTrendlineStream, f64), RetCode> {
-        self.ht_trendline_open_internal(inReal, 0)
+    pub fn HT_TRENDLINE_Open(&self, inReal: &[f64], ) -> Result<(HT_TRENDLINE_Stream, f64), RetCode> {
+        self.HT_TRENDLINE_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_trendline_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_trendline`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_TRENDLINE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_TRENDLINE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_TRENDLINE_OpenAndFill")]
-    pub fn ht_trendline_open_and_fill(
+    pub fn HT_TRENDLINE_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<HtTrendlineStream, RetCode> {
+    ) -> Result<HT_TRENDLINE_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1399,7 +1399,7 @@ impl Core {
         rad2Deg = 45.0 / tempReal;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtTrendline as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_TRENDLINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1696,7 +1696,7 @@ impl Core {
         }
         let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
         win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
-        let state = HtTrendlineStreamState {
+        let state = HT_TRENDLINE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1762,19 +1762,19 @@ impl Core {
             winCap_i: cap_i as usize,
             win_i_inReal,
         };
-        Ok(HtTrendlineStream { core: self.clone(), state })
+        Ok(HT_TRENDLINE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtTrendlineStream {
+impl HT_TRENDLINE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_TRENDLINE_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ht_trendline_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.HT_TRENDLINE_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -1792,7 +1792,7 @@ impl HtTrendlineStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtTrendlineStream>();
+    _assert_auto::<HT_TRENDLINE_Stream>();
 };
 
 /***************/

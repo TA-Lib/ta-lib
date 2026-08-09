@@ -12,7 +12,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#minMax} consumes before it can
+    * Number of leading input bars {@link Core#MINMAX} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -22,7 +22,7 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int minMaxLookback( int optInTimePeriod )
+   public int MINMAX_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
@@ -32,14 +32,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode minMaxInternal( int startIdx,
-                           int endIdx,
-                           double inReal[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outMin[],
-                           double outMax[] )
+   RetCode MINMAX_Internal( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outMin[],
+                            double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -140,14 +140,14 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode minMaxInternal( int startIdx,
-                           int endIdx,
-                           float inReal[],
-                           int optInTimePeriod,
-                           MInteger outBegIdx,
-                           MInteger outNBElement,
-                           double outMin[],
-                           double outMax[] )
+   RetCode MINMAX_Internal( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            MInteger outBegIdx,
+                            MInteger outNBElement,
+                            double outMin[],
+                            double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -240,7 +240,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minMaxLookback} is a <b>success with
+    * valid range shorter than {@link Core#MINMAX_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -260,13 +260,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#max
-    * @see Core#minMaxIndex
-    * @see Core#minIndex
-    * @see Core#maxIndex
+    * @see Core#MIN
+    * @see Core#MAX
+    * @see Core#MINMAXINDEX
+    * @see Core#MININDEX
+    * @see Core#MAXINDEX
     */
-   public OutRange minMax( int startIdx,
+   public OutRange MINMAX( int startIdx,
                            int endIdx,
                            double inReal[],
                            int optInTimePeriod,
@@ -275,7 +275,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minMaxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw failure("MINMAX", retCode);
       }
@@ -291,7 +291,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#minMaxLookback} is a <b>success with
+    * valid range shorter than {@link Core#MINMAX_Lookback} is a <b>success with
     * no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -311,13 +311,13 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#min
-    * @see Core#max
-    * @see Core#minMaxIndex
-    * @see Core#minIndex
-    * @see Core#maxIndex
+    * @see Core#MIN
+    * @see Core#MAX
+    * @see Core#MINMAXINDEX
+    * @see Core#MININDEX
+    * @see Core#MAXINDEX
     */
-   public OutRange minMax( int startIdx,
+   public OutRange MINMAX( int startIdx,
                            int endIdx,
                            float inReal[],
                            int optInTimePeriod,
@@ -326,7 +326,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minMaxInternal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_Internal(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw failure("MINMAX", retCode);
       }
@@ -336,8 +336,8 @@
 
    /**
     * A live MINMAX stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#minMax} over the same series.
-    * Open with {@link Core#minMaxOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#MINMAX} over the same series.
+    * Open with {@link Core#MINMAX_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -348,7 +348,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class MinMaxStream {
+   public static final class MINMAX_Stream {
       final Core core;
       int optInTimePeriod;
       double highest;
@@ -367,10 +367,10 @@
       Value cachedValue;
       OutRange fillRange = OutRange.EMPTY;
 
-      MinMaxStream( Core core ) { this.core = core; }
+      MINMAX_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#minMaxOpenAndFill}, or
+       * The range filled by {@link Core#MINMAX_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -378,7 +378,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      MinMaxStream( MinMaxStream other ) {
+      MINMAX_Stream( MINMAX_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -416,7 +416,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public Value update( double inReal ) {
-         core.minMaxStreamStep(this, inReal);
+         core.MINMAX_StreamStep(this, inReal);
          this.cachedValue = new Value(this.cur_outMin, this.cur_outMax);
          return this.cachedValue;
       }
@@ -429,8 +429,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public Value peek( double inReal ) {
-         MinMaxStream scratch = new MinMaxStream(this);
-         core.minMaxStreamStep(scratch, inReal);
+         MINMAX_Stream scratch = new MINMAX_Stream(this);
+         core.MINMAX_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outMin, scratch.cur_outMax);
       }
 
@@ -447,11 +447,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public MinMaxStream copy() {
-         return new MinMaxStream(this);
+      public MINMAX_Stream copy() {
+         return new MINMAX_Stream(this);
       }
    }
-   void minMaxStreamStep( MinMaxStream sp, double inReal )
+   void MINMAX_StreamStep( MINMAX_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
          int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
@@ -499,7 +499,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode minMaxOpenBody( MinMaxStream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MINMAX_OpenBody( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
    {
       double highest = 0;
       double lowest = 0;
@@ -624,10 +624,10 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMin = lastValue_outMin;
       sp.cur_outMax = lastValue_outMax;
-      sp.cachedValue = new MinMaxStream.Value(sp.cur_outMin, sp.cur_outMax);
+      sp.cachedValue = new MINMAX_Stream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
-   private RetCode minMaxOpenAndFillBody( MinMaxStream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
+   private RetCode MINMAX_OpenAndFillBody( MINMAX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
    {
       double highest = 0;
       double lowest = 0;
@@ -752,14 +752,14 @@
       sp.x_inReal = capX_inReal;
       sp.cur_outMin = outMin[outNBElement.value - 1];
       sp.cur_outMax = outMax[outNBElement.value - 1];
-      sp.cachedValue = new MinMaxStream.Value(sp.cur_outMin, sp.cur_outMax);
+      sp.cachedValue = new MINMAX_Stream.Value(sp.cur_outMin, sp.cur_outMax);
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind minMaxOpen (composition seam). */
-   MinMaxStream minMaxOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind MINMAX_Open (composition seam). */
+   MINMAX_Stream MINMAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {
-      MinMaxStream sp = new MinMaxStream(this);
-      RetCode retCode = minMaxOpenBody(sp, inReal, startIdx, optInTimePeriod);
+      MINMAX_Stream sp = new MINMAX_Stream(this);
+      RetCode retCode = MINMAX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -774,32 +774,32 @@
    /**
     * Open a live MINMAX stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#minMax} at that bar.
-    * <p>The history must hold at least {@code minMaxLookback(...) + 1} bars
+    * to {@link Core#MINMAX} at that bar.
+    * <p>The history must hold at least {@code MINMAX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public MinMaxStream minMaxOpen( double inReal[], int optInTimePeriod )
+   public MINMAX_Stream MINMAX_Open( double inReal[], int optInTimePeriod )
    {
-      return minMaxOpenInternal(inReal, 0, optInTimePeriod);
+      return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#minMaxOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#minMax} over the whole history in the same single pass
+    * {@link Core#MINMAX_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#MINMAX} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link MinMaxStream#fillRange()}.
+    * {@link MINMAX_Stream#fillRange()}.
     */
-   public MinMaxStream minMaxOpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
+   public MINMAX_Stream MINMAX_OpenAndFill( double inReal[], int optInTimePeriod, double outMin[], double outMax[] )
    {
-      MinMaxStream sp = new MinMaxStream(this);
+      MINMAX_Stream sp = new MINMAX_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = minMaxOpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      RetCode retCode = MINMAX_OpenAndFillBody(sp, inReal, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

@@ -223,7 +223,7 @@ Rust:
 
 ```rust
 let core = Core::builder().build();               // immutable settings (issue #104)
-let (mut s, _last) = core.sma_open(&history, 14)?; // &self method on Core; the
+let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
                                                   // handle holds its own Core
                                                   // (a cheap by-value clone)
 for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
@@ -240,26 +240,26 @@ Java (shipped shape — design-panel reviewed):
 
 ```java
 Core core = new Core();
-Core.SmaStream s = core.smaOpen(history, 14);   // throws on reject; value() = last-bar value
-double v = s.update(bar);                       // one value per closed bar; never throws
-double p = s.peek(formingBarClose);             // forming bar, non-committing (deep copy)
-Core.SmaStream t = s.copy();                    // independent stream fork
-Core.MacdStream m = core.macdOpen(history, 12, 26, 9);
-Core.MacdStream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
-Core.SmaStream s2 = core.smaOpenAndFill(history, 14, warmup);
-OutRange fr = s2.fillRange();                   // range written, on the handle
+Core.SMA_Stream s = core.SMA_Open(history, 14);  // throws on reject; value() = last-bar value
+double v = s.update(bar);                        // one value per closed bar; never throws
+double p = s.peek(formingBarClose);              // forming bar, non-committing (deep copy)
+Core.SMA_Stream t = s.copy();                    // independent stream fork
+Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
+Core.MACD_Stream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
+Core.SMA_Stream s2 = core.SMA_OpenAndFill(history, 14, warmup);
+OutRange fr = s2.fillRange();                    // range written, on the handle
 ```
 
-- Handles are `public static final` classes **nested in `Core`** (`Core.SmaStream`),
-  named from the Java base method (`movingAverage` → `MovingAverageStream`) — they
-  ride the existing per-function fragment splice into both the shipped `Core.java`
-  and the JSON-RPC server with zero new build plumbing.
+- Handles are `public static final` classes **nested in `Core`** (`Core.SMA_Stream`),
+  named `<NAME>_Stream` from the YAML `name` — they ride the existing per-function
+  fragment splice into both the shipped `Core.java` and the JSON-RPC server with
+  zero new build plumbing.
 - Open rejections are unchecked exceptions: `InsufficientHistoryException`
   (an `IllegalArgumentException` subclass — the one routine, data-dependent
   condition, catchable separately) for `historyLen < lookback + 1`, plain
   `IllegalArgumentException` for out-of-range parameters and `OpenAndFill`
   aliasing, `IllegalStateException` for capture invariants. Messages carry the
-  stable prefix `"TA_<NAME> open:"`. `update`/`peek` never throw post-open.
+  stable prefix `"<NAME> open:"`. `update`/`peek` never throw post-open.
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
@@ -269,7 +269,7 @@ OutRange fr = s2.fillRange();                   // range written, on the handle
   async connotation and Java's broken `clone()`.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
-  one managed backend where `smaOpenAndFill(history, …, history)` compiles, so
+  one managed backend where `SMA_OpenAndFill(history, …, history)` compiles, so
   the guard is load-bearing (the planned managed .NET emitter must mirror it).
 - `Integer.MIN_VALUE` keeps its batch meaning (use the documented default) in
   streaming opens; the stream gate asserts `open(MIN_VALUE) == open(default)`

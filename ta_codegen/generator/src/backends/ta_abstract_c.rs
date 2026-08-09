@@ -283,7 +283,6 @@ fn gen_def_ui_h() -> String {
          \x20  #define DEF_FUNCTION( name, \\\n\
          \x20                        groupId, \\\n\
          \x20                        hint, \\\n\
-         \x20                        camelCaseName, \\\n\
          \x20                        flags ) \\\n\
          \x20  \\\n\
          \x20  TA_FuncInfo TA_INFO_##name; \\\n\
@@ -304,7 +303,6 @@ fn gen_def_ui_h() -> String {
          \x20     (const char * const)#name, \\\n\
          \x20     (const char * const)groupId##String, \\\n\
          \x20     (const char * const)hint, \\\n\
-         \x20     (const char * const)camelCaseName, \\\n\
          \x20     (const int)flags, \\\n\
          \x20     (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \\\n\
          \x20     (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \\\n\
@@ -315,7 +313,6 @@ fn gen_def_ui_h() -> String {
          \x20  #define DEF_FUNCTION( name, \\\n\
          \x20                        groupId, \\\n\
          \x20                        hint, \\\n\
-         \x20                        camelCaseName, \\\n\
          \x20                        flags ) \\\n\
          \x20  \\\n\
          \x20  TA_FuncInfo TA_INFO_##name; \\\n\
@@ -336,7 +333,6 @@ fn gen_def_ui_h() -> String {
          \x20     (const char * const)#name, \\\n\
          \x20     (const char * const)groupId##String, \\\n\
          \x20     (const char * const)hint, \\\n\
-         \x20     (const char * const)camelCaseName, \\\n\
          \x20     (const int)flags, \\\n\
          \x20     (sizeof(TA_##name##_Inputs)   / sizeof(TA_InputParameterInfo *))   - 1, \\\n\
          \x20     (sizeof(TA_##name##_OptInputs)/ sizeof(TA_OptInputParameterInfo *))- 1, \\\n\
@@ -350,7 +346,7 @@ fn gen_def_ui_h() -> String {
 
     // Utility macros for math unary/binary operators
     o.push_str(
-        "#define DEF_MATH_UNARY_OPERATOR(NAME,HINT,CAMELCASENAME) \\\n\
+        "#define DEF_MATH_UNARY_OPERATOR(NAME,HINT) \\\n\
          \tstatic const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \\\n\
          { \\\n\
          \x20 &TA_DEF_UI_Input_Real, \\\n\
@@ -365,13 +361,12 @@ fn gen_def_ui_h() -> String {
          DEF_FUNCTION( NAME, \\\n\
          \x20             TA_GroupId_MathTransform, \\\n\
          \x20             HINT, \\\n\
-         \x20             CAMELCASENAME, \\\n\
          \x20             0 \\\n\
          \x20            );\n\n",
     );
 
     o.push_str(
-        "#define DEF_MATH_BINARY_OPERATOR(NAME,HINT,CAMELCASENAME) \\\n\
+        "#define DEF_MATH_BINARY_OPERATOR(NAME,HINT) \\\n\
          \tstatic const TA_InputParameterInfo    *TA_##NAME##_Inputs[]    = \\\n\
          { \\\n\
          \x20 &TA_DEF_UI_Input_Real0, \\\n\
@@ -387,7 +382,6 @@ fn gen_def_ui_h() -> String {
          DEF_FUNCTION( NAME, \\\n\
          \x20             TA_GroupId_MathOperators, \\\n\
          \x20             HINT, \\\n\
-         \x20             CAMELCASENAME, \\\n\
          \x20             0 \\\n\
          \x20            );\n\n",
     );
@@ -551,7 +545,7 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     o.push_str("static const TA_IntegerDataPair TA_MA_TypeDataPair[] =\n{\n");
     for (i, v) in ma.variants.iter().enumerate() {
         let comma = if i + 1 < ma.variants.len() { "," } else { "" };
-        let _ = writeln!(o, "   {{{},\"{}\"}}{comma}", v.value, v.short_name);
+        let _ = writeln!(o, "   {{{},\"{}\"}}{comma}", v.value, v.name);
     }
     o.push_str("};\n\n");
 
@@ -1121,7 +1115,6 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
     // DEF_FUNCTION macro invocation.
     let group_id = group_id_string(&func.group);
     let hint = func.hint.as_deref().unwrap_or("");
-    let camel = func.camel_case.as_deref().unwrap_or(name);
     let flags_str = func_flags_string(&func.flags);
 
     let _ = writeln!(
@@ -1129,7 +1122,6 @@ fn emit_table_function(o: &mut String, func: &FuncDef) {
         "DEF_FUNCTION( {name},\n\
          \x20             {group_id},\n\
          \x20             \"{hint}\",\n\
-         \x20             \"{camel}\",\n\
          \x20             {flags_str}\n\
          \x20            );"
     );

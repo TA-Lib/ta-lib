@@ -1,5 +1,4 @@
 name: CDLMORNINGSTAR
-camel_case: CdlMorningStar
 group: Pattern Recognition
 hint: Morning Star
 flags: [candlestick, stream]

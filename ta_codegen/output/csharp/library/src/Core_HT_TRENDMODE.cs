@@ -65,7 +65,7 @@ public partial class Core
     *                circular-buffer loop (which still uses i).
     */
    /// <summary>
-   /// Number of leading input bars <c>HtTrendMode</c> consumes before it can
+   /// Number of leading input bars <c>HT_TRENDMODE</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -78,7 +78,7 @@ public partial class Core
    /// </para>
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int HtTrendModeLookback( )
+   public int HT_TRENDMODE_Lookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -88,15 +88,15 @@ public partial class Core
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendMode] ;
+      return 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDMODE] ;
 
    }
-   internal RetCode HtTrendMode( int startIdx,
-                                 int endIdx,
-                                 double[] inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 int[] outInteger )
+   internal RetCode HT_TRENDMODE( int startIdx,
+                                  int endIdx,
+                                  double[] inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  int[] outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -218,7 +218,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendMode];
+      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDMODE];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -580,12 +580,12 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode HtTrendMode( int startIdx,
-                                 int endIdx,
-                                 float[] inReal,
-                                 out int outBegIdx,
-                                 out int outNBElement,
-                                 int[] outInteger )
+   internal RetCode HT_TRENDMODE( int startIdx,
+                                  int endIdx,
+                                  float[] inReal,
+                                  out int outBegIdx,
+                                  out int outNBElement,
+                                  int[] outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -693,7 +693,7 @@ public partial class Core
       rad2Deg = 45.0 / tempReal;
       deg2Rad = 1.0 / rad2Deg;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HtTrendMode];
+      lookbackTotal = 63 + this.unstablePeriod[(int)FuncUnstId.HT_TRENDMODE];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -996,8 +996,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtTrendModeLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_TRENDMODE_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -1013,12 +1013,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtTrendMode( int startIdx,
-                                int endIdx,
-                                double[] inReal,
-                                int[] outInteger )
+   public OutRange HT_TRENDMODE( int startIdx,
+                                 int endIdx,
+                                 double[] inReal,
+                                 int[] outInteger )
    {
-      RetCode retCode = HtTrendMode(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDMODE", retCode);
       }
@@ -1041,8 +1041,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>HtTrendModeLookback</c> is a <b>success
-   /// with no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>HT_TRENDMODE_Lookback</c> is a
+   /// <b>success with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -1058,12 +1058,12 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange HtTrendMode( int startIdx,
-                                int endIdx,
-                                float[] inReal,
-                                int[] outInteger )
+   public OutRange HT_TRENDMODE( int startIdx,
+                                 int endIdx,
+                                 float[] inReal,
+                                 int[] outInteger )
    {
-      RetCode retCode = HtTrendMode(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = HT_TRENDMODE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDMODE", retCode);
       }

@@ -64,9 +64,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_sine`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::HT_SINE`]: the number of leading input values consumed before
     /// the first output value can be produced.
-    pub fn ht_sine_lookback(&self) -> usize {
+    pub fn HT_SINE_Lookback(&self) -> usize {
         // 31 input are skip
         // +32 output are skip to account for misc lookback
         // ---
@@ -74,7 +74,7 @@ impl Core {
         //
         // 31 is for being compatible with Tradestation.
         // See mama_lookback for an explanation of the "32".
-        return (63 + self.unstable_period[FuncUnstId::HtSine as usize]) as usize;
+        return (63 + self.unstable_period[FuncUnstId::HT_SINE as usize]) as usize;
     }
     /// Hilbert Transform SineWave: derives the dominant-cycle phase from price and emits its sine
     /// plus a 45-degree-lead sine. The two curves cross near cycle turning points. outSine and
@@ -114,7 +114,7 @@ impl Core {
     /// let mut sine = vec![0.0; 252];
     /// let mut lead_sine = vec![0.0; 252];
     ///
-    /// let ret = core.ht_sine(
+    /// let ret = core.HT_SINE(
     ///     0, data.len() - 1, &data,
     ///     &mut out_beg, &mut out_nb, &mut sine, &mut lead_sine,
     /// );
@@ -125,19 +125,19 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ht_dcphase`] · [`Core::ht_dcperiod`] · [`Core::ht_phasor`] ·
-    /// [`Core::ht_trendmode`] · [`Core::mama`]
+    /// [`Core::HT_DCPHASE`] · [`Core::HT_DCPERIOD`] · [`Core::HT_PHASOR`] ·
+    /// [`Core::HT_TRENDMODE`] · [`Core::MAMA`]
     ///
     /// # References
     ///
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine/)
+    /// Further reading: [ta-lib.org/functions/HT_SINE](https://ta-lib.org/functions/HT_SINE/)
     #[doc(alias = "HilbertTransformSineWave")]
     #[doc(alias = "EhlersSineWave")]
     #[doc(alias = "SineWaveIndicator")]
-    pub fn ht_sine(
+    pub fn HT_SINE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -148,13 +148,13 @@ impl Core {
         outLeadSine: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_sine_fma, ht_sine_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_SINE_fma, HT_SINE_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_sine_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+        self.HT_SINE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_sine_fma(
+    fn HT_SINE_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -164,10 +164,10 @@ impl Core {
         outSine: &mut [f64],
         outLeadSine: &mut [f64],
     ) -> RetCode {
-        self.ht_sine_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
+        self.HT_SINE_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outSine, outLeadSine)
     }
     #[inline(always)]
-    fn ht_sine_impl(
+    fn HT_SINE_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -186,7 +186,7 @@ impl Core {
         if outSine.as_ptr() == outLeadSine.as_ptr() {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ht_sine_lookback();
+        let _assertLb = self.HT_SINE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outSine.len());
@@ -280,7 +280,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtSine as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_SINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -591,20 +591,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_SINE stream: one value per closed bar, bit-identical to [`Core::ht_sine`]
-/// over the same series. Open with [`Core::ht_sine_open`]; dropping the handle
+/// Live HT_SINE stream: one value per closed bar, bit-identical to [`Core::HT_SINE`]
+/// over the same series. Open with [`Core::HT_SINE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_SINE_Stream")]
-pub struct HtSineStream {
+pub struct HT_SINE_Stream {
     core: Core,
-    state: HtSineStreamState,
+    state: HT_SINE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtSineStreamState {
+struct HT_SINE_StreamState {
     i: usize,
     tempReal: f64,
     tempReal2: f64,
@@ -682,7 +682,7 @@ struct HtSineStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_sine_step_internal(&self, sp: &mut HtSineStreamState, inReal: f64, outSine: &mut f64, outLeadSine: &mut f64) {
+    fn HT_SINE_step_internal(&self, sp: &mut HT_SINE_StreamState, inReal: f64, outSine: &mut f64, outLeadSine: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -877,10 +877,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_sine_open`] (composition seam).
-    pub(crate) fn ht_sine_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_SINE_Open`] (composition seam).
+    pub(crate) fn HT_SINE_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtSineStream, (f64, f64)), RetCode> {
+    ) -> Result<(HT_SINE_Stream, (f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -981,7 +981,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtSine as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_SINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1300,7 +1300,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtSineStreamState {
+        let state = HT_SINE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1370,11 +1370,11 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok((HtSineStream { core: self.clone(), state }, (lastValue_outSine, lastValue_outLeadSine)))
+        Ok((HT_SINE_Stream { core: self.clone(), state }, (lastValue_outSine, lastValue_outLeadSine)))
     }
 
     /// Open a live HT_SINE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_sine`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_SINE`] at that bar.
     ///
     /// # Errors
     ///
@@ -1386,24 +1386,24 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_sine_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_SINE_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_HT_SINE_Open")]
-    pub fn ht_sine_open(&self, inReal: &[f64], ) -> Result<(HtSineStream, (f64, f64)), RetCode> {
-        self.ht_sine_open_internal(inReal, 0)
+    pub fn HT_SINE_Open(&self, inReal: &[f64], ) -> Result<(HT_SINE_Stream, (f64, f64)), RetCode> {
+        self.HT_SINE_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_sine_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_sine`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_SINE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_SINE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_SINE_OpenAndFill")]
-    pub fn ht_sine_open_and_fill(
+    pub fn HT_SINE_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64],
-    ) -> Result<HtSineStream, RetCode> {
+    ) -> Result<HT_SINE_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1505,7 +1505,7 @@ impl Core {
         constDeg2RadBy360 = tempReal * 8.0;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HtSine as usize]) as usize;
+        lookbackTotal = (63 + self.unstable_period[FuncUnstId::HT_SINE as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1825,7 +1825,7 @@ impl Core {
         if cbSize_smoothPrice > historyLen + 1 {
             return Err(RetCode::InternalError);
         }
-        let state = HtSineStreamState {
+        let state = HT_SINE_StreamState {
             i,
             tempReal,
             tempReal2,
@@ -1895,20 +1895,20 @@ impl Core {
             cbSize_smoothPrice: cbSize_smoothPrice,
             cb_smoothPrice: smoothPrice,
         };
-        Ok(HtSineStream { core: self.clone(), state })
+        Ok(HT_SINE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtSineStream {
+impl HT_SINE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_SINE_Update")]
     pub fn update(&mut self, inReal: f64) -> (f64, f64) {
         let mut outSine: f64 = 0.0_f64;
         let mut outLeadSine: f64 = 0.0_f64;
-        self.core.ht_sine_step_internal(&mut self.state, inReal, &mut outSine, &mut outLeadSine);
+        self.core.HT_SINE_step_internal(&mut self.state, inReal, &mut outSine, &mut outLeadSine);
         (outSine, outLeadSine)
     }
 
@@ -1926,7 +1926,7 @@ impl HtSineStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtSineStream>();
+    _assert_auto::<HT_SINE_Stream>();
 };
 
 /***************/

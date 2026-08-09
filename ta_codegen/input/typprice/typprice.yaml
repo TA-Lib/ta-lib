@@ -1,5 +1,4 @@
 name: TYPPRICE
-camel_case: TypPrice
 group: Price Transform
 hint: Typical Price
 flags: [overlap, stream]

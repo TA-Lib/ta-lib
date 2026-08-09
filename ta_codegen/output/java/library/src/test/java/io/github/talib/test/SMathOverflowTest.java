@@ -88,28 +88,28 @@ public class SMathOverflowTest {
     static void addFloatOverflow() {
         float[] a = { 3.0e38f }, b = { 3.0e38f };   // 6e38 > FLT_MAX
         double[] o = { -1.0 };
-        OutRange r = Core.DEFAULT.add(0, 0, a, b, o);
+        OutRange r = Core.DEFAULT.ADD(0, 0, a, b, o);
         checkFiniteAndEqual("ADD", r, o[0], (double) a[0] + (double) b[0]);
     }
 
     static void subFloatOverflow() {
         float[] a = { 3.0e38f }, b = { -3.0e38f };  // 6e38 > FLT_MAX
         double[] o = { -1.0 };
-        OutRange r = Core.DEFAULT.sub(0, 0, a, b, o);
+        OutRange r = Core.DEFAULT.SUB(0, 0, a, b, o);
         checkFiniteAndEqual("SUB", r, o[0], (double) a[0] - (double) b[0]);
     }
 
     static void multFloatOverflow() {
         float[] a = { 3.0e38f }, b = { 10.0f };     // 3e39 > FLT_MAX (PR #33)
         double[] o = { -1.0 };
-        OutRange r = Core.DEFAULT.mult(0, 0, a, b, o);
+        OutRange r = Core.DEFAULT.MULT(0, 0, a, b, o);
         checkFiniteAndEqual("MULT", r, o[0], (double) a[0] * (double) b[0]);
     }
 
     static void divFloatOverflow() {
         float[] a = { 3.0e38f }, b = { 1.0e-3f };   // 3e41 > FLT_MAX
         double[] o = { -1.0 };
-        OutRange r = Core.DEFAULT.div(0, 0, a, b, o);
+        OutRange r = Core.DEFAULT.DIV(0, 0, a, b, o);
         checkFiniteAndEqual("DIV", r, o[0], (double) a[0] / (double) b[0]);
     }
 

@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdltasukigap`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLTASUKIGAP`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdltasukigap_lookback(&self) -> usize {
+    pub fn CDLTASUKIGAP_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -128,7 +128,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdltasukigap(
+    /// let ret = core.CDLTASUKIGAP(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -138,13 +138,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlgapsidesidewhite`] · [`Core::cdlxsidegap3methods`]
+    /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdltasukigap](https://ta-lib.org/functions/cdltasukigap/)
+    /// [ta-lib.org/functions/CDLTASUKIGAP](https://ta-lib.org/functions/CDLTASUKIGAP/)
     #[doc(alias = "TasukiGap")]
     #[doc(alias = "UpsideDownsideTasukiGap")]
-    pub fn cdltasukigap(
+    pub fn CDLTASUKIGAP(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -162,7 +162,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdltasukigap_lookback();
+        let _assertLb = self.CDLTASUKIGAP_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -183,7 +183,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdltasukigap_lookback();
+        lookbackTotal = self.CDLTASUKIGAP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -299,20 +299,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLTASUKIGAP stream: one value per closed bar, bit-identical to [`Core::cdltasukigap`]
-/// over the same series. Open with [`Core::cdltasukigap_open`]; dropping the handle
+/// Live CDLTASUKIGAP stream: one value per closed bar, bit-identical to [`Core::CDLTASUKIGAP`]
+/// over the same series. Open with [`Core::CDLTASUKIGAP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLTASUKIGAP_Stream")]
-pub struct CdltasukigapStream {
+pub struct CDLTASUKIGAP_Stream {
     core: Core,
-    state: CdltasukigapStreamState,
+    state: CDLTASUKIGAP_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdltasukigapStreamState {
+struct CDLTASUKIGAP_StreamState {
     NearPeriodTotal: f64,
     lag1_inOpen: f64,
     lag2_inOpen: f64,
@@ -336,7 +336,7 @@ struct CdltasukigapStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdltasukigap_step_internal(&self, sp: &mut CdltasukigapStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLTASUKIGAP_step_internal(&self, sp: &mut CDLTASUKIGAP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Near_rangeType: i32 = self.candle_settings.near.range_type;
         #[allow(non_snake_case)]
@@ -415,10 +415,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdltasukigap_open`] (composition seam).
-    pub(crate) fn cdltasukigap_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLTASUKIGAP_Open`] (composition seam).
+    pub(crate) fn CDLTASUKIGAP_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdltasukigapStream, i32), RetCode> {
+    ) -> Result<(CDLTASUKIGAP_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -444,7 +444,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdltasukigap_lookback();
+        lookbackTotal = self.CDLTASUKIGAP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -593,7 +593,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdltasukigapStreamState {
+        let state = CDLTASUKIGAP_StreamState {
             NearPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -609,11 +609,11 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok((CdltasukigapStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLTASUKIGAP_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLTASUKIGAP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdltasukigap`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLTASUKIGAP`] at that bar.
     ///
     /// # Errors
     ///
@@ -632,23 +632,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdltasukigap_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLTASUKIGAP_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLTASUKIGAP_Open")]
-    pub fn cdltasukigap_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdltasukigapStream, i32), RetCode> {
-        self.cdltasukigap_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLTASUKIGAP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLTASUKIGAP_Stream, i32), RetCode> {
+        self.CDLTASUKIGAP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdltasukigap_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdltasukigap`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLTASUKIGAP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLTASUKIGAP`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLTASUKIGAP_OpenAndFill")]
-    pub fn cdltasukigap_open_and_fill(
+    pub fn CDLTASUKIGAP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdltasukigapStream, RetCode> {
+    ) -> Result<CDLTASUKIGAP_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -673,7 +673,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdltasukigap_lookback();
+        lookbackTotal = self.CDLTASUKIGAP_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -824,7 +824,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdltasukigapStreamState {
+        let state = CDLTASUKIGAP_StreamState {
             NearPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
             lag2_inOpen: inOpen[historyLen - 2],
@@ -840,19 +840,19 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok(CdltasukigapStream { core: self.clone(), state })
+        Ok(CDLTASUKIGAP_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdltasukigapStream {
+impl CDLTASUKIGAP_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLTASUKIGAP_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdltasukigap_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLTASUKIGAP_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -870,7 +870,7 @@ impl CdltasukigapStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdltasukigapStream>();
+    _assert_auto::<CDLTASUKIGAP_Stream>();
 };
 
 /***************/

@@ -58,7 +58,7 @@ public partial class Core
     *  122104 MF,CF  Fix#1089506 for when optInTimePeriod is 1.
     */
    /// <summary>
-   /// Number of leading input bars <c>PlusDM</c> consumes before it can produce
+   /// Number of leading input bars <c>PLUS_DM</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -73,7 +73,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Wilder smoothing period (default 14; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int PlusDMLookback( int optInTimePeriod )
+   public int PLUS_DM_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -81,20 +81,20 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDM] - 1 ;
+         return optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1 ;
       } else {
          return 1 ;
       }
 
    }
-   internal RetCode PlusDM( int startIdx,
-                            int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            double[] outReal )
+   internal RetCode PLUS_DM( int startIdx,
+                             int endIdx,
+                             double[] inHigh,
+                             double[] inLow,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -185,7 +185,7 @@ public partial class Core
        *    New Concepts In Technical Trading Systems, J. Welles Wilder Jr
        */
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDM] - 1;
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
       } else {
          lookbackTotal = 1;
       }
@@ -256,7 +256,7 @@ public partial class Core
       }
       /* Process subsequent DM */
       /* Skip the unstable period. */
-      i = this.unstablePeriod[(int)FuncUnstId.PlusDM];
+      i = this.unstablePeriod[(int)FuncUnstId.PLUS_DM];
       while( i-- != 0 ) {
          today += 1;
          tempReal = inHigh[today];
@@ -302,14 +302,14 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode PlusDM( int startIdx,
-                            int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
-                            int optInTimePeriod,
-                            out int outBegIdx,
-                            out int outNBElement,
-                            double[] outReal )
+   internal RetCode PLUS_DM( int startIdx,
+                             int endIdx,
+                             float[] inHigh,
+                             float[] inLow,
+                             int optInTimePeriod,
+                             out int outBegIdx,
+                             out int outNBElement,
+                             double[] outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -335,7 +335,7 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( optInTimePeriod > 1 ) {
-         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PlusDM] - 1;
+         lookbackTotal = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.PLUS_DM] - 1;
       } else {
          lookbackTotal = 1;
       }
@@ -388,7 +388,7 @@ public partial class Core
             prevPlusDM += diffP;
          }
       }
-      i = this.unstablePeriod[(int)FuncUnstId.PlusDM];
+      i = this.unstablePeriod[(int)FuncUnstId.PLUS_DM];
       while( i-- != 0 ) {
          today += 1;
          tempReal = (double)inHigh[today];
@@ -440,8 +440,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PlusDMLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PLUS_DM_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -460,14 +460,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange PlusDM( int startIdx,
-                           int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           int optInTimePeriod,
-                           double[] outReal )
+   public OutRange PLUS_DM( int startIdx,
+                            int endIdx,
+                            double[] inHigh,
+                            double[] inLow,
+                            int optInTimePeriod,
+                            double[] outReal )
    {
-      RetCode retCode = PlusDM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DM", retCode);
       }
@@ -496,8 +496,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>PlusDMLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>PLUS_DM_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -516,14 +516,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange PlusDM( int startIdx,
-                           int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           int optInTimePeriod,
-                           double[] outReal )
+   public OutRange PLUS_DM( int startIdx,
+                            int endIdx,
+                            float[] inHigh,
+                            float[] inLow,
+                            int optInTimePeriod,
+                            double[] outReal )
    {
-      RetCode retCode = PlusDM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = PLUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PLUS_DM", retCode);
       }

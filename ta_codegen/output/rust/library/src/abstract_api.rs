@@ -32,174 +32,174 @@ use crate::FuncUnstId;
 #[repr(u16)]
 #[allow(non_camel_case_types)]
 pub enum FuncId {
-    Accbands,
-    Acos,
-    Ad,
-    Add,
-    Adosc,
-    Adx,
-    Adxr,
-    Apo,
-    Aroon,
-    Aroonosc,
-    Asin,
-    Atan,
-    Atr,
-    Avgdev,
-    Avgprice,
-    Bbands,
-    Beta,
-    Bop,
-    Cci,
-    Cdl2crows,
-    Cdl3blackcrows,
-    Cdl3inside,
-    Cdl3linestrike,
-    Cdl3outside,
-    Cdl3starsinsouth,
-    Cdl3whitesoldiers,
-    Cdlabandonedbaby,
-    Cdladvanceblock,
-    Cdlbelthold,
-    Cdlbreakaway,
-    Cdlclosingmarubozu,
-    Cdlconcealbabyswall,
-    Cdlcounterattack,
-    Cdldarkcloudcover,
-    Cdldoji,
-    Cdldojistar,
-    Cdldragonflydoji,
-    Cdlengulfing,
-    Cdleveningdojistar,
-    Cdleveningstar,
-    Cdlgapsidesidewhite,
-    Cdlgravestonedoji,
-    Cdlhammer,
-    Cdlhangingman,
-    Cdlharami,
-    Cdlharamicross,
-    Cdlhighwave,
-    Cdlhikkake,
-    Cdlhikkakemod,
-    Cdlhomingpigeon,
-    Cdlidentical3crows,
-    Cdlinneck,
-    Cdlinvertedhammer,
-    Cdlkicking,
-    Cdlkickingbylength,
-    Cdlladderbottom,
-    Cdllongleggeddoji,
-    Cdllongline,
-    Cdlmarubozu,
-    Cdlmatchinglow,
-    Cdlmathold,
-    Cdlmorningdojistar,
-    Cdlmorningstar,
-    Cdlonneck,
-    Cdlpiercing,
-    Cdlrickshawman,
-    Cdlrisefall3methods,
-    Cdlseparatinglines,
-    Cdlshootingstar,
-    Cdlshortline,
-    Cdlspinningtop,
-    Cdlstalledpattern,
-    Cdlsticksandwich,
-    Cdltakuri,
-    Cdltasukigap,
-    Cdlthrusting,
-    Cdltristar,
-    Cdlunique3river,
-    Cdlupsidegap2crows,
-    Cdlxsidegap3methods,
-    Ceil,
-    Cmf,
-    Cmo,
-    Cmou,
-    Correl,
-    Cos,
-    Cosh,
-    Dema,
-    Div,
-    Dx,
-    Ema,
-    Exp,
-    Floor,
-    Hma,
-    HtDcperiod,
-    HtDcphase,
-    HtPhasor,
-    HtSine,
-    HtTrendline,
-    HtTrendmode,
-    Imi,
-    Kama,
-    Linearreg,
-    LinearregAngle,
-    LinearregIntercept,
-    LinearregSlope,
-    Ln,
-    Log10,
-    Ma,
-    Macd,
-    Macdext,
-    Macdfix,
-    Mama,
-    Mavp,
-    Max,
-    Maxindex,
-    Medprice,
-    Mfi,
-    Midpoint,
-    Midprice,
-    Min,
-    Minindex,
-    Minmax,
-    Minmaxindex,
-    MinusDi,
-    MinusDm,
-    Mom,
-    Mult,
-    Natr,
-    Nvi,
-    Obv,
-    PlusDi,
-    PlusDm,
-    Ppo,
-    Pvi,
-    Pvo,
-    Roc,
-    Rocp,
-    Rocr,
-    Rocr100,
-    Rsi,
-    Sar,
-    Sarext,
-    Sin,
-    Sinh,
-    Sma,
-    Sqrt,
-    Stddev,
-    Stoch,
-    Stochf,
-    Stochrsi,
-    Sub,
-    Sum,
+    ACCBANDS,
+    ACOS,
+    AD,
+    ADD,
+    ADOSC,
+    ADX,
+    ADXR,
+    APO,
+    AROON,
+    AROONOSC,
+    ASIN,
+    ATAN,
+    ATR,
+    AVGDEV,
+    AVGPRICE,
+    BBANDS,
+    BETA,
+    BOP,
+    CCI,
+    CDL2CROWS,
+    CDL3BLACKCROWS,
+    CDL3INSIDE,
+    CDL3LINESTRIKE,
+    CDL3OUTSIDE,
+    CDL3STARSINSOUTH,
+    CDL3WHITESOLDIERS,
+    CDLABANDONEDBABY,
+    CDLADVANCEBLOCK,
+    CDLBELTHOLD,
+    CDLBREAKAWAY,
+    CDLCLOSINGMARUBOZU,
+    CDLCONCEALBABYSWALL,
+    CDLCOUNTERATTACK,
+    CDLDARKCLOUDCOVER,
+    CDLDOJI,
+    CDLDOJISTAR,
+    CDLDRAGONFLYDOJI,
+    CDLENGULFING,
+    CDLEVENINGDOJISTAR,
+    CDLEVENINGSTAR,
+    CDLGAPSIDESIDEWHITE,
+    CDLGRAVESTONEDOJI,
+    CDLHAMMER,
+    CDLHANGINGMAN,
+    CDLHARAMI,
+    CDLHARAMICROSS,
+    CDLHIGHWAVE,
+    CDLHIKKAKE,
+    CDLHIKKAKEMOD,
+    CDLHOMINGPIGEON,
+    CDLIDENTICAL3CROWS,
+    CDLINNECK,
+    CDLINVERTEDHAMMER,
+    CDLKICKING,
+    CDLKICKINGBYLENGTH,
+    CDLLADDERBOTTOM,
+    CDLLONGLEGGEDDOJI,
+    CDLLONGLINE,
+    CDLMARUBOZU,
+    CDLMATCHINGLOW,
+    CDLMATHOLD,
+    CDLMORNINGDOJISTAR,
+    CDLMORNINGSTAR,
+    CDLONNECK,
+    CDLPIERCING,
+    CDLRICKSHAWMAN,
+    CDLRISEFALL3METHODS,
+    CDLSEPARATINGLINES,
+    CDLSHOOTINGSTAR,
+    CDLSHORTLINE,
+    CDLSPINNINGTOP,
+    CDLSTALLEDPATTERN,
+    CDLSTICKSANDWICH,
+    CDLTAKURI,
+    CDLTASUKIGAP,
+    CDLTHRUSTING,
+    CDLTRISTAR,
+    CDLUNIQUE3RIVER,
+    CDLUPSIDEGAP2CROWS,
+    CDLXSIDEGAP3METHODS,
+    CEIL,
+    CMF,
+    CMO,
+    CMOU,
+    CORREL,
+    COS,
+    COSH,
+    DEMA,
+    DIV,
+    DX,
+    EMA,
+    EXP,
+    FLOOR,
+    HMA,
+    HT_DCPERIOD,
+    HT_DCPHASE,
+    HT_PHASOR,
+    HT_SINE,
+    HT_TRENDLINE,
+    HT_TRENDMODE,
+    IMI,
+    KAMA,
+    LINEARREG,
+    LINEARREG_ANGLE,
+    LINEARREG_INTERCEPT,
+    LINEARREG_SLOPE,
+    LN,
+    LOG10,
+    MA,
+    MACD,
+    MACDEXT,
+    MACDFIX,
+    MAMA,
+    MAVP,
+    MAX,
+    MAXINDEX,
+    MEDPRICE,
+    MFI,
+    MIDPOINT,
+    MIDPRICE,
+    MIN,
+    MININDEX,
+    MINMAX,
+    MINMAXINDEX,
+    MINUS_DI,
+    MINUS_DM,
+    MOM,
+    MULT,
+    NATR,
+    NVI,
+    OBV,
+    PLUS_DI,
+    PLUS_DM,
+    PPO,
+    PVI,
+    PVO,
+    ROC,
+    ROCP,
+    ROCR,
+    ROCR100,
+    RSI,
+    SAR,
+    SAREXT,
+    SIN,
+    SINH,
+    SMA,
+    SQRT,
+    STDDEV,
+    STOCH,
+    STOCHF,
+    STOCHRSI,
+    SUB,
+    SUM,
     T3,
-    Tan,
-    Tanh,
-    Tema,
-    Trange,
-    Trima,
-    Trix,
-    Tsf,
-    Typprice,
-    Ultosc,
-    Var,
-    Vwma,
-    Wclprice,
-    Willr,
-    Wma,
+    TAN,
+    TANH,
+    TEMA,
+    TRANGE,
+    TRIMA,
+    TRIX,
+    TSF,
+    TYPPRICE,
+    ULTOSC,
+    VAR,
+    VWMA,
+    WCLPRICE,
+    WILLR,
+    WMA,
 }
 
 impl FuncId {
@@ -367,7 +367,6 @@ pub struct OptInputInfo {
 pub struct FuncInfo {
     pub id: FuncId,
     pub name: &'static str,
-    pub camel_case_name: &'static str,
     pub group: Group,
     pub hint: &'static str,
     pub flags: FuncFlags,
@@ -387,9 +386,8 @@ impl FuncInfo {
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
 pub static FUNCS: [FuncInfo; 168] = [
     FuncInfo {
-        id: FuncId::Accbands,
+        id: FuncId::ACCBANDS,
         name: "ACCBANDS",
-        camel_case_name: "Accbands",
         group: Group::OverlapStudies,
         hint: "Acceleration Bands",
         flags: FuncFlags(0x03000000),
@@ -399,9 +397,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Acos,
+        id: FuncId::ACOS,
         name: "ACOS",
-        camel_case_name: "Acos",
         group: Group::MathTransform,
         hint: "Vector Trigonometric ACos",
         flags: FuncFlags(0x02000000),
@@ -411,9 +408,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Ad,
+        id: FuncId::AD,
         name: "AD",
-        camel_case_name: "Ad",
         group: Group::VolumeIndicators,
         hint: "Chaikin A/D Line",
         flags: FuncFlags(0x22000000),
@@ -423,9 +419,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Add,
+        id: FuncId::ADD,
         name: "ADD",
-        camel_case_name: "Add",
         group: Group::MathOperators,
         hint: "Vector Arithmetic Add",
         flags: FuncFlags(0x02000000),
@@ -435,9 +430,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Adosc,
+        id: FuncId::ADOSC,
         name: "ADOSC",
-        camel_case_name: "AdOsc",
         group: Group::VolumeIndicators,
         hint: "Chaikin A/D Oscillator",
         flags: FuncFlags(0x22000000),
@@ -447,21 +441,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Adx,
+        id: FuncId::ADX,
         name: "ADX",
-        camel_case_name: "Adx",
         group: Group::MomentumIndicators,
         hint: "Average Directional Movement Index",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Adx),
+        unst_id: Some(FuncUnstId::ADX),
     },
     FuncInfo {
-        id: FuncId::Adxr,
+        id: FuncId::ADXR,
         name: "ADXR",
-        camel_case_name: "Adxr",
         group: Group::MomentumIndicators,
         hint: "Average Directional Movement Index Rating",
         flags: FuncFlags(0x02000000),
@@ -471,9 +463,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Apo,
+        id: FuncId::APO,
         name: "APO",
-        camel_case_name: "Apo",
         group: Group::MomentumIndicators,
         hint: "Absolute Price Oscillator",
         flags: FuncFlags(0x02000000),
@@ -483,9 +474,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Aroon,
+        id: FuncId::AROON,
         name: "AROON",
-        camel_case_name: "Aroon",
         group: Group::MomentumIndicators,
         hint: "Aroon",
         flags: FuncFlags(0x02000000),
@@ -495,9 +485,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Aroonosc,
+        id: FuncId::AROONOSC,
         name: "AROONOSC",
-        camel_case_name: "AroonOsc",
         group: Group::MomentumIndicators,
         hint: "Aroon Oscillator",
         flags: FuncFlags(0x02000000),
@@ -507,9 +496,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Asin,
+        id: FuncId::ASIN,
         name: "ASIN",
-        camel_case_name: "Asin",
         group: Group::MathTransform,
         hint: "Vector Trigonometric ASin",
         flags: FuncFlags(0x02000000),
@@ -519,9 +507,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Atan,
+        id: FuncId::ATAN,
         name: "ATAN",
-        camel_case_name: "Atan",
         group: Group::MathTransform,
         hint: "Vector Trigonometric ATan",
         flags: FuncFlags(0x02000000),
@@ -531,21 +518,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Atr,
+        id: FuncId::ATR,
         name: "ATR",
-        camel_case_name: "Atr",
         group: Group::VolatilityIndicators,
         hint: "Average True Range",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Atr),
+        unst_id: Some(FuncUnstId::ATR),
     },
     FuncInfo {
-        id: FuncId::Avgdev,
+        id: FuncId::AVGDEV,
         name: "AVGDEV",
-        camel_case_name: "AvgDev",
         group: Group::PriceTransform,
         hint: "Average Deviation",
         flags: FuncFlags(0x03000000),
@@ -555,9 +540,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Avgprice,
+        id: FuncId::AVGPRICE,
         name: "AVGPRICE",
-        camel_case_name: "AvgPrice",
         group: Group::PriceTransform,
         hint: "Average Price",
         flags: FuncFlags(0x03000000),
@@ -567,9 +551,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Bbands,
+        id: FuncId::BBANDS,
         name: "BBANDS",
-        camel_case_name: "Bbands",
         group: Group::OverlapStudies,
         hint: "Bollinger Bands",
         flags: FuncFlags(0x03000000),
@@ -579,9 +562,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Beta,
+        id: FuncId::BETA,
         name: "BETA",
-        camel_case_name: "Beta",
         group: Group::StatisticFunctions,
         hint: "Beta",
         flags: FuncFlags(0x02000000),
@@ -591,9 +573,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Bop,
+        id: FuncId::BOP,
         name: "BOP",
-        camel_case_name: "Bop",
         group: Group::MomentumIndicators,
         hint: "Balance Of Power",
         flags: FuncFlags(0x02000000),
@@ -603,9 +584,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cci,
+        id: FuncId::CCI,
         name: "CCI",
-        camel_case_name: "Cci",
         group: Group::MomentumIndicators,
         hint: "Commodity Channel Index",
         flags: FuncFlags(0x02000000),
@@ -615,9 +595,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl2crows,
+        id: FuncId::CDL2CROWS,
         name: "CDL2CROWS",
-        camel_case_name: "Cdl2Crows",
         group: Group::PatternRecognition,
         hint: "Two Crows",
         flags: FuncFlags(0x12000000),
@@ -627,9 +606,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3blackcrows,
+        id: FuncId::CDL3BLACKCROWS,
         name: "CDL3BLACKCROWS",
-        camel_case_name: "Cdl3BlackCrows",
         group: Group::PatternRecognition,
         hint: "Three Black Crows",
         flags: FuncFlags(0x12000000),
@@ -639,9 +617,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3inside,
+        id: FuncId::CDL3INSIDE,
         name: "CDL3INSIDE",
-        camel_case_name: "Cdl3Inside",
         group: Group::PatternRecognition,
         hint: "Three Inside Up/Down",
         flags: FuncFlags(0x12000000),
@@ -651,9 +628,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3linestrike,
+        id: FuncId::CDL3LINESTRIKE,
         name: "CDL3LINESTRIKE",
-        camel_case_name: "Cdl3LineStrike",
         group: Group::PatternRecognition,
         hint: "Three-Line Strike",
         flags: FuncFlags(0x12000000),
@@ -663,9 +639,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3outside,
+        id: FuncId::CDL3OUTSIDE,
         name: "CDL3OUTSIDE",
-        camel_case_name: "Cdl3Outside",
         group: Group::PatternRecognition,
         hint: "Three Outside Up/Down",
         flags: FuncFlags(0x12000000),
@@ -675,9 +650,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3starsinsouth,
+        id: FuncId::CDL3STARSINSOUTH,
         name: "CDL3STARSINSOUTH",
-        camel_case_name: "Cdl3StarsInSouth",
         group: Group::PatternRecognition,
         hint: "Three Stars In The South",
         flags: FuncFlags(0x12000000),
@@ -687,9 +661,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdl3whitesoldiers,
+        id: FuncId::CDL3WHITESOLDIERS,
         name: "CDL3WHITESOLDIERS",
-        camel_case_name: "Cdl3WhiteSoldiers",
         group: Group::PatternRecognition,
         hint: "Three Advancing White Soldiers",
         flags: FuncFlags(0x12000000),
@@ -699,9 +672,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlabandonedbaby,
+        id: FuncId::CDLABANDONEDBABY,
         name: "CDLABANDONEDBABY",
-        camel_case_name: "CdlAbandonedBaby",
         group: Group::PatternRecognition,
         hint: "Abandoned Baby",
         flags: FuncFlags(0x12000000),
@@ -711,9 +683,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdladvanceblock,
+        id: FuncId::CDLADVANCEBLOCK,
         name: "CDLADVANCEBLOCK",
-        camel_case_name: "CdlAdvanceBlock",
         group: Group::PatternRecognition,
         hint: "Advance Block",
         flags: FuncFlags(0x12000000),
@@ -723,9 +694,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlbelthold,
+        id: FuncId::CDLBELTHOLD,
         name: "CDLBELTHOLD",
-        camel_case_name: "CdlBeltHold",
         group: Group::PatternRecognition,
         hint: "Belt-hold",
         flags: FuncFlags(0x12000000),
@@ -735,9 +705,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlbreakaway,
+        id: FuncId::CDLBREAKAWAY,
         name: "CDLBREAKAWAY",
-        camel_case_name: "CdlBreakaway",
         group: Group::PatternRecognition,
         hint: "Breakaway",
         flags: FuncFlags(0x12000000),
@@ -747,9 +716,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlclosingmarubozu,
+        id: FuncId::CDLCLOSINGMARUBOZU,
         name: "CDLCLOSINGMARUBOZU",
-        camel_case_name: "CdlClosingMarubozu",
         group: Group::PatternRecognition,
         hint: "Closing Marubozu",
         flags: FuncFlags(0x12000000),
@@ -759,9 +727,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlconcealbabyswall,
+        id: FuncId::CDLCONCEALBABYSWALL,
         name: "CDLCONCEALBABYSWALL",
-        camel_case_name: "CdlConcealBabysWall",
         group: Group::PatternRecognition,
         hint: "Concealing Baby Swallow",
         flags: FuncFlags(0x12000000),
@@ -771,9 +738,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlcounterattack,
+        id: FuncId::CDLCOUNTERATTACK,
         name: "CDLCOUNTERATTACK",
-        camel_case_name: "CdlCounterAttack",
         group: Group::PatternRecognition,
         hint: "Counterattack",
         flags: FuncFlags(0x12000000),
@@ -783,9 +749,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdldarkcloudcover,
+        id: FuncId::CDLDARKCLOUDCOVER,
         name: "CDLDARKCLOUDCOVER",
-        camel_case_name: "CdlDarkCloudCover",
         group: Group::PatternRecognition,
         hint: "Dark Cloud Cover",
         flags: FuncFlags(0x12000000),
@@ -795,9 +760,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdldoji,
+        id: FuncId::CDLDOJI,
         name: "CDLDOJI",
-        camel_case_name: "CdlDoji",
         group: Group::PatternRecognition,
         hint: "Doji",
         flags: FuncFlags(0x12000000),
@@ -807,9 +771,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdldojistar,
+        id: FuncId::CDLDOJISTAR,
         name: "CDLDOJISTAR",
-        camel_case_name: "CdlDojiStar",
         group: Group::PatternRecognition,
         hint: "Doji Star",
         flags: FuncFlags(0x12000000),
@@ -819,9 +782,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdldragonflydoji,
+        id: FuncId::CDLDRAGONFLYDOJI,
         name: "CDLDRAGONFLYDOJI",
-        camel_case_name: "CdlDragonflyDoji",
         group: Group::PatternRecognition,
         hint: "Dragonfly Doji",
         flags: FuncFlags(0x12000000),
@@ -831,9 +793,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlengulfing,
+        id: FuncId::CDLENGULFING,
         name: "CDLENGULFING",
-        camel_case_name: "CdlEngulfing",
         group: Group::PatternRecognition,
         hint: "Engulfing Pattern",
         flags: FuncFlags(0x12000000),
@@ -843,9 +804,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdleveningdojistar,
+        id: FuncId::CDLEVENINGDOJISTAR,
         name: "CDLEVENINGDOJISTAR",
-        camel_case_name: "CdlEveningDojiStar",
         group: Group::PatternRecognition,
         hint: "Evening Doji Star",
         flags: FuncFlags(0x12000000),
@@ -855,9 +815,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdleveningstar,
+        id: FuncId::CDLEVENINGSTAR,
         name: "CDLEVENINGSTAR",
-        camel_case_name: "CdlEveningStar",
         group: Group::PatternRecognition,
         hint: "Evening Star",
         flags: FuncFlags(0x12000000),
@@ -867,9 +826,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlgapsidesidewhite,
+        id: FuncId::CDLGAPSIDESIDEWHITE,
         name: "CDLGAPSIDESIDEWHITE",
-        camel_case_name: "CdlGapSideSideWhite",
         group: Group::PatternRecognition,
         hint: "Up/Down-gap side-by-side white lines",
         flags: FuncFlags(0x12000000),
@@ -879,9 +837,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlgravestonedoji,
+        id: FuncId::CDLGRAVESTONEDOJI,
         name: "CDLGRAVESTONEDOJI",
-        camel_case_name: "CdlGravestoneDoji",
         group: Group::PatternRecognition,
         hint: "Gravestone Doji",
         flags: FuncFlags(0x12000000),
@@ -891,9 +848,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhammer,
+        id: FuncId::CDLHAMMER,
         name: "CDLHAMMER",
-        camel_case_name: "CdlHammer",
         group: Group::PatternRecognition,
         hint: "Hammer",
         flags: FuncFlags(0x12000000),
@@ -903,9 +859,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhangingman,
+        id: FuncId::CDLHANGINGMAN,
         name: "CDLHANGINGMAN",
-        camel_case_name: "CdlHangingMan",
         group: Group::PatternRecognition,
         hint: "Hanging Man",
         flags: FuncFlags(0x12000000),
@@ -915,9 +870,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlharami,
+        id: FuncId::CDLHARAMI,
         name: "CDLHARAMI",
-        camel_case_name: "CdlHarami",
         group: Group::PatternRecognition,
         hint: "Harami Pattern",
         flags: FuncFlags(0x12000000),
@@ -927,9 +881,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlharamicross,
+        id: FuncId::CDLHARAMICROSS,
         name: "CDLHARAMICROSS",
-        camel_case_name: "CdlHaramiCross",
         group: Group::PatternRecognition,
         hint: "Harami Cross Pattern",
         flags: FuncFlags(0x12000000),
@@ -939,9 +892,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhighwave,
+        id: FuncId::CDLHIGHWAVE,
         name: "CDLHIGHWAVE",
-        camel_case_name: "CdlHignWave",
         group: Group::PatternRecognition,
         hint: "High-Wave Candle",
         flags: FuncFlags(0x12000000),
@@ -951,9 +903,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhikkake,
+        id: FuncId::CDLHIKKAKE,
         name: "CDLHIKKAKE",
-        camel_case_name: "CdlHikkake",
         group: Group::PatternRecognition,
         hint: "Hikkake Pattern",
         flags: FuncFlags(0x12000000),
@@ -963,9 +914,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhikkakemod,
+        id: FuncId::CDLHIKKAKEMOD,
         name: "CDLHIKKAKEMOD",
-        camel_case_name: "CdlHikkakeMod",
         group: Group::PatternRecognition,
         hint: "Modified Hikkake Pattern",
         flags: FuncFlags(0x12000000),
@@ -975,9 +925,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlhomingpigeon,
+        id: FuncId::CDLHOMINGPIGEON,
         name: "CDLHOMINGPIGEON",
-        camel_case_name: "CdlHomingPigeon",
         group: Group::PatternRecognition,
         hint: "Homing Pigeon",
         flags: FuncFlags(0x12000000),
@@ -987,9 +936,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlidentical3crows,
+        id: FuncId::CDLIDENTICAL3CROWS,
         name: "CDLIDENTICAL3CROWS",
-        camel_case_name: "CdlIdentical3Crows",
         group: Group::PatternRecognition,
         hint: "Identical Three Crows",
         flags: FuncFlags(0x12000000),
@@ -999,9 +947,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlinneck,
+        id: FuncId::CDLINNECK,
         name: "CDLINNECK",
-        camel_case_name: "CdlInNeck",
         group: Group::PatternRecognition,
         hint: "In-Neck Pattern",
         flags: FuncFlags(0x12000000),
@@ -1011,9 +958,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlinvertedhammer,
+        id: FuncId::CDLINVERTEDHAMMER,
         name: "CDLINVERTEDHAMMER",
-        camel_case_name: "CdlInvertedHammer",
         group: Group::PatternRecognition,
         hint: "Inverted Hammer",
         flags: FuncFlags(0x12000000),
@@ -1023,9 +969,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlkicking,
+        id: FuncId::CDLKICKING,
         name: "CDLKICKING",
-        camel_case_name: "CdlKicking",
         group: Group::PatternRecognition,
         hint: "Kicking",
         flags: FuncFlags(0x12000000),
@@ -1035,9 +980,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlkickingbylength,
+        id: FuncId::CDLKICKINGBYLENGTH,
         name: "CDLKICKINGBYLENGTH",
-        camel_case_name: "CdlKickingByLength",
         group: Group::PatternRecognition,
         hint: "Kicking - bull/bear determined by the longer marubozu",
         flags: FuncFlags(0x12000000),
@@ -1047,9 +991,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlladderbottom,
+        id: FuncId::CDLLADDERBOTTOM,
         name: "CDLLADDERBOTTOM",
-        camel_case_name: "CdlLadderBottom",
         group: Group::PatternRecognition,
         hint: "Ladder Bottom",
         flags: FuncFlags(0x12000000),
@@ -1059,9 +1002,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdllongleggeddoji,
+        id: FuncId::CDLLONGLEGGEDDOJI,
         name: "CDLLONGLEGGEDDOJI",
-        camel_case_name: "CdlLongLeggedDoji",
         group: Group::PatternRecognition,
         hint: "Long Legged Doji",
         flags: FuncFlags(0x12000000),
@@ -1071,9 +1013,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdllongline,
+        id: FuncId::CDLLONGLINE,
         name: "CDLLONGLINE",
-        camel_case_name: "CdlLongLine",
         group: Group::PatternRecognition,
         hint: "Long Line Candle",
         flags: FuncFlags(0x12000000),
@@ -1083,9 +1024,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlmarubozu,
+        id: FuncId::CDLMARUBOZU,
         name: "CDLMARUBOZU",
-        camel_case_name: "CdlMarubozu",
         group: Group::PatternRecognition,
         hint: "Marubozu",
         flags: FuncFlags(0x12000000),
@@ -1095,9 +1035,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlmatchinglow,
+        id: FuncId::CDLMATCHINGLOW,
         name: "CDLMATCHINGLOW",
-        camel_case_name: "CdlMatchingLow",
         group: Group::PatternRecognition,
         hint: "Matching Low",
         flags: FuncFlags(0x12000000),
@@ -1107,9 +1046,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlmathold,
+        id: FuncId::CDLMATHOLD,
         name: "CDLMATHOLD",
-        camel_case_name: "CdlMatHold",
         group: Group::PatternRecognition,
         hint: "Mat Hold",
         flags: FuncFlags(0x12000000),
@@ -1119,9 +1057,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlmorningdojistar,
+        id: FuncId::CDLMORNINGDOJISTAR,
         name: "CDLMORNINGDOJISTAR",
-        camel_case_name: "CdlMorningDojiStar",
         group: Group::PatternRecognition,
         hint: "Morning Doji Star",
         flags: FuncFlags(0x12000000),
@@ -1131,9 +1068,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlmorningstar,
+        id: FuncId::CDLMORNINGSTAR,
         name: "CDLMORNINGSTAR",
-        camel_case_name: "CdlMorningStar",
         group: Group::PatternRecognition,
         hint: "Morning Star",
         flags: FuncFlags(0x12000000),
@@ -1143,9 +1079,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlonneck,
+        id: FuncId::CDLONNECK,
         name: "CDLONNECK",
-        camel_case_name: "CdlOnNeck",
         group: Group::PatternRecognition,
         hint: "On-Neck Pattern",
         flags: FuncFlags(0x12000000),
@@ -1155,9 +1090,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlpiercing,
+        id: FuncId::CDLPIERCING,
         name: "CDLPIERCING",
-        camel_case_name: "CdlPiercing",
         group: Group::PatternRecognition,
         hint: "Piercing Pattern",
         flags: FuncFlags(0x12000000),
@@ -1167,9 +1101,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlrickshawman,
+        id: FuncId::CDLRICKSHAWMAN,
         name: "CDLRICKSHAWMAN",
-        camel_case_name: "CdlRickshawMan",
         group: Group::PatternRecognition,
         hint: "Rickshaw Man",
         flags: FuncFlags(0x12000000),
@@ -1179,9 +1112,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlrisefall3methods,
+        id: FuncId::CDLRISEFALL3METHODS,
         name: "CDLRISEFALL3METHODS",
-        camel_case_name: "CdlRiseFall3Methods",
         group: Group::PatternRecognition,
         hint: "Rising/Falling Three Methods",
         flags: FuncFlags(0x12000000),
@@ -1191,9 +1123,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlseparatinglines,
+        id: FuncId::CDLSEPARATINGLINES,
         name: "CDLSEPARATINGLINES",
-        camel_case_name: "CdlSeperatingLines",
         group: Group::PatternRecognition,
         hint: "Separating Lines",
         flags: FuncFlags(0x12000000),
@@ -1203,9 +1134,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlshootingstar,
+        id: FuncId::CDLSHOOTINGSTAR,
         name: "CDLSHOOTINGSTAR",
-        camel_case_name: "CdlShootingStar",
         group: Group::PatternRecognition,
         hint: "Shooting Star",
         flags: FuncFlags(0x12000000),
@@ -1215,9 +1145,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlshortline,
+        id: FuncId::CDLSHORTLINE,
         name: "CDLSHORTLINE",
-        camel_case_name: "CdlShortLine",
         group: Group::PatternRecognition,
         hint: "Short Line Candle",
         flags: FuncFlags(0x12000000),
@@ -1227,9 +1156,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlspinningtop,
+        id: FuncId::CDLSPINNINGTOP,
         name: "CDLSPINNINGTOP",
-        camel_case_name: "CdlSpinningTop",
         group: Group::PatternRecognition,
         hint: "Spinning Top",
         flags: FuncFlags(0x12000000),
@@ -1239,9 +1167,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlstalledpattern,
+        id: FuncId::CDLSTALLEDPATTERN,
         name: "CDLSTALLEDPATTERN",
-        camel_case_name: "CdlStalledPattern",
         group: Group::PatternRecognition,
         hint: "Stalled Pattern",
         flags: FuncFlags(0x12000000),
@@ -1251,9 +1178,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlsticksandwich,
+        id: FuncId::CDLSTICKSANDWICH,
         name: "CDLSTICKSANDWICH",
-        camel_case_name: "CdlStickSandwich",
         group: Group::PatternRecognition,
         hint: "Stick Sandwich",
         flags: FuncFlags(0x12000000),
@@ -1263,9 +1189,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdltakuri,
+        id: FuncId::CDLTAKURI,
         name: "CDLTAKURI",
-        camel_case_name: "CdlTakuri",
         group: Group::PatternRecognition,
         hint: "Takuri (Dragonfly Doji with very long lower shadow)",
         flags: FuncFlags(0x12000000),
@@ -1275,9 +1200,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdltasukigap,
+        id: FuncId::CDLTASUKIGAP,
         name: "CDLTASUKIGAP",
-        camel_case_name: "CdlTasukiGap",
         group: Group::PatternRecognition,
         hint: "Tasuki Gap",
         flags: FuncFlags(0x12000000),
@@ -1287,9 +1211,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlthrusting,
+        id: FuncId::CDLTHRUSTING,
         name: "CDLTHRUSTING",
-        camel_case_name: "CdlThrusting",
         group: Group::PatternRecognition,
         hint: "Thrusting Pattern",
         flags: FuncFlags(0x12000000),
@@ -1299,9 +1222,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdltristar,
+        id: FuncId::CDLTRISTAR,
         name: "CDLTRISTAR",
-        camel_case_name: "CdlTristar",
         group: Group::PatternRecognition,
         hint: "Tristar Pattern",
         flags: FuncFlags(0x12000000),
@@ -1311,9 +1233,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlunique3river,
+        id: FuncId::CDLUNIQUE3RIVER,
         name: "CDLUNIQUE3RIVER",
-        camel_case_name: "CdlUnique3River",
         group: Group::PatternRecognition,
         hint: "Unique 3 River",
         flags: FuncFlags(0x12000000),
@@ -1323,9 +1244,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlupsidegap2crows,
+        id: FuncId::CDLUPSIDEGAP2CROWS,
         name: "CDLUPSIDEGAP2CROWS",
-        camel_case_name: "CdlUpsideGap2Crows",
         group: Group::PatternRecognition,
         hint: "Upside Gap Two Crows",
         flags: FuncFlags(0x12000000),
@@ -1335,9 +1255,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cdlxsidegap3methods,
+        id: FuncId::CDLXSIDEGAP3METHODS,
         name: "CDLXSIDEGAP3METHODS",
-        camel_case_name: "CdlXSideGap3Methods",
         group: Group::PatternRecognition,
         hint: "Upside/Downside Gap Three Methods",
         flags: FuncFlags(0x12000000),
@@ -1347,9 +1266,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Ceil,
+        id: FuncId::CEIL,
         name: "CEIL",
-        camel_case_name: "Ceil",
         group: Group::MathTransform,
         hint: "Vector Ceil",
         flags: FuncFlags(0x02000000),
@@ -1359,9 +1277,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cmf,
+        id: FuncId::CMF,
         name: "CMF",
-        camel_case_name: "Cmf",
         group: Group::VolumeIndicators,
         hint: "Chaikin Money Flow",
         flags: FuncFlags(0x02000000),
@@ -1371,21 +1288,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cmo,
+        id: FuncId::CMO,
         name: "CMO",
-        camel_case_name: "Cmo",
         group: Group::MomentumIndicators,
         hint: "Chande Momentum Oscillator",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Cmo),
+        unst_id: Some(FuncUnstId::CMO),
     },
     FuncInfo {
-        id: FuncId::Cmou,
+        id: FuncId::CMOU,
         name: "CMOU",
-        camel_case_name: "Cmou",
         group: Group::MomentumIndicators,
         hint: "Chande Momentum Oscillator (Unsmoothed)",
         flags: FuncFlags(0x02000000),
@@ -1395,9 +1310,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Correl,
+        id: FuncId::CORREL,
         name: "CORREL",
-        camel_case_name: "Correl",
         group: Group::StatisticFunctions,
         hint: "Pearson's Correlation Coefficient (r)",
         flags: FuncFlags(0x02000000),
@@ -1407,9 +1321,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cos,
+        id: FuncId::COS,
         name: "COS",
-        camel_case_name: "Cos",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Cos",
         flags: FuncFlags(0x02000000),
@@ -1419,9 +1332,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Cosh,
+        id: FuncId::COSH,
         name: "COSH",
-        camel_case_name: "Cosh",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Cosh",
         flags: FuncFlags(0x02000000),
@@ -1431,9 +1343,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Dema,
+        id: FuncId::DEMA,
         name: "DEMA",
-        camel_case_name: "Dema",
         group: Group::OverlapStudies,
         hint: "Double Exponential Moving Average",
         flags: FuncFlags(0x03000000),
@@ -1443,9 +1354,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Div,
+        id: FuncId::DIV,
         name: "DIV",
-        camel_case_name: "Div",
         group: Group::MathOperators,
         hint: "Vector Arithmetic Div",
         flags: FuncFlags(0x02000000),
@@ -1455,33 +1365,30 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Dx,
+        id: FuncId::DX,
         name: "DX",
-        camel_case_name: "Dx",
         group: Group::MomentumIndicators,
         hint: "Directional Movement Index",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Dx),
+        unst_id: Some(FuncUnstId::DX),
     },
     FuncInfo {
-        id: FuncId::Ema,
+        id: FuncId::EMA,
         name: "EMA",
-        camel_case_name: "Ema",
         group: Group::OverlapStudies,
         hint: "Exponential Moving Average",
         flags: FuncFlags(0x0b000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Ema),
+        unst_id: Some(FuncUnstId::EMA),
     },
     FuncInfo {
-        id: FuncId::Exp,
+        id: FuncId::EXP,
         name: "EXP",
-        camel_case_name: "Exp",
         group: Group::MathTransform,
         hint: "Vector Arithmetic Exp",
         flags: FuncFlags(0x02000000),
@@ -1491,9 +1398,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Floor,
+        id: FuncId::FLOOR,
         name: "FLOOR",
-        camel_case_name: "Floor",
         group: Group::MathTransform,
         hint: "Vector Floor",
         flags: FuncFlags(0x02000000),
@@ -1503,9 +1409,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Hma,
+        id: FuncId::HMA,
         name: "HMA",
-        camel_case_name: "Hma",
         group: Group::OverlapStudies,
         hint: "Hull Moving Average",
         flags: FuncFlags(0x03000000),
@@ -1515,81 +1420,74 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::HtDcperiod,
+        id: FuncId::HT_DCPERIOD,
         name: "HT_DCPERIOD",
-        camel_case_name: "HtDcPeriod",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Period",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::HtDcPeriod),
+        unst_id: Some(FuncUnstId::HT_DCPERIOD),
     },
     FuncInfo {
-        id: FuncId::HtDcphase,
+        id: FuncId::HT_DCPHASE,
         name: "HT_DCPHASE",
-        camel_case_name: "HtDcPhase",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - Dominant Cycle Phase",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::HtDcPhase),
+        unst_id: Some(FuncUnstId::HT_DCPHASE),
     },
     FuncInfo {
-        id: FuncId::HtPhasor,
+        id: FuncId::HT_PHASOR,
         name: "HT_PHASOR",
-        camel_case_name: "HtPhasor",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - Phasor Components",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInPhase", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outQuadrature", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
-        unst_id: Some(FuncUnstId::HtPhasor),
+        unst_id: Some(FuncUnstId::HT_PHASOR),
     },
     FuncInfo {
-        id: FuncId::HtSine,
+        id: FuncId::HT_SINE,
         name: "HT_SINE",
-        camel_case_name: "HtSine",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - SineWave",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outSine", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outLeadSine", kind: OutputType::Real, flags: OutputFlags(0x00000004) }, ],
-        unst_id: Some(FuncUnstId::HtSine),
+        unst_id: Some(FuncUnstId::HT_SINE),
     },
     FuncInfo {
-        id: FuncId::HtTrendline,
+        id: FuncId::HT_TRENDLINE,
         name: "HT_TRENDLINE",
-        camel_case_name: "HtTrendline",
         group: Group::OverlapStudies,
         hint: "Hilbert Transform - Instantaneous Trendline",
         flags: FuncFlags(0x0b000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::HtTrendline),
+        unst_id: Some(FuncUnstId::HT_TRENDLINE),
     },
     FuncInfo {
-        id: FuncId::HtTrendmode,
+        id: FuncId::HT_TRENDMODE,
         name: "HT_TRENDMODE",
-        camel_case_name: "HtTrendMode",
         group: Group::CycleIndicators,
         hint: "Hilbert Transform - Trend vs Cycle Mode",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::HtTrendMode),
+        unst_id: Some(FuncUnstId::HT_TRENDMODE),
     },
     FuncInfo {
-        id: FuncId::Imi,
+        id: FuncId::IMI,
         name: "IMI",
-        camel_case_name: "Imi",
         group: Group::MomentumIndicators,
         hint: "Intraday Momentum Index",
         flags: FuncFlags(0x02000000),
@@ -1599,21 +1497,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Kama,
+        id: FuncId::KAMA,
         name: "KAMA",
-        camel_case_name: "Kama",
         group: Group::OverlapStudies,
         hint: "Kaufman Adaptive Moving Average",
         flags: FuncFlags(0x0b000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Kama),
+        unst_id: Some(FuncUnstId::KAMA),
     },
     FuncInfo {
-        id: FuncId::Linearreg,
+        id: FuncId::LINEARREG,
         name: "LINEARREG",
-        camel_case_name: "LinearReg",
         group: Group::StatisticFunctions,
         hint: "Linear Regression",
         flags: FuncFlags(0x03000000),
@@ -1623,9 +1519,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::LinearregAngle,
+        id: FuncId::LINEARREG_ANGLE,
         name: "LINEARREG_ANGLE",
-        camel_case_name: "LinearRegAngle",
         group: Group::StatisticFunctions,
         hint: "Linear Regression Angle",
         flags: FuncFlags(0x02000000),
@@ -1635,9 +1530,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::LinearregIntercept,
+        id: FuncId::LINEARREG_INTERCEPT,
         name: "LINEARREG_INTERCEPT",
-        camel_case_name: "LinearRegIntercept",
         group: Group::StatisticFunctions,
         hint: "Linear Regression Intercept",
         flags: FuncFlags(0x03000000),
@@ -1647,9 +1541,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::LinearregSlope,
+        id: FuncId::LINEARREG_SLOPE,
         name: "LINEARREG_SLOPE",
-        camel_case_name: "LinearRegSlope",
         group: Group::StatisticFunctions,
         hint: "Linear Regression Slope",
         flags: FuncFlags(0x02000000),
@@ -1659,9 +1552,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Ln,
+        id: FuncId::LN,
         name: "LN",
-        camel_case_name: "Ln",
         group: Group::MathTransform,
         hint: "Vector Log Natural",
         flags: FuncFlags(0x02000000),
@@ -1671,9 +1563,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Log10,
+        id: FuncId::LOG10,
         name: "LOG10",
-        camel_case_name: "Log10",
         group: Group::MathTransform,
         hint: "Vector Log10",
         flags: FuncFlags(0x02000000),
@@ -1683,9 +1574,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Ma,
+        id: FuncId::MA,
         name: "MA",
-        camel_case_name: "MovingAverage",
         group: Group::OverlapStudies,
         hint: "Moving average",
         flags: FuncFlags(0x03000000),
@@ -1695,9 +1585,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Macd,
+        id: FuncId::MACD,
         name: "MACD",
-        camel_case_name: "Macd",
         group: Group::MomentumIndicators,
         hint: "Moving Average Convergence/Divergence",
         flags: FuncFlags(0x02000000),
@@ -1707,9 +1596,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Macdext,
+        id: FuncId::MACDEXT,
         name: "MACDEXT",
-        camel_case_name: "MacdExt",
         group: Group::MomentumIndicators,
         hint: "MACD with controllable MA type",
         flags: FuncFlags(0x02000000),
@@ -1719,9 +1607,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Macdfix,
+        id: FuncId::MACDFIX,
         name: "MACDFIX",
-        camel_case_name: "MacdFix",
         group: Group::MomentumIndicators,
         hint: "Moving Average Convergence/Divergence Fix 12/26",
         flags: FuncFlags(0x02000000),
@@ -1731,21 +1618,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Mama,
+        id: FuncId::MAMA,
         name: "MAMA",
-        camel_case_name: "Mama",
         group: Group::OverlapStudies,
         hint: "MESA Adaptive Moving Average",
         flags: FuncFlags(0x0b000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastLimit", display_name: "Fast Limit", hint: "Upper limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.5, suggested: (0.21, 0.8, 0.01) } }, OptInputInfo { param_name: "optInSlowLimit", display_name: "Slow Limit", hint: "Lower limit use in the adaptive algorithm", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.01, max: 0.99, precision: 2, default: 0.05, suggested: (0.01, 0.6, 0.01) } }, ],
         outputs: &[OutputInfo { param_name: "outMAMA", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outFAMA", kind: OutputType::Real, flags: OutputFlags(0x00002004) }, ],
-        unst_id: Some(FuncUnstId::Mama),
+        unst_id: Some(FuncUnstId::MAMA),
     },
     FuncInfo {
-        id: FuncId::Mavp,
+        id: FuncId::MAVP,
         name: "MAVP",
-        camel_case_name: "MovingAverageVariablePeriod",
         group: Group::OverlapStudies,
         hint: "Moving average with variable period",
         flags: FuncFlags(0x03000000),
@@ -1755,9 +1640,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Max,
+        id: FuncId::MAX,
         name: "MAX",
-        camel_case_name: "Max",
         group: Group::MathOperators,
         hint: "Highest value over a specified period",
         flags: FuncFlags(0x03000000),
@@ -1767,9 +1651,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Maxindex,
+        id: FuncId::MAXINDEX,
         name: "MAXINDEX",
-        camel_case_name: "MaxIndex",
         group: Group::MathOperators,
         hint: "Index of highest value over a specified period",
         flags: FuncFlags(0x02000000),
@@ -1779,9 +1662,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Medprice,
+        id: FuncId::MEDPRICE,
         name: "MEDPRICE",
-        camel_case_name: "MedPrice",
         group: Group::PriceTransform,
         hint: "Median Price",
         flags: FuncFlags(0x03000000),
@@ -1791,9 +1673,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Mfi,
+        id: FuncId::MFI,
         name: "MFI",
-        camel_case_name: "Mfi",
         group: Group::MomentumIndicators,
         hint: "Money Flow Index",
         flags: FuncFlags(0x02000000),
@@ -1803,9 +1684,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Midpoint,
+        id: FuncId::MIDPOINT,
         name: "MIDPOINT",
-        camel_case_name: "MidPoint",
         group: Group::OverlapStudies,
         hint: "MidPoint over period",
         flags: FuncFlags(0x03000000),
@@ -1815,9 +1695,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Midprice,
+        id: FuncId::MIDPRICE,
         name: "MIDPRICE",
-        camel_case_name: "MidPrice",
         group: Group::OverlapStudies,
         hint: "Midpoint Price over period",
         flags: FuncFlags(0x03000000),
@@ -1827,9 +1706,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Min,
+        id: FuncId::MIN,
         name: "MIN",
-        camel_case_name: "Min",
         group: Group::MathOperators,
         hint: "Lowest value over a specified period",
         flags: FuncFlags(0x03000000),
@@ -1839,9 +1717,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Minindex,
+        id: FuncId::MININDEX,
         name: "MININDEX",
-        camel_case_name: "MinIndex",
         group: Group::MathOperators,
         hint: "Index of lowest value over a specified period",
         flags: FuncFlags(0x02000000),
@@ -1851,9 +1728,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Minmax,
+        id: FuncId::MINMAX,
         name: "MINMAX",
-        camel_case_name: "MinMax",
         group: Group::MathOperators,
         hint: "Lowest and highest values over a specified period",
         flags: FuncFlags(0x03000000),
@@ -1863,9 +1739,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Minmaxindex,
+        id: FuncId::MINMAXINDEX,
         name: "MINMAXINDEX",
-        camel_case_name: "MinMaxIndex",
         group: Group::MathOperators,
         hint: "Indexes of lowest and highest values over a specified period",
         flags: FuncFlags(0x02000000),
@@ -1875,33 +1750,30 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::MinusDi,
+        id: FuncId::MINUS_DI,
         name: "MINUS_DI",
-        camel_case_name: "MinusDI",
         group: Group::MomentumIndicators,
         hint: "Minus Directional Indicator",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::MinusDI),
+        unst_id: Some(FuncUnstId::MINUS_DI),
     },
     FuncInfo {
-        id: FuncId::MinusDm,
+        id: FuncId::MINUS_DM,
         name: "MINUS_DM",
-        camel_case_name: "MinusDM",
         group: Group::MomentumIndicators,
         hint: "Minus Directional Movement",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::MinusDM),
+        unst_id: Some(FuncUnstId::MINUS_DM),
     },
     FuncInfo {
-        id: FuncId::Mom,
+        id: FuncId::MOM,
         name: "MOM",
-        camel_case_name: "Mom",
         group: Group::MomentumIndicators,
         hint: "Momentum",
         flags: FuncFlags(0x02000000),
@@ -1911,9 +1783,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Mult,
+        id: FuncId::MULT,
         name: "MULT",
-        camel_case_name: "Mult",
         group: Group::MathOperators,
         hint: "Vector Arithmetic Mult",
         flags: FuncFlags(0x02000000),
@@ -1923,21 +1794,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Natr,
+        id: FuncId::NATR,
         name: "NATR",
-        camel_case_name: "Natr",
         group: Group::VolatilityIndicators,
         hint: "Normalized Average True Range",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Natr),
+        unst_id: Some(FuncUnstId::NATR),
     },
     FuncInfo {
-        id: FuncId::Nvi,
+        id: FuncId::NVI,
         name: "NVI",
-        camel_case_name: "Nvi",
         group: Group::VolumeIndicators,
         hint: "Negative Volume Index",
         flags: FuncFlags(0x22000000),
@@ -1947,9 +1816,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Obv,
+        id: FuncId::OBV,
         name: "OBV",
-        camel_case_name: "Obv",
         group: Group::VolumeIndicators,
         hint: "On Balance Volume",
         flags: FuncFlags(0x22000000),
@@ -1959,33 +1827,30 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::PlusDi,
+        id: FuncId::PLUS_DI,
         name: "PLUS_DI",
-        camel_case_name: "PlusDI",
         group: Group::MomentumIndicators,
         hint: "Plus Directional Indicator",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::PlusDI),
+        unst_id: Some(FuncUnstId::PLUS_DI),
     },
     FuncInfo {
-        id: FuncId::PlusDm,
+        id: FuncId::PLUS_DM,
         name: "PLUS_DM",
-        camel_case_name: "PlusDM",
         group: Group::MomentumIndicators,
         hint: "Plus Directional Movement",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::PlusDM),
+        unst_id: Some(FuncUnstId::PLUS_DM),
     },
     FuncInfo {
-        id: FuncId::Ppo,
+        id: FuncId::PPO,
         name: "PPO",
-        camel_case_name: "Ppo",
         group: Group::MomentumIndicators,
         hint: "Percentage Price Oscillator",
         flags: FuncFlags(0x02000000),
@@ -1995,9 +1860,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Pvi,
+        id: FuncId::PVI,
         name: "PVI",
-        camel_case_name: "Pvi",
         group: Group::VolumeIndicators,
         hint: "Positive Volume Index",
         flags: FuncFlags(0x22000000),
@@ -2007,9 +1871,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Pvo,
+        id: FuncId::PVO,
         name: "PVO",
-        camel_case_name: "Pvo",
         group: Group::VolumeIndicators,
         hint: "Percentage Volume Oscillator",
         flags: FuncFlags(0x02000000),
@@ -2019,9 +1882,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Roc,
+        id: FuncId::ROC,
         name: "ROC",
-        camel_case_name: "Roc",
         group: Group::MomentumIndicators,
         hint: "Rate of change : ((price/prevPrice)-1)*100",
         flags: FuncFlags(0x02000000),
@@ -2031,9 +1893,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Rocp,
+        id: FuncId::ROCP,
         name: "ROCP",
-        camel_case_name: "RocP",
         group: Group::MomentumIndicators,
         hint: "Rate of change Percentage: (price-prevPrice)/prevPrice",
         flags: FuncFlags(0x02000000),
@@ -2043,9 +1904,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Rocr,
+        id: FuncId::ROCR,
         name: "ROCR",
-        camel_case_name: "RocR",
         group: Group::MomentumIndicators,
         hint: "Rate of change ratio: (price/prevPrice)",
         flags: FuncFlags(0x02000000),
@@ -2055,9 +1915,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Rocr100,
+        id: FuncId::ROCR100,
         name: "ROCR100",
-        camel_case_name: "RocR100",
         group: Group::MomentumIndicators,
         hint: "Rate of change ratio 100 scale: (price/prevPrice)*100",
         flags: FuncFlags(0x02000000),
@@ -2067,21 +1926,19 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Rsi,
+        id: FuncId::RSI,
         name: "RSI",
-        camel_case_name: "Rsi",
         group: Group::MomentumIndicators,
         hint: "Relative Strength Index",
         flags: FuncFlags(0x0a000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
-        unst_id: Some(FuncUnstId::Rsi),
+        unst_id: Some(FuncUnstId::RSI),
     },
     FuncInfo {
-        id: FuncId::Sar,
+        id: FuncId::SAR,
         name: "SAR",
-        camel_case_name: "Sar",
         group: Group::OverlapStudies,
         hint: "Parabolic SAR",
         flags: FuncFlags(0x23000000),
@@ -2091,9 +1948,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sarext,
+        id: FuncId::SAREXT,
         name: "SAREXT",
-        camel_case_name: "SarExt",
         group: Group::OverlapStudies,
         hint: "Parabolic SAR - Extended",
         flags: FuncFlags(0x23000000),
@@ -2103,9 +1959,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sin,
+        id: FuncId::SIN,
         name: "SIN",
-        camel_case_name: "Sin",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Sin",
         flags: FuncFlags(0x02000000),
@@ -2115,9 +1970,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sinh,
+        id: FuncId::SINH,
         name: "SINH",
-        camel_case_name: "Sinh",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Sinh",
         flags: FuncFlags(0x02000000),
@@ -2127,9 +1981,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sma,
+        id: FuncId::SMA,
         name: "SMA",
-        camel_case_name: "Sma",
         group: Group::OverlapStudies,
         hint: "Simple Moving Average",
         flags: FuncFlags(0x03000000),
@@ -2139,9 +1992,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sqrt,
+        id: FuncId::SQRT,
         name: "SQRT",
-        camel_case_name: "Sqrt",
         group: Group::MathTransform,
         hint: "Vector Square Root",
         flags: FuncFlags(0x02000000),
@@ -2151,9 +2003,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Stddev,
+        id: FuncId::STDDEV,
         name: "STDDEV",
-        camel_case_name: "StdDev",
         group: Group::StatisticFunctions,
         hint: "Standard Deviation",
         flags: FuncFlags(0x02000000),
@@ -2163,9 +2014,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Stoch,
+        id: FuncId::STOCH,
         name: "STOCH",
-        camel_case_name: "Stoch",
         group: Group::MomentumIndicators,
         hint: "Stochastic",
         flags: FuncFlags(0x02000000),
@@ -2175,9 +2025,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Stochf,
+        id: FuncId::STOCHF,
         name: "STOCHF",
-        camel_case_name: "StochF",
         group: Group::MomentumIndicators,
         hint: "Stochastic Fast",
         flags: FuncFlags(0x02000000),
@@ -2187,9 +2036,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Stochrsi,
+        id: FuncId::STOCHRSI,
         name: "STOCHRSI",
-        camel_case_name: "StochRsi",
         group: Group::MomentumIndicators,
         hint: "Stochastic Relative Strength Index",
         flags: FuncFlags(0x02000000),
@@ -2199,9 +2047,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sub,
+        id: FuncId::SUB,
         name: "SUB",
-        camel_case_name: "Sub",
         group: Group::MathOperators,
         hint: "Vector Arithmetic Subtraction",
         flags: FuncFlags(0x02000000),
@@ -2211,9 +2058,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Sum,
+        id: FuncId::SUM,
         name: "SUM",
-        camel_case_name: "Sum",
         group: Group::MathOperators,
         hint: "Summation",
         flags: FuncFlags(0x02000000),
@@ -2225,7 +2071,6 @@ pub static FUNCS: [FuncInfo; 168] = [
     FuncInfo {
         id: FuncId::T3,
         name: "T3",
-        camel_case_name: "T3",
         group: Group::OverlapStudies,
         hint: "Triple Exponential Moving Average (T3)",
         flags: FuncFlags(0x0b000000),
@@ -2235,9 +2080,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: Some(FuncUnstId::T3),
     },
     FuncInfo {
-        id: FuncId::Tan,
+        id: FuncId::TAN,
         name: "TAN",
-        camel_case_name: "Tan",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Tan",
         flags: FuncFlags(0x02000000),
@@ -2247,9 +2091,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Tanh,
+        id: FuncId::TANH,
         name: "TANH",
-        camel_case_name: "Tanh",
         group: Group::MathTransform,
         hint: "Vector Trigonometric Tanh",
         flags: FuncFlags(0x02000000),
@@ -2259,9 +2102,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Tema,
+        id: FuncId::TEMA,
         name: "TEMA",
-        camel_case_name: "Tema",
         group: Group::OverlapStudies,
         hint: "Triple Exponential Moving Average",
         flags: FuncFlags(0x03000000),
@@ -2271,9 +2113,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Trange,
+        id: FuncId::TRANGE,
         name: "TRANGE",
-        camel_case_name: "TrueRange",
         group: Group::VolatilityIndicators,
         hint: "True Range",
         flags: FuncFlags(0x02000000),
@@ -2283,9 +2124,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Trima,
+        id: FuncId::TRIMA,
         name: "TRIMA",
-        camel_case_name: "Trima",
         group: Group::OverlapStudies,
         hint: "Triangular Moving Average",
         flags: FuncFlags(0x03000000),
@@ -2295,9 +2135,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Trix,
+        id: FuncId::TRIX,
         name: "TRIX",
-        camel_case_name: "Trix",
         group: Group::MomentumIndicators,
         hint: "1-day Rate-Of-Change (ROC) of a Triple Smooth EMA",
         flags: FuncFlags(0x02000000),
@@ -2307,9 +2146,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Tsf,
+        id: FuncId::TSF,
         name: "TSF",
-        camel_case_name: "Tsf",
         group: Group::StatisticFunctions,
         hint: "Time Series Forecast",
         flags: FuncFlags(0x03000000),
@@ -2319,9 +2157,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Typprice,
+        id: FuncId::TYPPRICE,
         name: "TYPPRICE",
-        camel_case_name: "TypPrice",
         group: Group::PriceTransform,
         hint: "Typical Price",
         flags: FuncFlags(0x03000000),
@@ -2331,9 +2168,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Ultosc,
+        id: FuncId::ULTOSC,
         name: "ULTOSC",
-        camel_case_name: "UltOsc",
         group: Group::MomentumIndicators,
         hint: "Ultimate Oscillator",
         flags: FuncFlags(0x02000000),
@@ -2343,9 +2179,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Var,
+        id: FuncId::VAR,
         name: "VAR",
-        camel_case_name: "Variance",
         group: Group::StatisticFunctions,
         hint: "Variance",
         flags: FuncFlags(0x02000000),
@@ -2355,9 +2190,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Vwma,
+        id: FuncId::VWMA,
         name: "VWMA",
-        camel_case_name: "Vwma",
         group: Group::OverlapStudies,
         hint: "Volume Weighted Moving Average",
         flags: FuncFlags(0x03000000),
@@ -2367,9 +2201,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Wclprice,
+        id: FuncId::WCLPRICE,
         name: "WCLPRICE",
-        camel_case_name: "WclPrice",
         group: Group::PriceTransform,
         hint: "Weighted Close Price",
         flags: FuncFlags(0x03000000),
@@ -2379,9 +2212,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Willr,
+        id: FuncId::WILLR,
         name: "WILLR",
-        camel_case_name: "WillR",
         group: Group::MomentumIndicators,
         hint: "Williams' %R",
         flags: FuncFlags(0x02000000),
@@ -2391,9 +2223,8 @@ pub static FUNCS: [FuncInfo; 168] = [
         unst_id: None,
     },
     FuncInfo {
-        id: FuncId::Wma,
+        id: FuncId::WMA,
         name: "WMA",
-        camel_case_name: "Wma",
         group: Group::OverlapStudies,
         hint: "Weighted Moving Average",
         flags: FuncFlags(0x03000000),
@@ -2410,174 +2241,174 @@ pub static FUNCS: [FuncInfo; 168] = [
 /// and faster than C's linear `strcmp` scan, with zero allocation/dependencies.
 pub fn get_func_handle(name: &str) -> Option<FuncId> {
     Some(match name {
-        "ACCBANDS" => FuncId::Accbands,
-        "ACOS" => FuncId::Acos,
-        "AD" => FuncId::Ad,
-        "ADD" => FuncId::Add,
-        "ADOSC" => FuncId::Adosc,
-        "ADX" => FuncId::Adx,
-        "ADXR" => FuncId::Adxr,
-        "APO" => FuncId::Apo,
-        "AROON" => FuncId::Aroon,
-        "AROONOSC" => FuncId::Aroonosc,
-        "ASIN" => FuncId::Asin,
-        "ATAN" => FuncId::Atan,
-        "ATR" => FuncId::Atr,
-        "AVGDEV" => FuncId::Avgdev,
-        "AVGPRICE" => FuncId::Avgprice,
-        "BBANDS" => FuncId::Bbands,
-        "BETA" => FuncId::Beta,
-        "BOP" => FuncId::Bop,
-        "CCI" => FuncId::Cci,
-        "CDL2CROWS" => FuncId::Cdl2crows,
-        "CDL3BLACKCROWS" => FuncId::Cdl3blackcrows,
-        "CDL3INSIDE" => FuncId::Cdl3inside,
-        "CDL3LINESTRIKE" => FuncId::Cdl3linestrike,
-        "CDL3OUTSIDE" => FuncId::Cdl3outside,
-        "CDL3STARSINSOUTH" => FuncId::Cdl3starsinsouth,
-        "CDL3WHITESOLDIERS" => FuncId::Cdl3whitesoldiers,
-        "CDLABANDONEDBABY" => FuncId::Cdlabandonedbaby,
-        "CDLADVANCEBLOCK" => FuncId::Cdladvanceblock,
-        "CDLBELTHOLD" => FuncId::Cdlbelthold,
-        "CDLBREAKAWAY" => FuncId::Cdlbreakaway,
-        "CDLCLOSINGMARUBOZU" => FuncId::Cdlclosingmarubozu,
-        "CDLCONCEALBABYSWALL" => FuncId::Cdlconcealbabyswall,
-        "CDLCOUNTERATTACK" => FuncId::Cdlcounterattack,
-        "CDLDARKCLOUDCOVER" => FuncId::Cdldarkcloudcover,
-        "CDLDOJI" => FuncId::Cdldoji,
-        "CDLDOJISTAR" => FuncId::Cdldojistar,
-        "CDLDRAGONFLYDOJI" => FuncId::Cdldragonflydoji,
-        "CDLENGULFING" => FuncId::Cdlengulfing,
-        "CDLEVENINGDOJISTAR" => FuncId::Cdleveningdojistar,
-        "CDLEVENINGSTAR" => FuncId::Cdleveningstar,
-        "CDLGAPSIDESIDEWHITE" => FuncId::Cdlgapsidesidewhite,
-        "CDLGRAVESTONEDOJI" => FuncId::Cdlgravestonedoji,
-        "CDLHAMMER" => FuncId::Cdlhammer,
-        "CDLHANGINGMAN" => FuncId::Cdlhangingman,
-        "CDLHARAMI" => FuncId::Cdlharami,
-        "CDLHARAMICROSS" => FuncId::Cdlharamicross,
-        "CDLHIGHWAVE" => FuncId::Cdlhighwave,
-        "CDLHIKKAKE" => FuncId::Cdlhikkake,
-        "CDLHIKKAKEMOD" => FuncId::Cdlhikkakemod,
-        "CDLHOMINGPIGEON" => FuncId::Cdlhomingpigeon,
-        "CDLIDENTICAL3CROWS" => FuncId::Cdlidentical3crows,
-        "CDLINNECK" => FuncId::Cdlinneck,
-        "CDLINVERTEDHAMMER" => FuncId::Cdlinvertedhammer,
-        "CDLKICKING" => FuncId::Cdlkicking,
-        "CDLKICKINGBYLENGTH" => FuncId::Cdlkickingbylength,
-        "CDLLADDERBOTTOM" => FuncId::Cdlladderbottom,
-        "CDLLONGLEGGEDDOJI" => FuncId::Cdllongleggeddoji,
-        "CDLLONGLINE" => FuncId::Cdllongline,
-        "CDLMARUBOZU" => FuncId::Cdlmarubozu,
-        "CDLMATCHINGLOW" => FuncId::Cdlmatchinglow,
-        "CDLMATHOLD" => FuncId::Cdlmathold,
-        "CDLMORNINGDOJISTAR" => FuncId::Cdlmorningdojistar,
-        "CDLMORNINGSTAR" => FuncId::Cdlmorningstar,
-        "CDLONNECK" => FuncId::Cdlonneck,
-        "CDLPIERCING" => FuncId::Cdlpiercing,
-        "CDLRICKSHAWMAN" => FuncId::Cdlrickshawman,
-        "CDLRISEFALL3METHODS" => FuncId::Cdlrisefall3methods,
-        "CDLSEPARATINGLINES" => FuncId::Cdlseparatinglines,
-        "CDLSHOOTINGSTAR" => FuncId::Cdlshootingstar,
-        "CDLSHORTLINE" => FuncId::Cdlshortline,
-        "CDLSPINNINGTOP" => FuncId::Cdlspinningtop,
-        "CDLSTALLEDPATTERN" => FuncId::Cdlstalledpattern,
-        "CDLSTICKSANDWICH" => FuncId::Cdlsticksandwich,
-        "CDLTAKURI" => FuncId::Cdltakuri,
-        "CDLTASUKIGAP" => FuncId::Cdltasukigap,
-        "CDLTHRUSTING" => FuncId::Cdlthrusting,
-        "CDLTRISTAR" => FuncId::Cdltristar,
-        "CDLUNIQUE3RIVER" => FuncId::Cdlunique3river,
-        "CDLUPSIDEGAP2CROWS" => FuncId::Cdlupsidegap2crows,
-        "CDLXSIDEGAP3METHODS" => FuncId::Cdlxsidegap3methods,
-        "CEIL" => FuncId::Ceil,
-        "CMF" => FuncId::Cmf,
-        "CMO" => FuncId::Cmo,
-        "CMOU" => FuncId::Cmou,
-        "CORREL" => FuncId::Correl,
-        "COS" => FuncId::Cos,
-        "COSH" => FuncId::Cosh,
-        "DEMA" => FuncId::Dema,
-        "DIV" => FuncId::Div,
-        "DX" => FuncId::Dx,
-        "EMA" => FuncId::Ema,
-        "EXP" => FuncId::Exp,
-        "FLOOR" => FuncId::Floor,
-        "HMA" => FuncId::Hma,
-        "HT_DCPERIOD" => FuncId::HtDcperiod,
-        "HT_DCPHASE" => FuncId::HtDcphase,
-        "HT_PHASOR" => FuncId::HtPhasor,
-        "HT_SINE" => FuncId::HtSine,
-        "HT_TRENDLINE" => FuncId::HtTrendline,
-        "HT_TRENDMODE" => FuncId::HtTrendmode,
-        "IMI" => FuncId::Imi,
-        "KAMA" => FuncId::Kama,
-        "LINEARREG" => FuncId::Linearreg,
-        "LINEARREG_ANGLE" => FuncId::LinearregAngle,
-        "LINEARREG_INTERCEPT" => FuncId::LinearregIntercept,
-        "LINEARREG_SLOPE" => FuncId::LinearregSlope,
-        "LN" => FuncId::Ln,
-        "LOG10" => FuncId::Log10,
-        "MA" => FuncId::Ma,
-        "MACD" => FuncId::Macd,
-        "MACDEXT" => FuncId::Macdext,
-        "MACDFIX" => FuncId::Macdfix,
-        "MAMA" => FuncId::Mama,
-        "MAVP" => FuncId::Mavp,
-        "MAX" => FuncId::Max,
-        "MAXINDEX" => FuncId::Maxindex,
-        "MEDPRICE" => FuncId::Medprice,
-        "MFI" => FuncId::Mfi,
-        "MIDPOINT" => FuncId::Midpoint,
-        "MIDPRICE" => FuncId::Midprice,
-        "MIN" => FuncId::Min,
-        "MININDEX" => FuncId::Minindex,
-        "MINMAX" => FuncId::Minmax,
-        "MINMAXINDEX" => FuncId::Minmaxindex,
-        "MINUS_DI" => FuncId::MinusDi,
-        "MINUS_DM" => FuncId::MinusDm,
-        "MOM" => FuncId::Mom,
-        "MULT" => FuncId::Mult,
-        "NATR" => FuncId::Natr,
-        "NVI" => FuncId::Nvi,
-        "OBV" => FuncId::Obv,
-        "PLUS_DI" => FuncId::PlusDi,
-        "PLUS_DM" => FuncId::PlusDm,
-        "PPO" => FuncId::Ppo,
-        "PVI" => FuncId::Pvi,
-        "PVO" => FuncId::Pvo,
-        "ROC" => FuncId::Roc,
-        "ROCP" => FuncId::Rocp,
-        "ROCR" => FuncId::Rocr,
-        "ROCR100" => FuncId::Rocr100,
-        "RSI" => FuncId::Rsi,
-        "SAR" => FuncId::Sar,
-        "SAREXT" => FuncId::Sarext,
-        "SIN" => FuncId::Sin,
-        "SINH" => FuncId::Sinh,
-        "SMA" => FuncId::Sma,
-        "SQRT" => FuncId::Sqrt,
-        "STDDEV" => FuncId::Stddev,
-        "STOCH" => FuncId::Stoch,
-        "STOCHF" => FuncId::Stochf,
-        "STOCHRSI" => FuncId::Stochrsi,
-        "SUB" => FuncId::Sub,
-        "SUM" => FuncId::Sum,
+        "ACCBANDS" => FuncId::ACCBANDS,
+        "ACOS" => FuncId::ACOS,
+        "AD" => FuncId::AD,
+        "ADD" => FuncId::ADD,
+        "ADOSC" => FuncId::ADOSC,
+        "ADX" => FuncId::ADX,
+        "ADXR" => FuncId::ADXR,
+        "APO" => FuncId::APO,
+        "AROON" => FuncId::AROON,
+        "AROONOSC" => FuncId::AROONOSC,
+        "ASIN" => FuncId::ASIN,
+        "ATAN" => FuncId::ATAN,
+        "ATR" => FuncId::ATR,
+        "AVGDEV" => FuncId::AVGDEV,
+        "AVGPRICE" => FuncId::AVGPRICE,
+        "BBANDS" => FuncId::BBANDS,
+        "BETA" => FuncId::BETA,
+        "BOP" => FuncId::BOP,
+        "CCI" => FuncId::CCI,
+        "CDL2CROWS" => FuncId::CDL2CROWS,
+        "CDL3BLACKCROWS" => FuncId::CDL3BLACKCROWS,
+        "CDL3INSIDE" => FuncId::CDL3INSIDE,
+        "CDL3LINESTRIKE" => FuncId::CDL3LINESTRIKE,
+        "CDL3OUTSIDE" => FuncId::CDL3OUTSIDE,
+        "CDL3STARSINSOUTH" => FuncId::CDL3STARSINSOUTH,
+        "CDL3WHITESOLDIERS" => FuncId::CDL3WHITESOLDIERS,
+        "CDLABANDONEDBABY" => FuncId::CDLABANDONEDBABY,
+        "CDLADVANCEBLOCK" => FuncId::CDLADVANCEBLOCK,
+        "CDLBELTHOLD" => FuncId::CDLBELTHOLD,
+        "CDLBREAKAWAY" => FuncId::CDLBREAKAWAY,
+        "CDLCLOSINGMARUBOZU" => FuncId::CDLCLOSINGMARUBOZU,
+        "CDLCONCEALBABYSWALL" => FuncId::CDLCONCEALBABYSWALL,
+        "CDLCOUNTERATTACK" => FuncId::CDLCOUNTERATTACK,
+        "CDLDARKCLOUDCOVER" => FuncId::CDLDARKCLOUDCOVER,
+        "CDLDOJI" => FuncId::CDLDOJI,
+        "CDLDOJISTAR" => FuncId::CDLDOJISTAR,
+        "CDLDRAGONFLYDOJI" => FuncId::CDLDRAGONFLYDOJI,
+        "CDLENGULFING" => FuncId::CDLENGULFING,
+        "CDLEVENINGDOJISTAR" => FuncId::CDLEVENINGDOJISTAR,
+        "CDLEVENINGSTAR" => FuncId::CDLEVENINGSTAR,
+        "CDLGAPSIDESIDEWHITE" => FuncId::CDLGAPSIDESIDEWHITE,
+        "CDLGRAVESTONEDOJI" => FuncId::CDLGRAVESTONEDOJI,
+        "CDLHAMMER" => FuncId::CDLHAMMER,
+        "CDLHANGINGMAN" => FuncId::CDLHANGINGMAN,
+        "CDLHARAMI" => FuncId::CDLHARAMI,
+        "CDLHARAMICROSS" => FuncId::CDLHARAMICROSS,
+        "CDLHIGHWAVE" => FuncId::CDLHIGHWAVE,
+        "CDLHIKKAKE" => FuncId::CDLHIKKAKE,
+        "CDLHIKKAKEMOD" => FuncId::CDLHIKKAKEMOD,
+        "CDLHOMINGPIGEON" => FuncId::CDLHOMINGPIGEON,
+        "CDLIDENTICAL3CROWS" => FuncId::CDLIDENTICAL3CROWS,
+        "CDLINNECK" => FuncId::CDLINNECK,
+        "CDLINVERTEDHAMMER" => FuncId::CDLINVERTEDHAMMER,
+        "CDLKICKING" => FuncId::CDLKICKING,
+        "CDLKICKINGBYLENGTH" => FuncId::CDLKICKINGBYLENGTH,
+        "CDLLADDERBOTTOM" => FuncId::CDLLADDERBOTTOM,
+        "CDLLONGLEGGEDDOJI" => FuncId::CDLLONGLEGGEDDOJI,
+        "CDLLONGLINE" => FuncId::CDLLONGLINE,
+        "CDLMARUBOZU" => FuncId::CDLMARUBOZU,
+        "CDLMATCHINGLOW" => FuncId::CDLMATCHINGLOW,
+        "CDLMATHOLD" => FuncId::CDLMATHOLD,
+        "CDLMORNINGDOJISTAR" => FuncId::CDLMORNINGDOJISTAR,
+        "CDLMORNINGSTAR" => FuncId::CDLMORNINGSTAR,
+        "CDLONNECK" => FuncId::CDLONNECK,
+        "CDLPIERCING" => FuncId::CDLPIERCING,
+        "CDLRICKSHAWMAN" => FuncId::CDLRICKSHAWMAN,
+        "CDLRISEFALL3METHODS" => FuncId::CDLRISEFALL3METHODS,
+        "CDLSEPARATINGLINES" => FuncId::CDLSEPARATINGLINES,
+        "CDLSHOOTINGSTAR" => FuncId::CDLSHOOTINGSTAR,
+        "CDLSHORTLINE" => FuncId::CDLSHORTLINE,
+        "CDLSPINNINGTOP" => FuncId::CDLSPINNINGTOP,
+        "CDLSTALLEDPATTERN" => FuncId::CDLSTALLEDPATTERN,
+        "CDLSTICKSANDWICH" => FuncId::CDLSTICKSANDWICH,
+        "CDLTAKURI" => FuncId::CDLTAKURI,
+        "CDLTASUKIGAP" => FuncId::CDLTASUKIGAP,
+        "CDLTHRUSTING" => FuncId::CDLTHRUSTING,
+        "CDLTRISTAR" => FuncId::CDLTRISTAR,
+        "CDLUNIQUE3RIVER" => FuncId::CDLUNIQUE3RIVER,
+        "CDLUPSIDEGAP2CROWS" => FuncId::CDLUPSIDEGAP2CROWS,
+        "CDLXSIDEGAP3METHODS" => FuncId::CDLXSIDEGAP3METHODS,
+        "CEIL" => FuncId::CEIL,
+        "CMF" => FuncId::CMF,
+        "CMO" => FuncId::CMO,
+        "CMOU" => FuncId::CMOU,
+        "CORREL" => FuncId::CORREL,
+        "COS" => FuncId::COS,
+        "COSH" => FuncId::COSH,
+        "DEMA" => FuncId::DEMA,
+        "DIV" => FuncId::DIV,
+        "DX" => FuncId::DX,
+        "EMA" => FuncId::EMA,
+        "EXP" => FuncId::EXP,
+        "FLOOR" => FuncId::FLOOR,
+        "HMA" => FuncId::HMA,
+        "HT_DCPERIOD" => FuncId::HT_DCPERIOD,
+        "HT_DCPHASE" => FuncId::HT_DCPHASE,
+        "HT_PHASOR" => FuncId::HT_PHASOR,
+        "HT_SINE" => FuncId::HT_SINE,
+        "HT_TRENDLINE" => FuncId::HT_TRENDLINE,
+        "HT_TRENDMODE" => FuncId::HT_TRENDMODE,
+        "IMI" => FuncId::IMI,
+        "KAMA" => FuncId::KAMA,
+        "LINEARREG" => FuncId::LINEARREG,
+        "LINEARREG_ANGLE" => FuncId::LINEARREG_ANGLE,
+        "LINEARREG_INTERCEPT" => FuncId::LINEARREG_INTERCEPT,
+        "LINEARREG_SLOPE" => FuncId::LINEARREG_SLOPE,
+        "LN" => FuncId::LN,
+        "LOG10" => FuncId::LOG10,
+        "MA" => FuncId::MA,
+        "MACD" => FuncId::MACD,
+        "MACDEXT" => FuncId::MACDEXT,
+        "MACDFIX" => FuncId::MACDFIX,
+        "MAMA" => FuncId::MAMA,
+        "MAVP" => FuncId::MAVP,
+        "MAX" => FuncId::MAX,
+        "MAXINDEX" => FuncId::MAXINDEX,
+        "MEDPRICE" => FuncId::MEDPRICE,
+        "MFI" => FuncId::MFI,
+        "MIDPOINT" => FuncId::MIDPOINT,
+        "MIDPRICE" => FuncId::MIDPRICE,
+        "MIN" => FuncId::MIN,
+        "MININDEX" => FuncId::MININDEX,
+        "MINMAX" => FuncId::MINMAX,
+        "MINMAXINDEX" => FuncId::MINMAXINDEX,
+        "MINUS_DI" => FuncId::MINUS_DI,
+        "MINUS_DM" => FuncId::MINUS_DM,
+        "MOM" => FuncId::MOM,
+        "MULT" => FuncId::MULT,
+        "NATR" => FuncId::NATR,
+        "NVI" => FuncId::NVI,
+        "OBV" => FuncId::OBV,
+        "PLUS_DI" => FuncId::PLUS_DI,
+        "PLUS_DM" => FuncId::PLUS_DM,
+        "PPO" => FuncId::PPO,
+        "PVI" => FuncId::PVI,
+        "PVO" => FuncId::PVO,
+        "ROC" => FuncId::ROC,
+        "ROCP" => FuncId::ROCP,
+        "ROCR" => FuncId::ROCR,
+        "ROCR100" => FuncId::ROCR100,
+        "RSI" => FuncId::RSI,
+        "SAR" => FuncId::SAR,
+        "SAREXT" => FuncId::SAREXT,
+        "SIN" => FuncId::SIN,
+        "SINH" => FuncId::SINH,
+        "SMA" => FuncId::SMA,
+        "SQRT" => FuncId::SQRT,
+        "STDDEV" => FuncId::STDDEV,
+        "STOCH" => FuncId::STOCH,
+        "STOCHF" => FuncId::STOCHF,
+        "STOCHRSI" => FuncId::STOCHRSI,
+        "SUB" => FuncId::SUB,
+        "SUM" => FuncId::SUM,
         "T3" => FuncId::T3,
-        "TAN" => FuncId::Tan,
-        "TANH" => FuncId::Tanh,
-        "TEMA" => FuncId::Tema,
-        "TRANGE" => FuncId::Trange,
-        "TRIMA" => FuncId::Trima,
-        "TRIX" => FuncId::Trix,
-        "TSF" => FuncId::Tsf,
-        "TYPPRICE" => FuncId::Typprice,
-        "ULTOSC" => FuncId::Ultosc,
-        "VAR" => FuncId::Var,
-        "VWMA" => FuncId::Vwma,
-        "WCLPRICE" => FuncId::Wclprice,
-        "WILLR" => FuncId::Willr,
-        "WMA" => FuncId::Wma,
+        "TAN" => FuncId::TAN,
+        "TANH" => FuncId::TANH,
+        "TEMA" => FuncId::TEMA,
+        "TRANGE" => FuncId::TRANGE,
+        "TRIMA" => FuncId::TRIMA,
+        "TRIX" => FuncId::TRIX,
+        "TSF" => FuncId::TSF,
+        "TYPPRICE" => FuncId::TYPPRICE,
+        "ULTOSC" => FuncId::ULTOSC,
+        "VAR" => FuncId::VAR,
+        "VWMA" => FuncId::VWMA,
+        "WCLPRICE" => FuncId::WCLPRICE,
+        "WILLR" => FuncId::WILLR,
+        "WMA" => FuncId::WMA,
         _ => return None,
     })
 }
@@ -2684,7 +2515,7 @@ impl OptValue for f64 {
 /// let core = Core::new();
 /// let close = vec![1.0f64; 64];
 /// let mut out = vec![0.0f64; 64];
-/// let mut call = FuncId::Sma.new_call(&core);
+/// let mut call = FuncId::SMA.new_call(&core);
 /// call.set_input(0, &close)?;
 /// call.set_opt(0, 30_i32)?;
 /// call.set_output(0, &mut out)?;
@@ -2822,174 +2653,174 @@ impl<'a> ParamHolder<'a> {
     /// [`RetCode::BadParam`] if a bound optional parameter is out of range.
     pub fn lookback(&self) -> Result<usize, RetCode> {
         let lb = match self.func {
-            FuncId::Accbands => self.core.accbands_lookback(self.int_opt[0]),
-            FuncId::Acos => self.core.acos_lookback(),
-            FuncId::Ad => self.core.ad_lookback(),
-            FuncId::Add => self.core.add_lookback(),
-            FuncId::Adosc => self.core.adosc_lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::Adx => self.core.adx_lookback(self.int_opt[0]),
-            FuncId::Adxr => self.core.adxr_lookback(self.int_opt[0]),
-            FuncId::Apo => self.core.apo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Aroon => self.core.aroon_lookback(self.int_opt[0]),
-            FuncId::Aroonosc => self.core.aroonosc_lookback(self.int_opt[0]),
-            FuncId::Asin => self.core.asin_lookback(),
-            FuncId::Atan => self.core.atan_lookback(),
-            FuncId::Atr => self.core.atr_lookback(self.int_opt[0]),
-            FuncId::Avgdev => self.core.avgdev_lookback(self.int_opt[0]),
-            FuncId::Avgprice => self.core.avgprice_lookback(),
-            FuncId::Bbands => self.core.bbands_lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3]),
-            FuncId::Beta => self.core.beta_lookback(self.int_opt[0]),
-            FuncId::Bop => self.core.bop_lookback(),
-            FuncId::Cci => self.core.cci_lookback(self.int_opt[0]),
-            FuncId::Cdl2crows => self.core.cdl2crows_lookback(),
-            FuncId::Cdl3blackcrows => self.core.cdl3blackcrows_lookback(),
-            FuncId::Cdl3inside => self.core.cdl3inside_lookback(),
-            FuncId::Cdl3linestrike => self.core.cdl3linestrike_lookback(),
-            FuncId::Cdl3outside => self.core.cdl3outside_lookback(),
-            FuncId::Cdl3starsinsouth => self.core.cdl3starsinsouth_lookback(),
-            FuncId::Cdl3whitesoldiers => self.core.cdl3whitesoldiers_lookback(),
-            FuncId::Cdlabandonedbaby => self.core.cdlabandonedbaby_lookback(self.real_opt[0]),
-            FuncId::Cdladvanceblock => self.core.cdladvanceblock_lookback(),
-            FuncId::Cdlbelthold => self.core.cdlbelthold_lookback(),
-            FuncId::Cdlbreakaway => self.core.cdlbreakaway_lookback(),
-            FuncId::Cdlclosingmarubozu => self.core.cdlclosingmarubozu_lookback(),
-            FuncId::Cdlconcealbabyswall => self.core.cdlconcealbabyswall_lookback(),
-            FuncId::Cdlcounterattack => self.core.cdlcounterattack_lookback(),
-            FuncId::Cdldarkcloudcover => self.core.cdldarkcloudcover_lookback(self.real_opt[0]),
-            FuncId::Cdldoji => self.core.cdldoji_lookback(),
-            FuncId::Cdldojistar => self.core.cdldojistar_lookback(),
-            FuncId::Cdldragonflydoji => self.core.cdldragonflydoji_lookback(),
-            FuncId::Cdlengulfing => self.core.cdlengulfing_lookback(),
-            FuncId::Cdleveningdojistar => self.core.cdleveningdojistar_lookback(self.real_opt[0]),
-            FuncId::Cdleveningstar => self.core.cdleveningstar_lookback(self.real_opt[0]),
-            FuncId::Cdlgapsidesidewhite => self.core.cdlgapsidesidewhite_lookback(),
-            FuncId::Cdlgravestonedoji => self.core.cdlgravestonedoji_lookback(),
-            FuncId::Cdlhammer => self.core.cdlhammer_lookback(),
-            FuncId::Cdlhangingman => self.core.cdlhangingman_lookback(),
-            FuncId::Cdlharami => self.core.cdlharami_lookback(),
-            FuncId::Cdlharamicross => self.core.cdlharamicross_lookback(),
-            FuncId::Cdlhighwave => self.core.cdlhighwave_lookback(),
-            FuncId::Cdlhikkake => self.core.cdlhikkake_lookback(),
-            FuncId::Cdlhikkakemod => self.core.cdlhikkakemod_lookback(),
-            FuncId::Cdlhomingpigeon => self.core.cdlhomingpigeon_lookback(),
-            FuncId::Cdlidentical3crows => self.core.cdlidentical3crows_lookback(),
-            FuncId::Cdlinneck => self.core.cdlinneck_lookback(),
-            FuncId::Cdlinvertedhammer => self.core.cdlinvertedhammer_lookback(),
-            FuncId::Cdlkicking => self.core.cdlkicking_lookback(),
-            FuncId::Cdlkickingbylength => self.core.cdlkickingbylength_lookback(),
-            FuncId::Cdlladderbottom => self.core.cdlladderbottom_lookback(),
-            FuncId::Cdllongleggeddoji => self.core.cdllongleggeddoji_lookback(),
-            FuncId::Cdllongline => self.core.cdllongline_lookback(),
-            FuncId::Cdlmarubozu => self.core.cdlmarubozu_lookback(),
-            FuncId::Cdlmatchinglow => self.core.cdlmatchinglow_lookback(),
-            FuncId::Cdlmathold => self.core.cdlmathold_lookback(self.real_opt[0]),
-            FuncId::Cdlmorningdojistar => self.core.cdlmorningdojistar_lookback(self.real_opt[0]),
-            FuncId::Cdlmorningstar => self.core.cdlmorningstar_lookback(self.real_opt[0]),
-            FuncId::Cdlonneck => self.core.cdlonneck_lookback(),
-            FuncId::Cdlpiercing => self.core.cdlpiercing_lookback(),
-            FuncId::Cdlrickshawman => self.core.cdlrickshawman_lookback(),
-            FuncId::Cdlrisefall3methods => self.core.cdlrisefall3methods_lookback(),
-            FuncId::Cdlseparatinglines => self.core.cdlseparatinglines_lookback(),
-            FuncId::Cdlshootingstar => self.core.cdlshootingstar_lookback(),
-            FuncId::Cdlshortline => self.core.cdlshortline_lookback(),
-            FuncId::Cdlspinningtop => self.core.cdlspinningtop_lookback(),
-            FuncId::Cdlstalledpattern => self.core.cdlstalledpattern_lookback(),
-            FuncId::Cdlsticksandwich => self.core.cdlsticksandwich_lookback(),
-            FuncId::Cdltakuri => self.core.cdltakuri_lookback(),
-            FuncId::Cdltasukigap => self.core.cdltasukigap_lookback(),
-            FuncId::Cdlthrusting => self.core.cdlthrusting_lookback(),
-            FuncId::Cdltristar => self.core.cdltristar_lookback(),
-            FuncId::Cdlunique3river => self.core.cdlunique3river_lookback(),
-            FuncId::Cdlupsidegap2crows => self.core.cdlupsidegap2crows_lookback(),
-            FuncId::Cdlxsidegap3methods => self.core.cdlxsidegap3methods_lookback(),
-            FuncId::Ceil => self.core.ceil_lookback(),
-            FuncId::Cmf => self.core.cmf_lookback(self.int_opt[0]),
-            FuncId::Cmo => self.core.cmo_lookback(self.int_opt[0]),
-            FuncId::Cmou => self.core.cmou_lookback(self.int_opt[0]),
-            FuncId::Correl => self.core.correl_lookback(self.int_opt[0]),
-            FuncId::Cos => self.core.cos_lookback(),
-            FuncId::Cosh => self.core.cosh_lookback(),
-            FuncId::Dema => self.core.dema_lookback(self.int_opt[0]),
-            FuncId::Div => self.core.div_lookback(),
-            FuncId::Dx => self.core.dx_lookback(self.int_opt[0]),
-            FuncId::Ema => self.core.ema_lookback(self.int_opt[0]),
-            FuncId::Exp => self.core.exp_lookback(),
-            FuncId::Floor => self.core.floor_lookback(),
-            FuncId::Hma => self.core.hma_lookback(self.int_opt[0]),
-            FuncId::HtDcperiod => self.core.ht_dcperiod_lookback(),
-            FuncId::HtDcphase => self.core.ht_dcphase_lookback(),
-            FuncId::HtPhasor => self.core.ht_phasor_lookback(),
-            FuncId::HtSine => self.core.ht_sine_lookback(),
-            FuncId::HtTrendline => self.core.ht_trendline_lookback(),
-            FuncId::HtTrendmode => self.core.ht_trendmode_lookback(),
-            FuncId::Imi => self.core.imi_lookback(self.int_opt[0]),
-            FuncId::Kama => self.core.kama_lookback(self.int_opt[0]),
-            FuncId::Linearreg => self.core.linearreg_lookback(self.int_opt[0]),
-            FuncId::LinearregAngle => self.core.linearreg_angle_lookback(self.int_opt[0]),
-            FuncId::LinearregIntercept => self.core.linearreg_intercept_lookback(self.int_opt[0]),
-            FuncId::LinearregSlope => self.core.linearreg_slope_lookback(self.int_opt[0]),
-            FuncId::Ln => self.core.ln_lookback(),
-            FuncId::Log10 => self.core.log10_lookback(),
-            FuncId::Ma => self.core.ma_lookback(self.int_opt[0], self.int_opt[1]),
-            FuncId::Macd => self.core.macd_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Macdext => self.core.macdext_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
-            FuncId::Macdfix => self.core.macdfix_lookback(self.int_opt[0]),
-            FuncId::Mama => self.core.mama_lookback(self.real_opt[0], self.real_opt[1]),
-            FuncId::Mavp => self.core.mavp_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Max => self.core.max_lookback(self.int_opt[0]),
-            FuncId::Maxindex => self.core.maxindex_lookback(self.int_opt[0]),
-            FuncId::Medprice => self.core.medprice_lookback(),
-            FuncId::Mfi => self.core.mfi_lookback(self.int_opt[0]),
-            FuncId::Midpoint => self.core.midpoint_lookback(self.int_opt[0]),
-            FuncId::Midprice => self.core.midprice_lookback(self.int_opt[0]),
-            FuncId::Min => self.core.min_lookback(self.int_opt[0]),
-            FuncId::Minindex => self.core.minindex_lookback(self.int_opt[0]),
-            FuncId::Minmax => self.core.minmax_lookback(self.int_opt[0]),
-            FuncId::Minmaxindex => self.core.minmaxindex_lookback(self.int_opt[0]),
-            FuncId::MinusDi => self.core.minus_di_lookback(self.int_opt[0]),
-            FuncId::MinusDm => self.core.minus_dm_lookback(self.int_opt[0]),
-            FuncId::Mom => self.core.mom_lookback(self.int_opt[0]),
-            FuncId::Mult => self.core.mult_lookback(),
-            FuncId::Natr => self.core.natr_lookback(self.int_opt[0]),
-            FuncId::Nvi => self.core.nvi_lookback(),
-            FuncId::Obv => self.core.obv_lookback(),
-            FuncId::PlusDi => self.core.plus_di_lookback(self.int_opt[0]),
-            FuncId::PlusDm => self.core.plus_dm_lookback(self.int_opt[0]),
-            FuncId::Ppo => self.core.ppo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Pvi => self.core.pvi_lookback(),
-            FuncId::Pvo => self.core.pvo_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Roc => self.core.roc_lookback(self.int_opt[0]),
-            FuncId::Rocp => self.core.rocp_lookback(self.int_opt[0]),
-            FuncId::Rocr => self.core.rocr_lookback(self.int_opt[0]),
-            FuncId::Rocr100 => self.core.rocr100_lookback(self.int_opt[0]),
-            FuncId::Rsi => self.core.rsi_lookback(self.int_opt[0]),
-            FuncId::Sar => self.core.sar_lookback(self.real_opt[0], self.real_opt[1]),
-            FuncId::Sarext => self.core.sarext_lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
-            FuncId::Sin => self.core.sin_lookback(),
-            FuncId::Sinh => self.core.sinh_lookback(),
-            FuncId::Sma => self.core.sma_lookback(self.int_opt[0]),
-            FuncId::Sqrt => self.core.sqrt_lookback(),
-            FuncId::Stddev => self.core.stddev_lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::Stoch => self.core.stoch_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4]),
-            FuncId::Stochf => self.core.stochf_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Stochrsi => self.core.stochrsi_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
-            FuncId::Sub => self.core.sub_lookback(),
-            FuncId::Sum => self.core.sum_lookback(self.int_opt[0]),
-            FuncId::T3 => self.core.t3_lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::Tan => self.core.tan_lookback(),
-            FuncId::Tanh => self.core.tanh_lookback(),
-            FuncId::Tema => self.core.tema_lookback(self.int_opt[0]),
-            FuncId::Trange => self.core.trange_lookback(),
-            FuncId::Trima => self.core.trima_lookback(self.int_opt[0]),
-            FuncId::Trix => self.core.trix_lookback(self.int_opt[0]),
-            FuncId::Tsf => self.core.tsf_lookback(self.int_opt[0]),
-            FuncId::Typprice => self.core.typprice_lookback(),
-            FuncId::Ultosc => self.core.ultosc_lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::Var => self.core.var_lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::Vwma => self.core.vwma_lookback(self.int_opt[0]),
-            FuncId::Wclprice => self.core.wclprice_lookback(),
-            FuncId::Willr => self.core.willr_lookback(self.int_opt[0]),
-            FuncId::Wma => self.core.wma_lookback(self.int_opt[0]),
+            FuncId::ACCBANDS => self.core.ACCBANDS_Lookback(self.int_opt[0]),
+            FuncId::ACOS => self.core.ACOS_Lookback(),
+            FuncId::AD => self.core.AD_Lookback(),
+            FuncId::ADD => self.core.ADD_Lookback(),
+            FuncId::ADOSC => self.core.ADOSC_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::ADX => self.core.ADX_Lookback(self.int_opt[0]),
+            FuncId::ADXR => self.core.ADXR_Lookback(self.int_opt[0]),
+            FuncId::APO => self.core.APO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::AROON => self.core.AROON_Lookback(self.int_opt[0]),
+            FuncId::AROONOSC => self.core.AROONOSC_Lookback(self.int_opt[0]),
+            FuncId::ASIN => self.core.ASIN_Lookback(),
+            FuncId::ATAN => self.core.ATAN_Lookback(),
+            FuncId::ATR => self.core.ATR_Lookback(self.int_opt[0]),
+            FuncId::AVGDEV => self.core.AVGDEV_Lookback(self.int_opt[0]),
+            FuncId::AVGPRICE => self.core.AVGPRICE_Lookback(),
+            FuncId::BBANDS => self.core.BBANDS_Lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3]),
+            FuncId::BETA => self.core.BETA_Lookback(self.int_opt[0]),
+            FuncId::BOP => self.core.BOP_Lookback(),
+            FuncId::CCI => self.core.CCI_Lookback(self.int_opt[0]),
+            FuncId::CDL2CROWS => self.core.CDL2CROWS_Lookback(),
+            FuncId::CDL3BLACKCROWS => self.core.CDL3BLACKCROWS_Lookback(),
+            FuncId::CDL3INSIDE => self.core.CDL3INSIDE_Lookback(),
+            FuncId::CDL3LINESTRIKE => self.core.CDL3LINESTRIKE_Lookback(),
+            FuncId::CDL3OUTSIDE => self.core.CDL3OUTSIDE_Lookback(),
+            FuncId::CDL3STARSINSOUTH => self.core.CDL3STARSINSOUTH_Lookback(),
+            FuncId::CDL3WHITESOLDIERS => self.core.CDL3WHITESOLDIERS_Lookback(),
+            FuncId::CDLABANDONEDBABY => self.core.CDLABANDONEDBABY_Lookback(self.real_opt[0]),
+            FuncId::CDLADVANCEBLOCK => self.core.CDLADVANCEBLOCK_Lookback(),
+            FuncId::CDLBELTHOLD => self.core.CDLBELTHOLD_Lookback(),
+            FuncId::CDLBREAKAWAY => self.core.CDLBREAKAWAY_Lookback(),
+            FuncId::CDLCLOSINGMARUBOZU => self.core.CDLCLOSINGMARUBOZU_Lookback(),
+            FuncId::CDLCONCEALBABYSWALL => self.core.CDLCONCEALBABYSWALL_Lookback(),
+            FuncId::CDLCOUNTERATTACK => self.core.CDLCOUNTERATTACK_Lookback(),
+            FuncId::CDLDARKCLOUDCOVER => self.core.CDLDARKCLOUDCOVER_Lookback(self.real_opt[0]),
+            FuncId::CDLDOJI => self.core.CDLDOJI_Lookback(),
+            FuncId::CDLDOJISTAR => self.core.CDLDOJISTAR_Lookback(),
+            FuncId::CDLDRAGONFLYDOJI => self.core.CDLDRAGONFLYDOJI_Lookback(),
+            FuncId::CDLENGULFING => self.core.CDLENGULFING_Lookback(),
+            FuncId::CDLEVENINGDOJISTAR => self.core.CDLEVENINGDOJISTAR_Lookback(self.real_opt[0]),
+            FuncId::CDLEVENINGSTAR => self.core.CDLEVENINGSTAR_Lookback(self.real_opt[0]),
+            FuncId::CDLGAPSIDESIDEWHITE => self.core.CDLGAPSIDESIDEWHITE_Lookback(),
+            FuncId::CDLGRAVESTONEDOJI => self.core.CDLGRAVESTONEDOJI_Lookback(),
+            FuncId::CDLHAMMER => self.core.CDLHAMMER_Lookback(),
+            FuncId::CDLHANGINGMAN => self.core.CDLHANGINGMAN_Lookback(),
+            FuncId::CDLHARAMI => self.core.CDLHARAMI_Lookback(),
+            FuncId::CDLHARAMICROSS => self.core.CDLHARAMICROSS_Lookback(),
+            FuncId::CDLHIGHWAVE => self.core.CDLHIGHWAVE_Lookback(),
+            FuncId::CDLHIKKAKE => self.core.CDLHIKKAKE_Lookback(),
+            FuncId::CDLHIKKAKEMOD => self.core.CDLHIKKAKEMOD_Lookback(),
+            FuncId::CDLHOMINGPIGEON => self.core.CDLHOMINGPIGEON_Lookback(),
+            FuncId::CDLIDENTICAL3CROWS => self.core.CDLIDENTICAL3CROWS_Lookback(),
+            FuncId::CDLINNECK => self.core.CDLINNECK_Lookback(),
+            FuncId::CDLINVERTEDHAMMER => self.core.CDLINVERTEDHAMMER_Lookback(),
+            FuncId::CDLKICKING => self.core.CDLKICKING_Lookback(),
+            FuncId::CDLKICKINGBYLENGTH => self.core.CDLKICKINGBYLENGTH_Lookback(),
+            FuncId::CDLLADDERBOTTOM => self.core.CDLLADDERBOTTOM_Lookback(),
+            FuncId::CDLLONGLEGGEDDOJI => self.core.CDLLONGLEGGEDDOJI_Lookback(),
+            FuncId::CDLLONGLINE => self.core.CDLLONGLINE_Lookback(),
+            FuncId::CDLMARUBOZU => self.core.CDLMARUBOZU_Lookback(),
+            FuncId::CDLMATCHINGLOW => self.core.CDLMATCHINGLOW_Lookback(),
+            FuncId::CDLMATHOLD => self.core.CDLMATHOLD_Lookback(self.real_opt[0]),
+            FuncId::CDLMORNINGDOJISTAR => self.core.CDLMORNINGDOJISTAR_Lookback(self.real_opt[0]),
+            FuncId::CDLMORNINGSTAR => self.core.CDLMORNINGSTAR_Lookback(self.real_opt[0]),
+            FuncId::CDLONNECK => self.core.CDLONNECK_Lookback(),
+            FuncId::CDLPIERCING => self.core.CDLPIERCING_Lookback(),
+            FuncId::CDLRICKSHAWMAN => self.core.CDLRICKSHAWMAN_Lookback(),
+            FuncId::CDLRISEFALL3METHODS => self.core.CDLRISEFALL3METHODS_Lookback(),
+            FuncId::CDLSEPARATINGLINES => self.core.CDLSEPARATINGLINES_Lookback(),
+            FuncId::CDLSHOOTINGSTAR => self.core.CDLSHOOTINGSTAR_Lookback(),
+            FuncId::CDLSHORTLINE => self.core.CDLSHORTLINE_Lookback(),
+            FuncId::CDLSPINNINGTOP => self.core.CDLSPINNINGTOP_Lookback(),
+            FuncId::CDLSTALLEDPATTERN => self.core.CDLSTALLEDPATTERN_Lookback(),
+            FuncId::CDLSTICKSANDWICH => self.core.CDLSTICKSANDWICH_Lookback(),
+            FuncId::CDLTAKURI => self.core.CDLTAKURI_Lookback(),
+            FuncId::CDLTASUKIGAP => self.core.CDLTASUKIGAP_Lookback(),
+            FuncId::CDLTHRUSTING => self.core.CDLTHRUSTING_Lookback(),
+            FuncId::CDLTRISTAR => self.core.CDLTRISTAR_Lookback(),
+            FuncId::CDLUNIQUE3RIVER => self.core.CDLUNIQUE3RIVER_Lookback(),
+            FuncId::CDLUPSIDEGAP2CROWS => self.core.CDLUPSIDEGAP2CROWS_Lookback(),
+            FuncId::CDLXSIDEGAP3METHODS => self.core.CDLXSIDEGAP3METHODS_Lookback(),
+            FuncId::CEIL => self.core.CEIL_Lookback(),
+            FuncId::CMF => self.core.CMF_Lookback(self.int_opt[0]),
+            FuncId::CMO => self.core.CMO_Lookback(self.int_opt[0]),
+            FuncId::CMOU => self.core.CMOU_Lookback(self.int_opt[0]),
+            FuncId::CORREL => self.core.CORREL_Lookback(self.int_opt[0]),
+            FuncId::COS => self.core.COS_Lookback(),
+            FuncId::COSH => self.core.COSH_Lookback(),
+            FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
+            FuncId::DIV => self.core.DIV_Lookback(),
+            FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
+            FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
+            FuncId::EXP => self.core.EXP_Lookback(),
+            FuncId::FLOOR => self.core.FLOOR_Lookback(),
+            FuncId::HMA => self.core.HMA_Lookback(self.int_opt[0]),
+            FuncId::HT_DCPERIOD => self.core.HT_DCPERIOD_Lookback(),
+            FuncId::HT_DCPHASE => self.core.HT_DCPHASE_Lookback(),
+            FuncId::HT_PHASOR => self.core.HT_PHASOR_Lookback(),
+            FuncId::HT_SINE => self.core.HT_SINE_Lookback(),
+            FuncId::HT_TRENDLINE => self.core.HT_TRENDLINE_Lookback(),
+            FuncId::HT_TRENDMODE => self.core.HT_TRENDMODE_Lookback(),
+            FuncId::IMI => self.core.IMI_Lookback(self.int_opt[0]),
+            FuncId::KAMA => self.core.KAMA_Lookback(self.int_opt[0]),
+            FuncId::LINEARREG => self.core.LINEARREG_Lookback(self.int_opt[0]),
+            FuncId::LINEARREG_ANGLE => self.core.LINEARREG_ANGLE_Lookback(self.int_opt[0]),
+            FuncId::LINEARREG_INTERCEPT => self.core.LINEARREG_INTERCEPT_Lookback(self.int_opt[0]),
+            FuncId::LINEARREG_SLOPE => self.core.LINEARREG_SLOPE_Lookback(self.int_opt[0]),
+            FuncId::LN => self.core.LN_Lookback(),
+            FuncId::LOG10 => self.core.LOG10_Lookback(),
+            FuncId::MA => self.core.MA_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::MACD => self.core.MACD_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::MACDEXT => self.core.MACDEXT_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
+            FuncId::MACDFIX => self.core.MACDFIX_Lookback(self.int_opt[0]),
+            FuncId::MAMA => self.core.MAMA_Lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::MAX => self.core.MAX_Lookback(self.int_opt[0]),
+            FuncId::MAXINDEX => self.core.MAXINDEX_Lookback(self.int_opt[0]),
+            FuncId::MEDPRICE => self.core.MEDPRICE_Lookback(),
+            FuncId::MFI => self.core.MFI_Lookback(self.int_opt[0]),
+            FuncId::MIDPOINT => self.core.MIDPOINT_Lookback(self.int_opt[0]),
+            FuncId::MIDPRICE => self.core.MIDPRICE_Lookback(self.int_opt[0]),
+            FuncId::MIN => self.core.MIN_Lookback(self.int_opt[0]),
+            FuncId::MININDEX => self.core.MININDEX_Lookback(self.int_opt[0]),
+            FuncId::MINMAX => self.core.MINMAX_Lookback(self.int_opt[0]),
+            FuncId::MINMAXINDEX => self.core.MINMAXINDEX_Lookback(self.int_opt[0]),
+            FuncId::MINUS_DI => self.core.MINUS_DI_Lookback(self.int_opt[0]),
+            FuncId::MINUS_DM => self.core.MINUS_DM_Lookback(self.int_opt[0]),
+            FuncId::MOM => self.core.MOM_Lookback(self.int_opt[0]),
+            FuncId::MULT => self.core.MULT_Lookback(),
+            FuncId::NATR => self.core.NATR_Lookback(self.int_opt[0]),
+            FuncId::NVI => self.core.NVI_Lookback(),
+            FuncId::OBV => self.core.OBV_Lookback(),
+            FuncId::PLUS_DI => self.core.PLUS_DI_Lookback(self.int_opt[0]),
+            FuncId::PLUS_DM => self.core.PLUS_DM_Lookback(self.int_opt[0]),
+            FuncId::PPO => self.core.PPO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::PVI => self.core.PVI_Lookback(),
+            FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::ROC => self.core.ROC_Lookback(self.int_opt[0]),
+            FuncId::ROCP => self.core.ROCP_Lookback(self.int_opt[0]),
+            FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
+            FuncId::ROCR100 => self.core.ROCR100_Lookback(self.int_opt[0]),
+            FuncId::RSI => self.core.RSI_Lookback(self.int_opt[0]),
+            FuncId::SAR => self.core.SAR_Lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::SAREXT => self.core.SAREXT_Lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
+            FuncId::SIN => self.core.SIN_Lookback(),
+            FuncId::SINH => self.core.SINH_Lookback(),
+            FuncId::SMA => self.core.SMA_Lookback(self.int_opt[0]),
+            FuncId::SQRT => self.core.SQRT_Lookback(),
+            FuncId::STDDEV => self.core.STDDEV_Lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::STOCH => self.core.STOCH_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4]),
+            FuncId::STOCHF => self.core.STOCHF_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::STOCHRSI => self.core.STOCHRSI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
+            FuncId::SUB => self.core.SUB_Lookback(),
+            FuncId::SUM => self.core.SUM_Lookback(self.int_opt[0]),
+            FuncId::T3 => self.core.T3_Lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::TAN => self.core.TAN_Lookback(),
+            FuncId::TANH => self.core.TANH_Lookback(),
+            FuncId::TEMA => self.core.TEMA_Lookback(self.int_opt[0]),
+            FuncId::TRANGE => self.core.TRANGE_Lookback(),
+            FuncId::TRIMA => self.core.TRIMA_Lookback(self.int_opt[0]),
+            FuncId::TRIX => self.core.TRIX_Lookback(self.int_opt[0]),
+            FuncId::TSF => self.core.TSF_Lookback(self.int_opt[0]),
+            FuncId::TYPPRICE => self.core.TYPPRICE_Lookback(),
+            FuncId::ULTOSC => self.core.ULTOSC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::VAR => self.core.VAR_Lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::VWMA => self.core.VWMA_Lookback(self.int_opt[0]),
+            FuncId::WCLPRICE => self.core.WCLPRICE_Lookback(),
+            FuncId::WILLR => self.core.WILLR_Lookback(self.int_opt[0]),
+            FuncId::WMA => self.core.WMA_Lookback(self.int_opt[0]),
         };
         // The generated lookbacks report a rejected parameter as usize::MAX.
         if lb == usize::MAX { Err(RetCode::BadParam) } else { Ok(lb) }
@@ -3020,7 +2851,7 @@ impl<'a> ParamHolder<'a> {
         let mut beg: usize = 0;
         let mut nb: usize = 0;
         let rc = match self.func {
-            FuncId::Accbands => {
+            FuncId::ACCBANDS => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
@@ -3030,146 +2861,146 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.accbands(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.ACCBANDS(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
                 rc
             }
-            FuncId::Acos => {
+            FuncId::ACOS => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.acos(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ACOS(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ad => {
+            FuncId::AD => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ad(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AD(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Add => {
+            FuncId::ADD => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.add(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADD(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Adosc => {
+            FuncId::ADOSC => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.adosc(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADOSC(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Adx => {
+            FuncId::ADX => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.adx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Adxr => {
+            FuncId::ADXR => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.adxr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ADXR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Apo => {
+            FuncId::APO => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.apo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.APO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Aroon => {
+            FuncId::AROON => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.aroon(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.AROON(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::Aroonosc => {
+            FuncId::AROONOSC => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.aroonosc(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AROONOSC(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Asin => {
+            FuncId::ASIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.asin(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ASIN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Atan => {
+            FuncId::ATAN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.atan(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ATAN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Atr => {
+            FuncId::ATR => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.atr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Avgdev => {
+            FuncId::AVGDEV => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.avgdev(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AVGDEV(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Avgprice => {
+            FuncId::AVGPRICE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.avgprice(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.AVGPRICE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Bbands => {
+            FuncId::BBANDS => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
@@ -3177,974 +3008,960 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.bbands(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.BBANDS(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
                 rc
             }
-            FuncId::Beta => {
+            FuncId::BETA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.beta(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.BETA(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Bop => {
+            FuncId::BOP => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.bop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.BOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cci => {
+            FuncId::CCI => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cci(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CCI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl2crows => {
+            FuncId::CDL2CROWS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3blackcrows => {
+            FuncId::CDL3BLACKCROWS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3blackcrows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3BLACKCROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3inside => {
+            FuncId::CDL3INSIDE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3inside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3INSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3linestrike => {
+            FuncId::CDL3LINESTRIKE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3linestrike(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3LINESTRIKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3outside => {
+            FuncId::CDL3OUTSIDE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3outside(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3OUTSIDE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3starsinsouth => {
+            FuncId::CDL3STARSINSOUTH => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3starsinsouth(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3STARSINSOUTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdl3whitesoldiers => {
+            FuncId::CDL3WHITESOLDIERS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdl3whitesoldiers(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDL3WHITESOLDIERS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlabandonedbaby => {
+            FuncId::CDLABANDONEDBABY => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlabandonedbaby(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLABANDONEDBABY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdladvanceblock => {
+            FuncId::CDLADVANCEBLOCK => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdladvanceblock(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLADVANCEBLOCK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlbelthold => {
+            FuncId::CDLBELTHOLD => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlbelthold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLBELTHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlbreakaway => {
+            FuncId::CDLBREAKAWAY => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlbreakaway(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLBREAKAWAY(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlclosingmarubozu => {
+            FuncId::CDLCLOSINGMARUBOZU => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlclosingmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCLOSINGMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlconcealbabyswall => {
+            FuncId::CDLCONCEALBABYSWALL => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlconcealbabyswall(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCONCEALBABYSWALL(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlcounterattack => {
+            FuncId::CDLCOUNTERATTACK => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlcounterattack(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLCOUNTERATTACK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdldarkcloudcover => {
+            FuncId::CDLDARKCLOUDCOVER => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdldarkcloudcover(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDARKCLOUDCOVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdldoji => {
+            FuncId::CDLDOJI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdldoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdldojistar => {
+            FuncId::CDLDOJISTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdldojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdldragonflydoji => {
+            FuncId::CDLDRAGONFLYDOJI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdldragonflydoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLDRAGONFLYDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlengulfing => {
+            FuncId::CDLENGULFING => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlengulfing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLENGULFING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdleveningdojistar => {
+            FuncId::CDLEVENINGDOJISTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdleveningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLEVENINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdleveningstar => {
+            FuncId::CDLEVENINGSTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdleveningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLEVENINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlgapsidesidewhite => {
+            FuncId::CDLGAPSIDESIDEWHITE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlgapsidesidewhite(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLGAPSIDESIDEWHITE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlgravestonedoji => {
+            FuncId::CDLGRAVESTONEDOJI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlgravestonedoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLGRAVESTONEDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhammer => {
+            FuncId::CDLHAMMER => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhangingman => {
+            FuncId::CDLHANGINGMAN => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhangingman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHANGINGMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlharami => {
+            FuncId::CDLHARAMI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlharami(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHARAMI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlharamicross => {
+            FuncId::CDLHARAMICROSS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlharamicross(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHARAMICROSS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhighwave => {
+            FuncId::CDLHIGHWAVE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhighwave(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIGHWAVE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhikkake => {
+            FuncId::CDLHIKKAKE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhikkake(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIKKAKE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhikkakemod => {
+            FuncId::CDLHIKKAKEMOD => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhikkakemod(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHIKKAKEMOD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlhomingpigeon => {
+            FuncId::CDLHOMINGPIGEON => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlhomingpigeon(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLHOMINGPIGEON(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlidentical3crows => {
+            FuncId::CDLIDENTICAL3CROWS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlidentical3crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLIDENTICAL3CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlinneck => {
+            FuncId::CDLINNECK => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlinneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLINNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlinvertedhammer => {
+            FuncId::CDLINVERTEDHAMMER => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlinvertedhammer(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLINVERTEDHAMMER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlkicking => {
+            FuncId::CDLKICKING => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlkicking(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLKICKING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlkickingbylength => {
+            FuncId::CDLKICKINGBYLENGTH => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlkickingbylength(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLKICKINGBYLENGTH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlladderbottom => {
+            FuncId::CDLLADDERBOTTOM => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlladderbottom(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLADDERBOTTOM(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdllongleggeddoji => {
+            FuncId::CDLLONGLEGGEDDOJI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdllongleggeddoji(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLONGLEGGEDDOJI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdllongline => {
+            FuncId::CDLLONGLINE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdllongline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLLONGLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlmarubozu => {
+            FuncId::CDLMARUBOZU => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlmarubozu(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMARUBOZU(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlmatchinglow => {
+            FuncId::CDLMATCHINGLOW => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlmatchinglow(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMATCHINGLOW(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlmathold => {
+            FuncId::CDLMATHOLD => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlmathold(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMATHOLD(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlmorningdojistar => {
+            FuncId::CDLMORNINGDOJISTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlmorningdojistar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMORNINGDOJISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlmorningstar => {
+            FuncId::CDLMORNINGSTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlmorningstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLMORNINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, self.real_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlonneck => {
+            FuncId::CDLONNECK => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlonneck(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLONNECK(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlpiercing => {
+            FuncId::CDLPIERCING => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlpiercing(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLPIERCING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlrickshawman => {
+            FuncId::CDLRICKSHAWMAN => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlrickshawman(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLRICKSHAWMAN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlrisefall3methods => {
+            FuncId::CDLRISEFALL3METHODS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlrisefall3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLRISEFALL3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlseparatinglines => {
+            FuncId::CDLSEPARATINGLINES => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlseparatinglines(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSEPARATINGLINES(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlshootingstar => {
+            FuncId::CDLSHOOTINGSTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlshootingstar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSHOOTINGSTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlshortline => {
+            FuncId::CDLSHORTLINE => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlshortline(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSHORTLINE(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlspinningtop => {
+            FuncId::CDLSPINNINGTOP => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlspinningtop(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSPINNINGTOP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlstalledpattern => {
+            FuncId::CDLSTALLEDPATTERN => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlstalledpattern(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSTALLEDPATTERN(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlsticksandwich => {
+            FuncId::CDLSTICKSANDWICH => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlsticksandwich(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLSTICKSANDWICH(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdltakuri => {
+            FuncId::CDLTAKURI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdltakuri(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTAKURI(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdltasukigap => {
+            FuncId::CDLTASUKIGAP => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdltasukigap(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTASUKIGAP(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlthrusting => {
+            FuncId::CDLTHRUSTING => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlthrusting(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTHRUSTING(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdltristar => {
+            FuncId::CDLTRISTAR => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdltristar(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLTRISTAR(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlunique3river => {
+            FuncId::CDLUNIQUE3RIVER => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlunique3river(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLUNIQUE3RIVER(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlupsidegap2crows => {
+            FuncId::CDLUPSIDEGAP2CROWS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlupsidegap2crows(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLUPSIDEGAP2CROWS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cdlxsidegap3methods => {
+            FuncId::CDLXSIDEGAP3METHODS => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.cdlxsidegap3methods(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CDLXSIDEGAP3METHODS(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ceil => {
+            FuncId::CEIL => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ceil(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CEIL(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cmf => {
+            FuncId::CMF => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cmf(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMF(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cmo => {
+            FuncId::CMO => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cmo(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMO(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Cmou => {
+            FuncId::CMOU => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cmou(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CMOU(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Correl => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.correl(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
-                self.real_out[0] = Some(o0);
-                rc
-            }
-            FuncId::Cos => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cos(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
-                self.real_out[0] = Some(o0);
-                rc
-            }
-            FuncId::Cosh => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.cosh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
-                self.real_out[0] = Some(o0);
-                rc
-            }
-            FuncId::Dema => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.dema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
-                self.real_out[0] = Some(o0);
-                rc
-            }
-            FuncId::Div => {
+            FuncId::CORREL => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.div(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.CORREL(start_idx, end_idx, i0, i1, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Dx => {
+            FuncId::COS => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.COS(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::COSH => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.COSH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::DEMA => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.DEMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::DIV => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.DIV(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::DX => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.dx(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.DX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ema => {
+            FuncId::EMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.EMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Exp => {
+            FuncId::EXP => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.exp(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.EXP(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Floor => {
+            FuncId::FLOOR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.floor(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.FLOOR(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Hma => {
+            FuncId::HMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.hma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::HtDcperiod => {
+            FuncId::HT_DCPERIOD => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ht_dcperiod(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_DCPERIOD(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::HtDcphase => {
+            FuncId::HT_DCPHASE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ht_dcphase(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_DCPHASE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::HtPhasor => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ht_phasor(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
-                rc
-            }
-            FuncId::HtSine => {
+            FuncId::HT_PHASOR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ht_sine(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.HT_PHASOR(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::HtTrendline => {
+            FuncId::HT_SINE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ht_trendline(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.HT_SINE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::HT_TRENDLINE => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.HT_TRENDLINE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::HtTrendmode => {
+            FuncId::HT_TRENDMODE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.ht_trendmode(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.HT_TRENDMODE(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Imi => {
+            FuncId::IMI => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.imi(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.IMI(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Kama => {
+            FuncId::KAMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.kama(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.KAMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Linearreg => {
+            FuncId::LINEARREG => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.linearreg(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::LinearregAngle => {
+            FuncId::LINEARREG_ANGLE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.linearreg_angle(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_ANGLE(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::LinearregIntercept => {
+            FuncId::LINEARREG_INTERCEPT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.linearreg_intercept(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_INTERCEPT(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::LinearregSlope => {
+            FuncId::LINEARREG_SLOPE => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.linearreg_slope(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LINEARREG_SLOPE(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ln => {
+            FuncId::LN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ln(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Log10 => {
+            FuncId::LOG10 => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.log10(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.LOG10(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ma => {
+            FuncId::MA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ma(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MA(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Macd => {
-                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.macd(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
-                self.real_out[2] = Some(o2);
-                rc
-            }
-            FuncId::Macdext => {
+            FuncId::MACD => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
@@ -4152,13 +3969,13 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.macdext(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACD(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
                 rc
             }
-            FuncId::Macdfix => {
+            FuncId::MACDEXT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
@@ -4166,343 +3983,344 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.macdfix(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACDEXT(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
                 rc
             }
-            FuncId::Mama => {
+            FuncId::MACDFIX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.mama(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.MACDFIX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                rc
+            }
+            FuncId::MAMA => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.MAMA(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::Mavp => {
+            FuncId::MAVP => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.mavp(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAVP(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Max => {
+            FuncId::MAX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.max(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Maxindex => {
+            FuncId::MAXINDEX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.maxindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Medprice => {
+            FuncId::MEDPRICE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.medprice(start_idx, end_idx, i0_1, i0_2, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MEDPRICE(start_idx, end_idx, i0_1, i0_2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Mfi => {
+            FuncId::MFI => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.mfi(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MFI(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Midpoint => {
+            FuncId::MIDPOINT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.midpoint(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIDPOINT(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Midprice => {
+            FuncId::MIDPRICE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.midprice(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIDPRICE(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Min => {
+            FuncId::MIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.min(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MIN(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Minindex => {
+            FuncId::MININDEX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.minindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MININDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.int_out[0] = Some(o0);
                 rc
             }
-            FuncId::Minmax => {
+            FuncId::MINMAX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.minmax(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MINMAX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::Minmaxindex => {
+            FuncId::MINMAXINDEX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.int_out[0] = Some(o0); return Err(RetCode::BadParam); } // i32
                 let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.int_out[1] = Some(o1); return Err(RetCode::BadParam); } // i32
-                let rc = self.core.minmaxindex(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.MINMAXINDEX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.int_out[0] = Some(o0);
                 self.int_out[1] = Some(o1);
                 rc
             }
-            FuncId::MinusDi => {
+            FuncId::MINUS_DI => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.minus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MINUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::MinusDm => {
+            FuncId::MINUS_DM => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.minus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MINUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Mom => {
+            FuncId::MOM => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.mom(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MOM(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Mult => {
+            FuncId::MULT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.mult(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MULT(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Natr => {
+            FuncId::NATR => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.natr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.NATR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Nvi => {
+            FuncId::NVI => {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.nvi(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.NVI(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Obv => {
+            FuncId::OBV => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.obv(start_idx, end_idx, i0, i1_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.OBV(start_idx, end_idx, i0, i1_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::PlusDi => {
+            FuncId::PLUS_DI => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.plus_di(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PLUS_DI(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::PlusDm => {
+            FuncId::PLUS_DM => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.plus_dm(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PLUS_DM(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ppo => {
+            FuncId::PPO => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ppo(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PPO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Pvi => {
+            FuncId::PVI => {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.pvi(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PVI(start_idx, end_idx, i0_3, i0_4, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Pvo => {
+            FuncId::PVO => {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.pvo(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PVO(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Roc => {
+            FuncId::ROC => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.roc(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROC(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Rocp => {
+            FuncId::ROCP => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.rocp(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCP(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Rocr => {
+            FuncId::ROCR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.rocr(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCR(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Rocr100 => {
+            FuncId::ROCR100 => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.rocr100(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ROCR100(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Rsi => {
+            FuncId::RSI => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.rsi(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.RSI(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sar => {
+            FuncId::SAR => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sar(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SAR(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sarext => {
+            FuncId::SAREXT => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sarext(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SAREXT(start_idx, end_idx, i0_1, i0_2, self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sin => {
+            FuncId::SIN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sin(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SIN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sinh => {
+            FuncId::SINH => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sinh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SINH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sma => {
+            FuncId::SMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sqrt => {
+            FuncId::SQRT => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sqrt(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SQRT(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Stddev => {
+            FuncId::STDDEV => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.stddev(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.STDDEV(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Stoch => {
-                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
-                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
-                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
-                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
-                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
-                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.stoch(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], &mut beg, &mut nb, &mut *o0, &mut *o1);
-                self.real_out[0] = Some(o0);
-                self.real_out[1] = Some(o1);
-                rc
-            }
-            FuncId::Stochf => {
+            FuncId::STOCH => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
@@ -4510,36 +4328,49 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.stochf(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCH(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::Stochrsi => {
+            FuncId::STOCHF => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.STOCHF(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::STOCHRSI => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.stochrsi(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCHRSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
-            FuncId::Sub => {
+            FuncId::SUB => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sub(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SUB(start_idx, end_idx, i0, i1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Sum => {
+            FuncId::SUM => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.sum(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.SUM(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4547,130 +4378,130 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.t3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.T3(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Tan => {
+            FuncId::TAN => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.tan(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TAN(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Tanh => {
+            FuncId::TANH => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.tanh(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TANH(start_idx, end_idx, i0, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Tema => {
+            FuncId::TEMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.tema(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TEMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Trange => {
+            FuncId::TRANGE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.trange(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRANGE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Trima => {
+            FuncId::TRIMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.trima(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRIMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Trix => {
+            FuncId::TRIX => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.trix(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TRIX(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Tsf => {
+            FuncId::TSF => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.tsf(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TSF(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Typprice => {
+            FuncId::TYPPRICE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.typprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.TYPPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Ultosc => {
+            FuncId::ULTOSC => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.ultosc(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.ULTOSC(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Var => {
+            FuncId::VAR => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.var(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.VAR(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Vwma => {
+            FuncId::VWMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1_4 = self.price[1][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.vwma(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.VWMA(start_idx, end_idx, i0, i1_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Wclprice => {
+            FuncId::WCLPRICE => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.wclprice(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WCLPRICE(start_idx, end_idx, i0_1, i0_2, i0_3, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Willr => {
+            FuncId::WILLR => {
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.willr(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WILLR(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
-            FuncId::Wma => {
+            FuncId::WMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.wma(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.WMA(start_idx, end_idx, i0, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4821,7 +4652,7 @@ mod binder_tests {
         let core = Core::new();
         let close = series(0.0);
         let mut tiny = vec![0.0; 4];
-        let mut h = FuncId::Sma.new_call(&core);
+        let mut h = FuncId::SMA.new_call(&core);
         h.set_input(0, &close).unwrap();
         h.set_opt(0, 30_i32).unwrap();
         h.set_output(0, &mut tiny).unwrap();
@@ -4834,7 +4665,7 @@ mod binder_tests {
         let core = Core::new();
         let close = series(0.0);
         let mut out = vec![0.0; N];
-        let mut h = FuncId::Sma.new_call(&core);
+        let mut h = FuncId::SMA.new_call(&core);
         assert_eq!(h.set_input(9, &close).err(), Some(RetCode::BadParam));
         assert_eq!(h.set_opt(0, 1.5_f64).err(), Some(RetCode::BadParam));
         assert_eq!(h.set_opt(9, 30_i32).err(), Some(RetCode::BadParam));

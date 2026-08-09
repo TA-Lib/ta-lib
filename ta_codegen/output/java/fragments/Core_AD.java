@@ -15,7 +15,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#ad} consumes before it can
+    * Number of leading input bars {@link Core#AD} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,21 +23,21 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int adLookback( )
+   public int AD_Lookback( )
    {
       /* This function have no lookback needed. */
       return 0 ;
 
    }
-   RetCode adInternal( int startIdx,
-                       int endIdx,
-                       double inHigh[],
-                       double inLow[],
-                       double inClose[],
-                       double inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode AD_Internal( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        double inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -88,15 +88,15 @@
       }
       return RetCode.Success ;
    }
-   RetCode adInternal( int startIdx,
-                       int endIdx,
-                       float inHigh[],
-                       float inLow[],
-                       float inClose[],
-                       float inVolume[],
-                       MInteger outBegIdx,
-                       MInteger outNBElement,
-                       double outReal[] )
+   RetCode AD_Internal( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        float inVolume[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -144,7 +144,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adLookback} is a <b>success with no
+    * valid range shorter than {@link Core#AD_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -163,10 +163,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adOsc
-    * @see Core#obv
+    * @see Core#ADOSC
+    * @see Core#OBV
     */
-   public OutRange ad( int startIdx,
+   public OutRange AD( int startIdx,
                        int endIdx,
                        double inHigh[],
                        double inLow[],
@@ -176,7 +176,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AD", retCode);
       }
@@ -197,7 +197,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#adLookback} is a <b>success with no
+    * valid range shorter than {@link Core#AD_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -216,10 +216,10 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#adOsc
-    * @see Core#obv
+    * @see Core#ADOSC
+    * @see Core#OBV
     */
-   public OutRange ad( int startIdx,
+   public OutRange AD( int startIdx,
                        int endIdx,
                        float inHigh[],
                        float inLow[],
@@ -229,7 +229,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("AD", retCode);
       }
@@ -239,8 +239,8 @@
 
    /**
     * A live AD stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#ad} over the same series.
-    * Open with {@link Core#adOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#AD} over the same series.
+    * Open with {@link Core#AD_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -251,16 +251,16 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class AdStream {
+   public static final class AD_Stream {
       final Core core;
       double ad;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      AdStream( Core core ) { this.core = core; }
+      AD_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#adOpenAndFill}, or
+       * The range filled by {@link Core#AD_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -268,7 +268,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      AdStream( AdStream other ) {
+      AD_Stream( AD_Stream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
@@ -280,7 +280,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
-         core.adStreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.AD_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
 
@@ -292,8 +292,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
-         AdStream scratch = new AdStream(this);
-         core.adStreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         AD_Stream scratch = new AD_Stream(this);
+         core.AD_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -310,11 +310,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public AdStream copy() {
-         return new AdStream(this);
+      public AD_Stream copy() {
+         return new AD_Stream(this);
       }
    }
-   void adStreamStep( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void AD_StreamStep( AD_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -329,7 +329,7 @@
       }
       sp.cur_outReal = sp.ad;
    }
-   private RetCode adOpenBody( AdStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+   private RetCode AD_OpenBody( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -388,7 +388,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode adOpenAndFillBody( AdStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode AD_OpenAndFillBody( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int nbBar = 0;
       int currentBar = 0;
@@ -448,11 +448,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind adOpen (composition seam). */
-   AdStream adOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
+   /* Internal startIdx-anchored open behind AD_Open (composition seam). */
+   AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {
-      AdStream sp = new AdStream(this);
-      RetCode retCode = adOpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx);
+      AD_Stream sp = new AD_Stream(this);
+      RetCode retCode = AD_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -467,32 +467,32 @@
    /**
     * Open a live AD stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#ad} at that bar.
-    * <p>The history must hold at least {@code adLookback(...) + 1} bars
+    * to {@link Core#AD} at that bar.
+    * <p>The history must hold at least {@code AD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public AdStream adOpen( double inHigh[], double inLow[], double inClose[], double inVolume[] )
+   public AD_Stream AD_Open( double inHigh[], double inLow[], double inClose[], double inVolume[] )
    {
-      return adOpenInternal(inHigh, inLow, inClose, inVolume, 0);
+      return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
    /**
-    * {@link Core#adOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#ad} over the whole history in the same single pass
+    * {@link Core#AD_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#AD} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link AdStream#fillRange()}.
+    * {@link AD_Stream#fillRange()}.
     */
-   public AdStream adOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
+   public AD_Stream AD_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], double outReal[] )
    {
-      AdStream sp = new AdStream(this);
+      AD_Stream sp = new AD_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = adOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
+      RetCode retCode = AD_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

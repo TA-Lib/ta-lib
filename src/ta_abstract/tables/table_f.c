@@ -57,7 +57,6 @@ static const TA_OptInputParameterInfo *TA_FLOOR_OptInputs[] =
 DEF_FUNCTION( FLOOR,
               TA_GroupId_MathTransform,
               "Vector Floor",
-              "Floor",
               TA_FUNC_FLG_STREAM
              );
 /* FLOOR END */

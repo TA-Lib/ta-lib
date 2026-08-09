@@ -63,7 +63,7 @@ public partial class Core
     *                streamable-source form (a sub-output lag ring).
     */
    /// <summary>
-   /// Number of leading input bars <c>Adxr</c> consumes before it can produce
+   /// Number of leading input bars <c>ADXR</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -74,7 +74,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period, also the bar gap between the two averaged ADX values
    /// (default 14; range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int AdxrLookback( int optInTimePeriod )
+   public int ADXR_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 14;
@@ -82,13 +82,13 @@ public partial class Core
          return -1;
       }
       if( optInTimePeriod > 1 ) {
-         return optInTimePeriod + AdxLookback(optInTimePeriod) - 1 ;
+         return optInTimePeriod + ADX_Lookback(optInTimePeriod) - 1 ;
       } else {
          return 3 ;
       }
 
    }
-   internal RetCode Adxr( int startIdx,
+   internal RetCode ADXR( int startIdx,
                           int endIdx,
                           double[] inHigh,
                           double[] inLow,
@@ -132,7 +132,7 @@ public partial class Core
        * enough initial data.
        * Always one price bar gets consumed.
        */
-      adxrLookback = AdxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -146,7 +146,7 @@ public partial class Core
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
        * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
        */
-      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -162,7 +162,7 @@ public partial class Core
       outNBElement = nbElement;
       return RetCode.Success ;
    }
-   internal RetCode Adxr( int startIdx,
+   internal RetCode ADXR( int startIdx,
                           int endIdx,
                           float[] inHigh,
                           float[] inLow,
@@ -190,7 +190,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      adxrLookback = AdxrLookback(optInTimePeriod);
+      adxrLookback = ADXR_Lookback(optInTimePeriod);
       if( startIdx < adxrLookback ) {
          startIdx = adxrLookback;
       }
@@ -200,7 +200,7 @@ public partial class Core
          return RetCode.Success ;
       }
       adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      retCode = Adx(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
+      retCode = ADX(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, out outBegIdx, out outNBElement, adx);
       if( retCode != RetCode.Success ) {
          return retCode ;
       }
@@ -230,7 +230,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdxrLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>ADXR_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -251,7 +251,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Adxr( int startIdx,
+   public OutRange ADXR( int startIdx,
                          int endIdx,
                          double[] inHigh,
                          double[] inLow,
@@ -259,7 +259,7 @@ public partial class Core
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Adxr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
       }
@@ -289,7 +289,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>AdxrLookback</c> is a <b>success with
+   /// NaN. A valid range shorter than <c>ADXR_Lookback</c> is a <b>success with
    /// no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -310,7 +310,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Adxr( int startIdx,
+   public OutRange ADXR( int startIdx,
                          int endIdx,
                          float[] inHigh,
                          float[] inLow,
@@ -318,7 +318,7 @@ public partial class Core
                          int optInTimePeriod,
                          double[] outReal )
    {
-      RetCode retCode = Adxr(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = ADXR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADXR", retCode);
       }

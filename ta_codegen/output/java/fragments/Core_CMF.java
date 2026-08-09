@@ -13,7 +13,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#cmf} consumes before it can
+    * Number of leading input bars {@link Core#CMF} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -23,7 +23,7 @@
     *        2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int cmfLookback( int optInTimePeriod )
+   public int CMF_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
@@ -33,16 +33,16 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode cmfInternal( int startIdx,
-                        int endIdx,
-                        double inHigh[],
-                        double inLow[],
-                        double inClose[],
-                        double inVolume[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode CMF_Internal( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         double inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -166,16 +166,16 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode cmfInternal( int startIdx,
-                        int endIdx,
-                        float inHigh[],
-                        float inLow[],
-                        float inClose[],
-                        float inVolume[],
-                        int optInTimePeriod,
-                        MInteger outBegIdx,
-                        MInteger outNBElement,
-                        double outReal[] )
+   RetCode CMF_Internal( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         float inVolume[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -309,7 +309,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmfLookback} is a <b>success with no
+    * valid range shorter than {@link Core#CMF_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -330,12 +330,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ad
-    * @see Core#adOsc
-    * @see Core#mfi
-    * @see Core#obv
+    * @see Core#AD
+    * @see Core#ADOSC
+    * @see Core#MFI
+    * @see Core#OBV
     */
-   public OutRange cmf( int startIdx,
+   public OutRange CMF( int startIdx,
                         int endIdx,
                         double inHigh[],
                         double inLow[],
@@ -346,7 +346,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmfInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMF", retCode);
       }
@@ -391,7 +391,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#cmfLookback} is a <b>success with no
+    * valid range shorter than {@link Core#CMF_Lookback} is a <b>success with no
     * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -412,12 +412,12 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#ad
-    * @see Core#adOsc
-    * @see Core#mfi
-    * @see Core#obv
+    * @see Core#AD
+    * @see Core#ADOSC
+    * @see Core#MFI
+    * @see Core#OBV
     */
-   public OutRange cmf( int startIdx,
+   public OutRange CMF( int startIdx,
                         int endIdx,
                         float inHigh[],
                         float inLow[],
@@ -428,7 +428,7 @@
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmfInternal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_Internal(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("CMF", retCode);
       }
@@ -438,8 +438,8 @@
 
    /**
     * A live CMF stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#cmf} over the same series.
-    * Open with {@link Core#cmfOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#CMF} over the same series.
+    * Open with {@link Core#CMF_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -450,7 +450,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class CmfStream {
+   public static final class CMF_Stream {
       final Core core;
       int optInTimePeriod;
       double sumMFV;
@@ -468,10 +468,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      CmfStream( Core core ) { this.core = core; }
+      CMF_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#cmfOpenAndFill}, or
+       * The range filled by {@link Core#CMF_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -479,7 +479,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      CmfStream( CmfStream other ) {
+      CMF_Stream( CMF_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
@@ -503,7 +503,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inHigh, double inLow, double inClose, double inVolume ) {
-         core.cmfStreamStep(this, inHigh, inLow, inClose, inVolume);
+         core.CMF_StreamStep(this, inHigh, inLow, inClose, inVolume);
          return this.cur_outReal;
       }
 
@@ -515,8 +515,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
-         CmfStream scratch = new CmfStream(this);
-         core.cmfStreamStep(scratch, inHigh, inLow, inClose, inVolume);
+         CMF_Stream scratch = new CMF_Stream(this);
+         core.CMF_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }
 
@@ -533,11 +533,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public CmfStream copy() {
-         return new CmfStream(this);
+      public CMF_Stream copy() {
+         return new CMF_Stream(this);
       }
    }
-   void cmfStreamStep( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   void CMF_StreamStep( CMF_Stream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       sp.sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
       sp.sumVol -= sp.cb_mfv_volume[sp.mfv_Idx];
@@ -564,7 +564,7 @@
          sp.mfv_Idx = 0;
       }
    }
-   private RetCode cmfOpenBody( CmfStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   private RetCode CMF_OpenBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -712,7 +712,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode cmfOpenAndFillBody( CmfStream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode CMF_OpenAndFillBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -861,11 +861,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind cmfOpen (composition seam). */
-   CmfStream cmfOpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
+   CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {
-      CmfStream sp = new CmfStream(this);
-      RetCode retCode = cmfOpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
+      CMF_Stream sp = new CMF_Stream(this);
+      RetCode retCode = CMF_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -880,32 +880,32 @@
    /**
     * Open a live CMF stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#cmf} at that bar.
-    * <p>The history must hold at least {@code cmfLookback(...) + 1} bars
+    * to {@link Core#CMF} at that bar.
+    * <p>The history must hold at least {@code CMF_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public CmfStream cmfOpen( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
+   public CMF_Stream CMF_Open( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod )
    {
-      return cmfOpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
+      return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
    /**
-    * {@link Core#cmfOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#cmf} over the whole history in the same single pass
+    * {@link Core#CMF_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#CMF} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link CmfStream#fillRange()}.
+    * {@link CMF_Stream#fillRange()}.
     */
-   public CmfStream cmfOpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
+   public CMF_Stream CMF_OpenAndFill( double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
    {
-      CmfStream sp = new CmfStream(this);
+      CMF_Stream sp = new CMF_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = cmfOpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

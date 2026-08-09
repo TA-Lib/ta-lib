@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::bop`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::BOP`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn bop_lookback(&self) -> usize {
+    pub fn BOP_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Balance Of Power compares where the close sits relative to the open, normalized by the bar's
@@ -120,7 +120,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.bop(
+    /// let ret = core.BOP(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -129,9 +129,9 @@ impl Core {
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
-    /// Further reading: [ta-lib.org/functions/bop](https://ta-lib.org/functions/bop/)
+    /// Further reading: [ta-lib.org/functions/BOP](https://ta-lib.org/functions/BOP/)
     #[doc(alias = "BalanceOfPower")]
-    pub fn bop(
+    pub fn BOP(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -149,7 +149,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.bop_lookback();
+        let _assertLb = self.BOP_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -180,20 +180,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live BOP stream: one value per closed bar, bit-identical to [`Core::bop`]
-/// over the same series. Open with [`Core::bop_open`]; dropping the handle
+/// Live BOP stream: one value per closed bar, bit-identical to [`Core::BOP`]
+/// over the same series. Open with [`Core::BOP_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_BOP_Stream")]
-pub struct BopStream {
+pub struct BOP_Stream {
     core: Core,
-    state: BopStreamState,
+    state: BOP_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct BopStreamState {
+struct BOP_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -203,7 +203,7 @@ struct BopStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn bop_step_internal(&self, sp: &mut BopStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
+    fn BOP_step_internal(&self, sp: &mut BOP_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         tempReal = inHigh - inLow;
         if (tempReal) < 1e-14 {
@@ -213,10 +213,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::bop_open`] (composition seam).
-    pub(crate) fn bop_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::BOP_Open`] (composition seam).
+    pub(crate) fn BOP_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(BopStream, f64), RetCode> {
+    ) -> Result<(BOP_Stream, f64), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -247,13 +247,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = BopStreamState {
+        let state = BOP_StreamState {
         };
-        Ok((BopStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((BOP_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live BOP stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::bop`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::BOP`] at that bar.
     ///
     /// # Errors
     ///
@@ -272,23 +272,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.bop_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.BOP_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_BOP_Open")]
-    pub fn bop_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(BopStream, f64), RetCode> {
-        self.bop_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn BOP_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(BOP_Stream, f64), RetCode> {
+        self.BOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::bop_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::bop`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::BOP_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::BOP`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_BOP_OpenAndFill")]
-    pub fn bop_open_and_fill(
+    pub fn BOP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<BopStream, RetCode> {
+    ) -> Result<BOP_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -320,21 +320,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = BopStreamState {
+        let state = BOP_StreamState {
         };
-        Ok(BopStream { core: self.clone(), state })
+        Ok(BOP_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl BopStream {
+impl BOP_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_BOP_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.bop_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
+        self.core.BOP_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outReal);
         outReal
     }
 
@@ -352,7 +352,7 @@ impl BopStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<BopStream>();
+    _assert_auto::<BOP_Stream>();
 };
 
 /***************/

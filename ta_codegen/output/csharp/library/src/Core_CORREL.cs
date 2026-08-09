@@ -58,7 +58,7 @@ public partial class Core
     *  062804 MF   Resolve div by zero bug on limit case.
     */
    /// <summary>
-   /// Number of leading input bars <c>Correl</c> consumes before it can produce
+   /// Number of leading input bars <c>CORREL</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -69,7 +69,7 @@ public partial class Core
    /// <param name="optInTimePeriod">Rolling window length (default 30; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CorrelLookback( int optInTimePeriod )
+   public int CORREL_Lookback( int optInTimePeriod )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 30;
@@ -79,7 +79,7 @@ public partial class Core
       return optInTimePeriod - 1 ;
 
    }
-   internal RetCode Correl( int startIdx,
+   internal RetCode CORREL( int startIdx,
                             int endIdx,
                             double[] inReal0,
                             double[] inReal1,
@@ -190,7 +190,7 @@ public partial class Core
       outNBElement = outIdx;
       return RetCode.Success ;
    }
-   internal RetCode Correl( int startIdx,
+   internal RetCode CORREL( int startIdx,
                             int endIdx,
                             float[] inReal0,
                             float[] inReal1,
@@ -303,8 +303,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CorrelLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CORREL_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -323,14 +323,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Correl( int startIdx,
+   public OutRange CORREL( int startIdx,
                            int endIdx,
                            double[] inReal0,
                            double[] inReal1,
                            int optInTimePeriod,
                            double[] outReal )
    {
-      RetCode retCode = Correl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }
@@ -360,8 +360,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CorrelLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>CORREL_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -380,14 +380,14 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Correl( int startIdx,
+   public OutRange CORREL( int startIdx,
                            int endIdx,
                            float[] inReal0,
                            float[] inReal1,
                            int optInTimePeriod,
                            double[] outReal )
    {
-      RetCode retCode = Correl(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
+      RetCode retCode = CORREL(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CORREL", retCode);
       }

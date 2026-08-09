@@ -14,8 +14,8 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#htDcPhase} consumes before it can
-    * produce its first value.
+    * Number of leading input bars {@link Core#HT_DCPHASE} consumes before it
+    * can produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
@@ -25,7 +25,7 @@
     *
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int htDcPhaseLookback( )
+   public int HT_DCPHASE_Lookback( )
    {
       /* 31 input are skip
        * +32 output are skip to account for misc lookback
@@ -35,15 +35,15 @@
        * 31 is for being compatible with Tradestation.
        * See mama_lookback for an explanation of the "32".
        */
-      return 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()] ;
+      return 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()] ;
 
    }
-   RetCode htDcPhaseInternal( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode HT_DCPHASE_Internal( int startIdx,
+                                int endIdx,
+                                double inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -137,7 +137,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -446,12 +446,12 @@
       outNBElement.value = outIdx;
       return RetCode.Success ;
    }
-   RetCode htDcPhaseInternal( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              MInteger outBegIdx,
-                              MInteger outNBElement,
-                              double outReal[] )
+   RetCode HT_DCPHASE_Internal( int startIdx,
+                                int endIdx,
+                                float inReal[],
+                                MInteger outBegIdx,
+                                MInteger outNBElement,
+                                double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -533,7 +533,7 @@
       tempReal = Math.atan(1);
       rad2Deg = 45.0 / tempReal;
       constDeg2RadBy360 = tempReal * 8.0;
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -797,7 +797,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htDcPhaseLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_DCPHASE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -813,22 +813,22 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#htSine
-    * @see Core#htTrendline
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDLINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htDcPhase( int startIdx,
-                              int endIdx,
-                              double inReal[],
-                              double outReal[] )
+   public OutRange HT_DCPHASE( int startIdx,
+                               int endIdx,
+                               double inReal[],
+                               double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPhaseInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -846,7 +846,7 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#htDcPhaseLookback} is a <b>success
+    * valid range shorter than {@link Core#HT_DCPHASE_Lookback} is a <b>success
     * with no values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
@@ -862,22 +862,22 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#htDcPeriod
-    * @see Core#htPhasor
-    * @see Core#htSine
-    * @see Core#htTrendline
-    * @see Core#htTrendMode
-    * @see Core#mama
-    * @see Core#wma
+    * @see Core#HT_DCPERIOD
+    * @see Core#HT_PHASOR
+    * @see Core#HT_SINE
+    * @see Core#HT_TRENDLINE
+    * @see Core#HT_TRENDMODE
+    * @see Core#MAMA
+    * @see Core#WMA
     */
-   public OutRange htDcPhase( int startIdx,
-                              int endIdx,
-                              float inReal[],
-                              double outReal[] )
+   public OutRange HT_DCPHASE( int startIdx,
+                               int endIdx,
+                               float inReal[],
+                               double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPhaseInternal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_Internal(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("HT_DCPHASE", retCode);
       }
@@ -887,8 +887,8 @@
 
    /**
     * A live HT_DCPHASE stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#htDcPhase} over the same series.
-    * Open with {@link Core#htDcPhaseOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#HT_DCPHASE} over the same series.
+    * Open with {@link Core#HT_DCPHASE_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -899,7 +899,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class HtDcPhaseStream {
+   public static final class HT_DCPHASE_Stream {
       final Core core;
       int i;
       double tempReal;
@@ -971,10 +971,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      HtDcPhaseStream( Core core ) { this.core = core; }
+      HT_DCPHASE_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#htDcPhaseOpenAndFill}, or
+       * The range filled by {@link Core#HT_DCPHASE_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -982,7 +982,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      HtDcPhaseStream( HtDcPhaseStream other ) {
+      HT_DCPHASE_Stream( HT_DCPHASE_Stream other ) {
          this.core = other.core;
          this.i = other.i;
          this.tempReal = other.tempReal;
@@ -1060,7 +1060,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.htDcPhaseStreamStep(this, inReal);
+         core.HT_DCPHASE_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -1072,8 +1072,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         HtDcPhaseStream scratch = new HtDcPhaseStream(this);
-         core.htDcPhaseStreamStep(scratch, inReal);
+         HT_DCPHASE_Stream scratch = new HT_DCPHASE_Stream(this);
+         core.HT_DCPHASE_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -1090,11 +1090,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public HtDcPhaseStream copy() {
-         return new HtDcPhaseStream(this);
+      public HT_DCPHASE_Stream copy() {
+         return new HT_DCPHASE_Stream(this);
       }
    }
-   void htDcPhaseStreamStep( HtDcPhaseStream sp, double inReal )
+   void HT_DCPHASE_StreamStep( HT_DCPHASE_Stream sp, double inReal )
    {
       double adjustedPrevPeriod = 0.0;
       double todayValue = 0.0;
@@ -1289,7 +1289,7 @@
       }
       sp.streamParity = 1 - sp.streamParity;
    }
-   private RetCode htDcPhaseOpenBody( HtDcPhaseStream sp, double inReal[], int startIdx )
+   private RetCode HT_DCPHASE_OpenBody( HT_DCPHASE_Stream sp, double inReal[], int startIdx )
    {
       int outIdx = 0;
       int i = 0;
@@ -1388,7 +1388,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -1777,7 +1777,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode htDcPhaseOpenAndFillBody( HtDcPhaseStream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode HT_DCPHASE_OpenAndFillBody( HT_DCPHASE_Stream sp, double inReal[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       int outIdx = 0;
       int i = 0;
@@ -1877,7 +1877,7 @@
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HtDcPhase.ordinal()];
+      lookbackTotal = 63 + this.unstablePeriod[FuncUnstId.HT_DCPHASE.ordinal()];
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -2266,11 +2266,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind htDcPhaseOpen (composition seam). */
-   HtDcPhaseStream htDcPhaseOpenInternal( double inReal[], int startIdx )
+   /* Internal startIdx-anchored open behind HT_DCPHASE_Open (composition seam). */
+   HT_DCPHASE_Stream HT_DCPHASE_OpenInternal( double inReal[], int startIdx )
    {
-      HtDcPhaseStream sp = new HtDcPhaseStream(this);
-      RetCode retCode = htDcPhaseOpenBody(sp, inReal, startIdx);
+      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
+      RetCode retCode = HT_DCPHASE_OpenBody(sp, inReal, startIdx);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -2285,32 +2285,32 @@
    /**
     * Open a live HT_DCPHASE stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#htDcPhase} at that bar.
-    * <p>The history must hold at least {@code htDcPhaseLookback(...) + 1} bars
+    * to {@link Core#HT_DCPHASE} at that bar.
+    * <p>The history must hold at least {@code HT_DCPHASE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public HtDcPhaseStream htDcPhaseOpen( double inReal[] )
+   public HT_DCPHASE_Stream HT_DCPHASE_Open( double inReal[] )
    {
-      return htDcPhaseOpenInternal(inReal, 0);
+      return HT_DCPHASE_OpenInternal(inReal, 0);
    }
    /**
-    * {@link Core#htDcPhaseOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#htDcPhase} over the whole history in the same single pass
+    * {@link Core#HT_DCPHASE_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#HT_DCPHASE} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link HtDcPhaseStream#fillRange()}.
+    * {@link HT_DCPHASE_Stream#fillRange()}.
     */
-   public HtDcPhaseStream htDcPhaseOpenAndFill( double inReal[], double outReal[] )
+   public HT_DCPHASE_Stream HT_DCPHASE_OpenAndFill( double inReal[], double outReal[] )
    {
-      HtDcPhaseStream sp = new HtDcPhaseStream(this);
+      HT_DCPHASE_Stream sp = new HT_DCPHASE_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = htDcPhaseOpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
+      RetCode retCode = HT_DCPHASE_OpenAndFillBody(sp, inReal, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;

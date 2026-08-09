@@ -64,11 +64,11 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ht_dcperiod`]: the number of leading input values consumed
+    /// Lookback period for [`Core::HT_DCPERIOD`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn ht_dcperiod_lookback(&self) -> usize {
+    pub fn HT_DCPERIOD_Lookback(&self) -> usize {
         // See mama_lookback for an explanation of these
-        return (32 + self.unstable_period[FuncUnstId::HtDcPeriod as usize]) as usize;
+        return (32 + self.unstable_period[FuncUnstId::HT_DCPERIOD as usize]) as usize;
     }
     /// Hilbert Transform estimate of the dominant cycle period (in bars) of the price series.
     /// Outputs the smoothed instantaneous cycle period. Output is the estimated dominant cycle
@@ -106,7 +106,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ht_dcperiod(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.HT_DCPERIOD(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -114,8 +114,8 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::ht_dcphase`] · [`Core::ht_phasor`] · [`Core::ht_sine`] · [`Core::ht_trendmode`]
-    /// · [`Core::mama`] · [`Core::wma`]
+    /// [`Core::HT_DCPHASE`] · [`Core::HT_PHASOR`] · [`Core::HT_SINE`] · [`Core::HT_TRENDMODE`]
+    /// · [`Core::MAMA`] · [`Core::WMA`]
     ///
     /// # References
     ///
@@ -123,10 +123,10 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/ht_dcperiod](https://ta-lib.org/functions/ht_dcperiod/)
+    /// [ta-lib.org/functions/HT_DCPERIOD](https://ta-lib.org/functions/HT_DCPERIOD/)
     #[doc(alias = "HilbertTransformDominantCyclePeriod")]
     #[doc(alias = "DominantCyclePeriod")]
-    pub fn ht_dcperiod(
+    pub fn HT_DCPERIOD(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -136,13 +136,13 @@ impl Core {
         outReal: &mut [f64],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, ht_dcperiod_fma, ht_dcperiod_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
+        return ta_lib_dispatch::dispatch_fma!(self, HT_DCPERIOD_fma, HT_DCPERIOD_impl, (startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal));
         #[cfg(not(target_arch = "x86_64"))]
-        self.ht_dcperiod_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_DCPERIOD_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
-    fn ht_dcperiod_fma(
+    fn HT_DCPERIOD_fma(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -151,10 +151,10 @@ impl Core {
         outNBElement: &mut usize,
         outReal: &mut [f64],
     ) -> RetCode {
-        self.ht_dcperiod_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
+        self.HT_DCPERIOD_impl(startIdx, endIdx, inReal, outBegIdx, outNBElement, outReal)
     }
     #[inline(always)]
-    fn ht_dcperiod_impl(
+    fn HT_DCPERIOD_impl(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -169,7 +169,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.ht_dcperiod_lookback();
+        let _assertLb = self.HT_DCPERIOD_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -240,7 +240,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtDcPeriod as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_DCPERIOD as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -497,20 +497,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live HT_DCPERIOD stream: one value per closed bar, bit-identical to [`Core::ht_dcperiod`]
-/// over the same series. Open with [`Core::ht_dcperiod_open`]; dropping the handle
+/// Live HT_DCPERIOD stream: one value per closed bar, bit-identical to [`Core::HT_DCPERIOD`]
+/// over the same series. Open with [`Core::HT_DCPERIOD_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_HT_DCPERIOD_Stream")]
-pub struct HtDcPeriodStream {
+pub struct HT_DCPERIOD_Stream {
     core: Core,
-    state: HtDcPeriodStreamState,
+    state: HT_DCPERIOD_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct HtDcPeriodStreamState {
+struct HT_DCPERIOD_StreamState {
     tempReal: f64,
     tempReal2: f64,
     period: f64,
@@ -575,7 +575,7 @@ struct HtDcPeriodStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ht_dcperiod_step_internal(&self, sp: &mut HtDcPeriodStreamState, inReal: f64, outReal: &mut f64) {
+    fn HT_DCPERIOD_step_internal(&self, sp: &mut HT_DCPERIOD_StreamState, inReal: f64, outReal: &mut f64) {
         let mut adjustedPrevPeriod: f64 = 0.0_f64;
         let mut todayValue: f64 = 0.0_f64;
         if sp.ringCap_trailingWMAIdx == 0 {
@@ -721,10 +721,10 @@ impl Core {
         sp.streamParity = 1 - sp.streamParity;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ht_dcperiod_open`] (composition seam).
-    pub(crate) fn ht_dcperiod_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::HT_DCPERIOD_Open`] (composition seam).
+    pub(crate) fn HT_DCPERIOD_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(HtDcPeriodStream, f64), RetCode> {
+    ) -> Result<(HT_DCPERIOD_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -803,7 +803,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtDcPeriod as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_DCPERIOD as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1064,7 +1064,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = HtDcPeriodStreamState {
+        let state = HT_DCPERIOD_StreamState {
             tempReal,
             tempReal2,
             period,
@@ -1121,11 +1121,11 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok((HtDcPeriodStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((HT_DCPERIOD_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live HT_DCPERIOD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ht_dcperiod`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::HT_DCPERIOD`] at that bar.
     ///
     /// # Errors
     ///
@@ -1137,23 +1137,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ht_dcperiod_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.HT_DCPERIOD_Open(&data).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_HT_DCPERIOD_Open")]
-    pub fn ht_dcperiod_open(&self, inReal: &[f64], ) -> Result<(HtDcPeriodStream, f64), RetCode> {
-        self.ht_dcperiod_open_internal(inReal, 0)
+    pub fn HT_DCPERIOD_Open(&self, inReal: &[f64], ) -> Result<(HT_DCPERIOD_Stream, f64), RetCode> {
+        self.HT_DCPERIOD_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::ht_dcperiod_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ht_dcperiod`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::HT_DCPERIOD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::HT_DCPERIOD`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_HT_DCPERIOD_OpenAndFill")]
-    pub fn ht_dcperiod_open_and_fill(
+    pub fn HT_DCPERIOD_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<HtDcPeriodStream, RetCode> {
+    ) -> Result<HT_DCPERIOD_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -1231,7 +1231,7 @@ impl Core {
         rad2Deg = 180.0 / (4.0 * (1_f64).atan());
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HtDcPeriod as usize]) as usize;
+        lookbackTotal = (32 + self.unstable_period[FuncUnstId::HT_DCPERIOD as usize]) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1493,7 +1493,7 @@ impl Core {
         let mut ring_trailingWMAIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingWMAIdx];
         ring_trailingWMAIdx_inReal[..cap_trailingWMAIdx as usize]
             .copy_from_slice(&inReal[historyLen - cap_trailingWMAIdx as usize..]);
-        let state = HtDcPeriodStreamState {
+        let state = HT_DCPERIOD_StreamState {
             tempReal,
             tempReal2,
             period,
@@ -1550,19 +1550,19 @@ impl Core {
             ringCap_trailingWMAIdx: cap_trailingWMAIdx as usize,
             ring_trailingWMAIdx_inReal,
         };
-        Ok(HtDcPeriodStream { core: self.clone(), state })
+        Ok(HT_DCPERIOD_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl HtDcPeriodStream {
+impl HT_DCPERIOD_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_HT_DCPERIOD_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ht_dcperiod_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.HT_DCPERIOD_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -1580,7 +1580,7 @@ impl HtDcPeriodStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<HtDcPeriodStream>();
+    _assert_auto::<HT_DCPERIOD_Stream>();
 };
 
 /***************/

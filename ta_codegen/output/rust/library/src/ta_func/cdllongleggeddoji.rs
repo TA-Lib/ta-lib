@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdllongleggeddoji`]: the number of leading input values consumed
+    /// Lookback period for [`Core::CDLLONGLEGGEDDOJI`]: the number of leading input values consumed
     /// before the first output value can be produced.
-    pub fn cdllongleggeddoji_lookback(&self) -> usize {
+    pub fn CDLLONGLEGGEDDOJI_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -138,7 +138,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdllongleggeddoji(
+    /// let ret = core.CDLLONGLEGGEDDOJI(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,13 +148,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdldoji`] · [`Core::cdlgravestonedoji`] · [`Core::cdldragonflydoji`] ·
-    /// [`Core::cdlrickshawman`]
+    /// [`Core::CDLDOJI`] · [`Core::CDLGRAVESTONEDOJI`] · [`Core::CDLDRAGONFLYDOJI`] ·
+    /// [`Core::CDLRICKSHAWMAN`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji/)
+    /// [ta-lib.org/functions/CDLLONGLEGGEDDOJI](https://ta-lib.org/functions/CDLLONGLEGGEDDOJI/)
     #[doc(alias = "LongLeggedDoji")]
-    pub fn cdllongleggeddoji(
+    pub fn CDLLONGLEGGEDDOJI(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -172,7 +172,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdllongleggeddoji_lookback();
+        let _assertLb = self.CDLLONGLEGGEDDOJI_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -201,7 +201,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongleggeddoji_lookback();
+        lookbackTotal = self.CDLLONGLEGGEDDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -352,20 +352,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLLONGLEGGEDDOJI stream: one value per closed bar, bit-identical to [`Core::cdllongleggeddoji`]
-/// over the same series. Open with [`Core::cdllongleggeddoji_open`]; dropping the handle
+/// Live CDLLONGLEGGEDDOJI stream: one value per closed bar, bit-identical to [`Core::CDLLONGLEGGEDDOJI`]
+/// over the same series. Open with [`Core::CDLLONGLEGGEDDOJI_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLLONGLEGGEDDOJI_Stream")]
-pub struct CdllongleggeddojiStream {
+pub struct CDLLONGLEGGEDDOJI_Stream {
     core: Core,
-    state: CdllongleggeddojiStreamState,
+    state: CDLLONGLEGGEDDOJI_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdllongleggeddojiStreamState {
+struct CDLLONGLEGGEDDOJI_StreamState {
     BodyDojiPeriodTotal: f64,
     ShadowLongPeriodTotal: f64,
     ringPos_BodyDojiTrailingIdx: usize,
@@ -389,7 +389,7 @@ struct CdllongleggeddojiStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdllongleggeddoji_step_internal(&self, sp: &mut CdllongleggeddojiStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLLONGLEGGEDDOJI_step_internal(&self, sp: &mut CDLLONGLEGGEDDOJI_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -501,10 +501,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdllongleggeddoji_open`] (composition seam).
-    pub(crate) fn cdllongleggeddoji_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLLONGLEGGEDDOJI_Open`] (composition seam).
+    pub(crate) fn CDLLONGLEGGEDDOJI_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdllongleggeddojiStream, i32), RetCode> {
+    ) -> Result<(CDLLONGLEGGEDDOJI_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -538,7 +538,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongleggeddoji_lookback();
+        lookbackTotal = self.CDLLONGLEGGEDDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -718,7 +718,7 @@ impl Core {
         let mut ring_ShadowLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
         ring_ShadowLongTrailingIdx_inClose[..cap_ShadowLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let state = CdllongleggeddojiStreamState {
+        let state = CDLLONGLEGGEDDOJI_StreamState {
             BodyDojiPeriodTotal,
             ShadowLongPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
@@ -734,11 +734,11 @@ impl Core {
             ring_ShadowLongTrailingIdx_inLow,
             ring_ShadowLongTrailingIdx_inClose,
         };
-        Ok((CdllongleggeddojiStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLLONGLEGGEDDOJI_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLLONGLEGGEDDOJI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdllongleggeddoji`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLLONGLEGGEDDOJI`] at that bar.
     ///
     /// # Errors
     ///
@@ -757,23 +757,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdllongleggeddoji_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLLONGLEGGEDDOJI_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLLONGLEGGEDDOJI_Open")]
-    pub fn cdllongleggeddoji_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdllongleggeddojiStream, i32), RetCode> {
-        self.cdllongleggeddoji_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLLONGLEGGEDDOJI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLLONGLEGGEDDOJI_Stream, i32), RetCode> {
+        self.CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdllongleggeddoji_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdllongleggeddoji`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLLONGLEGGEDDOJI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLLONGLEGGEDDOJI`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLLONGLEGGEDDOJI_OpenAndFill")]
-    pub fn cdllongleggeddoji_open_and_fill(
+    pub fn CDLLONGLEGGEDDOJI_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdllongleggeddojiStream, RetCode> {
+    ) -> Result<CDLLONGLEGGEDDOJI_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -806,7 +806,7 @@ impl Core {
         let ShadowLong_factor: f64 = self.candle_settings.shadow_long.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdllongleggeddoji_lookback();
+        lookbackTotal = self.CDLLONGLEGGEDDOJI_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -988,7 +988,7 @@ impl Core {
         let mut ring_ShadowLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowLongTrailingIdx];
         ring_ShadowLongTrailingIdx_inClose[..cap_ShadowLongTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_ShadowLongTrailingIdx as usize..]);
-        let state = CdllongleggeddojiStreamState {
+        let state = CDLLONGLEGGEDDOJI_StreamState {
             BodyDojiPeriodTotal,
             ShadowLongPeriodTotal,
             ringPos_BodyDojiTrailingIdx: 0_usize,
@@ -1004,19 +1004,19 @@ impl Core {
             ring_ShadowLongTrailingIdx_inLow,
             ring_ShadowLongTrailingIdx_inClose,
         };
-        Ok(CdllongleggeddojiStream { core: self.clone(), state })
+        Ok(CDLLONGLEGGEDDOJI_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdllongleggeddojiStream {
+impl CDLLONGLEGGEDDOJI_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLLONGLEGGEDDOJI_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdllongleggeddoji_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLLONGLEGGEDDOJI_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1034,7 +1034,7 @@ impl CdllongleggeddojiStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdllongleggeddojiStream>();
+    _assert_auto::<CDLLONGLEGGEDDOJI_Stream>();
 };
 
 /***************/

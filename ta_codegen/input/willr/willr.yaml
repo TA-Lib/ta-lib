@@ -1,5 +1,4 @@
 name: WILLR
-camel_case: WillR
 group: Momentum Indicators
 hint: Williams' %R
 flags: [stream]

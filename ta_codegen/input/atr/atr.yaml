@@ -1,5 +1,4 @@
 name: ATR
-camel_case: Atr
 group: Volatility Indicators
 hint: Average True Range
 flags: [unstable_period, stream]

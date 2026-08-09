@@ -1,5 +1,4 @@
 name: AVGPRICE
-camel_case: AvgPrice
 group: Price Transform
 hint: Average Price
 flags: [overlap, stream]

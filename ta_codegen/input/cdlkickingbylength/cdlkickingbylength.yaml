@@ -1,5 +1,4 @@
 name: CDLKICKINGBYLENGTH
-camel_case: CdlKickingByLength
 group: Pattern Recognition
 hint: Kicking - bull/bear determined by the longer marubozu
 flags: [candlestick, stream]

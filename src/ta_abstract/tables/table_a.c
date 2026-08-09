@@ -70,7 +70,6 @@ static const TA_OptInputParameterInfo *TA_ACCBANDS_OptInputs[] =
 DEF_FUNCTION( ACCBANDS,
               TA_GroupId_OverlapStudies,
               "Acceleration Bands",
-              "Accbands",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* ACCBANDS END */
@@ -94,7 +93,6 @@ static const TA_OptInputParameterInfo *TA_ACOS_OptInputs[] =
 DEF_FUNCTION( ACOS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ACos",
-              "Acos",
               TA_FUNC_FLG_STREAM
              );
 /* ACOS END */
@@ -118,7 +116,6 @@ static const TA_OptInputParameterInfo *TA_AD_OptInputs[] =
 DEF_FUNCTION( AD,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Line",
-              "Ad",
               TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* AD END */
@@ -143,7 +140,6 @@ static const TA_OptInputParameterInfo *TA_ADD_OptInputs[] =
 DEF_FUNCTION( ADD,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Add",
-              "Add",
               TA_FUNC_FLG_STREAM
              );
 /* ADD END */
@@ -198,7 +194,6 @@ static const TA_OptInputParameterInfo *TA_ADOSC_OptInputs[] =
 DEF_FUNCTION( ADOSC,
               TA_GroupId_VolumeIndicators,
               "Chaikin A/D Oscillator",
-              "AdOsc",
               TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
              );
 /* ADOSC END */
@@ -224,7 +219,6 @@ static const TA_OptInputParameterInfo *TA_ADX_OptInputs[] =
 DEF_FUNCTION( ADX,
               TA_GroupId_MomentumIndicators,
               "Average Directional Movement Index",
-              "Adx",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* ADX END */
@@ -250,7 +244,6 @@ static const TA_OptInputParameterInfo *TA_ADXR_OptInputs[] =
 DEF_FUNCTION( ADXR,
               TA_GroupId_MomentumIndicators,
               "Average Directional Movement Index Rating",
-              "Adxr",
               TA_FUNC_FLG_STREAM
              );
 /* ADXR END */
@@ -292,7 +285,6 @@ static const TA_OptInputParameterInfo *TA_APO_OptInputs[] =
 DEF_FUNCTION( APO,
               TA_GroupId_MomentumIndicators,
               "Absolute Price Oscillator",
-              "Apo",
               TA_FUNC_FLG_STREAM
              );
 /* APO END */
@@ -325,7 +317,6 @@ static const TA_OptInputParameterInfo *TA_AROON_OptInputs[] =
 DEF_FUNCTION( AROON,
               TA_GroupId_MomentumIndicators,
               "Aroon",
-              "Aroon",
               TA_FUNC_FLG_STREAM
              );
 /* AROON END */
@@ -351,7 +342,6 @@ static const TA_OptInputParameterInfo *TA_AROONOSC_OptInputs[] =
 DEF_FUNCTION( AROONOSC,
               TA_GroupId_MomentumIndicators,
               "Aroon Oscillator",
-              "AroonOsc",
               TA_FUNC_FLG_STREAM
              );
 /* AROONOSC END */
@@ -375,7 +365,6 @@ static const TA_OptInputParameterInfo *TA_ASIN_OptInputs[] =
 DEF_FUNCTION( ASIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ASin",
-              "Asin",
               TA_FUNC_FLG_STREAM
              );
 /* ASIN END */
@@ -399,7 +388,6 @@ static const TA_OptInputParameterInfo *TA_ATAN_OptInputs[] =
 DEF_FUNCTION( ATAN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ATan",
-              "Atan",
               TA_FUNC_FLG_STREAM
              );
 /* ATAN END */
@@ -425,7 +413,6 @@ static const TA_OptInputParameterInfo *TA_ATR_OptInputs[] =
 DEF_FUNCTION( ATR,
               TA_GroupId_VolatilityIndicators,
               "Average True Range",
-              "Atr",
               TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
              );
 /* ATR END */
@@ -451,7 +438,6 @@ static const TA_OptInputParameterInfo *TA_AVGDEV_OptInputs[] =
 DEF_FUNCTION( AVGDEV,
               TA_GroupId_PriceTransform,
               "Average Deviation",
-              "AvgDev",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* AVGDEV END */
@@ -475,7 +461,6 @@ static const TA_OptInputParameterInfo *TA_AVGPRICE_OptInputs[] =
 DEF_FUNCTION( AVGPRICE,
               TA_GroupId_PriceTransform,
               "Average Price",
-              "AvgPrice",
               TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* AVGPRICE END */

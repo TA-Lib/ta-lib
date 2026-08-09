@@ -1,5 +1,4 @@
 name: CMF
-camel_case: Cmf
 group: Volume Indicators
 hint: Chaikin Money Flow
 flags: [stream]

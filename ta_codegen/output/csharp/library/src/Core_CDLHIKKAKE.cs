@@ -62,7 +62,7 @@ public partial class Core
     *               batch results (verified vs v0.6.4).
     */
    /// <summary>
-   /// Number of leading input bars <c>CdlHikkake</c> consumes before it can
+   /// Number of leading input bars <c>CDLHIKKAKE</c> consumes before it can
    /// produce its first value.
    /// </summary>
    /// <remarks>
@@ -71,12 +71,12 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int CdlHikkakeLookback( )
+   public int CDLHIKKAKE_Lookback( )
    {
       return 5 ;
 
    }
-   internal RetCode CdlHikkake( int startIdx,
+   internal RetCode CDLHIKKAKE( int startIdx,
                                 int endIdx,
                                 double[] inOpen,
                                 double[] inHigh,
@@ -107,7 +107,7 @@ public partial class Core
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
-      lookbackTotal = CdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       /* Move up the start index if there is not
        * enough initial data.
        */
@@ -186,7 +186,7 @@ public partial class Core
       outBegIdx = startIdx;
       return RetCode.Success ;
    }
-   internal RetCode CdlHikkake( int startIdx,
+   internal RetCode CDLHIKKAKE( int startIdx,
                                 int endIdx,
                                 float[] inOpen,
                                 float[] inHigh,
@@ -211,7 +211,7 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      lookbackTotal = CdlHikkakeLookback();
+      lookbackTotal = CDLHIKKAKE_Lookback();
       if( startIdx < lookbackTotal ) {
          startIdx = lookbackTotal;
       }
@@ -273,7 +273,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlHikkakeLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>CDLHIKKAKE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -294,7 +294,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlHikkake( int startIdx,
+   public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                double[] inOpen,
                                double[] inHigh,
@@ -302,7 +302,7 @@ public partial class Core
                                double[] inClose,
                                int[] outInteger )
    {
-      RetCode retCode = CdlHikkake(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKE", retCode);
       }
@@ -326,7 +326,7 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>CdlHikkakeLookback</c> is a <b>success
+   /// NaN. A valid range shorter than <c>CDLHIKKAKE_Lookback</c> is a <b>success
    /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
@@ -347,7 +347,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange CdlHikkake( int startIdx,
+   public OutRange CDLHIKKAKE( int startIdx,
                                int endIdx,
                                float[] inOpen,
                                float[] inHigh,
@@ -355,7 +355,7 @@ public partial class Core
                                float[] inClose,
                                int[] outInteger )
    {
-      RetCode retCode = CdlHikkake(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
+      RetCode retCode = CDLHIKKAKE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLHIKKAKE", retCode);
       }

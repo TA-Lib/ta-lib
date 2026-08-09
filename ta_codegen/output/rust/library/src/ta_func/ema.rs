@@ -64,7 +64,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::ema`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::EMA`]: the number of leading input values consumed before the
     /// first output value can be produced.
     ///
     /// # Arguments
@@ -75,13 +75,13 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn ema_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn EMA_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        return (optInTimePeriod - 1 + self.unstable_period[FuncUnstId::Ema as usize]) as usize;
+        return (optInTimePeriod - 1 + self.unstable_period[FuncUnstId::EMA as usize]) as usize;
     }
     /// Exponential moving average that weights recent prices more heavily via a recursive smoothing
     /// factor. A core building block seeding or composing many other indicators. Reacts faster than
@@ -135,7 +135,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.ema(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.EMA(0, data.len() - 1, &data, 30, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -143,14 +143,14 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sma`] · [`Core::dema`] · [`Core::tema`] · [`Core::ma`] · [`Core::macd`] ·
-    /// [`Core::t3`]
+    /// [`Core::SMA`] · [`Core::DEMA`] · [`Core::TEMA`] · [`Core::MA`] · [`Core::MACD`] ·
+    /// [`Core::T3`]
     ///
-    /// Further reading: [ta-lib.org/functions/ema](https://ta-lib.org/functions/ema/)
+    /// Further reading: [ta-lib.org/functions/EMA](https://ta-lib.org/functions/EMA/)
     #[doc(alias = "ExponentialMovingAverage")]
     #[doc(alias = "ExponentiallyWeightedMovingAverage")]
     #[doc(alias = "EWMA")]
-    pub fn ema(
+    pub fn EMA(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -171,21 +171,21 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.ema_lookback(optInTimePeriod);
+        let _assertLb = self.EMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
         // Simply call the internal implementation of the EMA.
-        return self.ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
+        return self.EMA_Private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
     }
-    /// Internal variant of [`Core::ema`] taking the precomputed parameter `optInK_1`. Skips the
+    /// Internal variant of [`Core::EMA`] taking the precomputed parameter `optInK_1`. Skips the
     /// validation prologue: its only callers are the guarded bodies, which have already validated.
     ///
-    /// Unlike [`Core::ema`] the bounds assertions here are unconditional: an `endIdx` beyond the
+    /// Unlike [`Core::EMA`] the bounds assertions here are unconditional: an `endIdx` beyond the
     /// input slice panics even when the lookback clamp means no element would be read.
     #[inline]
-    pub(crate) fn ema_private(
+    pub(crate) fn EMA_Private(
         &self,
         mut startIdx: usize,
         endIdx: usize,
@@ -202,7 +202,7 @@ impl Core {
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let _assertLb = self.ema_lookback(optInTimePeriod);
+        let _assertLb = self.EMA_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -219,7 +219,7 @@ impl Core {
         // time... but there is some exception, this is why both must be provided.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = self.EMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -280,20 +280,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live EMA stream: one value per closed bar, bit-identical to [`Core::ema`]
-/// over the same series. Open with [`Core::ema_open`]; dropping the handle
+/// Live EMA stream: one value per closed bar, bit-identical to [`Core::EMA`]
+/// over the same series. Open with [`Core::EMA_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_EMA_Stream")]
-pub struct EmaStream {
+pub struct EMA_Stream {
     core: Core,
-    state: EmaStreamState,
+    state: EMA_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct EmaStreamState {
+struct EMA_StreamState {
     optInTimePeriod: i32,
     optInK_1: f64,
     prevMA: f64,
@@ -306,15 +306,15 @@ struct EmaStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn ema_step_internal(&self, sp: &mut EmaStreamState, inReal: f64, outReal: &mut f64) {
+    fn EMA_step_internal(&self, sp: &mut EMA_StreamState, inReal: f64, outReal: &mut f64) {
         sp.prevMA = (inReal - sp.prevMA) * ((sp.optInK_1) as f64) + sp.prevMA;
         (*outReal) = sp.prevMA;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ema_open`] (composition seam).
-    pub(crate) fn ema_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::EMA_Open`] (composition seam).
+    pub(crate) fn EMA_OpenInternal(
         &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(EmaStream, f64), RetCode> {
+    ) -> Result<(EMA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -352,7 +352,7 @@ impl Core {
         // time... but there is some exception, this is why both must be provided.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = self.EMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -409,16 +409,16 @@ impl Core {
         dummyNBElement = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = EmaStreamState {
+        let state = EMA_StreamState {
             optInTimePeriod,
             optInK_1,
             prevMA,
         };
-        Ok((EmaStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((EMA_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live EMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ema`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::EMA`] at that bar.
     ///
     /// # Errors
     ///
@@ -430,23 +430,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.ema_open(&data, 30).expect("enough history");
+    /// let (mut s, _last) = core.EMA_Open(&data, 30).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_EMA_Open")]
-    pub fn ema_open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(EmaStream, f64), RetCode> {
-        self.ema_open_internal(inReal, 0, optInTimePeriod)
+    pub fn EMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(EMA_Stream, f64), RetCode> {
+        self.EMA_OpenInternal(inReal, 0, optInTimePeriod)
     }
 
-    /// [`Core::ema_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ema`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::EMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::EMA`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_EMA_OpenAndFill")]
-    pub fn ema_open_and_fill(
+    pub fn EMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<EmaStream, RetCode> {
+    ) -> Result<EMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -483,7 +483,7 @@ impl Core {
         // time... but there is some exception, this is why both must be provided.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.ema_lookback(optInTimePeriod);
+        lookbackTotal = self.EMA_Lookback(optInTimePeriod);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -541,24 +541,24 @@ impl Core {
         (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
-        let state = EmaStreamState {
+        let state = EMA_StreamState {
             optInTimePeriod,
             optInK_1,
             prevMA,
         };
-        Ok(EmaStream { core: self.clone(), state })
+        Ok(EMA_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl EmaStream {
+impl EMA_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_EMA_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.ema_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.EMA_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -576,7 +576,7 @@ impl EmaStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<EmaStream>();
+    _assert_auto::<EMA_Stream>();
 };
 
 /***************/

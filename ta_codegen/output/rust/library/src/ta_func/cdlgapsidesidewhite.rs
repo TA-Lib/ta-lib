@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlgapsidesidewhite`]: the number of leading input values
+    /// Lookback period for [`Core::CDLGAPSIDESIDEWHITE`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlgapsidesidewhite_lookback(&self) -> usize {
+    pub fn CDLGAPSIDESIDEWHITE_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -134,7 +134,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlgapsidesidewhite(
+    /// let ret = core.CDLGAPSIDESIDEWHITE(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -144,13 +144,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdltasukigap`] · [`Core::cdlxsidegap3methods`]
+    /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite/)
+    /// [ta-lib.org/functions/CDLGAPSIDESIDEWHITE](https://ta-lib.org/functions/CDLGAPSIDESIDEWHITE/)
     #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
     #[doc(alias = "Gappingside-by-sidewhitelines")]
-    pub fn cdlgapsidesidewhite(
+    pub fn CDLGAPSIDESIDEWHITE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -168,7 +168,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlgapsidesidewhite_lookback();
+        let _assertLb = self.CDLGAPSIDESIDEWHITE_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -197,7 +197,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlgapsidesidewhite_lookback();
+        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -360,20 +360,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLGAPSIDESIDEWHITE stream: one value per closed bar, bit-identical to [`Core::cdlgapsidesidewhite`]
-/// over the same series. Open with [`Core::cdlgapsidesidewhite_open`]; dropping the handle
+/// Live CDLGAPSIDESIDEWHITE stream: one value per closed bar, bit-identical to [`Core::CDLGAPSIDESIDEWHITE`]
+/// over the same series. Open with [`Core::CDLGAPSIDESIDEWHITE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLGAPSIDESIDEWHITE_Stream")]
-pub struct CdlgapsidesidewhiteStream {
+pub struct CDLGAPSIDESIDEWHITE_Stream {
     core: Core,
-    state: CdlgapsidesidewhiteStreamState,
+    state: CDLGAPSIDESIDEWHITE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlgapsidesidewhiteStreamState {
+struct CDLGAPSIDESIDEWHITE_StreamState {
     NearPeriodTotal: f64,
     EqualPeriodTotal: f64,
     lag1_inOpen: f64,
@@ -405,7 +405,7 @@ struct CdlgapsidesidewhiteStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlgapsidesidewhite_step_internal(&self, sp: &mut CdlgapsidesidewhiteStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLGAPSIDESIDEWHITE_step_internal(&self, sp: &mut CDLGAPSIDESIDEWHITE_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
         #[allow(non_snake_case)]
@@ -526,10 +526,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlgapsidesidewhite_open`] (composition seam).
-    pub(crate) fn cdlgapsidesidewhite_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLGAPSIDESIDEWHITE_Open`] (composition seam).
+    pub(crate) fn CDLGAPSIDESIDEWHITE_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlgapsidesidewhiteStream, i32), RetCode> {
+    ) -> Result<(CDLGAPSIDESIDEWHITE_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -563,7 +563,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlgapsidesidewhite_lookback();
+        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -797,7 +797,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlgapsidesidewhiteStreamState {
+        let state = CDLGAPSIDESIDEWHITE_StreamState {
             NearPeriodTotal,
             EqualPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -821,11 +821,11 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok((CdlgapsidesidewhiteStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLGAPSIDESIDEWHITE_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLGAPSIDESIDEWHITE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlgapsidesidewhite`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLGAPSIDESIDEWHITE`] at that bar.
     ///
     /// # Errors
     ///
@@ -844,23 +844,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlgapsidesidewhite_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLGAPSIDESIDEWHITE_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLGAPSIDESIDEWHITE_Open")]
-    pub fn cdlgapsidesidewhite_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlgapsidesidewhiteStream, i32), RetCode> {
-        self.cdlgapsidesidewhite_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLGAPSIDESIDEWHITE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLGAPSIDESIDEWHITE_Stream, i32), RetCode> {
+        self.CDLGAPSIDESIDEWHITE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlgapsidesidewhite_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlgapsidesidewhite`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLGAPSIDESIDEWHITE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLGAPSIDESIDEWHITE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLGAPSIDESIDEWHITE_OpenAndFill")]
-    pub fn cdlgapsidesidewhite_open_and_fill(
+    pub fn CDLGAPSIDESIDEWHITE_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlgapsidesidewhiteStream, RetCode> {
+    ) -> Result<CDLGAPSIDESIDEWHITE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -893,7 +893,7 @@ impl Core {
         let Near_factor: f64 = self.candle_settings.near.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlgapsidesidewhite_lookback();
+        lookbackTotal = self.CDLGAPSIDESIDEWHITE_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1129,7 +1129,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = CdlgapsidesidewhiteStreamState {
+        let state = CDLGAPSIDESIDEWHITE_StreamState {
             NearPeriodTotal,
             EqualPeriodTotal,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1153,19 +1153,19 @@ impl Core {
             ring_NearTrailingIdx_inLow,
             ring_NearTrailingIdx_inClose,
         };
-        Ok(CdlgapsidesidewhiteStream { core: self.clone(), state })
+        Ok(CDLGAPSIDESIDEWHITE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlgapsidesidewhiteStream {
+impl CDLGAPSIDESIDEWHITE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLGAPSIDESIDEWHITE_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlgapsidesidewhite_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLGAPSIDESIDEWHITE_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1183,7 +1183,7 @@ impl CdlgapsidesidewhiteStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlgapsidesidewhiteStream>();
+    _assert_auto::<CDLGAPSIDESIDEWHITE_Stream>();
 };
 
 /***************/

@@ -74,7 +74,7 @@ public partial class Core
     *                TA_MAType_DISABLED); required for streaming (issue #93).
     */
    /// <summary>
-   /// Number of leading input bars <c>Bbands</c> consumes before it can produce
+   /// Number of leading input bars <c>BBANDS</c> consumes before it can produce
    /// its first value.
    /// </summary>
    /// <remarks>
@@ -92,7 +92,7 @@ public partial class Core
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
-   public int BbandsLookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   public int BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       if( optInTimePeriod == int.MinValue ) {
          optInTimePeriod = 20;
@@ -110,7 +110,7 @@ public partial class Core
          return -1;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       int maLookback = 0;
       int stddevLookback = 0;
@@ -126,12 +126,12 @@ public partial class Core
        * Open is tied to lookback+1. The middle band still begins at the MA's earlier
        * begIdx internally and is realigned to this later bar in bbands() below.
        */
-      maLookback = MovingAverageLookback(optInTimePeriod, optInMAType);
-      stddevLookback = StdDevLookback(optInTimePeriod, 1.0);
+      maLookback = MA_Lookback(optInTimePeriod, optInMAType);
+      stddevLookback = STDDEV_Lookback(optInTimePeriod, 1.0);
       return (maLookback > stddevLookback) ? maLookback : stddevLookback ;
 
    }
-   internal RetCode Bbands( int startIdx,
+   internal RetCode BBANDS( int startIdx,
                             int endIdx,
                             double[] inReal,
                             int optInTimePeriod,
@@ -176,12 +176,12 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
-      if( optInMAType == MAType.Sma ) {
+      if( optInMAType == MAType.SMA ) {
          /* SMA fast path: the middle band (SMA) and the standard deviation share one
           * pass over the window below. Bit-identical to the general MA + STDDEV path
           * (which the stream composes for every MA type).
@@ -336,7 +336,7 @@ public partial class Core
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Calculate the middle band moving average. */
-      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
@@ -344,7 +344,7 @@ public partial class Core
       /* Remember where the moving average begins, to realign it below. */
       maBegIdx = (int)outBegIdx;
       /* Calculate the Standard Deviation into tempBuffer2. */
-      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -381,7 +381,7 @@ public partial class Core
       }
       return RetCode.Success ;
    }
-   internal RetCode Bbands( int startIdx,
+   internal RetCode BBANDS( int startIdx,
                             int endIdx,
                             float[] inReal,
                             int optInTimePeriod,
@@ -426,12 +426,12 @@ public partial class Core
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue ) {
-         optInMAType = MAType.Sma;
+         optInMAType = MAType.SMA;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
-      if( optInMAType == MAType.Sma ) {
+      if( optInMAType == MAType.SMA ) {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
          double maTotal;
@@ -545,13 +545,13 @@ public partial class Core
       }
       tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
       tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      retCode = MovingAverage(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
+      retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, tempBuffer1);
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
          outNBElement = 0;
          return retCode ;
       }
       maBegIdx = (int)outBegIdx;
-      retCode = StdDev((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
+      retCode = STDDEV((int)outBegIdx, endIdx, inReal, optInTimePeriod, 1.0, out outBegIdx, out outNBElement, tempBuffer2);
       if( retCode != RetCode.Success ) {
          outNBElement = 0;
          return retCode ;
@@ -605,8 +605,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>BbandsLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>BBANDS_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -635,7 +635,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Bbands( int startIdx,
+   public OutRange BBANDS( int startIdx,
                            int endIdx,
                            double[] inReal,
                            int optInTimePeriod,
@@ -646,7 +646,7 @@ public partial class Core
                            double[] outRealMiddleBand,
                            double[] outRealLowerBand )
    {
-      RetCode retCode = Bbands(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
       }
@@ -685,8 +685,8 @@ public partial class Core
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
-   /// NaN. A valid range shorter than <c>BbandsLookback</c> is a <b>success with
-   /// no values</b> (<c>Count == 0</c>), not an error.
+   /// NaN. A valid range shorter than <c>BBANDS_Lookback</c> is a <b>success
+   /// with no values</b> (<c>Count == 0</c>), not an error.
    /// </para>
    /// </remarks>
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
@@ -715,7 +715,7 @@ public partial class Core
    /// share one array.</exception>
    /// <exception cref="System.NullReferenceException">An input or output array is null. (Unlike the C library, the managed tier
    /// does not pre-validate nulls; the first array access throws.)</exception>
-   public OutRange Bbands( int startIdx,
+   public OutRange BBANDS( int startIdx,
                            int endIdx,
                            float[] inReal,
                            int optInTimePeriod,
@@ -726,7 +726,7 @@ public partial class Core
                            double[] outRealMiddleBand,
                            double[] outRealLowerBand )
    {
-      RetCode retCode = Bbands(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+      RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
       }

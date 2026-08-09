@@ -70,7 +70,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::midprice`]: the number of leading input values consumed before
+    /// Lookback period for [`Core::MIDPRICE`]: the number of leading input values consumed before
     /// the first output value can be produced.
     ///
     /// # Arguments
@@ -81,7 +81,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn midprice_lookback(&self, mut optInTimePeriod: i32) -> usize {
+    pub fn MIDPRICE_Lookback(&self, mut optInTimePeriod: i32) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -137,7 +137,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.midprice(
+    /// let ret = core.MIDPRICE(
     ///     0, high.len() - 1, &high, &low, 14,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -148,11 +148,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::midpoint`] · [`Core::medprice`]
+    /// [`Core::MIDPOINT`] · [`Core::MEDPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/midprice](https://ta-lib.org/functions/midprice/)
+    /// Further reading: [ta-lib.org/functions/MIDPRICE](https://ta-lib.org/functions/MIDPRICE/)
     #[doc(alias = "MidpointPrice")]
-    pub fn midprice(
+    pub fn MIDPRICE(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -174,7 +174,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.midprice_lookback(optInTimePeriod);
+        let _assertLb = self.MIDPRICE_Lookback(optInTimePeriod);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -313,20 +313,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live MIDPRICE stream: one value per closed bar, bit-identical to [`Core::midprice`]
-/// over the same series. Open with [`Core::midprice_open`]; dropping the handle
+/// Live MIDPRICE stream: one value per closed bar, bit-identical to [`Core::MIDPRICE`]
+/// over the same series. Open with [`Core::MIDPRICE_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_MIDPRICE_Stream")]
-pub struct MidpriceStream {
+pub struct MIDPRICE_Stream {
     core: Core,
-    state: MidpriceStreamState,
+    state: MIDPRICE_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct MidpriceStreamState {
+struct MIDPRICE_StreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
@@ -347,7 +347,7 @@ struct MidpriceStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn midprice_step_internal(&self, sp: &mut MidpriceStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
+    fn MIDPRICE_step_internal(&self, sp: &mut MIDPRICE_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmpLow: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
@@ -397,10 +397,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::midprice_open`] (composition seam).
-    pub(crate) fn midprice_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::MIDPRICE_Open`] (composition seam).
+    pub(crate) fn MIDPRICE_OpenInternal(
         &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MidpriceStream, f64), RetCode> {
+    ) -> Result<(MIDPRICE_Stream, f64), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -539,7 +539,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MidpriceStreamState {
+        let state = MIDPRICE_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -552,11 +552,11 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok((MidpriceStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((MIDPRICE_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live MIDPRICE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::midprice`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::MIDPRICE`] at that bar.
     ///
     /// # Errors
     ///
@@ -569,23 +569,23 @@ impl Core {
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.midprice_open(&high, &low, 14).expect("enough history");
+    /// let (mut s, _last) = core.MIDPRICE_Open(&high, &low, 14).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1);
     /// let updated = s.update(101.4, 99.1);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MIDPRICE_Open")]
-    pub fn midprice_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(MidpriceStream, f64), RetCode> {
-        self.midprice_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    pub fn MIDPRICE_Open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(MIDPRICE_Stream, f64), RetCode> {
+        self.MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod)
     }
 
-    /// [`Core::midprice_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::midprice`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::MIDPRICE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MIDPRICE`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MIDPRICE_OpenAndFill")]
-    pub fn midprice_open_and_fill(
+    pub fn MIDPRICE_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<MidpriceStream, RetCode> {
+    ) -> Result<MIDPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -724,7 +724,7 @@ impl Core {
                 fillJ += 1;
             }
         }
-        let state = MidpriceStreamState {
+        let state = MIDPRICE_StreamState {
             optInTimePeriod,
             lowest,
             highest,
@@ -737,19 +737,19 @@ impl Core {
             x_inHigh,
             x_inLow,
         };
-        Ok(MidpriceStream { core: self.clone(), state })
+        Ok(MIDPRICE_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl MidpriceStream {
+impl MIDPRICE_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_MIDPRICE_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.midprice_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
+        self.core.MIDPRICE_step_internal(&mut self.state, inHigh, inLow, &mut outReal);
         outReal
     }
 
@@ -767,7 +767,7 @@ impl MidpriceStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<MidpriceStream>();
+    _assert_auto::<MIDPRICE_Stream>();
 };
 
 /***************/

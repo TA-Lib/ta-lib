@@ -1,5 +1,4 @@
 name: TRIMA
-camel_case: Trima
 group: Overlap Studies
 hint: Triangular Moving Average
 flags: [overlap, stream]

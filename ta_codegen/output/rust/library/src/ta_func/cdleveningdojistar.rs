@@ -63,7 +63,7 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdleveningdojistar`]: the number of leading input values
+    /// Lookback period for [`Core::CDLEVENINGDOJISTAR`]: the number of leading input values
     /// consumed before the first output value can be produced.
     ///
     /// # Arguments
@@ -74,7 +74,7 @@ impl Core {
     /// Returns `usize::MAX` when a parameter is out of range. Real parameters accept `-4e37` to
     /// select their default value.
     #[inline]
-    pub fn cdleveningdojistar_lookback(&self, mut optInPenetration: f64) -> usize {
+    pub fn CDLEVENINGDOJISTAR_Lookback(&self, mut optInPenetration: f64) -> usize {
         if optInPenetration == REAL_DEFAULT {
             optInPenetration = 3e-1;
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
@@ -156,7 +156,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdleveningdojistar(
+    /// let ret = core.CDLEVENINGDOJISTAR(
     ///     0, open.len() - 1, &open, &high, &low, &close, 0.3,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -166,13 +166,13 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdleveningstar`] · [`Core::cdlmorningdojistar`] · [`Core::cdldojistar`] ·
-    /// [`Core::cdlabandonedbaby`]
+    /// [`Core::CDLEVENINGSTAR`] · [`Core::CDLMORNINGDOJISTAR`] · [`Core::CDLDOJISTAR`] ·
+    /// [`Core::CDLABANDONEDBABY`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar/)
+    /// [ta-lib.org/functions/CDLEVENINGDOJISTAR](https://ta-lib.org/functions/CDLEVENINGDOJISTAR/)
     #[doc(alias = "EveningDojiStar")]
-    pub fn cdleveningdojistar(
+    pub fn CDLEVENINGDOJISTAR(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -196,7 +196,7 @@ impl Core {
         } else if (optInPenetration < 0e0) || (optInPenetration > REAL_MAX) {
             return RetCode::BadParam;
         }
-        let _assertLb = self.cdleveningdojistar_lookback(optInPenetration);
+        let _assertLb = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -233,7 +233,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdleveningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -451,20 +451,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLEVENINGDOJISTAR stream: one value per closed bar, bit-identical to [`Core::cdleveningdojistar`]
-/// over the same series. Open with [`Core::cdleveningdojistar_open`]; dropping the handle
+/// Live CDLEVENINGDOJISTAR stream: one value per closed bar, bit-identical to [`Core::CDLEVENINGDOJISTAR`]
+/// over the same series. Open with [`Core::CDLEVENINGDOJISTAR_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLEVENINGDOJISTAR_Stream")]
-pub struct CdleveningdojistarStream {
+pub struct CDLEVENINGDOJISTAR_Stream {
     core: Core,
-    state: CdleveningdojistarStreamState,
+    state: CDLEVENINGDOJISTAR_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdleveningdojistarStreamState {
+struct CDLEVENINGDOJISTAR_StreamState {
     optInPenetration: f64,
     BodyDojiPeriodTotal: f64,
     BodyLongPeriodTotal: f64,
@@ -504,7 +504,7 @@ struct CdleveningdojistarStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdleveningdojistar_step_internal(&self, sp: &mut CdleveningdojistarStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLEVENINGDOJISTAR_step_internal(&self, sp: &mut CDLEVENINGDOJISTAR_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
         #[allow(non_snake_case)]
@@ -682,10 +682,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdleveningdojistar_open`] (composition seam).
-    pub(crate) fn cdleveningdojistar_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLEVENINGDOJISTAR_Open`] (composition seam).
+    pub(crate) fn CDLEVENINGDOJISTAR_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInPenetration: f64,
-    ) -> Result<(CdleveningdojistarStream, i32), RetCode> {
+    ) -> Result<(CDLEVENINGDOJISTAR_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -732,7 +732,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdleveningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -996,7 +996,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdleveningdojistarStreamState {
+        let state = CDLEVENINGDOJISTAR_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1028,11 +1028,11 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok((CdleveningdojistarStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLEVENINGDOJISTAR_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLEVENINGDOJISTAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdleveningdojistar`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLEVENINGDOJISTAR`] at that bar.
     ///
     /// # Errors
     ///
@@ -1051,23 +1051,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdleveningdojistar_open(&open, &high, &low, &close, 0.3).expect("enough history");
+    /// let (mut s, _last) = core.CDLEVENINGDOJISTAR_Open(&open, &high, &low, &close, 0.3).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_Open")]
-    pub fn cdleveningdojistar_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CdleveningdojistarStream, i32), RetCode> {
-        self.cdleveningdojistar_open_internal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
+    pub fn CDLEVENINGDOJISTAR_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInPenetration: f64) -> Result<(CDLEVENINGDOJISTAR_Stream, i32), RetCode> {
+        self.CDLEVENINGDOJISTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration)
     }
 
-    /// [`Core::cdleveningdojistar_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdleveningdojistar`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLEVENINGDOJISTAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLEVENINGDOJISTAR`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_OpenAndFill")]
-    pub fn cdleveningdojistar_open_and_fill(
+    pub fn CDLEVENINGDOJISTAR_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInPenetration: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdleveningdojistarStream, RetCode> {
+    ) -> Result<CDLEVENINGDOJISTAR_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -1113,7 +1113,7 @@ impl Core {
         let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdleveningdojistar_lookback(optInPenetration);
+        lookbackTotal = self.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1379,7 +1379,7 @@ impl Core {
         let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
         ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
             .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CdleveningdojistarStreamState {
+        let state = CDLEVENINGDOJISTAR_StreamState {
             optInPenetration,
             BodyDojiPeriodTotal,
             BodyLongPeriodTotal,
@@ -1411,19 +1411,19 @@ impl Core {
             ring_BodyShortTrailingIdx_inLow,
             ring_BodyShortTrailingIdx_inClose,
         };
-        Ok(CdleveningdojistarStream { core: self.clone(), state })
+        Ok(CDLEVENINGDOJISTAR_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdleveningdojistarStream {
+impl CDLEVENINGDOJISTAR_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLEVENINGDOJISTAR_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdleveningdojistar_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLEVENINGDOJISTAR_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1441,7 +1441,7 @@ impl CdleveningdojistarStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdleveningdojistarStream>();
+    _assert_auto::<CDLEVENINGDOJISTAR_Stream>();
 };
 
 /***************/

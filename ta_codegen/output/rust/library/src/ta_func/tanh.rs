@@ -62,9 +62,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::tanh`]: the number of leading input values consumed before the
+    /// Lookback period for [`Core::TANH`]: the number of leading input values consumed before the
     /// first output value can be produced.
-    pub fn tanh_lookback(&self) -> usize {
+    pub fn TANH_Lookback(&self) -> usize {
         return (0) as usize;
     }
     /// Vector hyperbolic tangent: applies tanh element-wise to the input series.
@@ -107,7 +107,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.tanh(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.TANH(0, data.len() - 1, &data, &mut out_beg, &mut out_nb, &mut out);
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -115,11 +115,11 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::sinh`] · [`Core::cosh`] · [`Core::tan`]
+    /// [`Core::SINH`] · [`Core::COSH`] · [`Core::TAN`]
     ///
-    /// Further reading: [ta-lib.org/functions/tanh](https://ta-lib.org/functions/tanh/)
+    /// Further reading: [ta-lib.org/functions/TANH](https://ta-lib.org/functions/TANH/)
     #[doc(alias = "HyperbolicTangent")]
-    pub fn tanh(
+    pub fn TANH(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -134,7 +134,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.tanh_lookback();
+        let _assertLb = self.TANH_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
@@ -156,20 +156,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live TANH stream: one value per closed bar, bit-identical to [`Core::tanh`]
-/// over the same series. Open with [`Core::tanh_open`]; dropping the handle
+/// Live TANH stream: one value per closed bar, bit-identical to [`Core::TANH`]
+/// over the same series. Open with [`Core::TANH_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_TANH_Stream")]
-pub struct TanhStream {
+pub struct TANH_Stream {
     core: Core,
-    state: TanhStreamState,
+    state: TANH_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct TanhStreamState {
+struct TANH_StreamState {
 }
 
 #[allow(non_snake_case)]
@@ -179,14 +179,14 @@ struct TanhStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn tanh_step_internal(&self, sp: &mut TanhStreamState, inReal: f64, outReal: &mut f64) {
+    fn TANH_step_internal(&self, sp: &mut TANH_StreamState, inReal: f64, outReal: &mut f64) {
         (*outReal) = (inReal).tanh();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::tanh_open`] (composition seam).
-    pub(crate) fn tanh_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::TANH_Open`] (composition seam).
+    pub(crate) fn TANH_OpenInternal(
         &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(TanhStream, f64), RetCode> {
+    ) -> Result<(TANH_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -213,13 +213,13 @@ impl Core {
         dummyBegIdx = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TanhStreamState {
+        let state = TANH_StreamState {
         };
-        Ok((TanhStream { core: self.clone(), state }, lastValue_outReal))
+        Ok((TANH_Stream { core: self.clone(), state }, lastValue_outReal))
     }
 
     /// Open a live TANH stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::tanh`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::TANH`] at that bar.
     ///
     /// # Errors
     ///
@@ -231,23 +231,23 @@ impl Core {
     /// let data: Vec<f64> = (0..252).map(|i| (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.tanh_open(&data).expect("enough history");
+    /// let (mut s, _last) = core.TANH_Open(&data).expect("enough history");
     /// let peeked = s.peek(0.42);
     /// let updated = s.update(0.42);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_TANH_Open")]
-    pub fn tanh_open(&self, inReal: &[f64], ) -> Result<(TanhStream, f64), RetCode> {
-        self.tanh_open_internal(inReal, 0)
+    pub fn TANH_Open(&self, inReal: &[f64], ) -> Result<(TANH_Stream, f64), RetCode> {
+        self.TANH_OpenInternal(inReal, 0)
     }
 
-    /// [`Core::tanh_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::tanh`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::TANH_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TANH`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_TANH_OpenAndFill")]
-    pub fn tanh_open_and_fill(
+    pub fn TANH_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TanhStream, RetCode> {
+    ) -> Result<TANH_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -273,21 +273,21 @@ impl Core {
         (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
-        let state = TanhStreamState {
+        let state = TANH_StreamState {
         };
-        Ok(TanhStream { core: self.clone(), state })
+        Ok(TANH_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl TanhStream {
+impl TANH_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_TANH_Update")]
     pub fn update(&mut self, inReal: f64) -> f64 {
         let mut outReal: f64 = 0.0_f64;
-        self.core.tanh_step_internal(&mut self.state, inReal, &mut outReal);
+        self.core.TANH_step_internal(&mut self.state, inReal, &mut outReal);
         outReal
     }
 
@@ -305,7 +305,7 @@ impl TanhStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<TanhStream>();
+    _assert_auto::<TANH_Stream>();
 };
 
 /***************/

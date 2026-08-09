@@ -2,12 +2,12 @@
 //!
 //! For every YAML-declared streamable function this appends a
 //! `/**** Streaming API *****/` section to the generated per-function Rust
-//! file: an opaque `#[derive(Clone)]` handle (`<Pascal>Stream { core, state }`),
+//! file: an opaque `#[derive(Clone)]` handle (`<NAME>_Stream { core, state }`),
 //! a private state struct mirroring the C stream struct field-for-field, a
-//! `<snake>_step_internal` transition method on `Core` (so batch rendering
+//! `<NAME>_step_internal` transition method on `Core` (so batch rendering
 //! conventions — `self.candle_settings`, `self.compatibility`, lookback calls —
-//! work verbatim), a `pub(crate) <snake>_open_internal(.., startIdx, ..)`
-//! composition seam, the public `<snake>_open` / `<snake>_open_and_fill`
+//! work verbatim), a `pub(crate) <NAME>_OpenInternal(.., startIdx, ..)`
+//! composition seam, the public `<NAME>_Open` / `<NAME>_OpenAndFill`
 //! constructors, and `update`/`peek` on the handle.
 //!
 //! Bit-exactness argument (same as C): `open` transcribes the ENTIRE batch
@@ -37,7 +37,7 @@ use super::rust_lang::{
     build_matype_map, collect_for_loop_vars, collect_sentinel_vars, collect_signed_int_vars,
     collect_var_types, emit_circbuf_prolog_rust, expr_is_untyped_integer, CircBufTier,
     gen_opt_param_validation_with, render_expr, render_hoisted_blocks, render_statement,
-    to_pascal_case, RustRenderCtx,
+    RustRenderCtx,
 };
 use crate::helper_registry::hoist_block_helpers;
 
@@ -55,18 +55,21 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     streaming::validate_streamable(func, lookup).is_ok()
 }
 
-/// Public handle type name: shared `to_pascal_case` + "Stream" (one naming
-/// authority with `FuncUnstId` — `MinusDIStream`, `HtDcPeriodStream`).
+/// Public handle type name: the function name verbatim + `_Stream`, mirroring
+/// C's `TA_MINUS_DI_Stream` minus the prefix.
 pub fn stream_type_name(func: &FuncDef) -> String {
-    format!("{}Stream", to_pascal_case(&func.name))
+    format!("{}_Stream", func.name)
 }
 
 fn state_type_name(func: &FuncDef) -> String {
-    format!("{}StreamState", to_pascal_case(&func.name))
+    format!("{}_StreamState", func.name)
 }
 
+/// The base an indicator's stream entry points are spelled from — the function
+/// name verbatim, so `SMA` yields `SMA_Open`/`SMA_Update`/`SMA_Peek`, mirroring
+/// C's `TA_SMA_Open` minus the namespace prefix.
 fn snake(func: &FuncDef) -> String {
-    func.name.to_lowercase()
+    func.name.clone()
 }
 
 fn out_is_int(func: &FuncDef, name: &str) -> bool {
@@ -505,7 +508,7 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
     let _ = writeln!(
         o,
         "/// Live {n} stream: one value per closed bar, bit-identical to [`Core::{sn}`]\n\
-         /// over the same series. Open with [`Core::{sn}_open`]; dropping the handle\n\
+         /// over the same series. Open with [`Core::{sn}_Open`]; dropping the handle\n\
          /// closes the stream. Cloning it forks an independent stream.\n\
          #[must_use = \"a stream does nothing unless updated; dropping it closes the stream\"]\n\
          #[derive(Debug, Clone)]\n\
@@ -614,7 +617,7 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
     ctx
 }
 
-/// `fn <snake>_step_internal(&self, sp: &mut State, <bars>, <&mut outs>)`.
+/// `fn <NAME>_step_internal(&self, sp: &mut State, <bars>, <&mut outs>)`.
 #[allow(clippy::too_many_arguments)]
 fn emit_step(
     o: &mut String,
@@ -869,8 +872,8 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
-/// The open-family emitter: `pub(crate) <snake>_open_internal` (Scalar) or
-/// `pub <snake>_open_and_fill` (Fill). `body` is the transcribed batch region
+/// The open-family emitter: `pub(crate) <NAME>_OpenInternal` (Scalar) or
+/// `pub <NAME>_OpenAndFill` (Fill). `body` is the transcribed batch region
 /// (loop tier: `model.body`; fast-path-skip: `prologue ++ general arm ++
 /// epilogue`).
 #[allow(clippy::too_many_arguments)]
@@ -925,11 +928,11 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
         OutMode::Scalar => {
             let _ = writeln!(
                 o,
-                "    /// Internal startIdx-anchored open behind [`Core::{sn}_open`] (composition seam)."
+                "    /// Internal startIdx-anchored open behind [`Core::{sn}_Open`] (composition seam)."
             );
             let _ = writeln!(
                 o,
-                "    pub(crate) fn {sn}_open_internal(\n        &self, {sig_inputs}startIdx: usize{sig_opts},\n    ) -> Result<({handle}, {vt}), RetCode> {{"
+                "    pub(crate) fn {sn}_OpenInternal(\n        &self, {sig_inputs}startIdx: usize{sig_opts},\n    ) -> Result<({handle}, {vt}), RetCode> {{"
             );
         }
         // Batch parameter order: inputs, optional params, then the output tail
@@ -942,7 +945,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             }
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass. Output slices must hold\n    /// `len - lookback` values; undersized slices panic (the batch sizing contract)."
+                "    /// [`Core::{sn}_Open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{sn}`] over `0..len` in the same single pass. Output slices must hold\n    /// `len - lookback` values; undersized slices panic (the batch sizing contract)."
             );
             let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_OpenAndFill\")]");
             let opts_head = sig_opts.trim_start_matches(", ");
@@ -953,7 +956,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             };
             let _ = writeln!(
                 o,
-                "    pub fn {sn}_open_and_fill(\n        &self, {sig_inputs}{opts_head}outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
+                "    pub fn {sn}_OpenAndFill(\n        &self, {sig_inputs}{opts_head}outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
     }
@@ -1242,7 +1245,7 @@ fn emit_identity_fast_path(
         .collect();
     let cond = render_expr(&idp.condition, &typing.ctx, &opt_real_params, registry, helpers);
     let lb_args: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let lb_call = format!("self.{sn}_lookback({})", lb_args.join(", "));
+    let lb_call = format!("self.{sn}_Lookback({})", lb_args.join(", "));
     let _ = writeln!(o, "        if {cond} {{");
     let _ = writeln!(
         o,
@@ -1546,17 +1549,17 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Open\")]");
     let _ = writeln!(
         o,
-        "    pub fn {sn}_open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
+        "    pub fn {sn}_Open(&self, {sig_inputs}{}) -> Result<({handle}, {vt}), RetCode> {{",
         sig_opts.trim_start_matches(", ")
     );
     let _ = writeln!(
         o,
-        "        self.{sn}_open_internal({fwd_inputs}0{fwd_opts})"
+        "        self.{sn}_OpenInternal({fwd_inputs}0{fwd_opts})"
     );
     let _ = writeln!(o, "    }}\n");
 }
 
-/// Rustdoc for `<snake>_open`, including the peek==update doctest witness.
+/// Rustdoc for `<NAME>_Open`, including the peek==update doctest witness.
 fn stream_open_docs(func: &FuncDef) -> String {
     let sn = snake(func);
     let mut d = String::new();
@@ -1620,7 +1623,7 @@ fn stream_doctest(func: &FuncDef, sn: &str) -> Option<Vec<String>> {
     lines.push(String::new());
     lines.push("let core = Core::new();".to_string());
     lines.push(format!(
-        "let (mut s, _last) = core.{sn}_open({}).expect(\"enough history\");",
+        "let (mut s, _last) = core.{sn}_Open({}).expect(\"enough history\");",
         args.join(", ")
     ));
     lines.push(format!("let peeked = s.peek({});", bar_args.join(", ")));
@@ -2000,20 +2003,20 @@ fn emit_fastpath_skip(
 // Dispatch tier (MA): a tagged enum over the callees' PUBLIC streams.
 // ---------------------------------------------------------------------------
 
-/// `SmaStream` for callee `sma` — the shared naming authority (uppercased so
-/// the `to_pascal_case` FuncUnstId spellings apply: `minus_dm` -> `MinusDM`).
+/// `SMA_Stream` for callee `sma` — the callee's own handle type, spelled from
+/// its verbatim name.
 fn callee_stream_type(callee: &str) -> String {
-    format!("{}Stream", to_pascal_case(&callee.to_uppercase()))
+    format!("{}_Stream", callee.to_uppercase())
 }
 
 /// `MaSub` — the module-private sub-stream enum of a dispatch handle.
 fn sub_enum_name(func: &FuncDef) -> String {
-    format!("{}Sub", to_pascal_case(&func.name))
+    format!("{}_Sub", func.name)
 }
 
 /// `Sma` — the enum variant name for a supported arm's callee.
 fn callee_variant(callee: &str) -> String {
-    to_pascal_case(&callee.to_uppercase())
+    callee.to_uppercase()
 }
 
 /// A minimal render context for dispatch/period-bank expressions (identity
@@ -2090,7 +2093,7 @@ fn emit_dispatch(
         .collect::<Vec<_>>()
         .join(", ");
     let lb_args = params_join.clone();
-    let lb_call = format!("self.{sn}_lookback({lb_args})");
+    let lb_call = format!("self.{sn}_Lookback({lb_args})");
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
@@ -2215,8 +2218,8 @@ fn emit_dispatch(
             let _ = writeln!(o, "            {case} => {{");
             let _ = writeln!(
                 o,
-                "                let (sub, subValue) = self.{}_open_internal({bar_args}, startIdx{opts})?;",
-                arm.callee
+                "                let (sub, subValue) = self.{}_OpenInternal({bar_args}, startIdx{opts})?;",
+                arm.callee.to_uppercase()
             );
             // Select the forwarded callee slot(s) in dispatch output order
             // (a multi-output callee's open value is a tuple; Discard slots
@@ -2320,8 +2323,8 @@ fn emit_dispatch(
                 .join(", ");
             let _ = writeln!(
                 o,
-                "                self.{}_open_and_fill({bar_args}, {opts}outBegIdx, outNBElement, {fill_outs})?,",
-                arm.callee
+                "                self.{}_OpenAndFill({bar_args}, {opts}outBegIdx, outNBElement, {fill_outs})?,",
+                arm.callee.to_uppercase()
             );
             let _ = writeln!(o, "            ),");
         } else {
@@ -2363,7 +2366,8 @@ fn emit_period_bank(
     let _ = (registry, helpers);
     let handle = stream_type_name(func);
     let state = state_type_name(func);
-    let callee = plan.callee.as_str();
+    let callee = plan.callee.to_uppercase();
+    let callee = callee.as_str();
     let subty = callee_stream_type(callee);
     let min = plan.min_param.as_str();
     let max = plan.max_param.as_str();
@@ -2435,7 +2439,7 @@ fn emit_period_bank(
         o,
         "        // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the\n        // batch does: it clamps startIdx up to lookback(maxPeriod) and calls the\n        // callee with that same start for every period. Seeding each sub at its\n        // OWN (smaller) lookback would seed the recurrence from a different bar\n        // and diverge for every period < maxPeriod (order-1 for recursive MAs,\n        // running-sum residue for stable ones)."
     );
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_lookback({lb_args});");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args});");
     let _ = writeln!(
         o,
         "        let subStart: usize = if startIdx < lookbackTotal {{ lookbackTotal }} else {{ startIdx }};"
@@ -2446,7 +2450,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        for bankIdx in 0..nBank {{");
     let _ = writeln!(
         o,
-        "            let (sub, subValue) = self.{callee}_open_internal({price}, subStart, {open_opts})?;"
+        "            let (sub, subValue) = self.{callee}_OpenInternal({price}, subStart, {open_opts})?;"
     );
     let _ = writeln!(o, "            bank.push(sub);");
     let _ = writeln!(o, "            scratch.push(subValue);");
@@ -2473,7 +2477,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
     let _ = writeln!(o, "        let historyLen: usize = {price}.len();");
-    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_lookback({lb_args});");
+    let _ = writeln!(o, "        let lookbackTotal: usize = self.{callee}_Lookback({lb_args});");
     let _ = writeln!(
         o,
         "        if historyLen < lookbackTotal + 1 {{\n            return Err(RetCode::BadParam);\n        }}"
@@ -2485,7 +2489,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "        for bankIdx in 0..nBank {{");
     let _ = writeln!(
         o,
-        "            let (sub, subValue) = self.{callee}_open_internal(&{price}[..lookbackTotal + 1], lookbackTotal, {open_opts})?;"
+        "            let (sub, subValue) = self.{callee}_OpenInternal(&{price}[..lookbackTotal + 1], lookbackTotal, {open_opts})?;"
     );
     let _ = writeln!(o, "            bank.push(sub);");
     let _ = writeln!(o, "            scratch.push(subValue);");
@@ -2995,7 +2999,7 @@ fn emit_composed_open(
     let mut inserts: Vec<(usize, String)> = Vec::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let mut t = String::new();
-        let callee = sub.callee.to_lowercase();
+        let callee = sub.callee.to_uppercase();
         let anchor = render_anchor(&sub.s_arg, &typing.ctx, &opt_real_params, registry, helpers);
         let e_arg = render_expr(
             &streaming::rewrite_expr(&sub.e_arg, &|e| match e {
@@ -3038,7 +3042,7 @@ fn emit_composed_open(
         let _ = writeln!(t, "        // sub-call's own startIdx (the seeding point).");
         let _ = writeln!(
             t,
-            "        let (sub{si}, _) = self.{callee}_open_internal({}, {anchor}{opt_tail})?;",
+            "        let (sub{si}, _) = self.{callee}_OpenInternal({}, {anchor}{opt_tail})?;",
             srcs.join(", ")
         );
         inserts.push((region_len + sub.tail_idx, t));

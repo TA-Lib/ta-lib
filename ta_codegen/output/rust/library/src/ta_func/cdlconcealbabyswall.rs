@@ -63,9 +63,9 @@ use super::*;
 #[allow(unused_mut)]
 #[allow(unused_assignments)]
 impl Core {
-    /// Lookback period for [`Core::cdlconcealbabyswall`]: the number of leading input values
+    /// Lookback period for [`Core::CDLCONCEALBABYSWALL`]: the number of leading input values
     /// consumed before the first output value can be produced.
-    pub fn cdlconcealbabyswall_lookback(&self) -> usize {
+    pub fn CDLCONCEALBABYSWALL_Lookback(&self) -> usize {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
         #[allow(non_snake_case)]
@@ -125,7 +125,7 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0i32; 252];
     ///
-    /// let ret = core.cdlconcealbabyswall(
+    /// let ret = core.CDLCONCEALBABYSWALL(
     ///     0, open.len() - 1, &open, &high, &low, &close,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
@@ -135,12 +135,12 @@ impl Core {
     ///
     /// # See also
     ///
-    /// [`Core::cdlmarubozu`] · [`Core::cdlengulfing`]
+    /// [`Core::CDLMARUBOZU`] · [`Core::CDLENGULFING`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/cdlconcealbabyswall](https://ta-lib.org/functions/cdlconcealbabyswall/)
+    /// [ta-lib.org/functions/CDLCONCEALBABYSWALL](https://ta-lib.org/functions/CDLCONCEALBABYSWALL/)
     #[doc(alias = "ConcealingBabySwallow")]
-    pub fn cdlconcealbabyswall(
+    pub fn CDLCONCEALBABYSWALL(
         &self,
         startIdx: usize,
         endIdx: usize,
@@ -158,7 +158,7 @@ impl Core {
         if endIdx > MAX_INDEX || endIdx < startIdx {
             return RetCode::OutOfRangeEndIndex;
         }
-        let _assertLb = self.cdlconcealbabyswall_lookback();
+        let _assertLb = self.CDLCONCEALBABYSWALL_Lookback();
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inOpen.len());
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
@@ -180,7 +180,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlconcealbabyswall_lookback();
+        lookbackTotal = self.CDLCONCEALBABYSWALL_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -334,20 +334,20 @@ impl Core {
 }
 /**** Streaming API *****/
 
-/// Live CDLCONCEALBABYSWALL stream: one value per closed bar, bit-identical to [`Core::cdlconcealbabyswall`]
-/// over the same series. Open with [`Core::cdlconcealbabyswall_open`]; dropping the handle
+/// Live CDLCONCEALBABYSWALL stream: one value per closed bar, bit-identical to [`Core::CDLCONCEALBABYSWALL`]
+/// over the same series. Open with [`Core::CDLCONCEALBABYSWALL_Open`]; dropping the handle
 /// closes the stream. Cloning it forks an independent stream.
 #[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
 #[derive(Debug, Clone)]
 #[doc(alias = "TA_CDLCONCEALBABYSWALL_Stream")]
-pub struct CdlconcealbabyswallStream {
+pub struct CDLCONCEALBABYSWALL_Stream {
     core: Core,
-    state: CdlconcealbabyswallStreamState,
+    state: CDLCONCEALBABYSWALL_StreamState,
 }
 
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
-struct CdlconcealbabyswallStreamState {
+struct CDLCONCEALBABYSWALL_StreamState {
     ShadowVeryShortPeriodTotal: [f64; 4 as usize],
     totIdx: usize,
     lag1_inOpen: f64,
@@ -384,7 +384,7 @@ struct CdlconcealbabyswallStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn cdlconcealbabyswall_step_internal(&self, sp: &mut CdlconcealbabyswallStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
+    fn CDLCONCEALBABYSWALL_step_internal(&self, sp: &mut CDLCONCEALBABYSWALL_StreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         #[allow(non_snake_case)]
         let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
         #[allow(non_snake_case)]
@@ -482,10 +482,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::cdlconcealbabyswall_open`] (composition seam).
-    pub(crate) fn cdlconcealbabyswall_open_internal(
+    /// Internal startIdx-anchored open behind [`Core::CDLCONCEALBABYSWALL_Open`] (composition seam).
+    pub(crate) fn CDLCONCEALBABYSWALL_OpenInternal(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CdlconcealbabyswallStream, i32), RetCode> {
+    ) -> Result<(CDLCONCEALBABYSWALL_Stream, i32), RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -512,7 +512,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlconcealbabyswall_lookback();
+        lookbackTotal = self.CDLCONCEALBABYSWALL_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -711,7 +711,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlconcealbabyswallStreamState {
+        let state = CDLCONCEALBABYSWALL_StreamState {
             ShadowVeryShortPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -740,11 +740,11 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok((CdlconcealbabyswallStream { core: self.clone(), state }, lastValue_outInteger))
+        Ok((CDLCONCEALBABYSWALL_Stream { core: self.clone(), state }, lastValue_outInteger))
     }
 
     /// Open a live CDLCONCEALBABYSWALL stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::cdlconcealbabyswall`] at that bar.
+    /// the value at the last history bar — bit-identical to [`Core::CDLCONCEALBABYSWALL`] at that bar.
     ///
     /// # Errors
     ///
@@ -763,23 +763,23 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.cdlconcealbabyswall_open(&open, &high, &low, &close).expect("enough history");
+    /// let (mut s, _last) = core.CDLCONCEALBABYSWALL_Open(&open, &high, &low, &close).expect("enough history");
     /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
     /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
     /// assert_eq!(peeked, updated);
     /// ```
     #[doc(alias = "TA_CDLCONCEALBABYSWALL_Open")]
-    pub fn cdlconcealbabyswall_open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CdlconcealbabyswallStream, i32), RetCode> {
-        self.cdlconcealbabyswall_open_internal(inOpen, inHigh, inLow, inClose, 0)
+    pub fn CDLCONCEALBABYSWALL_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLCONCEALBABYSWALL_Stream, i32), RetCode> {
+        self.CDLCONCEALBABYSWALL_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
     }
 
-    /// [`Core::cdlconcealbabyswall_open`] that also fills the output array(s) bit-identically to
-    /// [`Core::cdlconcealbabyswall`] over `0..len` in the same single pass. Output slices must hold
+    /// [`Core::CDLCONCEALBABYSWALL_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLCONCEALBABYSWALL`] over `0..len` in the same single pass. Output slices must hold
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_CDLCONCEALBABYSWALL_OpenAndFill")]
-    pub fn cdlconcealbabyswall_open_and_fill(
+    pub fn CDLCONCEALBABYSWALL_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CdlconcealbabyswallStream, RetCode> {
+    ) -> Result<CDLCONCEALBABYSWALL_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -805,7 +805,7 @@ impl Core {
         let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
-        lookbackTotal = self.cdlconcealbabyswall_lookback();
+        lookbackTotal = self.CDLCONCEALBABYSWALL_Lookback();
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < lookbackTotal {
@@ -1006,7 +1006,7 @@ impl Core {
         win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
         let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
         win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CdlconcealbabyswallStreamState {
+        let state = CDLCONCEALBABYSWALL_StreamState {
             ShadowVeryShortPeriodTotal,
             totIdx,
             lag1_inOpen: inOpen[historyLen - 1],
@@ -1035,19 +1035,19 @@ impl Core {
             win_totIdx_inLow,
             win_totIdx_inClose,
         };
-        Ok(CdlconcealbabyswallStream { core: self.clone(), state })
+        Ok(CDLCONCEALBABYSWALL_Stream { core: self.clone(), state })
     }
 
 }
 
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-impl CdlconcealbabyswallStream {
+impl CDLCONCEALBABYSWALL_Stream {
     /// Commit one closed bar; always produces a value. Never allocates.
     #[doc(alias = "TA_CDLCONCEALBABYSWALL_Update")]
     pub fn update(&mut self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
         let mut outInteger: i32 = 0_i32;
-        self.core.cdlconcealbabyswall_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
+        self.core.CDLCONCEALBABYSWALL_step_internal(&mut self.state, inOpen, inHigh, inLow, inClose, &mut outInteger);
         outInteger
     }
 
@@ -1065,7 +1065,7 @@ impl CdlconcealbabyswallStream {
 
 const _: () = {
     const fn _assert_auto<T: Send + Sync + Clone>() {}
-    _assert_auto::<CdlconcealbabyswallStream>();
+    _assert_auto::<CDLCONCEALBABYSWALL_Stream>();
 };
 
 /***************/

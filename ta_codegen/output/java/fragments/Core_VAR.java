@@ -17,7 +17,7 @@
  */
 
    /**
-    * Number of leading input bars {@link Core#variance} consumes before it can
+    * Number of leading input bars {@link Core#VAR} consumes before it can
     * produce its first value.
     * <p>Equivalently, the index of the first bar with a value when the whole
     * series is requested. Feed at least {@code lookback + 1} bars to get any
@@ -29,7 +29,7 @@
     *        the computation (default 1; {@code -4e37} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
-   public int varianceLookback( int optInTimePeriod, double optInNbDev )
+   public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
    {
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 5;
@@ -44,14 +44,14 @@
       return optInTimePeriod - 1 ;
 
    }
-   RetCode varianceInternal( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode VAR_Internal( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double tempReal = 0;
       double shift = 0;
@@ -182,14 +182,14 @@
       outBegIdx.value = startIdx;
       return RetCode.Success ;
    }
-   RetCode varianceInternal( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             MInteger outBegIdx,
-                             MInteger outNBElement,
-                             double outReal[] )
+   RetCode VAR_Internal( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         double optInNbDev,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
    {
       double tempReal = 0;
       double shift = 0;
@@ -303,8 +303,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#varianceLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#VAR_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -323,18 +323,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#stdDev
+    * @see Core#STDDEV
     */
-   public OutRange variance( int startIdx,
-                             int endIdx,
-                             double inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             double outReal[] )
+   public OutRange VAR( int startIdx,
+                        int endIdx,
+                        double inReal[],
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VAR", retCode);
       }
@@ -359,8 +359,8 @@
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
-    * valid range shorter than {@link Core#varianceLookback} is a <b>success
-    * with no values</b> ({@code count() == 0}), not an error.
+    * valid range shorter than {@link Core#VAR_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
     *
     * @param startIdx First bar of the requested range (inclusive).
     * @param endIdx Last bar of the requested range (inclusive).
@@ -379,18 +379,18 @@
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
     *
-    * @see Core#stdDev
+    * @see Core#STDDEV
     */
-   public OutRange variance( int startIdx,
-                             int endIdx,
-                             float inReal[],
-                             int optInTimePeriod,
-                             double optInNbDev,
-                             double outReal[] )
+   public OutRange VAR( int startIdx,
+                        int endIdx,
+                        float inReal[],
+                        int optInTimePeriod,
+                        double optInNbDev,
+                        double outReal[] )
    {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = varianceInternal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw failure("VAR", retCode);
       }
@@ -400,8 +400,8 @@
 
    /**
     * A live VAR stream (unrelated to {@code java.util.stream}): one value per
-    * closed bar, bit-identical to {@link Core#variance} over the same series.
-    * Open with {@link Core#varianceOpen}; there is no close — the handle is
+    * closed bar, bit-identical to {@link Core#VAR} over the same series.
+    * Open with {@link Core#VAR_Open}; there is no close — the handle is
     * ordinary heap state, unreferenced handles are simply garbage-collected.
     * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
     * {@code value} and {@code copy} must not race with an {@code update} on
@@ -412,7 +412,7 @@
     * <p>Not serializable by design: to checkpoint, retain the history and
     * re-open — the result is bit-identical by contract.
     */
-   public static final class VarianceStream {
+   public static final class VAR_Stream {
       final Core core;
       int optInTimePeriod;
       double optInNbDev;
@@ -433,10 +433,10 @@
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
-      VarianceStream( Core core ) { this.core = core; }
+      VAR_Stream( Core core ) { this.core = core; }
 
       /**
-       * The range filled by {@link Core#varianceOpenAndFill}, or
+       * The range filled by {@link Core#VAR_OpenAndFill}, or
        * {@link OutRange#EMPTY} when this handle came from a plain
        * {@code open} (which fills nothing). Never {@code null}; a
        * successful {@code openAndFill} always writes at least one value,
@@ -444,7 +444,7 @@
        */
       public OutRange fillRange() { return fillRange; }
 
-      VarianceStream( VarianceStream other ) {
+      VAR_Stream( VAR_Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -471,7 +471,7 @@
        * Never throws after a successful open; never allocates handle state.
        */
       public double update( double inReal ) {
-         core.varianceStreamStep(this, inReal);
+         core.VAR_StreamStep(this, inReal);
          return this.cur_outReal;
       }
 
@@ -483,8 +483,8 @@
        * prefer {@code update} on a {@code copy()}.
        */
       public double peek( double inReal ) {
-         VarianceStream scratch = new VarianceStream(this);
-         core.varianceStreamStep(scratch, inReal);
+         VAR_Stream scratch = new VAR_Stream(this);
+         core.VAR_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }
 
@@ -501,11 +501,11 @@
        * An independent deep copy of this stream: both evolve separately from
        * here on (the Java rendering of the Rust handle's {@code Clone}).
        */
-      public VarianceStream copy() {
-         return new VarianceStream(this);
+      public VAR_Stream copy() {
+         return new VAR_Stream(this);
       }
    }
-   void varianceStreamStep( VarianceStream sp, double inReal )
+   void VAR_StreamStep( VAR_Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.i >= 1073741824 ) {
@@ -572,7 +572,7 @@
       sp.cur_outReal = sp.variance;
       sp.i += 1;
    }
-   private RetCode varianceOpenBody( VarianceStream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   private RetCode VAR_OpenBody( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
       double tempReal = 0;
       double shift = 0;
@@ -734,7 +734,7 @@
       sp.cur_outReal = lastValue_outReal;
       return RetCode.Success;
    }
-   private RetCode varianceOpenAndFillBody( VarianceStream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode VAR_OpenAndFillBody( VAR_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
       double tempReal = 0;
       double shift = 0;
@@ -897,11 +897,11 @@
       sp.cur_outReal = outReal[outNBElement.value - 1];
       return RetCode.Success;
    }
-   /* Internal startIdx-anchored open behind varianceOpen (composition seam). */
-   VarianceStream varianceOpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   /* Internal startIdx-anchored open behind VAR_Open (composition seam). */
+   VAR_Stream VAR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {
-      VarianceStream sp = new VarianceStream(this);
-      RetCode retCode = varianceOpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
+      VAR_Stream sp = new VAR_Stream(this);
+      RetCode retCode = VAR_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev);
       if( retCode == RetCode.Success ) {
          return sp;
       }
@@ -916,32 +916,32 @@
    /**
     * Open a live VAR stream over the warm-up history; the handle's
     * {@code value()} starts at the last history bar's value — bit-identical
-    * to {@link Core#variance} at that bar.
-    * <p>The history must hold at least {@code varianceLookback(...) + 1} bars
+    * to {@link Core#VAR} at that bar.
+    * <p>The history must hold at least {@code VAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
     * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
     * default, as in the batch API).
     */
-   public VarianceStream varianceOpen( double inReal[], int optInTimePeriod, double optInNbDev )
+   public VAR_Stream VAR_Open( double inReal[], int optInTimePeriod, double optInNbDev )
    {
-      return varianceOpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
+      return VAR_OpenInternal(inReal, 0, optInTimePeriod, optInNbDev);
    }
    /**
-    * {@link Core#varianceOpen} that also fills the output array(s) bit-identically
-    * to {@link Core#variance} over the whole history in the same single pass
+    * {@link Core#VAR_Open} that also fills the output array(s) bit-identically
+    * to {@link Core#VAR} over the whole history in the same single pass
     * (no separate batch call needed for the warm-up plot). Output arrays must
     * not alias the inputs or each other, and must hold
     * {@code historyLen - lookback} values.
     * <p>The range written is on the returned handle:
-    * {@link VarianceStream#fillRange()}.
+    * {@link VAR_Stream#fillRange()}.
     */
-   public VarianceStream varianceOpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
+   public VAR_Stream VAR_OpenAndFill( double inReal[], int optInTimePeriod, double optInNbDev, double outReal[] )
    {
-      VarianceStream sp = new VarianceStream(this);
+      VAR_Stream sp = new VAR_Stream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = varianceOpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      RetCode retCode = VAR_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
       if( retCode == RetCode.Success ) {
          return sp;
