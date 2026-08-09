@@ -71,12 +71,13 @@ public class StreamSmokeTest {
      * Every stream opener, given one bar of history, must report ITSELF using the
      * spelling the metadata registry publishes — {@code "<name> open: ..."}.
      *
-     * <p>Swept over all 168 rather than sampled: the three spellings of a function
-     * differ (the Java method {@code htTrendline}, the registry name {@code
-     * HT_TRENDLINE}, C's {@code TA_HT_TRENDLINE}), so a hardcoded prefix would pin
-     * whichever happened to be current, and two hand-picked functions cannot see a
-     * composed opener naming its sub-stage. The expectation is read from the
-     * registry so the message and the registry move together.
+     * <p>Swept over every registered function rather than sampled: the three
+     * spellings of a function differ (the Java method {@code htTrendline}, the
+     * registry name {@code HT_TRENDLINE}, C's {@code TA_HT_TRENDLINE}), so a
+     * hardcoded prefix would pin whichever happened to be current, and two
+     * hand-picked functions cannot see a composed opener naming its sub-stage.
+     * The expectation is read from the registry so the message and the registry
+     * move together.
      *
      * <p>Zero-lookback functions (ACOS, AD, OBV, …) succeed on one bar and are
      * counted, not asserted.
@@ -113,14 +114,22 @@ public class StreamSmokeTest {
                     unexpected.add(f.name() + ": unhandled parameter " + pt[i].getName());
                 }
             }
+            // Which arm this function belongs in is a fact the registry already
+            // knows, so assert it per function instead of pinning the two totals.
+            int lookback = f.newCall(core).lookback();
             try {
                 open.invoke(core, args);
+                if (lookback > 0) {
+                    unexpected.add(f.name() + ": accepted one bar despite lookback " + lookback);
+                }
                 noThrow++;                             // zero-lookback function
             } catch (java.lang.reflect.InvocationTargetException e) {
                 Throwable t = e.getCause();
                 String msg = String.valueOf(t.getMessage());
                 if (!(t instanceof InsufficientHistoryException)) {
                     unexpected.add(f.name() + " -> " + t.getClass().getSimpleName() + ": " + msg);
+                } else if (lookback == 0) {
+                    unexpected.add(f.name() + ": rejected one bar despite lookback 0");
                 } else if (msg.startsWith(f.name() + " open:")) {
                     own++;
                 } else {
@@ -138,14 +147,18 @@ public class StreamSmokeTest {
             System.out.println("  (reports a sub-stage's name: " + s + ")");
         }
         check(unexpected.isEmpty(), "every opener is reachable and rejects as documented");
-        check(own + noThrow + substage.size() == 168,
-              "the sweep covered all 168 functions (saw " + (own + noThrow + substage.size()) + ")");
-        check(noThrow == 28, "28 zero-lookback openers accept one bar (saw " + noThrow + ")");
+        int registered = io.github.talib.metadata.Functions.all().size();
+        check(own + noThrow + substage.size() == registered,
+              "the sweep covered every registered function (saw "
+              + (own + noThrow + substage.size()) + "/" + registered + ")");
         /* No allowlist. Until the composed shape got its own-lookback precheck,
          * APO/BBANDS/PPO/PVO reported "MA open:" and STDDEV "VAR open:" — the
-         * sub-stream they delegate to. All 140 now name themselves. */
+         * sub-stream they delegate to. Every opener now names itself. */
         check(substage.isEmpty(), "no opener reports a sub-stage's name (saw " + substage.size() + ")");
-        check(own == 140, "all 140 throwing openers name themselves (saw " + own + ")");
+        /* Non-vacuity: both arms must actually be reached. Which functions land
+         * in which is asserted per function in the loop, against the registry. */
+        check(noThrow > 0 && own > 0,
+              "both arms exercised (" + noThrow + " zero-lookback, " + own + " throwing)");
     }
 
     private static boolean bitEq(double a, double b) {
