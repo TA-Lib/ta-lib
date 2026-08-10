@@ -158,7 +158,11 @@ fn test_rust_identity_fast_path_t3() {
     // param==1 identity short-circuit before the transcribed body: min-history
     // check via lookback, passthrough value, default state.
     assert!(s.contains("if historyLen < self.T3_Lookback(optInTimePeriod, optInVFactor) + 1 {"));
-    assert!(s.contains("outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];"));
+    // Stride 0 short-circuits to the last bar; only the fill arm loops. Letting
+    // the loop run at stride 0 is correct but makes the scalar Open O(history).
+    assert!(s.contains("if outStride == 0 {"), "identity arm short-circuits at stride 0");
+    assert!(s.contains("outReal[0] = inReal[historyLen - 1];"), "stride-0 arm takes the last bar");
+    assert!(s.contains("outReal[fillIdx] = inReal[fillLb + fillIdx];"), "fill arm indexes plainly");
 }
 
 #[test]

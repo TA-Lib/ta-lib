@@ -399,9 +399,16 @@ static TA_RetCode TA_VWMA_OpenCore( struct TA_VWMA_Stream **stream, const double
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
-         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         if( outStride )
          {
-            outReal[(fillIdx) * outStride] = inReal[fillLb + fillIdx];
+            for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+            {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         else
+         {
+            outReal[0] = inReal[historyLen - 1];
          }
       }
       *stream = sp;

@@ -59467,8 +59467,12 @@ public final class Core {
          int fillLb = CMO_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -62271,8 +62275,12 @@ public final class Core {
          int fillLb = DEMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -64525,8 +64533,12 @@ public final class Core {
          int fillLb = EMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -66176,8 +66188,12 @@ public final class Core {
          int fillLb = HMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -78621,8 +78637,12 @@ public final class Core {
          int fillLb = KAMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -106379,8 +106399,12 @@ public final class Core {
          int fillLb = RSI_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -115720,8 +115744,12 @@ public final class Core {
          int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -117152,8 +117180,12 @@ public final class Core {
          int fillLb = TEMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -123242,8 +123274,12 @@ public final class Core {
          int fillLb = VWMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
@@ -125005,8 +125041,12 @@ public final class Core {
          int fillLb = WMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;

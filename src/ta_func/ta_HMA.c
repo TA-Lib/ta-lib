@@ -719,9 +719,16 @@ static TA_RetCode TA_HMA_OpenCore( struct TA_HMA_Stream **stream, const double i
          int fillIdx;
          *outBegIdx = fillLb;
          *outNBElement = historyLen - fillLb;
-         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         if( outStride )
          {
-            outReal[(fillIdx) * outStride] = inReal[fillLb + fillIdx];
+            for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+            {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
+         }
+         else
+         {
+            outReal[0] = inReal[historyLen - 1];
          }
       }
       *stream = sp;

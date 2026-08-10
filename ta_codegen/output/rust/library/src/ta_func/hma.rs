@@ -603,10 +603,14 @@ impl Core {
             let fillLb: usize = self.HMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
-            let mut fillIdx: usize = 0;
-            while fillIdx < historyLen - fillLb {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
-                fillIdx += 1;
+            if outStride == 0 {
+                outReal[0] = inReal[historyLen - 1];
+            } else {
+                let mut fillIdx: usize = 0;
+                while fillIdx < historyLen - fillLb {
+                    outReal[fillIdx] = inReal[fillLb + fillIdx];
+                    fillIdx += 1;
+                }
             }
             return Ok(HMA_Stream { core: self.clone(), state });
         }

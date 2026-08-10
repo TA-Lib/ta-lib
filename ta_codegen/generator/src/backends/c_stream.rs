@@ -3284,18 +3284,32 @@ fn emit_identity_fast_path(
         ));
         // Fill the whole identity range: output j maps to input bar
         // (lookback + j), 0 <= j < historyLen - lookback — batch(0,len-1) for the
-        // identity param (a shifted copy; bit-exact by construction). At stride 0
-        // the loop rewrites slot 0 each pass and leaves the last value there,
-        // which is exactly what the scalar path published.
+        // identity param (a shifted copy; bit-exact by construction).
+        //
+        // Stride 0 short-circuits to the last bar instead of running the loop.
+        // It would be CORRECT to let it run (every iteration rewrites slot 0 and
+        // the last one leaves the right value), but the scalar Open would then
+        // be O(history) where it is O(1) — a whole-history loop whose only
+        // surviving effect is its final store. `outStride` is a literal at both
+        // call sites, so this branch folds away in each.
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         int fillLb = {lb_call};");
         let _ = writeln!(o, "         int fillIdx;");
         let _ = writeln!(o, "         *outBegIdx = fillLb;");
         let _ = writeln!(o, "         *outNBElement = historyLen - fillLb;");
-        let _ = writeln!(o, "         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
+        let _ = writeln!(o, "         if( {OUT_STRIDE} )");
+        let _ = writeln!(o, "         {{");
+        let _ = writeln!(o, "            for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
+        let _ = writeln!(o, "            {{");
+        for (out, inp) in &idp.pairs {
+            let _ = writeln!(o, "               {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+        }
+        let _ = writeln!(o, "            }}");
+        let _ = writeln!(o, "         }}");
+        let _ = writeln!(o, "         else");
         let _ = writeln!(o, "         {{");
         for (out, inp) in &idp.pairs {
-            let _ = writeln!(o, "            {out}[{}] = {inp}[fillLb + fillIdx];", stride_index("fillIdx"));
+            let _ = writeln!(o, "            {out}[0] = {inp}[historyLen - 1];");
         }
         let _ = writeln!(o, "         }}");
         let _ = writeln!(o, "      }}");

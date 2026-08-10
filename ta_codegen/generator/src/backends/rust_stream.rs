@@ -1373,19 +1373,26 @@ fn emit_identity_fast_path(
         let _ = writeln!(o, "                {name}: {default},");
     }
     let _ = writeln!(o, "            }};");
-    // Fill the whole identity range through the stride: at stride 1 this is
-    // batch(0, len-1) for the identity param; at stride 0 every iteration
-    // rewrites slot 0 and leaves inReal[historyLen - 1] there, which is exactly
-    // what the scalar arm used to return directly.
+    // Fill the whole identity range: at stride 1 this is batch(0, len-1) for the
+    // identity param. Stride 0 short-circuits to the last bar — letting the loop
+    // run would be CORRECT (every iteration rewrites slot 0, the last one leaves
+    // the right value) but would make the scalar Open O(history) where it is
+    // O(1). `outStride` is a literal at both call sites, so the branch folds.
     let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
     let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
     let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
-    let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
-    let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
+    let _ = writeln!(o, "            if outStride == 0 {{");
     for (out, inp) in &idp.pairs {
-        let _ = writeln!(o, "                {out}[fillIdx * outStride] = {inp}[fillLb + fillIdx];");
+        let _ = writeln!(o, "                {out}[0] = {inp}[historyLen - 1];");
     }
-    let _ = writeln!(o, "                fillIdx += 1;");
+    let _ = writeln!(o, "            }} else {{");
+    let _ = writeln!(o, "                let mut fillIdx: usize = 0;");
+    let _ = writeln!(o, "                while fillIdx < historyLen - fillLb {{");
+    for (out, inp) in &idp.pairs {
+        let _ = writeln!(o, "                    {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+    }
+    let _ = writeln!(o, "                    fillIdx += 1;");
+    let _ = writeln!(o, "                }}");
     let _ = writeln!(o, "            }}");
     let _ = writeln!(
         o,

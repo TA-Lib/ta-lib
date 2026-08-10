@@ -385,3 +385,19 @@ fn java_composed_copy_out_is_stride_guarded() {
         "the composed copy-out is guarded by the stride"
     );
 }
+
+#[test]
+fn java_identity_fast_path_short_circuits_at_stride_zero() {
+    // Java has no inliner guarantee here — a cold Open runs the loop in full —
+    // so the stride-0 short-circuit matters more than in C/Rust, not less.
+    let s = java_stream_section("t3");
+    assert!(s.contains("if( outStride == 0 ) {"), "identity arm short-circuits at stride 0");
+    assert!(
+        s.contains("outReal[0] = inReal[historyLen - 1];"),
+        "stride-0 arm takes the last bar directly"
+    );
+    assert!(
+        s.contains("outReal[fillIdx] = inReal[fillLb + fillIdx];"),
+        "fill arm indexes plainly"
+    );
+}

@@ -1380,17 +1380,23 @@ fn emit_identity_fast_path(
             let _ = writeln!(o, "         sp.{name} = {default};");
         }
     }
-    // Fill the whole identity range through the stride: at stride 1 this is
-    // batch(0, len-1) for the identity param; at stride 0 every iteration
-    // rewrites slot 0 and leaves the last history value there, which is exactly
-    // what the scalar arm used to assign directly.
+    // Fill the whole identity range: at stride 1 this is batch(0, len-1) for the
+    // identity param. Stride 0 short-circuits to the last bar — letting the loop
+    // run would be CORRECT but would make the scalar Open O(history) where it is
+    // O(1), and here there is no inliner guarantee: a cold Open runs it in full.
     let _ = writeln!(o, "         int fillLb = {lb_call};");
     let _ = writeln!(o, "         outBegIdx.value = fillLb;");
     let _ = writeln!(o, "         outNBElement.value = historyLen - fillLb;");
-    let _ = writeln!(o, "         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {{");
+    let _ = writeln!(o, "         if( outStride == 0 ) {{");
     for (out, inp) in &idp.pairs {
-        let _ = writeln!(o, "            {out}[fillIdx * outStride] = {inp}[fillLb + fillIdx];");
+        let _ = writeln!(o, "            {out}[0] = {inp}[historyLen - 1];");
     }
+    let _ = writeln!(o, "         }} else {{");
+    let _ = writeln!(o, "            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {{");
+    for (out, inp) in &idp.pairs {
+        let _ = writeln!(o, "               {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+    }
+    let _ = writeln!(o, "            }}");
     let _ = writeln!(o, "         }}");
     for (out, _inp) in &idp.pairs {
         let _ = writeln!(o, "         sp.cur_{out} = {out}[(outNBElement.value - 1) * outStride];");

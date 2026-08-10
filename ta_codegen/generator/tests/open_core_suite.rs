@@ -390,3 +390,25 @@ fn every_mergeable_function_has_exactly_one_core() {
         "these streaming functions did not get a merged core: {missing:?}"
     );
 }
+
+#[test]
+fn identity_fast_path_short_circuits_at_stride_zero() {
+    // The identity arm (period 1 => the output IS the input, shifted) must not
+    // pay for the fill loop when there is nowhere to fill. At stride 0 every
+    // iteration stores to slot 0 of the one-element sink, so a whole-history
+    // loop would leave `Open` O(history) where it used to be O(1) — correct,
+    // but linear in the warm-up for the 8 functions whose period-1 arm is
+    // reachable (EMA, DEMA, TEMA, T3, KAMA, HMA, WMA, VWMA).
+    let src = stream_c("ema");
+    let core = strip_comments(&body_of(&src, "TA_EMA_OpenCore("));
+    assert!(
+        core.contains("outReal[0] = inReal[historyLen - 1];"),
+        "the identity arm takes the last bar directly at stride 0:\n{core}"
+    );
+    // ...and the fill arm keeps the plain (unscaled) subscript, since stride is
+    // 1 there by construction.
+    assert!(
+        core.contains("outReal[fillIdx] = inReal[fillLb + fillIdx];"),
+        "the identity fill arm indexes plainly:\n{core}"
+    );
+}
