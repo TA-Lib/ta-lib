@@ -87,7 +87,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return -1;
       }
       int retValue = 0;
@@ -161,7 +161,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       /* No-smoothing identity: period 1 (every MA type) or the explicit
@@ -246,7 +246,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {

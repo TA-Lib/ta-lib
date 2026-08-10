@@ -360,6 +360,14 @@ fn gen_header() -> String {
 /// in C++ — `TA_INTEGER_DEFAULT` is an `int` with no implicit conversion to an
 /// enum type there. C keeps both, permanently: the sentinel is public header
 /// API already compiled into caller binaries.
+///
+/// Both bounds and the sentinel are emitted **by name**: `TA_INTEGER_DEFAULT`
+/// rather than the `(int)0x80000000` it expands to, and an `enum:` param's span
+/// as that enum's generated `_MIN`/`_MAX` macros rather than the numbers of the
+/// day. Every one of these prologues is a copy — five tiers times ten
+/// MAType-taking functions — so a literal bound here is a number that has to be
+/// right in a hundred places at once, and reads to anyone opening
+/// `src/ta_func/ta_MA.c` as a hand-maintained one.
 // Integer optional-param defaults and ranges are stored as `f64` in the IR; casting
 // the integer-valued ones to `i32` for literal emission is exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
@@ -380,15 +388,15 @@ pub(crate) fn emit_opt_param_validation(
                         _ => String::new(),
                     };
                     out.push_str(&format!(
-                        "   if( (int){name} == (int)0x80000000{extra} )\n      {name} = {val};\n",
+                        "   if( (int){name} == TA_INTEGER_DEFAULT{extra} )\n      {name} = {val};\n",
                         name = opt.name,
                         val = default_val as i32
                     ));
-                    if let Some((min, max)) = super::common::effective_range(opt, enums) {
-                        let min_i = min as i32;
-                        let max_i = max as i32;
+                    if let Some((min, max)) =
+                        super::common::int_bound_exprs(opt, enums, crate::registry::Lang::C)
+                    {
                         out.push_str(&format!(
-                            "   else if( (int){name} < {min_i} || (int){name} > {max_i} )\n      return {fail};\n",
+                            "   else if( (int){name} < {min} || (int){name} > {max} )\n      return {fail};\n",
                             name = opt.name
                         ));
                     }

@@ -78,7 +78,7 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
 {
    int maLookback;
    int stddevLookback;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
@@ -90,9 +90,9 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return -1;
    /* A band value needs BOTH the middle-band moving average and the standard
     * deviation of the outer bands, so the first valid output is the later of the
@@ -141,7 +141,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -153,9 +153,9 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
@@ -440,7 +440,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -452,9 +452,9 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
@@ -742,7 +742,7 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
    if( !inReal || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -754,9 +754,9 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

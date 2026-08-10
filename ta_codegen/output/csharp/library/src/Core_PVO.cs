@@ -87,7 +87,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return -1;
       }
       /* Lookback is driven by the slowest MA. */
@@ -132,7 +132,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       /* Allocate an intermediate buffer. */
@@ -210,7 +210,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];

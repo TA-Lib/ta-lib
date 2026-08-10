@@ -14,7 +14,8 @@
 //!   inside the enum. Emitting it *as a member* would make it an id and corrupt
 //!   the ABI, so it goes in a sibling `FuncUnstIds` static class.
 
-use crate::ir::EnumDef;
+use crate::ir::{EnumDef, FuncDef};
+use crate::registry::Lang;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -27,19 +28,23 @@ const NAMESPACE: &str = "TALib";
 /// ordinal-equals-`value:` assert catches a non-contiguous edit before it can
 /// silently reorder the ABI.
 #[allow(clippy::implicit_hasher)]
-pub fn generate_matype(enums: &HashMap<String, EnumDef>, path: &Path) {
+pub fn generate_matype(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, path: &Path) {
     let ma = enums
         .get("MAType")
         .expect("MAType enum missing from enums.yaml");
-    let s = render_matype(enums);
+    let s = render_matype(funcs, enums);
     super::write_if_changed(path, &s, "MAType.cs", ma.variants.len());
 }
 
 /// Render `MAType.cs`. Split from [`generate_matype`] so tests can assert on the
 /// emitted text rather than merely on the emitter having run.
+///
+/// `funcs` decides only whether the `MATypes` limit companion is emitted — it is,
+/// for an enum some optional parameter is declared with, because the generated
+/// prologue range-checks such a parameter and needs a name for the bound.
 #[allow(clippy::implicit_hasher)]
 #[must_use]
-pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
+pub fn render_matype(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let ma = enums
         .get("MAType")
         .expect("MAType enum missing from enums.yaml");
@@ -64,7 +69,49 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
         s.push_str(&format!("    {} = {},\n", v.name, v.value));
     }
     s.push_str("}\n");
+    if super::common::param_enum_names(funcs).contains(&ma.name) {
+        s.push_str(&render_limits(ma));
+    }
     s
+}
+
+/// The `MATypes` companion holding the enum's inclusive value limits.
+///
+/// C# surfaces `optInMAType` as an enum with no implicit int conversion but no
+/// domain check either — `(MAType)42` is a legal cast — so the generated
+/// prologue range-checks it, and these are what that check names. Derived from
+/// the member list, so appending a member widens every check at once instead of
+/// leaving a literal bound in each of them.
+///
+/// A C# enum cannot hold static members, hence the sibling class, exactly as
+/// `FuncUnstIds.Count` does for `FuncUnstId`.
+fn render_limits(def: &EnumDef) -> String {
+    let (lo, hi) = super::common::enum_value_bounds_of(def).expect("a parameter enum has members");
+    let (min_name, max_name) =
+        super::common::enum_limit_names_of(def, Lang::CSharp).expect("C# declares enum limits");
+    // The registry hands back qualified names (`MATypes.Min`); the declaration
+    // needs the class and the member apart.
+    let (class, min_member) = split_qualified(&min_name);
+    let (_, max_member) = split_qualified(&max_name);
+    let ty = &def.name;
+    format!(
+        "\n/// <summary>Companion constants for <see cref=\"{ty}\"/>.</summary>\n\
+         public static class {class}\n{{\n\
+         \x20   /// <summary>Lowest value <see cref=\"{ty}\"/> defines. Not a member:\n\
+         \x20   /// the inclusive lower bound of the domain a parameter of that type\n\
+         \x20   /// accepts.</summary>\n\
+         \x20   public const int {min_member} = {lo};\n\n\
+         \x20   /// <summary>Highest value <see cref=\"{ty}\"/> defines. Grows when a\n\
+         \x20   /// member is appended.</summary>\n\
+         \x20   public const int {max_member} = {hi};\n\
+         }}\n"
+    )
+}
+
+/// Split `Class.Member` into its two halves.
+fn split_qualified(name: &str) -> (&str, &str) {
+    name.split_once('.')
+        .unwrap_or_else(|| panic!("expected a qualified C# constant name, got {name}"))
 }
 
 /// Generate the shipped C# `FuncUnstId` enum plus its `FuncUnstIds.Count`.

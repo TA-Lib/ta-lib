@@ -22,6 +22,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
+- TA_MATYPE_MIN / TA_MATYPE_MAX in ta_defs.h (MATypes.Min / MATypes.Max in C#): the
+  inclusive value limits of the MA type list, so a caller can range-check an
+  optInMAType without hard-coding how many members there are.
 
 ### Faster
 - ~3x to 7x: DEMA, TEMA and TRIX

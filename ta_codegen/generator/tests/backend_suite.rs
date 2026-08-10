@@ -12,7 +12,7 @@ use ta_codegen_lib::backends;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::parser;
-use ta_codegen_lib::registry::Registry;
+use ta_codegen_lib::registry::{Lang, Registry};
 
 // ---------------------------------------------------------------------------
 // Test infrastructure
@@ -8003,17 +8003,15 @@ fn enum_param_gets_a_domain_gate_in_both_tiers() {
     let registry = make_registry();
     let helpers = make_helpers();
 
-    let hi = enums
-        .get("MAType")
-        .expect("MAType")
-        .variants
-        .iter()
-        .map(|v| v.value)
-        .max()
-        .expect("members");
+    // The gate names the generated limit constants rather than the numbers of
+    // the day -- that is the whole point of them, so assert the spelling the
+    // enum surface declares and never a literal.
+    let ma = enums.get("MAType").expect("MAType");
+    let (c_min, c_max) =
+        backends::common::enum_limit_names_of(ma, Lang::C).expect("C declares MAType limits");
 
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
-    let gate = format!("(int)optInMAType < 0 || (int)optInMAType > {hi}");
+    let gate = format!("(int)optInMAType < {c_min} || (int)optInMAType > {c_max}");
     // Both tiers: the lookback fails with -1, the guarded call with TA_BAD_PARAM.
     assert!(
         c.contains(&format!("{gate} )\n      return -1;")),
@@ -8024,12 +8022,88 @@ fn enum_param_gets_a_domain_gate_in_both_tiers() {
         "C guarded call lost the enum domain gate:\n{c}"
     );
 
+    let (cs_min, cs_max) = backends::common::enum_limit_names_of(ma, Lang::CSharp)
+        .expect("C# declares MAType limits");
     let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
     assert!(
-        cs.contains(&format!("(int)optInMAType < 0 || (int)optInMAType > {hi}")),
+        cs.contains(&format!("(int)optInMAType < {cs_min} || (int)optInMAType > {cs_max}")),
         "C# lost the enum domain gate:\n{cs}"
     );
 
+    // And no tier carries the bound as a number any more: a reintroduced literal
+    // is a value that has to be re-edited in every prologue when a member is
+    // appended, which is the defect the constants exist to remove.
+    let hi = ma.variants.iter().map(|v| v.value).max().expect("members");
+    for (lang, src) in [("C", &c), ("C#", &cs)] {
+        assert!(
+            !src.contains(&format!("optInMAType > {hi}")),
+            "{lang} spelled the MAType bound as a literal again:\n{src}"
+        );
+    }
+}
+
+#[test]
+fn the_enum_limit_macros_are_declared_next_to_the_enum() {
+    // The declaration is where the number now lives, so it is what has to be
+    // derived. A synthetic enum that ends somewhere other than MAType's 11 is
+    // what separates a derived bound from a hard-coded one.
+    use ta_codegen_lib::ir::{EnumDef, EnumVariant};
+    let tri = EnumDef {
+        name: "Tri".to_string(),
+        c_prefix: "TA_Tri_".to_string(),
+        variants: (0..3)
+            .map(|v| EnumVariant {
+                name: format!("V{v}"),
+                c_name: format!("TA_Tri_V{v}"),
+                value: v,
+            })
+            .collect(),
+    };
+
+    let c = backends::ta_defs::render_enum_limits(&tri, "TA_Tri");
+    assert!(
+        c.contains("#define TA_TRI_MIN 0") && c.contains("#define TA_TRI_MAX 2"),
+        "the C limit macros must span the members and take the enum's own \
+         c_prefix, upper-cased:\n{c}"
+    );
+
+    // C# reaches the same numbers through the shipped enum file. Swap MAType's
+    // members for the synthetic three so a hard-coded 11 could not pass.
+    let (func, _) = load_indicator("ma");
+    let mut enums = load_enums();
+    let ma = enums.get_mut("MAType").expect("MAType");
+    ma.variants.truncate(3);
+    let cs = backends::csharp_enums::render_matype(std::slice::from_ref(&func), &enums);
+    assert!(
+        cs.contains("public const int Min = 0;") && cs.contains("public const int Max = 2;"),
+        "the C# limit companion must span the members:\n{cs}"
+    );
+    assert!(
+        cs.contains("public static class MATypes"),
+        "the C# limits must live in the enum's companion class:\n{cs}"
+    );
+}
+
+#[test]
+fn an_enum_no_parameter_is_typed_with_gets_no_limits() {
+    // FuncUnstId's pinned ALL = 65535 sits outside its member span, so limits
+    // derived from the members would describe a domain its API does not have.
+    // Nothing is typed with it, so nothing emits them -- assert that rule holds
+    // rather than that FuncUnstId in particular is spelled out somewhere.
+    let enums = load_enums();
+    let (func, _) = load_indicator("ma");
+    let param_enums = backends::common::param_enum_names(std::slice::from_ref(&func));
+    assert!(param_enums.contains("MAType"), "MA takes an optInMAType");
+    assert!(
+        !param_enums.contains("FuncUnstId"),
+        "no optional parameter is typed with FuncUnstId"
+    );
+
+    let cs = backends::csharp_enums::render_funcunstid(&enums);
+    assert!(
+        !cs.contains("Min =") && !cs.contains("Max ="),
+        "FuncUnstId gained value limits its ALL wildcard falls outside of:\n{cs}"
+    );
 }
 
 #[test]
@@ -8039,6 +8113,8 @@ fn the_gate_bound_follows_the_member_set() {
     // while the enum happens to end at 11. So span it against a synthetic enum
     // that ends somewhere else.
     use ta_codegen_lib::ir::{EnumDef, EnumVariant, OptInput, ParamType};
+    // (What the prologue now emits is the constant's NAME; the number it
+    // resolves to is asserted at the declaration, above.)
     let mut enums = load_enums();
     enums.insert(
         "Tri".to_string(),
@@ -8066,17 +8142,24 @@ fn the_gate_bound_follows_the_member_set() {
         precision: None,
     };
     assert_eq!(
-        backends::common::effective_range(&opt, &enums),
-        Some((0.0, 2.0)),
+        backends::common::enum_value_bounds_of(enums.get("Tri").expect("Tri")),
+        Some((0, 2)),
         "the domain must span the members, not a hard-coded bound"
+    );
+    assert_eq!(
+        backends::common::int_bound_exprs(&opt, &enums, Lang::C),
+        Some(("TA_TRI_MIN".to_string(), "TA_TRI_MAX".to_string())),
+        "the prologue must name the enum's own limit macros, not MAType's"
     );
 }
 
 #[test]
 fn a_declared_range_still_wins_over_the_member_span() {
-    // The precedence branch in `effective_range`: an `enum:` parameter that DID
+    // The precedence branch in `int_bound_exprs`: an `enum:` parameter that DID
     // declare a range must keep it, or a narrower intent would be silently
-    // widened to the whole enum. Nothing in the shipped input exercises this.
+    // widened to the whole enum. A declared range is per-parameter, so it stays
+    // a literal -- the limit constants describe the TYPE's domain, which is not
+    // the same thing. Nothing in the shipped input exercises this.
     use ta_codegen_lib::ir::{OptInput, ParamType};
     let enums = load_enums();
     let opt = OptInput {
@@ -8091,8 +8174,8 @@ fn a_declared_range_still_wins_over_the_member_span() {
         precision: None,
     };
     assert_eq!(
-        backends::common::effective_range(&opt, &enums),
-        Some((0.0, 2.0)),
+        backends::common::int_bound_exprs(&opt, &enums, Lang::C),
+        Some(("0".to_string(), "2".to_string())),
         "a declared range must win over the member span"
     );
 }
@@ -8100,7 +8183,8 @@ fn a_declared_range_still_wins_over_the_member_span() {
 #[test]
 fn csharp_matype_emits_every_yaml_variant_with_its_value() {
     let enums = load_enums();
-    let src = backends::csharp_enums::render_matype(&enums);
+    let (func, _) = load_indicator("ma");
+    let src = backends::csharp_enums::render_matype(std::slice::from_ref(&func), &enums);
     let ma = enums.get("MAType").expect("MAType in enums.yaml");
 
     for v in &ma.variants {

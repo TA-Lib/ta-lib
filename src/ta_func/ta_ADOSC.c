@@ -60,11 +60,11 @@
 TA_LIB_API int TA_ADOSC_Lookback( int optInFastPeriod, int optInSlowPeriod )
 {
    int slowestPeriod;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 3;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return -1;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 10;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return -1;
@@ -122,11 +122,11 @@ TA_LIB_API TA_RetCode TA_ADOSC( int    startIdx,
       return TA_BAD_PARAM;
    if( !inVolume )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 3;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 10;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -286,11 +286,11 @@ TA_RetCode TA_S_ADOSC( int    startIdx,
       return TA_BAD_PARAM;
    if( !inVolume )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 3;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 10;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -414,11 +414,11 @@ static TA_RetCode TA_ADOSC_OpenCore( struct TA_ADOSC_Stream **stream, const doub
    if( !inHigh || !inLow || !inClose || !inVolume || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 3;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 10;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;

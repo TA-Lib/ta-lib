@@ -62,7 +62,7 @@
 
 TA_LIB_API int TA_MACDFIX_Lookback( int optInSignalPeriod )
 {
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return -1;
@@ -108,7 +108,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -331,7 +331,7 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -500,7 +500,7 @@ static TA_RetCode TA_MACDFIX_OpenCore( struct TA_MACDFIX_Stream **stream, const 
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;

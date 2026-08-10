@@ -655,7 +655,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // Take over gen_code's two remaining C-side scalar generators:
         //   - the FuncUnstId enum (GENCODE SECTION 1) in the public header ta_defs.h
         //   - the TA_SetRetCodeInfo table in ta_common/ta_retcode.c (from the csv)
-        backends::ta_defs::generate(&enums, &root.join("include/ta_defs.h"));
+        backends::ta_defs::generate(all_funcs, &enums, &root.join("include/ta_defs.h"));
         backends::retcode::generate(
             &root.join("ta_codegen/generator/templates/c/ta_retcode.c.template"),
             &root.join("src/ta_common/ta_retcode.csv"),
@@ -711,7 +711,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         let csharp_src = root.join("ta_codegen/output/csharp/library/src");
         std::fs::create_dir_all(&csharp_src).unwrap();
         backends::csharp_enums::generate(&enums, &csharp_src.join("FuncUnstId.cs"));
-        backends::csharp_enums::generate_matype(&enums, &csharp_src.join("MAType.cs"));
+        backends::csharp_enums::generate_matype(all_funcs, &enums, &csharp_src.join("MAType.cs"));
         // The catalogue IS whole-corpus, so it renders `all_funcs` rather than
         // the filtered set — the same source `rust_abstract` uses. Java's
         // registry instead SKIPS under `--func` because its Core.java splice

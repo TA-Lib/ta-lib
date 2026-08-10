@@ -64,17 +64,17 @@
 
 TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType )
 {
-   if( (int)optInMinPeriod == (int)0x80000000 )
+   if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
       return -1;
-   if( (int)optInMaxPeriod == (int)0x80000000 )
+   if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return -1;
    /* The same cross-parameter constraint mavp() rejects on. Each period is in
     * range on its own, so no prologue check can catch it, and without this the
@@ -129,17 +129,17 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       return TA_BAD_PARAM;
    if( !inPeriods )
       return TA_BAD_PARAM;
-   if( (int)optInMinPeriod == (int)0x80000000 )
+   if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMaxPeriod == (int)0x80000000 )
+   if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -486,17 +486,17 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       return TA_BAD_PARAM;
    if( !inPeriods )
       return TA_BAD_PARAM;
-   if( (int)optInMinPeriod == (int)0x80000000 )
+   if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMaxPeriod == (int)0x80000000 )
+   if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -735,17 +735,17 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
    if( !inReal || !inPeriods || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInMinPeriod == (int)0x80000000 )
+   if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMaxPeriod == (int)0x80000000 )
+   if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
@@ -802,17 +802,17 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal || (const void *)outReal == (const void *)inPeriods ) return TA_BAD_PARAM;
-   if( (int)optInMinPeriod == (int)0x80000000 )
+   if( (int)optInMinPeriod == TA_INTEGER_DEFAULT )
       optInMinPeriod = 2;
    else if( (int)optInMinPeriod < 1 || (int)optInMinPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMaxPeriod == (int)0x80000000 )
+   if( (int)optInMaxPeriod == TA_INTEGER_DEFAULT )
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );

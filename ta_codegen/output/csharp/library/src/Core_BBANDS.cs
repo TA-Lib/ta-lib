@@ -112,7 +112,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return -1;
       }
       int maLookback = 0;
@@ -180,7 +180,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
@@ -432,7 +432,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
