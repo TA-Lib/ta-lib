@@ -74,6 +74,8 @@ TA_LIB_API int TA_PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAT
       return -1;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return -1;
    /* Lookback is driven by the slowest MA. */
    return TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType);
 }
@@ -114,6 +116,8 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -204,6 +208,8 @@ TA_RetCode TA_S_PPO( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -317,6 +323,8 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -463,6 +471,8 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;

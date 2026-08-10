@@ -70,6 +70,18 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
        (unsigned int)id >= (unsigned int)TA_FUNC_UNST_COUNT )
       return TA_BAD_PARAM;
 
+   /* The period is added to a lookback which is then used as an index, so an
+    * unbounded one overflows that lookback NEGATIVE and the function indexes
+    * far past the end of its input. TA_MAX_INDEX is the ceiling the index space
+    * already enforces on startIdx/endIdx; a warm-up longer than the largest
+    * addressable series could never produce output, so nothing legitimate is
+    * refused. Guarding here rather than in each lookback keeps the invariant in
+    * one place -- every unstable-period function derives its lookback from this
+    * value.
+    */
+   if( unstablePeriod > (unsigned int)TA_MAX_INDEX )
+      return TA_BAD_PARAM;
+
    if( id == TA_FUNC_UNST_ALL )
    {
       for( i=0; i < TA_FUNC_UNST_COUNT; i++ )

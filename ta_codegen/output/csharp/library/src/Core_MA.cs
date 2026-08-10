@@ -87,6 +87,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return -1;
       }
       int retValue = 0;
       if( optInTimePeriod <= 1 || optInMAType == MAType.DISABLED ) {
@@ -159,6 +161,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       /* No-smoothing identity: period 1 (every MA type) or the explicit
        * TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
@@ -242,6 +246,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
          nbElement = endIdx - startIdx + 1;

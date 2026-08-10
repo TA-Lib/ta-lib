@@ -18,7 +18,9 @@ automated backstops that now make the whole class fail loudly.
    - integer ranges: `min`, `min+1`, `default-1`, `default`, `default+1`, and a
      large "past the data" period, plus the out-of-range `min-1` and (bounded)
      `max+1`;
-   - integer/real lists (e.g. `MAType`): every enumerated value;
+   - integer/real lists (e.g. `MAType`): every enumerated value, plus one past
+     the highest — a choice list declares no `range:`, so nothing rejected an
+     out-of-domain value until the prologue learned to derive one from the members;
    - real ranges: `min`, `default`, `max` (realistic magnitudes).
 
    Contract (issue #94): the default must compute coherently; every other in-range
@@ -28,6 +30,13 @@ automated backstops that now make the whole class fail loudly.
    access, or a non-finite / subnormal output. All successful outputs are scanned
    with `isfinite` + a subnormal check. Set `PB_SWEEP_LIST_ALL=1` to enumerate
    every failing case in one run instead of aborting on the first.
+
+   Every swept case additionally asserts that the two tiers agree about whether
+   the parameters are usable at all: `TA_GetLookback` reports a negative value
+   exactly when `TA_CallFunc` returns `TA_BAD_PARAM`. A caller sizes its buffers
+   from the first before trusting the second, so a lookback that answers a
+   plausible number for parameters the call rejects is a lie a wrapper cannot
+   detect. The count is printed and asserted equal to the number of swept values.
 
 2. **ASan/UBSan nightly** — the `sanitizers` job in `.github/workflows/dev-nightly-tests.yml`
    builds the library + `ta_regtest` with `-fsanitize=address,undefined
@@ -56,7 +65,7 @@ using `memmove` wherever the caller's buffer may be reused as scratch.
 | **MACDEXT** | `macdext.c` `memmove(outMACD, &fastMABuffer[lookbackSignal], …)` | **Fixed (#94)** — same pattern; `memcpy` → `memmove`. |
 | **RSI** | `rsi.c` `period==1` in-place copy `memmove(&outReal[0], &inReal[startIdx], …)` | **Fixed (#94)** — was `memcpy`; overlaps for an in-place caller (`outReal == inReal`) with `startIdx > 0`. Now `memmove`, matching WMA. |
 | **CMO** | `cmo.c` `period==1` in-place copy | **Fixed (#94)** — same as RSI; `memcpy` → `memmove`. |
-| **MAVP** | inverted window `optInMinPeriod > optInMaxPeriod` | **Fixed (#94)** — the per-bar clamp pushed the period above `optInMaxPeriod`, exceeding the lookback and reading uninitialized scratch. Now returns `TA_BAD_PARAM`. |
+| **MAVP** | inverted window `optInMinPeriod > optInMaxPeriod` | **Fixed (#94)** — the per-bar clamp pushed the period above `optInMaxPeriod`, exceeding the lookback and reading uninitialized scratch. Now returns `TA_BAD_PARAM`, and `TA_MAVP_Lookback` returns `-1` on the same window rather than a usable number. |
 | **BBANDS** | `bbands.c` `memcpy(outRealMiddleBand, tempBuffer1, …)` | **Safe** — guarded by `if( tempBuffer1 != outRealMiddleBand )`; provably non-overlapping (ASan-clean). |
 | **BBANDS** | `bbands.c` `memmove(tempBuffer1, &tempBuffer1[shiftIdx], …)` | **Safe** — same-buffer realign (#99), already `memmove`. |
 | **WMA** | `wma.c` `memmove(outReal, &inReal[startIdx], …)` | **Safe** — already `memmove` (the reference pattern the RSI/CMO fixes now match). |

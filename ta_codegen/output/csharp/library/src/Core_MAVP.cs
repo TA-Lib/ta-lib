@@ -93,6 +93,15 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return -1;
+      }
+      /* The same cross-parameter constraint mavp() rejects on. Each period is in
+       * range on its own, so no prologue check can catch it, and without this the
+       * lookback answers a usable number for a call that cannot run.
+       */
+      if( optInMinPeriod > optInMaxPeriod ) {
+         return 0 - 1 ;
       }
       return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
@@ -149,6 +158,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       /* An inverted period window (min above max) is an invalid parameter
        * combination: the per-bar clamp below would push a period above
@@ -417,6 +428,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInMinPeriod > optInMaxPeriod ) {
          outBegIdx = 0;

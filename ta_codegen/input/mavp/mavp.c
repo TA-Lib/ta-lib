@@ -20,6 +20,12 @@
 
 int mavp_lookback(int optInMinPeriod, int optInMaxPeriod, TA_MAType optInMAType)
 {
+   /* The same cross-parameter constraint mavp() rejects on. Each period is in
+    * range on its own, so no prologue check can catch it, and without this the
+    * lookback answers a usable number for a call that cannot run. */
+   if( optInMinPeriod > optInMaxPeriod )
+      return -1;
+
    return ma_lookback(optInMaxPeriod, optInMAType);
 }
 

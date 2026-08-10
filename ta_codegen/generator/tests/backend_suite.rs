@@ -7947,6 +7947,116 @@ fn rust_matype_emits_every_yaml_variant_and_its_frozen_shape() {
     );
 }
 
+// ---------------------------------------------------------------------------
+// The enum domain gate. A choice-list parameter declares no `range:`, so before
+// this the prologue emitted only the default substitution and each body decided
+// for itself what an out-of-domain value meant -- which is how TA_MA_Lookback
+// answered 0 for parameters TA_MA rejects. Both tiers now reject from one
+// emitter with two failure literals, the construction that already made integer
+// ranges immune. Asserted on emitted content, per this file's standard.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn enum_param_gets_a_domain_gate_in_both_tiers() {
+    let enums = load_enums();
+    let (func, _) = load_indicator("ma");
+    let registry = make_registry();
+    let helpers = make_helpers();
+
+    let hi = enums
+        .get("MAType")
+        .expect("MAType")
+        .variants
+        .iter()
+        .map(|v| v.value)
+        .max()
+        .expect("members");
+
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let gate = format!("(int)optInMAType < 0 || (int)optInMAType > {hi}");
+    // Both tiers: the lookback fails with -1, the guarded call with TA_BAD_PARAM.
+    assert!(
+        c.contains(&format!("{gate} )\n      return -1;")),
+        "C lookback lost the enum domain gate:\n{c}"
+    );
+    assert!(
+        c.contains(&format!("{gate} )\n      return TA_BAD_PARAM;")),
+        "C guarded call lost the enum domain gate:\n{c}"
+    );
+
+    let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        cs.contains(&format!("(int)optInMAType < 0 || (int)optInMAType > {hi}")),
+        "C# lost the enum domain gate:\n{cs}"
+    );
+
+}
+
+#[test]
+fn the_gate_bound_follows_the_member_set() {
+    // The bound is derived, never spelled. Asserting it against MAType's own max
+    // cannot show that -- a hard-coded 11 and a derived one read identically
+    // while the enum happens to end at 11. So span it against a synthetic enum
+    // that ends somewhere else.
+    use ta_codegen_lib::ir::{EnumDef, EnumVariant, OptInput, ParamType};
+    let mut enums = load_enums();
+    enums.insert(
+        "Tri".to_string(),
+        EnumDef {
+            name: "Tri".to_string(),
+            c_prefix: "TA_Tri_".to_string(),
+            variants: (0..3)
+                .map(|v| EnumVariant {
+                    name: format!("V{v}"),
+                    c_name: format!("TA_Tri_V{v}"),
+                    value: v,
+                })
+                .collect(),
+        },
+    );
+    let opt = OptInput {
+        name: "optInTri".to_string(),
+        param_type: ParamType::Enum("Tri".to_string()),
+        display_name: None,
+        hint: None,
+        range: None,
+        default: Some(0.0),
+        suggested: None,
+        flags: Vec::new(),
+        precision: None,
+    };
+    assert_eq!(
+        backends::common::effective_range(&opt, &enums),
+        Some((0.0, 2.0)),
+        "the domain must span the members, not a hard-coded bound"
+    );
+}
+
+#[test]
+fn a_declared_range_still_wins_over_the_member_span() {
+    // The precedence branch in `effective_range`: an `enum:` parameter that DID
+    // declare a range must keep it, or a narrower intent would be silently
+    // widened to the whole enum. Nothing in the shipped input exercises this.
+    use ta_codegen_lib::ir::{OptInput, ParamType};
+    let enums = load_enums();
+    let opt = OptInput {
+        name: "optInMAType".to_string(),
+        param_type: ParamType::Enum("MAType".to_string()),
+        display_name: None,
+        hint: None,
+        range: Some((0.0, 2.0)),
+        default: Some(0.0),
+        suggested: None,
+        flags: Vec::new(),
+        precision: None,
+    };
+    assert_eq!(
+        backends::common::effective_range(&opt, &enums),
+        Some((0.0, 2.0)),
+        "a declared range must win over the member span"
+    );
+}
+
 #[test]
 fn csharp_matype_emits_every_yaml_variant_with_its_value() {
     let enums = load_enums();

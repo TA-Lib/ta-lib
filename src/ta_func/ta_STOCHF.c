@@ -77,6 +77,8 @@ TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period,
       return -1;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return -1;
    /* Account for the initial data needed for Fast-K. */
    retValue = optInFastK_Period - 1;
    /* Add the smoothing being done for Fast-D */
@@ -135,6 +137,8 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
    if( !outFastK )
       return TA_BAD_PARAM;
    if( !outFastD )
@@ -395,6 +399,8 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
    if( !outFastK )
       return TA_BAD_PARAM;
    if( !outFastD )
@@ -675,6 +681,8 @@ TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const doubl
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -1005,6 +1013,8 @@ TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const do
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;

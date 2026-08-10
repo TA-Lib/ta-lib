@@ -92,6 +92,8 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
       return -1;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return -1;
    /* A band value needs BOTH the middle-band moving average and the standard
     * deviation of the outer bands, so the first valid output is the later of the
     * two lookbacks. For every MA type whose lookback is at least
@@ -153,6 +155,8 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
    if( !outRealMiddleBand )
@@ -450,6 +454,8 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
    if( !outRealMiddleBand )
@@ -751,6 +757,8 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -940,6 +948,8 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;

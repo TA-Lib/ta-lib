@@ -77,6 +77,8 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period,
       return -1;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return -1;
    retValue = TA_RSI_Lookback(optInTimePeriod) + TA_STOCHF_Lookback(optInFastK_Period,optInFastD_Period,optInFastD_MAType);
    return retValue;
 }
@@ -123,6 +125,8 @@ TA_LIB_API TA_RetCode TA_STOCHRSI( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
    if( !outFastK )
       return TA_BAD_PARAM;
    if( !outFastD )
@@ -240,6 +244,8 @@ TA_RetCode TA_S_STOCHRSI( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
    if( !outFastK )
       return TA_BAD_PARAM;
    if( !outFastD )
@@ -358,6 +364,8 @@ TA_RetCode TA_STOCHRSI_OpenInternal( struct TA_STOCHRSI_Stream **stream, const d
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
@@ -530,6 +538,8 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
       return TA_BAD_PARAM;
    if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
+   else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 )
+      return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
    startIdx = 0;
