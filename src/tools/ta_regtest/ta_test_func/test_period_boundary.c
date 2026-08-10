@@ -1062,6 +1062,108 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
    return TA_TEST_PASS;
 }
 
+/* The period-1 copy on the STREAMING surfaces, on hostile data.
+ *
+ * pbSweepMaIdentity above reaches only the double batch entry point. The
+ * streaming surfaces are covered by stream_verify, which compares stream
+ * against batch on its own seed-generated shapes -- and those are benign at
+ * period 1, so an arm deleted from the step leaves batch(copy) and
+ * stream(recursion) numerically equal and the gate green. Sabotage-proven:
+ * removing the arm from TA_EMA_StepInternal alone passes ta_regtest and
+ * 15908 stream_verify legs; removing it from TA_S_EMA instead is caught (by
+ * the VARIANT gate), so only the streaming half needs this.
+ *
+ * EMA and DEMA only, and deliberately: they are the two whose period-1 value
+ * comes from an EMA recursion rather than a window, i.e. the two the arm
+ * actually rescues. The other arms are copies either way.
+ */
+static ErrorNumber pbCheckStreamCopy( const char *label, TA_RetCode rc,
+                                      double got, double want )
+{
+   if( rc != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: retCode %d\n", label, (int)rc );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   if( got != want )
+   {
+      printf( "\nFail: %s: got %.17g, expected %.17g\n", label, got, want );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber testStreamIdentityAtPeriodOne( const TA_History *hostile )
+{
+   static TA_Real fill[PB_DATA_SIZE];
+   const TA_Real *in = hostile->close;
+   int n = (int)hostile->nbBars;
+   int warm = 8;                 /* bars consumed by Open; the rest via Update */
+   TA_EMA_Stream *es = NULL;
+   TA_DEMA_Stream *ds = NULL;
+   TA_Integer beg, nb;
+   TA_RetCode rc;
+   ErrorNumber errNb;
+   double v;
+   int i;
+
+   /* --- EMA: Open, then Peek/Update bar by bar --- */
+   rc = TA_EMA_Open( &es, in, warm, 1, &v );
+   errNb = pbCheckStreamCopy( "EMA(1) stream Open", rc, v, in[warm-1] );
+   if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
+   for( i = warm; i < n; i++ )
+   {
+      rc = TA_EMA_Peek( es, in[i], &v );
+      errNb = pbCheckStreamCopy( "EMA(1) stream Peek", rc, v, in[i] );
+      if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
+      rc = TA_EMA_Update( es, in[i], &v );
+      errNb = pbCheckStreamCopy( "EMA(1) stream Update", rc, v, in[i] );
+      if( errNb != TA_TEST_PASS ) { TA_EMA_Close( es ); return errNb; }
+   }
+   TA_EMA_Close( es );
+
+   /* --- EMA: OpenAndFill over the whole history --- */
+   rc = TA_EMA_OpenAndFill( &es, in, n, 1, &beg, &nb, fill );
+   if( rc != TA_SUCCESS || beg != 0 || nb != n )
+   {
+      printf( "\nFail: EMA(1) OpenAndFill: rc=%d beg=%d nb=%d expected 0/0/%d\n",
+              (int)rc, (int)beg, (int)nb, n );
+      TA_EMA_Close( es );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   TA_EMA_Close( es );
+   errNb = pbCheckSameSeries( "EMA(1) OpenAndFill", fill, in, nb );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   /* --- DEMA: same three surfaces --- */
+   rc = TA_DEMA_Open( &ds, in, warm, 1, &v );
+   errNb = pbCheckStreamCopy( "DEMA(1) stream Open", rc, v, in[warm-1] );
+   if( errNb != TA_TEST_PASS ) { TA_DEMA_Close( ds ); return errNb; }
+   for( i = warm; i < n; i++ )
+   {
+      rc = TA_DEMA_Update( ds, in[i], &v );
+      errNb = pbCheckStreamCopy( "DEMA(1) stream Update", rc, v, in[i] );
+      if( errNb != TA_TEST_PASS ) { TA_DEMA_Close( ds ); return errNb; }
+   }
+   TA_DEMA_Close( ds );
+
+   rc = TA_DEMA_OpenAndFill( &ds, in, n, 1, &beg, &nb, fill );
+   if( rc != TA_SUCCESS || beg != 0 || nb != n )
+   {
+      printf( "\nFail: DEMA(1) OpenAndFill: rc=%d beg=%d nb=%d expected 0/0/%d\n",
+              (int)rc, (int)beg, (int)nb, n );
+      TA_DEMA_Close( ds );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   TA_DEMA_Close( ds );
+   errNb = pbCheckSameSeries( "DEMA(1) OpenAndFill", fill, in, nb );
+   if( errNb != TA_TEST_PASS ) return errNb;
+
+   printf( "\n  Period-1 streaming copy: EMA and DEMA, Open/Peek/Update/OpenAndFill "
+           "over %d bars of the Sterbenz-hostile series", n );
+   return TA_TEST_PASS;
+}
+
 static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
 {
    TA_History hostile;
@@ -1085,6 +1187,10 @@ static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
    if( errNb != TA_TEST_PASS )
       return errNb;
    errNb = pbSweepMaIdentity( &hostile, "Sterbenz-hostile series" );
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   errNb = testStreamIdentityAtPeriodOne( &hostile );
    if( errNb != TA_TEST_PASS )
       return errNb;
 
