@@ -3056,6 +3056,17 @@ impl StatementEmitter for RustStmt<'_, '_> {
     fn return_stmt(&self, value: &Option<Expr>, indent: usize) -> String {
         let pad = " ".repeat(indent);
         match value {
+            Some(expr) if self.ctx.is_lookback && is_negative_one(expr) => {
+                // The lookback bad-param contract: -1 in C, Java and C#; Rust's
+                // lookback returns `usize`, whose sentinel is usize::MAX.
+                // The parser desugars the unary minus to `0 - 1`, and in a usize
+                // return position that is a deny-by-default `arithmetic_overflow`
+                // ERROR in every profile -- the crate compiles at all only
+                // because lib.rs allows that lint crate-wide, and under the allow
+                // it wraps in release and panics in debug. Translate the contract
+                // here rather than leave it as arithmetic riding on the allow.
+                format!("{pad}return usize::MAX;\n")
+            }
             Some(expr) => {
                 let rendered = render_return_expr(expr, self.ctx, self.opt_real_params, self.registry, self.helpers);
                 // In lookback functions, return value must be usize. Cast any i32/mixed expression.

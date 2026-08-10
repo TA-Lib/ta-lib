@@ -361,7 +361,7 @@ fn emit_opt_param_validation(
                     // No shipped enum param declares a `range:`, but emitting the
                     // check keeps a future one from being silently un-gated here
                     // while C (which shares its Integer arm) still enforces it.
-                    if let Some((min, max)) = opt.range {
+                    if let Some((min, max)) = super::common::effective_range(opt, enums) {
                         let min_i = min as i32;
                         let max_i = max as i32;
                         out.push_str(&format!(

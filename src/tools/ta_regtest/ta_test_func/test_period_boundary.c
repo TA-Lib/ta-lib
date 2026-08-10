@@ -78,14 +78,16 @@
  *    parameter of every function is exercised across its whole range —
  *    integer ranges at min / min+1 / default+-1 / a large "past the
  *    data" period plus the out-of-range min-1 and max+1; integer/real
- *    lists at every enumerated value; real ranges at min / default /
- *    max. Each in-range value must be coherent (outBegIdx >= lookback,
- *    coverage to the last bar, or an empty result) or a clean
- *    TA_BAD_PARAM; the default must always compute; out-of-range
- *    integers must be rejected; and every output is scanned for
- *    NaN/Inf/subnormal garbage. Reads the metadata, so it adapts
- *    automatically. Set PB_SWEEP_LIST_ALL=1 to enumerate every failing
- *    case in one run instead of aborting on the first.
+ *    lists at every enumerated value plus one past the highest; real
+ *    ranges at min / default / max. Each in-range value must be coherent
+ *    (outBegIdx >= lookback, coverage to the last bar, or an empty
+ *    result) or a clean TA_BAD_PARAM; the default must always compute;
+ *    out-of-range integers must be rejected; the lookback tier and the
+ *    call tier must agree about whether the parameters are usable at
+ *    all; and every output is scanned for NaN/Inf/subnormal garbage.
+ *    Reads the metadata, so it adapts automatically. Set
+ *    PB_SWEEP_LIST_ALL=1 to enumerate every failing case in one run
+ *    instead of aborting on the first.
  *
  * When --codegen is active every successful hand-written call is
  * also verified against the language servers (C, Rust, Java, C#)
@@ -165,6 +167,7 @@ typedef struct
    int nbParamTested;
    int nbFail;
    int nbServerEmpty;   /* empty-output cases cross-checked vs the servers (#142) */
+   int nbLookbackParity;/* cases where lookback and call were compared */
 } PBSweepCtx;
 
 /* Diagnostic: when the environment variable PB_SWEEP_LIST_ALL is set, the
@@ -2018,6 +2021,9 @@ static int pbBuildServerInputs( const TA_FuncInfo *funcInfo,
  * either fully spans lookback..last-bar (lookback <= endIdx) or is empty (the
  * period consumes the whole range); a crash, an out-of-bounds access, a
  * garbage/non-finite value, or any other retCode is always a failure.
+ * Independent of `expect`, TA_GetLookback must report a negative value exactly
+ * when the call returns TA_BAD_PARAM -- the two tiers have to agree about
+ * whether the parameters are usable, whatever that answer is.
  * On the first failure sets ctx->errNb and returns.
  */
 static void pbSweepRunCase( PBSweepCtx *ctx,
@@ -2115,7 +2121,39 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
       return;
    }
 
+   /* The lookback tier and the call tier must agree about whether the bound
+    * parameters are usable at all. TA_GetLookback reports its verdict in the
+    * value (-1 = rejected), TA_CallFunc in its return code, and a caller sizes
+    * its buffers from the first before trusting the second -- so a lookback that
+    * answers a plausible number for parameters the call will reject is a lie a
+    * wrapper cannot detect.
+    *
+    * Asserted for EVERY swept case, not just the out-of-range ones: the
+    * interesting failures are values each tier considers in range on its own.
+    * For a generated range check the two cannot disagree (one emitter, two
+    * failure literals) -- what this reaches is the hand-written decisions in
+    * ta_codegen/input: a switch default, or a cross-parameter constraint the
+    * lookback never re-checks. */
+   if( TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS )
+   {
+      printf( "\nFail: %s: TA_GetLookback failed\n", label );
+      pbFail( ctx );
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
    retCode = TA_CallFunc( paramHolder, 0, endIdx, &outBegIdx, &outNbElement );
+
+   ctx->nbLookbackParity++;
+   if( ( lookback < 0 ) != ( retCode == TA_BAD_PARAM ) )
+   {
+      printf( "\nFail: %s: lookback/call disagree -- lookback=%d, call retCode=%d.\n"
+              "      One tier accepts these parameters and the other rejects them;\n"
+              "      a caller sizes its buffers from the lookback.\n",
+              label, lookback, retCode );
+      pbFail( ctx );
+      TA_ParamHolderFree( paramHolder );
+      return;
+   }
 
    if( expect == PB_EXPECT_REJECT )
    {
@@ -2144,14 +2182,6 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
       TA_ParamHolderFree( paramHolder );
       return;
    }
-   if( TA_GetLookback( paramHolder, &lookback ) != TA_SUCCESS )
-   {
-      printf( "\nFail: %s: TA_GetLookback failed\n", label );
-      pbFail( ctx );
-      TA_ParamHolderFree( paramHolder );
-      return;
-   }
-
    if( lookback <= endIdx )
    {
       /* Enough data: output must start at or after the lookback (a later start
@@ -2251,9 +2281,10 @@ static void pbSweepRunCase( PBSweepCtx *ctx,
 
 /* Boundary grid for one function: every optional parameter is swept across
  * min / min+1 / default-1 / default / default+1 / a large "past the data"
- * period (integer ranges), across every enumerated value (integer/real
- * lists), and across min / default / max (real ranges — the library does not
- * range-check reals, so those exercise the finite scan, not BAD_PARAM). The
+ * period (integer ranges), across every enumerated value plus one past the
+ * highest (integer/real lists), and across min / default / max (real ranges —
+ * the library does not range-check reals, so those exercise the finite scan,
+ * not BAD_PARAM). The
  * out-of-range integers min-1 and (bounded) max+1 must be cleanly rejected.
  * Every other parameter is held at its default. #94's true-max / integer-
  * overflow surface is deliberately delegated to the ASan/UBSan nightly job
@@ -2346,12 +2377,24 @@ static void pbSweepOneFunction( const TA_FuncInfo *funcInfo, void *opaque )
       {
          const TA_IntegerList *list = (const TA_IntegerList *)optInfo->dataSet;
          unsigned int e;
+         int maxValue = 0;
          for( e = 0; e < list->nbElement; e++ )
          {
+            if( list->data[e].value > maxValue ) maxValue = list->data[e].value;
             pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0,
                             list->data[e].value, 0.0, PB_EXPECT_STRICT );
             if( ctx->errNb != TA_TEST_PASS ) return;
          }
+         /* One value past the end of the list. A choice list declares no
+          * `range:`, so until the prologue learned to derive one from the
+          * members nothing rejected this before each body's own dispatch --
+          * which is how a lookback came to answer 0 for a call that rejects.
+          * Now both tiers reject it from the one emitter, and this is what
+          * pins that. Derived from the list rather than spelled here, so an
+          * appended member cannot turn it into a valid value. */
+         pbSweepRunCase( ctx, funcInfo, paramNb, optInfo, 0,
+                         maxValue + 1, 0.0, PB_EXPECT_REJECT );
+         if( ctx->errNb != TA_TEST_PASS ) return;
          break;
       }
       case TA_OptInput_RealRange:
@@ -2417,6 +2460,7 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    ctx.errNb = TA_TEST_PASS;
    ctx.nbParamTested = 0;
    ctx.nbFail = 0;
+   ctx.nbLookbackParity = 0;
    ctx.nbServerEmpty = 0;
    g_pbListAll = ( getenv( "PB_SWEEP_LIST_ALL" ) != NULL );
 
@@ -2429,9 +2473,22 @@ static ErrorNumber testMinBoundarySweep( const TA_History *history )
    if( ctx.errNb != TA_TEST_PASS )
       return ctx.errNb;
 
+   printf( "\n  Lookback/call parity: %d case(s) compared over %d swept parameter value(s)\n",
+           ctx.nbLookbackParity, ctx.nbParamTested );
+
    if( ctx.nbParamTested == 0 )
    {
       printf( "\nFail: boundary sweep tested no parameter (enumeration broken?)\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+
+   /* Every swept case is compared, so this is an equality rather than a
+    * non-zero floor: a case that silently stopped being compared would look
+    * exactly like a pass. */
+   if( ctx.nbLookbackParity != ctx.nbParamTested )
+   {
+      printf( "\nFail: boundary sweep compared %d lookback(s) for %d swept value(s)\n",
+              ctx.nbLookbackParity, ctx.nbParamTested );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
 

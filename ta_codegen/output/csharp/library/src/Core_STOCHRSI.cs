@@ -98,6 +98,8 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
+      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+         return -1;
       }
       int retValue = 0;
       retValue = RSI_Lookback(optInTimePeriod) + STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -149,6 +151,8 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
+      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
@@ -253,6 +257,8 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
+      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;

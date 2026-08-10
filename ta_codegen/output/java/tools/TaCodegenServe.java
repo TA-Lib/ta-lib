@@ -104741,6 +104741,13 @@ class Core {
           if( optInMAType == MAType.DEFAULT ) {
              optInMAType = MAType.SMA;
           }
+          /* The same cross-parameter constraint mavp() rejects on. Each period is in
+           * range on its own, so no prologue check can catch it, and without this the
+           * lookback answers a usable number for a call that cannot run.
+           */
+          if( optInMinPeriod > optInMaxPeriod ) {
+             return 0 - 1 ;
+          }
           return MA_Lookback(optInMaxPeriod, optInMAType) ;
 
        }

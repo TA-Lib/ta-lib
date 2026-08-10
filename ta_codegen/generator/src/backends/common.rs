@@ -78,6 +78,59 @@ pub(crate) fn ma_pseudo_member_doc(variant: &str) -> Option<&'static str> {
     }
 }
 
+/// The range the validation prologue should enforce for an optional parameter:
+/// its declared `range:`, or — for an `enum:` parameter, which declares none —
+/// the span of its members.
+#[must_use]
+#[allow(clippy::implicit_hasher)]
+pub fn effective_range(
+    opt: &crate::ir::OptInput,
+    enums: &HashMap<String, EnumDef>,
+) -> Option<(f64, f64)> {
+    if let Some(r) = opt.range {
+        return Some(r);
+    }
+    match &opt.param_type {
+        crate::ir::ParamType::Enum(name) => {
+            enum_value_bounds(enums, name).map(|(lo, hi)| (f64::from(lo), f64::from(hi)))
+        }
+        _ => None,
+    }
+}
+
+/// The inclusive value range an `enum:` parameter accepts: `0..=max member`.
+///
+/// A choice list declares no `range:` in YAML, so until now nothing rejected a
+/// value outside it and each body decided for itself — which is how a lookback
+/// came to answer a usable number for parameters its own function rejects. The
+/// prologue is where the two tiers agree by construction: one emitter, two
+/// failure literals.
+///
+/// Derived from the members, so an appended one widens the gate automatically.
+#[must_use]
+pub(crate) fn enum_value_bounds(
+    enums: &HashMap<String, EnumDef>,
+    enum_name: &str,
+) -> Option<(i32, i32)> {
+    let e = enums.get(enum_name)?;
+    let lo = e.variants.iter().map(|v| v.value).min()?;
+    let hi = e.variants.iter().map(|v| v.value).max()?;
+    // A span only describes the member set while the values are contiguous, and
+    // the prologue gate this feeds is `< lo || > hi` -- a reserved slot would sit
+    // inside the span and reach the body's dispatch again, re-arming exactly the
+    // defect the gate exists to close. MAType is asserted contiguous by three
+    // emitters, but each of those names it explicitly; this helper is generic, so
+    // it checks here rather than inheriting an invariant keyed to another type.
+    let n = i32::try_from(e.variants.len()).unwrap_or(i32::MAX);
+    assert!(
+        hi - lo + 1 == n,
+        "enum {enum_name} has a gap in its values ({lo}..={hi} over {n} members): the \
+         validation prologue gates on the span, which would admit the missing value. \
+         Emit a membership test instead of widening this."
+    );
+    Some((lo, hi))
+}
+
 /// `Type.MEMBER` for `value`, when the enum declares a member with that value.
 ///
 /// Java and C# spell a qualified enum member identically, so both render from

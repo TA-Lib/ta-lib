@@ -72,6 +72,8 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
       return -1;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return -1;
    if( optInTimePeriod <= 1 || optInMAType == TA_MAType_DISABLED )
    {
       return 0;
@@ -142,6 +144,8 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -229,6 +233,8 @@ TA_RetCode TA_S_MA( int    startIdx,
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
 
@@ -309,6 +315,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    sp = (struct TA_MA_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;
@@ -433,6 +441,8 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
       return TA_BAD_PARAM;
    if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
+   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+      return TA_BAD_PARAM;
 
    sp = (struct TA_MA_Stream *)TA_Malloc( sizeof(*sp) );
    if( !sp ) return TA_ALLOC_ERR;

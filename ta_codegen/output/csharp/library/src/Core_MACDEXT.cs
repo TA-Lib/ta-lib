@@ -95,6 +95,8 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
+      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+         return -1;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -103,6 +105,8 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
+      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+         return -1;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -111,6 +115,8 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
+      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+         return -1;
       }
       int tempInteger = 0;
       int lookbackLargest = 0;
@@ -167,6 +173,8 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
+      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -175,6 +183,8 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
+      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -183,6 +193,8 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
+      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
@@ -328,6 +340,8 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
+      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSlowPeriod == int.MinValue ) {
          optInSlowPeriod = 26;
@@ -336,6 +350,8 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
+      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSignalPeriod == int.MinValue ) {
          optInSignalPeriod = 9;
@@ -344,6 +360,8 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
+      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
          return RetCode.BadParam ;
