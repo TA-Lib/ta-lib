@@ -4741,16 +4741,30 @@ pub trait NameMap {
 /// the copy is unreachable there (and reads as a bug, since the return mapping
 /// rewrites its `return SUCCESS` into `return BAD_PARAM`). The comment block
 /// introducing the branch goes with it — kept, it would document code that is
-/// no longer there.
+/// no longer there. Only the comment IMMEDIATELY above it: that is the whole of
+/// the attachment the IR carries, so an input comment that forward-references
+/// the branch from further up has to be fixed in the input prose.
+///
+/// Panics unless exactly one statement matched, so both ways of getting this
+/// wrong are loud: matching none silently reinstates the dead branch, matching
+/// several silently deletes live code, and dead code is invisible to every value
+/// gate. Carrying the index `detect_identity_path` already computes would not
+/// help — the region handed here is a DERIVED list (`prologue ++ arm ++
+/// epilogue`, and C's dual-mode path runs `drop_unused_decls` over it first), so
+/// a position from the original body can address a different statement.
+///
+/// # Panics
+/// If the body does not contain exactly one transcription of `identity`.
 #[must_use]
 pub fn strip_identity_branch(body: &[Statement], identity: Option<&IdentityPath>) -> Vec<Statement> {
     let Some(idp) = identity else {
         return body.to_vec();
     };
-    let cond_dbg = format!("{:?}", idp.condition);
     let mut out: Vec<Statement> = Vec::with_capacity(body.len());
+    let mut hits = 0_usize;
     for st in body {
-        if matches!(st, Statement::If { condition, .. } if format!("{condition:?}") == cond_dbg) {
+        if matches!(st, Statement::If { condition, .. } if *condition == idp.condition) {
+            hits += 1;
             if matches!(out.last(), Some(Statement::Comment(_))) {
                 out.pop();
             }
@@ -4758,6 +4772,11 @@ pub fn strip_identity_branch(body: &[Statement], identity: Option<&IdentityPath>
         }
         out.push(st.clone());
     }
+    assert_eq!(
+        hits, 1,
+        "identity strip matched {hits} statements, expected exactly 1 (guard: {:?})",
+        idp.condition
+    );
     out
 }
 
