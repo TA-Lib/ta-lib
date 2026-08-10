@@ -6,6 +6,7 @@
  *
  * Usage:
  *   ./ta_bench [--points=N] [--iters=N] [--language=c,rust] [--function=RSI,SMA]
+ *              [--mode=batch|open|openfill]
  *              [--shape=NAME] [--seed=N] [--regime-period=N] [--trend-strength=F]
  *              [--list-shapes] [--verify-corpus]
  *
@@ -170,14 +171,25 @@ static int send_load_data(BenchLanguage *lang, char *buf, int sz, char *resp, in
 /* When >0, overrides any integer optInTimePeriod param (diagnostic period sweep). */
 static int g_period_override = 0;
 
+/* --mode: which entry point the servers time.
+     0 = the batch call (default)
+     1 = TA_<N>_Open        -- the streaming warm-up, scalar sink
+     2 = TA_<N>_OpenAndFill -- the warm-up that also fills the history arrays
+   The warm-up arms time an Open+Close round trip; the handle must be released
+   each iteration, and the free is nanoseconds against a whole-history replay.
+   Note the frozen `cref` server predates the streaming API, so it answers only
+   mode 0 -- there is no cross-version reference column for the warm-up. */
+static int g_bench_mode = 0;
+static const char *g_mode_name = "batch";
+
 static int build_bench_request(char *buf, int sz, const TA_FuncInfo *fi,
                                 int startIdx, int endIdx, int iters) {
     int pos = codegen_appendf(buf, sz, 0,
         /* no_output: only timing_ns is read here, and serialising the output
            arrays costs far more than the call being timed. */
         "{\"method\":\"TA_%s\",\"params\":{\"startIdx\":%d,\"endIdx\":%d,"
-        "\"use_preloaded\":1,\"no_output\":1,\"iters\":%d",
-        fi->name, startIdx, endIdx, iters);
+        "\"use_preloaded\":1,\"no_output\":1,\"iters\":%d,\"bench_mode\":%d",
+        fi->name, startIdx, endIdx, iters, g_bench_mode);
 
     /* Add optional params with default values */
     for( unsigned int i = 0; i < fi->nbOptInput; i++ ) {
@@ -375,6 +387,13 @@ int main(int argc, char *argv[]) {
         else if( strncmp(argv[i], "--language=", 11) == 0 ) lang_filter = argv[i]+11;
         else if( strncmp(argv[i], "--function=", 11) == 0 ) func_filter = argv[i]+11;
         else if( strncmp(argv[i], "--period=", 9) == 0 )    g_period_override = atoi(argv[i]+9);
+        else if( strncmp(argv[i], "--mode=", 7) == 0 ) {
+            g_mode_name = argv[i]+7;
+            if( strcmp(g_mode_name, "batch") == 0 )        g_bench_mode = 0;
+            else if( strcmp(g_mode_name, "open") == 0 )     g_bench_mode = 1;
+            else if( strcmp(g_mode_name, "openfill") == 0 ) g_bench_mode = 2;
+            else { fprintf(stderr, "unknown --mode=%s (batch|open|openfill)\n", g_mode_name); return 1; }
+        }
         else if( strncmp(argv[i], "--shape=", 8) == 0 )     shape_name = argv[i]+8;
         else if( strncmp(argv[i], "--seed=", 7) == 0 )      seed = atoi(argv[i]+7);
         else if( strncmp(argv[i], "--regime-period=", 16) == 0 ) regime_period = atoi(argv[i]+16);

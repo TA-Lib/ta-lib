@@ -59281,8 +59281,12 @@ class Core {
              int fillLb = CMO_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -62085,8 +62089,12 @@ class Core {
              int fillLb = DEMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -64339,8 +64347,12 @@ class Core {
              int fillLb = EMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -65990,8 +66002,12 @@ class Core {
              int fillLb = HMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -78435,8 +78451,12 @@ class Core {
              int fillLb = KAMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -106193,8 +106213,12 @@ class Core {
              int fillLb = RSI_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -115534,8 +115558,12 @@ class Core {
              int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -116966,8 +116994,12 @@ class Core {
              int fillLb = TEMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -123056,8 +123088,12 @@ class Core {
              int fillLb = VWMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -124819,8 +124855,12 @@ class Core {
              int fillLb = WMA_Lookback(optInTimePeriod);
              outBegIdx.value = fillLb;
              outNBElement.value = historyLen - fillLb;
-             for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
+             if( outStride == 0 ) {
+                outReal[0] = inReal[historyLen - 1];
+             } else {
+                for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+                   outReal[fillIdx] = inReal[fillLb + fillIdx];
+                }
              }
              sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
              return RetCode.Success;
@@ -126529,9 +126569,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ACCBANDS_Internal(
             startIdx, endIdx,
             inHigh,
@@ -126539,6 +126581,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        else { try {
+            if (bench_mode == 1) {
+                core.ACCBANDS_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.ACCBANDS_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126598,13 +126648,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ACOS_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ACOS_Open(inReal);
+            } else {
+                core.ACOS_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126665,9 +126725,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.AD_Internal(
             startIdx, endIdx,
             inHigh,
@@ -126675,6 +126737,14 @@ public class TaCodegenServe {
             inClose,
             inVolume,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.AD_Open(inHigh, inLow, inClose, inVolume);
+            } else {
+                core.AD_OpenAndFill(inHigh, inLow, inClose, inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126736,14 +126806,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ADD_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ADD_Open(inReal0, inReal1);
+            } else {
+                core.ADD_OpenAndFill(inReal0, inReal1, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126809,9 +126889,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ADOSC_Internal(
             startIdx, endIdx,
             inHigh,
@@ -126821,6 +126903,14 @@ public class TaCodegenServe {
             optInFastPeriod,
             optInSlowPeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ADOSC_Open(inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod);
+            } else {
+                core.ADOSC_OpenAndFill(inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126890,9 +126980,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ADX_Internal(
             startIdx, endIdx,
             inHigh,
@@ -126900,6 +126992,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ADX_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.ADX_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -126964,9 +127064,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ADXR_Internal(
             startIdx, endIdx,
             inHigh,
@@ -126974,6 +127076,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ADXR_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.ADXR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127032,9 +127142,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.APO_Internal(
             startIdx, endIdx,
             inReal,
@@ -127042,6 +127154,14 @@ public class TaCodegenServe {
             optInSlowPeriod,
             optInMAType,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.APO_Open(inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+            } else {
+                core.APO_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127099,15 +127219,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.AROON_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.AROON_Open(inHigh, inLow, optInTimePeriod);
+            } else {
+                core.AROON_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127167,15 +127297,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.AROONOSC_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.AROONOSC_Open(inHigh, inLow, optInTimePeriod);
+            } else {
+                core.AROONOSC_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127228,13 +127368,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ASIN_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ASIN_Open(inReal);
+            } else {
+                core.ASIN_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127283,13 +127433,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ATAN_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ATAN_Open(inReal);
+            } else {
+                core.ATAN_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127348,9 +127508,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ATR_Internal(
             startIdx, endIdx,
             inHigh,
@@ -127358,6 +127520,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ATR_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.ATR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127414,14 +127584,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.AVGDEV_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.AVGDEV_Open(inReal, optInTimePeriod);
+            } else {
+                core.AVGDEV_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127483,9 +127663,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.AVGPRICE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -127493,6 +127675,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.AVGPRICE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.AVGPRICE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127556,9 +127746,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.BBANDS_Internal(
             startIdx, endIdx,
             inReal,
@@ -127567,6 +127759,14 @@ public class TaCodegenServe {
             optInNbDevDn,
             optInMAType,
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        else { try {
+            if (bench_mode == 1) {
+                core.BBANDS_Open(inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+            } else {
+                core.BBANDS_OpenAndFill(inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127628,15 +127828,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.BETA_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.BETA_Open(inReal0, inReal1, optInTimePeriod);
+            } else {
+                core.BETA_OpenAndFill(inReal0, inReal1, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127701,9 +127911,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.BOP_Internal(
             startIdx, endIdx,
             inOpen,
@@ -127711,6 +127923,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.BOP_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.BOP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127777,9 +127997,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CCI_Internal(
             startIdx, endIdx,
             inHigh,
@@ -127787,6 +128009,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CCI_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.CCI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127854,9 +128084,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL2CROWS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -127864,6 +128096,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL2CROWS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL2CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -127933,9 +128173,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3BLACKCROWS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -127943,6 +128185,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3BLACKCROWS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3BLACKCROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128012,9 +128262,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3INSIDE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128022,6 +128274,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3INSIDE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3INSIDE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128091,9 +128351,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3LINESTRIKE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128101,6 +128363,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3LINESTRIKE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3LINESTRIKE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128170,9 +128440,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3OUTSIDE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128180,6 +128452,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3OUTSIDE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3OUTSIDE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128249,9 +128529,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3STARSINSOUTH_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128259,6 +128541,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3STARSINSOUTH_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3STARSINSOUTH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128328,9 +128618,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDL3WHITESOLDIERS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128338,6 +128630,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDL3WHITESOLDIERS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDL3WHITESOLDIERS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128408,9 +128708,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLABANDONEDBABY_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128419,6 +128721,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLABANDONEDBABY_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLABANDONEDBABY_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128489,9 +128799,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLADVANCEBLOCK_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128499,6 +128811,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLADVANCEBLOCK_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLADVANCEBLOCK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128568,9 +128888,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLBELTHOLD_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128578,6 +128900,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLBELTHOLD_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLBELTHOLD_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128647,9 +128977,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLBREAKAWAY_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128657,6 +128989,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLBREAKAWAY_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLBREAKAWAY_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128726,9 +129066,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLCLOSINGMARUBOZU_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128736,6 +129078,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLCLOSINGMARUBOZU_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLCLOSINGMARUBOZU_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128805,9 +129155,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLCONCEALBABYSWALL_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128815,6 +129167,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLCONCEALBABYSWALL_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLCONCEALBABYSWALL_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128884,9 +129244,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLCOUNTERATTACK_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128894,6 +129256,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLCOUNTERATTACK_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLCOUNTERATTACK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -128964,9 +129334,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLDARKCLOUDCOVER_Internal(
             startIdx, endIdx,
             inOpen,
@@ -128975,6 +129347,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLDARKCLOUDCOVER_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLDARKCLOUDCOVER_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129045,9 +129425,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLDOJI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129055,6 +129437,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLDOJI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129124,9 +129514,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLDOJISTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129134,6 +129526,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLDOJISTAR_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129203,9 +129603,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLDRAGONFLYDOJI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129213,6 +129615,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLDRAGONFLYDOJI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLDRAGONFLYDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129282,9 +129692,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLENGULFING_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129292,6 +129704,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLENGULFING_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLENGULFING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129362,9 +129782,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLEVENINGDOJISTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129373,6 +129795,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLEVENINGDOJISTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLEVENINGDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129444,9 +129874,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLEVENINGSTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129455,6 +129887,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLEVENINGSTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLEVENINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129525,9 +129965,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLGAPSIDESIDEWHITE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129535,6 +129977,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLGAPSIDESIDEWHITE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLGAPSIDESIDEWHITE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129604,9 +130054,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLGRAVESTONEDOJI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129614,6 +130066,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLGRAVESTONEDOJI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLGRAVESTONEDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129683,9 +130143,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHAMMER_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129693,6 +130155,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHAMMER_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHAMMER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129762,9 +130232,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHANGINGMAN_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129772,6 +130244,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHANGINGMAN_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHANGINGMAN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129841,9 +130321,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHARAMI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129851,6 +130333,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHARAMI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHARAMI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129920,9 +130410,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHARAMICROSS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -129930,6 +130422,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHARAMICROSS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHARAMICROSS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -129999,9 +130499,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHIGHWAVE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130009,6 +130511,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHIGHWAVE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHIGHWAVE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130078,9 +130588,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHIKKAKE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130088,6 +130600,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHIKKAKE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHIKKAKE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130157,9 +130677,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHIKKAKEMOD_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130167,6 +130689,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHIKKAKEMOD_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHIKKAKEMOD_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130236,9 +130766,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLHOMINGPIGEON_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130246,6 +130778,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLHOMINGPIGEON_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLHOMINGPIGEON_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130315,9 +130855,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLIDENTICAL3CROWS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130325,6 +130867,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLIDENTICAL3CROWS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLIDENTICAL3CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130394,9 +130944,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLINNECK_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130404,6 +130956,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLINNECK_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLINNECK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130473,9 +131033,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLINVERTEDHAMMER_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130483,6 +131045,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLINVERTEDHAMMER_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLINVERTEDHAMMER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130552,9 +131122,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLKICKING_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130562,6 +131134,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLKICKING_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLKICKING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130631,9 +131211,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLKICKINGBYLENGTH_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130641,6 +131223,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLKICKINGBYLENGTH_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLKICKINGBYLENGTH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130710,9 +131300,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLLADDERBOTTOM_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130720,6 +131312,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLLADDERBOTTOM_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLLADDERBOTTOM_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130789,9 +131389,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLLONGLEGGEDDOJI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130799,6 +131401,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLLONGLEGGEDDOJI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLLONGLEGGEDDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130868,9 +131478,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLLONGLINE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130878,6 +131490,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLLONGLINE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLLONGLINE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -130947,9 +131567,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLMARUBOZU_Internal(
             startIdx, endIdx,
             inOpen,
@@ -130957,6 +131579,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLMARUBOZU_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLMARUBOZU_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131026,9 +131656,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLMATCHINGLOW_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131036,6 +131668,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLMATCHINGLOW_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLMATCHINGLOW_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131106,9 +131746,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLMATHOLD_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131117,6 +131759,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLMATHOLD_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLMATHOLD_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131188,9 +131838,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLMORNINGDOJISTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131199,6 +131851,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLMORNINGDOJISTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLMORNINGDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131270,9 +131930,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLMORNINGSTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131281,6 +131943,14 @@ public class TaCodegenServe {
             inClose,
             optInPenetration,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLMORNINGSTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+            } else {
+                core.CDLMORNINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131351,9 +132021,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLONNECK_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131361,6 +132033,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLONNECK_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLONNECK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131430,9 +132110,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLPIERCING_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131440,6 +132122,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLPIERCING_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLPIERCING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131509,9 +132199,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLRICKSHAWMAN_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131519,6 +132211,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLRICKSHAWMAN_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLRICKSHAWMAN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131588,9 +132288,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLRISEFALL3METHODS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131598,6 +132300,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLRISEFALL3METHODS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLRISEFALL3METHODS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131667,9 +132377,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSEPARATINGLINES_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131677,6 +132389,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSEPARATINGLINES_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSEPARATINGLINES_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131746,9 +132466,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSHOOTINGSTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131756,6 +132478,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSHOOTINGSTAR_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSHOOTINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131825,9 +132555,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSHORTLINE_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131835,6 +132567,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSHORTLINE_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSHORTLINE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131904,9 +132644,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSPINNINGTOP_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131914,6 +132656,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSPINNINGTOP_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSPINNINGTOP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -131983,9 +132733,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSTALLEDPATTERN_Internal(
             startIdx, endIdx,
             inOpen,
@@ -131993,6 +132745,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSTALLEDPATTERN_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSTALLEDPATTERN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132062,9 +132822,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLSTICKSANDWICH_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132072,6 +132834,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLSTICKSANDWICH_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLSTICKSANDWICH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132141,9 +132911,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLTAKURI_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132151,6 +132923,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLTAKURI_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLTAKURI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132220,9 +133000,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLTASUKIGAP_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132230,6 +133012,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLTASUKIGAP_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLTASUKIGAP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132299,9 +133089,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLTHRUSTING_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132309,6 +133101,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLTHRUSTING_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLTHRUSTING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132378,9 +133178,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLTRISTAR_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132388,6 +133190,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLTRISTAR_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLTRISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132457,9 +133267,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLUNIQUE3RIVER_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132467,6 +133279,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLUNIQUE3RIVER_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLUNIQUE3RIVER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132536,9 +133356,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLUPSIDEGAP2CROWS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132546,6 +133368,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLUPSIDEGAP2CROWS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLUPSIDEGAP2CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132615,9 +133445,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CDLXSIDEGAP3METHODS_Internal(
             startIdx, endIdx,
             inOpen,
@@ -132625,6 +133457,14 @@ public class TaCodegenServe {
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CDLXSIDEGAP3METHODS_Open(inOpen, inHigh, inLow, inClose);
+            } else {
+                core.CDLXSIDEGAP3METHODS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132682,13 +133522,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CEIL_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CEIL_Open(inReal);
+            } else {
+                core.CEIL_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132750,9 +133600,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CMF_Internal(
             startIdx, endIdx,
             inHigh,
@@ -132761,6 +133613,14 @@ public class TaCodegenServe {
             inVolume,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CMF_Open(inHigh, inLow, inClose, inVolume, optInTimePeriod);
+            } else {
+                core.CMF_OpenAndFill(inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132821,14 +133681,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CMO_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CMO_Open(inReal, optInTimePeriod);
+            } else {
+                core.CMO_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132879,14 +133749,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CMOU_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CMOU_Open(inReal, optInTimePeriod);
+            } else {
+                core.CMOU_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -132941,15 +133821,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.CORREL_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.CORREL_Open(inReal0, inReal1, optInTimePeriod);
+            } else {
+                core.CORREL_OpenAndFill(inReal0, inReal1, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133002,13 +133892,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.COS_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.COS_Open(inReal);
+            } else {
+                core.COS_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133057,13 +133957,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.COSH_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.COSH_Open(inReal);
+            } else {
+                core.COSH_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133113,14 +134023,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.DEMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.DEMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.DEMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133174,14 +134094,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.DIV_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.DIV_Open(inReal0, inReal1);
+            } else {
+                core.DIV_OpenAndFill(inReal0, inReal1, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133243,9 +134173,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.DX_Internal(
             startIdx, endIdx,
             inHigh,
@@ -133253,6 +134185,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.DX_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.DX_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133310,14 +134250,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.EMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.EMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.EMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133367,13 +134317,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.EXP_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.EXP_Open(inReal);
+            } else {
+                core.EXP_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133422,13 +134382,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.FLOOR_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.FLOOR_Open(inReal);
+            } else {
+                core.FLOOR_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133478,14 +134448,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.HMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.HMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133536,13 +134516,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_DCPERIOD_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_DCPERIOD_Open(inReal);
+            } else {
+                core.HT_DCPERIOD_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133592,13 +134582,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_DCPHASE_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_DCPHASE_Open(inReal);
+            } else {
+                core.HT_DCPHASE_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133649,13 +134649,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_PHASOR_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_PHASOR_Open(inReal);
+            } else {
+                core.HT_PHASOR_OpenAndFill(inReal, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133708,13 +134718,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_SINE_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_SINE_Open(inReal);
+            } else {
+                core.HT_SINE_OpenAndFill(inReal, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133766,13 +134786,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_TRENDLINE_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_TRENDLINE_Open(inReal);
+            } else {
+                core.HT_TRENDLINE_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133822,13 +134852,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.HT_TRENDMODE_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.HT_TRENDMODE_Open(inReal);
+            } else {
+                core.HT_TRENDMODE_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133882,15 +134922,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.IMI_Internal(
             startIdx, endIdx,
             inOpen,
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.IMI_Open(inOpen, inClose, optInTimePeriod);
+            } else {
+                core.IMI_OpenAndFill(inOpen, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -133945,14 +134995,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.KAMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.KAMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.KAMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134003,14 +135063,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LINEARREG_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LINEARREG_Open(inReal, optInTimePeriod);
+            } else {
+                core.LINEARREG_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134061,14 +135131,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LINEARREG_ANGLE_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LINEARREG_ANGLE_Open(inReal, optInTimePeriod);
+            } else {
+                core.LINEARREG_ANGLE_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134119,14 +135199,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LINEARREG_INTERCEPT_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LINEARREG_INTERCEPT_Open(inReal, optInTimePeriod);
+            } else {
+                core.LINEARREG_INTERCEPT_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134177,14 +135267,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LINEARREG_SLOPE_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LINEARREG_SLOPE_Open(inReal, optInTimePeriod);
+            } else {
+                core.LINEARREG_SLOPE_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134234,13 +135334,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LN_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LN_Open(inReal);
+            } else {
+                core.LN_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134289,13 +135399,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.LOG10_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.LOG10_Open(inReal);
+            } else {
+                core.LOG10_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134346,15 +135466,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             optInMAType,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MA_Open(inReal, optInTimePeriod, optInMAType);
+            } else {
+                core.MA_OpenAndFill(inReal, optInTimePeriod, optInMAType, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134410,9 +135540,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MACD_Internal(
             startIdx, endIdx,
             inReal,
@@ -134420,6 +135552,14 @@ public class TaCodegenServe {
             optInSlowPeriod,
             optInSignalPeriod,
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        else { try {
+            if (bench_mode == 1) {
+                core.MACD_Open(inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+            } else {
+                core.MACD_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134483,9 +135623,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MACDEXT_Internal(
             startIdx, endIdx,
             inReal,
@@ -134496,6 +135638,14 @@ public class TaCodegenServe {
             optInSignalPeriod,
             optInSignalMAType,
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        else { try {
+            if (bench_mode == 1) {
+                core.MACDEXT_Open(inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+            } else {
+                core.MACDEXT_OpenAndFill(inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134557,14 +135707,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MACDFIX_Internal(
             startIdx, endIdx,
             inReal,
             optInSignalPeriod,
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+        else { try {
+            if (bench_mode == 1) {
+                core.MACDFIX_Open(inReal, optInSignalPeriod);
+            } else {
+                core.MACDFIX_OpenAndFill(inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134622,15 +135782,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MAMA_Internal(
             startIdx, endIdx,
             inReal,
             optInFastLimit,
             optInSlowLimit,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.MAMA_Open(inReal, optInFastLimit, optInSlowLimit);
+            } else {
+                core.MAMA_OpenAndFill(inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134690,9 +135860,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MAVP_Internal(
             startIdx, endIdx,
             inReal0,
@@ -134701,6 +135873,14 @@ public class TaCodegenServe {
             optInMaxPeriod,
             optInMAType,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MAVP_Open(inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
+            } else {
+                core.MAVP_OpenAndFill(inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134756,14 +135936,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MAX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MAX_Open(inReal, optInTimePeriod);
+            } else {
+                core.MAX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134814,14 +136004,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MAXINDEX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MAXINDEX_Open(inReal, optInTimePeriod);
+            } else {
+                core.MAXINDEX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134875,14 +136075,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MEDPRICE_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MEDPRICE_Open(inHigh, inLow);
+            } else {
+                core.MEDPRICE_OpenAndFill(inHigh, inLow, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -134947,9 +136157,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MFI_Internal(
             startIdx, endIdx,
             inHigh,
@@ -134958,6 +136170,14 @@ public class TaCodegenServe {
             inVolume,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MFI_Open(inHigh, inLow, inClose, inVolume, optInTimePeriod);
+            } else {
+                core.MFI_OpenAndFill(inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135017,14 +136237,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MIDPOINT_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MIDPOINT_Open(inReal, optInTimePeriod);
+            } else {
+                core.MIDPOINT_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135079,15 +136309,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MIDPRICE_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MIDPRICE_Open(inHigh, inLow, optInTimePeriod);
+            } else {
+                core.MIDPRICE_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135141,14 +136381,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MIN_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MIN_Open(inReal, optInTimePeriod);
+            } else {
+                core.MIN_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135199,14 +136449,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MININDEX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MININDEX_Open(inReal, optInTimePeriod);
+            } else {
+                core.MININDEX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135258,14 +136518,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MINMAX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.MINMAX_Open(inReal, optInTimePeriod);
+            } else {
+                core.MINMAX_OpenAndFill(inReal, optInTimePeriod, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135319,14 +136589,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MINMAXINDEX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.MINMAXINDEX_Open(inReal, optInTimePeriod);
+            } else {
+                core.MINMAXINDEX_OpenAndFill(inReal, optInTimePeriod, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135388,9 +136668,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MINUS_DI_Internal(
             startIdx, endIdx,
             inHigh,
@@ -135398,6 +136680,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MINUS_DI_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.MINUS_DI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135459,15 +136749,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MINUS_DM_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MINUS_DM_Open(inHigh, inLow, optInTimePeriod);
+            } else {
+                core.MINUS_DM_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135521,14 +136821,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MOM_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MOM_Open(inReal, optInTimePeriod);
+            } else {
+                core.MOM_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135582,14 +136892,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.MULT_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MULT_Open(inReal0, inReal1);
+            } else {
+                core.MULT_OpenAndFill(inReal0, inReal1, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135651,9 +136971,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.NATR_Internal(
             startIdx, endIdx,
             inHigh,
@@ -135661,6 +136983,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.NATR_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.NATR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135720,14 +137050,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.NVI_Internal(
             startIdx, endIdx,
             inClose,
             inVolume,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.NVI_Open(inClose, inVolume);
+            } else {
+                core.NVI_OpenAndFill(inClose, inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135783,14 +137123,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.OBV_Internal(
             startIdx, endIdx,
             inReal,
             inVolume,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.OBV_Open(inReal, inVolume);
+            } else {
+                core.OBV_OpenAndFill(inReal, inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135852,9 +137202,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.PLUS_DI_Internal(
             startIdx, endIdx,
             inHigh,
@@ -135862,6 +137214,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.PLUS_DI_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.PLUS_DI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135923,15 +137283,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.PLUS_DM_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.PLUS_DM_Open(inHigh, inLow, optInTimePeriod);
+            } else {
+                core.PLUS_DM_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -135987,9 +137357,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.PPO_Internal(
             startIdx, endIdx,
             inReal,
@@ -135997,6 +137369,14 @@ public class TaCodegenServe {
             optInSlowPeriod,
             optInMAType,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.PPO_Open(inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+            } else {
+                core.PPO_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136052,14 +137432,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.PVI_Internal(
             startIdx, endIdx,
             inClose,
             inVolume,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.PVI_Open(inClose, inVolume);
+            } else {
+                core.PVI_OpenAndFill(inClose, inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136114,9 +137504,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.PVO_Internal(
             startIdx, endIdx,
             inVolume,
@@ -136124,6 +137516,14 @@ public class TaCodegenServe {
             optInSlowPeriod,
             optInMAType,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.PVO_Open(inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
+            } else {
+                core.PVO_OpenAndFill(inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136176,14 +137576,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ROC_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ROC_Open(inReal, optInTimePeriod);
+            } else {
+                core.ROC_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136234,14 +137644,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ROCP_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ROCP_Open(inReal, optInTimePeriod);
+            } else {
+                core.ROCP_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136292,14 +137712,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ROCR_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ROCR_Open(inReal, optInTimePeriod);
+            } else {
+                core.ROCR_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136350,14 +137780,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ROCR100_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ROCR100_Open(inReal, optInTimePeriod);
+            } else {
+                core.ROCR100_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136409,14 +137849,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.RSI_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.RSI_Open(inReal, optInTimePeriod);
+            } else {
+                core.RSI_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136472,9 +137922,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SAR_Internal(
             startIdx, endIdx,
             inHigh,
@@ -136482,6 +137934,14 @@ public class TaCodegenServe {
             optInAcceleration,
             optInMaximum,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SAR_Open(inHigh, inLow, optInAcceleration, optInMaximum);
+            } else {
+                core.SAR_OpenAndFill(inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136547,9 +138007,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SAREXT_Internal(
             startIdx, endIdx,
             inHigh,
@@ -136563,6 +138025,14 @@ public class TaCodegenServe {
             optInAccelerationShort,
             optInAccelerationMaxShort,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SAREXT_Open(inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+            } else {
+                core.SAREXT_OpenAndFill(inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136622,13 +138092,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SIN_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SIN_Open(inReal);
+            } else {
+                core.SIN_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136677,13 +138157,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SINH_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SINH_Open(inReal);
+            } else {
+                core.SINH_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136733,14 +138223,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.SMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136790,13 +138290,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SQRT_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SQRT_Open(inReal);
+            } else {
+                core.SQRT_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136847,15 +138357,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.STDDEV_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             optInNbDev,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.STDDEV_Open(inReal, optInTimePeriod, optInNbDev);
+            } else {
+                core.STDDEV_OpenAndFill(inReal, optInTimePeriod, optInNbDev, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -136920,9 +138440,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.STOCH_Internal(
             startIdx, endIdx,
             inHigh,
@@ -136934,6 +138456,14 @@ public class TaCodegenServe {
             optInSlowD_Period,
             optInSlowD_MAType,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.STOCH_Open(inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+            } else {
+                core.STOCH_OpenAndFill(inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137007,9 +138537,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.STOCHF_Internal(
             startIdx, endIdx,
             inHigh,
@@ -137019,6 +138551,14 @@ public class TaCodegenServe {
             optInFastD_Period,
             optInFastD_MAType,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.STOCHF_Open(inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            } else {
+                core.STOCHF_OpenAndFill(inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137083,9 +138623,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.STOCHRSI_Internal(
             startIdx, endIdx,
             inReal,
@@ -137094,6 +138636,14 @@ public class TaCodegenServe {
             optInFastD_Period,
             optInFastD_MAType,
             outBegIdx, outNBElement, outArr0, outArr1);
+        else { try {
+            if (bench_mode == 1) {
+                core.STOCHRSI_Open(inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            } else {
+                core.STOCHRSI_OpenAndFill(inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137152,14 +138702,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SUB_Internal(
             startIdx, endIdx,
             inReal0,
             inReal1,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SUB_Open(inReal0, inReal1);
+            } else {
+                core.SUB_OpenAndFill(inReal0, inReal1, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137212,14 +138772,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.SUM_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.SUM_Open(inReal, optInTimePeriod);
+            } else {
+                core.SUM_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137272,15 +138842,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.T3_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             optInVFactor,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.T3_Open(inReal, optInTimePeriod, optInVFactor);
+            } else {
+                core.T3_OpenAndFill(inReal, optInTimePeriod, optInVFactor, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137331,13 +138911,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TAN_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TAN_Open(inReal);
+            } else {
+                core.TAN_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137386,13 +138976,23 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TANH_Internal(
             startIdx, endIdx,
             inReal,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TANH_Open(inReal);
+            } else {
+                core.TANH_OpenAndFill(inReal, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137442,14 +139042,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TEMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TEMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.TEMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137507,15 +139117,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TRANGE_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TRANGE_Open(inHigh, inLow, inClose);
+            } else {
+                core.TRANGE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137571,14 +139191,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TRIMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TRIMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.TRIMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137629,14 +139259,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TRIX_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TRIX_Open(inReal, optInTimePeriod);
+            } else {
+                core.TRIX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137687,14 +139327,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TSF_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TSF_Open(inReal, optInTimePeriod);
+            } else {
+                core.TSF_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137752,15 +139402,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.TYPPRICE_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.TYPPRICE_Open(inHigh, inLow, inClose);
+            } else {
+                core.TYPPRICE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137826,9 +139486,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.ULTOSC_Internal(
             startIdx, endIdx,
             inHigh,
@@ -137838,6 +139500,14 @@ public class TaCodegenServe {
             optInTimePeriod2,
             optInTimePeriod3,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.ULTOSC_Open(inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+            } else {
+                core.ULTOSC_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137897,15 +139567,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.VAR_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             optInNbDev,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.VAR_Open(inReal, optInTimePeriod, optInNbDev);
+            } else {
+                core.VAR_OpenAndFill(inReal, optInTimePeriod, optInNbDev, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -137961,15 +139641,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.VWMA_Internal(
             startIdx, endIdx,
             inReal,
             inVolume,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.VWMA_Open(inReal, inVolume, optInTimePeriod);
+            } else {
+                core.VWMA_OpenAndFill(inReal, inVolume, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -138030,15 +139720,25 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.WCLPRICE_Internal(
             startIdx, endIdx,
             inHigh,
             inLow,
             inClose,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.WCLPRICE_Open(inHigh, inLow, inClose);
+            } else {
+                core.WCLPRICE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -138102,9 +139802,11 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.WILLR_Internal(
             startIdx, endIdx,
             inHigh,
@@ -138112,6 +139814,14 @@ public class TaCodegenServe {
             inClose,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.WILLR_Open(inHigh, inLow, inClose, optInTimePeriod);
+            } else {
+                core.WILLR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -138168,14 +139878,24 @@ public class TaCodegenServe {
         MInteger outBegIdx = new MInteger();
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
         rc = core.WMA_Internal(
             startIdx, endIdx,
             inReal,
             optInTimePeriod,
             outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.WMA_Open(inReal, optInTimePeriod);
+            } else {
+                core.WMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
