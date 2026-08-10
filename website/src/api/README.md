@@ -100,7 +100,7 @@ TA_RetCode TA_Shutdown( void );</pre>
 <li>
 <span class="ta-arg-in">One or more input arrays are then specified. Typically, these are the "price" data. In this example there is only one input. All input parameter names start with &quot;in&quot;.</span>
 </li>
-<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. If you do not care about a particular optIn, just specify TA_INTEGER_DEFAULT or TA_REAL_DEFAULT (depending on the type). For a moving-average type, use TA_MAType_DEFAULT — it is a member of the TA_MAType enum, so unlike TA_INTEGER_DEFAULT it also compiles in C++.</span>
+<li><span class="ta-arg-opt">Zero or more optional inputs are then specified. In this example there are two optional inputs. These parameters give finer control specific to each function. If you do not care about a particular optIn, just specify TA_INTEGER_DEFAULT or TA_REAL_DEFAULT (depending on the type). For a moving-average type, use TA_MAType_DEFAULT.</span>
 </li>
 <li>
 <span class="ta-arg-out">One or more output arrays come last. In this example there is only one output (outReal). The parameters outBegIdx and outNBElement always come just before the output arrays.</span>
