@@ -245,14 +245,12 @@ static void TA_SUM_StepInternal( struct TA_SUM_Stream *sp, double inReal, double
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_SUM_OpenInternal( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+static TA_RetCode TA_SUM_OpenCore( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_SUM_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -265,113 +263,6 @@ TA_RetCode TA_SUM_OpenInternal( struct TA_SUM_Stream **stream, const double inRe
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      double periodTotal = 0.0;
-      double tempReal = 0.0;
-      int i;
-      int outIdx;
-      int trailingIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the MA calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      periodTotal = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 )
-      {
-         while( i < startIdx )
-         {
-            periodTotal += inReal[i++];
-         }
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the inReal and
-       * outReal to be the same buffer.
-       */
-      outIdx = 0;
-      do
-      {
-         periodTotal += inReal[i++];
-         tempReal = periodTotal;
-         periodTotal -= inReal[trailingIdx++];
-         lastValue_outReal = tempReal;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_SUM_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->periodTotal = periodTotal;
-      sp->tempReal = tempReal;
-      sp->ringCap_trailingIdx = (int)(i - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_SUM_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
-        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_SUM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_SUM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
-      }
-      sp->ringPos_trailingIdx = 0;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_SUM_Open( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
-{
-   return TA_SUM_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_SUM_OpenAndFill( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_SUM_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -423,7 +314,7 @@ TA_LIB_API TA_RetCode TA_SUM_OpenAndFill( TA_SUM_Stream **stream, const double i
          periodTotal += inReal[i++];
          tempReal = periodTotal;
          periodTotal -= inReal[trailingIdx++];
-         outReal[outIdx++] = tempReal;
+         outReal[outIdx++ * outStride] = tempReal;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
       *outNBElement= outIdx;
@@ -449,6 +340,35 @@ TA_LIB_API TA_RetCode TA_SUM_OpenAndFill( TA_SUM_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_SUM_OpenInternal( struct TA_SUM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_SUM_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_SUM_Open( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_SUM_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_SUM_OpenAndFill( TA_SUM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_SUM_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_SUM_Update( TA_SUM_Stream *stream, double inReal, double *outReal )

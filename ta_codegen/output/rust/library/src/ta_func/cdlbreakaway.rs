@@ -416,10 +416,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLBREAKAWAY_Open`] (composition seam).
-    pub(crate) fn CDLBREAKAWAY_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLBREAKAWAY_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLBREAKAWAY_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLBREAKAWAY_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLBREAKAWAY_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLBREAKAWAY_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -431,7 +432,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut BodyLongPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -453,8 +453,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -501,9 +501,9 @@ impl Core {
                (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 4] - inOpen[i - 4]).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), _ => (inHigh[i - 4]) - (inLow[i - 4]) - ((inClose[i - 4]) - (inOpen[i - 4])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long
                ((((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 3]).max(inClose[i - 3]) < (inOpen[i - 4]).min(inClose[i - 4]) { 1 } else { 0 }) != 0) && inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] < inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] < inLow[i - 2] && inClose[i] > inOpen[i - 3] && inClose[i] < inClose[i - 4] || (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 3]).min(inClose[i - 3]) > (inOpen[i - 4]).max(inClose[i - 4]) { 1 } else { 0 }) != 0) && inHigh[i - 2] > inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] > inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && inClose[i] < inOpen[i - 3] && inClose[i] > inClose[i - 4]) // when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap
             {
-                lastValue_outInteger = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -538,238 +538,6 @@ impl Core {
                 }
             }
             BodyLongPeriodTotal += _candlerange_3 - _candlerange_4;
-            i += 1;
-            BodyLongTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let capLag_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
-        let cap_BodyLongTrailingIdx: i64 = capLag_BodyLongTrailingIdx + 5;
-        if capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
-        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = CDLBREAKAWAY_StreamState {
-            BodyLongPeriodTotal,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag2_inOpen: inOpen[historyLen - 2],
-            lag3_inOpen: inOpen[historyLen - 3],
-            lag4_inOpen: inOpen[historyLen - 4],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag2_inHigh: inHigh[historyLen - 2],
-            lag3_inHigh: inHigh[historyLen - 3],
-            lag4_inHigh: inHigh[historyLen - 4],
-            lag1_inLow: inLow[historyLen - 1],
-            lag2_inLow: inLow[historyLen - 2],
-            lag3_inLow: inLow[historyLen - 3],
-            lag4_inLow: inLow[historyLen - 4],
-            lag1_inClose: inClose[historyLen - 1],
-            lag2_inClose: inClose[historyLen - 2],
-            lag3_inClose: inClose[historyLen - 3],
-            lag4_inClose: inClose[historyLen - 4],
-            ringPos_BodyLongTrailingIdx: historyLen % cap_BodyLongTrailingIdx as usize,
-            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
-            ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
-            ring_BodyLongTrailingIdx_inOpen,
-            ring_BodyLongTrailingIdx_inHigh,
-            ring_BodyLongTrailingIdx_inLow,
-            ring_BodyLongTrailingIdx_inClose,
-        };
-        Ok((CDLBREAKAWAY_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLBREAKAWAY stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLBREAKAWAY`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLBREAKAWAY_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLBREAKAWAY_Open")]
-    pub fn CDLBREAKAWAY_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLBREAKAWAY_Stream, i32), RetCode> {
-        self.CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLBREAKAWAY_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLBREAKAWAY`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLBREAKAWAY_OpenAndFill")]
-    pub fn CDLBREAKAWAY_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLBREAKAWAY_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut BodyLongTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
-        #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
-        #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLBREAKAWAY_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
-        i = BodyLongTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_5: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_5 = (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                1 => {
-                    _candlerange_5 = inHigh[i - 4] - inLow[i - 4];
-                }
-                2 => {
-                    _candlerange_5 = inHigh[i - 4] - inLow[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                _ => {
-                    _candlerange_5 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_5;
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - first candle: long black (white)
-        // - second candle: black (white) day whose body gaps down (up)
-        // - third candle: black or white day with lower (higher) high and lower (higher) low than prior candle's
-        // - fourth candle: black (white) day with lower (higher) high and lower (higher) low than prior candle's
-        // - fifth candle: white (black) day that closes inside the gap, erasing the prior 3 days
-        // The meaning of "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // the user should consider that breakaway is significant in a trend opposite to the last candle, while this
-        // function does not consider it
-        outIdx = 0;
-        loop {
-            if (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) && // 1st, 2nd, 4th same color, 5th opposite
-               (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) &&
-               (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 0 - (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) &&
-               (inClose[i - 4] - inOpen[i - 4]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 4] - inOpen[i - 4]).abs(), 1 => (inHigh[i - 4]) - (inLow[i - 4]), _ => (inHigh[i - 4]) - (inLow[i - 4]) - ((inClose[i - 4]) - (inOpen[i - 4])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // 1st long
-               ((((if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && ((if (inOpen[i - 3]).max(inClose[i - 3]) < (inOpen[i - 4]).min(inClose[i - 4]) { 1 } else { 0 }) != 0) && inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] < inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] < inLow[i - 2] && inClose[i] > inOpen[i - 3] && inClose[i] < inClose[i - 4] || (if inClose[i - 4] >= inOpen[i - 4] { 1 } else { 0 - 1 }) == 1 && ((if (inOpen[i - 3]).min(inClose[i - 3]) > (inOpen[i - 4]).max(inClose[i - 4]) { 1 } else { 0 }) != 0) && inHigh[i - 2] > inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] > inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && inClose[i] < inOpen[i - 3] && inClose[i] > inClose[i - 4]) // when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap
-            {
-                outInteger[outIdx] = ((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) * 100) as i32;
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_6: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_6 = (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                1 => {
-                    _candlerange_6 = inHigh[i - 4] - inLow[i - 4];
-                }
-                2 => {
-                    _candlerange_6 = inHigh[i - 4] - inLow[i - 4] - (inClose[i - 4] - inOpen[i - 4]).abs();
-                }
-                _ => {
-                    _candlerange_6 = 0.0;
-                }
-            }
-            let mut _candlerange_7: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4]).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4];
-                }
-                2 => {
-                    _candlerange_7 = inHigh[BodyLongTrailingIdx - 4] - inLow[BodyLongTrailingIdx - 4] - (inClose[BodyLongTrailingIdx - 4] - inOpen[BodyLongTrailingIdx - 4]).abs();
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_6 - _candlerange_7;
             i += 1;
             BodyLongTrailingIdx += 1;
             if !(i <= endIdx) { break; }
@@ -844,6 +612,57 @@ impl Core {
             ring_BodyLongTrailingIdx_inClose,
         };
         Ok(CDLBREAKAWAY_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLBREAKAWAY_Open`] (composition seam).
+    pub(crate) fn CDLBREAKAWAY_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLBREAKAWAY_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLBREAKAWAY_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLBREAKAWAY stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLBREAKAWAY`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLBREAKAWAY_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLBREAKAWAY_Open")]
+    pub fn CDLBREAKAWAY_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLBREAKAWAY_Stream, i32), RetCode> {
+        self.CDLBREAKAWAY_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLBREAKAWAY_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLBREAKAWAY`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLBREAKAWAY_OpenAndFill")]
+    pub fn CDLBREAKAWAY_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLBREAKAWAY_Stream, RetCode> {
+        self.CDLBREAKAWAY_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

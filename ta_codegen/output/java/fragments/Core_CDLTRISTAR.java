@@ -457,16 +457,13 @@
          sp.ringPos_BodyTrailingIdx = 0;
       }
    }
-   private RetCode CDLTRISTAR_OpenBody( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLTRISTAR_OpenCore( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double BodyPeriodTotal = 0;
       int i = 0;
       int outIdx = 0;
       int BodyTrailingIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -518,20 +515,20 @@
              Math.abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
          {
             /* 3rd: doji */
-            lastValue_outInteger = 0;
+            outInteger[outIdx * outStride] = 0;
             if( (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
                 Math.max(inOpen[i], inClose[i]) < Math.max(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
-               lastValue_outInteger = 0 - 100;
+               outInteger[outIdx * outStride] = 0 - 100;
             }
             if( (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
                 Math.min(inOpen[i], inClose[i]) > Math.min(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
             {
-               lastValue_outInteger = 100;
+               outInteger[outIdx * outStride] = 100;
             }
             outIdx += 1;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -575,130 +572,22 @@
       sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
       sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
       sp.cs_BodyDoji_factor = BodyDoji_factor;
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDLTRISTAR_OpenBody( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDLTRISTAR_OpenAndFillBody( CDLTRISTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      double BodyPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int BodyTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      int BodyDoji_rangeType = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].rangeType.ordinal();
-      int BodyDoji_avgPeriod = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].avgPeriod;
-      double BodyDoji_factor = this.candleSettings[CandleSettingType.BodyDoji.ordinal()].factor;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDLTRISTAR_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - 2 - BodyDoji_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx - 2 ) {
-         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyDoji_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - 3 consecutive doji days
-       * - the second doji is a star
-       * The meaning of "doji" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
-       */
-      i = startIdx;
-      outIdx = 0;
-      do {
-         if( Math.abs(inClose[i - 2] - inOpen[i - 2]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: doji */
-             Math.abs(inClose[i - 1] - inOpen[i - 1]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: doji */
-             Math.abs(inClose[i] - inOpen[i]) <= ((BodyDoji_factor * (((BodyDoji_avgPeriod != 0) ? (BodyPeriodTotal / BodyDoji_avgPeriod) : ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyDoji_rangeType == 2) ? 2.0 : 1.0)))) )
-         {
-            /* 3rd: doji */
-            outInteger[outIdx] = 0;
-            if( (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps up */
-                Math.max(inOpen[i], inClose[i]) < Math.max(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not higher than 2nd */
-            {
-               outInteger[outIdx] = 0 - 100;
-            }
-            if( (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && /* 2nd gaps down */
-                Math.min(inOpen[i], inClose[i]) > Math.min(inOpen[i - 1], inClose[i - 1]) ) /* 3rd is not lower than 2nd */
-            {
-               outInteger[outIdx] = 100;
-            }
-            outIdx += 1;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         BodyPeriodTotal += ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyDoji_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyDoji_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0))) - ((BodyDoji_rangeType == 0) ? (Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : ((BodyDoji_rangeType == 1) ? (inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) : ((BodyDoji_rangeType == 2) ? ((inHigh[BodyTrailingIdx] - inLow[BodyTrailingIdx]) - Math.abs(inClose[BodyTrailingIdx] - inOpen[BodyTrailingIdx])) : 0.0)));
-         i += 1;
-         BodyTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_BodyTrailingIdx = i - BodyTrailingIdx;
-      if( cap_BodyTrailingIdx < 0 || cap_BodyTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
-      double[] capRing_BodyTrailingIdx_inOpen = new double[allocN_BodyTrailingIdx];
-      System.arraycopy(inOpen, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inOpen, 0, cap_BodyTrailingIdx);
-      double[] capRing_BodyTrailingIdx_inHigh = new double[allocN_BodyTrailingIdx];
-      System.arraycopy(inHigh, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inHigh, 0, cap_BodyTrailingIdx);
-      double[] capRing_BodyTrailingIdx_inLow = new double[allocN_BodyTrailingIdx];
-      System.arraycopy(inLow, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inLow, 0, cap_BodyTrailingIdx);
-      double[] capRing_BodyTrailingIdx_inClose = new double[allocN_BodyTrailingIdx];
-      System.arraycopy(inClose, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inClose, 0, cap_BodyTrailingIdx);
-      sp.BodyPeriodTotal = BodyPeriodTotal;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.ringPos_BodyTrailingIdx = 0;
-      sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
-      sp.ring_BodyTrailingIdx_inOpen = capRing_BodyTrailingIdx_inOpen;
-      sp.ring_BodyTrailingIdx_inHigh = capRing_BodyTrailingIdx_inHigh;
-      sp.ring_BodyTrailingIdx_inLow = capRing_BodyTrailingIdx_inLow;
-      sp.ring_BodyTrailingIdx_inClose = capRing_BodyTrailingIdx_inClose;
-      sp.cs_BodyDoji_rangeType = BodyDoji_rangeType;
-      sp.cs_BodyDoji_avgPeriod = BodyDoji_avgPeriod;
-      sp.cs_BodyDoji_factor = BodyDoji_factor;
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDLTRISTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDLTRISTAR_Open (composition seam). */
    CDLTRISTAR_Stream CDLTRISTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

@@ -456,230 +456,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::KAMA_Open`] (composition seam).
-    pub(crate) fn KAMA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(KAMA_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        if optInTimePeriod == 1 {
-            if historyLen < self.KAMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = KAMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                constMax: 0.0_f64,
-                constDiff: 0.0_f64,
-                sumROC1: 0.0_f64,
-                prevKAMA: 0.0_f64,
-                trailingValue: 0.0_f64,
-                lag1_inReal: 0.0_f64,
-                ringPos_trailingIdx: 0_usize,
-                ringCap_trailingIdx: 0_usize,
-                ring_trailingIdx_inReal: vec![0.0_f64; 1],
-            };
-            return Ok((KAMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
-        }
-        let mut constMax: f64 = 0.0_f64;
-        let mut constDiff: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempReal2: f64 = 0.0_f64;
-        let mut sumROC1: f64 = 0.0_f64;
-        let mut periodROC: f64 = 0.0_f64;
-        let mut prevKAMA: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut trailingValue: f64 = 0.0_f64;
-        constMax = 2.0 / (30.0 + 1.0);
-        constDiff = 2.0 / (2.0 + 1.0) - constMax;
-        // Default return values
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). The unstable period
-        // still delays the first output for API consistency.
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Initialize the variables by going through
-        // the lookback period.
-        sumROC1 = 0.0;
-        today = startIdx - lookbackTotal;
-        trailingIdx = today;
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            tempReal -= inReal[today];
-            sumROC1 += (tempReal).abs();
-        }
-        // At this point sumROC1 represent the
-        // summation of the 1-day price difference
-        // over the (optInTimePeriod-1)
-        // Calculate the first KAMA
-        // The yesterday price is used here as the previous KAMA.
-        prevKAMA = inReal[today - 1];
-        tempReal = inReal[today];
-        tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        periodROC = tempReal - tempReal2;
-        // Save the trailing value. Do this because inReal
-        // and outReal can be pointers to the same buffer.
-        trailingValue = tempReal2;
-        // Calculate the efficiency ratio
-        if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-            tempReal = 1.0;
-        } else {
-            tempReal = (periodROC / sumROC1).abs();
-        }
-        // Calculate the smoothing constant
-        tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-        tempReal *= tempReal;
-        // Calculate the KAMA like an EMA, using the
-        // smoothing constant as the adaptive factor.
-        prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-        // 'today' keep track of where the processing is within the
-        // input.
-        // Skip the unstable period. Do the whole processing
-        // needed for KAMA, but do not write it in the output.
-        while today <= startIdx {
-            tempReal = inReal[today];
-            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            periodROC = tempReal - tempReal2;
-            // Adjust sumROC1:
-            //  - Remove trailing ROC1
-            //  - Add new ROC1
-            sumROC1 -= (trailingValue - tempReal2).abs();
-            sumROC1 += (tempReal - inReal[today - 1]).abs();
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-                tempReal = 1.0;
-            } else {
-                tempReal = (periodROC / sumROC1).abs();
-            }
-            // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-            tempReal *= tempReal;
-            // Calculate the KAMA like an EMA, using the
-            // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-        }
-        // Write the first value.
-        lastValue_outReal = prevKAMA;
-        outIdx = 1;
-        dummyBegIdx = today - 1;
-        // Do the KAMA calculation for the requested range.
-        while today <= endIdx {
-            tempReal = inReal[today];
-            tempReal2 = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            periodROC = tempReal - tempReal2;
-            // Adjust sumROC1:
-            //  - Remove trailing ROC1
-            //  - Add new ROC1
-            sumROC1 -= (trailingValue - tempReal2).abs();
-            sumROC1 += (tempReal - inReal[today - 1]).abs();
-            // Save the trailing value. Do this because inReal
-            // and outReal can be pointers to the same buffer.
-            trailingValue = tempReal2;
-            // Calculate the efficiency ratio
-            if sumROC1 <= periodROC || (sumROC1).abs() < 1e-14 {
-                tempReal = 1.0;
-            } else {
-                tempReal = (periodROC / sumROC1).abs();
-            }
-            // Calculate the smoothing constant
-            tempReal = (tempReal as f64).mul_add(constDiff, constMax);
-            tempReal *= tempReal;
-            // Calculate the KAMA like an EMA, using the
-            // smoothing constant as the adaptive factor.
-            prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-            lastValue_outReal = prevKAMA;
-        }
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = KAMA_StreamState {
-            optInTimePeriod,
-            constMax,
-            constDiff,
-            sumROC1,
-            prevKAMA,
-            trailingValue,
-            lag1_inReal: inReal[historyLen - 1],
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok((KAMA_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live KAMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::KAMA`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.KAMA_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_KAMA_Open")]
-    pub fn KAMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KAMA_Stream, f64), RetCode> {
-        self.KAMA_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::KAMA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::KAMA`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_KAMA_OpenAndFill")]
-    pub fn KAMA_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::KAMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::KAMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn KAMA_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<KAMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -694,7 +474,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
@@ -716,10 +496,14 @@ impl Core {
             let fillLb: usize = self.KAMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
-            let mut fillIdx: usize = 0;
-            while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
-                fillIdx += 1;
+            if outStride == 0 {
+                outReal[0] = inReal[historyLen - 1];
+            } else {
+                let mut fillIdx: usize = 0;
+                while fillIdx < historyLen - fillLb {
+                    outReal[fillIdx] = inReal[fillLb + fillIdx];
+                    fillIdx += 1;
+                }
             }
             return Ok(KAMA_Stream { core: self.clone(), state });
         }
@@ -741,9 +525,6 @@ impl Core {
         // Default return values
         (*outBegIdx) = 0;
         (*outNBElement) = 0;
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). The unstable period
-        // still delays the first output for API consistency.
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = (optInTimePeriod + self.unstable_period[FuncUnstId::KAMA as usize]) as usize;
@@ -823,7 +604,7 @@ impl Core {
             prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
         }
         // Write the first value.
-        outReal[0] = prevKAMA;
+        outReal[(0 * outStride) as usize] = prevKAMA;
         outIdx = 1;
         (*outBegIdx) = today - 1;
         // Do the KAMA calculation for the requested range.
@@ -851,8 +632,7 @@ impl Core {
             // Calculate the KAMA like an EMA, using the
             // smoothing constant as the adaptive factor.
             prevKAMA = (inReal[{ let _v = today; today += 1; _v }] - prevKAMA as f64).mul_add(tempReal, prevKAMA);
-            outReal[outIdx] = prevKAMA;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevKAMA;
         }
         (*outNBElement) = outIdx;
 
@@ -878,6 +658,50 @@ impl Core {
             ring_trailingIdx_inReal,
         };
         Ok(KAMA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::KAMA_Open`] (composition seam).
+    pub(crate) fn KAMA_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(KAMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.KAMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live KAMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::KAMA`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.KAMA_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_KAMA_Open")]
+    pub fn KAMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(KAMA_Stream, f64), RetCode> {
+        self.KAMA_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::KAMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::KAMA`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_KAMA_OpenAndFill")]
+    pub fn KAMA_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<KAMA_Stream, RetCode> {
+        self.KAMA_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

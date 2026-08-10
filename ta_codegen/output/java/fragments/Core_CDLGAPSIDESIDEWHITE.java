@@ -506,7 +506,7 @@
          sp.ringPos_NearTrailingIdx = 0;
       }
    }
-   private RetCode CDLGAPSIDESIDEWHITE_OpenBody( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLGAPSIDESIDEWHITE_OpenCore( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double NearPeriodTotal = 0;
       double EqualPeriodTotal = 0;
@@ -515,9 +515,6 @@
       int NearTrailingIdx = 0;
       int EqualTrailingIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -587,9 +584,9 @@
              inOpen[i] >= inOpen[i - 1] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* same open 2 and 3 */
              inOpen[i] <= inOpen[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
          {
-            lastValue_outInteger = (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) ? 100 : 0 - 100;
+            outInteger[outIdx++ * outStride] = (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) ? 100 : 0 - 100;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -676,182 +673,22 @@
       sp.cs_Near_rangeType = Near_rangeType;
       sp.cs_Near_avgPeriod = Near_avgPeriod;
       sp.cs_Near_factor = Near_factor;
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDLGAPSIDESIDEWHITE_OpenBody( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDLGAPSIDESIDEWHITE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDLGAPSIDESIDEWHITE_OpenAndFillBody( CDLGAPSIDESIDEWHITE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      double NearPeriodTotal = 0;
-      double EqualPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int NearTrailingIdx = 0;
-      int EqualTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      int Equal_rangeType = this.candleSettings[CandleSettingType.Equal.ordinal()].rangeType.ordinal();
-      int Equal_avgPeriod = this.candleSettings[CandleSettingType.Equal.ordinal()].avgPeriod;
-      double Equal_factor = this.candleSettings[CandleSettingType.Equal.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDLGAPSIDESIDEWHITE_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      NearPeriodTotal = 0;
-      EqualPeriodTotal = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = EqualTrailingIdx;
-      while( i < startIdx ) {
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - upside or downside gap (between the bodies)
-       * - first candle after the window: white candlestick
-       * - second candle after the window: white candlestick with similar size (near the same) and about the same
-       *   open (equal) of the previous candle
-       * - the second candle does not close the window
-       * The meaning of "near" and "equal" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) or negative (-1 to -100): the user should consider that upside
-       * or downside gap side-by-side white lines is significant when it appears in a trend, while this function
-       * does not consider the trend
-       */
-      outIdx = 0;
-      do {
-         if( ((Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) && (Math.min(inOpen[i], inClose[i]) > Math.max(inOpen[i - 2], inClose[i - 2])) || (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && (Math.max(inOpen[i], inClose[i]) < Math.min(inOpen[i - 2], inClose[i - 2]))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && /* 2nd: white */
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&         /* 3rd: white */
-             Math.abs(inClose[i] - inOpen[i]) >= Math.abs(inClose[i - 1] - inOpen[i - 1]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) && /* same size 2 and 3 */
-             Math.abs(inClose[i] - inOpen[i]) <= Math.abs(inClose[i - 1] - inOpen[i - 1]) + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
-             inOpen[i] >= inOpen[i - 1] - ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) && /* same open 2 and 3 */
-             inOpen[i] <= inOpen[i - 1] + ((Equal_factor * (((Equal_avgPeriod != 0) ? (EqualPeriodTotal / Equal_avgPeriod) : ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Equal_rangeType == 2) ? 2.0 : 1.0)))) )
-         {
-            outInteger[outIdx++] = (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) ? 100 : 0 - 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         NearPeriodTotal += ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - 1] - inLow[NearTrailingIdx - 1]) - Math.abs(inClose[NearTrailingIdx - 1] - inOpen[NearTrailingIdx - 1])) : 0.0)));
-         EqualPeriodTotal += ((Equal_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Equal_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Equal_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((Equal_rangeType == 0) ? (Math.abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : ((Equal_rangeType == 1) ? (inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) : ((Equal_rangeType == 2) ? ((inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1]) - Math.abs(inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         NearTrailingIdx += 1;
-         EqualTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_EqualTrailingIdx = i - EqualTrailingIdx;
-      int cap_EqualTrailingIdx = capLag_EqualTrailingIdx + 2;
-      if( capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_EqualTrailingIdx = (cap_EqualTrailingIdx > 0)? cap_EqualTrailingIdx : 1;
-      double[] capRing_EqualTrailingIdx_inOpen = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inOpen[fillJ % cap_EqualTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inHigh = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inHigh[fillJ % cap_EqualTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inLow = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inLow[fillJ % cap_EqualTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_EqualTrailingIdx_inClose = new double[allocN_EqualTrailingIdx];
-      for( int fillJ = historyLen - cap_EqualTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_EqualTrailingIdx_inClose[fillJ % cap_EqualTrailingIdx] = inClose[fillJ];
-      }
-      int capLag_NearTrailingIdx = i - NearTrailingIdx;
-      int cap_NearTrailingIdx = capLag_NearTrailingIdx + 2;
-      if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
-      double[] capRing_NearTrailingIdx_inOpen = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inHigh = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inLow = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inClose = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx] = inClose[fillJ];
-      }
-      sp.NearPeriodTotal = NearPeriodTotal;
-      sp.EqualPeriodTotal = EqualPeriodTotal;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.ringPos_EqualTrailingIdx = historyLen % cap_EqualTrailingIdx;
-      sp.ringCap_EqualTrailingIdx = cap_EqualTrailingIdx;
-      sp.ringLag_EqualTrailingIdx = capLag_EqualTrailingIdx;
-      sp.ring_EqualTrailingIdx_inOpen = capRing_EqualTrailingIdx_inOpen;
-      sp.ring_EqualTrailingIdx_inHigh = capRing_EqualTrailingIdx_inHigh;
-      sp.ring_EqualTrailingIdx_inLow = capRing_EqualTrailingIdx_inLow;
-      sp.ring_EqualTrailingIdx_inClose = capRing_EqualTrailingIdx_inClose;
-      sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
-      sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
-      sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
-      sp.ring_NearTrailingIdx_inOpen = capRing_NearTrailingIdx_inOpen;
-      sp.ring_NearTrailingIdx_inHigh = capRing_NearTrailingIdx_inHigh;
-      sp.ring_NearTrailingIdx_inLow = capRing_NearTrailingIdx_inLow;
-      sp.ring_NearTrailingIdx_inClose = capRing_NearTrailingIdx_inClose;
-      sp.cs_Equal_rangeType = Equal_rangeType;
-      sp.cs_Equal_avgPeriod = Equal_avgPeriod;
-      sp.cs_Equal_factor = Equal_factor;
-      sp.cs_Near_rangeType = Near_rangeType;
-      sp.cs_Near_avgPeriod = Near_avgPeriod;
-      sp.cs_Near_factor = Near_factor;
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDLGAPSIDESIDEWHITE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDLGAPSIDESIDEWHITE_Open (composition seam). */
    CDLGAPSIDESIDEWHITE_Stream CDLGAPSIDESIDEWHITE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

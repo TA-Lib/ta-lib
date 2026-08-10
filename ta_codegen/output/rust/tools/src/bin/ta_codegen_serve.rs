@@ -881,6 +881,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -930,6 +931,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ACCBANDS(
                 startIdx, endIdx,
                 &inHigh,
@@ -938,6 +940,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ACCBANDS_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ACCBANDS_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -963,6 +972,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -995,11 +1005,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ACOS(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ACOS_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ACOS_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1021,6 +1039,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1074,6 +1093,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.AD(
                 startIdx, endIdx,
                 &inHigh,
@@ -1082,6 +1102,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inVolume,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.AD_Open(&inHigh, &inLow, &inClose, &inVolume, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.AD_OpenAndFill(&inHigh, &inLow, &inClose, &inVolume, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1103,6 +1130,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1142,12 +1170,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ADD(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ADD_Open(&inReal0, &inReal1, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ADD_OpenAndFill(&inReal0, &inReal1, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1169,6 +1205,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1224,6 +1261,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ADOSC(
                 startIdx, endIdx,
                 &inHigh,
@@ -1234,6 +1272,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSlowPeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ADOSC_Open(&inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ADOSC_OpenAndFill(&inHigh, &inLow, &inClose, &inVolume, optInFastPeriod, optInSlowPeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1255,6 +1300,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1305,6 +1351,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ADX(
                 startIdx, endIdx,
                 &inHigh,
@@ -1313,6 +1360,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ADX_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ADX_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1334,6 +1388,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1381,6 +1436,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ADXR(
                 startIdx, endIdx,
                 &inHigh,
@@ -1389,6 +1445,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ADXR_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ADXR_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1410,6 +1473,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1449,6 +1513,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.APO(
                 startIdx, endIdx,
                 &inReal,
@@ -1457,6 +1522,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.APO_Open(&inReal, optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.APO_OpenAndFill(&inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -1479,6 +1551,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1520,6 +1593,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.AROON(
                 startIdx, endIdx,
                 &inHigh,
@@ -1527,6 +1601,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.AROON_Open(&inHigh, &inLow, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.AROON_OpenAndFill(&inHigh, &inLow, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1550,6 +1631,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1590,6 +1672,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.AROONOSC(
                 startIdx, endIdx,
                 &inHigh,
@@ -1597,6 +1680,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.AROONOSC_Open(&inHigh, &inLow, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.AROONOSC_OpenAndFill(&inHigh, &inLow, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1618,6 +1708,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1650,11 +1741,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ASIN(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ASIN_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ASIN_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1676,6 +1775,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1708,11 +1808,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ATAN(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ATAN_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ATAN_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1734,6 +1842,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1784,6 +1893,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ATR(
                 startIdx, endIdx,
                 &inHigh,
@@ -1792,6 +1902,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ATR_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ATR_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1813,6 +1930,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1846,12 +1964,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.AVGDEV(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.AVGDEV_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.AVGDEV_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1873,6 +1999,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1926,6 +2053,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.AVGPRICE(
                 startIdx, endIdx,
                 &inOpen,
@@ -1934,6 +2062,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.AVGPRICE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.AVGPRICE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -1955,6 +2090,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -1997,6 +2133,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.BBANDS(
                 startIdx, endIdx,
                 &inReal,
@@ -2006,6 +2143,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.BBANDS_Open(&inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.BBANDS_OpenAndFill(&inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -2032,6 +2176,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2072,6 +2217,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.BETA(
                 startIdx, endIdx,
                 &inReal0,
@@ -2079,6 +2225,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.BETA_Open(&inReal0, &inReal1, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.BETA_OpenAndFill(&inReal0, &inReal1, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2100,6 +2253,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2153,6 +2307,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.BOP(
                 startIdx, endIdx,
                 &inOpen,
@@ -2161,6 +2316,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.BOP_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.BOP_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2182,6 +2344,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2229,6 +2392,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CCI(
                 startIdx, endIdx,
                 &inHigh,
@@ -2237,6 +2401,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CCI_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CCI_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2258,6 +2429,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2311,6 +2483,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL2CROWS(
                 startIdx, endIdx,
                 &inOpen,
@@ -2319,6 +2492,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL2CROWS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL2CROWS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2340,6 +2520,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2393,6 +2574,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3BLACKCROWS(
                 startIdx, endIdx,
                 &inOpen,
@@ -2401,6 +2583,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3BLACKCROWS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3BLACKCROWS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2422,6 +2611,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2475,6 +2665,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3INSIDE(
                 startIdx, endIdx,
                 &inOpen,
@@ -2483,6 +2674,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3INSIDE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3INSIDE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2504,6 +2702,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2557,6 +2756,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3LINESTRIKE(
                 startIdx, endIdx,
                 &inOpen,
@@ -2565,6 +2765,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3LINESTRIKE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3LINESTRIKE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2586,6 +2793,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2639,6 +2847,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3OUTSIDE(
                 startIdx, endIdx,
                 &inOpen,
@@ -2647,6 +2856,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3OUTSIDE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3OUTSIDE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2668,6 +2884,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2721,6 +2938,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3STARSINSOUTH(
                 startIdx, endIdx,
                 &inOpen,
@@ -2729,6 +2947,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3STARSINSOUTH_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3STARSINSOUTH_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2750,6 +2975,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2803,6 +3029,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDL3WHITESOLDIERS(
                 startIdx, endIdx,
                 &inOpen,
@@ -2811,6 +3038,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDL3WHITESOLDIERS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDL3WHITESOLDIERS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2832,6 +3066,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2886,6 +3121,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLABANDONEDBABY(
                 startIdx, endIdx,
                 &inOpen,
@@ -2895,6 +3131,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLABANDONEDBABY_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLABANDONEDBABY_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2916,6 +3159,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -2969,6 +3213,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLADVANCEBLOCK(
                 startIdx, endIdx,
                 &inOpen,
@@ -2977,6 +3222,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLADVANCEBLOCK_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLADVANCEBLOCK_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -2998,6 +3250,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3051,6 +3304,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLBELTHOLD(
                 startIdx, endIdx,
                 &inOpen,
@@ -3059,6 +3313,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLBELTHOLD_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLBELTHOLD_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3080,6 +3341,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3133,6 +3395,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLBREAKAWAY(
                 startIdx, endIdx,
                 &inOpen,
@@ -3141,6 +3404,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLBREAKAWAY_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLBREAKAWAY_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3162,6 +3432,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3215,6 +3486,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLCLOSINGMARUBOZU(
                 startIdx, endIdx,
                 &inOpen,
@@ -3223,6 +3495,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLCLOSINGMARUBOZU_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLCLOSINGMARUBOZU_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3244,6 +3523,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3297,6 +3577,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLCONCEALBABYSWALL(
                 startIdx, endIdx,
                 &inOpen,
@@ -3305,6 +3586,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLCONCEALBABYSWALL_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLCONCEALBABYSWALL_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3326,6 +3614,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3379,6 +3668,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLCOUNTERATTACK(
                 startIdx, endIdx,
                 &inOpen,
@@ -3387,6 +3677,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLCOUNTERATTACK_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLCOUNTERATTACK_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3408,6 +3705,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3462,6 +3760,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLDARKCLOUDCOVER(
                 startIdx, endIdx,
                 &inOpen,
@@ -3471,6 +3770,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLDARKCLOUDCOVER_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLDARKCLOUDCOVER_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3492,6 +3798,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3545,6 +3852,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLDOJI(
                 startIdx, endIdx,
                 &inOpen,
@@ -3553,6 +3861,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLDOJI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLDOJI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3574,6 +3889,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3627,6 +3943,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -3635,6 +3952,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLDOJISTAR_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLDOJISTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3656,6 +3980,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3709,6 +4034,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLDRAGONFLYDOJI(
                 startIdx, endIdx,
                 &inOpen,
@@ -3717,6 +4043,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLDRAGONFLYDOJI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLDRAGONFLYDOJI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3738,6 +4071,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3791,6 +4125,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLENGULFING(
                 startIdx, endIdx,
                 &inOpen,
@@ -3799,6 +4134,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLENGULFING_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLENGULFING_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3820,6 +4162,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3874,6 +4217,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLEVENINGDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -3883,6 +4227,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLEVENINGDOJISTAR_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLEVENINGDOJISTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3904,6 +4255,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -3958,6 +4310,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLEVENINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -3967,6 +4320,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLEVENINGSTAR_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLEVENINGSTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -3988,6 +4348,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4041,6 +4402,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLGAPSIDESIDEWHITE(
                 startIdx, endIdx,
                 &inOpen,
@@ -4049,6 +4411,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLGAPSIDESIDEWHITE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLGAPSIDESIDEWHITE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4070,6 +4439,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4123,6 +4493,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLGRAVESTONEDOJI(
                 startIdx, endIdx,
                 &inOpen,
@@ -4131,6 +4502,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLGRAVESTONEDOJI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLGRAVESTONEDOJI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4152,6 +4530,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4205,6 +4584,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHAMMER(
                 startIdx, endIdx,
                 &inOpen,
@@ -4213,6 +4593,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHAMMER_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHAMMER_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4234,6 +4621,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4287,6 +4675,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHANGINGMAN(
                 startIdx, endIdx,
                 &inOpen,
@@ -4295,6 +4684,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHANGINGMAN_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHANGINGMAN_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4316,6 +4712,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4369,6 +4766,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHARAMI(
                 startIdx, endIdx,
                 &inOpen,
@@ -4377,6 +4775,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHARAMI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHARAMI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4398,6 +4803,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4451,6 +4857,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHARAMICROSS(
                 startIdx, endIdx,
                 &inOpen,
@@ -4459,6 +4866,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHARAMICROSS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHARAMICROSS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4480,6 +4894,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4533,6 +4948,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHIGHWAVE(
                 startIdx, endIdx,
                 &inOpen,
@@ -4541,6 +4957,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHIGHWAVE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHIGHWAVE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4562,6 +4985,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4615,6 +5039,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHIKKAKE(
                 startIdx, endIdx,
                 &inOpen,
@@ -4623,6 +5048,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHIKKAKE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHIKKAKE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4644,6 +5076,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4697,6 +5130,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHIKKAKEMOD(
                 startIdx, endIdx,
                 &inOpen,
@@ -4705,6 +5139,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHIKKAKEMOD_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHIKKAKEMOD_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4726,6 +5167,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4779,6 +5221,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLHOMINGPIGEON(
                 startIdx, endIdx,
                 &inOpen,
@@ -4787,6 +5230,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLHOMINGPIGEON_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLHOMINGPIGEON_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4808,6 +5258,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4861,6 +5312,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLIDENTICAL3CROWS(
                 startIdx, endIdx,
                 &inOpen,
@@ -4869,6 +5321,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLIDENTICAL3CROWS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLIDENTICAL3CROWS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4890,6 +5349,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -4943,6 +5403,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLINNECK(
                 startIdx, endIdx,
                 &inOpen,
@@ -4951,6 +5412,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLINNECK_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLINNECK_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -4972,6 +5440,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5025,6 +5494,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLINVERTEDHAMMER(
                 startIdx, endIdx,
                 &inOpen,
@@ -5033,6 +5503,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLINVERTEDHAMMER_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLINVERTEDHAMMER_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5054,6 +5531,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5107,6 +5585,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLKICKING(
                 startIdx, endIdx,
                 &inOpen,
@@ -5115,6 +5594,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLKICKING_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLKICKING_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5136,6 +5622,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5189,6 +5676,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLKICKINGBYLENGTH(
                 startIdx, endIdx,
                 &inOpen,
@@ -5197,6 +5685,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLKICKINGBYLENGTH_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLKICKINGBYLENGTH_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5218,6 +5713,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5271,6 +5767,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLLADDERBOTTOM(
                 startIdx, endIdx,
                 &inOpen,
@@ -5279,6 +5776,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLLADDERBOTTOM_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLLADDERBOTTOM_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5300,6 +5804,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5353,6 +5858,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLLONGLEGGEDDOJI(
                 startIdx, endIdx,
                 &inOpen,
@@ -5361,6 +5867,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLLONGLEGGEDDOJI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLLONGLEGGEDDOJI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5382,6 +5895,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5435,6 +5949,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLLONGLINE(
                 startIdx, endIdx,
                 &inOpen,
@@ -5443,6 +5958,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLLONGLINE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLLONGLINE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5464,6 +5986,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5517,6 +6040,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLMARUBOZU(
                 startIdx, endIdx,
                 &inOpen,
@@ -5525,6 +6049,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLMARUBOZU_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLMARUBOZU_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5546,6 +6077,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5599,6 +6131,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLMATCHINGLOW(
                 startIdx, endIdx,
                 &inOpen,
@@ -5607,6 +6140,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLMATCHINGLOW_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLMATCHINGLOW_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5628,6 +6168,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5682,6 +6223,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLMATHOLD(
                 startIdx, endIdx,
                 &inOpen,
@@ -5691,6 +6233,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLMATHOLD_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLMATHOLD_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5712,6 +6261,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5766,6 +6316,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLMORNINGDOJISTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -5775,6 +6326,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLMORNINGDOJISTAR_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLMORNINGDOJISTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5796,6 +6354,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5850,6 +6409,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLMORNINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -5859,6 +6419,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInPenetration,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLMORNINGSTAR_Open(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLMORNINGSTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, optInPenetration, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5880,6 +6447,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -5933,6 +6501,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLONNECK(
                 startIdx, endIdx,
                 &inOpen,
@@ -5941,6 +6510,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLONNECK_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLONNECK_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -5962,6 +6538,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6015,6 +6592,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLPIERCING(
                 startIdx, endIdx,
                 &inOpen,
@@ -6023,6 +6601,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLPIERCING_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLPIERCING_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6044,6 +6629,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6097,6 +6683,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLRICKSHAWMAN(
                 startIdx, endIdx,
                 &inOpen,
@@ -6105,6 +6692,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLRICKSHAWMAN_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLRICKSHAWMAN_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6126,6 +6720,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6179,6 +6774,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLRISEFALL3METHODS(
                 startIdx, endIdx,
                 &inOpen,
@@ -6187,6 +6783,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLRISEFALL3METHODS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLRISEFALL3METHODS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6208,6 +6811,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6261,6 +6865,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSEPARATINGLINES(
                 startIdx, endIdx,
                 &inOpen,
@@ -6269,6 +6874,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSEPARATINGLINES_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSEPARATINGLINES_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6290,6 +6902,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6343,6 +6956,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSHOOTINGSTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -6351,6 +6965,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSHOOTINGSTAR_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSHOOTINGSTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6372,6 +6993,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6425,6 +7047,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSHORTLINE(
                 startIdx, endIdx,
                 &inOpen,
@@ -6433,6 +7056,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSHORTLINE_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSHORTLINE_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6454,6 +7084,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6507,6 +7138,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSPINNINGTOP(
                 startIdx, endIdx,
                 &inOpen,
@@ -6515,6 +7147,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSPINNINGTOP_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSPINNINGTOP_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6536,6 +7175,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6589,6 +7229,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSTALLEDPATTERN(
                 startIdx, endIdx,
                 &inOpen,
@@ -6597,6 +7238,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSTALLEDPATTERN_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSTALLEDPATTERN_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6618,6 +7266,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6671,6 +7320,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLSTICKSANDWICH(
                 startIdx, endIdx,
                 &inOpen,
@@ -6679,6 +7329,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLSTICKSANDWICH_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLSTICKSANDWICH_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6700,6 +7357,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6753,6 +7411,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLTAKURI(
                 startIdx, endIdx,
                 &inOpen,
@@ -6761,6 +7420,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLTAKURI_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLTAKURI_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6782,6 +7448,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6835,6 +7502,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLTASUKIGAP(
                 startIdx, endIdx,
                 &inOpen,
@@ -6843,6 +7511,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLTASUKIGAP_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLTASUKIGAP_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6864,6 +7539,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6917,6 +7593,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLTHRUSTING(
                 startIdx, endIdx,
                 &inOpen,
@@ -6925,6 +7602,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLTHRUSTING_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLTHRUSTING_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -6946,6 +7630,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -6999,6 +7684,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLTRISTAR(
                 startIdx, endIdx,
                 &inOpen,
@@ -7007,6 +7693,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLTRISTAR_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLTRISTAR_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7028,6 +7721,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7081,6 +7775,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLUNIQUE3RIVER(
                 startIdx, endIdx,
                 &inOpen,
@@ -7089,6 +7784,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLUNIQUE3RIVER_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLUNIQUE3RIVER_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7110,6 +7812,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7163,6 +7866,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLUPSIDEGAP2CROWS(
                 startIdx, endIdx,
                 &inOpen,
@@ -7171,6 +7875,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLUPSIDEGAP2CROWS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLUPSIDEGAP2CROWS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7192,6 +7903,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7245,6 +7957,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CDLXSIDEGAP3METHODS(
                 startIdx, endIdx,
                 &inOpen,
@@ -7253,6 +7966,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CDLXSIDEGAP3METHODS_Open(&inOpen, &inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CDLXSIDEGAP3METHODS_OpenAndFill(&inOpen, &inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7274,6 +7994,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7306,11 +8027,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CEIL(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CEIL_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CEIL_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7332,6 +8061,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7386,6 +8116,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CMF(
                 startIdx, endIdx,
                 &inHigh,
@@ -7395,6 +8126,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CMF_Open(&inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CMF_OpenAndFill(&inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7416,6 +8154,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7452,12 +8191,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CMO(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CMO_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CMO_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7479,6 +8226,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7512,12 +8260,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CMOU(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CMOU_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CMOU_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7539,6 +8295,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7579,6 +8336,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.CORREL(
                 startIdx, endIdx,
                 &inReal0,
@@ -7586,6 +8344,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.CORREL_Open(&inReal0, &inReal1, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.CORREL_OpenAndFill(&inReal0, &inReal1, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7607,6 +8372,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7639,11 +8405,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.COS(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.COS_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.COS_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7665,6 +8439,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7697,11 +8472,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.COSH(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.COSH_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.COSH_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7723,6 +8506,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7756,12 +8540,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.DEMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.DEMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.DEMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7783,6 +8575,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7822,12 +8615,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.DIV(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.DIV_Open(&inReal0, &inReal1, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.DIV_OpenAndFill(&inReal0, &inReal1, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7849,6 +8650,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7899,6 +8701,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.DX(
                 startIdx, endIdx,
                 &inHigh,
@@ -7907,6 +8710,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.DX_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.DX_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7928,6 +8738,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -7964,12 +8775,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.EMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.EMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.EMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -7991,6 +8810,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8023,11 +8843,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.EXP(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.EXP_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.EXP_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8049,6 +8877,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8081,11 +8910,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.FLOOR(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.FLOOR_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.FLOOR_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8107,6 +8944,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8140,12 +8978,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8167,6 +9013,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8202,11 +9049,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_DCPERIOD(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_DCPERIOD_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_DCPERIOD_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8228,6 +9083,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8263,11 +9119,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_DCPHASE(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_DCPHASE_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_DCPHASE_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8289,6 +9153,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8325,11 +9190,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_PHASOR(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_PHASOR_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_PHASOR_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8353,6 +9226,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8389,11 +9263,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_SINE(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_SINE_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_SINE_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8417,6 +9299,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8452,11 +9335,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_TRENDLINE(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_TRENDLINE_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_TRENDLINE_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8478,6 +9369,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8513,11 +9405,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.HT_TRENDMODE(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.HT_TRENDMODE_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.HT_TRENDMODE_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8539,6 +9439,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8579,6 +9480,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.IMI(
                 startIdx, endIdx,
                 &inOpen,
@@ -8586,6 +9488,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.IMI_Open(&inOpen, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.IMI_OpenAndFill(&inOpen, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8607,6 +9516,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8643,12 +9553,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.KAMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.KAMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.KAMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8670,6 +9588,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8703,12 +9622,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LINEARREG(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LINEARREG_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LINEARREG_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8730,6 +9657,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8763,12 +9691,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LINEARREG_ANGLE(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LINEARREG_ANGLE_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LINEARREG_ANGLE_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8790,6 +9726,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8823,12 +9760,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LINEARREG_INTERCEPT(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LINEARREG_INTERCEPT_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LINEARREG_INTERCEPT_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8850,6 +9795,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8883,12 +9829,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LINEARREG_SLOPE(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LINEARREG_SLOPE_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LINEARREG_SLOPE_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8910,6 +9864,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -8942,11 +9897,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LN(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LN_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LN_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -8968,6 +9931,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9000,11 +9964,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.LOG10(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.LOG10_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.LOG10_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9026,6 +9998,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9064,6 +10037,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MA(
                 startIdx, endIdx,
                 &inReal,
@@ -9071,6 +10045,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MA_Open(&inReal, optInTimePeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MA_OpenAndFill(&inReal, optInTimePeriod, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -9093,6 +10074,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9130,6 +10112,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MACD(
                 startIdx, endIdx,
                 &inReal,
@@ -9138,6 +10121,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSignalPeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MACD_Open(&inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MACD_OpenAndFill(&inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9163,6 +10153,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9211,6 +10202,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MACDEXT(
                 startIdx, endIdx,
                 &inReal,
@@ -9222,6 +10214,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSignalMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MACDEXT_Open(&inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MACDEXT_OpenAndFill(&inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -9248,6 +10247,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9283,12 +10283,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MACDFIX(
                 startIdx, endIdx,
                 &inReal,
                 optInSignalPeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MACDFIX_Open(&inReal, optInSignalPeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MACDFIX_OpenAndFill(&inReal, optInSignalPeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9314,6 +10322,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9352,6 +10361,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MAMA(
                 startIdx, endIdx,
                 &inReal,
@@ -9359,6 +10369,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSlowLimit,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MAMA_Open(&inReal, optInFastLimit, optInSlowLimit, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MAMA_OpenAndFill(&inReal, optInFastLimit, optInSlowLimit, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9382,6 +10399,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9428,6 +10446,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MAVP(
                 startIdx, endIdx,
                 &inReal0,
@@ -9437,6 +10456,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MAVP_Open(&inReal0, &inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MAVP_OpenAndFill(&inReal0, &inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -9459,6 +10485,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9492,12 +10519,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MAX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MAX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MAX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9519,6 +10554,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9552,12 +10588,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MAXINDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MAXINDEX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MAXINDEX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9579,6 +10623,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9618,12 +10663,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MEDPRICE(
                 startIdx, endIdx,
                 &inHigh,
                 &inLow,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MEDPRICE_Open(&inHigh, &inLow, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MEDPRICE_OpenAndFill(&inHigh, &inLow, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9645,6 +10698,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9699,6 +10753,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MFI(
                 startIdx, endIdx,
                 &inHigh,
@@ -9708,6 +10763,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MFI_Open(&inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MFI_OpenAndFill(&inHigh, &inLow, &inClose, &inVolume, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9729,6 +10791,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9762,12 +10825,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MIDPOINT(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MIDPOINT_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MIDPOINT_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9789,6 +10860,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9829,6 +10901,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MIDPRICE(
                 startIdx, endIdx,
                 &inHigh,
@@ -9836,6 +10909,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MIDPRICE_Open(&inHigh, &inLow, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MIDPRICE_OpenAndFill(&inHigh, &inLow, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9857,6 +10937,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9890,12 +10971,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MIN(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MIN_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MIN_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9917,6 +11006,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -9950,12 +11040,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MININDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MININDEX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MININDEX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -9977,6 +11075,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10011,12 +11110,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MINMAX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MINMAX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MINMAX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10040,6 +11147,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10074,12 +11182,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MINMAXINDEX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outIntBuf0, &mut outIntBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MINMAXINDEX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MINMAXINDEX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outIntBuf0, &mut outIntBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10103,6 +11219,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10153,6 +11270,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MINUS_DI(
                 startIdx, endIdx,
                 &inHigh,
@@ -10161,6 +11279,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MINUS_DI_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MINUS_DI_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10182,6 +11307,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10225,6 +11351,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MINUS_DM(
                 startIdx, endIdx,
                 &inHigh,
@@ -10232,6 +11359,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MINUS_DM_Open(&inHigh, &inLow, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MINUS_DM_OpenAndFill(&inHigh, &inLow, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10253,6 +11387,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10286,12 +11421,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MOM(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MOM_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MOM_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10313,6 +11456,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10352,12 +11496,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.MULT(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.MULT_Open(&inReal0, &inReal1, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.MULT_OpenAndFill(&inReal0, &inReal1, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10379,6 +11531,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10429,6 +11582,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.NATR(
                 startIdx, endIdx,
                 &inHigh,
@@ -10437,6 +11591,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.NATR_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.NATR_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10458,6 +11619,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10497,12 +11659,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.NVI(
                 startIdx, endIdx,
                 &inClose,
                 &inVolume,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.NVI_Open(&inClose, &inVolume, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.NVI_OpenAndFill(&inClose, &inVolume, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10524,6 +11694,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10563,12 +11734,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.OBV(
                 startIdx, endIdx,
                 &inReal,
                 &inVolume,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.OBV_Open(&inReal, &inVolume, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.OBV_OpenAndFill(&inReal, &inVolume, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10590,6 +11769,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10640,6 +11820,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.PLUS_DI(
                 startIdx, endIdx,
                 &inHigh,
@@ -10648,6 +11829,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.PLUS_DI_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.PLUS_DI_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10669,6 +11857,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10712,6 +11901,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.PLUS_DM(
                 startIdx, endIdx,
                 &inHigh,
@@ -10719,6 +11909,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.PLUS_DM_Open(&inHigh, &inLow, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.PLUS_DM_OpenAndFill(&inHigh, &inLow, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10740,6 +11937,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10779,6 +11977,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.PPO(
                 startIdx, endIdx,
                 &inReal,
@@ -10787,6 +11986,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.PPO_Open(&inReal, optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.PPO_OpenAndFill(&inReal, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -10809,6 +12015,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10848,12 +12055,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.PVI(
                 startIdx, endIdx,
                 &inClose,
                 &inVolume,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.PVI_Open(&inClose, &inVolume, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.PVI_OpenAndFill(&inClose, &inVolume, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -10875,6 +12090,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10914,6 +12130,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.PVO(
                 startIdx, endIdx,
                 &inVolume,
@@ -10922,6 +12139,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.PVO_Open(&inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.PVO_OpenAndFill(&inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -10944,6 +12168,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -10977,12 +12202,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ROC(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ROC_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ROC_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11004,6 +12237,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11037,12 +12271,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ROCP(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ROCP_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ROCP_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11064,6 +12306,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11097,12 +12340,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ROCR(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ROCR_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ROCR_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11124,6 +12375,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11157,12 +12409,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ROCR100(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ROCR100_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ROCR100_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11184,6 +12444,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11220,12 +12481,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.RSI(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.RSI_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.RSI_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11247,6 +12516,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11288,6 +12558,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SAR(
                 startIdx, endIdx,
                 &inHigh,
@@ -11296,6 +12567,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInMaximum,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SAR_Open(&inHigh, &inLow, optInAcceleration, optInMaximum, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SAR_OpenAndFill(&inHigh, &inLow, optInAcceleration, optInMaximum, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11317,6 +12595,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11364,6 +12643,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SAREXT(
                 startIdx, endIdx,
                 &inHigh,
@@ -11378,6 +12658,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInAccelerationMaxShort,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SAREXT_Open(&inHigh, &inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SAREXT_OpenAndFill(&inHigh, &inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11399,6 +12686,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11431,11 +12719,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SIN(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SIN_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SIN_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11457,6 +12753,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11489,11 +12786,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SINH(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SINH_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SINH_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11515,6 +12820,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11548,12 +12854,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11575,6 +12889,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11607,11 +12922,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SQRT(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SQRT_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SQRT_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11633,6 +12956,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11667,6 +12991,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.STDDEV(
                 startIdx, endIdx,
                 &inReal,
@@ -11674,6 +12999,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInNbDev,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.STDDEV_Open(&inReal, optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.STDDEV_OpenAndFill(&inReal, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -11695,6 +13027,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11753,6 +13086,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.STOCH(
                 startIdx, endIdx,
                 &inHigh,
@@ -11765,6 +13099,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInSlowD_MAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.STOCH_Open(&inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.STOCH_OpenAndFill(&inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -11789,6 +13130,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11843,6 +13185,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.STOCHF(
                 startIdx, endIdx,
                 &inHigh,
@@ -11853,6 +13196,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInFastD_MAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.STOCHF_Open(&inHigh, &inLow, &inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.STOCHF_OpenAndFill(&inHigh, &inLow, &inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -11877,6 +13227,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11918,6 +13269,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.STOCHRSI(
                 startIdx, endIdx,
                 &inReal,
@@ -11927,6 +13279,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInFastD_MAType,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.STOCHRSI_Open(&inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.STOCHRSI_OpenAndFill(&inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -11951,6 +13310,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11990,12 +13350,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SUB(
                 startIdx, endIdx,
                 &inReal0,
                 &inReal1,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SUB_Open(&inReal0, &inReal1, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SUB_OpenAndFill(&inReal0, &inReal1, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12017,6 +13385,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12050,12 +13419,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.SUM(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.SUM_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.SUM_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12077,6 +13454,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12114,6 +13492,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.T3(
                 startIdx, endIdx,
                 &inReal,
@@ -12121,6 +13500,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInVFactor,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.T3_Open(&inReal, optInTimePeriod, optInVFactor, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.T3_OpenAndFill(&inReal, optInTimePeriod, optInVFactor, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12142,6 +13528,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12174,11 +13561,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TAN(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TAN_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TAN_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12200,6 +13595,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12232,11 +13628,19 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TANH(
                 startIdx, endIdx,
                 &inReal,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TANH_Open(&inReal, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TANH_OpenAndFill(&inReal, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12258,6 +13662,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12291,12 +13696,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TEMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TEMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TEMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12318,6 +13731,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12364,6 +13778,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TRANGE(
                 startIdx, endIdx,
                 &inHigh,
@@ -12371,6 +13786,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TRANGE_Open(&inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TRANGE_OpenAndFill(&inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12392,6 +13814,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12425,12 +13848,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TRIMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TRIMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TRIMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12452,6 +13883,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12485,12 +13917,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TRIX(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TRIX_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TRIX_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12512,6 +13952,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12545,12 +13986,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TSF(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TSF_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TSF_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12572,6 +14021,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12618,6 +14068,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.TYPPRICE(
                 startIdx, endIdx,
                 &inHigh,
@@ -12625,6 +14076,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.TYPPRICE_Open(&inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.TYPPRICE_OpenAndFill(&inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12646,6 +14104,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12695,6 +14154,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.ULTOSC(
                 startIdx, endIdx,
                 &inHigh,
@@ -12705,6 +14165,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod3,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.ULTOSC_Open(&inHigh, &inLow, &inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.ULTOSC_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12726,6 +14193,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12760,6 +14228,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.VAR(
                 startIdx, endIdx,
                 &inReal,
@@ -12767,6 +14236,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInNbDev,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.VAR_Open(&inReal, optInTimePeriod, optInNbDev, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.VAR_OpenAndFill(&inReal, optInTimePeriod, optInNbDev, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12788,6 +14264,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12828,6 +14305,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.VWMA(
                 startIdx, endIdx,
                 &inReal,
@@ -12835,6 +14313,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.VWMA_Open(&inReal, &inVolume, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.VWMA_OpenAndFill(&inReal, &inVolume, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12856,6 +14341,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12902,6 +14388,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.WCLPRICE(
                 startIdx, endIdx,
                 &inHigh,
@@ -12909,6 +14396,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inClose,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.WCLPRICE_Open(&inHigh, &inLow, &inClose, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.WCLPRICE_OpenAndFill(&inHigh, &inLow, &inClose, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -12930,6 +14424,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -12977,6 +14472,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.WILLR(
                 startIdx, endIdx,
                 &inHigh,
@@ -12985,6 +14481,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.WILLR_Open(&inHigh, &inLow, &inClose, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.WILLR_OpenAndFill(&inHigh, &inLow, &inClose, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
@@ -13006,6 +14509,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let endIdx = params["endIdx"].as_u64().unwrap_or(0) as usize;
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
+            let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -13039,12 +14543,20 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut start_time = Instant::now();
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
+            if bench_mode == 0 {
             rc = core.WMA(
                 startIdx, endIdx,
                 &inReal,
                 optInTimePeriod,
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
+            } else {
+            if bench_mode == 1 {
+                rc = match core.WMA_Open(&inReal, optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.WMA_OpenAndFill(&inReal, optInTimePeriod, &mut outBegIdx, &mut outNBElement, &mut outBuf0) { Ok(_h) => RetCode::Success, Err(e) => e };
+            }
+            }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {

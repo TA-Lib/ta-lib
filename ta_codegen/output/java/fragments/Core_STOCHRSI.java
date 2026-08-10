@@ -506,7 +506,7 @@
       sp.cur_outFastK = cur_outFastK;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   private RetCode STOCHRSI_OpenCore( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       double[] tempRSIBuffer;
       RetCode retCode;
@@ -516,8 +516,6 @@
       MInteger outBegIdx1 = new MInteger();
       MInteger outBegIdx2 = new MInteger();
       MInteger outNbElement1 = new MInteger();
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -621,128 +619,24 @@
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
       sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
+      if( outStride == 1 ) System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
+      if( outStride == 1 ) System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      return STOCHRSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
    }
    private RetCode STOCHRSI_OpenAndFillBody( STOCHRSI_Stream sp, double inReal[], int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
-      double[] tempRSIBuffer;
-      RetCode retCode;
-      int lookbackTotal = 0;
-      int lookbackSTOCHF = 0;
-      int tempArraySize = 0;
-      MInteger outBegIdx1 = new MInteger();
-      MInteger outBegIdx2 = new MInteger();
-      MInteger outNbElement1 = new MInteger();
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInFastK_Period == Integer.MIN_VALUE ) {
-         optInFastK_Period = 5;
-      } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInFastD_Period == Integer.MIN_VALUE ) {
-         optInFastD_Period = 3;
-      } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInFastD_MAType == MAType.DEFAULT ) {
-         optInFastD_MAType = MAType.SMA;
-      }
       if( (Object)outFastK == (Object)inReal || (Object)outFastD == (Object)inReal || (Object)outFastK == (Object)outFastD ) {
          return RetCode.BadParam;
       }
-      if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outFastK = new double[historyLen];
-      double[] sc_outFastD = new double[historyLen];
-      /* Stochastic RSI
-       *
-       * Reference: "Stochastic RSI and Dynamic Momentum Index"
-       *            by Tushar Chande and Stanley Kroll
-       *            Stock&Commodities V.11:5 (189-199)
-       *
-       * The TA-Lib version offer flexibility beyond what is explain
-       * in the Stock&Commodities article.
-       *
-       * To calculate the "Unsmoothed stochastic RSI" with symetry like
-       * explain in the article, keep the optInTimePeriod and optInFastK_Period
-       * equal. Example:
-       *
-       *    unsmoothed stoch RSI 14 : optInTimePeriod   = 14
-       *                              optInFastK_Period = 14
-       *                              optInFastD_Period = 'x'
-       *
-       * The outFastK is the unsmoothed RSI discuss in the article.
-       *
-       * You can set the optInFastD_Period to smooth the RSI. The smooth
-       * version will be found in outFastD. The outFastK will still contain
-       * the unsmoothed stoch RSI. If you do not care about the smoothing of
-       * the StochRSI, just leave optInFastD_Period to 1 and ignore outFastD.
-       */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackSTOCHF = STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = RSI_Lookback(optInTimePeriod) + lookbackSTOCHF;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outBegIdx.value = startIdx;
-      tempArraySize = endIdx - startIdx + 1 + lookbackSTOCHF;
-      tempRSIBuffer = new double[(int)(tempArraySize * 1)];
-      /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      RSI_Stream sub0 = RSI_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx - lookbackSTOCHF, optInTimePeriod);
-      retCode = RSI_Internal(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, outBegIdx1, outNbElement1, tempRSIBuffer);
-      if( retCode != RetCode.Success || outNbElement1.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      STOCHF_Stream sub1 = STOCHF_OpenInternal(java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), java.util.Arrays.copyOfRange(tempRSIBuffer, 0, (tempArraySize - 1) + 1), 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
-      retCode = STOCHF_Internal(0, tempArraySize - 1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx2, outNBElement, sc_outFastK, sc_outFastD);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.optInFastK_Period = optInFastK_Period;
-      sp.optInFastD_Period = optInFastD_Period;
-      sp.optInFastD_MAType = optInFastD_MAType;
-      sp.sub0 = sub0;
-      sp.sub1 = sub1;
-      sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
-      sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
-      System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
-      System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
-      return RetCode.Success;
+      return STOCHRSI_OpenCore( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
    }
    /* Internal startIdx-anchored open behind STOCHRSI_Open (composition seam). */
    STOCHRSI_Stream STOCHRSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )

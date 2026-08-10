@@ -4,6 +4,7 @@
 //! the generated TA function implementations, and writes JSON responses to stdout.
 //! All servers speak the same protocol as the existing Rust server in server.rs.
 
+use std::fmt::Write as _;
 use crate::backends::builtins::SpecialBuiltin;
 use crate::backends::c::c_predicate_expr;
 use crate::backends::java::java_predicate_expr;
@@ -1483,6 +1484,94 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 }
 
 #[allow(clippy::too_many_lines)]
+/// The `--mode=open` / `--mode=openfill` arms of the Rust bench loop. Handles
+/// are dropped at end of scope, so the warm-up cost here is the Open alone.
+/// `historyLen` is the whole preloaded slice: the streaming entry points pin
+/// bar 0, which is what makes `OpenAndFill` bit-exact.
+fn emit_rust_warmup_arms(
+    s: &mut String,
+    func: &FuncDef,
+    input_names: &[String],
+    outputs: &[Output],
+) {
+    let base = func.name.clone();
+    let mut ins = String::new();
+    for name in input_names {
+        let _ = write!(ins, "&{name}, ");
+    }
+    let mut opts = String::new();
+    for opt in &func.optional_inputs {
+        let _ = write!(opts, "{}, ", opt.name);
+    }
+    let mut fill_outs = String::new();
+    let (mut real_idx, mut int_idx) = (0usize, 0usize);
+    for out in outputs {
+        if out.param_type == ParamType::Integer {
+            let _ = write!(fill_outs, ", &mut outIntBuf{int_idx}");
+            int_idx += 1;
+        } else {
+            let _ = write!(fill_outs, ", &mut outBuf{real_idx}");
+            real_idx += 1;
+        }
+    }
+    s.push_str("            if bench_mode == 1 {\n");
+    s.push_str(&format!(
+        "                rc = match core.{base}_Open({ins}{opts}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
+    ));
+    s.push_str("            } else {\n");
+    s.push_str(&format!(
+        "                rc = match core.{base}_OpenAndFill({ins}{opts}&mut outBegIdx, &mut outNBElement{fill_outs}) {{ Ok(_h) => RetCode::Success, Err(e) => e }};\n"
+    ));
+    s.push_str("            }\n");
+}
+
+/// The `--mode=open` / `--mode=openfill` arms of the C bench loop: time the
+/// streaming warm-up instead of the batch call. Every function streams, so both
+/// arms exist unconditionally. `historyLen` is `endIdx + 1` — the streaming
+/// entry points pin bar 0 (that is what makes `OpenAndFill` bit-exact), so they
+/// replay `0..endIdx` regardless of `startIdx`. Each arm closes the handle it
+/// opened: a 168-function sweep would otherwise leak one per iteration, and the
+/// free is nanoseconds against a whole-history replay.
+fn emit_c_warmup_arms(s: &mut String, func: &FuncDef, input_names: &[String]) {
+    let n = func.name.clone();
+    let mut open_args = String::new();
+    for (j, _name) in input_names.iter().enumerate() {
+        let _ = write!(open_args, ", g_inBuf{j}");
+    }
+    let _ = write!(open_args, ", endIdx + 1");
+    for opt in &func.optional_inputs {
+        let _ = write!(open_args, ", {}", opt.name);
+    }
+    let mut scalar_outs = String::new();
+    let mut fill_outs = String::new();
+    let (mut real_idx, mut int_idx) = (0usize, 0usize);
+    for (k, out) in func.outputs.iter().enumerate() {
+        let _ = write!(scalar_outs, ", &_openOut{k}");
+        if out.param_type == ParamType::Integer {
+            let _ = write!(fill_outs, ", g_outIntBuf{int_idx}");
+            int_idx += 1;
+        } else {
+            let _ = write!(fill_outs, ", g_outBuf{real_idx}");
+            real_idx += 1;
+        }
+    }
+    s.push_str("        else if( bench_mode == 1 ) {\n");
+    s.push_str(&format!("            TA_{n}_Stream *_h = NULL;\n"));
+    for (k, out) in func.outputs.iter().enumerate() {
+        let ty = if out.param_type == ParamType::Integer { "int" } else { "double" };
+        s.push_str(&format!("            {ty} _openOut{k} = 0;\n"));
+    }
+    s.push_str(&format!("            rc = TA_{n}_Open( &_h{open_args}{scalar_outs} );\n"));
+    s.push_str(&format!("            if( _h ) TA_{n}_Close( _h );\n"));
+    s.push_str("        }\n");
+    s.push_str("        else {\n");
+    s.push_str(&format!("            TA_{n}_Stream *_h = NULL;\n"));
+    s.push_str(&format!("            rc = TA_{n}_OpenAndFill( &_h{open_args}, &outBegIdx, &outNBElement{fill_outs} );\n"));
+    s.push_str(&format!("            if( _h ) TA_{n}_Close( _h );\n"));
+    s.push_str("        }\n");
+}
+
+#[allow(clippy::too_many_lines)]
 fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
 
@@ -1596,6 +1685,12 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // Only the indicator call itself is timed.
         s.push_str("        int bench_iters = json_find_int(json, \"iters\");\n");
         s.push_str("        if( bench_iters < 1 ) bench_iters = 1;\n");
+        // bench_mode (ta_bench --mode): 0 = the batch call (default), 1 = the
+        // streaming warm-up TA_<N>_Open, 2 = TA_<N>_OpenAndFill. The warm-up
+        // arms time an Open+Close round trip: the handle has to be released
+        // every iteration or a 168-function sweep leaks one per iteration, and
+        // the free is nanoseconds against a whole-history replay.
+        s.push_str("        int bench_mode = json_find_int(json, \"bench_mode\");\n");
 
         s.push_str("        TA_RetCode rc = 0;\n");
 
@@ -1627,6 +1722,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         s.push_str("        if( _bi == 1 ) _t0 = get_nanotime();\n");
 
         // Call the function
+        s.push_str("        if( bench_mode == 0 )\n");
         s.push_str(&format!("        rc = TA_{}(\n", func.name));
         s.push_str("            startIdx, endIdx,\n");
 
@@ -1658,6 +1754,8 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
             }
         }
         s.push_str(");\n");
+
+        emit_c_warmup_arms(&mut s, func, &input_names);
         s.push_str("        }\n"); // end bench_iters loop
         s.push_str("        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;\n");
 
@@ -2425,11 +2523,13 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // Benchmark iteration loop with timing. Iteration 0 is always a
         // discarded warm-up — see the C emitter: it removes the cold-call bias
         // AND makes every correctness gate an idempotency check.
+        s.push_str("        int bench_mode = jsonInt(json, \"bench_mode\");\n");
         s.push_str("        long startNs = 0;\n");
         s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
         s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
 
         // Call
+        s.push_str("        if (bench_mode == 0)\n");
         s.push_str(&format!("        rc = core.{func_base}_Internal(\n"));
         s.push_str("            startIdx, endIdx,\n");
         for name in &input_names {
@@ -2443,6 +2543,35 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str(&format!(", outArr{k}"));
         }
         s.push_str(");\n");
+        // --- warm-up arms (ta_bench --mode=open / openfill). Java handles are
+        // GC-managed (no Close) and the public Open throws instead of returning
+        // a code, so the arms convert the throw into a RetCode.
+        {
+            // Join once: a function with no optional params would otherwise
+            // emit `Open(inReal, )`.
+            let mut open_args: Vec<String> = input_names.clone();
+            for opt in &func.optional_inputs {
+                open_args.push(opt.name.clone());
+            }
+            let ins = open_args.join(", ");
+            let mut fill_args = open_args.clone();
+            for k in 0..outputs.len() {
+                fill_args.push(format!("outArr{k}"));
+            }
+            let fill = fill_args.join(", ");
+            s.push_str("        else { try {\n");
+            s.push_str("            if (bench_mode == 1) {\n");
+            s.push_str(&format!(
+                "                core.{func_base}_Open({ins});\n"
+            ));
+            s.push_str("            } else {\n");
+            s.push_str(&format!(
+                "                core.{func_base}_OpenAndFill({fill});\n"
+            ));
+            s.push_str("            }\n");
+            s.push_str("            rc = RetCode.Success;\n");
+            s.push_str("        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }\n");
+        }
         s.push_str("        }\n"); // end bench_iters loop
 
         // Timing capture
@@ -3037,6 +3166,12 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         s.push_str("        int use_preloaded = GetInt(p, \"use_preloaded\", 0);\n");
         s.push_str("        int bench_iters = GetInt(p, \"iters\", 1);\n");
         s.push_str("        if (bench_iters < 1) bench_iters = 1;\n");
+        // ta_bench --mode=open/openfill has nothing to measure here: the C#
+        // backend has no streaming API at all (no *_Open / *_OpenAndFill).
+        // Answer honestly rather than silently timing the batch call and
+        // reporting it as a warm-up number.
+        s.push_str("        if (GetInt(p, \"bench_mode\", 0) != 0)\n");
+        s.push_str("            return \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\";\n");
 
         // Inputs: preloaded reference data or from the request.
         for name in &input_names {
@@ -3526,6 +3661,10 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
         s.push_str("            let use_preloaded = params[\"use_preloaded\"].as_i64().unwrap_or(0);\n");
         s.push_str("            let bench_iters = std::cmp::max(1, params[\"iters\"].as_i64().unwrap_or(1)) as u64;\n");
+        // bench_mode (ta_bench --mode): 0 = batch (default), 1 = the streaming
+        // warm-up Open, 2 = OpenAndFill. Rust handles are dropped at end of
+        // scope, so unlike C there is nothing to close explicitly.
+        s.push_str("            let bench_mode = params[\"bench_mode\"].as_i64().unwrap_or(0);\n");
         // --xlang-hash (issue #113): seed-based input generation + out_hash. Absent
         // (0) for the normal per-function / preloaded paths.
         s.push_str("            let gen_present = params[\"gen_present\"].as_i64().unwrap_or(0);\n");
@@ -3709,6 +3848,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         s.push_str("            for _bi in 0..=bench_iters {\n");
         s.push_str("                if _bi == 1 { start_time = Instant::now(); }\n");
+        s.push_str("            if bench_mode == 0 {\n");
         s.push_str(&format!(
             "            rc = core.{fn_name}(\n"
         ));
@@ -3733,6 +3873,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
         s.push_str(",\n");
         s.push_str("            );\n");
+        s.push_str("            } else {\n");
+        emit_rust_warmup_arms(&mut s, func, &input_names, outputs);
+        s.push_str("            }\n");
         s.push_str("            }\n"); // end guarded bench loop
         if !enum_opts.is_empty() {
             s.push_str("            }\n"); // end enum-conversion guard

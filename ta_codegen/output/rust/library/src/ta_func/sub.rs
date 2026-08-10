@@ -192,10 +192,11 @@ impl Core {
         (*outReal) = inReal0 - inReal1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SUB_Open`] (composition seam).
-    pub(crate) fn SUB_OpenInternal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
-    ) -> Result<(SUB_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::SUB_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::SUB_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn SUB_OpenCore(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<SUB_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
         }
@@ -207,7 +208,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Default return values
@@ -215,17 +215,28 @@ impl Core {
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            lastValue_outReal = inReal0[i] - inReal1[i];
+            outReal[(outIdx * outStride) as usize] = ((inReal0[i] - inReal1[i]) as f64);
             i += 1;
             outIdx += 1;
         }
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
         let state = SUB_StreamState {
         };
-        Ok((SUB_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(SUB_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::SUB_Open`] (composition seam).
+    pub(crate) fn SUB_OpenInternal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize,
+    ) -> Result<(SUB_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.SUB_OpenCore(inReal0, inReal1, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live SUB stream over the warm-up history; returns the handle and
@@ -261,35 +272,7 @@ impl Core {
     pub fn SUB_OpenAndFill(
         &self, inReal0: &[f64], inReal1: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<SUB_Stream, RetCode> {
-        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal0.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inReal0.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        // Default return values
-        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-        i = startIdx;
-        outIdx = 0;
-        while i <= endIdx {
-            outReal[outIdx] = ((inReal0[i] - inReal1[i]) as f64);
-            i += 1;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-
-        // Capture the live batch state into the handle.
-        let state = SUB_StreamState {
-        };
-        Ok(SUB_Stream { core: self.clone(), state })
+        self.SUB_OpenCore(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

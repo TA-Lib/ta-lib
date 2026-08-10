@@ -554,10 +554,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLTHRUSTING_Open`] (composition seam).
-    pub(crate) fn CDLTHRUSTING_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLTHRUSTING_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLTHRUSTING_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLTHRUSTING_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLTHRUSTING_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -569,7 +570,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut EqualPeriodTotal: f64 = 0.0_f64;
         let mut BodyLongPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -599,8 +599,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -669,9 +669,9 @@ impl Core {
                inClose[i] > inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // close into prior body
                inClose[i] <= ((inClose[i - 1] - inOpen[i - 1]).abs() as f64).mul_add(0.5, inClose[i - 1]) // under the midpoint
             {
-                lastValue_outInteger = (0 - 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (0 - 100) as i32;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -737,334 +737,6 @@ impl Core {
                 }
             }
             BodyLongPeriodTotal += _candlerange_8 - _candlerange_9;
-            i += 1;
-            EqualTrailingIdx += 1;
-            BodyLongTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let capLag_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
-        let cap_BodyLongTrailingIdx: i64 = capLag_BodyLongTrailingIdx + 2;
-        if capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
-        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_BodyLongTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
-        let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 2;
-        if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
-        let mut ring_EqualTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inOpen[fillJ % cap_EqualTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inHigh[fillJ % cap_EqualTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inLow[fillJ % cap_EqualTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inClose[fillJ % cap_EqualTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = CDLTHRUSTING_StreamState {
-            EqualPeriodTotal,
-            BodyLongPeriodTotal,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag1_inLow: inLow[historyLen - 1],
-            lag1_inClose: inClose[historyLen - 1],
-            ringPos_BodyLongTrailingIdx: historyLen % cap_BodyLongTrailingIdx as usize,
-            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
-            ringLag_BodyLongTrailingIdx: capLag_BodyLongTrailingIdx as usize,
-            ring_BodyLongTrailingIdx_inOpen,
-            ring_BodyLongTrailingIdx_inHigh,
-            ring_BodyLongTrailingIdx_inLow,
-            ring_BodyLongTrailingIdx_inClose,
-            ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
-            ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
-            ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
-            ring_EqualTrailingIdx_inOpen,
-            ring_EqualTrailingIdx_inHigh,
-            ring_EqualTrailingIdx_inLow,
-            ring_EqualTrailingIdx_inClose,
-        };
-        Ok((CDLTHRUSTING_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLTHRUSTING stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLTHRUSTING`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLTHRUSTING_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLTHRUSTING_Open")]
-    pub fn CDLTHRUSTING_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
-        self.CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLTHRUSTING_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLTHRUSTING`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLTHRUSTING_OpenAndFill")]
-    pub fn CDLTHRUSTING_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLTHRUSTING_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut EqualPeriodTotal: f64 = 0.0_f64;
-        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut EqualTrailingIdx: usize = 0_usize;
-        let mut BodyLongTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
-        #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
-        #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
-        #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
-        #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
-        #[allow(non_snake_case)]
-        let Equal_factor: f64 = self.candle_settings.equal.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLTHRUSTING_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        EqualPeriodTotal = 0.0;
-        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
-        BodyLongPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - ((BodyLong_avgPeriod) as usize);
-        i = EqualTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_10: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_10 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_10 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_10 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_10 = 0.0;
-                }
-            }
-            EqualPeriodTotal += _candlerange_10;
-            i += 1;
-        }
-        i = BodyLongTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_11: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_11 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_11 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_11 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_11 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_11;
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - first candle: long black candle
-        // - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
-        // to differentiate it from in-neck the close should not be equal to the black candle's close
-        // The meaning of "equal" is specified with TA_SetCandleSettings
-        // outInteger is negative (-1 to -100): thrusting pattern is always bearish
-        // the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-        // even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-        // function does not consider the trend
-        outIdx = 0;
-        loop {
-            if (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
-               (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) && // long
-               (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && // 2nd: white
-               inOpen[i] < inLow[i - 1] &&                               // open below prior low
-               inClose[i] > inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // close into prior body
-               inClose[i] <= ((inClose[i - 1] - inOpen[i - 1]).abs() as f64).mul_add(0.5, inClose[i - 1]) // under the midpoint
-            {
-                outInteger[outIdx] = (0 - 100) as i32;
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_12: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_12 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_12 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_12 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_12 = 0.0;
-                }
-            }
-            let mut _candlerange_13: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_13 = (inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1]).abs();
-                }
-                1 => {
-                    _candlerange_13 = inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1];
-                }
-                2 => {
-                    _candlerange_13 = inHigh[EqualTrailingIdx - 1] - inLow[EqualTrailingIdx - 1] - (inClose[EqualTrailingIdx - 1] - inOpen[EqualTrailingIdx - 1]).abs();
-                }
-                _ => {
-                    _candlerange_13 = 0.0;
-                }
-            }
-            EqualPeriodTotal += _candlerange_12 - _candlerange_13;
-            let mut _candlerange_14: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_14 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_14 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_14 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_14 = 0.0;
-                }
-            }
-            let mut _candlerange_15: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_15 = (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
-                }
-                1 => {
-                    _candlerange_15 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1];
-                }
-                2 => {
-                    _candlerange_15 = inHigh[BodyLongTrailingIdx - 1] - inLow[BodyLongTrailingIdx - 1] - (inClose[BodyLongTrailingIdx - 1] - inOpen[BodyLongTrailingIdx - 1]).abs();
-                }
-                _ => {
-                    _candlerange_15 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_14 - _candlerange_15;
             i += 1;
             EqualTrailingIdx += 1;
             BodyLongTrailingIdx += 1;
@@ -1174,6 +846,57 @@ impl Core {
             ring_EqualTrailingIdx_inClose,
         };
         Ok(CDLTHRUSTING_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLTHRUSTING_Open`] (composition seam).
+    pub(crate) fn CDLTHRUSTING_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLTHRUSTING_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLTHRUSTING stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLTHRUSTING`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLTHRUSTING_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLTHRUSTING_Open")]
+    pub fn CDLTHRUSTING_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLTHRUSTING_Stream, i32), RetCode> {
+        self.CDLTHRUSTING_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLTHRUSTING_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLTHRUSTING`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLTHRUSTING_OpenAndFill")]
+    pub fn CDLTHRUSTING_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLTHRUSTING_Stream, RetCode> {
+        self.CDLTHRUSTING_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

@@ -280,136 +280,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ROC_Open`] (composition seam).
-    pub(crate) fn ROC_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(ROC_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 10;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut inIdx: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut tempReal: f64 = 0.0_f64;
-        // The interpretation of the rate of change varies widely depending
-        // which software and/or books you are refering to.
-        //
-        // The following is the table of Rate-Of-Change implemented in TA-LIB:
-        //       MOM     = (price - prevPrice)         [Momentum]
-        //       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
-        //       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
-        //       ROCR    = (price/prevPrice)           [Rate of change ratio]
-        //       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
-        //
-        // Here are the equivalent function in other software:
-        //       TA-Lib  |   Tradestation   |    Metastock
-        //       =================================================
-        //       MOM     |   Momentum       |    ROC (Point)
-        //       ROC     |   ROC            |    ROC (Percent)
-        //       ROCP    |   PercentChange  |    -
-        //       ROCR    |   -              |    -
-        //       ROCR100 |   -              |    MO
-        //
-        // The MOM function is the only one who is not normalized, and thus
-        // should be avoided for comparing different time serie of prices.
-        //
-        // ROC and ROCP are centered at zero and can have positive and negative
-        // value. Here are some equivalence:
-        //    ROC = ROCP/100
-        //        = ((price-prevPrice)/prevPrice)/100
-        //        = ((price/prevPrice)-1)*100
-        //
-        // ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
-        // always positive values.
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < ((optInTimePeriod) as usize) {
-            startIdx = (optInTimePeriod) as usize;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Calculate Rate of change: ((price / prevPrice)-1)*100
-        outIdx = 0;
-        inIdx = startIdx;
-        trailingIdx = startIdx - ((optInTimePeriod) as usize);
-        while inIdx <= endIdx {
-            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            if tempReal != 0.0 {
-                lastValue_outReal = (inReal[inIdx] / tempReal - 1.0) * 100.0;
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            inIdx += 1;
-        }
-        // Set output limits.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = ROC_StreamState {
-            optInTimePeriod,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok((ROC_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live ROC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ROC`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.ROC_Open(&data, 10).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_ROC_Open")]
-    pub fn ROC_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(ROC_Stream, f64), RetCode> {
-        self.ROC_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::ROC_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ROC`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_ROC_OpenAndFill")]
-    pub fn ROC_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::ROC_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::ROC_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn ROC_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ROC_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -424,7 +298,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut inIdx: usize = 0_usize;
@@ -479,11 +353,9 @@ impl Core {
         while inIdx <= endIdx {
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             if tempReal != 0.0 {
-                outReal[outIdx] = (((inReal[inIdx] / tempReal - 1.0) * 100.0) as f64);
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inReal[inIdx] / tempReal - 1.0) * 100.0) as f64);
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             inIdx += 1;
         }
@@ -507,6 +379,50 @@ impl Core {
             ring_trailingIdx_inReal,
         };
         Ok(ROC_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ROC_Open`] (composition seam).
+    pub(crate) fn ROC_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(ROC_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.ROC_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live ROC stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::ROC`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.ROC_Open(&data, 10).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ROC_Open")]
+    pub fn ROC_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(ROC_Stream, f64), RetCode> {
+        self.ROC_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::ROC_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ROC`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ROC_OpenAndFill")]
+    pub fn ROC_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<ROC_Stream, RetCode> {
+        self.ROC_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

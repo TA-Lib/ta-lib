@@ -259,13 +259,10 @@
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
-   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx )
+   private RetCode MEDPRICE_OpenCore( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length ) {
@@ -282,45 +279,27 @@
        */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         lastValue_outReal = (inHigh[i] + inLow[i]) / 2.0;
+         outReal[outIdx++ * outStride] = (inHigh[i] + inLow[i]) / 2.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return MEDPRICE_OpenCore( sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode MEDPRICE_OpenAndFillBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int outIdx = 0;
-      int i = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          return RetCode.BadParam;
       }
-      /* MEDPRICE = (High + Low ) / 2
-       * This is the high and low of the same price bar.
-       *
-       * See MIDPRICE to use instead the highest high and lowest
-       * low over multiple price bar.
-       */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return MEDPRICE_OpenCore( sp, inHigh, inLow, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind MEDPRICE_Open (composition seam). */
    MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )

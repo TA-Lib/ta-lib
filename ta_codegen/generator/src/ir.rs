@@ -475,7 +475,7 @@ pub enum VarType {
     IntArray(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Literal(f64),
     IntLiteral(i64),
@@ -505,7 +505,7 @@ pub enum Expr {
     Ternary(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
     Add,
     Sub,

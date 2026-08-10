@@ -504,10 +504,11 @@ impl Core {
         (*outMACDHist) = macdValue - sp.prevSignal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MACD_Open`] (composition seam).
-    pub(crate) fn MACD_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
-    ) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+    /// The single whole-history transcription behind [`Core::MACD_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::MACD_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn MACD_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MACD_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -532,267 +533,6 @@ impl Core {
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outMACD: f64 = 0.0_f64;
-        let mut lastValue_outMACDSignal: f64 = 0.0_f64;
-        let mut lastValue_outMACDHist: f64 = 0.0_f64;
-        let mut prevFast: f64 = 0.0_f64;
-        let mut prevSlow: f64 = 0.0_f64;
-        let mut prevSignal: f64 = 0.0_f64;
-        let mut macdValue: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut slowK: f64 = 0.0_f64;
-        let mut fastK: f64 = 0.0_f64;
-        let mut signalK: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut tempInteger: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut lookbackSignal: usize = 0_usize;
-        // Make sure slow is really slower than
-        // the fast period! if not, swap...
-        if optInSlowPeriod < optInFastPeriod {
-            // swap
-            tempInteger = (optInSlowPeriod) as usize;
-            optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
-        }
-        // Catch special case for fix 26/12 MACD.
-        // Use hardcoded k values matching the original algorithm.
-        if optInSlowPeriod == 0 {
-            // Fix 26
-            optInSlowPeriod = 26;
-            slowK = 0.075;
-        } else {
-            slowK = 2.0 / ((optInSlowPeriod + 1) as f64);
-        }
-        if optInFastPeriod == 0 {
-            // Fix 12
-            optInFastPeriod = 12;
-            fastK = 0.15;
-        } else {
-            fastK = 2.0 / ((optInFastPeriod + 1) as f64);
-        }
-        // A signal period of 1 disables signal-line smoothing: the signal IS the
-        // MACD line and the histogram is exactly zero. signalK is then exactly
-        // 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-        // only while consecutive MACD-line values stay within a factor of two of
-        // each other. The MACD line oscillates through zero, so it leaves that
-        // window on ordinary data; hence the explicit arm at each step.
-        signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
-        lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
-        // Move up the start index if there is not
-        // enough initial data.
-        lookbackTotal = lookbackSignal;
-        lookbackTotal += self.EMA_Lookback(optInSlowPeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Everything is computed in a single lockstep pass: each bar
-        // advances the fast and slow EMA (two independent recursions),
-        // their difference is the MACD line, and each MACD-line value
-        // is immediately fed into the signal EMA. No temporary buffers.
-        //
-        // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
-        //  - EMA recursion: ((x-prev)*k)+prev.
-        //  - Default compatibility: each EMA is seeded with the sum of
-        //    its first 'period' inputs, accumulated from 0.0 in input
-        //    order, divided by the period. The fast and slow seed
-        //    windows end on the same bar. The signal EMA is seeded the
-        //    same way from the first 'signal period' MACD-line values.
-        //  - Metastock compatibility: the fast and slow EMA are seeded
-        //    from inReal[0], the signal EMA from the first MACD-line
-        //    value.
-        // Output alignment is identical for all compatibility modes;
-        // only the seed values differ.
-        //
-        // In-place (an output == inReal) is supported: outputs at
-        // [outIdx] are written only after inReal[startIdx+outIdx] was
-        // read.
-        if self.compatibility == Compatibility::Default {
-            // Seed each price EMA with a simple average of its first
-            // 'period' price bars. The fast window is the tail of the
-            // slow window: consume the leading slow-only bars first,
-            // then accumulate both over the shared bars.
-            today = startIdx - lookbackTotal;
-            tempReal = 0.0;
-            i = (optInSlowPeriod - optInFastPeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevFast = 0.0;
-            i = (optInFastPeriod) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevFast += inReal[today];
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevSlow = tempReal / ((optInSlowPeriod) as f64);
-            prevFast = prevFast / ((optInFastPeriod) as f64);
-            // Advance both EMA through their unstable period, up to the
-            // first MACD-line bar.
-            while today <= startIdx - lookbackSignal {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            }
-            macdValue = prevFast - prevSlow;
-            // Seed the signal EMA with a simple average of the first
-            // 'signal period' MACD-line values, accumulated as they are
-            // produced.
-            prevSignal = 0.0;
-            prevSignal += macdValue;
-            i = (optInSignalPeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-                macdValue = prevFast - prevSlow;
-                prevSignal += macdValue;
-            }
-            prevSignal = prevSignal / ((optInSignalPeriod) as f64);
-        } else {
-            // Metastock/Tradestation: seed the fast and slow EMA with
-            // inReal[0], advance them in lockstep up to the first
-            // MACD-line bar, then seed the signal EMA with the first
-            // MACD-line value.
-            prevFast = inReal[0];
-            prevSlow = inReal[0];
-            today = 1;
-            while today <= startIdx - lookbackSignal {
-                tempReal = inReal[{ let _v = today; today += 1; _v }];
-                prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-                prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            }
-            macdValue = prevFast - prevSlow;
-            prevSignal = macdValue;
-        }
-        // Advance everything in lockstep through the unstable period
-        // of the signal EMA, up to the first output bar.
-        while today <= startIdx {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            if optInSignalPeriod == 1 {
-                prevSignal = macdValue;
-            } else {
-                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
-            }
-        }
-        // Stable zone: keep advancing in lockstep and write the three
-        // outputs.
-        lastValue_outMACD = macdValue;
-        lastValue_outMACDSignal = prevSignal;
-        lastValue_outMACDHist = macdValue - prevSignal;
-        outIdx = 1;
-        while today <= endIdx {
-            tempReal = inReal[{ let _v = today; today += 1; _v }];
-            prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
-            prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            if optInSignalPeriod == 1 {
-                prevSignal = macdValue;
-            } else {
-                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
-            }
-            lastValue_outMACD = macdValue;
-            lastValue_outMACDSignal = prevSignal;
-            lastValue_outMACDHist = macdValue - prevSignal;
-            outIdx += 1;
-        }
-        // All done! Indicate the output limits and return success.
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = MACD_StreamState {
-            optInFastPeriod,
-            optInSlowPeriod,
-            optInSignalPeriod,
-            prevFast,
-            prevSlow,
-            prevSignal,
-            slowK,
-            fastK,
-            signalK,
-        };
-        Ok((MACD_Stream { core: self.clone(), state }, (lastValue_outMACD, lastValue_outMACDSignal, lastValue_outMACDHist)))
-    }
-
-    /// Open a live MACD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MACD`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.MACD_Open(&data, 12, 26, 9).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
-    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
-    /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
-    /// ```
-    #[doc(alias = "TA_MACD_Open")]
-    pub fn MACD_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
-        self.MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
-    }
-
-    /// [`Core::MACD_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MACD`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_MACD_OpenAndFill")]
-    pub fn MACD_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
-    ) -> Result<MACD_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if outMACD.as_ptr() == outMACDSignal.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if outMACD.as_ptr() == outMACDHist.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
-            optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
-            optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
-            optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut prevFast: f64 = 0.0_f64;
@@ -948,9 +688,9 @@ impl Core {
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
-        outMACD[0] = macdValue;
-        outMACDSignal[0] = prevSignal;
-        outMACDHist[0] = macdValue - prevSignal;
+        outMACD[(0 * outStride) as usize] = macdValue;
+        outMACDSignal[(0 * outStride) as usize] = prevSignal;
+        outMACDHist[(0 * outStride) as usize] = macdValue - prevSignal;
         outIdx = 1;
         while today <= endIdx {
             tempReal = inReal[{ let _v = today; today += 1; _v }];
@@ -962,9 +702,9 @@ impl Core {
             } else {
                 prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
             }
-            outMACD[outIdx] = macdValue;
-            outMACDSignal[outIdx] = prevSignal;
-            outMACDHist[outIdx] = macdValue - prevSignal;
+            outMACD[(outIdx * outStride) as usize] = macdValue;
+            outMACDSignal[(outIdx * outStride) as usize] = prevSignal;
+            outMACDHist[(outIdx * outStride) as usize] = macdValue - prevSignal;
             outIdx += 1;
         }
         // All done! Indicate the output limits and return success.
@@ -984,6 +724,63 @@ impl Core {
             signalK,
         };
         Ok(MACD_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::MACD_Open`] (composition seam).
+    pub(crate) fn MACD_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32,
+    ) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outMACD = [0.0_f64; 1];
+        let mut sink_outMACDSignal = [0.0_f64; 1];
+        let mut sink_outMACDHist = [0.0_f64; 1];
+        let handle = self.MACD_OpenCore(inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
+    }
+
+    /// Open a live MACD stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::MACD`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.MACD_Open(&data, 12, 26, 9).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
+    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
+    /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
+    /// ```
+    #[doc(alias = "TA_MACD_Open")]
+    pub fn MACD_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInSignalPeriod: i32) -> Result<(MACD_Stream, (f64, f64, f64)), RetCode> {
+        self.MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod)
+    }
+
+    /// [`Core::MACD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MACD`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MACD_OpenAndFill")]
+    pub fn MACD_OpenAndFill(
+        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+    ) -> Result<MACD_Stream, RetCode> {
+        if outMACD.as_ptr() == outMACDSignal.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if outMACD.as_ptr() == outMACDHist.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        self.MACD_OpenCore(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

@@ -603,205 +603,7 @@
       sp.e6 = Math.fma(sp.one_minus_k, sp.e6, sp.k * sp.e5);
       sp.cur_outReal = Math.fma(sp.c4, sp.e3, Math.fma(sp.c3, sp.e4, Math.fma(sp.c1, sp.e6, sp.c2 * sp.e5)));
    }
-   private RetCode T3_OpenBody( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
-   {
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int i = 0;
-      double k = 0;
-      double one_minus_k = 0;
-      double e1 = 0;
-      double e2 = 0;
-      double e3 = 0;
-      double e4 = 0;
-      double e5 = 0;
-      double e6 = 0;
-      double c1 = 0;
-      double c2 = 0;
-      double c3 = 0;
-      double c4 = 0;
-      double tempReal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInVFactor == REAL_DEFAULT ) {
-         optInVFactor = 7e-1;
-      } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
-         return RetCode.BadParam;
-      }
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < T3_Lookback(optInTimePeriod, optInVFactor) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.optInVFactor = optInVFactor;
-         sp.k = 0.0;
-         sp.one_minus_k = 0.0;
-         sp.e1 = 0.0;
-         sp.e2 = 0.0;
-         sp.e3 = 0.0;
-         sp.e4 = 0.0;
-         sp.e5 = 0.0;
-         sp.e6 = 0.0;
-         sp.c1 = 0.0;
-         sp.c2 = 0.0;
-         sp.c3 = 0.0;
-         sp.c4 = 0.0;
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      /* For an explanation of this function, please read:
-       *
-       * Magazine articles written by Tim Tillson
-       *
-       * Essentially, a T3 of time serie 't' is:
-       *   EMA1(x,Period) = EMA(x,Period)
-       *   EMA2(x,Period) = EMA(EMA1(x,Period),Period)
-       *   GD(x,Period,vFactor) = (EMA1(x,Period)*(1+vFactor)) - (EMA2(x,Period)*vFactor)
-       *   T3 = GD (GD ( GD(t, Period, vFactor), Period, vFactor), Period, vFactor);
-       *
-       * T3 offers a moving average with less lags then the
-       * traditional EMA.
-       *
-       * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
-       * in the litterature.
-       */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.T3.ordinal()];
-      if( startIdx <= lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outNBElement.value = 0;
-         outBegIdx.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
-      outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal;
-      k = 2.0 / (optInTimePeriod + 1.0);
-      one_minus_k = 1.0 - k;
-      /* Initialize e1 */
-      tempReal = inReal[today++];
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         tempReal += inReal[today++];
-      }
-      e1 = tempReal / optInTimePeriod;
-      /* Initialize e2 */
-      tempReal = e1;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         tempReal += e1;
-      }
-      e2 = tempReal / optInTimePeriod;
-      /* Initialize e3 */
-      tempReal = e2;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         tempReal += e2;
-      }
-      e3 = tempReal / optInTimePeriod;
-      /* Initialize e4 */
-      tempReal = e3;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         e3 = Math.fma(one_minus_k, e3, k * e2);
-         tempReal += e3;
-      }
-      e4 = tempReal / optInTimePeriod;
-      /* Initialize e5 */
-      tempReal = e4;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         e3 = Math.fma(one_minus_k, e3, k * e2);
-         e4 = Math.fma(one_minus_k, e4, k * e3);
-         tempReal += e4;
-      }
-      e5 = tempReal / optInTimePeriod;
-      /* Initialize e6 */
-      tempReal = e5;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         e3 = Math.fma(one_minus_k, e3, k * e2);
-         e4 = Math.fma(one_minus_k, e4, k * e3);
-         e5 = Math.fma(one_minus_k, e5, k * e4);
-         tempReal += e5;
-      }
-      e6 = tempReal / optInTimePeriod;
-      /* Skip the unstable period */
-      while( today <= startIdx ) {
-         /* Do the calculation but do not write the output */
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         e3 = Math.fma(one_minus_k, e3, k * e2);
-         e4 = Math.fma(one_minus_k, e4, k * e3);
-         e5 = Math.fma(one_minus_k, e5, k * e4);
-         e6 = Math.fma(one_minus_k, e6, k * e5);
-      }
-      /* Calculate the constants */
-      tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
-      c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
-      /* Write the first output */
-      outIdx = 0;
-      lastValue_outReal = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
-      /* Calculate and output the remaining of the range. */
-      while( today <= endIdx ) {
-         e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = Math.fma(one_minus_k, e2, k * e1);
-         e3 = Math.fma(one_minus_k, e3, k * e2);
-         e4 = Math.fma(one_minus_k, e4, k * e3);
-         e5 = Math.fma(one_minus_k, e5, k * e4);
-         e6 = Math.fma(one_minus_k, e6, k * e5);
-         lastValue_outReal = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
-      }
-      /* Indicates to the caller the number of output
-       * successfully calculated.
-       */
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.optInVFactor = optInVFactor;
-      sp.k = k;
-      sp.one_minus_k = one_minus_k;
-      sp.e1 = e1;
-      sp.e2 = e2;
-      sp.e3 = e3;
-      sp.e4 = e4;
-      sp.e5 = e5;
-      sp.e6 = e6;
-      sp.c1 = c1;
-      sp.c2 = c2;
-      sp.c3 = c3;
-      sp.c4 = c4;
-      sp.cur_outReal = lastValue_outReal;
-      return RetCode.Success;
-   }
-   private RetCode T3_OpenAndFillBody( T3_Stream sp, double inReal[], int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode T3_OpenCore( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int lookbackTotal = 0;
@@ -822,7 +624,6 @@
       double tempReal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      int startIdx = 0;
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
@@ -837,9 +638,6 @@
       if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( optInVFactor < 0e0 || optInVFactor > 1e0 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -863,10 +661,14 @@
          int fillLb = T3_Lookback(optInTimePeriod, optInVFactor);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       /* For an explanation of this function, please read:
@@ -895,11 +697,6 @@
          outBegIdx.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);
@@ -973,7 +770,7 @@
       c4 = Math.fma(3.0, tempReal, Math.fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
-      outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
+      outReal[outIdx++ * outStride] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       /* Calculate and output the remaining of the range. */
       while( today <= endIdx ) {
          e1 = Math.fma(one_minus_k, e1, k * inReal[today++]);
@@ -982,7 +779,7 @@
          e4 = Math.fma(one_minus_k, e4, k * e3);
          e5 = Math.fma(one_minus_k, e5, k * e4);
          e6 = Math.fma(one_minus_k, e6, k * e5);
-         outReal[outIdx++] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
+         outReal[outIdx++ * outStride] = Math.fma(c4, e3, Math.fma(c3, e4, Math.fma(c1, e6, c2 * e5)));
       }
       /* Indicates to the caller the number of output
        * successfully calculated.
@@ -1003,8 +800,22 @@
       sp.c2 = c2;
       sp.c3 = c3;
       sp.c4 = c4;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode T3_OpenBody( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return T3_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode T3_OpenAndFillBody( T3_Stream sp, double inReal[], int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal ) {
+         return RetCode.BadParam;
+      }
+      return T3_OpenCore( sp, inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind T3_Open (composition seam). */
    T3_Stream T3_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )

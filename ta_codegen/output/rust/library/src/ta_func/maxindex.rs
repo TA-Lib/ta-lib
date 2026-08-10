@@ -295,139 +295,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MAXINDEX_Open`] (composition seam).
-    pub(crate) fn MAXINDEX_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MAXINDEX_Stream, i32), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
-        let mut highest: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut nbInitialElementNeeded: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut highestIdx: i32 = 0_i32;
-        // Identify the minimum number of price bar needed
-        // to identify at least one output over the specified
-        // period.
-        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < nbInitialElementNeeded {
-            startIdx = nbInitialElementNeeded;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Proceed with the calculation for the requested range.
-        // (The integer output can never share the real input's buffer —
-        // different element type; issue #130.)
-        outIdx = 0;
-        today = startIdx;
-        trailingIdx = startIdx - nbInitialElementNeeded;
-        highestIdx = 0 - 1;
-        highest = 0.0;
-        while today <= endIdx {
-            tmp = inReal[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inReal[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inReal[i];
-                    if tmp > highest {
-                        highestIdx = (i) as i32;
-                        highest = tmp;
-                    }
-                }
-            } else if tmp >= highest {
-                highestIdx = (today) as i32;
-                highest = tmp;
-            }
-            lastValue_outInteger = (highestIdx) as i32;
-            trailingIdx += 1;
-            today += 1;
-        }
-        // Keep the outBegIdx relative to the
-        // caller input before returning.
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
-        if capX < 1 || capX > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
-        {
-            let mut fillJ: usize = historyLen - capX as usize;
-            while fillJ < historyLen {
-                x_inReal[fillJ % capX as usize] = inReal[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = MAXINDEX_StreamState {
-            optInTimePeriod,
-            highest,
-            trailingIdx: (trailingIdx) as i32,
-            i: (i) as i32,
-            highestIdx: (highestIdx) as i32,
-            today: (today) as i32,
-            xCap: capX as i32,
-            x_inReal,
-        };
-        Ok((MAXINDEX_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live MAXINDEX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MAXINDEX`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.MAXINDEX_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_MAXINDEX_Open")]
-    pub fn MAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MAXINDEX_Stream, i32), RetCode> {
-        self.MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::MAXINDEX_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MAXINDEX`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_MAXINDEX_OpenAndFill")]
-    pub fn MAXINDEX_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    /// The single whole-history transcription behind [`Core::MAXINDEX_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::MAXINDEX_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn MAXINDEX_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
     ) -> Result<MAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -442,7 +313,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut highest: f64 = 0.0_f64;
@@ -493,8 +364,7 @@ impl Core {
                 highestIdx = (today) as i32;
                 highest = tmp;
             }
-            outInteger[outIdx] = (highestIdx) as i32;
-            outIdx += 1;
+            outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (highestIdx) as i32;
             trailingIdx += 1;
             today += 1;
         }
@@ -527,6 +397,50 @@ impl Core {
             x_inReal,
         };
         Ok(MAXINDEX_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::MAXINDEX_Open`] (composition seam).
+    pub(crate) fn MAXINDEX_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MAXINDEX_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.MAXINDEX_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live MAXINDEX stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::MAXINDEX`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.MAXINDEX_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_MAXINDEX_Open")]
+    pub fn MAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MAXINDEX_Stream, i32), RetCode> {
+        self.MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::MAXINDEX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MAXINDEX`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MAXINDEX_OpenAndFill")]
+    pub fn MAXINDEX_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<MAXINDEX_Stream, RetCode> {
+        self.MAXINDEX_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

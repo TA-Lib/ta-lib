@@ -338,14 +338,12 @@ static void TA_CDLTASUKIGAP_StepInternal( struct TA_CDLTASUKIGAP_Stream *sp, dou
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CDLTASUKIGAP_OpenInternal( struct TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+static TA_RetCode TA_CDLTASUKIGAP_OpenCore( struct TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLTASUKIGAP_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   int lastValue_outInteger;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -354,171 +352,6 @@ TA_RetCode TA_CDLTASUKIGAP_OpenInternal( struct TA_CDLTASUKIGAP_Stream **stream,
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outInteger = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int Near_avgPeriod = TA_Globals->candleSettings[TA_Near].avgPeriod;
-      double NearPeriodTotal = 0.0;
-      int i;
-      int outIdx;
-      int NearTrailingIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_CDLTASUKIGAP_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      NearPeriodTotal = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = NearTrailingIdx;
-      while( i < startIdx )
-      {
-         NearPeriodTotal += TA_CANDLERANGE(Near,i - 1);
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - upside (downside) gap
-       * - first candle after the window: white (black) candlestick
-       * - second candle: black (white) candlestick that opens within the previous real body and closes under (above)
-       *   the previous real body inside the gap
-       * - the size of two real bodies should be near the same
-       * The meaning of "near" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-       * the user should consider that tasuki gap is significant when it appears in a trend, while this function does
-       * not consider it
-       */
-      outIdx = 0;
-      do
-      {
-         if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > max(inClose[i - 2],inOpen[i - 2]) && fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) || ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < min(inClose[i - 2],inOpen[i - 2]) && fabs(fabs(inClose[i - 1] - inOpen[i - 1]) - fabs(inClose[i] - inOpen[i])) < TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) )
-         {
-            /* upside gap */
-            /* 1st: white */
-            /* 2nd: black */
-            /* that opens within the white rb */
-            /* and closes under the white rb */
-            /* inside the gap */
-            /* size of 2 rb near the same */
-            /* downside gap */
-            /* 1st: black */
-            /* 2nd: white */
-            /* that opens within the black rb */
-            /* and closes above the black rb */
-            /* inside the gap */
-            /* size of 2 rb near the same */
-            lastValue_outInteger = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else 
-         {
-            lastValue_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         NearPeriodTotal += TA_CANDLERANGE(Near,i - 1) - TA_CANDLERANGE(Near,NearTrailingIdx - 1);
-         i += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CDLTASUKIGAP_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->NearPeriodTotal = NearPeriodTotal;
-      sp->ringLag_NearTrailingIdx = (int)(i - NearTrailingIdx);
-      sp->ringCap_NearTrailingIdx = sp->ringLag_NearTrailingIdx + 2;
-      if( sp->ringLag_NearTrailingIdx < 0 || sp->ringCap_NearTrailingIdx > historyLen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_NearTrailingIdx > 0 ? sp->ringCap_NearTrailingIdx : 1);
-        sp->ring_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_NearTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inOpen ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_NearTrailingIdx_inOpen[fillJ % sp->ringCap_NearTrailingIdx] = inOpen[fillJ];
-        }
-        sp->ring_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_NearTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inHigh ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_NearTrailingIdx_inHigh[fillJ % sp->ringCap_NearTrailingIdx] = inHigh[fillJ];
-        }
-        sp->ring_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_NearTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inLow ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_NearTrailingIdx_inLow[fillJ % sp->ringCap_NearTrailingIdx] = inLow[fillJ];
-        }
-        sp->ring_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_NearTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_NearTrailingIdx_inClose ) { TA_CDLTASUKIGAP_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_NearTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_NearTrailingIdx_inClose[fillJ % sp->ringCap_NearTrailingIdx] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_NearTrailingIdx = historyLen % sp->ringCap_NearTrailingIdx;
-      sp->lag1_inOpen = inOpen[historyLen - 1];
-      sp->lag2_inOpen = inOpen[historyLen - 2];
-      sp->lag1_inHigh = inHigh[historyLen - 1];
-      sp->lag1_inLow = inLow[historyLen - 1];
-      sp->lag1_inClose = inClose[historyLen - 1];
-      sp->lag2_inClose = inClose[historyLen - 2];
-      *outInteger = lastValue_outInteger;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
-{
-   return TA_CDLTASUKIGAP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
-}
-
-TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
-{
-   struct TA_CDLTASUKIGAP_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -590,10 +423,10 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stre
             /* and closes above the black rb */
             /* inside the gap */
             /* size of 2 rb near the same */
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else 
          {
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -658,6 +491,35 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stre
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLTASUKIGAP_OpenInternal( struct TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_CDLTASUKIGAP_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Open( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
+{
+   return TA_CDLTASUKIGAP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OpenAndFill( TA_CDLTASUKIGAP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_CDLTASUKIGAP_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Update( TA_CDLTASUKIGAP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

@@ -264,113 +264,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::AVGDEV_Open`] (composition seam).
-    pub(crate) fn AVGDEV_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(AVGDEV_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookback: usize = 0_usize;
-        lookback = (optInTimePeriod - 1) as usize;
-        if startIdx < lookback {
-            startIdx = lookback;
-        }
-        today = startIdx;
-        // Make sure there is still something to evaluate.
-        if today > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Process the initial DM and TR
-        dummyBegIdx = today;
-        outIdx = 0;
-        while today <= endIdx {
-            let mut todaySum: f64 = 0.0_f64;
-            let mut todayDev: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
-            todaySum = 0.0;
-            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
-            i = 0;
-            while i < ((optInTimePeriod) as usize) {
-                todaySum += inReal[today - i];
-                i += 1;
-            }
-            todayDev = 0.0;
-            // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
-            i = 0;
-            while i < ((optInTimePeriod) as usize) {
-                todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
-                i += 1;
-            }
-            lastValue_outReal = todayDev / ((optInTimePeriod) as f64);
-            outIdx += 1;
-            today += 1;
-        }
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_i: i64 = (optInTimePeriod) as i64;
-        if cap_i < 1 || cap_i > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut win_i_inReal: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inReal.copy_from_slice(&inReal[historyLen - cap_i as usize..]);
-        let state = AVGDEV_StreamState {
-            optInTimePeriod,
-            winPos_i: 0_usize,
-            winCap_i: cap_i as usize,
-            win_i_inReal,
-        };
-        Ok((AVGDEV_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live AVGDEV stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::AVGDEV`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.AVGDEV_Open(&data, 14).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_AVGDEV_Open")]
-    pub fn AVGDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(AVGDEV_Stream, f64), RetCode> {
-        self.AVGDEV_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::AVGDEV_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::AVGDEV`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_AVGDEV_OpenAndFill")]
-    pub fn AVGDEV_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::AVGDEV_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::AVGDEV_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn AVGDEV_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<AVGDEV_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -385,7 +282,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
@@ -423,7 +320,7 @@ impl Core {
                 todayDev += (inReal[today - i] - todaySum / ((optInTimePeriod) as f64)).abs();
                 i += 1;
             }
-            outReal[outIdx] = todayDev / ((optInTimePeriod) as f64);
+            outReal[(outIdx * outStride) as usize] = todayDev / ((optInTimePeriod) as f64);
             outIdx += 1;
             today += 1;
         }
@@ -443,6 +340,50 @@ impl Core {
             win_i_inReal,
         };
         Ok(AVGDEV_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::AVGDEV_Open`] (composition seam).
+    pub(crate) fn AVGDEV_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(AVGDEV_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.AVGDEV_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live AVGDEV stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::AVGDEV`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.AVGDEV_Open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_AVGDEV_Open")]
+    pub fn AVGDEV_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(AVGDEV_Stream, f64), RetCode> {
+        self.AVGDEV_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::AVGDEV_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::AVGDEV`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_AVGDEV_OpenAndFill")]
+    pub fn AVGDEV_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AVGDEV_Stream, RetCode> {
+        self.AVGDEV_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

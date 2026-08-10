@@ -66,8 +66,8 @@
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -495,7 +495,7 @@
       sp.prevMA = (inReal - sp.prevMA) * sp.optInK_1 + sp.prevMA;
       sp.cur_outReal = sp.prevMA;
    }
-   private RetCode EMA_OpenBody( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode EMA_OpenCore( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double tempReal = 0;
       double prevMA = 0;
@@ -503,9 +503,6 @@
       int today = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -517,127 +514,6 @@
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < EMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.optInK_1 = optInK_1;
-         sp.prevMA = 0.0;
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      /* Internal implementation can be called from any other TA function.
-       *
-       * Faster because there is no parameter check, but it is a double
-       * edge sword.
-       *
-       * The optInK_1 and optInTimePeriod are usually tightly coupled:
-       *
-       *    optInK_1  = 2 / (optInTimePeriod + 1).
-       *
-       * These values are going to be related by this equation 99.9% of the
-       * time... but there is some exception, this is why both must be provided.
-       *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
-       */
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = EMA_Lookback(optInTimePeriod);
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because at
-       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. Two-decimal prices already
-       * spend a full mantissa, so a single 3x move breaks it. The unstable
-       * period still delays the first output.
-       */
-      outBegIdx.value = startIdx;
-      /* Do the EMA calculation using tight loops. */
-      /* The first EMA is calculated differently. It
-       * then become the seed for subsequent EMA.
-       *
-       * The algorithm for this seed vary widely.
-       * Only 3 are implemented here:
-       *
-       * TA_MA_CLASSIC:
-       *    Use a simple MA of the first 'period'.
-       *    This is the approach most widely documented.
-       *
-       * TA_MA_METASTOCK:
-       *    Use first price bar value as a seed
-       *    from the begining of all the available
-       *    data.
-       *
-       * TA_MA_TRADESTATION:
-       *    Use 4th price bar as a seed, except when
-       *    period is 1 who use 2th price bar or something
-       *    like that... (not an obvious one...).
-       */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 ) {
-         tempReal += inReal[today++];
-      }
-      prevMA = tempReal / optInTimePeriod;
-      while( today <= startIdx ) {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-      }
-      lastValue_outReal = prevMA;
-      outIdx = 1;
-      while( today <= endIdx ) {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-         lastValue_outReal = prevMA;
-      }
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.optInK_1 = optInK_1;
-      sp.prevMA = prevMA;
-      sp.cur_outReal = lastValue_outReal;
-      return RetCode.Success;
-   }
-   private RetCode EMA_OpenAndFillBody( EMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      double tempReal = 0;
-      double prevMA = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
       double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
@@ -651,10 +527,14 @@
          int fillLb = EMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       /* Internal implementation can be called from any other TA function.
@@ -669,8 +549,8 @@
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -688,14 +568,6 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because at
-       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. Two-decimal prices already
-       * spend a full mantissa, so a single 3x move breaks it. The unstable
-       * period still delays the first output.
-       */
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
       /* The first EMA is calculated differently. It
@@ -728,19 +600,33 @@
       while( today <= startIdx ) {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
-      outReal[0] = prevMA;
+      outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx ) {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-         outReal[outIdx++] = prevMA;
+         outReal[outIdx++ * outStride] = prevMA;
       }
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInK_1 = optInK_1;
       sp.prevMA = prevMA;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode EMA_OpenBody( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return EMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode EMA_OpenAndFillBody( EMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal ) {
+         return RetCode.BadParam;
+      }
+      return EMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
    EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

@@ -275,14 +275,11 @@
          sp.cur_outReal = (inClose - inOpen) / tempReal;
       }
    }
-   private RetCode BOP_OpenBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode BOP_OpenCore( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
       double tempReal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -296,49 +293,30 @@
       for( i = startIdx; i <= endIdx; i += 1 ) {
          tempReal = inHigh[i] - inLow[i];
          if( (tempReal < 0.00000000000001) ) {
-            lastValue_outReal = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          } else {
-            lastValue_outReal = (inClose[i] - inOpen[i]) / tempReal;
+            outReal[outIdx++ * outStride] = (inClose[i] - inOpen[i]) / tempReal;
          }
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode BOP_OpenBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return BOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode BOP_OpenAndFillBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int outIdx = 0;
-      int i = 0;
-      double tempReal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* BOP = (Close - Open)/(High - Low) */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inHigh[i] - inLow[i];
-         if( (tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
-         }
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return BOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind BOP_Open (composition seam). */
    BOP_Stream BOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

@@ -245,14 +245,12 @@ static void TA_CDLENGULFING_StepInternal( struct TA_CDLENGULFING_Stream *sp, dou
    sp->lag1_inClose = inClose;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CDLENGULFING_OpenInternal( struct TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+static TA_RetCode TA_CDLENGULFING_OpenCore( struct TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLENGULFING_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   int lastValue_outInteger;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -261,105 +259,6 @@ TA_RetCode TA_CDLENGULFING_OpenInternal( struct TA_CDLENGULFING_Stream **stream,
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outInteger = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int i;
-      int outIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_CDLENGULFING_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first: black (white) real body
-       * - second: white (black) real body that engulfs the prior real body
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-       * - 100 is returned when the second candle's real body begins before and ends after the first candle's real body
-       * - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-       *   "Candlestick charting explained")
-       * The user should consider that an engulfing must appear in a downtrend if bullish or in an uptrend if bearish,
-       * while this function does not consider it
-       */
-      outIdx = 0;
-      do
-      {
-         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) )
-         {
-            /* white engulfs black */
-            /* black engulfs white */
-            if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
-            {
-               lastValue_outInteger = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
-            } else 
-            {
-               lastValue_outInteger = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
-            }
-         } else 
-         {
-            lastValue_outInteger = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CDLENGULFING_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->lag1_inOpen = inOpen[historyLen - 1];
-      sp->lag1_inClose = inClose[historyLen - 1];
-      *outInteger = lastValue_outInteger;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
-{
-   return TA_CDLENGULFING_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
-}
-
-TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
-{
-   struct TA_CDLENGULFING_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -409,14 +308,14 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stre
             /* black engulfs white */
             if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
             {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
             } else 
             {
-               outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
+               outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 80;
             }
          } else 
          {
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          i += 1;
       } while( i <= endIdx );
@@ -433,6 +332,35 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stre
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLENGULFING_OpenInternal( struct TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_CDLENGULFING_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_Open( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
+{
+   return TA_CDLENGULFING_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDLENGULFING_OpenAndFill( TA_CDLENGULFING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_CDLENGULFING_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

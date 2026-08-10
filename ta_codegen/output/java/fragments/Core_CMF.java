@@ -564,7 +564,7 @@
          sp.mfv_Idx = 0;
       }
    }
-   private RetCode CMF_OpenBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   private RetCode CMF_OpenCore( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumMFV = 0;
       double sumVol = 0;
@@ -581,9 +581,6 @@
       double[] mfv_volume;
       int mfv_Idx = 0;
       int maxIdx_mfv = (50)-1;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
@@ -659,9 +656,9 @@
        * report 0.0 rather than propagating a division by zero (issue #112).
        */
       if( sumVol > 0.0 ) {
-         lastValue_outReal = sumMFV / sumVol;
+         outReal[outIdx++ * outStride] = sumMFV / sumVol;
       } else {
-         lastValue_outReal = 0.0;
+         outReal[outIdx++ * outStride] = 0.0;
       }
       /* Now continue processing the remaining bars. */
       while( today <= endIdx ) {
@@ -682,9 +679,9 @@
          sumVol += inVolume[today];
          today += 1;
          if( sumVol > 0.0 ) {
-            lastValue_outReal = sumMFV / sumVol;
+            outReal[outIdx++ * outStride] = sumMFV / sumVol;
          } else {
-            lastValue_outReal = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          }
          mfv_Idx++;
          if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
@@ -709,157 +706,22 @@
       sp.cbSize_mfv = capCb_mfv;
       sp.cb_mfv_flow = mfv_flow;
       sp.cb_mfv_volume = mfv_volume;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CMF_OpenBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode CMF_OpenAndFillBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double sumMFV = 0;
-      double sumVol = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double mfv = 0;
-      int lookbackTotal = 0;
-      int outIdx = 0;
-      int i = 0;
-      int today = 0;
-      double[] mfv_flow;
-      double[] mfv_volume;
-      int mfv_Idx = 0;
-      int maxIdx_mfv = (50)-1;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 20;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      /* Both the per-bar money flow volume and the volume that produced it are
-       * carried in the circular buffer. Keeping the volume here rather than
-       * re-reading inVolume[] at the trailing index is what makes outReal safe to
-       * alias any input: once a bar has been consumed it is never read again.
-       */
-      /* Id, Type, Static Size */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      mfv_flow = new double[optInTimePeriod];
-      mfv_volume = new double[optInTimePeriod];
-      maxIdx_mfv = (optInTimePeriod)-1;
-      mfv_Idx = 0;
-      outIdx = 0;
-      /* Accumulate the money flow volume and the volume over the first
-       * complete window, filling the circular buffer as we go.
-       *
-       * The per-bar multiplier is written exactly as in ta_AD.c so that the
-       * Chaikin money flow volume has one definition in the library.
-       */
-      today = startIdx - lookbackTotal;
-      sumMFV = 0.0;
-      sumVol = 0.0;
-      for( i = optInTimePeriod; i > 0; i -= 1 ) {
-         high = inHigh[today];
-         low = inLow[today];
-         close = inClose[today];
-         tmp = high - low;
-         if( tmp > 0.0 ) {
-            mfv = (close - low - (high - close)) / tmp * inVolume[today];
-         } else {
-            mfv = 0.0;
-         }
-         mfv_flow[mfv_Idx] = mfv;
-         mfv_volume[mfv_Idx] = inVolume[today];
-         sumMFV += mfv;
-         sumVol += inVolume[today];
-         today += 1;
-         mfv_Idx++;
-         if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
-      }
-      /* The first full window is complete: emit its output for startIdx here,
-       * then slide the window over the remaining bars below.
-       *
-       * A window whose volume is entirely zero has no money flow to distribute;
-       * report 0.0 rather than propagating a division by zero (issue #112).
-       */
-      if( sumVol > 0.0 ) {
-         outReal[outIdx++] = sumMFV / sumVol;
-      } else {
-         outReal[outIdx++] = 0.0;
-      }
-      /* Now continue processing the remaining bars. */
-      while( today <= endIdx ) {
-         sumMFV -= mfv_flow[mfv_Idx];
-         sumVol -= mfv_volume[mfv_Idx];
-         high = inHigh[today];
-         low = inLow[today];
-         close = inClose[today];
-         tmp = high - low;
-         if( tmp > 0.0 ) {
-            mfv = (close - low - (high - close)) / tmp * inVolume[today];
-         } else {
-            mfv = 0.0;
-         }
-         mfv_flow[mfv_Idx] = mfv;
-         mfv_volume[mfv_Idx] = inVolume[today];
-         sumMFV += mfv;
-         sumVol += inVolume[today];
-         today += 1;
-         if( sumVol > 0.0 ) {
-            outReal[outIdx++] = sumMFV / sumVol;
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-         mfv_Idx++;
-         if( mfv_Idx > maxIdx_mfv ) { mfv_Idx = 0; }
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int capCb_mfv = maxIdx_mfv + 1;
-      if( capCb_mfv > historyLen + 1 ) {
-         return RetCode.InternalError;
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.sumMFV = sumMFV;
-      sp.sumVol = sumVol;
-      sp.high = high;
-      sp.low = low;
-      sp.close = close;
-      sp.tmp = tmp;
-      sp.mfv = mfv;
-      sp.mfv_Idx = mfv_Idx;
-      sp.maxIdx_mfv = maxIdx_mfv;
-      sp.cbSize_mfv = capCb_mfv;
-      sp.cb_mfv_flow = mfv_flow;
-      sp.cb_mfv_volume = mfv_volume;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
    CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )

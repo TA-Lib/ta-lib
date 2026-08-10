@@ -473,155 +473,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode WMA_OpenBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      int inIdx = 0;
-      int outIdx = 0;
-      int i = 0;
-      int trailingIdx = 0;
-      double periodSum = 0;
-      double periodSub = 0;
-      double tempReal = 0;
-      double trailingValue = 0;
-      double divider = 0;
-      int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < WMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.periodSum = 0.0;
-         sp.periodSub = 0.0;
-         sp.trailingValue = 0.0;
-         sp.divider = 0.0;
-         sp.ringPos_trailingIdx = 0;
-         sp.ringCap_trailingIdx = 0;
-         sp.ring_trailingIdx_inReal = new double[1];
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      lookbackTotal = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
-      /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
-       * int product n*(n+1) overflows int32 at n>=46341 (#142).
-       */
-      divider = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-      /* The algo used here use a very basic property of
-       * multiplication/addition: (x*2) = x+x
-       *
-       * As an example, a 3 period weighted can be
-       * interpreted in two way:
-       *  (x1*1)+(x2*2)+(x3*3)
-       *      OR
-       *  x1+x2+x2+x3+x3+x3 (this is the periodSum)
-       *
-       * When you move forward in the time serie
-       * you can quickly adjust the periodSum for the
-       * period by substracting:
-       *   x1+x2+x3 (This is the periodSub)
-       * Making the new periodSum equals to:
-       *   x2+x3+x3
-       *
-       * You can then add the new price bar
-       * which is x4+x4+x4 giving:
-       *   x2+x3+x3+x4+x4+x4
-       *
-       * At this point one iteration is completed and you can
-       * see that we are back to the step 1 of this example.
-       *
-       * Why making it so un-intuitive? The number of memory
-       * access and floating point operations are kept to a
-       * minimum with this algo.
-       */
-      outIdx = 0;
-      trailingIdx = startIdx - lookbackTotal;
-      /* Evaluate the initial periodSum/periodSub and trailingValue. */
-      periodSub = (double)0.0;
-      periodSum = periodSub;
-      inIdx = trailingIdx;
-      i = 1;
-      while( inIdx < startIdx ) {
-         tempReal = inReal[inIdx++];
-         periodSub += tempReal;
-         periodSum += tempReal * i;
-         i += 1;
-      }
-      trailingValue = 0.0;
-      /* Tight loop for the requested range. */
-      while( inIdx <= endIdx ) {
-         /* Add the current price bar to the sum
-          * who are carried through the iterations.
-          */
-         tempReal = inReal[inIdx++];
-         periodSub += tempReal;
-         periodSub -= trailingValue;
-         periodSum += tempReal * optInTimePeriod;
-         /* Save the trailing value for being substract at
-          * the next iteration.
-          * (must be saved here just in case outReal and
-          *  inReal are the same buffer).
-          */
-         trailingValue = inReal[trailingIdx++];
-         /* Calculate the WMA for this price bar. */
-         lastValue_outReal = periodSum / divider;
-         /* Prepare the periodSum for the next iteration. */
-         periodSum -= periodSub;
-      }
-      /* Set output limits. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.periodSum = periodSum;
-      sp.periodSub = periodSub;
-      sp.trailingValue = trailingValue;
-      sp.divider = divider;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = lastValue_outReal;
-      return RetCode.Success;
-   }
-   private RetCode WMA_OpenAndFillBody( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode WMA_OpenCore( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
@@ -635,7 +487,6 @@
       int lookbackTotal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      int startIdx = 0;
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
@@ -645,9 +496,6 @@
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -665,10 +513,14 @@
          int fillLb = WMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       lookbackTotal = optInTimePeriod - 1;
@@ -684,11 +536,6 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
        */
@@ -750,7 +597,7 @@
           */
          trailingValue = inReal[trailingIdx++];
          /* Calculate the WMA for this price bar. */
-         outReal[outIdx++] = periodSum / divider;
+         outReal[outIdx++ * outStride] = periodSum / divider;
          /* Prepare the periodSum for the next iteration. */
          periodSum -= periodSub;
       }
@@ -773,8 +620,22 @@
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode WMA_OpenBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return WMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode WMA_OpenAndFillBody( WMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal ) {
+         return RetCode.BadParam;
+      }
+      return WMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
    WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

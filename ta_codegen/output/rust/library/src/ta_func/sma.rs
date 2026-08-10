@@ -268,124 +268,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SMA_Open`] (composition seam).
-    pub(crate) fn SMA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(SMA_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut periodTotal: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the MA calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        periodTotal = 0.0;
-        trailingIdx = startIdx - lookbackTotal;
-        i = trailingIdx;
-        if optInTimePeriod > 1 {
-            while i < startIdx {
-                periodTotal += inReal[i] as f64;
-                i = i + 1;
-            }
-        }
-        // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the inReal and
-        // outReal to be the same buffer.
-        outIdx = 0;
-        while i <= endIdx {
-            periodTotal += inReal[i] as f64;
-            i = i + 1;
-            tempReal = periodTotal;
-            periodTotal -= inReal[trailingIdx] as f64;
-            trailingIdx = trailingIdx + 1;
-            lastValue_outReal = tempReal / (optInTimePeriod as f64);
-            outIdx = outIdx + 1;
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = SMA_StreamState {
-            optInTimePeriod,
-            periodTotal,
-            tempReal,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok((SMA_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live SMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::SMA`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.SMA_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_SMA_Open")]
-    pub fn SMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SMA_Stream, f64), RetCode> {
-        self.SMA_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::SMA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SMA`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_SMA_OpenAndFill")]
-    pub fn SMA_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::SMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::SMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn SMA_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -400,7 +286,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut periodTotal: f64 = 0.0_f64;
@@ -444,7 +330,7 @@ impl Core {
             tempReal = periodTotal;
             periodTotal -= inReal[trailingIdx] as f64;
             trailingIdx = trailingIdx + 1;
-            outReal[outIdx] = tempReal / (optInTimePeriod as f64);
+            outReal[(outIdx * outStride) as usize] = tempReal / (optInTimePeriod as f64);
             outIdx = outIdx + 1;
         }
         // All done. Indicate the output limits and return.
@@ -469,6 +355,50 @@ impl Core {
             ring_trailingIdx_inReal,
         };
         Ok(SMA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::SMA_Open`] (composition seam).
+    pub(crate) fn SMA_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(SMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.SMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live SMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::SMA`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.SMA_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_SMA_Open")]
+    pub fn SMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(SMA_Stream, f64), RetCode> {
+        self.SMA_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::SMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SMA`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_SMA_OpenAndFill")]
+    pub fn SMA_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<SMA_Stream, RetCode> {
+        self.SMA_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

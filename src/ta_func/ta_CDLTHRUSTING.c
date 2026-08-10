@@ -384,14 +384,12 @@ static void TA_CDLTHRUSTING_StepInternal( struct TA_CDLTHRUSTING_Stream *sp, dou
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CDLTHRUSTING_OpenInternal( struct TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+static TA_RetCode TA_CDLTHRUSTING_OpenCore( struct TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLTHRUSTING_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   int lastValue_outInteger;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -400,211 +398,6 @@ TA_RetCode TA_CDLTHRUSTING_OpenInternal( struct TA_CDLTHRUSTING_Stream **stream,
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outInteger = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
-      int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;
-      double EqualPeriodTotal = 0.0;
-      double BodyLongPeriodTotal = 0.0;
-      int i;
-      int outIdx;
-      int EqualTrailingIdx;
-      int BodyLongTrailingIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_CDLTHRUSTING_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      EqualPeriodTotal = 0;
-      EqualTrailingIdx = startIdx - Equal_avgPeriod;
-      BodyLongPeriodTotal = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      i = EqualTrailingIdx;
-      while( i < startIdx )
-      {
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1);
-         i += 1;
-      }
-      i = BodyLongTrailingIdx;
-      while( i < startIdx )
-      {
-         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1);
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle: long black candle
-       * - second candle: white candle with open below previous day low and close into previous day body under the midpoint;
-       * to differentiate it from in-neck the close should not be equal to the black candle's close
-       * The meaning of "equal" is specified with TA_SetCandleSettings
-       * outInteger is negative (-1 to -100): thrusting pattern is always bearish
-       * the user should consider that the thrusting pattern is significant when it appears in a downtrend and it could be
-       * even bullish "when coming in an uptrend or occurring twice within several days" (Steve Nison says), while this
-       * function does not consider the trend
-       */
-      outIdx = 0;
-      do
-      {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 1st: black */
-             fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) && /* long */
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 2nd: white */
-             inOpen[i] < inLow[i - 1] &&                                 /* open below prior low */
-             inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* close into prior body */
-             inClose[i] <= fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* under the midpoint */
-         {
-            lastValue_outInteger = 0 - 100;
-         } else 
-         {
-            lastValue_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         EqualPeriodTotal += TA_CANDLERANGE(Equal,i - 1) - TA_CANDLERANGE(Equal,EqualTrailingIdx - 1);
-         BodyLongPeriodTotal += TA_CANDLERANGE(BodyLong,i - 1) - TA_CANDLERANGE(BodyLong,BodyLongTrailingIdx - 1);
-         i += 1;
-         EqualTrailingIdx += 1;
-         BodyLongTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CDLTHRUSTING_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->EqualPeriodTotal = EqualPeriodTotal;
-      sp->BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp->ringLag_BodyLongTrailingIdx = (int)(i - BodyLongTrailingIdx);
-      sp->ringCap_BodyLongTrailingIdx = sp->ringLag_BodyLongTrailingIdx + 2;
-      if( sp->ringLag_BodyLongTrailingIdx < 0 || sp->ringCap_BodyLongTrailingIdx > historyLen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_BodyLongTrailingIdx > 0 ? sp->ringCap_BodyLongTrailingIdx : 1);
-        sp->ring_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inOpen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyLongTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inOpen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_inOpen[fillJ % sp->ringCap_BodyLongTrailingIdx] = inOpen[fillJ];
-        }
-        sp->ring_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inHigh ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyLongTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inHigh ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_inHigh[fillJ % sp->ringCap_BodyLongTrailingIdx] = inHigh[fillJ];
-        }
-        sp->ring_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inLow ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyLongTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inLow ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_inLow[fillJ % sp->ringCap_BodyLongTrailingIdx] = inLow[fillJ];
-        }
-        sp->ring_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyLongTrailingIdx_inClose ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyLongTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyLongTrailingIdx_inClose ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_BodyLongTrailingIdx_inClose[fillJ % sp->ringCap_BodyLongTrailingIdx] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_BodyLongTrailingIdx = historyLen % sp->ringCap_BodyLongTrailingIdx;
-      sp->ringLag_EqualTrailingIdx = (int)(i - EqualTrailingIdx);
-      sp->ringCap_EqualTrailingIdx = sp->ringLag_EqualTrailingIdx + 2;
-      if( sp->ringLag_EqualTrailingIdx < 0 || sp->ringCap_EqualTrailingIdx > historyLen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_EqualTrailingIdx > 0 ? sp->ringCap_EqualTrailingIdx : 1);
-        sp->ring_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_inOpen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_EqualTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_inOpen ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_EqualTrailingIdx_inOpen[fillJ % sp->ringCap_EqualTrailingIdx] = inOpen[fillJ];
-        }
-        sp->ring_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_inHigh ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_EqualTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_inHigh ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_EqualTrailingIdx_inHigh[fillJ % sp->ringCap_EqualTrailingIdx] = inHigh[fillJ];
-        }
-        sp->ring_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_inLow ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_EqualTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_inLow ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_EqualTrailingIdx_inLow[fillJ % sp->ringCap_EqualTrailingIdx] = inLow[fillJ];
-        }
-        sp->ring_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_EqualTrailingIdx_inClose ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_EqualTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_EqualTrailingIdx_inClose ) { TA_CDLTHRUSTING_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        { int fillJ;
-          for( fillJ = historyLen - sp->ringCap_EqualTrailingIdx; fillJ < historyLen; fillJ++ )
-             sp->ring_EqualTrailingIdx_inClose[fillJ % sp->ringCap_EqualTrailingIdx] = inClose[fillJ];
-        }
-      }
-      sp->ringPos_EqualTrailingIdx = historyLen % sp->ringCap_EqualTrailingIdx;
-      sp->lag1_inOpen = inOpen[historyLen - 1];
-      sp->lag1_inHigh = inHigh[historyLen - 1];
-      sp->lag1_inLow = inLow[historyLen - 1];
-      sp->lag1_inClose = inClose[historyLen - 1];
-      *outInteger = lastValue_outInteger;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Open( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
-{
-   return TA_CDLTHRUSTING_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
-}
-
-TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OpenAndFill( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
-{
-   struct TA_CDLTHRUSTING_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -677,10 +470,10 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OpenAndFill( TA_CDLTHRUSTING_Stream **stre
              inClose[i] > inClose[i - 1] + TA_CANDLEAVERAGE(Equal,EqualPeriodTotal,i - 1) && /* close into prior body */
              inClose[i] <= fma(fabs(inClose[i - 1] - inOpen[i - 1]), 0.5, inClose[i - 1]) ) /* under the midpoint */
          {
-            outInteger[outIdx++] = 0 - 100;
+            outInteger[outIdx++ * outStride] = 0 - 100;
          } else 
          {
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -784,6 +577,35 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OpenAndFill( TA_CDLTHRUSTING_Stream **stre
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLTHRUSTING_OpenInternal( struct TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_CDLTHRUSTING_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Open( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
+{
+   return TA_CDLTHRUSTING_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OpenAndFill( TA_CDLTHRUSTING_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_CDLTHRUSTING_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Update( TA_CDLTHRUSTING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

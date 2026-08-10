@@ -347,10 +347,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::WMA_Open`] (composition seam).
-    pub(crate) fn WMA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(WMA_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::WMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::WMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn WMA_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<WMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -367,7 +368,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod == 1 {
             if historyLen < self.WMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
@@ -382,7 +382,19 @@ impl Core {
                 ringCap_trailingIdx: 0_usize,
                 ring_trailingIdx_inReal: vec![0.0_f64; 1],
             };
-            return Ok((WMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
+            let fillLb: usize = self.WMA_Lookback(optInTimePeriod);
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            if outStride == 0 {
+                outReal[0] = inReal[historyLen - 1];
+            } else {
+                let mut fillIdx: usize = 0;
+                while fillIdx < historyLen - fillLb {
+                    outReal[fillIdx] = inReal[fillLb + fillIdx];
+                    fillIdx += 1;
+                }
+            }
+            return Ok(WMA_Stream { core: self.clone(), state });
         }
         let mut inIdx: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -402,14 +414,10 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        // To make the rest more efficient, handle exception
-        // case where the user is asking for a period of '1'.
-        // In that case outputs equals inputs for the requested
-        // range.
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
         divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
@@ -467,13 +475,13 @@ impl Core {
             //  inReal are the same buffer).
             trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
             // Calculate the WMA for this price bar.
-            lastValue_outReal = periodSum / divider;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = periodSum / divider;
             // Prepare the periodSum for the next iteration.
             periodSum -= periodSub;
         }
         // Set output limits.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
         let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
@@ -494,7 +502,18 @@ impl Core {
             ringCap_trailingIdx: cap_trailingIdx as usize,
             ring_trailingIdx_inReal,
         };
-        Ok((WMA_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(WMA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::WMA_Open`] (composition seam).
+    pub(crate) fn WMA_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(WMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.WMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live WMA stream over the warm-up history; returns the handle and
@@ -527,158 +546,7 @@ impl Core {
     pub fn WMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<WMA_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        if optInTimePeriod == 1 {
-            if historyLen < self.WMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = WMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                periodSum: 0.0_f64,
-                periodSub: 0.0_f64,
-                trailingValue: 0.0_f64,
-                divider: 0.0_f64,
-                ringPos_trailingIdx: 0_usize,
-                ringCap_trailingIdx: 0_usize,
-                ring_trailingIdx_inReal: vec![0.0_f64; 1],
-            };
-            let fillLb: usize = self.WMA_Lookback(optInTimePeriod);
-            (*outBegIdx) = fillLb;
-            (*outNBElement) = historyLen - fillLb;
-            let mut fillIdx: usize = 0;
-            while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
-                fillIdx += 1;
-            }
-            return Ok(WMA_Stream { core: self.clone(), state });
-        }
-        let mut inIdx: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut periodSum: f64 = 0.0_f64;
-        let mut periodSub: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        let mut divider: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // To make the rest more efficient, handle exception
-        // case where the user is asking for a period of '1'.
-        // In that case outputs equals inputs for the requested
-        // range.
-        // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
-        // int product n*(n+1) overflows int32 at n>=46341 (#142).
-        divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
-        // The algo used here use a very basic property of
-        // multiplication/addition: (x*2) = x+x
-        //
-        // As an example, a 3 period weighted can be
-        // interpreted in two way:
-        //  (x1*1)+(x2*2)+(x3*3)
-        //      OR
-        //  x1+x2+x2+x3+x3+x3 (this is the periodSum)
-        //
-        // When you move forward in the time serie
-        // you can quickly adjust the periodSum for the
-        // period by substracting:
-        //   x1+x2+x3 (This is the periodSub)
-        // Making the new periodSum equals to:
-        //   x2+x3+x3
-        //
-        // You can then add the new price bar
-        // which is x4+x4+x4 giving:
-        //   x2+x3+x3+x4+x4+x4
-        //
-        // At this point one iteration is completed and you can
-        // see that we are back to the step 1 of this example.
-        //
-        // Why making it so un-intuitive? The number of memory
-        // access and floating point operations are kept to a
-        // minimum with this algo.
-        outIdx = 0;
-        trailingIdx = startIdx - lookbackTotal;
-        // Evaluate the initial periodSum/periodSub and trailingValue.
-        periodSub = 0.0 as f64;
-        periodSum = periodSub;
-        inIdx = trailingIdx;
-        i = 1;
-        while inIdx < startIdx {
-            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
-            periodSub += tempReal;
-            periodSum += tempReal * ((i) as f64);
-            i += 1;
-        }
-        trailingValue = 0.0;
-        // Tight loop for the requested range.
-        while inIdx <= endIdx {
-            // Add the current price bar to the sum
-            // who are carried through the iterations.
-            tempReal = inReal[{ let _v = inIdx; inIdx += 1; _v }];
-            periodSub += tempReal;
-            periodSub -= trailingValue;
-            periodSum += tempReal * ((optInTimePeriod) as f64);
-            // Save the trailing value for being substract at
-            // the next iteration.
-            // (must be saved here just in case outReal and
-            //  inReal are the same buffer).
-            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            // Calculate the WMA for this price bar.
-            outReal[outIdx] = periodSum / divider;
-            outIdx += 1;
-            // Prepare the periodSum for the next iteration.
-            periodSum -= periodSub;
-        }
-        // Set output limits.
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (inIdx as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = WMA_StreamState {
-            optInTimePeriod,
-            periodSum,
-            periodSub,
-            trailingValue,
-            divider,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok(WMA_Stream { core: self.clone(), state })
+        self.WMA_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

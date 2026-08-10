@@ -137,7 +137,7 @@ fn test_rust_ht_dcperiod_parity_stream_section() {
     let step = s
         .split("fn HT_DCPERIOD_step_internal")
         .nth(1)
-        .and_then(|t| t.split("/// Internal startIdx-anchored open").next())
+        .and_then(|t| t.split("/// The single whole-history transcription").next())
         .expect("step body");
     assert!(!step.contains("startIdx"), "gate strip removed startIdx from the step");
     // Fixed-size Hilbert arrays are carried whole.
@@ -149,7 +149,7 @@ fn test_rust_dx_out_feedback_carried() {
     let s = rust_stream_section("dx");
     // Previous-output feedback carried as lastOut state (zero-denominator repeat).
     assert!(s.contains("lastOut_outReal: f64,"));
-    assert!(s.contains("lastOut_outReal: lastValue_outReal,"));
+    assert!(s.contains("lastOut_outReal: outReal[(*outNBElement - 1) * outStride],"));
 }
 
 #[test]
@@ -158,7 +158,11 @@ fn test_rust_identity_fast_path_t3() {
     // param==1 identity short-circuit before the transcribed body: min-history
     // check via lookback, passthrough value, default state.
     assert!(s.contains("if historyLen < self.T3_Lookback(optInTimePeriod, optInVFactor) + 1 {"));
-    assert!(s.contains("inReal[historyLen - 1]"));
+    // Stride 0 short-circuits to the last bar; only the fill arm loops. Letting
+    // the loop run at stride 0 is correct but makes the scalar Open O(history).
+    assert!(s.contains("if outStride == 0 {"), "identity arm short-circuits at stride 0");
+    assert!(s.contains("outReal[0] = inReal[historyLen - 1];"), "stride-0 arm takes the last bar");
+    assert!(s.contains("outReal[fillIdx] = inReal[fillLb + fillIdx];"), "fill arm indexes plainly");
 }
 
 #[test]
@@ -210,4 +214,111 @@ fn every_streamable_func_emits_rust_stream() {
         );
     }
     assert!(checked >= 160, "streamable floor: checked {checked}");
+}
+
+// ---------------------------------------------------------------------------
+// Merged Open family (`OpenCore` + stride)
+// ---------------------------------------------------------------------------
+//
+// `OpenInternal` and `OpenAndFill` are one emission: `<sn>_OpenCore(..., outStride:
+// usize)`. Fill passes stride 1 and the caller's slice; the scalar path passes
+// stride 0 and a one-element sink, so every write collapses onto slot 0 and that
+// slot ends holding the last history value. `Dispatch` (MA) and `PeriodBank`
+// (MAVP) are exempt — they hand the fill to a sub / run a different warm-up.
+
+#[test]
+fn rust_open_family_is_one_core_with_two_wrappers() {
+    let s = rust_stream_section("cdlhammer");
+    assert_eq!(
+        s.matches("fn CDLHAMMER_OpenCore(").count(),
+        1,
+        "the core is emitted exactly once"
+    );
+    assert!(s.contains("outStride: usize"), "the core takes a stride");
+    // Both wrappers delegate; neither re-transcribes the algorithm.
+    for w in ["fn CDLHAMMER_OpenInternal(", "pub fn CDLHAMMER_OpenAndFill("] {
+        let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
+        let body = &s[at..at + 900.min(s.len() - at)];
+        assert!(body.contains("CDLHAMMER_OpenCore("), "{w} delegates to the core");
+        assert!(
+            !body.contains("BodyPeriodTotal"),
+            "{w} must not re-transcribe the algorithm"
+        );
+    }
+}
+
+#[test]
+fn rust_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
+    let s = rust_stream_section("cdlhammer");
+    let at = s.find("fn CDLHAMMER_OpenInternal(").expect("scalar wrapper");
+    let body = &s[at..at + 900.min(s.len() - at)];
+    assert!(body.contains("[0_i32; 1]"), "an int output sinks into a 1-element array:\n{body}");
+    assert!(body.contains(", 0)?"), "scalar passes stride 0:\n{body}");
+    assert!(body.contains("sink_outInteger[0]"), "the value comes back from slot 0:\n{body}");
+}
+
+#[test]
+fn rust_output_writes_are_stride_scaled() {
+    let s = rust_stream_section("cdlhammer");
+    assert!(
+        s.contains("outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;"),
+        "per-bar output writes scale by the stride"
+    );
+}
+
+#[test]
+fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
+    // #108: the capture epilogue reads the input tail after writing the outputs,
+    // so two outputs may not share a slice. Rust's borrow checker rules out
+    // output-vs-input, but not output-vs-output.
+    let s = rust_stream_section("minmax");
+    let at = s.find("pub fn MINMAX_OpenAndFill(").expect("fill wrapper");
+    let body = &s[at..at + 700.min(s.len() - at)];
+    assert!(
+        body.contains("outMin.as_ptr() == outMax.as_ptr()"),
+        "output distinctness survives on the fill wrapper:\n{body}"
+    );
+    // The scalar wrapper's sinks are its own locals — it must not pay for it.
+    let sat = s.find("fn MINMAX_OpenInternal(").expect("scalar wrapper");
+    let sbody = &s[sat..sat + 700.min(s.len() - sat)];
+    assert!(
+        !sbody.contains("as_ptr()"),
+        "Open has no aliasing hazard and must not carry the guard:\n{sbody}"
+    );
+}
+
+#[test]
+fn rust_multi_output_scalar_wrapper_rebuilds_the_value_tuple() {
+    let s = rust_stream_section("minmax");
+    let at = s.find("fn MINMAX_OpenInternal(").expect("scalar wrapper");
+    let body = &s[at..at + 900.min(s.len() - at)];
+    assert!(
+        body.contains("(sink_outMin[0], sink_outMax[0])"),
+        "a 2-output scalar open returns the pair from the sinks:\n{body}"
+    );
+}
+
+#[test]
+fn rust_exempt_tiers_keep_two_bodies() {
+    for (name, upper) in [("ma", "MA"), ("mavp", "MAVP")] {
+        let s = rust_stream_section(name);
+        assert!(
+            !s.contains(&format!("fn {upper}_OpenCore(")),
+            "{upper} is an exempt tier and must keep two bodies"
+        );
+        assert!(s.contains(&format!("fn {upper}_OpenInternal(")));
+        assert!(s.contains(&format!("fn {upper}_OpenAndFill(")));
+    }
+}
+
+#[test]
+fn rust_composed_copy_out_is_stride_guarded() {
+    // Both modes compute into `sc_*`; only the hand-back differs, and a bulk
+    // copy takes a base pointer rather than a subscript — the one place the
+    // stride cannot express the difference on its own.
+    let s = rust_stream_section("adxr");
+    assert!(
+        s.contains("if outStride == 1 {") && s.contains("copy_from_slice"),
+        "the composed copy-out is guarded by the stride"
+    );
 }

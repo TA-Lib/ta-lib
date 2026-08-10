@@ -243,10 +243,11 @@ impl Core {
         sp.prevVolume = tempVolume;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::PVI_Open`] (composition seam).
-    pub(crate) fn PVI_OpenInternal(
-        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(PVI_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::PVI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::PVI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn PVI_OpenCore(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<PVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -258,7 +259,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevPVI: f64 = 0.0_f64;
@@ -281,13 +281,13 @@ impl Core {
             if tempVolume > prevVolume && prevClose != 0.0 {
                 prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
             }
-            lastValue_outReal = prevPVI;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevPVI;
             prevClose = tempClose;
             prevVolume = tempVolume;
         }
         i = (endIdx as usize) + 1;
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
         let state = PVI_StreamState {
@@ -295,7 +295,18 @@ impl Core {
             prevClose,
             prevVolume,
         };
-        Ok((PVI_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(PVI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::PVI_Open`] (composition seam).
+    pub(crate) fn PVI_OpenInternal(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(PVI_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.PVI_OpenCore(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live PVI stream over the warm-up history; returns the handle and
@@ -333,55 +344,7 @@ impl Core {
     pub fn PVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVI_Stream, RetCode> {
-        if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inClose.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inClose.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevPVI: f64 = 0.0_f64;
-        let mut prevClose: f64 = 0.0_f64;
-        let mut prevVolume: f64 = 0.0_f64;
-        let mut tempClose: f64 = 0.0_f64;
-        let mut tempVolume: f64 = 0.0_f64;
-        // The index is a running cumulative value seeded at 1000, updated only on
-        // bars whose volume increased versus the prior bar (Positive Volume).
-        prevPVI = 1000.0;
-        prevClose = inClose[startIdx];
-        prevVolume = inVolume[startIdx];
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempClose = inClose[i];
-            tempVolume = inVolume[i];
-            // prevClose != 0 guards the percentage-change division: a zero previous
-            // close is a degenerate input that would otherwise emit NaN/Inf; carry
-            // the index forward unchanged instead. Never triggers on real prices.
-            if tempVolume > prevVolume && prevClose != 0.0 {
-                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
-            }
-            outReal[outIdx] = prevPVI;
-            outIdx += 1;
-            prevClose = tempClose;
-            prevVolume = tempVolume;
-        }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = PVI_StreamState {
-            prevPVI,
-            prevClose,
-            prevVolume,
-        };
-        Ok(PVI_Stream { core: self.clone(), state })
+        self.PVI_OpenCore(inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

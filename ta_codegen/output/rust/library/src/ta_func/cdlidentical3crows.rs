@@ -629,10 +629,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLIDENTICAL3CROWS_Open`] (composition seam).
-    pub(crate) fn CDLIDENTICAL3CROWS_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLIDENTICAL3CROWS_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLIDENTICAL3CROWS_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLIDENTICAL3CROWS_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLIDENTICAL3CROWS_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -644,7 +645,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut ShadowVeryShortPeriodTotal: [f64; 3 as usize] = [0.0_f64; 3 as usize];
         let mut EqualPeriodTotal: [f64; 3 as usize] = [0.0_f64; 3 as usize];
         let mut i: usize = 0_usize;
@@ -675,8 +675,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -803,9 +803,9 @@ impl Core {
                inOpen[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd black opens very close to 2nd close
                inOpen[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 }))
             {
-                lastValue_outInteger = (0 - 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (0 - 100) as i32;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -880,428 +880,6 @@ impl Core {
                     }
                 }
                 EqualPeriodTotal[totIdx] = EqualPeriodTotal[totIdx] + (_candlerange_11 - _candlerange_12);
-                if totIdx == 1 { break; }
-                totIdx -= 1;
-            }
-            i += 1;
-            ShadowVeryShortTrailingIdx += 1;
-            EqualTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let capLag_EqualTrailingIdx: i64 = (i as i64) - (EqualTrailingIdx as i64);
-        let cap_EqualTrailingIdx: i64 = capLag_EqualTrailingIdx + 3;
-        if capLag_EqualTrailingIdx < 0 || cap_EqualTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_EqualTrailingIdx: usize = if cap_EqualTrailingIdx > 0 { cap_EqualTrailingIdx as usize } else { 1 };
-        let mut ring_EqualTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inOpen[fillJ % cap_EqualTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inHigh[fillJ % cap_EqualTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inLow[fillJ % cap_EqualTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_EqualTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_EqualTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_EqualTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_EqualTrailingIdx_inClose[fillJ % cap_EqualTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let capLag_ShadowVeryShortTrailingIdx: i64 = (i as i64) - (ShadowVeryShortTrailingIdx as i64);
-        let cap_ShadowVeryShortTrailingIdx: i64 = capLag_ShadowVeryShortTrailingIdx + 3;
-        if capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_ShadowVeryShortTrailingIdx: usize = if cap_ShadowVeryShortTrailingIdx > 0 { cap_ShadowVeryShortTrailingIdx as usize } else { 1 };
-        let mut ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inOpen[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inHigh[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inLow[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_ShadowVeryShortTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_ShadowVeryShortTrailingIdx_inClose[fillJ % cap_ShadowVeryShortTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let cap_totIdx: i64 = (3) as i64;
-        if cap_totIdx < 1 || cap_totIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut win_totIdx_inOpen: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inOpen.copy_from_slice(&inOpen[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inHigh: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inHigh.copy_from_slice(&inHigh[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inLow: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CDLIDENTICAL3CROWS_StreamState {
-            ShadowVeryShortPeriodTotal,
-            EqualPeriodTotal,
-            totIdx,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag2_inOpen: inOpen[historyLen - 2],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag2_inHigh: inHigh[historyLen - 2],
-            lag1_inLow: inLow[historyLen - 1],
-            lag2_inLow: inLow[historyLen - 2],
-            lag1_inClose: inClose[historyLen - 1],
-            lag2_inClose: inClose[historyLen - 2],
-            ringPos_EqualTrailingIdx: historyLen % cap_EqualTrailingIdx as usize,
-            ringCap_EqualTrailingIdx: cap_EqualTrailingIdx as usize,
-            ringLag_EqualTrailingIdx: capLag_EqualTrailingIdx as usize,
-            ring_EqualTrailingIdx_inOpen,
-            ring_EqualTrailingIdx_inHigh,
-            ring_EqualTrailingIdx_inLow,
-            ring_EqualTrailingIdx_inClose,
-            ringPos_ShadowVeryShortTrailingIdx: historyLen % cap_ShadowVeryShortTrailingIdx as usize,
-            ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
-            ringLag_ShadowVeryShortTrailingIdx: capLag_ShadowVeryShortTrailingIdx as usize,
-            ring_ShadowVeryShortTrailingIdx_inOpen,
-            ring_ShadowVeryShortTrailingIdx_inHigh,
-            ring_ShadowVeryShortTrailingIdx_inLow,
-            ring_ShadowVeryShortTrailingIdx_inClose,
-            winPos_totIdx: 0_usize,
-            winCap_totIdx: cap_totIdx as usize,
-            win_totIdx_inOpen,
-            win_totIdx_inHigh,
-            win_totIdx_inLow,
-            win_totIdx_inClose,
-        };
-        Ok((CDLIDENTICAL3CROWS_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLIDENTICAL3CROWS stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLIDENTICAL3CROWS`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLIDENTICAL3CROWS_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLIDENTICAL3CROWS_Open")]
-    pub fn CDLIDENTICAL3CROWS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
-        self.CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLIDENTICAL3CROWS_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLIDENTICAL3CROWS`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLIDENTICAL3CROWS_OpenAndFill")]
-    pub fn CDLIDENTICAL3CROWS_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLIDENTICAL3CROWS_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut ShadowVeryShortPeriodTotal: [f64; 3 as usize] = [0.0_f64; 3 as usize];
-        let mut EqualPeriodTotal: [f64; 3 as usize] = [0.0_f64; 3 as usize];
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut totIdx: usize = 0_usize;
-        let mut ShadowVeryShortTrailingIdx: usize = 0_usize;
-        let mut EqualTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let Equal_rangeType: i32 = self.candle_settings.equal.range_type;
-        #[allow(non_snake_case)]
-        let Equal_avgPeriod: i32 = self.candle_settings.equal.avg_period;
-        #[allow(non_snake_case)]
-        let Equal_factor: f64 = self.candle_settings.equal.factor;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLIDENTICAL3CROWS_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        ShadowVeryShortPeriodTotal[2] = 0.0;
-        ShadowVeryShortPeriodTotal[1] = 0.0;
-        ShadowVeryShortPeriodTotal[0] = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
-        EqualPeriodTotal[2] = 0.0;
-        EqualPeriodTotal[1] = 0.0;
-        EqualPeriodTotal[0] = 0.0;
-        EqualTrailingIdx = startIdx - ((Equal_avgPeriod) as usize);
-        i = ShadowVeryShortTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_13: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_13 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_13 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_13 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_13 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + _candlerange_13;
-            let mut _candlerange_14: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_14 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_14 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_14 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_14 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + _candlerange_14;
-            let mut _candlerange_15: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_15 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_15 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_15 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_15 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal[0] = ShadowVeryShortPeriodTotal[0] + _candlerange_15;
-            i += 1;
-        }
-        i = EqualTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_16: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_16 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_16 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_16 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_16 = 0.0;
-                }
-            }
-            EqualPeriodTotal[2] = EqualPeriodTotal[2] + _candlerange_16;
-            let mut _candlerange_17: f64;
-            match Equal_rangeType {
-                0 => {
-                    _candlerange_17 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_17 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_17 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_17 = 0.0;
-                }
-            }
-            EqualPeriodTotal[1] = EqualPeriodTotal[1] + _candlerange_17;
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - three consecutive and declining black candlesticks
-        // - each candle must have no or very short lower shadow
-        // - each candle after the first must open at or very close to the prior candle's close
-        // The meaning of "very short" is specified with TA_SetCandleSettings;
-        // the meaning of "very close" is specified with TA_SetCandleSettings (Equal);
-        // outInteger is negative (-1 to -100): identical three crows is always bearish;
-        // the user should consider that identical 3 crows is significant when it appears after a mature advance or at high levels,
-        // while this function does not consider it
-        outIdx = 0;
-        loop {
-            if (((if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st black
-               ((if inClose[i - 2] >= inOpen[i - 2] { inOpen[i - 2] } else { inClose[i - 2] }) - inLow[i - 2]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[2]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
-               (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd black
-               ((if inClose[i - 1] >= inOpen[i - 1] { inOpen[i - 1] } else { inClose[i - 1] }) - inLow[i - 1]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[1]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
-               (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 3rd black
-               ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal[0]) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && // very short lower shadow
-               inClose[i - 2] > inClose[i - 1] &&                                       // three declining
-               inClose[i - 1] > inClose[i] &&
-               inOpen[i - 1] <= inClose[i - 2] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[2]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd black opens very close to 1st close
-               inOpen[i - 1] >= inClose[i - 2] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[2]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               inOpen[i] <= inClose[i - 1] + ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd black opens very close to 2nd close
-               inOpen[i] >= inClose[i - 1] - ((Equal_factor) * (if (Equal_avgPeriod) != 0 { (EqualPeriodTotal[1]) / (Equal_avgPeriod as f64) } else { match Equal_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (Equal_rangeType) == 2 { 2.0 } else { 1.0 }))
-            {
-                outInteger[outIdx] = (0 - 100) as i32;
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            // for( totIdx = 2; totIdx >= 0; totIdx -= 1 )
-            totIdx = 2;
-            loop {
-                let mut _candlerange_18: f64;
-                match ShadowVeryShort_rangeType {
-                    0 => {
-                        _candlerange_18 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_18 = inHigh[i - totIdx] - inLow[i - totIdx];
-                    }
-                    2 => {
-                        _candlerange_18 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_18 = 0.0;
-                    }
-                }
-                let mut _candlerange_19: f64;
-                match ShadowVeryShort_rangeType {
-                    0 => {
-                        _candlerange_19 = (inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_19 = inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx];
-                    }
-                    2 => {
-                        _candlerange_19 = inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx] - (inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_19 = 0.0;
-                    }
-                }
-                ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (_candlerange_18 - _candlerange_19);
-                if totIdx == 0 { break; }
-                totIdx -= 1;
-            }
-            // for( totIdx = 2; totIdx >= 1; totIdx -= 1 )
-            totIdx = 2;
-            loop {
-                let mut _candlerange_20: f64;
-                match Equal_rangeType {
-                    0 => {
-                        _candlerange_20 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_20 = inHigh[i - totIdx] - inLow[i - totIdx];
-                    }
-                    2 => {
-                        _candlerange_20 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_20 = 0.0;
-                    }
-                }
-                let mut _candlerange_21: f64;
-                match Equal_rangeType {
-                    0 => {
-                        _candlerange_21 = (inClose[EqualTrailingIdx - totIdx] - inOpen[EqualTrailingIdx - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_21 = inHigh[EqualTrailingIdx - totIdx] - inLow[EqualTrailingIdx - totIdx];
-                    }
-                    2 => {
-                        _candlerange_21 = inHigh[EqualTrailingIdx - totIdx] - inLow[EqualTrailingIdx - totIdx] - (inClose[EqualTrailingIdx - totIdx] - inOpen[EqualTrailingIdx - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_21 = 0.0;
-                    }
-                }
-                EqualPeriodTotal[totIdx] = EqualPeriodTotal[totIdx] + (_candlerange_20 - _candlerange_21);
                 if totIdx == 1 { break; }
                 totIdx -= 1;
             }
@@ -1437,6 +1015,57 @@ impl Core {
             win_totIdx_inClose,
         };
         Ok(CDLIDENTICAL3CROWS_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLIDENTICAL3CROWS_Open`] (composition seam).
+    pub(crate) fn CDLIDENTICAL3CROWS_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLIDENTICAL3CROWS_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLIDENTICAL3CROWS stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLIDENTICAL3CROWS`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLIDENTICAL3CROWS_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLIDENTICAL3CROWS_Open")]
+    pub fn CDLIDENTICAL3CROWS_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLIDENTICAL3CROWS_Stream, i32), RetCode> {
+        self.CDLIDENTICAL3CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLIDENTICAL3CROWS_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLIDENTICAL3CROWS`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLIDENTICAL3CROWS_OpenAndFill")]
+    pub fn CDLIDENTICAL3CROWS_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLIDENTICAL3CROWS_Stream, RetCode> {
+        self.CDLIDENTICAL3CROWS_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

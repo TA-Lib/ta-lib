@@ -718,12 +718,12 @@
    }
    void HMA_StreamStep( HMA_Stream sp, double inReal )
    {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
       if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
          double tempReal = 0.0;
-         if( sp.optInTimePeriod == 1 ) {
-            sp.cur_outReal = inReal;
-            return ;
-         }
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -742,10 +742,6 @@
          }
       } else {
          double tempReal = 0.0;
-         if( sp.optInTimePeriod == 1 ) {
-            sp.cur_outReal = inReal;
-            return ;
-         }
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -789,11 +785,8 @@
          }
       }
    }
-   private RetCode HMA_OpenBody( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode HMA_OpenCore( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -805,448 +798,6 @@
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 20;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < HMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.dividerFull = 0.0;
-         sp.periodSubFull = 0.0;
-         sp.periodSumFull = 0.0;
-         sp.trailingFull = 0.0;
-         sp.fullOut = 0.0;
-         sp.halfPeriod = 0;
-         sp.sqrtPeriod = 0;
-         sp.dividerHalf = 0.0;
-         sp.dividerSqrt = 0.0;
-         sp.periodSubHalf = 0.0;
-         sp.periodSumHalf = 0.0;
-         sp.trailingHalf = 0.0;
-         sp.periodSubSqrt = 0.0;
-         sp.periodSumSqrt = 0.0;
-         sp.trailingSqrt = 0.0;
-         sp.halfOut = 0.0;
-         sp.diffReal = 0.0;
-         sp.dRing_Idx = 0;
-         sp.maxIdx_dRing = 0;
-         sp.ringPos_trailingIdxFull = 0;
-         sp.ringCap_trailingIdxFull = 0;
-         sp.ring_trailingIdxFull_inReal = new double[1];
-         sp.ringPos_trailingIdxHalf = 0;
-         sp.ringCap_trailingIdxHalf = 0;
-         sp.ring_trailingIdxHalf_inReal = new double[1];
-         sp.cbSize_dRing = 0;
-         sp.cb_dRing = new double[1];
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
-         int lookbackTotal = 0;
-         int lookbackSqrt = 0;
-         int halfPeriod = 0;
-         int sqrtPeriod = 0;
-         int ringSize = 0;
-         int wmaStartIdx = 0;
-         int today = 0;
-         int outIdx = 0;
-         int i = 0;
-         int w = 0;
-         double dividerFull = 0;
-         double dividerHalf = 0;
-         double dividerSqrt = 0;
-         int trailingIdxFull = 0;
-         int trailingIdxHalf = 0;
-         double periodSubFull = 0;
-         double periodSumFull = 0;
-         double trailingFull = 0;
-         double periodSubHalf = 0;
-         double periodSumHalf = 0;
-         double trailingHalf = 0;
-         double periodSubSqrt = 0;
-         double periodSumSqrt = 0;
-         double trailingSqrt = 0;
-         double tempReal = 0;
-         double fullOut = 0;
-         double halfOut = 0;
-         double diffReal = 0;
-         double[] dRing;
-         int dRing_Idx = 0;
-         int maxIdx_dRing = (50)-1;
-         /* The de-lagged series needs only its last sqrt(n) values, so the whole
-          * computation runs in one pass over a single window into the input:
-          * three interleaved WMA rolling sums plus this small ring. The ring has
-          * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-          * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
-          */
-         /* Hull Moving Average (Alan Hull, 2005):
-          *
-          *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-          *
-          * Both derived periods use the author's Integer() truncation; some other
-          * published sources round to nearest instead, which is a visibly different
-          * line. See hma.md and issue #139.
-          *
-          * Each of the three WMAs keeps TA_WMA's exact accumulation order
-          * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
-          * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-          * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
-          */
-         halfPeriod = optInTimePeriod / 2;
-         sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-         lookbackSqrt = WMA_Lookback(sqrtPeriod);
-         lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
-         /* Move up the start index if there is not
-          * enough initial data.
-          */
-         if( startIdx < lookbackTotal ) {
-            startIdx = lookbackTotal;
-         }
-         /* Make sure there is still something to evaluate. */
-         if( startIdx > endIdx ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
-         }
-         /* The two price WMAs are anchored where the first de-lagged value is
-          * needed: lookbackSqrt bars before the first requested output.
-          * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
-          */
-         wmaStartIdx = startIdx - lookbackSqrt;
-         dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-         /* Prime the full-period WMA over the optInTimePeriod-1 bars before
-          * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
-          */
-         periodSubFull = 0.0;
-         periodSumFull = 0.0;
-         trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
-         i = trailingIdxFull;
-         w = 1;
-         while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
-            periodSubFull += tempReal;
-            periodSumFull += tempReal * w;
-            w += 1;
-         }
-         trailingFull = 0.0;
-         outIdx = 0;
-         /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
-          * param so the stream analyzer sees a param-pure dual-mode split.
-          */
-         /* Degenerate regime, optInTimePeriod 2 or 3 only: halfPeriod and
-          * sqrtPeriod are both 1, and a period-1 WMA is the identity (TA_WMA's
-          * own short-circuit). The whole formula collapses to
-          *    HMA[t] = 2*price[t] - WMA(price, n)[t]
-          * with no de-lag ring at all. In-place note: the output store lands on
-          * the SAME slot the trailing read just consumed (zero margin), so the
-          * read stays ordered before the store.
-          */
-         for( today = startIdx; today <= endIdx; today += 1 ) {
-            tempReal = inReal[today];
-            periodSubFull += tempReal;
-            periodSubFull -= trailingFull;
-            periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
-            fullOut = periodSumFull / dividerFull;
-            periodSumFull -= periodSubFull;
-            lastValue_outReal = 2.0 * tempReal - fullOut;
-         }
-         outBegIdx.value = startIdx;
-         outNBElement.value = outIdx;
-         /* Capture the live batch state into the handle. */
-         int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
-            return RetCode.InternalError;
-         }
-         int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
-         double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
-         System.arraycopy(inReal, historyLen - cap_trailingIdxFull, capRing_trailingIdxFull_inReal, 0, cap_trailingIdxFull);
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.dividerFull = dividerFull;
-         sp.periodSubFull = periodSubFull;
-         sp.periodSumFull = periodSumFull;
-         sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
-         sp.halfPeriod = halfPeriod;
-         sp.sqrtPeriod = sqrtPeriod;
-         sp.dividerHalf = dividerHalf;
-         sp.dividerSqrt = dividerSqrt;
-         sp.periodSubHalf = periodSubHalf;
-         sp.periodSumHalf = periodSumHalf;
-         sp.trailingHalf = trailingHalf;
-         sp.periodSubSqrt = periodSubSqrt;
-         sp.periodSumSqrt = periodSumSqrt;
-         sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
-         sp.dRing_Idx = dRing_Idx;
-         sp.maxIdx_dRing = maxIdx_dRing;
-         sp.ringPos_trailingIdxFull = 0;
-         sp.ringCap_trailingIdxFull = cap_trailingIdxFull;
-         sp.ring_trailingIdxFull_inReal = capRing_trailingIdxFull_inReal;
-         sp.ring_trailingIdxHalf_inReal = new double[1];
-         sp.cb_dRing = new double[1];
-         sp.cur_outReal = lastValue_outReal;
-         return RetCode.Success;
-      } else {
-         int lookbackTotal = 0;
-         int lookbackSqrt = 0;
-         int halfPeriod = 0;
-         int sqrtPeriod = 0;
-         int ringSize = 0;
-         int wmaStartIdx = 0;
-         int today = 0;
-         int outIdx = 0;
-         int i = 0;
-         int w = 0;
-         double dividerFull = 0;
-         double dividerHalf = 0;
-         double dividerSqrt = 0;
-         int trailingIdxFull = 0;
-         int trailingIdxHalf = 0;
-         double periodSubFull = 0;
-         double periodSumFull = 0;
-         double trailingFull = 0;
-         double periodSubHalf = 0;
-         double periodSumHalf = 0;
-         double trailingHalf = 0;
-         double periodSubSqrt = 0;
-         double periodSumSqrt = 0;
-         double trailingSqrt = 0;
-         double tempReal = 0;
-         double fullOut = 0;
-         double halfOut = 0;
-         double diffReal = 0;
-         double[] dRing;
-         int dRing_Idx = 0;
-         int maxIdx_dRing = (50)-1;
-         /* The de-lagged series needs only its last sqrt(n) values, so the whole
-          * computation runs in one pass over a single window into the input:
-          * three interleaved WMA rolling sums plus this small ring. The ring has
-          * sqrt(n)-1 slots: on the stack while that fits the 50-slot prolog
-          * (optInTimePeriod <= 2703), TA_Malloc from optInTimePeriod = 2704 up.
-          */
-         /* Hull Moving Average (Alan Hull, 2005):
-          *
-          *    HMA(n) = WMA( 2*WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-          *
-          * Both derived periods use the author's Integer() truncation; some other
-          * published sources round to nearest instead, which is a visibly different
-          * line. See hma.md and issue #139.
-          *
-          * Each of the three WMAs keeps TA_WMA's exact accumulation order
-          * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
-          * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
-          * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
-          */
-         halfPeriod = optInTimePeriod / 2;
-         sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
-         lookbackSqrt = WMA_Lookback(sqrtPeriod);
-         lookbackTotal = WMA_Lookback(optInTimePeriod) + lookbackSqrt;
-         /* Move up the start index if there is not
-          * enough initial data.
-          */
-         if( startIdx < lookbackTotal ) {
-            startIdx = lookbackTotal;
-         }
-         /* Make sure there is still something to evaluate. */
-         if( startIdx > endIdx ) {
-            outBegIdx.value = 0;
-            outNBElement.value = 0;
-            return RetCode.OutOfRangeEndIndex ;
-         }
-         /* The two price WMAs are anchored where the first de-lagged value is
-          * needed: lookbackSqrt bars before the first requested output.
-          * wmaStartIdx >= optInTimePeriod-1 is implied by the clamp above.
-          */
-         wmaStartIdx = startIdx - lookbackSqrt;
-         dividerFull = (double)optInTimePeriod * (optInTimePeriod + 1) / 2.0;
-         /* Prime the full-period WMA over the optInTimePeriod-1 bars before
-          * wmaStartIdx, exactly as TA_WMA does (weights 1..period-1).
-          */
-         periodSubFull = 0.0;
-         periodSumFull = 0.0;
-         trailingIdxFull = wmaStartIdx - (optInTimePeriod - 1);
-         i = trailingIdxFull;
-         w = 1;
-         while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
-            periodSubFull += tempReal;
-            periodSumFull += tempReal * w;
-            w += 1;
-         }
-         trailingFull = 0.0;
-         outIdx = 0;
-         /* sqrtPeriod == 1 exactly when optInTimePeriod is 2 or 3; stated on the
-          * param so the stream analyzer sees a param-pure dual-mode split.
-          */
-         /* General regime: optInTimePeriod >= 4, so halfPeriod >= 2 and
-          * sqrtPeriod >= 2 -- no period-1 special cases below this point.
-          */
-         dividerHalf = (double)halfPeriod * (halfPeriod + 1) / 2.0;
-         dividerSqrt = (double)sqrtPeriod * (sqrtPeriod + 1) / 2.0;
-         /* Prime the half-period WMA the same way. */
-         periodSubHalf = 0.0;
-         periodSumHalf = 0.0;
-         trailingIdxHalf = wmaStartIdx - (halfPeriod - 1);
-         i = trailingIdxHalf;
-         w = 1;
-         while( i < wmaStartIdx ) {
-            tempReal = inReal[i++];
-            periodSubHalf += tempReal;
-            periodSumHalf += tempReal * w;
-            w += 1;
-         }
-         trailingHalf = 0.0;
-         /* The de-lagged value computed at bar t is consumed as the outer WMA's
-          * trailing value sqrtPeriod-1 bars later, so a single-cursor ring of
-          * sqrtPeriod-1 slots is enough: read the expiring value, overwrite the
-          * slot with the current one, advance.
-          */
-         ringSize = sqrtPeriod - 1;
-         if( ringSize < 1 ) return RetCode.InternalError;
-         dRing = new double[ringSize];
-         maxIdx_dRing = (ringSize)-1;
-         dRing_Idx = 0;
-         /* Warm-up: the sqrtPeriod-1 de-lagged values before the first output
-          * prime the outer WMA (weights 1..sqrtPeriod-1) and fill the ring.
-          */
-         periodSubSqrt = 0.0;
-         periodSumSqrt = 0.0;
-         trailingSqrt = 0.0;
-         w = 1;
-         for( today = wmaStartIdx; today < startIdx; today += 1 ) {
-            tempReal = inReal[today];
-            periodSubFull += tempReal;
-            periodSubFull -= trailingFull;
-            periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
-            fullOut = periodSumFull / dividerFull;
-            periodSumFull -= periodSubFull;
-            periodSubHalf += tempReal;
-            periodSubHalf -= trailingHalf;
-            periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
-            halfOut = periodSumHalf / dividerHalf;
-            periodSumHalf -= periodSubHalf;
-            diffReal = 2.0 * halfOut - fullOut;
-            periodSubSqrt += diffReal;
-            periodSumSqrt += diffReal * w;
-            w += 1;
-            dRing[dRing_Idx] = diffReal;
-            dRing_Idx++;
-            if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
-         }
-         /* Steady state: one pass, three rolling WMAs. Writes trail every read by
-          * at least sqrtPeriod-1 slots (the lookback clamp), so outReal == inReal
-          * stays safe.
-          */
-         for( today = startIdx; today <= endIdx; today += 1 ) {
-            tempReal = inReal[today];
-            periodSubFull += tempReal;
-            periodSubFull -= trailingFull;
-            periodSumFull += tempReal * optInTimePeriod;
-            trailingFull = inReal[trailingIdxFull++];
-            fullOut = periodSumFull / dividerFull;
-            periodSumFull -= periodSubFull;
-            periodSubHalf += tempReal;
-            periodSubHalf -= trailingHalf;
-            periodSumHalf += tempReal * halfPeriod;
-            trailingHalf = inReal[trailingIdxHalf++];
-            halfOut = periodSumHalf / dividerHalf;
-            periodSumHalf -= periodSubHalf;
-            diffReal = 2.0 * halfOut - fullOut;
-            periodSubSqrt += diffReal;
-            periodSubSqrt -= trailingSqrt;
-            periodSumSqrt += diffReal * sqrtPeriod;
-            trailingSqrt = dRing[dRing_Idx];
-            dRing[dRing_Idx] = diffReal;
-            dRing_Idx++;
-            if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
-            lastValue_outReal = periodSumSqrt / dividerSqrt;
-            periodSumSqrt -= periodSubSqrt;
-         }
-         outBegIdx.value = startIdx;
-         outNBElement.value = outIdx;
-         /* Capture the live batch state into the handle. */
-         int cap_trailingIdxFull = today - trailingIdxFull;
-         if( cap_trailingIdxFull < 0 || cap_trailingIdxFull > historyLen ) {
-            return RetCode.InternalError;
-         }
-         int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
-         double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
-         System.arraycopy(inReal, historyLen - cap_trailingIdxFull, capRing_trailingIdxFull_inReal, 0, cap_trailingIdxFull);
-         int cap_trailingIdxHalf = today - trailingIdxHalf;
-         if( cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen ) {
-            return RetCode.InternalError;
-         }
-         int allocN_trailingIdxHalf = (cap_trailingIdxHalf > 0)? cap_trailingIdxHalf : 1;
-         double[] capRing_trailingIdxHalf_inReal = new double[allocN_trailingIdxHalf];
-         System.arraycopy(inReal, historyLen - cap_trailingIdxHalf, capRing_trailingIdxHalf_inReal, 0, cap_trailingIdxHalf);
-         int capCb_dRing = maxIdx_dRing + 1;
-         if( capCb_dRing > historyLen + 1 ) {
-            return RetCode.InternalError;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.dividerFull = dividerFull;
-         sp.periodSubFull = periodSubFull;
-         sp.periodSumFull = periodSumFull;
-         sp.trailingFull = trailingFull;
-         sp.fullOut = fullOut;
-         sp.halfPeriod = halfPeriod;
-         sp.sqrtPeriod = sqrtPeriod;
-         sp.dividerHalf = dividerHalf;
-         sp.dividerSqrt = dividerSqrt;
-         sp.periodSubHalf = periodSubHalf;
-         sp.periodSumHalf = periodSumHalf;
-         sp.trailingHalf = trailingHalf;
-         sp.periodSubSqrt = periodSubSqrt;
-         sp.periodSumSqrt = periodSumSqrt;
-         sp.trailingSqrt = trailingSqrt;
-         sp.halfOut = halfOut;
-         sp.diffReal = diffReal;
-         sp.dRing_Idx = dRing_Idx;
-         sp.maxIdx_dRing = maxIdx_dRing;
-         sp.ringPos_trailingIdxFull = 0;
-         sp.ringCap_trailingIdxFull = cap_trailingIdxFull;
-         sp.ring_trailingIdxFull_inReal = capRing_trailingIdxFull_inReal;
-         sp.ringPos_trailingIdxHalf = 0;
-         sp.ringCap_trailingIdxHalf = cap_trailingIdxHalf;
-         sp.ring_trailingIdxHalf_inReal = capRing_trailingIdxHalf_inReal;
-         sp.cbSize_dRing = capCb_dRing;
-         sp.cb_dRing = dRing;
-         sp.cur_outReal = lastValue_outReal;
-         return RetCode.Success;
-      }
-   }
-   private RetCode HMA_OpenAndFillBody( HMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
-   {
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 20;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -1284,10 +835,14 @@
          int fillLb = HMA_Lookback(optInTimePeriod);
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
-         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         if( outStride == 0 ) {
+            outReal[0] = inReal[historyLen - 1];
+         } else {
+            for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+               outReal[fillIdx] = inReal[fillLb + fillIdx];
+            }
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       if( optInTimePeriod == 2 || optInTimePeriod == 3 ) {
@@ -1340,11 +895,6 @@
           * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -1403,7 +953,7 @@
             trailingFull = inReal[trailingIdxFull++];
             fullOut = periodSumFull / dividerFull;
             periodSumFull -= periodSubFull;
-            outReal[outIdx++] = 2.0 * tempReal - fullOut;
+            outReal[outIdx++ * outStride] = 2.0 * tempReal - fullOut;
          }
          outBegIdx.value = startIdx;
          outNBElement.value = outIdx;
@@ -1440,7 +990,7 @@
          sp.ring_trailingIdxFull_inReal = capRing_trailingIdxFull_inReal;
          sp.ring_trailingIdxHalf_inReal = new double[1];
          sp.cb_dRing = new double[1];
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       } else {
          int lookbackTotal = 0;
@@ -1492,11 +1042,6 @@
           * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -1622,7 +1167,7 @@
             dRing[dRing_Idx] = diffReal;
             dRing_Idx++;
             if( dRing_Idx > maxIdx_dRing ) { dRing_Idx = 0; }
-            outReal[outIdx++] = periodSumSqrt / dividerSqrt;
+            outReal[outIdx++ * outStride] = periodSumSqrt / dividerSqrt;
             periodSumSqrt -= periodSubSqrt;
          }
          outBegIdx.value = startIdx;
@@ -1674,9 +1219,23 @@
          sp.ring_trailingIdxHalf_inReal = capRing_trailingIdxHalf_inReal;
          sp.cbSize_dRing = capCb_dRing;
          sp.cb_dRing = dRing;
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
+   }
+   private RetCode HMA_OpenBody( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return HMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode HMA_OpenAndFillBody( HMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal ) {
+         return RetCode.BadParam;
+      }
+      return HMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind HMA_Open (composition seam). */
    HMA_Stream HMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

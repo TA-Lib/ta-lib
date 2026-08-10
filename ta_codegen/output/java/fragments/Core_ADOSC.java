@@ -529,7 +529,7 @@
       sp.slowEMA = Math.fma(sp.one_minus_slowk, sp.slowEMA, sp.slowk * sp.ad);
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
-   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   private RetCode ADOSC_OpenCore( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -546,9 +546,6 @@
       double fastk = 0;
       double one_minus_fastk = 0;
       double ad = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
@@ -663,7 +660,7 @@
          today += 1;
          fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
          slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-         lastValue_outReal = fastEMA - slowEMA;
+         outReal[outIdx++ * outStride] = fastEMA - slowEMA;
       }
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
@@ -676,159 +673,22 @@
       sp.fastk = fastk;
       sp.one_minus_fastk = one_minus_fastk;
       sp.ad = ad;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode ADOSC_OpenAndFillBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int slowestPeriod = 0;
-      double high = 0;
-      double low = 0;
-      double close = 0;
-      double tmp = 0;
-      double slowEMA = 0;
-      double slowk = 0;
-      double one_minus_slowk = 0;
-      double fastEMA = 0;
-      double fastk = 0;
-      double one_minus_fastk = 0;
-      double ad = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInFastPeriod == Integer.MIN_VALUE ) {
-         optInFastPeriod = 3;
-      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInSlowPeriod == Integer.MIN_VALUE ) {
-         optInSlowPeriod = 10;
-      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      /* Implementation Note:
-       *     The fastEMA varaible is not neceseraly the
-       *     fastest EMA.
-       *     In the same way, slowEMA is not neceseraly the
-       *     slowest EMA.
-       *
-       *     The ADOSC is always the (fastEMA - slowEMA) regardless
-       *     of the period specified. In other word:
-       *
-       *     ADOSC(3,10) = EMA(3,AD) - EMA(10,AD)
-       *
-       *        while
-       *
-       *     ADOSC(10,3) = EMA(10,AD)- EMA(3,AD)
-       *
-       *     In the first case the EMA(3) is truly a faster EMA,
-       *     while in the second case, the EMA(10) is still call
-       *     fastEMA in the algorithm, even if it is in fact slower.
-       *
-       *     This gives more flexibility to the user if they want to
-       *     experiment with unusual parameter settings.
-       */
-      /* Identify the slowest period.
-       * This infomration is used soleley to bootstrap
-       * the algorithm (skip the lookback period).
-       */
-      if( optInFastPeriod < optInSlowPeriod ) {
-         slowestPeriod = optInSlowPeriod;
-      } else {
-         slowestPeriod = optInFastPeriod;
-      }
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = EMA_Lookback(slowestPeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outBegIdx.value = startIdx;
-      today = startIdx - lookbackTotal;
-      /* The following variables are used to
-       * calculate the "ad".
-       */
-      ad = 0.0;
-      /* Constants for EMA */
-      fastk = 2.0 / ((double)optInFastPeriod + 1.0);
-      one_minus_fastk = 1.0 - fastk;
-      slowk = 2.0 / ((double)optInSlowPeriod + 1.0);
-      one_minus_slowk = 1.0 - slowk;
-      /* Initialize the two EMA
-       *
-       * Use the same range of initialization inputs for
-       * both EMA and simply seed with the first A/D value.
-       *
-       * Note: Metastock do the same.
-       */
-      high = inHigh[today];
-      low = inLow[today];
-      tmp = high - low;
-      close = inClose[today];
-      if( tmp > 0.0 ) {
-         ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-      }
-      today += 1;
-      fastEMA = ad;
-      slowEMA = ad;
-      /* Initialize the EMA and skip the unstable period. */
-      while( today < startIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
-         tmp = high - low;
-         close = inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-      }
-      /* Perform the calculation for the requested range */
-      outIdx = 0;
-      while( today <= endIdx ) {
-         high = inHigh[today];
-         low = inLow[today];
-         tmp = high - low;
-         close = inClose[today];
-         if( tmp > 0.0 ) {
-            ad += (close - low - (high - close)) / tmp * (double)inVolume[today];
-         }
-         today += 1;
-         fastEMA = Math.fma(one_minus_fastk, fastEMA, fastk * ad);
-         slowEMA = Math.fma(one_minus_slowk, slowEMA, slowk * ad);
-         outReal[outIdx++] = fastEMA - slowEMA;
-      }
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.optInFastPeriod = optInFastPeriod;
-      sp.optInSlowPeriod = optInSlowPeriod;
-      sp.slowEMA = slowEMA;
-      sp.slowk = slowk;
-      sp.one_minus_slowk = one_minus_slowk;
-      sp.fastEMA = fastEMA;
-      sp.fastk = fastk;
-      sp.one_minus_fastk = one_minus_fastk;
-      sp.ad = ad;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
    ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )

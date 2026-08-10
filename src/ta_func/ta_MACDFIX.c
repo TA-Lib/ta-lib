@@ -488,16 +488,12 @@ static void TA_MACDFIX_StepInternal( struct TA_MACDFIX_Stream *sp, double inReal
    *outMACDHist= macdValue - sp->prevSignal;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
+static TA_RetCode TA_MACDFIX_OpenCore( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[], int outStride )
 {
    struct TA_MACDFIX_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outMACD;
-   double lastValue_outMACDSignal;
-   double lastValue_outMACDHist;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -510,246 +506,6 @@ TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const dou
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outMACD = 0.0;
-   lastValue_outMACDSignal = 0.0;
-   lastValue_outMACDHist = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      double prevFast = 0.0;
-      double prevSlow = 0.0;
-      double prevSignal = 0.0;
-      double macdValue;
-      double tempReal;
-      double slowK = 0.0;
-      double fastK = 0.0;
-      double signalK = 0.0;
-      int i;
-      int today;
-      int outIdx;
-      int lookbackTotal;
-      int lookbackSignal;
-      /* MACDFIX is the fixed 26/12 MACD: the fast/slow periods and their
-       * smoothing factors are hardcoded (the general MACD selects these
-       * exact values when its fast/slow period arguments are 0). Only the
-       * signal period is caller-provided.
-       *    Fix 12 -> fastK = 0.15
-       *    Fix 26 -> slowK = 0.075
-       */
-      int optInFastPeriod = 12;
-      int optInSlowPeriod = 26;
-      fastK = 0.15;
-      slowK = 0.075;
-      /* A signal period of 1 disables signal-line smoothing: the signal IS the
-       * MACD line and the histogram is exactly zero. signalK is then exactly
-       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
-       * only while consecutive MACD-line values stay within a factor of two of
-       * each other. The MACD line oscillates through zero, so it leaves that
-       * window on ordinary data; hence the explicit arm at each step.
-       */
-      signalK = 2.0 / (double)(optInSignalPeriod + 1);
-      lookbackSignal = TA_EMA_Lookback(optInSignalPeriod);
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      lookbackTotal = lookbackSignal;
-      lookbackTotal += TA_EMA_Lookback(26);
-      /* fixed slow period */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Everything is computed in a single lockstep pass: each bar
-       * advances the fast and slow EMA (two independent recursions),
-       * their difference is the MACD line, and each MACD-line value
-       * is immediately fed into the signal EMA. No temporary buffers.
-       *
-       * The arithmetic order below is the bit-exactness contract
-       * (do not reorder or fuse operations):
-       *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum of
-       *    its first 'period' inputs, accumulated from 0.0 in input
-       *    order, divided by the period. The fast and slow seed
-       *    windows end on the same bar. The signal EMA is seeded the
-       *    same way from the first 'signal period' MACD-line values.
-       *  - Metastock compatibility: the fast and slow EMA are seeded
-       *    from inReal[0], the signal EMA from the first MACD-line
-       *    value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
-       *
-       * In-place (an output == inReal) is supported: outputs at
-       * [outIdx] are written only after inReal[startIdx+outIdx] was
-       * read.
-       */
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
-      {
-         /* Seed each price EMA with a simple average of its first
-          * 'period' price bars. The fast window is the tail of the
-          * slow window: consume the leading slow-only bars first,
-          * then accumulate both over the shared bars.
-          */
-         today = startIdx - lookbackTotal;
-         tempReal = 0.0;
-         i = optInSlowPeriod - optInFastPeriod;
-         while( i-- > 0 )
-         {
-            tempReal += inReal[today++];
-         }
-         prevFast = 0.0;
-         i = optInFastPeriod;
-         while( i-- > 0 )
-         {
-            prevFast += inReal[today];
-            tempReal += inReal[today++];
-         }
-         prevSlow = tempReal / optInSlowPeriod;
-         prevFast = prevFast / optInFastPeriod;
-         /* Advance both EMA through their unstable period, up to the
-          * first MACD-line bar.
-          */
-         while( today <= startIdx - lookbackSignal )
-         {
-            tempReal = inReal[today++];
-            prevFast = fma(tempReal - prevFast, fastK, prevFast);
-            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
-         }
-         macdValue = prevFast - prevSlow;
-         /* Seed the signal EMA with a simple average of the first
-          * 'signal period' MACD-line values, accumulated as they are
-          * produced.
-          */
-         prevSignal = 0.0;
-         prevSignal += macdValue;
-         i = optInSignalPeriod - 1;
-         while( i-- > 0 )
-         {
-            tempReal = inReal[today++];
-            prevFast = fma(tempReal - prevFast, fastK, prevFast);
-            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
-            macdValue = prevFast - prevSlow;
-            prevSignal += macdValue;
-         }
-         prevSignal = prevSignal / optInSignalPeriod;
-      } else 
-      {
-         /* Metastock/Tradestation: seed the fast and slow EMA with
-          * inReal[0], advance them in lockstep up to the first
-          * MACD-line bar, then seed the signal EMA with the first
-          * MACD-line value.
-          */
-         prevFast = inReal[0];
-         prevSlow = inReal[0];
-         today = 1;
-         while( today <= startIdx - lookbackSignal )
-         {
-            tempReal = inReal[today++];
-            prevFast = fma(tempReal - prevFast, fastK, prevFast);
-            prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
-         }
-         macdValue = prevFast - prevSlow;
-         prevSignal = macdValue;
-      }
-      /* Advance everything in lockstep through the unstable period
-       * of the signal EMA, up to the first output bar.
-       */
-      while( today <= startIdx )
-      {
-         tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
-         macdValue = prevFast - prevSlow;
-         if( optInSignalPeriod == 1 )
-         {
-            prevSignal = macdValue;
-         } else 
-         {
-            prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
-         }
-      }
-      /* Stable zone: keep advancing in lockstep and write the three
-       * outputs.
-       */
-      lastValue_outMACD = macdValue;
-      lastValue_outMACDSignal = prevSignal;
-      lastValue_outMACDHist = macdValue - prevSignal;
-      outIdx = 1;
-      while( today <= endIdx )
-      {
-         tempReal = inReal[today++];
-         prevFast = fma(tempReal - prevFast, fastK, prevFast);
-         prevSlow = fma(tempReal - prevSlow, slowK, prevSlow);
-         macdValue = prevFast - prevSlow;
-         if( optInSignalPeriod == 1 )
-         {
-            prevSignal = macdValue;
-         } else 
-         {
-            prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
-         }
-         lastValue_outMACD = macdValue;
-         lastValue_outMACDSignal = prevSignal;
-         lastValue_outMACDHist = macdValue - prevSignal;
-         outIdx += 1;
-      }
-      /* All done! Indicate the output limits and return success. */
-      dummyBegIdx = startIdx;
-      dummyNBElement = outIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_MACDFIX_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInSignalPeriod = optInSignalPeriod;
-      sp->prevFast = prevFast;
-      sp->prevSlow = prevSlow;
-      sp->prevSignal = prevSignal;
-      sp->slowK = slowK;
-      sp->fastK = fastK;
-      sp->signalK = signalK;
-      *outMACD = lastValue_outMACD;
-      *outMACDSignal = lastValue_outMACDSignal;
-      *outMACDHist = lastValue_outMACDHist;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_MACDFIX_Open( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
-{
-   return TA_MACDFIX_OpenInternal( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
-}
-
-TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
-{
-   struct TA_MACDFIX_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outMACD || !outMACDSignal || !outMACDHist || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
-      optInSignalPeriod = 9;
-   else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -916,9 +672,9 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const 
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
        */
-      outMACD[0] = macdValue;
-      outMACDSignal[0] = prevSignal;
-      outMACDHist[0] = macdValue - prevSignal;
+      outMACD[0 * outStride] = macdValue;
+      outMACDSignal[0 * outStride] = prevSignal;
+      outMACDHist[0 * outStride] = macdValue - prevSignal;
       outIdx = 1;
       while( today <= endIdx )
       {
@@ -933,9 +689,9 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const 
          {
             prevSignal = fma(macdValue - prevSignal, signalK, prevSignal);
          }
-         outMACD[outIdx] = macdValue;
-         outMACDSignal[outIdx] = prevSignal;
-         outMACDHist[outIdx] = macdValue - prevSignal;
+         outMACD[outIdx * outStride] = macdValue;
+         outMACDSignal[outIdx * outStride] = prevSignal;
+         outMACDHist[outIdx * outStride] = macdValue - prevSignal;
          outIdx += 1;
       }
       /* All done! Indicate the output limits and return success. */
@@ -956,6 +712,39 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outMACD = 0.0;
+   double sink_outMACDSignal = 0.0;
+   double sink_outMACDHist = 0.0;
+   retCode = TA_MACDFIX_OpenCore( stream, inReal, startIdx, historyLen, optInSignalPeriod, &dummyBegIdx, &dummyNBElement, &sink_outMACD, &sink_outMACDSignal, &sink_outMACDHist, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outMACD = sink_outMACD;
+      *outMACDSignal = sink_outMACDSignal;
+      *outMACDHist = sink_outMACDHist;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_MACDFIX_Open( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, double *outMACD, double *outMACDSignal, double *outMACDHist )
+{
+   return TA_MACDFIX_OpenInternal( stream, inReal, 0, historyLen, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist );
+}
+
+TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const double inReal[], int historyLen, int optInSignalPeriod, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
+   if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
+   return TA_MACDFIX_OpenCore( stream, inReal, 0, historyLen, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MACDFIX_Update( TA_MACDFIX_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

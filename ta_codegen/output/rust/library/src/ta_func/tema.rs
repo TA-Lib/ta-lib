@@ -421,10 +421,11 @@ impl Core {
         (*outReal) = sp.prevEMA3 + (3.0 * sp.prevEMA1 - 3.0 * sp.prevEMA2);
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TEMA_Open`] (composition seam).
-    pub(crate) fn TEMA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TEMA_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::TEMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TEMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TEMA_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TEMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -441,228 +442,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        if optInTimePeriod == 1 {
-            if historyLen < self.TEMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = TEMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                prevEMA1: 0.0_f64,
-                prevEMA2: 0.0_f64,
-                prevEMA3: 0.0_f64,
-                optInK_1: 0.0_f64,
-            };
-            return Ok((TEMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
-        }
-        let mut prevEMA1: f64 = 0.0_f64;
-        let mut prevEMA2: f64 = 0.0_f64;
-        let mut prevEMA3: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut optInK_1: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackEMA: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        // For an explanation of this function, please read:
-        //
-        // Stocks & Commodities V. 12:1 (11-19):
-        //   Smoothing Data With Faster Moving Averages
-        // Stocks & Commodities V. 12:2 (72-80):
-        //   Smoothing Data With Less Lag
-        //
-        // Both magazine articles written by Patrick G. Mulloy
-        //
-        // Essentially, a TEMA of time serie 't' is:
-        //   EMA1 = EMA(t,period)
-        //   EMA2 = EMA(EMA(t,period),period)
-        //   EMA3 = EMA(EMA(EMA(t,period),period))
-        //   TEMA = 3*EMA1 - 3*EMA2 + EMA3
-        //
-        // TEMA offers a moving average with less lags then the
-        // traditional EMA.
-        //
-        // Do not confuse a TEMA with EMA3. Both are called "Triple EMA"
-        // in the litterature.
-        //
-        // DEMA is very similar (and from the same author).
-        // Will change only on success.
-        dummyNBElement = 0;
-        dummyBegIdx = 0;
-        // Adjust startIdx to account for the lookback period.
-        lookbackEMA = self.EMA_Lookback(optInTimePeriod);
-        lookbackTotal = lookbackEMA * 3;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-        // contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
-        // The three EMA are computed in a single lockstep pass: each new
-        // EMA1 value is immediately fed into EMA2, and each new EMA2 value
-        // into EMA3. No temporary buffers are needed.
-        //
-        // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
-        //  - EMA recursion: ((x-prev)*k)+prev.
-        //  - Default compatibility: each EMA is seeded with the sum
-        //    of its first 'period' inputs, accumulated from 0.0 in
-        //    input order (0.0+x is not x for x=-0.0), divided by
-        //    the period.
-        //  - Metastock compatibility: EMA1 is seeded from inReal[0],
-        //    EMA2 from the first EMA1 value, EMA3 from the first EMA2
-        //    value.
-        //  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
-        //    added to EMA3 on the left.
-        // Output alignment is identical for all compatibility modes;
-        // only the seed values differ.
-        //
-        // In-place (inReal == outReal) is supported: outReal[outIdx]
-        // is written only after inReal[startIdx+outIdx] was read.
-        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
-        if self.compatibility == Compatibility::Default {
-            // Seed EMA1 with a simple average of the first
-            // 'period' price bars.
-            today = startIdx - lookbackTotal;
-            i = (optInTimePeriod) as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevEMA1 = tempReal / ((optInTimePeriod) as f64);
-            // Advance EMA1 alone through its unstable period, up to
-            // the bar where EMA2 seeding begins.
-            while today <= startIdx - lookbackEMA * 2 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            }
-            // Seed EMA2 with a simple average of the first 'period'
-            // EMA1 values, accumulated as EMA1 produces them.
-            tempReal = 0.0;
-            tempReal += prevEMA1;
-            i = (optInTimePeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-                tempReal += prevEMA1;
-            }
-            prevEMA2 = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            // Metastock/Tradestation: seed EMA1 from the first price
-            // bar, EMA2 from the first EMA1 value.
-            prevEMA1 = inReal[0];
-            today = 1;
-            while today <= startIdx - lookbackEMA * 2 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            }
-            prevEMA2 = prevEMA1;
-        }
-        // Advance EMA1 and EMA2 in lockstep through the unstable
-        // period of EMA2, up to the bar where EMA3 seeding begins.
-        while today <= startIdx - lookbackEMA {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-        }
-        if self.compatibility == Compatibility::Default {
-            // Seed EMA3 with a simple average of the first 'period'
-            // EMA2 values, accumulated as EMA2 produces them.
-            tempReal = 0.0;
-            tempReal += prevEMA2;
-            i = (optInTimePeriod - 1) as usize;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-                prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-                tempReal += prevEMA2;
-            }
-            prevEMA3 = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            // Metastock/Tradestation: seed EMA3 from the first EMA2
-            // value.
-            prevEMA3 = prevEMA2;
-        }
-        // Advance all three EMA in lockstep through the unstable
-        // period of EMA3, up to the first output bar.
-        while today <= startIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
-        }
-        // Stable zone: keep advancing the three EMA in lockstep and
-        // write the TEMA into the output.
-        lastValue_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
-        outIdx = 1;
-        while today <= endIdx {
-            prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
-            prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
-            prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
-            lastValue_outReal = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
-        }
-        // Succeed. Indicate where the output starts relative to
-        // the caller input.
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = TEMA_StreamState {
-            optInTimePeriod,
-            prevEMA1,
-            prevEMA2,
-            prevEMA3,
-            optInK_1,
-        };
-        Ok((TEMA_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live TEMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TEMA`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.TEMA_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_TEMA_Open")]
-    pub fn TEMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TEMA_Stream, f64), RetCode> {
-        self.TEMA_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::TEMA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TEMA`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_TEMA_OpenAndFill")]
-    pub fn TEMA_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
-    ) -> Result<TEMA_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
             if historyLen < self.TEMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
@@ -677,10 +456,14 @@ impl Core {
             let fillLb: usize = self.TEMA_Lookback(optInTimePeriod);
             (*outBegIdx) = fillLb;
             (*outNBElement) = historyLen - fillLb;
-            let mut fillIdx: usize = 0;
-            while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
-                fillIdx += 1;
+            if outStride == 0 {
+                outReal[0] = inReal[historyLen - 1];
+            } else {
+                let mut fillIdx: usize = 0;
+                while fillIdx < historyLen - fillLb {
+                    outReal[fillIdx] = inReal[fillLb + fillIdx];
+                    fillIdx += 1;
+                }
             }
             return Ok(TEMA_Stream { core: self.clone(), state });
         }
@@ -729,10 +512,6 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-        // contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
         // The three EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2, and each new EMA2 value
         // into EMA3. No temporary buffers are needed.
@@ -822,14 +601,13 @@ impl Core {
         }
         // Stable zone: keep advancing the three EMA in lockstep and
         // write the TEMA into the output.
-        outReal[0] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
+        outReal[(0 * outStride) as usize] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         outIdx = 1;
         while today <= endIdx {
             prevEMA1 = (inReal[{ let _v = today; today += 1; _v }] - prevEMA1 as f64).mul_add(optInK_1, prevEMA1);
             prevEMA2 = (prevEMA1 - prevEMA2 as f64).mul_add(optInK_1, prevEMA2);
             prevEMA3 = (prevEMA2 - prevEMA3 as f64).mul_add(optInK_1, prevEMA3);
-            outReal[outIdx] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevEMA3 + (3.0 * prevEMA1 - 3.0 * prevEMA2);
         }
         // Succeed. Indicate where the output starts relative to
         // the caller input.
@@ -845,6 +623,50 @@ impl Core {
             optInK_1,
         };
         Ok(TEMA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TEMA_Open`] (composition seam).
+    pub(crate) fn TEMA_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(TEMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TEMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live TEMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::TEMA`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.TEMA_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_TEMA_Open")]
+    pub fn TEMA_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TEMA_Stream, f64), RetCode> {
+        self.TEMA_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::TEMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TEMA`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_TEMA_OpenAndFill")]
+    pub fn TEMA_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<TEMA_Stream, RetCode> {
+        self.TEMA_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

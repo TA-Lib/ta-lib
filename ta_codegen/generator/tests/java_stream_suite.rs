@@ -285,3 +285,119 @@ fn test_java_stream_emit_ratchet() {
         "Java stream emit count fell below the 168 floor — a tier or `stream` flag was silently dropped (raise the floor deliberately as the family grows)"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Merged Open family (`OpenCore` + stride)
+// ---------------------------------------------------------------------------
+//
+// `<base>_OpenBody` and `<base>_OpenAndFillBody` are one emission,
+// `<base>_OpenCore(..., int outStride)`. Fill passes stride 1 and the caller's
+// arrays; the scalar path passes stride 0 and a one-element sink, so every write
+// collapses onto slot 0 and that slot ends holding the last history value —
+// which is also what makes the `sp.cur_*` capture resolve with no special case.
+// `Dispatch` (MA) and `PeriodBank` (MAVP) are exempt.
+
+#[test]
+fn java_open_family_is_one_core_with_two_wrappers() {
+    let s = java_stream_section("cdlhammer");
+    assert_eq!(
+        s.matches("private RetCode CDLHAMMER_OpenCore(").count(),
+        1,
+        "the core is emitted exactly once"
+    );
+    assert!(s.contains("int outStride )"), "the core takes a stride");
+    for w in [
+        "private RetCode CDLHAMMER_OpenBody(",
+        "private RetCode CDLHAMMER_OpenAndFillBody(",
+    ] {
+        let at = s.find(w).unwrap_or_else(|| panic!("missing {w}"));
+        let body = &s[at..at + 800.min(s.len() - at)];
+        assert!(body.contains("CDLHAMMER_OpenCore("), "{w} delegates to the core");
+        assert!(
+            !body.contains("BodyPeriodTotal"),
+            "{w} must not re-transcribe the algorithm"
+        );
+    }
+}
+
+#[test]
+fn java_scalar_wrapper_uses_a_one_element_sink_at_stride_zero() {
+    let s = java_stream_section("cdlhammer");
+    let at = s.find("private RetCode CDLHAMMER_OpenBody(").expect("scalar wrapper");
+    let body = &s[at..at + 800.min(s.len() - at)];
+    assert!(body.contains("new int[1]"), "an int output sinks into a 1-element array:\n{body}");
+    assert!(body.contains(", 0 );"), "scalar passes stride 0:\n{body}");
+}
+
+#[test]
+fn java_output_writes_are_stride_scaled() {
+    let s = java_stream_section("cdlhammer");
+    assert!(
+        s.contains("outInteger[outIdx++ * outStride] = 100;"),
+        "per-bar output writes scale by the stride"
+    );
+}
+
+#[test]
+fn java_fill_wrapper_keeps_the_aliasing_guards() {
+    // #108/#130: Java is the one managed backend where `out == in` compiles, so
+    // the fill must reject it by reference. The scalar sink is a fresh array and
+    // has no hazard.
+    let s = java_stream_section("accbands");
+    let at = s
+        .find("private RetCode ACCBANDS_OpenAndFillBody(")
+        .expect("fill wrapper");
+    let body = &s[at..at + 1600.min(s.len() - at)];
+    assert!(
+        body.contains("(Object)outRealUpperBand == (Object)inHigh"),
+        "output-vs-input guard survives on the fill wrapper:\n{body}"
+    );
+    assert!(
+        body.contains("(Object)outRealUpperBand == (Object)outRealMiddleBand"),
+        "output-vs-output guard survives on the fill wrapper:\n{body}"
+    );
+    let sat = s.find("private RetCode ACCBANDS_OpenBody(").expect("scalar wrapper");
+    let sbody = &s[sat..sat + 800.min(s.len() - sat)];
+    assert!(
+        !sbody.contains("(Object)"),
+        "Open has no aliasing hazard and must not carry the guard:\n{sbody}"
+    );
+}
+
+#[test]
+fn java_exempt_tiers_keep_two_bodies() {
+    for (name, base) in [("ma", "MA"), ("mavp", "MAVP")] {
+        let s = java_stream_section(name);
+        assert!(
+            !s.contains(&format!("{base}_OpenCore(")),
+            "{base} is an exempt tier and must keep two bodies"
+        );
+        assert!(s.contains(&format!("{base}_OpenBody(")));
+        assert!(s.contains(&format!("{base}_OpenAndFillBody(")));
+    }
+}
+
+#[test]
+fn java_composed_copy_out_is_stride_guarded() {
+    let s = java_stream_section("adxr");
+    assert!(
+        s.contains("if( outStride == 1 ) System.arraycopy("),
+        "the composed copy-out is guarded by the stride"
+    );
+}
+
+#[test]
+fn java_identity_fast_path_short_circuits_at_stride_zero() {
+    // Java has no inliner guarantee here — a cold Open runs the loop in full —
+    // so the stride-0 short-circuit matters more than in C/Rust, not less.
+    let s = java_stream_section("t3");
+    assert!(s.contains("if( outStride == 0 ) {"), "identity arm short-circuits at stride 0");
+    assert!(
+        s.contains("outReal[0] = inReal[historyLen - 1];"),
+        "stride-0 arm takes the last bar directly"
+    );
+    assert!(
+        s.contains("outReal[fillIdx] = inReal[fillLb + fillIdx];"),
+        "fill arm indexes plainly"
+    );
+}

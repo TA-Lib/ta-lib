@@ -443,14 +443,12 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
    sp->i += 1;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
+static TA_RetCode TA_VAR_OpenCore( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_VAR_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -467,197 +465,6 @@ TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inRe
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      double tempReal;
-      double shift = 0.0;
-      double periodTotal1 = 0.0;
-      double periodTotal2 = 0.0;
-      double meanValue1 = 0.0;
-      double variance = 0.0;
-      double invPeriod = 0.0;
-      int i = 0;
-      int j = 0;
-      int outIdx;
-      int trailingIdx = 0;
-      int windowStart = 0;
-      int nbInitialElementNeeded = 0;
-      int barsSinceReseed = 0;
-      /* Identify the minimum number of price bar needed to calculate
-       * at least one output.
-       */
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      /* Move up the start index if there is not enough initial data. */
-      if( startIdx < nbInitialElementNeeded )
-      {
-         startIdx = nbInitialElementNeeded;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      invPeriod = 1.0 / (double)optInTimePeriod;
-      /* Measure deviations against a shift near the window: the running sums
-       * periodTotal1 = sum(inReal-shift) and periodTotal2 = sum((inReal-shift)^2)
-       * stay at variance scale, so variance = periodTotal2/period - mean^2 no longer
-       * subtracts two ~mean^2 quantities. Anchor the shift to the first window value
-       * (also gives an exact 0 for period 1, with no division by period-1).
-       */
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      shift = inReal[trailingIdx];
-      periodTotal1 = 0.0;
-      periodTotal2 = 0.0;
-      for( j = trailingIdx; j < startIdx; j += 1 )
-      {
-         tempReal = inReal[j] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-      }
-      /* inReal and outReal may be the same buffer: each trailing value is consumed
-       * before its slot is overwritten by the output.
-       */
-      i = startIdx;
-      outIdx = 0;
-      barsSinceReseed = 32 * optInTimePeriod;
-      do
-      {
-         /* Add the incoming value, measured against the shift. */
-         tempReal = inReal[i] - shift;
-         periodTotal1 += tempReal;
-         tempReal *= tempReal;
-         periodTotal2 += tempReal;
-         meanValue1 = periodTotal1 * invPeriod;
-         variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-         /* Remove the trailing value (prepares the next window). */
-         tempReal = inReal[trailingIdx] - shift;
-         periodTotal1 -= tempReal;
-         tempReal *= tempReal;
-         periodTotal2 -= tempReal;
-         trailingIdx += 1;
-         /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
-          * when the shift is stale enough that the subtraction loses digits - i.e.
-          * the variance has shrunk below 1e-6 of the mean squared deviation it is
-          * extracted from (that ratio bounds the cancellation error to ~eps/1e-6 ~
-          * 2e-10, so partial cancellation, not just total collapse, is caught); OR
-          * when the value just removed sat so far from the shift that its squared term
-          * (tempReal) dwarfs the surviving sum (a large outlier passing through the
-          * window buries the small terms below its ulp, and the residual left when it
-          * leaves is cancellation garbage); OR at least every 32 windows so a slow
-          * drift stays bounded regardless of the series length. The strict `<` also
-          * leaves an exactly-constant window (variance 0, scale 0) alone instead of
-          * reseeding it every bar. Guarantees a non-negative output.
-          */
-         barsSinceReseed -= 1;
-         if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 )
-         {
-            barsSinceReseed = 32 * optInTimePeriod;
-            windowStart = i - nbInitialElementNeeded;
-            tempReal = 0.0;
-            for( j = windowStart; j <= i; j += 1 )
-            {
-               tempReal += inReal[j];
-            }
-            shift = tempReal * invPeriod;
-            periodTotal1 = 0.0;
-            periodTotal2 = 0.0;
-            for( j = windowStart; j <= i; j += 1 )
-            {
-               tempReal = inReal[j] - shift;
-               periodTotal1 += tempReal;
-               tempReal *= tempReal;
-               periodTotal2 += tempReal;
-            }
-            meanValue1 = periodTotal1 * invPeriod;
-            variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
-            /* Re-remove the trailing value under the new shift so the carried state
-             * matches the non-reseed path.
-             */
-            tempReal = inReal[windowStart] - shift;
-            periodTotal1 -= tempReal;
-            tempReal *= tempReal;
-            periodTotal2 -= tempReal;
-         }
-         lastValue_outReal = variance;
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_VAR_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->optInNbDev = optInNbDev;
-      sp->shift = shift;
-      sp->periodTotal1 = periodTotal1;
-      sp->periodTotal2 = periodTotal2;
-      sp->meanValue1 = meanValue1;
-      sp->variance = variance;
-      sp->invPeriod = invPeriod;
-      sp->j = j;
-      sp->trailingIdx = trailingIdx;
-      sp->windowStart = windowStart;
-      sp->nbInitialElementNeeded = nbInitialElementNeeded;
-      sp->barsSinceReseed = barsSinceReseed;
-      sp->i = i;
-      sp->xCap = (int)(i - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->x_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
-      if( !sp->xMirror_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      { int fillJ;
-        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
-        {
-           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
-        }
-      }
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_VAR_Open( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
-{
-   return TA_VAR_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_VAR_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 5;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( optInNbDev == TA_REAL_DEFAULT )
-      optInNbDev = 1;
-   else if( optInNbDev < TA_REAL_MIN || optInNbDev > TA_REAL_MAX )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -775,7 +582,7 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
             tempReal *= tempReal;
             periodTotal2 -= tempReal;
          }
-         outReal[outIdx++] = variance;
+         outReal[outIdx++ * outStride] = variance;
          i += 1;
       } while( i <= endIdx );
       /* All done. Indicate the output limits and return. */
@@ -815,6 +622,35 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_VAR_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_VAR_Open( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, double *outReal )
+{
+   return TA_VAR_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_VAR_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )

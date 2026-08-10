@@ -251,10 +251,11 @@ impl Core {
         (*outReal) = sp.ad;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::AD_Open`] (composition seam).
-    pub(crate) fn AD_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(AD_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::AD_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::AD_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn AD_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<AD_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -266,7 +267,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut nbBar: usize = 0_usize;
         let mut currentBar: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -290,8 +290,8 @@ impl Core {
         //       its calculations.
         // Default return values
         nbBar = endIdx - startIdx + 1;
-        dummyNBElement = nbBar;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = nbBar;
+        (*outBegIdx) = startIdx;
         currentBar = startIdx;
         outIdx = 0;
         ad = 0.0;
@@ -303,7 +303,7 @@ impl Core {
             if tmp > 0.0 {
                 ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
             }
-            lastValue_outReal = ad;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ad;
             currentBar += 1;
             nbBar -= 1;
         }
@@ -312,7 +312,18 @@ impl Core {
         let state = AD_StreamState {
             ad,
         };
-        Ok((AD_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(AD_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::AD_Open`] (composition seam).
+    pub(crate) fn AD_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(AD_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.AD_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live AD stream over the warm-up history; returns the handle and
@@ -352,64 +363,7 @@ impl Core {
     pub fn AD_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<AD_Stream, RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut nbBar: usize = 0_usize;
-        let mut currentBar: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut high: f64 = 0.0_f64;
-        let mut low: f64 = 0.0_f64;
-        let mut close: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut ad: f64 = 0.0_f64;
-        // Note: Results from this function might vary slightly
-        //       from Metastock outputs. The reason being that
-        //       Metastock use float instead of double and this
-        //       cause a different floating-point precision to
-        //       be used.
-        //
-        //       For most function, this is not an apparent difference
-        //       but for function using large cummulative values (like
-        //       this AD function), minor imprecision adds up and becomes
-        //       significative.
-        //
-        //       For better precision, TA-Lib use double in all its
-        //       its calculations.
-        // Default return values
-        nbBar = endIdx - startIdx + 1;
-        (*outNBElement) = nbBar;
-        (*outBegIdx) = startIdx;
-        currentBar = startIdx;
-        outIdx = 0;
-        ad = 0.0;
-        while nbBar != 0 {
-            high = inHigh[currentBar];
-            low = inLow[currentBar];
-            tmp = high - low;
-            close = inClose[currentBar];
-            if tmp > 0.0 {
-                ad += (close - low - (high - close)) / tmp * (inVolume[currentBar] as f64);
-            }
-            outReal[outIdx] = ad;
-            outIdx += 1;
-            currentBar += 1;
-            nbBar -= 1;
-        }
-
-        // Capture the live batch state into the handle.
-        let state = AD_StreamState {
-            ad,
-        };
-        Ok(AD_Stream { core: self.clone(), state })
+        self.AD_OpenCore(inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

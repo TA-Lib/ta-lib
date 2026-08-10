@@ -200,10 +200,11 @@ impl Core {
         (*outReal) = (inHigh + inLow + inClose) / 3.0;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TYPPRICE_Open`] (composition seam).
-    pub(crate) fn TYPPRICE_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(TYPPRICE_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::TYPPRICE_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TYPPRICE_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TYPPRICE_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TYPPRICE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -215,22 +216,32 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         // Typical price = (High + Low + Close ) / 3
         outIdx = 0;
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inHigh[i] + inLow[i] + inClose[i]) / 3.0) as f64);
         }
         i = (endIdx as usize) + 1;
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
         let state = TYPPRICE_StreamState {
         };
-        Ok((TYPPRICE_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(TYPPRICE_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TYPPRICE_Open`] (composition seam).
+    pub(crate) fn TYPPRICE_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(TYPPRICE_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TYPPRICE_OpenCore(inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live TYPPRICE stream over the warm-up history; returns the handle and
@@ -267,33 +278,7 @@ impl Core {
     pub fn TYPPRICE_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TYPPRICE_Stream, RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        // Typical price = (High + Low + Close ) / 3
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            outReal[outIdx] = (((inHigh[i] + inLow[i] + inClose[i]) / 3.0) as f64);
-            outIdx += 1;
-        }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-
-        // Capture the live batch state into the handle.
-        let state = TYPPRICE_StreamState {
-        };
-        Ok(TYPPRICE_Stream { core: self.clone(), state })
+        self.TYPPRICE_OpenCore(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

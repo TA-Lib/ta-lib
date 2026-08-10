@@ -294,10 +294,11 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ADXR_Open`] (composition seam).
-    pub(crate) fn ADXR_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(ADXR_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::ADXR_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::ADXR_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn ADXR_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<ADXR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -314,11 +315,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut _begStore: usize = 0;
-        let mut _nbStore: usize = 0;
-        let outBegIdx: &mut usize = &mut _begStore;
-        let outNBElement: &mut usize = &mut _nbStore;
         let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
         let mut adx: Vec<f64> = Vec::new();
         let mut adxrLookback: usize = 0_usize;
@@ -392,7 +388,23 @@ impl Core {
             lagRingCap_adx: lagCap_adx,
             lagRing_adx,
         };
-        Ok((ADXR_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        if outStride == 1 {
+            outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outReal[0] = sc_outReal[*outNBElement - 1];
+        }
+        Ok(ADXR_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ADXR_Open`] (composition seam).
+    pub(crate) fn ADXR_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(ADXR_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.ADXR_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live ADXR stream over the warm-up history; returns the handle and
@@ -429,97 +441,7 @@ impl Core {
     pub fn ADXR_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<ADXR_Stream, RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut adx: Vec<f64> = Vec::new();
-        let mut adxrLookback: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut nbElement: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        // Original implementation from Wilder's book was doing some integer
-        // rounding in its calculations.
-        //
-        // This was understandable in the context that at the time the book
-        // was written, most user were doing the calculation by hand.
-        //
-        // For a computer, rounding is unnecessary (and even problematic when inputs
-        // are close to 1).
-        //
-        // TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
-        // you can comment out the following #undef/#define and rebuild the library.
-        // Move up the start index if there is not
-        // enough initial data.
-        // Always one price bar gets consumed.
-        adxrLookback = self.ADXR_Lookback(optInTimePeriod);
-        if startIdx < adxrLookback {
-            startIdx = adxrLookback;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        adx = vec![0.0_f64; ((endIdx - startIdx + ((optInTimePeriod) as usize)) * 1) as usize];
-        // Compute ADX over a range that starts (period-1) bars earlier, so each
-        // ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-        // Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.ADX_OpenInternal(&inHigh[..((endIdx) as usize) + 1], &inLow[..((endIdx) as usize) + 1], &inClose[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((optInTimePeriod - 1) as usize), optInTimePeriod)?;
-        retCode = self.ADX((startIdx - (((optInTimePeriod - 1)) as usize)) as usize, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, &mut adx[..]);
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
-        // ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
-        // the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
-        // is adx[k]; the ADX range holds (period-1) more elements than the output.
-        nbElement = (*outNBElement) - (((optInTimePeriod - 1)) as usize);
-        // for( outIdx = 0; outIdx < nbElement; outIdx += 1 )
-        outIdx = 0;
-        while outIdx < nbElement {
-            sc_outReal[outIdx] = ((adx[(outIdx + (((optInTimePeriod - 1)) as usize)) as usize] + adx[outIdx]) / 2.0);
-            outIdx += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = nbElement;
-
-        // Capture the live producer state + sub handles.
-        if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
-        }
-        let lagCap_adx: usize = (optInTimePeriod - 1) as usize;
-        let mut lagRing_adx: Vec<f64> = vec![0.0_f64; lagCap_adx];
-        {
-            let mut lagI: usize = 0;
-            while lagI < lagCap_adx {
-                lagRing_adx[lagI] = adx[*outNBElement + lagI];
-                lagI += 1;
-            }
-        }
-        let state = ADXR_StreamState {
-            optInTimePeriod,
-            sub0,
-            lagRingPos_adx: 0_usize,
-            lagRingCap_adx: lagCap_adx,
-            lagRing_adx,
-        };
-        outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(ADXR_Stream { core: self.clone(), state })
+        self.ADXR_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

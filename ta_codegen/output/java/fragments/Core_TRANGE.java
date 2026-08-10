@@ -364,7 +364,7 @@
       sp.cur_outReal = greatest;
       sp.lag1_inClose = inClose;
    }
-   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode TRANGE_OpenCore( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int today = 0;
       int outIdx = 0;
@@ -374,9 +374,6 @@
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -427,7 +424,7 @@
          if( val3 > greatest ) {
             greatest = val3;
          }
-         lastValue_outReal = greatest;
+         outReal[outIdx++ * outStride] = greatest;
          today += 1;
       }
       outNBElement.value = outIdx;
@@ -435,83 +432,22 @@
       /* Capture the live batch state into the handle. */
       sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return TRANGE_OpenCore( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode TRANGE_OpenAndFillBody( TRANGE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int today = 0;
-      int outIdx = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* True Range is the greatest of the following:
-       *
-       *  val1 = distance from today's high to today's low.
-       *  val2 = distance from yesterday's close to today's high.
-       *  val3 = distance from yesterday's close to today's low.
-       *
-       * Some books and software makes the first TR value to be
-       * the (high - low) of the first bar. This function instead
-       * ignore the first price bar, and only output starting at the
-       * second price bar are valid. This is done for avoiding
-       * inconsistency.
-       */
-      /* Move up the start index if there is not
-       * enough initial data.
-       * Always one price bar gets consumed.
-       */
-      if( startIdx < 1 ) {
-         startIdx = 1;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outIdx = 0;
-      today = startIdx;
-      while( today <= endIdx ) {
-         /* Find the greatest of the 3 values. */
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         outReal[outIdx++] = greatest;
-         today += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.val3 = val3;
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return TRANGE_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
    TRANGE_Stream TRANGE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )

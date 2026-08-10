@@ -504,10 +504,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLGRAVESTONEDOJI_Open`] (composition seam).
-    pub(crate) fn CDLGRAVESTONEDOJI_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLGRAVESTONEDOJI_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLGRAVESTONEDOJI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLGRAVESTONEDOJI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLGRAVESTONEDOJI_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLGRAVESTONEDOJI_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -519,7 +520,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut BodyDojiPeriodTotal: f64 = 0.0_f64;
         let mut ShadowVeryShortPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -549,8 +549,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -611,9 +611,9 @@ impl Core {
         outIdx = 0;
         loop {
             if (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                lastValue_outInteger = 100;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -685,278 +685,6 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_BodyDojiTrailingIdx: i64 = (i as i64) - (BodyDojiTrailingIdx as i64);
-        if cap_BodyDojiTrailingIdx < 0 || cap_BodyDojiTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_BodyDojiTrailingIdx: usize = if cap_BodyDojiTrailingIdx > 0 { cap_BodyDojiTrailingIdx as usize } else { 1 };
-        let mut ring_BodyDojiTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inOpen[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inHigh[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inLow[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let mut ring_BodyDojiTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyDojiTrailingIdx];
-        ring_BodyDojiTrailingIdx_inClose[..cap_BodyDojiTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_BodyDojiTrailingIdx as usize..]);
-        let cap_ShadowVeryShortTrailingIdx: i64 = (i as i64) - (ShadowVeryShortTrailingIdx as i64);
-        if cap_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_ShadowVeryShortTrailingIdx: usize = if cap_ShadowVeryShortTrailingIdx > 0 { cap_ShadowVeryShortTrailingIdx as usize } else { 1 };
-        let mut ring_ShadowVeryShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inOpen[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inHigh[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inLow[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let mut ring_ShadowVeryShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_ShadowVeryShortTrailingIdx];
-        ring_ShadowVeryShortTrailingIdx_inClose[..cap_ShadowVeryShortTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_ShadowVeryShortTrailingIdx as usize..]);
-        let state = CDLGRAVESTONEDOJI_StreamState {
-            BodyDojiPeriodTotal,
-            ShadowVeryShortPeriodTotal,
-            ringPos_BodyDojiTrailingIdx: 0_usize,
-            ringCap_BodyDojiTrailingIdx: cap_BodyDojiTrailingIdx as usize,
-            ring_BodyDojiTrailingIdx_inOpen,
-            ring_BodyDojiTrailingIdx_inHigh,
-            ring_BodyDojiTrailingIdx_inLow,
-            ring_BodyDojiTrailingIdx_inClose,
-            ringPos_ShadowVeryShortTrailingIdx: 0_usize,
-            ringCap_ShadowVeryShortTrailingIdx: cap_ShadowVeryShortTrailingIdx as usize,
-            ring_ShadowVeryShortTrailingIdx_inOpen,
-            ring_ShadowVeryShortTrailingIdx_inHigh,
-            ring_ShadowVeryShortTrailingIdx_inLow,
-            ring_ShadowVeryShortTrailingIdx_inClose,
-        };
-        Ok((CDLGRAVESTONEDOJI_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLGRAVESTONEDOJI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLGRAVESTONEDOJI`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLGRAVESTONEDOJI_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLGRAVESTONEDOJI_Open")]
-    pub fn CDLGRAVESTONEDOJI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLGRAVESTONEDOJI_Stream, i32), RetCode> {
-        self.CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLGRAVESTONEDOJI_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLGRAVESTONEDOJI`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLGRAVESTONEDOJI_OpenAndFill")]
-    pub fn CDLGRAVESTONEDOJI_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLGRAVESTONEDOJI_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut BodyDojiPeriodTotal: f64 = 0.0_f64;
-        let mut ShadowVeryShortPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut BodyDojiTrailingIdx: usize = 0_usize;
-        let mut ShadowVeryShortTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let BodyDoji_rangeType: i32 = self.candle_settings.body_doji.range_type;
-        #[allow(non_snake_case)]
-        let BodyDoji_avgPeriod: i32 = self.candle_settings.body_doji.avg_period;
-        #[allow(non_snake_case)]
-        let BodyDoji_factor: f64 = self.candle_settings.body_doji.factor;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_rangeType: i32 = self.candle_settings.shadow_very_short.range_type;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_avgPeriod: i32 = self.candle_settings.shadow_very_short.avg_period;
-        #[allow(non_snake_case)]
-        let ShadowVeryShort_factor: f64 = self.candle_settings.shadow_very_short.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLGRAVESTONEDOJI_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        BodyDojiPeriodTotal = 0.0;
-        BodyDojiTrailingIdx = startIdx - ((BodyDoji_avgPeriod) as usize);
-        ShadowVeryShortPeriodTotal = 0.0;
-        ShadowVeryShortTrailingIdx = startIdx - ((ShadowVeryShort_avgPeriod) as usize);
-        i = BodyDojiTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_10: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_10 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_10 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_10 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_10 = 0.0;
-                }
-            }
-            BodyDojiPeriodTotal += _candlerange_10;
-            i += 1;
-        }
-        i = ShadowVeryShortTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_11: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_11 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_11 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_11 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_11 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal += _candlerange_11;
-            i += 1;
-        }
-        // Proceed with the calculation for the requested range.
-        //
-        // Must have:
-        // - doji body
-        // - open and close at the low of the day = no or very short lower shadow
-        // - upper shadow (to distinguish from other dojis, here upper shadow should not be very short)
-        // The meaning of "doji" and "very short" is specified with TA_SetCandleSettings
-        // outInteger is always positive (1 to 100) but this does not mean it is bullish: gravestone doji must be considered
-        // relatively to the trend
-        outIdx = 0;
-        loop {
-            if (inClose[i] - inOpen[i]).abs() <= ((BodyDoji_factor) * (if (BodyDoji_avgPeriod) != 0 { (BodyDojiPeriodTotal) / (BodyDoji_avgPeriod as f64) } else { match BodyDoji_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyDoji_rangeType) == 2 { 2.0 } else { 1.0 })) && ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]) < ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) && (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) > ((ShadowVeryShort_factor) * (if (ShadowVeryShort_avgPeriod) != 0 { (ShadowVeryShortPeriodTotal) / (ShadowVeryShort_avgPeriod as f64) } else { match ShadowVeryShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (ShadowVeryShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                outInteger[outIdx] = 100;
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_12: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_12 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_12 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_12 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_12 = 0.0;
-                }
-            }
-            let mut _candlerange_13: f64;
-            match BodyDoji_rangeType {
-                0 => {
-                    _candlerange_13 = (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
-                }
-                1 => {
-                    _candlerange_13 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
-                }
-                2 => {
-                    _candlerange_13 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx] - (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
-                }
-                _ => {
-                    _candlerange_13 = 0.0;
-                }
-            }
-            BodyDojiPeriodTotal += _candlerange_12 - _candlerange_13;
-            let mut _candlerange_14: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_14 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_14 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_14 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_14 = 0.0;
-                }
-            }
-            let mut _candlerange_15: f64;
-            match ShadowVeryShort_rangeType {
-                0 => {
-                    _candlerange_15 = (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
-                }
-                1 => {
-                    _candlerange_15 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx];
-                }
-                2 => {
-                    _candlerange_15 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx] - (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
-                }
-                _ => {
-                    _candlerange_15 = 0.0;
-                }
-            }
-            ShadowVeryShortPeriodTotal += _candlerange_14 - _candlerange_15;
-            i += 1;
-            BodyDojiTrailingIdx += 1;
-            ShadowVeryShortTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
 
@@ -1012,6 +740,57 @@ impl Core {
             ring_ShadowVeryShortTrailingIdx_inClose,
         };
         Ok(CDLGRAVESTONEDOJI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLGRAVESTONEDOJI_Open`] (composition seam).
+    pub(crate) fn CDLGRAVESTONEDOJI_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLGRAVESTONEDOJI_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLGRAVESTONEDOJI_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLGRAVESTONEDOJI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLGRAVESTONEDOJI`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLGRAVESTONEDOJI_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLGRAVESTONEDOJI_Open")]
+    pub fn CDLGRAVESTONEDOJI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLGRAVESTONEDOJI_Stream, i32), RetCode> {
+        self.CDLGRAVESTONEDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLGRAVESTONEDOJI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLGRAVESTONEDOJI`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLGRAVESTONEDOJI_OpenAndFill")]
+    pub fn CDLGRAVESTONEDOJI_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLGRAVESTONEDOJI_Stream, RetCode> {
+        self.CDLGRAVESTONEDOJI_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }
