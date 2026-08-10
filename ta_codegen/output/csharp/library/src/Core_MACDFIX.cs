@@ -57,6 +57,7 @@ public partial class Core
     *  052603 MF     Adapt code to compile with .NET Managed C++
     *  071126 MF,CC  Inline the fixed-26/12 MACD lockstep pass (was a
     *                delegation to macd(...,0,0,...)); bit-exact, streamable.
+    *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
     */
    /// <summary>
    /// Number of leading input bars <c>MACDFIX</c> consumes before it can produce
@@ -137,6 +138,13 @@ public partial class Core
        */
       fastK = 0.15;
       slowK = 0.075;
+      /* A signal period of 1 disables signal-line smoothing: the signal IS the
+       * MACD line and the histogram is exactly zero. signalK is then exactly
+       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+       * only while consecutive MACD-line values stay within a factor of two of
+       * each other. The MACD line oscillates through zero, so it leaves that
+       * window on ordinary data; hence the explicit arm at each step.
+       */
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
       lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
@@ -228,7 +236,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -242,7 +254,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -346,7 +362,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -357,7 +377,11 @@ public partial class Core
          prevFast = Math.FusedMultiplyAdd(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.FusedMultiplyAdd(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.FusedMultiplyAdd(macdValue - prevSignal, signalK, prevSignal);
+         }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;

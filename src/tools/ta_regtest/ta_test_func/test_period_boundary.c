@@ -200,6 +200,7 @@ static ErrorNumber testLookbackContract( void );
 static ErrorNumber testIdentityAtPeriodOne( const TA_History *history );
 static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history );
 static ErrorNumber testMacdFamilySignalOne( const TA_History *history );
+static ErrorNumber testMacdSignalOneHostile( void );
 static ErrorNumber testPeriodOnePins( const TA_History *history );
 static ErrorNumber testMinBoundarySweep( const TA_History *history );
 static ErrorNumber testLinearRegRampOverflowProbe( void );
@@ -1327,6 +1328,149 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
 
    /* doRangeTest varies the unstable period and leaves it set. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+   errNb = testMacdSignalOneHostile();
+   if( errNb != TA_TEST_PASS )
+      return errNb;
+
+   return TA_TEST_PASS;
+}
+
+/* The signal=1 contract on inputs the signal recursion cannot round-trip.
+ *
+ * "signal == MACD line, histogram == 0" is asserted bit-exactly above, but the
+ * reference close series can never break it: at a signal period of 1 the EMA
+ * factor is exactly 1.0, so the signal step is (x - prev) + prev, which returns
+ * x only while consecutive MACD-LINE values stay within a factor of two of each
+ * other. The MACD line is a difference of two EMAs decaying toward zero inside
+ * a flat run, so it leaves that window on inputs a price series never does --
+ * which is why this defect outlived the sub-test above.
+ *
+ * A GRID, not one series, and deliberately so: the divergence is delicate (a
+ * few bars out of 226) and each function has its own MACD line -- MACDFIX's
+ * fixed 0.15/0.075 factors put its line somewhere else entirely, so the series
+ * that breaks MACD leaves MACDFIX untouched. That is not hypothetical; the
+ * first version of this leg hardcoded one series and its own self-check caught
+ * it being vacuous for MACDFIX. Sweeping run lengths x levels means no single
+ * shape going benign can disarm the gate.
+ *
+ * Hostility is asserted from the RETURNED MACD line, replaying the naive step
+ * over it, accumulated per function across the whole grid. The fix does not
+ * touch the MACD line, so the assertion keeps its meaning afterwards.
+ */
+#define MH_N        252
+#define MH_MIN_NAIVE  1   /* per function, summed over the grid */
+
+static const int    pbMacdRuns[]   = { 24, 30, 36, 39, 45 };
+static const TA_Real pbMacdLo[]    = { 470.3574516572389, 0.87 };
+static const TA_Real pbMacdHi[]    = { 6515.901813836415, 913.71 };
+
+/* Assert the contract, and return how many bars the naive step would have
+ * lost (the caller accumulates it as the non-vacuity evidence). */
+static ErrorNumber pbCheckMacdSignalIsLine( const char *label,
+                                            const TA_Real *macd,
+                                            const TA_Real *signal,
+                                            const TA_Real *hist,
+                                            int nb, int *nbNaive )
+{
+   int i;
+   TA_Real prev;
+
+   prev = macd[0];
+   for( i = 1; i < nb; i++ )
+   {
+      prev = ((macd[i] - prev) * 1.0) + prev;
+      if( prev != macd[i] )
+         (*nbNaive)++;
+   }
+
+   for( i = 0; i < nb; i++ )
+   {
+      if( signal[i] != macd[i] )
+      {
+         printf( "\nFail: %s: [%d] signal %.17g != MACD line %.17g\n",
+                 label, i, signal[i], macd[i] );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+      if( hist[i] != 0.0 )
+      {
+         printf( "\nFail: %s: [%d] hist %.17g, expected 0\n", label, i, hist[i] );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber testMacdSignalOneHostile( void )
+{
+   static TA_Real in[MH_N];
+   static TA_Real outM[MH_N], outS[MH_N], outH[MH_N];
+   /* MACDEXT is the control: it reaches the same contract through ma()'s
+    * period-1 copy, not an EMA recursion (its all-EMA fast path requires
+    * signal >= 2), so it must already hold everywhere on this grid. */
+   static const char * const name[3] = { "MACD(12,26,1)", "MACDFIX(1)",
+                                         "MACDEXT(sig=1,EMA) [control]" };
+   int nbNaive[3] = { 0, 0, 0 };
+   TA_Integer beg, nb;
+   TA_RetCode rc;
+   ErrorNumber errNb;
+   unsigned int r, k;
+   int i, w;
+   char label[96];
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+   for( r = 0; r < sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]); r++ )
+   {
+      for( k = 0; k < sizeof(pbMacdLo)/sizeof(pbMacdLo[0]); k++ )
+      {
+         for( i = 0; i < MH_N; i++ )
+            in[i] = ((i / pbMacdRuns[r]) % 2) ? pbMacdLo[k] : pbMacdHi[k];
+
+         for( w = 0; w < 3; w++ )
+         {
+            switch( w )
+            {
+            case 0:
+               rc = TA_MACD( 0, MH_N-1, in, 12, 26, 1, &beg, &nb, outM, outS, outH );
+               break;
+            case 1:
+               rc = TA_MACDFIX( 0, MH_N-1, in, 1, &beg, &nb, outM, outS, outH );
+               break;
+            default:
+               rc = TA_MACDEXT( 0, MH_N-1, in, 12, TA_MAType_EMA, 26, TA_MAType_EMA,
+                                1, TA_MAType_EMA, &beg, &nb, outM, outS, outH );
+               break;
+            }
+            snprintf( label, sizeof(label), "%s run=%d lvl=%u",
+                      name[w], pbMacdRuns[r], k );
+            PB_CHECK_RC( label, rc, TA_SUCCESS );
+            errNb = pbCheckMacdSignalIsLine( label, outM, outS, outH, nb, &nbNaive[w] );
+            if( errNb != TA_TEST_PASS )
+               return errNb;
+         }
+      }
+   }
+
+   for( w = 0; w < 3; w++ )
+   {
+      if( nbNaive[w] < MH_MIN_NAIVE )
+      {
+         printf( "\nFail: %s: the signal=1 grid no longer discriminates -- the "
+                 "naive step round-trips its MACD line on every bar of all %u "
+                 "shapes (need at least %d)\n", name[w],
+                 (unsigned)(sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]) *
+                            sizeof(pbMacdLo)/sizeof(pbMacdLo[0])), MH_MIN_NAIVE );
+         return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+      }
+   }
+
+   printf( "\n  MACD signal=1: contract held on %u shapes x 3 functions; the "
+           "naive step would have lost %d/%d/%d bars\n",
+           (unsigned)(sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]) *
+                      sizeof(pbMacdLo)/sizeof(pbMacdLo[0])),
+           nbNaive[0], nbNaive[1], nbNaive[2] );
 
    return TA_TEST_PASS;
 }
