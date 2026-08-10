@@ -426,26 +426,6 @@ TA_RetCode TA_WMA_OpenInternal( struct TA_WMA_Stream **stream, const double inRe
          dummyNBElement = 0;
          return TA_BAD_PARAM;
       }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         dummyNBElement = endIdx - startIdx + 1;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         inIdx = startIdx;
-         for( i = 0; i < (int)dummyNBElement; i += 1 )
-         {
-            lastValue_outReal = inReal[inIdx++];
-         }
-         return TA_BAD_PARAM;
-      }
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
        */
@@ -626,26 +606,6 @@ TA_LIB_API TA_RetCode TA_WMA_OpenAndFill( TA_WMA_Stream **stream, const double i
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
-      }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         *outNBElement= endIdx - startIdx + 1;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         inIdx = startIdx;
-         for( i = 0; i < (int)*outNBElement; i += 1 )
-         {
-            outReal[i] = inReal[inIdx++];
-         }
          return TA_BAD_PARAM;
       }
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the

@@ -474,28 +474,6 @@ TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double in
       {
          return TA_BAD_PARAM;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit and separate
-       * from TA_EMA's own copy because the two EMA below are inlined here,
-       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-       * loses the input as soon as consecutive values differ by more than a
-       * factor of two, and 2*e1 - e2 then propagates the residue rather
-       * than cancelling it. The unstable period still delays the first
-       * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-       * 1, so the two disagree on alignment when it is non-zero.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
       /* Both EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2. No temporary
        * buffers are needed.
@@ -698,28 +676,6 @@ TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit and separate
-       * from TA_EMA's own copy because the two EMA below are inlined here,
-       * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-       * loses the input as soon as consecutive values differ by more than a
-       * factor of two, and 2*e1 - e2 then propagates the residue rather
-       * than cancelling it. The unstable period still delays the first
-       * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-       * 1, so the two disagree on alignment when it is non-zero.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            outReal[outIdx++] = inReal[today++];
-         }
-         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       /* Both EMA are computed in a single lockstep pass: each new

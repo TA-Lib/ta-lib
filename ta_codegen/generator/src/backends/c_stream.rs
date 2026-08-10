@@ -2016,6 +2016,9 @@ fn emit_dual_mode(
         o,
         "/* Private function, not in public API. */\nstatic void TA_{n}_StepInternal( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
+    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
+    // in the batch and in Open: it is a property of the function, not of a mode.
+    emit_identity_step_branch(o, ma, enums, registry, helpers, counter, 3);
     let pred_h = render_dual_pred(&dmp.predicate, true, func, registry, helpers, counter);
     let _ = writeln!(o, "   if( {pred_h} )\n   {{");
     emit_step_inner(o, ma, enums, registry, helpers, counter, 6, false);
@@ -2055,8 +2058,8 @@ fn emit_dual_mode(
     // Identity (HMA period 1) short-circuits ahead of the predicate: the handle
     // is memset, so both modes' buffers sit at NULL/0, and both transitions
     // short-circuit on the same guard — which arm the predicate would have
-    // picked is moot. (The batch's own copy of this branch still rides the
-    // transcribed prologue below; it is unreachable dead code there.)
+    // picked is moot. (The batch's own copy of this branch rides the transcribed
+    // prologue below; `build_open_body_from` drops it, unreachable from here.)
     emit_identity_fast_path(o, func, ma, registry, helpers, counter, OutMode::Scalar);
 
     // Each mode transcribes the SHARED PROLOGUE, then its own arm body, then the
@@ -2330,6 +2333,31 @@ fn emit_step_inner(
         o.push_str(&emit_used_candle_unpacking(&step_settings, &body_c, indent));
     }
     o.push_str(&body_c);
+}
+
+/// The identity short-circuit at the top of a dual-mode step, above the mode
+/// predicate — the one place it belongs, since it holds for the whole function
+/// (the arms are marked `identity_hoisted`, so they no longer carry a copy).
+fn emit_identity_step_branch(
+    o: &mut String,
+    model: &StreamModel,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+) {
+    if let Some(s) = streaming::identity_step_branch(model, &CNames) {
+        o.push_str(&render_statement_stream(
+            &s,
+            indent,
+            enums,
+            registry,
+            helpers,
+            counter,
+            &nullable_out_names(model.func),
+        ));
+    }
 }
 
 /// Extrema automatons carry batch-absolute int indices that grow by one
@@ -3519,6 +3547,7 @@ fn build_open_body_from(model: &StreamModel, body: &[Statement], mode: OutMode) 
         body.pop();
     }
     body.retain(|st| !matches!(st, Statement::CircBuf(crate::ir::CircBuf::Destroy { .. })));
+    let body = streaming::strip_identity_branch(&body, model.identity.as_ref());
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 

@@ -418,10 +418,6 @@ impl Core {
             dummyNBElement = 0;
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because
-        // (P*V)/V round-trips only ~97% of the time in IEEE double, and
-        // because a lone zero volume must give the price, not NaN.
         // Add-up the initial period, except for the last value.
         //
         // The price*volume product is kept in its own statement so no compiler may
@@ -590,10 +586,6 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because
-        // (P*V)/V round-trips only ~97% of the time in IEEE double, and
-        // because a lone zero volume must give the price, not NaN.
         // Add-up the initial period, except for the last value.
         //
         // The price*volume product is kept in its own statement so no compiler may

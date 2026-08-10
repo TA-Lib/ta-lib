@@ -477,12 +477,12 @@ struct HMA_StreamState {
 #[allow(unused_parens)]
 impl Core {
     fn HMA_step_internal(&self, sp: &mut HMA_StreamState, inReal: f64, outReal: &mut f64) {
+        if sp.optInTimePeriod == 1 {
+            (*outReal) = inReal;
+            return;
+        }
         if sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 {
             let mut tempReal: f64 = 0.0_f64;
-            if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return;
-            }
             if sp.ringCap_trailingIdxFull == 0 {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
             }
@@ -501,10 +501,6 @@ impl Core {
             }
         } else {
             let mut tempReal: f64 = 0.0_f64;
-            if sp.optInTimePeriod == 1 {
-                (*outReal) = inReal;
-                return;
-            }
             if sp.ringCap_trailingIdxFull == 0 {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
             }
@@ -655,10 +651,6 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
-            // No smoothing at period of 1: the output is a copy of the input
-            // (same convention as TA_MA for every MAType). Explicit because the
-            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -806,10 +798,6 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
-            // No smoothing at period of 1: the output is a copy of the input
-            // (same convention as TA_MA for every MAType). Explicit because the
-            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -1130,10 +1118,6 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
-            // No smoothing at period of 1: the output is a copy of the input
-            // (same convention as TA_MA for every MAType). Explicit because the
-            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);
@@ -1282,10 +1266,6 @@ impl Core {
             // (periodSub/periodSum, lagged trailing subtract), so this fused pass is
             // BIT-IDENTICAL to composing three TA_WMA calls -- the composite
             // differential in test_composite.c holds it to that, memcmp-exact.
-            // No smoothing at period of 1: the output is a copy of the input
-            // (same convention as TA_MA for every MAType). Explicit because the
-            // formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-            // arm below would leave a cancellation residual instead of a copy.
             halfPeriod = (optInTimePeriod / 2) as usize;
             sqrtPeriod = ((optInTimePeriod as f64).sqrt() as usize) as usize;
             lookbackSqrt = self.WMA_Lookback((sqrtPeriod) as i32);

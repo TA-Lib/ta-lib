@@ -430,23 +430,6 @@ TA_RetCode TA_VWMA_OpenInternal( struct TA_VWMA_Stream **stream, const double in
          dummyNBElement = 0;
          return TA_BAD_PARAM;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because
-       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
-       * because a lone zero volume must give the price, not NaN.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         i = startIdx;
-         while( i <= (int)endIdx )
-         {
-            lastValue_outReal = inReal[i++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
       /* Add-up the initial period, except for the last value.
        *
        * The price*volume product is kept in its own statement so no compiler may
@@ -620,23 +603,6 @@ TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double
       {
          *outBegIdx= 0;
          *outNBElement= 0;
-         return TA_BAD_PARAM;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because
-       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
-       * because a lone zero volume must give the price, not NaN.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         outIdx = 0;
-         i = startIdx;
-         while( i <= (int)endIdx )
-         {
-            outReal[outIdx++] = inReal[i++];
-         }
-         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       /* Add-up the initial period, except for the last value.

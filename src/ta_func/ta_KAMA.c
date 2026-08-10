@@ -569,31 +569,6 @@ TA_RetCode TA_KAMA_OpenInternal( struct TA_KAMA_Stream **stream, const double in
       /* Default return values */
       dummyBegIdx = 0;
       dummyNBElement = 0;
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). The unstable period
-       * still delays the first output for API consistency.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         lookbackTotal = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_KAMA,Kama);
-         if( startIdx < lookbackTotal )
-         {
-            startIdx = lookbackTotal;
-         }
-         if( startIdx > endIdx )
-         {
-            return TA_BAD_PARAM;
-         }
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -834,31 +809,6 @@ TA_LIB_API TA_RetCode TA_KAMA_OpenAndFill( TA_KAMA_Stream **stream, const double
       /* Default return values */
       *outBegIdx= 0;
       *outNBElement= 0;
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). The unstable period
-       * still delays the first output for API consistency.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         lookbackTotal = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_KAMA,Kama);
-         if( startIdx < lookbackTotal )
-         {
-            startIdx = lookbackTotal;
-         }
-         if( startIdx > endIdx )
-         {
-            return TA_BAD_PARAM;
-         }
-         *outBegIdx= startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            outReal[outIdx++] = inReal[today++];
-         }
-         *outNBElement= outIdx;
-         return TA_BAD_PARAM;
-      }
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */

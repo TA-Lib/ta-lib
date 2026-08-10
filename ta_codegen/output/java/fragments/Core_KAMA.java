@@ -664,10 +664,6 @@
       /* Default return values */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). The unstable period
-       * still delays the first output for API consistency.
-       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -873,10 +869,6 @@
       /* Default return values */
       outBegIdx.value = 0;
       outNBElement.value = 0;
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). The unstable period
-       * still delays the first output for API consistency.
-       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */

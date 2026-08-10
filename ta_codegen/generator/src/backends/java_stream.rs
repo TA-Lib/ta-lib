@@ -853,6 +853,23 @@ fn emit_step_body(
     }
 }
 
+/// The identity short-circuit at the top of a dual-mode step, above the mode
+/// predicate — the one place it belongs, since it holds for the whole function
+/// (the arms are marked `identity_hoisted`, so they no longer carry a copy).
+fn emit_identity_step_branch(
+    o: &mut String,
+    model: &StreamModel,
+    ctx: &JavaRenderCtx,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    indent: usize,
+) {
+    if let Some(s) = streaming::identity_step_branch(model, &JavaStreamNames) {
+        o.push_str(&render_statement_ctx(&s, indent, ctx, enums, registry, helpers));
+    }
+}
+
 /// Extrema automatons carry batch-absolute int indices; rebase them by a
 /// multiple of the ring capacity long before Integer.MAX_VALUE (mirrors C
 /// verbatim — index differences and `% cap` residues are invariant).
@@ -948,14 +965,7 @@ fn build_open_body_java(model: &StreamModel, body: &[Statement], mode: OutMode) 
     if matches!(body.last(), Some(Statement::Return { .. })) {
         body.pop();
     }
-    // Delete the body's own identity branch (dead: the open head short-circuits
-    // the same condition before the body runs).
-    if let Some(idp) = &model.identity {
-        let cond_dbg = format!("{:?}", idp.condition);
-        body.retain(|st| {
-            !matches!(st, Statement::If { condition, .. } if format!("{condition:?}") == cond_dbg)
-        });
-    }
+    let body = streaming::strip_identity_branch(&body, model.identity.as_ref());
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
@@ -1798,6 +1808,10 @@ fn emit_dual_mode(
     emit_step_sig(o, func);
     let empty = HashSet::new();
     let ctx = stream_ctx(&empty, counter, stream_fma);
+    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
+    // in the batch and in the opens: it is a property of the function, not of a
+    // mode.
+    emit_identity_step_branch(o, ma, &ctx, enums, registry, helpers, 6);
     let pred_sp = params_on_state(func, &dmp.predicate);
     let pred_sp = render_predicate(&pred_sp, &ctx, registry, helpers);
     let _ = writeln!(o, "      if( {pred_sp} ) {{");

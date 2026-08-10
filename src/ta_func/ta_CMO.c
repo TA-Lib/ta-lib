@@ -620,26 +620,6 @@ TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inRe
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         i = endIdx - startIdx + 1;
-         dummyNBElement = i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         return TA_BAD_PARAM;
-      }
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -909,26 +889,6 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         i = endIdx - startIdx + 1;
-         *outNBElement= i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 )
-         {
-            outReal[outIdx] = inReal[today++];
-         }
-         return TA_BAD_PARAM;
-      }
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */

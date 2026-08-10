@@ -70775,10 +70775,6 @@ class Core {
           }
           outIdx = 0;
           /* Index into the output. */
-          /* Trap special case where the period is '1'.
-           * In that case, just copy the input into the
-           * output for the requested range (as-is !)
-           */
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -70957,10 +70953,6 @@ class Core {
           }
           outIdx = 0;
           /* Index into the output. */
-          /* Trap special case where the period is '1'.
-           * In that case, just copy the input into the
-           * output for the requested range (as-is !)
-           */
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -74048,16 +74040,6 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit and separate
-           * from TA_EMA's own copy because the two EMA below are inlined here,
-           * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-           * loses the input as soon as consecutive values differ by more than a
-           * factor of two, and 2*e1 - e2 then propagates the residue rather
-           * than cancelling it. The unstable period still delays the first
-           * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-           * 1, so the two disagree on alignment when it is non-zero.
-           */
           /* Both EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2. No temporary
            * buffers are needed.
@@ -74216,16 +74198,6 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit and separate
-           * from TA_EMA's own copy because the two EMA below are inlined here,
-           * not delegated -- at period 1 they reduce to (x-prev)+prev, which
-           * loses the input as soon as consecutive values differ by more than a
-           * factor of two, and 2*e1 - e2 then propagates the residue rather
-           * than cancelling it. The unstable period still delays the first
-           * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
-           * 1, so the two disagree on alignment when it is non-zero.
-           */
           /* Both EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2. No temporary
            * buffers are needed.
@@ -76780,14 +76752,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because at
-           * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-           * (x-prev)+prev -- which returns x only while consecutive values stay
-           * within a factor of two of each other. Two-decimal prices already
-           * spend a full mantissa, so a single 3x move breaks it. The unstable
-           * period still delays the first output.
-           */
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
           /* The first EMA is calculated differently. It
@@ -76907,14 +76871,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because at
-           * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-           * (x-prev)+prev -- which returns x only while consecutive values stay
-           * within a factor of two of each other. Two-decimal prices already
-           * spend a full mantissa, so a single 3x move breaks it. The unstable
-           * period still delays the first output.
-           */
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
           /* The first EMA is calculated differently. It
@@ -78426,12 +78382,12 @@ class Core {
        }
        void HMA_StreamStep( HMA_Stream sp, double inReal )
        {
+          if( sp.optInTimePeriod == 1 ) {
+             sp.cur_outReal = inReal;
+             return ;
+          }
           if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
              double tempReal = 0.0;
-             if( sp.optInTimePeriod == 1 ) {
-                sp.cur_outReal = inReal;
-                return ;
-             }
              if( sp.ringCap_trailingIdxFull == 0 ) {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
              }
@@ -78450,10 +78406,6 @@ class Core {
              }
           } else {
              double tempReal = 0.0;
-             if( sp.optInTimePeriod == 1 ) {
-                sp.cur_outReal = inReal;
-                return ;
-             }
              if( sp.ringCap_trailingIdxFull == 0 ) {
                 sp.ring_trailingIdxFull_inReal[0] = inReal;
              }
@@ -78601,11 +78553,6 @@ class Core {
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
               */
-             /* No smoothing at period of 1: the output is a copy of the input
-              * (same convention as TA_MA for every MAType). Explicit because the
-              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-              * arm below would leave a cancellation residual instead of a copy.
-              */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
              lookbackSqrt = WMA_Lookback(sqrtPeriod);
@@ -78752,11 +78699,6 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
-              */
-             /* No smoothing at period of 1: the output is a copy of the input
-              * (same convention as TA_MA for every MAType). Explicit because the
-              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -79049,11 +78991,6 @@ class Core {
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
               */
-             /* No smoothing at period of 1: the output is a copy of the input
-              * (same convention as TA_MA for every MAType). Explicit because the
-              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-              * arm below would leave a cancellation residual instead of a copy.
-              */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
              lookbackSqrt = WMA_Lookback(sqrtPeriod);
@@ -79200,11 +79137,6 @@ class Core {
               * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
               * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
               * differential in test_composite.c holds it to that, memcmp-exact.
-              */
-             /* No smoothing at period of 1: the output is a copy of the input
-              * (same convention as TA_MA for every MAType). Explicit because the
-              * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-              * arm below would leave a cancellation residual instead of a copy.
               */
              halfPeriod = optInTimePeriod / 2;
              sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -94284,10 +94216,6 @@ class Core {
           /* Default return values */
           outBegIdx.value = 0;
           outNBElement.value = 0;
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). The unstable period
-           * still delays the first output for API consistency.
-           */
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
            */
@@ -94493,10 +94421,6 @@ class Core {
           /* Default return values */
           outBegIdx.value = 0;
           outNBElement.value = 0;
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). The unstable period
-           * still delays the first output for API consistency.
-           */
           /* Identify the minimum number of price bar needed
            * to calculate at least one output.
            */
@@ -127205,10 +127129,6 @@ class Core {
           }
           outIdx = 0;
           /* Index into the output. */
-          /* Trap special case where the period is '1'.
-           * In that case, just copy the input into the
-           * output for the requested range (as-is !)
-           */
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -127394,10 +127314,6 @@ class Core {
           }
           outIdx = 0;
           /* Index into the output. */
-          /* Trap special case where the period is '1'.
-           * In that case, just copy the input into the
-           * output for the requested range (as-is !)
-           */
           /* Accumulate Wilder's "Average Gain" and "Average Loss"
            * among the initial period.
            */
@@ -138213,11 +138129,6 @@ class Core {
              outBegIdx.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because the
-           * coefficients below sum to 1 only in real arithmetic; going through
-           * the math would leave ~1e-14 floating-point drift on every value.
-           */
           outBegIdx.value = startIdx;
           today = startIdx - lookbackTotal;
           k = 2.0 / (optInTimePeriod + 1.0);
@@ -138418,11 +138329,6 @@ class Core {
              outBegIdx.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because the
-           * coefficients below sum to 1 only in real arithmetic; going through
-           * the math would leave ~1e-14 floating-point drift on every value.
-           */
           outBegIdx.value = startIdx;
           today = startIdx - lookbackTotal;
           k = 2.0 / (optInTimePeriod + 1.0);
@@ -139876,11 +139782,6 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because the
-           * 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-           * contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
-           */
           /* The three EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2, and each new EMA2 value
            * into EMA3. No temporary buffers are needed.
@@ -140066,11 +139967,6 @@ class Core {
           if( startIdx > endIdx ) {
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because the
-           * 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-           * contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
-           */
           /* The three EMA are computed in a single lockstep pass: each new
            * EMA1 value is immediately fed into EMA2, and each new EMA2 value
            * into EMA3. No temporary buffers are needed.
@@ -147283,11 +147179,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because
-           * (P*V)/V round-trips only ~97% of the time in IEEE double, and
-           * because a lone zero volume must give the price, not NaN.
-           */
           /* Add-up the initial period, except for the last value.
            *
            * The price*volume product is kept in its own statement so no compiler may
@@ -147424,11 +147315,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* No smoothing at period of 1: the output is a copy of the input
-           * (same convention as TA_MA for every MAType). Explicit because
-           * (P*V)/V round-trips only ~97% of the time in IEEE double, and
-           * because a lone zero volume must give the price, not NaN.
-           */
           /* Add-up the initial period, except for the last value.
            *
            * The price*volume product is kept in its own statement so no compiler may
@@ -149319,11 +149205,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* To make the rest more efficient, handle exception
-           * case where the user is asking for a period of '1'.
-           * In that case outputs equals inputs for the requested
-           * range.
-           */
           /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
            * int product n*(n+1) overflows int32 at n>=46341 (#142).
            */
@@ -149474,11 +149355,6 @@ class Core {
              outNBElement.value = 0;
              return RetCode.OutOfRangeEndIndex ;
           }
-          /* To make the rest more efficient, handle exception
-           * case where the user is asking for a period of '1'.
-           * In that case outputs equals inputs for the requested
-           * range.
-           */
           /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
            * int product n*(n+1) overflows int32 at n>=46341 (#142).
            */

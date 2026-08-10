@@ -749,6 +749,41 @@ fn emit_step_body(
     o.push_str(&body);
 }
 
+/// The identity short-circuit at the top of a dual-mode step, above the mode
+/// predicate — the one place it belongs, since it holds for the whole function
+/// (the arms are marked `identity_hoisted`, so they no longer carry a copy).
+#[allow(clippy::too_many_arguments)]
+fn emit_identity_step_branch(
+    o: &mut String,
+    model: &StreamModel,
+    ctx: &RustRenderCtx,
+    opt_real_params: &[String],
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+    indent: usize,
+) {
+    if let Some(s) = streaming::identity_step_branch(model, &RustStreamNames) {
+        let output_names: Vec<String> =
+            model.func.outputs.iter().map(|out| out.name.clone()).collect();
+        let var_inits: HashMap<String, &Expr> = HashMap::new();
+        o.push_str(&render_statement(
+            &s,
+            indent,
+            ctx,
+            &[],
+            &var_inits,
+            &output_names,
+            opt_real_params,
+            enums,
+            registry,
+            helpers,
+            counter,
+        ));
+    }
+}
+
 /// Extrema automatons carry batch-absolute i32 indices; rebase them by a
 /// multiple of the ring capacity long before i32::MAX (mirrors C verbatim —
 /// index differences and `% cap` residues are invariant).
@@ -886,14 +921,7 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
         body.pop();
     }
     body.retain(|st| !matches!(st, Statement::CircBuf(CircBuf::Destroy { .. })));
-    // Delete the body's own identity branch (dead: the open head short-circuits
-    // the same condition before the body runs).
-    if let Some(idp) = &model.identity {
-        let cond_dbg = format!("{:?}", idp.condition);
-        body.retain(|st| {
-            !matches!(st, Statement::If { condition, .. } if format!("{condition:?}") == cond_dbg)
-        });
-    }
+    let body = streaming::strip_identity_branch(&body, model.identity.as_ref());
     streaming::rewrite_stmts(&body, &fe, &fs)
 }
 
@@ -1907,6 +1935,9 @@ fn emit_dual_mode(
         .collect();
     emit_step_sig(o, func);
     let ctx = build_step_ctx(func, &[ma, mb], &typing);
+    // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
+    // in the batch and in Open: it is a property of the function, not of a mode.
+    emit_identity_step_branch(o, ma, &ctx, &opt_real_params, enums, registry, helpers, counter, 8);
     let pred_sp = params_on_state(func, &dmp.predicate);
     let pred_sp = render_expr(&pred_sp, &ctx, &opt_real_params, registry, helpers);
     let _ = writeln!(o, "        if {pred_sp} {{");

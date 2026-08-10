@@ -533,22 +533,6 @@ TA_RetCode TA_TEMA_OpenInternal( struct TA_TEMA_Stream **stream, const double in
       {
          return TA_BAD_PARAM;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-       * contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         while( startIdx <= endIdx )
-         {
-            lastValue_outReal = inReal[startIdx++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
       /* The three EMA are computed in a single lockstep pass: each new
        * EMA1 value is immediately fed into EMA2, and each new EMA2 value
        * into EMA3. No temporary buffers are needed.
@@ -787,22 +771,6 @@ TA_LIB_API TA_RetCode TA_TEMA_OpenAndFill( TA_TEMA_Stream **stream, const double
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         return TA_BAD_PARAM;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-       * contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         outIdx = 0;
-         while( startIdx <= endIdx )
-         {
-            outReal[outIdx++] = inReal[startIdx++];
-         }
-         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       /* The three EMA are computed in a single lockstep pass: each new

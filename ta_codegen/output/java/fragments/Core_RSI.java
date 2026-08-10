@@ -647,10 +647,6 @@
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */
@@ -836,10 +832,6 @@
       }
       outIdx = 0;
       /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
       /* Accumulate Wilder's "Average Gain" and "Average Loss"
        * among the initial period.
        */

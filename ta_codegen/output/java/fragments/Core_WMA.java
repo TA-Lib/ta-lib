@@ -529,11 +529,6 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
        */
@@ -684,11 +679,6 @@
          outNBElement.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* To make the rest more efficient, handle exception
-       * case where the user is asking for a period of '1'.
-       * In that case outputs equals inputs for the requested
-       * range.
-       */
       /* Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
        * int product n*(n+1) overflows int32 at n>=46341 (#142).
        */

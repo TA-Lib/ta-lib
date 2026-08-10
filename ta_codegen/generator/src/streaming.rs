@@ -611,6 +611,15 @@ pub struct StreamModel<'a> {
     pub steady: Steady,
     /// Recognized param==1 identity path, if the batch body has one.
     pub identity: Option<IdentityPath>,
+    /// Set when the surface enclosing this model already emits the identity
+    /// short-circuit, so the transition must NOT repeat it. Only the dual-mode
+    /// step sets it: the identity is a property of the whole function, not of a
+    /// mode, so the step tests it once above the mode predicate (mirroring the
+    /// batch and Open). Repeated per arm it would sit inside a param-pure
+    /// predicate that can exclude the identity value — HMA's `period == 1`
+    /// inside its `period == 2 || period == 3` arm, unreachable by
+    /// construction.
+    pub identity_hoisted: bool,
     /// Cursor-parity carry (`cursor % 2` odd/even branch), if the batch body
     /// has one. Seeded in open, flipped each update; see [`ParitySpec`].
     pub parity: Option<ParitySpec>,
@@ -1526,6 +1535,7 @@ pub fn analyze_region_scoped<'a>(
         lags: lag_slots,
         steady,
         identity,
+        identity_hoisted: false,
         parity,
     };
     // Drift-proof the cached tier: re-derive it from the FINAL model (through
@@ -1674,8 +1684,15 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     // The identity lives in the shared prologue, so neither region-scoped
     // analysis can see it; hand it to both so every mode-selected surface
     // (step, Open, OpenAndFill) short-circuits exactly as the batch does.
+    // Every one of those surfaces tests it ONCE, above the mode predicate, so
+    // the arms themselves must not re-test it: an arm's predicate is param-pure
+    // and can exclude the identity value outright (HMA's `period == 2 ||
+    // period == 3`), which would leave a `period == 1` branch that no input can
+    // reach.
     mode_a.identity.clone_from(&identity);
     mode_b.identity = identity;
+    mode_a.identity_hoisted = true;
+    mode_b.identity_hoisted = true;
 
     Ok(DualModePlan {
         func,
@@ -4719,6 +4736,85 @@ pub trait NameMap {
     fn extrema_cap(&self) -> String;
 }
 
+/// Drop the batch body's own identity branch from an Open transcription: the
+/// open head short-circuits the very same condition before this region runs, so
+/// the copy is unreachable there (and reads as a bug, since the return mapping
+/// rewrites its `return SUCCESS` into `return BAD_PARAM`). The comment block
+/// introducing the branch goes with it — kept, it would document code that is
+/// no longer there.
+#[must_use]
+pub fn strip_identity_branch(body: &[Statement], identity: Option<&IdentityPath>) -> Vec<Statement> {
+    let Some(idp) = identity else {
+        return body.to_vec();
+    };
+    let cond_dbg = format!("{:?}", idp.condition);
+    let mut out: Vec<Statement> = Vec::with_capacity(body.len());
+    for st in body {
+        if matches!(st, Statement::If { condition, .. } if format!("{condition:?}") == cond_dbg) {
+            if matches!(out.last(), Some(Statement::Comment(_))) {
+                out.pop();
+            }
+            continue;
+        }
+        out.push(st.clone());
+    }
+    out
+}
+
+/// Everything the transition reads off the handle instead of as a local: the
+/// loop-carried scalars plus every optional/private-extra parameter.
+fn transition_state_names(model: &StreamModel) -> BTreeSet<String> {
+    model
+        .state
+        .iter()
+        .map(|(n, _)| n.clone())
+        .chain(model.func.optional_inputs.iter().map(|p| p.name.clone()))
+        .chain(
+            model
+                .func
+                .private_extra_params
+                .iter()
+                .map(|(n, _)| n.clone()),
+        )
+        .collect()
+}
+
+/// The step's identity short-circuit as one statement: `if( <guard, params read
+/// off the handle> ) { <out = bar>...; return; }`. `None` when the batch body
+/// has no identity path.
+///
+/// One check per FUNCTION, never per mode. [`analyze_dual_mode`] hands the same
+/// path to both arms — a region-scoped model cannot see the shared prologue it
+/// lives in — so the dual-mode step emits this ABOVE its mode predicate, the
+/// way its Open head already does, and marks both arms
+/// [`StreamModel::identity_hoisted`] so [`build_transition`] leaves it out of
+/// the arm bodies.
+#[must_use]
+pub fn identity_step_branch(model: &StreamModel, names: &dyn NameMap) -> Option<Statement> {
+    let idp = model.identity.as_ref()?;
+    let state_names = transition_state_names(model);
+    let condition = rewrite_expr(&idp.condition, &|e| match e {
+        Expr::Var(n) if state_names.contains(&n) => Expr::Var(names.state(&n)),
+        other => other,
+    });
+    let mut then_body: Vec<Statement> = idp
+        .pairs
+        .iter()
+        .map(|(out, inp)| Statement::Assign {
+            target: names.output(out),
+            value: Expr::Var(names.bar(inp)),
+            compound: false,
+        })
+        .collect();
+    then_body.push(Statement::Return { value: None });
+    Some(Statement::If {
+        condition,
+        then_body,
+        else_body: vec![],
+        cond_comments: vec![],
+    })
+}
+
 /// Build the transition statements: the steady-loop body with
 /// - `in[cursor]`            -> the bar parameter,
 /// - `in[cursor-k]`          -> the lag state field,
@@ -4732,19 +4828,7 @@ pub trait NameMap {
 #[allow(clippy::too_many_lines)]
 pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<Statement>, String> {
     let dropped = model.dropped_vars();
-    let state_names: BTreeSet<String> = model
-        .state
-        .iter()
-        .map(|(n, _)| n.clone())
-        .chain(model.func.optional_inputs.iter().map(|p| p.name.clone()))
-        .chain(
-            model
-                .func
-                .private_extra_params
-                .iter()
-                .map(|(n, _)| n.clone()),
-        )
-        .collect();
+    let state_names = transition_state_names(model);
 
     let rewritten = rewrite_stmts(
         &model.steady_stmts,
@@ -4771,29 +4855,13 @@ pub fn build_transition(model: &StreamModel, names: &dyn NameMap) -> Result<Vec<
     );
 
     // param==1 identity short-circuit, mirroring the batch's explicit path
-    // (bit-exact: both sides copy the input).
-    let identity_branch = model.identity.as_ref().map(|idp| {
-        let condition = rewrite_expr(&idp.condition, &|e| match e {
-            Expr::Var(n) if state_names.contains(&n) => Expr::Var(names.state(&n)),
-            other => other,
-        });
-        let mut then_body: Vec<Statement> = idp
-            .pairs
-            .iter()
-            .map(|(out, inp)| Statement::Assign {
-                target: names.output(out),
-                value: Expr::Var(names.bar(inp)),
-                compound: false,
-            })
-            .collect();
-        then_body.push(Statement::Return { value: None });
-        Statement::If {
-            condition,
-            then_body,
-            else_body: vec![],
-            cond_comments: vec![],
-        }
-    });
+    // (bit-exact: both sides copy the input). Skipped when the enclosing
+    // surface emits it above this model — see [`StreamModel::identity_hoisted`].
+    let identity_branch = if model.identity_hoisted {
+        None
+    } else {
+        identity_step_branch(model, names)
+    };
 
     // Safety: no dropped variable may survive.
     let mut leaked = BTreeSet::new();

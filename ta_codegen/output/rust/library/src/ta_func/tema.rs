@@ -500,10 +500,6 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-        // contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
         // The three EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2, and each new EMA2 value
         // into EMA3. No temporary buffers are needed.
@@ -729,10 +725,6 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // 3*e1 - 3*e2 + e3 composition cancels exactly only without FMA
-        // contraction; ARM64 fused multiply-add leaves ~1e-14 residue.
         // The three EMA are computed in a single lockstep pass: each new
         // EMA1 value is immediately fed into EMA2, and each new EMA2 value
         // into EMA3. No temporary buffers are needed.

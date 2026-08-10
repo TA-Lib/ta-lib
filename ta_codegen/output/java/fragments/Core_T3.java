@@ -690,11 +690,6 @@
          outBegIdx.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);
@@ -895,11 +890,6 @@
          outBegIdx.value = 0;
          return RetCode.OutOfRangeEndIndex ;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
       outBegIdx.value = startIdx;
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);

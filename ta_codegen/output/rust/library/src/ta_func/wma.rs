@@ -406,10 +406,6 @@ impl Core {
             dummyNBElement = 0;
             return Err(RetCode::BadParam);
         }
-        // To make the rest more efficient, handle exception
-        // case where the user is asking for a period of '1'.
-        // In that case outputs equals inputs for the requested
-        // range.
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
         divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;
@@ -589,10 +585,6 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        // To make the rest more efficient, handle exception
-        // case where the user is asking for a period of '1'.
-        // In that case outputs equals inputs for the requested
-        // range.
         // Weighted denominator 1+2+...+n = n(n+1)/2. Computed in double: the
         // int product n*(n+1) overflows int32 at n>=46341 (#142).
         divider = (optInTimePeriod as f64) * (((optInTimePeriod + 1)) as f64) / 2.0;

@@ -548,23 +548,6 @@ TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal
          dummyBegIdx = 0;
          return TA_BAD_PARAM;
       }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
       dummyBegIdx = startIdx;
       today = startIdx - lookbackTotal;
       k = 2.0 / (optInTimePeriod + 1.0);
@@ -786,23 +769,6 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
       {
          *outNBElement= 0;
          *outBegIdx= 0;
-         return TA_BAD_PARAM;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because the
-       * coefficients below sum to 1 only in real arithmetic; going through
-       * the math would leave ~1e-14 floating-point drift on every value.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         *outBegIdx= startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            outReal[outIdx++] = inReal[today++];
-         }
-         *outNBElement= outIdx;
          return TA_BAD_PARAM;
       }
       *outBegIdx= startIdx;

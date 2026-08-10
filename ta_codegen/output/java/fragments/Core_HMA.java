@@ -718,12 +718,12 @@
    }
    void HMA_StreamStep( HMA_Stream sp, double inReal )
    {
+      if( sp.optInTimePeriod == 1 ) {
+         sp.cur_outReal = inReal;
+         return ;
+      }
       if( sp.optInTimePeriod == 2 || sp.optInTimePeriod == 3 ) {
          double tempReal = 0.0;
-         if( sp.optInTimePeriod == 1 ) {
-            sp.cur_outReal = inReal;
-            return ;
-         }
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -742,10 +742,6 @@
          }
       } else {
          double tempReal = 0.0;
-         if( sp.optInTimePeriod == 1 ) {
-            sp.cur_outReal = inReal;
-            return ;
-         }
          if( sp.ringCap_trailingIdxFull == 0 ) {
             sp.ring_trailingIdxFull_inReal[0] = inReal;
          }
@@ -893,11 +889,6 @@
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
-          */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
          lookbackSqrt = WMA_Lookback(sqrtPeriod);
@@ -1044,11 +1035,6 @@
           * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
@@ -1341,11 +1327,6 @@
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
           */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
-          */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);
          lookbackSqrt = WMA_Lookback(sqrtPeriod);
@@ -1492,11 +1473,6 @@
           * (periodSub/periodSum, lagged trailing subtract), so this fused pass is
           * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
           * differential in test_composite.c holds it to that, memcmp-exact.
-          */
-         /* No smoothing at period of 1: the output is a copy of the input
-          * (same convention as TA_MA for every MAType). Explicit because the
-          * formula has no value there -- Integer(1/2) is 0 -- and the degenerate
-          * arm below would leave a cancellation residual instead of a copy.
           */
          halfPeriod = optInTimePeriod / 2;
          sqrtPeriod = (int)Math.sqrt((double)optInTimePeriod);

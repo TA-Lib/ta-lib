@@ -547,10 +547,6 @@ impl Core {
             dummyBegIdx = 0;
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // coefficients below sum to 1 only in real arithmetic; going through
-        // the math would leave ~1e-14 floating-point drift on every value.
         dummyBegIdx = startIdx;
         today = startIdx - lookbackTotal;
         k = 2.0 / (((optInTimePeriod) as f64) + 1.0);
@@ -800,10 +796,6 @@ impl Core {
             (*outBegIdx) = 0;
             return Err(RetCode::BadParam);
         }
-        // No smoothing at period of 1: the output is a copy of the input
-        // (same convention as TA_MA for every MAType). Explicit because the
-        // coefficients below sum to 1 only in real arithmetic; going through
-        // the math would leave ~1e-14 floating-point drift on every value.
         (*outBegIdx) = startIdx;
         today = startIdx - lookbackTotal;
         k = 2.0 / (((optInTimePeriod) as f64) + 1.0);
