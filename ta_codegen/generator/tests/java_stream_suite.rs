@@ -88,7 +88,7 @@ fn test_java_sma_ring_stream_section() {
 }
 
 #[test]
-fn test_java_ema_private_extra_param_and_compat() {
+fn test_java_ema_derived_state_and_compat() {
     let s = java_stream_section("ema");
     // The k factor is captured state, computed after default substitution.
     assert!(s.contains("double optInK_1;"));

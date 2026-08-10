@@ -53,6 +53,7 @@
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
+ *  081026 MF,CC Fold the internal variant into EMA (issue #183).
  */
 
 // Import types from parent module
@@ -156,6 +157,36 @@ impl Core {
         startIdx: usize,
         endIdx: usize,
         inReal: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, EMA_fma, EMA_impl, (startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.EMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn EMA_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.EMA_impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn EMA_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inReal: &[f64],
         mut optInTimePeriod: i32,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
@@ -176,51 +207,15 @@ impl Core {
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inReal.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
-        // Simply call the internal implementation of the EMA.
-        return self.EMA_Private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1, outBegIdx, outNBElement, outReal);
-    }
-    /// Internal variant of [`Core::EMA`] taking the precomputed parameter `optInK_1`. Skips the
-    /// validation prologue: its only callers are the guarded bodies, which have already validated.
-    ///
-    /// Unlike [`Core::EMA`] the bounds assertions here are unconditional: an `endIdx` beyond the
-    /// input slice panics even when the lookback clamp means no element would be read.
-    #[inline]
-    pub(crate) fn EMA_Private(
-        &self,
-        mut startIdx: usize,
-        endIdx: usize,
-        inReal: &[f64],
-        mut optInTimePeriod: i32,
-        optInK_1: f64,
-        outBegIdx: &mut usize,
-        outNBElement: &mut usize,
-        outReal: &mut [f64],
-    ) -> RetCode {
+        let mut startIdx = startIdx;
+        let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        let _assertLb = self.EMA_Lookback(optInTimePeriod);
-        let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
-        assert!(endIdx < inReal.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        // Internal implementation can be called from any other TA function.
-        //
-        // Faster because there is no parameter check, but it is a double
-        // edge sword.
-        //
-        // The optInK_1 and optInTimePeriod are usually tightly coupled:
-        //
-        //    optInK_1  = 2 / (optInTimePeriod + 1).
-        //
-        // These values are going to be related by this equation 99.9% of the
-        // time... but there is some exception, this is why both must be provided.
-        //
-        // Exception to the exception: at optInTimePeriod == 1 the period wins --
-        // the no-smoothing copy is taken whatever optInK_1 says.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.EMA_Lookback(optInTimePeriod);
@@ -287,12 +282,12 @@ impl Core {
             today = 1;
         }
         while today <= startIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
         }
         outReal[0] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
             outReal[outIdx] = prevMA;
             outIdx += 1;
         }
@@ -333,7 +328,7 @@ impl Core {
             (*outReal) = inReal;
             return;
         }
-        sp.prevMA = (inReal - sp.prevMA) * ((sp.optInK_1) as f64) + sp.prevMA;
+        sp.prevMA = (inReal - sp.prevMA as f64).mul_add(sp.optInK_1, sp.prevMA);
         (*outReal) = sp.prevMA;
     }
 
@@ -358,14 +353,13 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut optInK_1: f64 = 2.0 / ((optInTimePeriod + 1) as f64);
         if optInTimePeriod == 1 {
             if historyLen < self.EMA_Lookback(optInTimePeriod) + 1 {
                 return Err(RetCode::BadParam);
             }
             let state = EMA_StreamState {
                 optInTimePeriod: optInTimePeriod,
-                optInK_1: optInK_1,
+                optInK_1: 0.0_f64,
                 prevMA: 0.0_f64,
             };
             let fillLb: usize = self.EMA_Lookback(optInTimePeriod);
@@ -382,26 +376,14 @@ impl Core {
             }
             return Ok(EMA_Stream { core: self.clone(), state });
         }
+        let mut optInK_1: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut prevMA: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut lookbackTotal: usize = 0_usize;
-        // Internal implementation can be called from any other TA function.
-        //
-        // Faster because there is no parameter check, but it is a double
-        // edge sword.
-        //
-        // The optInK_1 and optInTimePeriod are usually tightly coupled:
-        //
-        //    optInK_1  = 2 / (optInTimePeriod + 1).
-        //
-        // These values are going to be related by this equation 99.9% of the
-        // time... but there is some exception, this is why both must be provided.
-        //
-        // Exception to the exception: at optInTimePeriod == 1 the period wins --
-        // the no-smoothing copy is taken whatever optInK_1 says.
+        optInK_1 = 2.0 / ((optInTimePeriod + 1) as f64);
         // Identify the minimum number of price bar needed
         // to calculate at least one output.
         lookbackTotal = self.EMA_Lookback(optInTimePeriod);
@@ -450,12 +432,12 @@ impl Core {
             today = 1;
         }
         while today <= startIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
         }
         outReal[(0 * outStride) as usize] = prevMA;
         outIdx = 1;
         while today <= endIdx {
-            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA) * ((optInK_1) as f64) + prevMA;
+            prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevMA;
         }
         (*outNBElement) = outIdx;

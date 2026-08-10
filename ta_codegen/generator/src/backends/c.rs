@@ -2364,10 +2364,23 @@ mod tests {
 
     /// Helper to load a FuncDef from the ta_codegen/input directory.
     fn load_func(name: &str) -> (FuncDef, HashMap<String, EnumDef>) {
-        let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+        load_func_from(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"), name)
+    }
+
+    /// Load a synthetic gate fixture from `input_synth/` — the definitions that
+    /// carry generator constructs no shipped indicator uses (see
+    /// `input_synth/README.md`). `enums.yaml` still comes from the real input
+    /// tree; the fixtures share it.
+    fn load_synth_func(name: &str) -> (FuncDef, HashMap<String, EnumDef>) {
+        load_func_from(&Path::new(env!("CARGO_MANIFEST_DIR")).join("input_synth"), name)
+    }
+
+    fn load_func_from(base: &Path, name: &str) -> (FuncDef, HashMap<String, EnumDef>) {
         let dir = base.join(name);
         let yaml_path = dir.join(format!("{name}.yaml"));
         let c_path = dir.join(format!("{name}.c"));
+
+        let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
 
         let enums_path = base.join("enums.yaml");
         let enums = if enums_path.exists() {
@@ -2414,18 +2427,20 @@ mod tests {
     #[test]
     fn test_c_private_omits_range_checks() {
         // Exactly one tier validates: the guarded entry point, not `_Private`.
-        // EMA is the one definition in ta_codegen/input/ with an explicit _private.
-        let (func, enums) = load_func("ema");
+        // No shipped indicator declares an explicit _private, so the construct
+        // is held by the SYNTH4 gate fixture (input_synth/README.md), which also
+        // carries it end-to-end through every backend in scripts/synth_gate.py.
+        let (func, enums) = load_synth_func("synth4");
         let registry = make_registry();
         let output = generate(&func, &enums, &registry, &HelperRegistry::empty());
 
         // `_Private` is emitted BEFORE the guarded body (the guarded one calls
         // it), so the private section runs from its definition to the guarded one.
         let private_start = output
-            .find("static TA_RetCode TA_EMA_Private(")
+            .find("static TA_RetCode TA_SYNTH4_Private(")
             .expect("Missing private function");
         let guarded_start = output
-            .find("TA_LIB_API TA_RetCode TA_EMA(")
+            .find("TA_LIB_API TA_RetCode TA_SYNTH4(")
             .expect("Missing guarded function");
         assert!(private_start < guarded_start, "_Private must precede its caller");
 

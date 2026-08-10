@@ -204,7 +204,10 @@ mod tests {
         assert_eq!(registry.resolve_call("ema", Lang::Java), "EMA_Internal");
         assert_eq!(registry.resolve_call("ema", Lang::CSharp), "EMA");
 
-        // `_private` is resolved by the same rule as any other suffix.
+        // `_private` is resolved by the same rule as any other suffix. Spelled
+        // against `ema` because this is a pure name transformation and every
+        // indicator is a valid subject; the construct itself is carried by the
+        // SYNTH4 gate fixture (input_synth/README.md).
         assert_eq!(registry.resolve_call("ema_private", Lang::C), "TA_EMA_Private");
         assert_eq!(registry.resolve_call("ema_private", Lang::Rust), "EMA_Private");
         assert_eq!(registry.resolve_call("ema_private", Lang::Java), "EMA_Private");

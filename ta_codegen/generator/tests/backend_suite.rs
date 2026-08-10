@@ -42,11 +42,31 @@ fn discover_indicators() -> Vec<String> {
 /// Load a function definition from its .yaml + .c files.
 /// Always loads enums.yaml since multiple indicators use enum types.
 fn load_indicator(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
-    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    load_from(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input"),
+        name,
+    )
+}
+
+/// Load a synthetic gate fixture from `input_synth/` — the definitions carrying
+/// generator constructs no shipped indicator uses (see `input_synth/README.md`).
+/// `scripts/synth_gate.py` runs the same fixtures end-to-end through every
+/// backend; these tests pin the rendered shape.
+fn load_synth(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
+    load_from(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("input_synth"),
+        name,
+    )
+}
+
+fn load_from(base: &Path, name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
     let yaml_path = base.join(format!("{}/{}.yaml", name, name));
     let c_path = base.join(format!("{}/{}.c", name, name));
 
-    let enums_path = base.join("enums.yaml");
+    // Enums always come from the real input tree: the synthetic fixtures share it.
+    let enums_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../ta_codegen/input")
+        .join("enums.yaml");
     let enums = parser::enums::load_enums(&enums_path);
 
     let mut func_def = parser::yaml::parse_yaml(&yaml_path);
@@ -93,6 +113,15 @@ struct AllOutputs {
 
 fn make_registry() -> Registry {
     let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    Registry::from_dir(&base)
+}
+
+/// A registry over the `input_synth/` gate fixtures. `scripts/synth_gate.py`
+/// copies them into `ta_codegen/input/` before generating, so there they are
+/// registered alongside the shipped indicators; here they are their own tree.
+/// Sufficient for the fixtures, none of which calls a shipped indicator.
+fn make_synth_registry() -> Registry {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("input_synth");
     Registry::from_dir(&base)
 }
 
@@ -504,25 +533,25 @@ fn test_c_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_c_ema_private_omits_validation() {
+fn test_c_synth_private_omits_validation() {
     // Exactly one tier validates: the guarded entry point, not `_Private`.
-    // Anchored on EMA — the one definition in ta_codegen/input/ with an
-    // explicit _private.
-    let (func, enums) = load_indicator("ema");
+    // Anchored on the SYNTH4 gate fixture — no shipped indicator declares an
+    // explicit _private (EMA's was folded away in #183).
+    let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
     let private = extract_section(
         &out.c,
-        "static TA_RetCode TA_EMA_Private(",
-        "TA_LIB_API TA_RetCode TA_EMA(",
+        "static TA_RetCode TA_SYNTH4_Private(",
+        "TA_LIB_API TA_RetCode TA_SYNTH4(",
     );
     assert!(
         !private.contains("TA_OUT_OF_RANGE_START_INDEX"),
-        "C EMA _Private should NOT have start index validation"
+        "C SYNTH4 _Private should NOT have start index validation"
     );
     assert!(
         !private.contains("TA_OUT_OF_RANGE_END_INDEX"),
-        "C EMA _Private should NOT have end index validation"
+        "C SYNTH4 _Private should NOT have end index validation"
     );
 }
 
@@ -543,14 +572,14 @@ fn test_java_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_java_ema_private_omits_validation() {
-    let (func, enums) = load_indicator("ema");
+fn test_java_synth_private_omits_validation() {
+    let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
-    let private = extract_section(&out.java, "RetCode EMA_Private(", "RetCode EMA_Internal(");
+    let private = extract_section(&out.java, "RetCode SYNTH4_Private(", "RetCode SYNTH4_Internal(");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Java EMA_Private should NOT have start index validation"
+        "Java SYNTH4_Private should NOT have start index validation"
     );
 }
 
@@ -569,20 +598,20 @@ fn test_rust_sma_guarded_has_validation() {
 }
 
 #[test]
-fn test_rust_ema_private_omits_validation() {
-    let (func, enums) = load_indicator("ema");
+fn test_rust_synth_private_omits_validation() {
+    let (func, enums) = load_synth("synth4");
     let out = generate_all(&func, &enums);
 
-    // `pub(crate)`, matching C's file-`static` TA_EMA_Private (#180): skipping
+    // `pub(crate)`, matching C's file-`static` TA_SYNTH4_Private (#180): skipping
     // validation is only sound while the callers are the guarded bodies.
-    let private = extract_section(&out.rust, "pub(crate) fn EMA_Private(", "\n}\n");
+    let private = extract_section(&out.rust, "pub(crate) fn SYNTH4_Private(", "\n}\n");
     assert!(
         !private.contains("OutOfRangeStartIndex"),
-        "Rust EMA_Private should NOT have range validation"
+        "Rust SYNTH4_Private should NOT have range validation"
     );
     assert!(
-        !out.rust.contains("pub fn EMA_Private("),
-        "Rust ema_private must not be crate-public: it is the one entry point with no \
+        !out.rust.contains("pub fn SYNTH4_Private("),
+        "Rust synth4_private must not be crate-public: it is the one entry point with no \
          validation prologue, so a `pub` here bypasses the TA_MAX_INDEX bound (#180)"
     );
 }
@@ -1065,9 +1094,8 @@ fn test_all_indicators_contain_success_returns() {
         };
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            // Delegation functions (e.g. EMA -> TA_EMA_Private, MACDFIX ->
-            // TA_MACD) return a RetCode from a callee without ever mentioning
-            // TA_SUCCESS literally.
+            // Delegation functions (e.g. MACDFIX -> TA_MACD) return a RetCode
+            // from a callee without ever mentioning TA_SUCCESS literally.
             // Accept: literal TA_SUCCESS OR a `return TA_<func>( ... )` delegation.
             let c_has_success = out.c.contains("TA_SUCCESS")
                 || out.c.lines().any(|l| {
@@ -3727,12 +3755,11 @@ fn rust_cross_indicator_lookback_with_pascal_case() {
 
 #[test]
 fn rust_private_cross_indicator_call() {
-    // EMA has explicit _private with extra params. Registry routes:
-    //   ema() → ema(), ema_private() → ema_private()
-    // The `_private` arm has its own resolution path and is
-    // (MACD was the original vehicle for both paths, but its lockstep fusion
-    // removed the EMA calls.) The bare-name path is exercised by MA's dispatch;
-    // the private-name path by EMA's guarded body delegating to ema_private().
+    // Two distinct call-resolution paths. The bare-name path is exercised by
+    // MA's dispatch to ema(); the private-name path (`<name>_private()` →
+    // `<Name>_Private`) by the SYNTH4 gate fixture's guarded body, which is the
+    // only definition left declaring an explicit _private with extra params
+    // (EMA's was folded away in #183).
     let registry = make_registry();
     let helpers = make_helpers();
 
@@ -3743,11 +3770,12 @@ fn rust_private_cross_indicator_call() {
         "MA Rust dispatch should call self.EMA(): {rust_out}"
     );
 
-    let (func, enums) = load_indicator("ema");
-    let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
+    let synth_registry = make_synth_registry();
+    let (func, enums) = load_synth("synth4");
+    let rust_out = backends::rust_lang::generate(&func, &enums, &synth_registry, &helpers);
     assert!(
-        rust_out.contains("self.EMA_Private("),
-        "EMA Rust guarded body should delegate to self.EMA_Private(): {rust_out}"
+        rust_out.contains("self.SYNTH4_Private("),
+        "SYNTH4 Rust guarded body should delegate to self.SYNTH4_Private(): {rust_out}"
     );
 }
 
@@ -8294,9 +8322,10 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
 fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
     const FUSING: &[&str] = &[
         "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-        "cdlpiercing", "cdlthrusting", "dema", "ht_dcperiod", "ht_dcphase", "ht_phasor",
-        "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg", "macd", "macdfix",
-        "mama", "sar", "sarext", "t3", "tema", "trix", "tsf", "wclprice",
+        "cdlpiercing", "cdlthrusting", "dema", "ema", "ht_dcperiod", "ht_dcphase",
+        "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
+        "macd", "macdfix", "mama", "sar", "sarext", "t3", "tema", "trix", "tsf",
+        "wclprice",
     ];
     let registry = make_registry();
     let helpers = make_helpers();

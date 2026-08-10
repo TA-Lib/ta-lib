@@ -211,8 +211,8 @@ ErrorNumber test_func_variants( TA_History *history )
    ctx.nb = nb;
    ctx.nbFunc = ctx.nbVector = ctx.nbCompare = ctx.nbValueCmp = ctx.nbOutputCmp = 0;
 
-   /* TA_EMA_Lookback reads the unstable period and TA_EMA_Private branches on
-    * the compatibility mode; neutralise both so a leftover setting from an
+   /* TA_EMA_Lookback reads the unstable period and TA_EMA branches on the
+    * compatibility mode; neutralise both so a leftover setting from an
     * earlier test group cannot colour these results. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );

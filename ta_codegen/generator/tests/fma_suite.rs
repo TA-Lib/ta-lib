@@ -130,13 +130,17 @@ fn fma_fusion_is_seed_invariant_across_all_functions() {
 /// (guards against the detector silently going dark for all of them).
 #[test]
 fn fma_fusion_fires_for_known_candidates() {
-    // The 26 functions whose generated code contains a fused site (matches the
-    // Rust `mul_add` / C `fma()` / Java `Math.fma` inventory).
+    // The 27 functions whose generated code contains a fused site (matches the
+    // Rust `mul_add` / C `fma()` / Java `Math.fma` inventory). Kept in step with
+    // the same list in `backend_suite.rs`
+    // (rust_fma_dispatch_fires_for_exactly_the_fusing_functions), which is the
+    // one that also fails on an UNEXPECTED entry.
     const FUSING: &[&str] = &[
         "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-        "cdlpiercing", "cdlthrusting", "dema", "ht_dcperiod", "ht_dcphase", "ht_phasor",
-        "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg", "macd", "macdfix",
-        "mama", "sar", "sarext", "t3", "tema", "trix", "tsf", "wclprice",
+        "cdlpiercing", "cdlthrusting", "dema", "ema", "ht_dcperiod", "ht_dcphase",
+        "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
+        "macd", "macdfix", "mama", "sar", "sarext", "t3", "tema", "trix", "tsf",
+        "wclprice",
     ];
     for name in FUSING {
         let f = load_func_full(name);

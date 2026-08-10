@@ -12,6 +12,7 @@
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
+ *  081026 MF,CC Fold the internal variant into EMA (issue #183).
  *
  */
 
@@ -27,37 +28,8 @@ TA_RetCode ema(int startIdx, int endIdx,
    double *outReal)
 {
    double optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
-
-   /* Simply call the internal implementation of the EMA. */
-   return ema_private(startIdx, endIdx, inReal, optInTimePeriod, optInK_1,
-      outBegIdx, outNBElement, outReal);
-}
-
-TA_RetCode ema_private(int startIdx, int endIdx,
-   const double *inReal,
-   int optInTimePeriod,
-   double optInK_1,
-   int *outBegIdx, int *outNBElement,
-   double *outReal)
-{
    double tempReal, prevMA;
    int i, today, outIdx, lookbackTotal;
-
-   /* Internal implementation can be called from any other TA function.
-    *
-    * Faster because there is no parameter check, but it is a double
-    * edge sword.
-    *
-    * The optInK_1 and optInTimePeriod are usually tightly coupled:
-    *
-    *    optInK_1  = 2 / (optInTimePeriod + 1).
-    *
-    * These values are going to be related by this equation 99.9% of the
-    * time... but there is some exception, this is why both must be provided.
-    *
-    * Exception to the exception: at optInTimePeriod == 1 the period wins --
-    * the no-smoothing copy is taken whatever optInK_1 says.
-    */
 
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.

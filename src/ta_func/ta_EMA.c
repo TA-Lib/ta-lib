@@ -56,6 +56,7 @@
  *  112400 MF   Template creation.
  *  052603 MF   Adapt code to compile with .NET Managed C++
  *  080926 MF,CC Explicit no-smoothing copy at a period of 1.
+ *  081026 MF,CC Fold the internal variant into EMA (issue #183).
  */
 
 TA_LIB_API int TA_EMA_Lookback( int optInTimePeriod )
@@ -67,15 +68,16 @@ TA_LIB_API int TA_EMA_Lookback( int optInTimePeriod )
    return optInTimePeriod - 1 + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_EMA,Ema);
 }
 
-static TA_RetCode TA_EMA_Private( int    startIdx,
-                                  int    endIdx,
-                                  const double inReal[],
-                                  int optInTimePeriod,
-                                  double optInK_1,
-                                  int          *outBegIdx,
-                                  int          *outNBElement,
-                                  double        outReal[] )
+TA_FMA_MULTIVERSION
+TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
+                              int    endIdx,
+                              const double inReal[],
+                              int optInTimePeriod,
+                              int          *outBegIdx,
+                              int          *outNBElement,
+                              double        outReal[] )
 {
+   double optInK_1;
    double tempReal;
    double prevMA;
    int i;
@@ -83,21 +85,21 @@ static TA_RetCode TA_EMA_Private( int    startIdx,
    int outIdx;
    int lookbackTotal;
 
-   /* Internal implementation can be called from any other TA function.
-    *
-    * Faster because there is no parameter check, but it is a double
-    * edge sword.
-    *
-    * The optInK_1 and optInTimePeriod are usually tightly coupled:
-    *
-    *    optInK_1  = 2 / (optInTimePeriod + 1).
-    *
-    * These values are going to be related by this equation 99.9% of the
-    * time... but there is some exception, this is why both must be provided.
-    *
-    * Exception to the exception: at optInTimePeriod == 1 the period wins --
-    * the no-smoothing copy is taken whatever optInK_1 says.
-    */
+   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
+      return TA_OUT_OF_RANGE_START_INDEX;
+   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
+      return TA_OUT_OF_RANGE_END_INDEX;
+
+   if( !inReal )
+      return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( !outReal )
+      return TA_BAD_PARAM;
+
+   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
     */
@@ -175,48 +177,20 @@ static TA_RetCode TA_EMA_Private( int    startIdx,
    }
    while( today <= startIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
-                              int    endIdx,
-                              const double inReal[],
-                              int optInTimePeriod,
-                              int          *outBegIdx,
-                              int          *outNBElement,
-                              double        outReal[] )
-{
-   double optInK_1;
-
-   if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
-      return TA_OUT_OF_RANGE_START_INDEX;
-   if( (endIdx < 0) || (endIdx > TA_MAX_INDEX) || (endIdx < startIdx) )
-      return TA_OUT_OF_RANGE_END_INDEX;
-
-   if( !inReal )
-      return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
-      optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( !outReal )
-      return TA_BAD_PARAM;
-
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   /* Simply call the internal implementation of the EMA. */
-   return TA_EMA_Private(startIdx,endIdx,inReal,optInTimePeriod,optInK_1,outBegIdx,outNBElement,outReal);
-}
-
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_EMA( int    startIdx,
                      int    endIdx,
                      const float inReal[],
@@ -225,13 +199,13 @@ TA_RetCode TA_S_EMA( int    startIdx,
                      int          *outNBElement,
                      double        outReal[] )
 {
+   double optInK_1;
    double tempReal;
    double prevMA;
    int i;
    int today;
    int outIdx;
    int lookbackTotal;
-   double optInK_1;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -248,7 +222,6 @@ TA_RetCode TA_S_EMA( int    startIdx,
       return TA_BAD_PARAM;
 
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-
    lookbackTotal = TA_EMA_Lookback(optInTimePeriod);
    if( startIdx < lookbackTotal )
    {
@@ -290,13 +263,13 @@ TA_RetCode TA_S_EMA( int    startIdx,
    }
    while( today <= startIdx )
    {
-      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
    }
    outReal[0] = prevMA;
    outIdx = 1;
    while( today <= endIdx )
    {
-      prevMA = ((double)inReal[today++] - prevMA) * optInK_1 + prevMA;
+      prevMA = fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
       outReal[outIdx++] = prevMA;
    }
    *outNBElement= outIdx;
@@ -319,7 +292,7 @@ static void TA_EMA_StepInternal( struct TA_EMA_Stream *sp, double inReal, double
       *outReal= inReal;
       return;
    }
-   sp->prevMA = (inReal - sp->prevMA) * sp->optInK_1 + sp->prevMA;
+   sp->prevMA = fma(inReal - sp->prevMA, sp->optInK_1, sp->prevMA);
    *outReal= sp->prevMA;
 }
 
@@ -329,7 +302,6 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double optInK_1;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -344,7 +316,6 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    if( optInTimePeriod == 1 )
@@ -354,7 +325,6 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
-      sp->optInK_1 = optInK_1;
       {
          int fillLb = TA_EMA_Lookback( optInTimePeriod );
          int fillIdx;
@@ -377,27 +347,13 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
    }
 
    {
+      double optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
       double tempReal;
       double prevMA = 0.0;
       int i;
       int today;
       int outIdx;
       int lookbackTotal;
-      /* Internal implementation can be called from any other TA function.
-       *
-       * Faster because there is no parameter check, but it is a double
-       * edge sword.
-       *
-       * The optInK_1 and optInTimePeriod are usually tightly coupled:
-       *
-       *    optInK_1  = 2 / (optInTimePeriod + 1).
-       *
-       * These values are going to be related by this equation 99.9% of the
-       * time... but there is some exception, this is why both must be provided.
-       *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins --
-       * the no-smoothing copy is taken whatever optInK_1 says.
-       */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
        */
@@ -455,13 +411,13 @@ static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double i
       }
       while( today <= startIdx )
       {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+         prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
       }
       outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx )
       {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
+         prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
          outReal[outIdx++ * outStride] = prevMA;
       }
       *outNBElement= outIdx;

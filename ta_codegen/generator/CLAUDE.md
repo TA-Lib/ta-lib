@@ -227,7 +227,7 @@ is concrete-`f64` only.
 |---------|---------|
 | `fn <N>_Lookback(...) -> usize` | Lookback (first valid output index) |
 | `fn <N>(...)` | Guarded public API: validates params, pre-computes optimization values, delegates |
-| `fn <N>_Private(...)` | Only where the definition declares one (`EMA_Private`). Extra pre-computed params (EMA's `k`), no validation prologue — its only caller is the guarded body above it |
+| `fn <N>_Private(...)` | Only where the definition declares one. Extra pre-computed params, no validation prologue — its only caller is the guarded body above it. No shipped indicator declares one; the construct is carried by the `SYNTH4` gate fixture (`input_synth/README.md`) |
 
 Cross-indicator calls target the **guarded** entry point, which carries the
 bounds-assert preamble; that preamble takes an empty-range escape so a call

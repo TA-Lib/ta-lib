@@ -2129,9 +2129,9 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
  * That vector is the one that exposed the TA_S_EMA defect fixed in 2e9767397:
  * the float body derived EMA's k factor from the raw sentinel because the
  * initialiser ran before the prologue substituted it, while the double tier
- * delegated to TA_EMA_Private after validation and was right. The same defect
- * was live in Java's float emaInternal and C#'s float Ema, where no gate could
- * see it — reaching only resolved defaults, this leg could not have caught it.
+ * was right. The same defect was live in Java's float emaInternal and C#'s
+ * float Ema, where no gate could see it — reaching only resolved defaults,
+ * this leg could not have caught it.
  *
  * Not asserted here: float(sentinel) == float(default). A body that mishandles
  * the sentinel diverges from its own double tier (the pair check above) or is

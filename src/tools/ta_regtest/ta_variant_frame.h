@@ -7084,7 +7084,7 @@ static const TA_VariantEntry TA_VariantTable[] = {
    { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, 0, 0 },
    { "EMA", TA_EMA_VFrameD, TA_EMA_VFrameS,
-     1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, 0, 1 },
+     1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, 0, 0 },
    { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
      1, TA_VIn_EXP, 0, NULL, 1, 0, 0 },
    { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,

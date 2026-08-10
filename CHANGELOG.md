@@ -63,6 +63,11 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
+- (#183) EMA now uses a fused multiply-add in its recursion, as the EMA cascades inside
+  DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most a few units in
+  the last place (measured worst 2.8e-16 relative on the reference series), and the same
+  shift reaches MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MA
+  type is EMA. TA_EMA and those cascades now agree bit-for-bit at equal periods.
 - (#4,#14) API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
 - (#144) API: `TA_FUNC_UNST_ALL` is now `65535` instead of tracking the number of
@@ -103,7 +108,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 ### Removed
 - (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` functions, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents. Introduced in 0.7.1 as a faster tier that skipped parameter validation; measurement across four toolchains found it is not measurably faster at any range size (one was 20-45% slower) while costing 15.5% of the library's `.text`. Use the ordinary function — `TA_SMA`, `core.SMA(..)`, `SMA(..)` — which returns the same values for the same valid inputs.
 - (#166) `include/ta_func_unguarded.h`. Half of it declared the functions above and the rest was never public API. `include/ta_func.h` already carries the complete stream surface.
-- (#166) `TA_EMA_Private` and `TA_S_EMA_Private` are no longer exported.
+- (#166,#183) `TA_EMA_Private` and `TA_S_EMA_Private`. They were exported up to 0.7.1; the
+  algorithm now lives in `TA_EMA` itself. Call `TA_EMA`, which returns the same values.
 
 ## [0.7.1] 2026-07-03
 ### Added

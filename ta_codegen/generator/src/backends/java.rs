@@ -756,8 +756,10 @@ fn gen_private(
 }
 
 /// Generate the Private method float overload (for Java method overloading).
-/// Java needs this because float[] is not assignable to double[] — S_ callers
-/// of EMA_Private(float_input, k) need a float overload.
+/// Java needs this because float[] is not assignable to double[] — an S_ caller
+/// of `<N>_Private(float_input, k)` needs a float overload. No shipped indicator
+/// declares a `_private`; the construct is carried by the SYNTH4 gate fixture
+/// (`input_synth/README.md`).
 fn gen_private_sp(
     func: &FuncDef,
     enums: &HashMap<String, EnumDef>,
