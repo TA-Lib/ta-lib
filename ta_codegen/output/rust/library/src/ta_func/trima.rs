@@ -554,10 +554,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TRIMA_Open`] (composition seam).
-    pub(crate) fn TRIMA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TRIMA_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::TRIMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TRIMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TRIMA_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TRIMA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -574,7 +575,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         if optInTimePeriod % 2 == 1 {
             let mut lookbackTotal: usize = 0_usize;
             let mut numerator: f64 = 0.0_f64;
@@ -597,8 +597,8 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                dummyBegIdx = 0;
-                dummyNBElement = 0;
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
                 return Err(RetCode::BadParam);
             }
             // TRIMA Description
@@ -745,7 +745,7 @@ impl Core {
             // Write the first output
             outIdx = 0;
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            lastValue_outReal = numerator * factor;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = numerator * factor;
             todayIdx += 1;
             // Note: The value at the trailingIdx was saved
             //       in tempReal to account for the case where
@@ -767,10 +767,10 @@ impl Core {
                 numerator += tempReal;
                 // Step (4)
                 tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                lastValue_outReal = numerator * factor;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = numerator * factor;
             }
-            dummyNBElement = outIdx;
-            dummyBegIdx = startIdx;
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
 
             // Capture the live batch state into the handle.
             let cap_middleIdx: i64 = (todayIdx as i64) - (middleIdx as i64);
@@ -803,7 +803,7 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok((TRIMA_Stream { core: self.clone(), state }, lastValue_outReal))
+            Ok(TRIMA_Stream { core: self.clone(), state })
         } else {
             let mut lookbackTotal: usize = 0_usize;
             let mut numerator: f64 = 0.0_f64;
@@ -826,8 +826,8 @@ impl Core {
             }
             // Make sure there is still something to evaluate.
             if startIdx > endIdx {
-                dummyBegIdx = 0;
-                dummyNBElement = 0;
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
                 return Err(RetCode::BadParam);
             }
             // TRIMA Description
@@ -953,7 +953,7 @@ impl Core {
             // Write the first output
             outIdx = 0;
             tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            lastValue_outReal = numerator * factor;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = numerator * factor;
             todayIdx += 1;
             // Note: The value at the trailingIdx was saved
             //       in tempReal to account for the case where
@@ -975,10 +975,10 @@ impl Core {
                 numerator += tempReal;
                 // Step (4)
                 tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                lastValue_outReal = numerator * factor;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = numerator * factor;
             }
-            dummyNBElement = outIdx;
-            dummyBegIdx = startIdx;
+            (*outNBElement) = outIdx;
+            (*outBegIdx) = startIdx;
 
             // Capture the live batch state into the handle.
             let cap_middleIdx: i64 = (todayIdx as i64) - (middleIdx as i64);
@@ -1011,8 +1011,19 @@ impl Core {
                 ringCap_trailingIdx: cap_trailingIdx as usize,
                 ring_trailingIdx_inReal,
             };
-            Ok((TRIMA_Stream { core: self.clone(), state }, lastValue_outReal))
+            Ok(TRIMA_Stream { core: self.clone(), state })
         }
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TRIMA_Open`] (composition seam).
+    pub(crate) fn TRIMA_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(TRIMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TRIMA_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live TRIMA stream over the warm-up history; returns the handle and
@@ -1045,464 +1056,7 @@ impl Core {
     pub fn TRIMA_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TRIMA_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        if optInTimePeriod % 2 == 1 {
-            let mut lookbackTotal: usize = 0_usize;
-            let mut numerator: f64 = 0.0_f64;
-            let mut numeratorSub: f64 = 0.0_f64;
-            let mut numeratorAdd: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
-            let mut outIdx: usize = 0_usize;
-            let mut todayIdx: usize = 0_usize;
-            let mut trailingIdx: usize = 0_usize;
-            let mut middleIdx: usize = 0_usize;
-            let mut factor: f64 = 0.0_f64;
-            let mut tempReal: f64 = 0.0_f64;
-            // Identify the minimum number of price bar needed
-            // to calculate at least one output.
-            lookbackTotal = (optInTimePeriod - 1) as usize;
-            // Move up the start index if there is not
-            // enough initial data.
-            if startIdx < lookbackTotal {
-                startIdx = lookbackTotal;
-            }
-            // Make sure there is still something to evaluate.
-            if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
-            }
-            // TRIMA Description
-            // =================
-            // The triangular MA is a weighted moving average. Instead of the
-            // TA_WMA who put more weigth on the latest price bar, the triangular
-            // put more weigth on the data in the middle of the specified period.
-            //
-            // Examples:
-            //   For TimeSerie={a,b,c,d,e,f...} ('a' is the older price)
-            //
-            //   1st value for TRIMA 4-Period is:  ((1*a)+(2*b)+(2*c)+(1*d)) / 6
-            //   2nd value for TRIMA 4-Period is:  ((1*b)+(2*c)+(2*d)+(1*e)) / 6
-            //
-            //   1st value for TRIMA 5-Period is:  ((1*a)+(2*b)+(3*c)+(2*d)+(1*e)) / 9
-            //   2nd value for TRIMA 5-Period is:  ((1*b)+(2*c)+(3*d)+(2*e)+(1*f)) / 9
-            //
-            // Generally Accepted Implementation
-            // ==================================
-            // Using algebra, it can be demonstrated that the TRIMA is equivalent to
-            // doing a SMA of a SMA. The following explain the rules:
-            //
-            //  (1) When the period is even, TRIMA(x,period)=SMA(SMA(x,period/2),(period/2)+1)
-            //  (2) When the period is odd,  TRIMA(x,period)=SMA(SMA(x,(period+1)/2),(period+1)/2)
-            //
-            // In other word:
-            //  (1) A period of 4 becomes TRIMA(x,4) = SMA( SMA( x, 2), 3 )
-            //  (2) A period of 5 becomes TRIMA(x,5) = SMA( SMA( x, 3), 3 )
-            //
-            // The SMA of a SMA is the algorithm generaly found in books.
-            //
-            // Tradestation Implementation
-            // ===========================
-            // Tradestation deviate from the generally accepted implementation by
-            // making the TRIMA to be as follow:
-            //    TRIMA(x,period) = SMA( SMA( x, (int)(period/2)+1), (int)(period/2)+1 );
-            // This formula is done regardless if the period is even or odd.
-            //
-            // In other word:
-            //  (1) A period of 4 becomes TRIMA(x,4) = SMA( SMA( x, 3), 3 )
-            //  (2) A period of 5 becomes TRIMA(x,5) = SMA( SMA( x, 3), 3 )
-            //  (3) A period of 6 becomes TRIMA(x,5) = SMA( SMA( x, 4), 4 )
-            //  (4) A period of 7 becomes TRIMA(x,5) = SMA( SMA( x, 4), 4 )
-            //
-            // It is not clear to me if the Tradestation approach is a bug or a deliberate
-            // decision to do things differently.
-            //
-            // Metastock Implementation
-            // ========================
-            // Output is the same as the generally accepted implementation.
-            //
-            // TA-Lib Implementation
-            // =====================
-            // Output is also the same as the generally accepted implementation.
-            //
-            // For speed optimization and avoid memory allocation, TA-Lib use
-            // a better algorithm than the usual SMA of a SMA.
-            //
-            // The calculation from one TRIMA value to the next is done by doing 4
-            // little adjustment (the following show a TRIMA 4-period):
-            //
-            // TRIMA at time 'd': ((1*a)+(2*b)+(2*c)+(1*d)) / 6
-            // TRIMA at time 'e': ((1*b)+(2*c)+(2*d)+(1*e)) / 6
-            //
-            // To go from TRIMA 'd' to 'e', the following is done:
-            //       1) 'a' and 'b' are substract from the numerator.
-            //       2) 'd' is added to the numerator.
-            //       3) 'e' is added to the numerator.
-            //       4) Calculate TRIMA by doing numerator / 6
-            //       5) Repeat sequence for next output
-            //
-            // These operations are the same steps done by TA-LIB:
-            //       1) is done by numeratorSub
-            //       2) is done by numeratorAdd.
-            //       3) is obtain from the latest input
-            //       4) Calculate and write TRIMA in the output
-            //       5) Repeat for next output.
-            //
-            // Of course, numerotrAdd and numeratorSub needs to be
-            // adjusted for each iteration.
-            //
-            // The update of numeratorSub needs values from the input at
-            // the trailingIdx and middleIdx position.
-            //
-            // The update of numeratorAdd needs values from the input at
-            // the middleIdx and todayIdx.
-            outIdx = 0;
-            // Logic for Odd period
-            // Calculate the factor which is 1 divided by the
-            // sumation of the weight.
-            //
-            // The sum of the weight is calculated as follow:
-            //
-            // The simple sumation serie 1+2+3... n can be
-            // express as n(n+1)/2
-            //
-            // From this logic, a "triangular" sumation formula
-            // can be found depending if the period is odd or even.
-            //
-            // Odd Period Formula:
-            //  period = 5 and with n=(int)(period/2)
-            //  the formula for a "triangular" serie is:
-            //    1+2+3+2+1 = (n*(n+1))+n+1
-            //              = (n+1)*(n+1)
-            //              = 3 * 3 = 9
-            //
-            // Even period Formula:
-            //   period = 6 and with n=(int)(period/2)
-            //   the formula for a "triangular" serie is:
-            //    1+2+3+3+2+1 = n*(n+1)
-            //                = 3 * 4 = 12
-            // Note: the (i+1) factors are widened to double so the product
-            //       cannot overflow a 32-bit int at extreme periods (i+1 reaches
-            //       ~50000 near the API maximum, and (i+1)*(i+1) exceeds INT_MAX
-            //       past period ~92682). For every period where the int product
-            //       fits, the widened value is identical.
-            i = (optInTimePeriod >> 1) as usize;
-            factor = ((i + 1) as f64) * (((i + 1)) as f64);
-            factor = 1.0 / factor;
-            // Initialize all the variable before
-            // starting to iterate for each output.
-            trailingIdx = startIdx - lookbackTotal;
-            middleIdx = trailingIdx + i;
-            todayIdx = middleIdx + i;
-            numerator = 0.0;
-            numeratorSub = 0.0;
-            // for( i = middleIdx; i >= trailingIdx; i -= 1 )
-            i = middleIdx;
-            loop {
-                tempReal = inReal[i];
-                numeratorSub += tempReal;
-                numerator += numeratorSub;
-                if i == trailingIdx { break; }
-                i -= 1;
-            }
-            numeratorAdd = 0.0;
-            middleIdx += 1;
-            for i in (middleIdx as usize)..(todayIdx as usize) + 1 {
-                tempReal = inReal[i];
-                numeratorAdd += tempReal;
-                numerator += numeratorAdd;
-            }
-            i = (todayIdx as usize) + 1;
-            // Write the first output
-            outIdx = 0;
-            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[outIdx] = numerator * factor;
-            outIdx += 1;
-            todayIdx += 1;
-            // Note: The value at the trailingIdx was saved
-            //       in tempReal to account for the case where
-            //       outReal and inReal are ptr on the same
-            //       buffer.
-            // Iterate for remaining output
-            while todayIdx <= endIdx {
-                // Step (1)
-                numerator -= numeratorSub;
-                numeratorSub -= tempReal;
-                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
-                numeratorSub += tempReal;
-                // Step (2)
-                numerator += numeratorAdd;
-                numeratorAdd -= tempReal;
-                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
-                numeratorAdd += tempReal;
-                // Step (3)
-                numerator += tempReal;
-                // Step (4)
-                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                outReal[outIdx] = numerator * factor;
-                outIdx += 1;
-            }
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
-
-            // Capture the live batch state into the handle.
-            let cap_middleIdx: i64 = (todayIdx as i64) - (middleIdx as i64);
-            if cap_middleIdx < 0 || cap_middleIdx > historyLen as i64 {
-                return Err(RetCode::InternalError);
-            }
-            let allocN_middleIdx: usize = if cap_middleIdx > 0 { cap_middleIdx as usize } else { 1 };
-            let mut ring_middleIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_middleIdx];
-            ring_middleIdx_inReal[..cap_middleIdx as usize]
-                .copy_from_slice(&inReal[historyLen - cap_middleIdx as usize..]);
-            let cap_trailingIdx: i64 = (todayIdx as i64) - (trailingIdx as i64);
-            if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-                return Err(RetCode::InternalError);
-            }
-            let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-            let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-            ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-                .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TRIMA_StreamState {
-                optInTimePeriod,
-                numerator,
-                numeratorSub,
-                numeratorAdd,
-                factor,
-                tempReal,
-                ringPos_middleIdx: 0_usize,
-                ringCap_middleIdx: cap_middleIdx as usize,
-                ring_middleIdx_inReal,
-                ringPos_trailingIdx: 0_usize,
-                ringCap_trailingIdx: cap_trailingIdx as usize,
-                ring_trailingIdx_inReal,
-            };
-            Ok(TRIMA_Stream { core: self.clone(), state })
-        } else {
-            let mut lookbackTotal: usize = 0_usize;
-            let mut numerator: f64 = 0.0_f64;
-            let mut numeratorSub: f64 = 0.0_f64;
-            let mut numeratorAdd: f64 = 0.0_f64;
-            let mut i: usize = 0_usize;
-            let mut outIdx: usize = 0_usize;
-            let mut todayIdx: usize = 0_usize;
-            let mut trailingIdx: usize = 0_usize;
-            let mut middleIdx: usize = 0_usize;
-            let mut factor: f64 = 0.0_f64;
-            let mut tempReal: f64 = 0.0_f64;
-            // Identify the minimum number of price bar needed
-            // to calculate at least one output.
-            lookbackTotal = (optInTimePeriod - 1) as usize;
-            // Move up the start index if there is not
-            // enough initial data.
-            if startIdx < lookbackTotal {
-                startIdx = lookbackTotal;
-            }
-            // Make sure there is still something to evaluate.
-            if startIdx > endIdx {
-                (*outBegIdx) = 0;
-                (*outNBElement) = 0;
-                return Err(RetCode::BadParam);
-            }
-            // TRIMA Description
-            // =================
-            // The triangular MA is a weighted moving average. Instead of the
-            // TA_WMA who put more weigth on the latest price bar, the triangular
-            // put more weigth on the data in the middle of the specified period.
-            //
-            // Examples:
-            //   For TimeSerie={a,b,c,d,e,f...} ('a' is the older price)
-            //
-            //   1st value for TRIMA 4-Period is:  ((1*a)+(2*b)+(2*c)+(1*d)) / 6
-            //   2nd value for TRIMA 4-Period is:  ((1*b)+(2*c)+(2*d)+(1*e)) / 6
-            //
-            //   1st value for TRIMA 5-Period is:  ((1*a)+(2*b)+(3*c)+(2*d)+(1*e)) / 9
-            //   2nd value for TRIMA 5-Period is:  ((1*b)+(2*c)+(3*d)+(2*e)+(1*f)) / 9
-            //
-            // Generally Accepted Implementation
-            // ==================================
-            // Using algebra, it can be demonstrated that the TRIMA is equivalent to
-            // doing a SMA of a SMA. The following explain the rules:
-            //
-            //  (1) When the period is even, TRIMA(x,period)=SMA(SMA(x,period/2),(period/2)+1)
-            //  (2) When the period is odd,  TRIMA(x,period)=SMA(SMA(x,(period+1)/2),(period+1)/2)
-            //
-            // In other word:
-            //  (1) A period of 4 becomes TRIMA(x,4) = SMA( SMA( x, 2), 3 )
-            //  (2) A period of 5 becomes TRIMA(x,5) = SMA( SMA( x, 3), 3 )
-            //
-            // The SMA of a SMA is the algorithm generaly found in books.
-            //
-            // Tradestation Implementation
-            // ===========================
-            // Tradestation deviate from the generally accepted implementation by
-            // making the TRIMA to be as follow:
-            //    TRIMA(x,period) = SMA( SMA( x, (int)(period/2)+1), (int)(period/2)+1 );
-            // This formula is done regardless if the period is even or odd.
-            //
-            // In other word:
-            //  (1) A period of 4 becomes TRIMA(x,4) = SMA( SMA( x, 3), 3 )
-            //  (2) A period of 5 becomes TRIMA(x,5) = SMA( SMA( x, 3), 3 )
-            //  (3) A period of 6 becomes TRIMA(x,5) = SMA( SMA( x, 4), 4 )
-            //  (4) A period of 7 becomes TRIMA(x,5) = SMA( SMA( x, 4), 4 )
-            //
-            // It is not clear to me if the Tradestation approach is a bug or a deliberate
-            // decision to do things differently.
-            //
-            // Metastock Implementation
-            // ========================
-            // Output is the same as the generally accepted implementation.
-            //
-            // TA-Lib Implementation
-            // =====================
-            // Output is also the same as the generally accepted implementation.
-            //
-            // For speed optimization and avoid memory allocation, TA-Lib use
-            // a better algorithm than the usual SMA of a SMA.
-            //
-            // The calculation from one TRIMA value to the next is done by doing 4
-            // little adjustment (the following show a TRIMA 4-period):
-            //
-            // TRIMA at time 'd': ((1*a)+(2*b)+(2*c)+(1*d)) / 6
-            // TRIMA at time 'e': ((1*b)+(2*c)+(2*d)+(1*e)) / 6
-            //
-            // To go from TRIMA 'd' to 'e', the following is done:
-            //       1) 'a' and 'b' are substract from the numerator.
-            //       2) 'd' is added to the numerator.
-            //       3) 'e' is added to the numerator.
-            //       4) Calculate TRIMA by doing numerator / 6
-            //       5) Repeat sequence for next output
-            //
-            // These operations are the same steps done by TA-LIB:
-            //       1) is done by numeratorSub
-            //       2) is done by numeratorAdd.
-            //       3) is obtain from the latest input
-            //       4) Calculate and write TRIMA in the output
-            //       5) Repeat for next output.
-            //
-            // Of course, numerotrAdd and numeratorSub needs to be
-            // adjusted for each iteration.
-            //
-            // The update of numeratorSub needs values from the input at
-            // the trailingIdx and middleIdx position.
-            //
-            // The update of numeratorAdd needs values from the input at
-            // the middleIdx and todayIdx.
-            outIdx = 0;
-            // Even logic.
-            //
-            // Very similar to the odd logic, except:
-            //  - calculation of the factor is different.
-            //  - the coverage of the numeratorSub and numeratorAdd is
-            //    slightly different.
-            //  - Adjustment of numeratorAdd is different. See Step (2).
-            i = (optInTimePeriod >> 1) as usize;
-            factor = (i as f64) * (((i + 1)) as f64);
-            // widen: i*(i+1) overflows int past period ~92682
-            factor = 1.0 / factor;
-            // Initialize all the variable before
-            // starting to iterate for each output.
-            trailingIdx = startIdx - lookbackTotal;
-            middleIdx = trailingIdx + i - 1;
-            todayIdx = middleIdx + i;
-            numerator = 0.0;
-            numeratorSub = 0.0;
-            // for( i = middleIdx; i >= trailingIdx; i -= 1 )
-            i = middleIdx;
-            loop {
-                tempReal = inReal[i];
-                numeratorSub += tempReal;
-                numerator += numeratorSub;
-                if i == trailingIdx { break; }
-                i -= 1;
-            }
-            numeratorAdd = 0.0;
-            middleIdx += 1;
-            for i in (middleIdx as usize)..(todayIdx as usize) + 1 {
-                tempReal = inReal[i];
-                numeratorAdd += tempReal;
-                numerator += numeratorAdd;
-            }
-            i = (todayIdx as usize) + 1;
-            // Write the first output
-            outIdx = 0;
-            tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[outIdx] = numerator * factor;
-            outIdx += 1;
-            todayIdx += 1;
-            // Note: The value at the trailingIdx was saved
-            //       in tempReal to account for the case where
-            //       outReal and inReal are ptr on the same
-            //       buffer.
-            // Iterate for remaining output
-            while todayIdx <= endIdx {
-                // Step (1)
-                numerator -= numeratorSub;
-                numeratorSub -= tempReal;
-                tempReal = inReal[{ let _v = middleIdx; middleIdx += 1; _v }];
-                numeratorSub += tempReal;
-                // Step (2)
-                numeratorAdd -= tempReal;
-                numerator += numeratorAdd;
-                tempReal = inReal[{ let _v = todayIdx; todayIdx += 1; _v }];
-                numeratorAdd += tempReal;
-                // Step (3)
-                numerator += tempReal;
-                // Step (4)
-                tempReal = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-                outReal[outIdx] = numerator * factor;
-                outIdx += 1;
-            }
-            (*outNBElement) = outIdx;
-            (*outBegIdx) = startIdx;
-
-            // Capture the live batch state into the handle.
-            let cap_middleIdx: i64 = (todayIdx as i64) - (middleIdx as i64);
-            if cap_middleIdx < 0 || cap_middleIdx > historyLen as i64 {
-                return Err(RetCode::InternalError);
-            }
-            let allocN_middleIdx: usize = if cap_middleIdx > 0 { cap_middleIdx as usize } else { 1 };
-            let mut ring_middleIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_middleIdx];
-            ring_middleIdx_inReal[..cap_middleIdx as usize]
-                .copy_from_slice(&inReal[historyLen - cap_middleIdx as usize..]);
-            let cap_trailingIdx: i64 = (todayIdx as i64) - (trailingIdx as i64);
-            if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-                return Err(RetCode::InternalError);
-            }
-            let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-            let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-            ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-                .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-            let state = TRIMA_StreamState {
-                optInTimePeriod,
-                numerator,
-                numeratorSub,
-                numeratorAdd,
-                factor,
-                tempReal,
-                ringPos_middleIdx: 0_usize,
-                ringCap_middleIdx: cap_middleIdx as usize,
-                ring_middleIdx_inReal,
-                ringPos_trailingIdx: 0_usize,
-                ringCap_trailingIdx: cap_trailingIdx as usize,
-                ring_trailingIdx_inReal,
-            };
-            Ok(TRIMA_Stream { core: self.clone(), state })
-        }
+        self.TRIMA_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

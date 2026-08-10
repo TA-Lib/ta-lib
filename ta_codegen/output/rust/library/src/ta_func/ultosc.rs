@@ -561,305 +561,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ULTOSC_Open`] (composition seam).
-    pub(crate) fn ULTOSC_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32,
-    ) -> Result<(ULTOSC_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod1) as i32) == (i32::MIN) {
-            optInTimePeriod1 = 7;
-        } else if (((optInTimePeriod1) as i32) < 1) || (((optInTimePeriod1) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInTimePeriod2) as i32) == (i32::MIN) {
-            optInTimePeriod2 = 14;
-        } else if (((optInTimePeriod2) as i32) < 1) || (((optInTimePeriod2) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInTimePeriod3) as i32) == (i32::MIN) {
-            optInTimePeriod3 = 28;
-        } else if (((optInTimePeriod3) as i32) < 1) || (((optInTimePeriod3) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut a1Total: f64 = 0.0_f64;
-        let mut a2Total: f64 = 0.0_f64;
-        let mut a3Total: f64 = 0.0_f64;
-        let mut b1Total: f64 = 0.0_f64;
-        let mut b2Total: f64 = 0.0_f64;
-        let mut b3Total: f64 = 0.0_f64;
-        let mut trueLow: f64 = 0.0_f64;
-        let mut trueRange: f64 = 0.0_f64;
-        let mut closeMinusTrueLow: f64 = 0.0_f64;
-        let mut tempDouble: f64 = 0.0_f64;
-        let mut output: f64 = 0.0_f64;
-        let mut tempHT: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        let mut tempCY: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut longestPeriod: usize = 0_usize;
-        let mut longestIndex: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingPos1: usize = 0_usize;
-        let mut trailingPos2: usize = 0_usize;
-        let mut usedFlag: [i32; 3 as usize] = [0_i32; 3 as usize];
-        let mut periods: [i32; 3 as usize] = [0_i32; 3 as usize];
-        let mut sortedPeriods: [i32; 3 as usize] = [0_i32; 3 as usize];
-        let mut term_closeMinusTrueLow: Vec<f64> = Vec::new();
-        let mut term_trueRange: Vec<f64> = Vec::new();
-        let mut term_Idx: usize = 0;
-        let mut maxIdx_term: usize = 31;
-        // The two per-bar terms the three moving sums are built from. Both are a
-        // pure function of the bar, so each bar is evaluated once on entry and read
-        // back when it leaves each of the three windows.
-        // One entry per bar of the longest window. Stays on the stack for every
-        // period up to 32, which covers the 7/14/28 default.
-        // Id, Type, Static Size
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        // Ensure that the time periods are ordered from shortest to longest.
-        // Sort.
-        periods[0] = optInTimePeriod1;
-        periods[1] = optInTimePeriod2;
-        periods[2] = optInTimePeriod3;
-        usedFlag[0] = 0;
-        usedFlag[1] = 0;
-        usedFlag[2] = 0;
-        // for( i = 0; i < 3; i += 1 )
-        i = 0;
-        while i < 3 {
-            longestPeriod = 0;
-            longestIndex = 0;
-            // for( j = 0; j < 3; j += 1 )
-            j = 0;
-            while j < 3 {
-                if usedFlag[j] == 0 && ((periods[j]) as usize) > longestPeriod {
-                    longestPeriod = (periods[j]) as usize;
-                    longestIndex = j;
-                }
-                j += 1;
-            }
-            usedFlag[longestIndex] = 1;
-            sortedPeriods[i] = (longestPeriod) as i32;
-            i += 1;
-        }
-        optInTimePeriod1 = sortedPeriods[2];
-        optInTimePeriod2 = sortedPeriods[1];
-        optInTimePeriod3 = sortedPeriods[0];
-        // Adjust startIdx for lookback period.
-        lookbackTotal = self.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        if optInTimePeriod3 < 1 { return Err(RetCode::InternalError); }
-        term_closeMinusTrueLow = vec![0.0_f64; (optInTimePeriod3) as usize];
-        term_trueRange = vec![0.0_f64; (optInTimePeriod3) as usize];
-        maxIdx_term = ((optInTimePeriod3) as usize) - 1;
-        term_Idx = 0;
-        // Prime running totals used in moving averages.
-        //
-        // One pass over the longest warm-up window replaces three overlapping
-        // passes. A bar inside the shorter windows is added to those totals as it
-        // is reached, so every total still accumulates exactly the same bars in
-        // exactly the same ascending order as three separate loops did.
-        a1Total = 0.0;
-        b1Total = 0.0;
-        a2Total = 0.0;
-        b2Total = 0.0;
-        a3Total = 0.0;
-        b3Total = 0.0;
-        // for( i = startIdx - ((optInTimePeriod3) as usize) + 1; i < startIdx; i += 1 )
-        i = startIdx - ((optInTimePeriod3) as usize) + 1;
-        while i < startIdx {
-            tempLT = inLow[i];
-            tempHT = inHigh[i];
-            tempCY = inClose[i - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[i] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
-            term_trueRange[term_Idx] = trueRange;
-            term_Idx += 1;
-            if term_Idx > maxIdx_term { term_Idx = 0; }
-            if i >= startIdx - ((optInTimePeriod1) as usize) + 1 {
-                a1Total += closeMinusTrueLow;
-                b1Total += trueRange;
-            }
-            if i >= startIdx - ((optInTimePeriod2) as usize) + 1 {
-                a2Total += closeMinusTrueLow;
-                b2Total += trueRange;
-            }
-            a3Total += closeMinusTrueLow;
-            b3Total += trueRange;
-            i += 1;
-        }
-        // Calculate oscillator
-        today = startIdx;
-        outIdx = 0;
-        // The warm-up wrote optInTimePeriod3-1 bars, so term_Idx is the slot for
-        // `today` and, once advanced past it, the slot of the bar leaving the
-        // longest window. The two shorter windows trail it by a fixed offset.
-        trailingPos1 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod1) as usize) + 1;
-        if trailingPos1 >= ((optInTimePeriod3) as usize) {
-            trailingPos1 -= (optInTimePeriod3) as usize;
-        }
-        trailingPos2 = term_Idx + ((optInTimePeriod3) as usize) - ((optInTimePeriod2) as usize) + 1;
-        if trailingPos2 >= ((optInTimePeriod3) as usize) {
-            trailingPos2 -= (optInTimePeriod3) as usize;
-        }
-        while today <= endIdx {
-            // Add on today's terms
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            trueLow = (tempLT).min(tempCY);
-            closeMinusTrueLow = inClose[today] - trueLow;
-            trueRange = tempHT - tempLT;
-            tempDouble = (tempCY - tempHT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            tempDouble = (tempCY - tempLT).abs();
-            if tempDouble > trueRange {
-                trueRange = tempDouble;
-            }
-            term_closeMinusTrueLow[term_Idx] = closeMinusTrueLow;
-            term_trueRange[term_Idx] = trueRange;
-            a1Total += closeMinusTrueLow;
-            a2Total += closeMinusTrueLow;
-            a3Total += closeMinusTrueLow;
-            b1Total += trueRange;
-            b2Total += trueRange;
-            b3Total += trueRange;
-            // Calculate the oscillator value for today
-            output = 0.0;
-            if !((b1Total).abs() < 1e-14) {
-                output += 4.0 * (a1Total / b1Total);
-            }
-            if !((b2Total).abs() < 1e-14) {
-                output += 2.0 * (a2Total / b2Total);
-            }
-            if !((b3Total).abs() < 1e-14) {
-                output += a3Total / b3Total;
-            }
-            // Remove the trailing terms to prepare for next day. Each was evaluated
-            // once, when its bar entered the ring.
-            a1Total -= term_closeMinusTrueLow[trailingPos1];
-            b1Total -= term_trueRange[trailingPos1];
-            trailingPos1 += 1;
-            if trailingPos1 >= ((optInTimePeriod3) as usize) {
-                trailingPos1 = 0;
-            }
-            a2Total -= term_closeMinusTrueLow[trailingPos2];
-            b2Total -= term_trueRange[trailingPos2];
-            trailingPos2 += 1;
-            if trailingPos2 >= ((optInTimePeriod3) as usize) {
-                trailingPos2 = 0;
-            }
-            term_Idx += 1;
-            if term_Idx > maxIdx_term { term_Idx = 0; }
-            a3Total -= term_closeMinusTrueLow[term_Idx];
-            b3Total -= term_trueRange[term_Idx];
-            // Last operation is to write the output. Must
-            // be done after the trailing index have all been
-            // taken care of because the caller is allowed
-            // to have the input array to be also the output
-            // array.
-            lastValue_outReal = 100.0 * (output / 7.0);
-            // Increment indexes
-            outIdx += 1;
-            today += 1;
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cbSize_term: usize = maxIdx_term + 1;
-        if cbSize_term > historyLen + 1 {
-            return Err(RetCode::InternalError);
-        }
-        let state = ULTOSC_StreamState {
-            optInTimePeriod1,
-            optInTimePeriod2,
-            optInTimePeriod3,
-            a1Total,
-            a2Total,
-            a3Total,
-            b1Total,
-            b2Total,
-            b3Total,
-            output,
-            trailingPos1,
-            trailingPos2,
-            term_Idx,
-            maxIdx_term,
-            lag1_inClose: inClose[historyLen - 1],
-            cbSize_term: cbSize_term,
-            cb_term_closeMinusTrueLow: term_closeMinusTrueLow,
-            cb_term_trueRange: term_trueRange,
-        };
-        Ok((ULTOSC_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live ULTOSC stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ULTOSC`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.ULTOSC_Open(&high, &low, &close, 7, 14, 28).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9);
-    /// let updated = s.update(101.4, 99.1, 100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_ULTOSC_Open")]
-    pub fn ULTOSC_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32) -> Result<(ULTOSC_Stream, f64), RetCode> {
-        self.ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)
-    }
-
-    /// [`Core::ULTOSC_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ULTOSC`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_ULTOSC_OpenAndFill")]
-    pub fn ULTOSC_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::ULTOSC_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::ULTOSC_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn ULTOSC_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ULTOSC_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -884,7 +589,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut a1Total: f64 = 0.0_f64;
@@ -1085,7 +790,7 @@ impl Core {
             // taken care of because the caller is allowed
             // to have the input array to be also the output
             // array.
-            outReal[outIdx] = 100.0 * (output / 7.0);
+            outReal[(outIdx * outStride) as usize] = 100.0 * (output / 7.0);
             // Increment indexes
             outIdx += 1;
             today += 1;
@@ -1120,6 +825,54 @@ impl Core {
             cb_term_trueRange: term_trueRange,
         };
         Ok(ULTOSC_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ULTOSC_Open`] (composition seam).
+    pub(crate) fn ULTOSC_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32,
+    ) -> Result<(ULTOSC_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.ULTOSC_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live ULTOSC stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::ULTOSC`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.ULTOSC_Open(&high, &low, &close, 7, 14, 28).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ULTOSC_Open")]
+    pub fn ULTOSC_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod1: i32, optInTimePeriod2: i32, optInTimePeriod3: i32) -> Result<(ULTOSC_Stream, f64), RetCode> {
+        self.ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3)
+    }
+
+    /// [`Core::ULTOSC_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ULTOSC`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ULTOSC_OpenAndFill")]
+    pub fn ULTOSC_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod1: i32, mut optInTimePeriod2: i32, mut optInTimePeriod3: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<ULTOSC_Stream, RetCode> {
+        self.ULTOSC_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

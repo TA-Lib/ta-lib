@@ -350,14 +350,11 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode MOM_OpenBody( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MOM_OpenCore( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int inIdx = 0;
       int outIdx = 0;
       int trailingIdx = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -422,7 +419,7 @@
       inIdx = startIdx;
       trailingIdx = startIdx - optInTimePeriod;
       while( inIdx <= endIdx ) {
-         lastValue_outReal = inReal[inIdx++] - inReal[trailingIdx++];
+         outReal[outIdx++ * outStride] = inReal[inIdx++] - inReal[trailingIdx++];
       }
       /* Set output limits. */
       outNBElement.value = outIdx;
@@ -439,101 +436,22 @@
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode MOM_OpenBody( MOM_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return MOM_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode MOM_OpenAndFillBody( MOM_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int inIdx = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 10;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      /* The interpretation of the rate of change varies widely depending
-       * which software and/or books you are refering to.
-       *
-       * The following is the table of Rate-Of-Change implemented in TA-LIB:
-       *       MOM     = (price - prevPrice)         [Momentum]
-       *       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
-       *       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
-       *       ROCR    = (price/prevPrice)           [Rate of change ratio]
-       *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
-       *
-       * Here are the equivalent function in other software:
-       *       TA-Lib  |   Tradestation   |    Metastock
-       *       =================================================
-       *       MOM     |   Momentum       |    ROC (Point)
-       *       ROC     |   ROC            |    ROC (Percent)
-       *       ROCP    |   PercentChange  |    -
-       *       ROCR    |   -              |    -
-       *       ROCR100 |   -              |    MO
-       *
-       * The MOM function is the only one who is not normalized, and thus
-       * should be avoided for comparing different time serie of prices.
-       *
-       * ROC and ROCP are centered at zero and can have positive and negative
-       * value. Here are some equivalence:
-       *    ROC = ROCP/100
-       *        = ((price-prevPrice)/prevPrice)/100
-       *        = ((price/prevPrice)-1)*100
-       *
-       * ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
-       * always positive values.
-       */
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Calculate Momentum:
-       *    Just substract the value from 'period' ago from
-       *    current value.
-       */
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx ) {
-         outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
-      }
-      /* Set output limits. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = inIdx - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return MOM_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind MOM_Open (composition seam). */
    MOM_Stream MOM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

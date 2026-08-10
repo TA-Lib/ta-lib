@@ -357,170 +357,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::VWMA_Open`] (composition seam).
-    pub(crate) fn VWMA_OpenInternal(
-        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(VWMA_Stream, f64), RetCode> {
-        if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        if optInTimePeriod == 1 {
-            if historyLen < self.VWMA_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = VWMA_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                sumPV: 0.0_f64,
-                sumV: 0.0_f64,
-                tempPV: 0.0_f64,
-                tempV: 0.0_f64,
-                ringPos_trailingIdx: 0_usize,
-                ringCap_trailingIdx: 0_usize,
-                ring_trailingIdx_inReal: vec![0.0_f64; 1],
-                ring_trailingIdx_inVolume: vec![0.0_f64; 1],
-            };
-            return Ok((VWMA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
-        }
-        let mut sumPV: f64 = 0.0_f64;
-        let mut sumV: f64 = 0.0_f64;
-        let mut tempPV: f64 = 0.0_f64;
-        let mut tempV: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Add-up the initial period, except for the last value.
-        //
-        // The price*volume product is kept in its own statement so no compiler may
-        // contract it into an FMA: that would make this function disagree with the
-        // Rust/Java backends under the cross-language bitwise gate, and with the
-        // two-TA_SMA composite reference.
-        sumPV = 0.0;
-        sumV = 0.0;
-        trailingIdx = startIdx - lookbackTotal;
-        i = trailingIdx;
-        if optInTimePeriod > 1 {
-            while i < startIdx {
-                tempReal = inReal[i] * inVolume[i];
-                sumPV += tempReal;
-                sumV += inVolume[i];
-                i = i + 1;
-            }
-        }
-        // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the inReal and
-        // outReal to be the same buffer.
-        outIdx = 0;
-        while i <= endIdx {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-            // Snapshot both sums before removing the trailing bar, mirroring the
-            // add-new / snapshot / subtract-old order of TA_SMA. That order is what
-            // makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
-            tempPV = sumPV;
-            tempV = sumV;
-            // Read the trailing values before writing the output, since the caller
-            // may pass the same buffer for an input and the output.
-            tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-            sumPV -= tempReal;
-            sumV -= inVolume[trailingIdx];
-            lastValue_outReal = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
-            trailingIdx = trailingIdx + 1;
-            outIdx = outIdx + 1;
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let mut ring_trailingIdx_inVolume: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inVolume[..cap_trailingIdx as usize]
-            .copy_from_slice(&inVolume[historyLen - cap_trailingIdx as usize..]);
-        let state = VWMA_StreamState {
-            optInTimePeriod,
-            sumPV,
-            sumV,
-            tempPV,
-            tempV,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-            ring_trailingIdx_inVolume,
-        };
-        Ok((VWMA_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live VWMA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::VWMA`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.VWMA_Open(&data, &volume, 30).expect("enough history");
-    /// let peeked = s.peek(100.9, 12_345.0);
-    /// let updated = s.update(100.9, 12_345.0);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_VWMA_Open")]
-    pub fn VWMA_Open(&self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(VWMA_Stream, f64), RetCode> {
-        self.VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod)
-    }
-
-    /// [`Core::VWMA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::VWMA`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_VWMA_OpenAndFill")]
-    pub fn VWMA_OpenAndFill(
-        &self, inReal: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::VWMA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::VWMA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn VWMA_OpenCore(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<VWMA_Stream, RetCode> {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
@@ -535,7 +375,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
@@ -558,7 +398,7 @@ impl Core {
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
             return Ok(VWMA_Stream { core: self.clone(), state });
@@ -623,7 +463,7 @@ impl Core {
             tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
             sumPV -= tempReal;
             sumV -= inVolume[trailingIdx];
-            outReal[outIdx] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
+            outReal[(outIdx * outStride) as usize] = tempPV / (optInTimePeriod as f64) / (tempV / (optInTimePeriod as f64));
             trailingIdx = trailingIdx + 1;
             outIdx = outIdx + 1;
         }
@@ -655,6 +495,53 @@ impl Core {
             ring_trailingIdx_inVolume,
         };
         Ok(VWMA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::VWMA_Open`] (composition seam).
+    pub(crate) fn VWMA_OpenInternal(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(VWMA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.VWMA_OpenCore(inReal, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live VWMA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::VWMA`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.VWMA_Open(&data, &volume, 30).expect("enough history");
+    /// let peeked = s.peek(100.9, 12_345.0);
+    /// let updated = s.update(100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_VWMA_Open")]
+    pub fn VWMA_Open(&self, inReal: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(VWMA_Stream, f64), RetCode> {
+        self.VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod)
+    }
+
+    /// [`Core::VWMA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::VWMA`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_VWMA_OpenAndFill")]
+    pub fn VWMA_OpenAndFill(
+        &self, inReal: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<VWMA_Stream, RetCode> {
+        self.VWMA_OpenCore(inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -258,13 +258,10 @@
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
-   private RetCode TYPPRICE_OpenBody( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode TYPPRICE_OpenCore( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -276,40 +273,27 @@
       /* Typical price = (High + Low + Close ) / 3 */
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 ) {
-         lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+         outReal[outIdx++ * outStride] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode TYPPRICE_OpenBody( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return TYPPRICE_OpenCore( sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode TYPPRICE_OpenAndFillBody( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int outIdx = 0;
-      int i = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* Typical price = (High + Low + Close ) / 3 */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return TYPPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind TYPPRICE_Open (composition seam). */
    TYPPRICE_Stream TYPPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )

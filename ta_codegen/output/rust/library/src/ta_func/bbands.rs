@@ -584,10 +584,11 @@ impl Core {
         (*outRealLowerBand) = cur_outRealLowerBand;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
-    pub(crate) fn BBANDS_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType,
-    ) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
+    /// The single whole-history transcription behind [`Core::BBANDS_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::BBANDS_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn BBANDS_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
+    ) -> Result<BBANDS_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -617,13 +618,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outRealUpperBand: f64 = 0.0_f64;
-        let mut lastValue_outRealMiddleBand: f64 = 0.0_f64;
-        let mut lastValue_outRealLowerBand: f64 = 0.0_f64;
-        let mut _begStore: usize = 0;
-        let mut _nbStore: usize = 0;
-        let outBegIdx: &mut usize = &mut _begStore;
-        let outNBElement: &mut usize = &mut _nbStore;
         let mut sc_outRealUpperBand: Vec<f64> = vec![0.0_f64; historyLen];
         let mut sc_outRealMiddleBand: Vec<f64> = vec![0.0_f64; historyLen];
         let mut sc_outRealLowerBand: Vec<f64> = vec![0.0_f64; historyLen];
@@ -714,7 +708,35 @@ impl Core {
             sub0,
             sub1,
         };
-        Ok((BBANDS_Stream { core: self.clone(), state }, (sc_outRealUpperBand[*outNBElement - 1], sc_outRealMiddleBand[*outNBElement - 1], sc_outRealLowerBand[*outNBElement - 1])))
+        if outStride == 1 {
+            outRealUpperBand[..*outNBElement].copy_from_slice(&sc_outRealUpperBand[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outRealUpperBand[0] = sc_outRealUpperBand[*outNBElement - 1];
+        }
+        if outStride == 1 {
+            outRealMiddleBand[..*outNBElement].copy_from_slice(&sc_outRealMiddleBand[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outRealMiddleBand[0] = sc_outRealMiddleBand[*outNBElement - 1];
+        }
+        if outStride == 1 {
+            outRealLowerBand[..*outNBElement].copy_from_slice(&sc_outRealLowerBand[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outRealLowerBand[0] = sc_outRealLowerBand[*outNBElement - 1];
+        }
+        Ok(BBANDS_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
+    pub(crate) fn BBANDS_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType,
+    ) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outRealUpperBand = [0.0_f64; 1];
+        let mut sink_outRealMiddleBand = [0.0_f64; 1];
+        let mut sink_outRealLowerBand = [0.0_f64; 1];
+        let handle = self.BBANDS_OpenCore(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
+        Ok((handle, (sink_outRealUpperBand[0], sink_outRealMiddleBand[0], sink_outRealLowerBand[0])))
     }
 
     /// Open a live BBANDS stream over the warm-up history; returns the handle and
@@ -749,12 +771,6 @@ impl Core {
     pub fn BBANDS_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<BBANDS_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
@@ -764,123 +780,7 @@ impl Core {
         if outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInNbDevUp == REAL_DEFAULT {
-            optInNbDevUp = 2e0;
-        } else if (optInNbDevUp < REAL_MIN) || (optInNbDevUp > REAL_MAX) {
-            return Err(RetCode::BadParam);
-        }
-        if optInNbDevDn == REAL_DEFAULT {
-            optInNbDevDn = 2e0;
-        } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
-            return Err(RetCode::BadParam);
-        }
-        if optInMAType == MAType::DEFAULT {
-            optInMAType = MAType::SMA;
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut sc_outRealUpperBand: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outRealMiddleBand: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outRealLowerBand: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut retCode: RetCode = RetCode::Success;
-        let mut i: usize = 0_usize;
-        let mut maBegIdx: usize = 0_usize;
-        let mut shiftIdx: usize = 0_usize;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempReal2: f64 = 0.0_f64;
-        let mut tempBuffer1: Vec<f64> = Vec::new();
-        let mut tempBuffer2: Vec<f64> = Vec::new();
-        // General path (every MA type other than SMA): the middle band is the moving
-        // average and the deviation is the standard deviation of the input, combined
-        // at the same bar. Two intermediate buffers are allocated so the input may
-        // safely alias an output (it is only read here).
-        tempBuffer1 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        tempBuffer2 = vec![0.0_f64; ((endIdx - startIdx + 1) * 1) as usize];
-        // Calculate the middle band moving average.
-        // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Remember where the moving average begins, to realign it below.
-        maBegIdx = ((*outBegIdx) as usize) as usize;
-        // Calculate the Standard Deviation into tempBuffer2.
-        // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.STDDEV_OpenInternal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.STDDEV(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
-        if retCode != RetCode::Success {
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // When the standard deviation (lookback optInTimePeriod-1) clamps to a later
-        // begIdx than the moving average did - as with TA_MAType_MAMA (constant
-        // lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
-        // at the earlier maBegIdx. Copy it forward from that shift into the middle
-        // band so each band value pairs the moving average and standard deviation of
-        // the same bar. The guarded subtraction keeps shiftIdx non-negative even when
-        // the standard deviation produced no output (an empty range leaves *outBegIdx
-        // at 0), which the unconditional copy below then handles as a zero-length move.
-        if ((((*outBegIdx) as usize)) as usize) > maBegIdx {
-            shiftIdx = ((((*outBegIdx) as usize)) as usize) - maBegIdx;
-        } else {
-            shiftIdx = 0;
-        }
-        {
-            let _n = ((*outNBElement) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (shiftIdx) as usize;
-            sc_outRealMiddleBand[_di.._di + _n].copy_from_slice(&tempBuffer1[_si.._si + _n]);
-        };
-        // Now do a tight loop to calculate the upper/lower band at the same time.
-        if optInNbDevUp == optInNbDevDn {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = tempBuffer2[i] * optInNbDevUp;
-                tempReal2 = sc_outRealMiddleBand[i];
-                sc_outRealUpperBand[i] = tempReal2 + tempReal;
-                sc_outRealLowerBand[i] = tempReal2 - tempReal;
-                i += 1;
-            }
-        } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal2 = sc_outRealMiddleBand[i];
-                sc_outRealUpperBand[i] = (tempBuffer2[i] as f64).mul_add(optInNbDevUp, tempReal2);
-                sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-                i += 1;
-            }
-        }
-
-        // Capture the live producer state + sub handles.
-        if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
-        }
-        let state = BBANDS_StreamState {
-            optInTimePeriod,
-            optInNbDevUp,
-            optInNbDevDn,
-            optInMAType,
-            sub0,
-            sub1,
-        };
-        outRealUpperBand[..*outNBElement].copy_from_slice(&sc_outRealUpperBand[..*outNBElement]);
-        outRealMiddleBand[..*outNBElement].copy_from_slice(&sc_outRealMiddleBand[..*outNBElement]);
-        outRealLowerBand[..*outNBElement].copy_from_slice(&sc_outRealLowerBand[..*outNBElement]);
-        Ok(BBANDS_Stream { core: self.clone(), state })
+        self.BBANDS_OpenCore(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
 
 }

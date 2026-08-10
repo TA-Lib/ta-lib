@@ -7229,7 +7229,7 @@ fn test_c_ht_dcperiod_parity_stream_section() {
         .split("TA_HT_DCPERIOD_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenInternal").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenCore").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
         "unconditional smoothPeriod output in the step"
@@ -7277,7 +7277,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
         .split("TA_HT_PHASOR_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_PHASOR_OpenInternal").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_PHASOR_OpenCore").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
     assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
@@ -7330,7 +7330,7 @@ fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
     let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_SINE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_SINE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
@@ -7344,7 +7344,7 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDLINE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDLINE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
     assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
@@ -7359,7 +7359,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
     let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDMODE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDMODE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
     assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
@@ -7376,7 +7376,7 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
     let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_MAMA_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_MAMA_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
@@ -7479,7 +7479,7 @@ fn test_c_midprice_fastpath_skip_stream_section() {
     // The fast-path window-rescan then-arm is NOT transcribed into the Open: no
     // `optInTimePeriod <= 20` branch survives (only the general else arm streams).
     let open = c
-        .split("TA_MIDPRICE_OpenInternal")
+        .split("TA_MIDPRICE_OpenCore")
         .nth(1)
         .expect("OpenInternal emitted");
     assert!(
@@ -7600,16 +7600,19 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         let open_at = c
             .find(&format!("TA_RetCode TA_{upper}_Open"))
             .unwrap_or_else(|| panic!("{upper} composed Open"));
-        // OpenInternal and OpenAndFill each transcribe the region, so every
-        // buffer is checked exactly twice across the two — never four times.
+        // One `OpenCore` transcribes the region for both entry points, so every
+        // buffer is checked exactly once — never twice. (Before the Open family
+        // was merged this read 2, one per transcription; the invariant being
+        // pinned is unchanged: the source's own check must not be emitted
+        // alongside the injected one.)
         let opens = &c[open_at..];
         for buf in buffers {
             let n = opens.matches(&format!("if( !{buf} )")).count();
             assert_eq!(
-                n, 2,
-                "{upper}: `{buf}` must be null-checked once per composed Open \
-                 (2 across OpenInternal + OpenAndFill), found {n} — the source's \
-                 own check is being emitted alongside the injected one again"
+                n, 1,
+                "{upper}: `{buf}` must be null-checked exactly once in the composed \
+                 OpenCore, found {n} — the source's own check is being emitted \
+                 alongside the injected one again"
             );
         }
     }
@@ -7921,6 +7924,178 @@ TA_RetCode bbands( int startIdx, int endIdx,
 // ran: a test that only checks "generate() did not panic" is the shape that has
 // passed vacuously in this repo before.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Rust enum (#179). Same standard as the C# one below: assert on EMITTED
+// CONTENT. Everything here is frozen public API the moment the crate publishes,
+// and until now none of it was asserted anywhere.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rust_matype_emits_every_yaml_variant_and_its_frozen_shape() {
+    let enums = load_enums();
+    let src = backends::rust_enums::render_matype(&enums);
+    let ma = enums.get("MAType").expect("MAType in enums.yaml");
+
+    for v in &ma.variants {
+        let decl = format!("    {} = {},", v.name, v.value);
+        assert!(
+            src.contains(&decl),
+            "Rust MAType is missing `{decl}` -- a dropped variant reorders the \
+             optInMAType ABI:\n{src}"
+        );
+        // The conversion must accept every member, or a value that is legal at
+        // the C ABI would be rejected by the Rust one.
+        let arm = format!("            {} => Self::{},", v.value, v.name);
+        assert!(
+            src.contains(&arm),
+            "TryFrom<i32> is missing `{arm}`:\n{src}"
+        );
+    }
+
+    // An EXTRA emitted member fails too.
+    let emitted = src
+        .lines()
+        .filter(|l| l.starts_with("    ") && l.contains(" = ") && l.trim_end().ends_with(','))
+        .count();
+    assert_eq!(emitted, ma.variants.len(), "emitted {emitted} members");
+
+    // `#[non_exhaustive]` is what lets a member be appended without breaking
+    // every downstream `match`; dropping it is a silent semver break.
+    assert!(src.contains("#[non_exhaustive]"), "MAType lost #[non_exhaustive]");
+
+    // No `#[repr]`: the crate has no FFI, so the layout is unobservable and the
+    // explicit discriminants carry the ABI. Adding one would freeze a size we
+    // deliberately did not promise.
+    assert!(
+        !src.contains("#[repr("),
+        "MAType gained a #[repr]; the crate has no FFI to justify one:\n{src}"
+    );
+
+    // The sentinel arm is load-bearing: the abstract tier stores the bound int
+    // verbatim as C's does, so TA_INTEGER_DEFAULT must still select the
+    // parameter's declared default rather than being rejected (#162).
+    assert!(
+        src.contains("i32::MIN => Self::DEFAULT,"),
+        "TryFrom lost the TA_INTEGER_DEFAULT arm; Rust would drop out of the \
+         choice-list sentinel contract:\n{src}"
+    );
+    assert!(
+        src.contains("_ => return Err(RetCode::BadParam),"),
+        "TryFrom lost its reject arm -- out-of-domain values would not be \
+         rejected by the library:\n{src}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// The enum domain gate. A choice-list parameter declares no `range:`, so before
+// this the prologue emitted only the default substitution and each body decided
+// for itself what an out-of-domain value meant -- which is how TA_MA_Lookback
+// answered 0 for parameters TA_MA rejects. Both tiers now reject from one
+// emitter with two failure literals, the construction that already made integer
+// ranges immune. Asserted on emitted content, per this file's standard.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn enum_param_gets_a_domain_gate_in_both_tiers() {
+    let enums = load_enums();
+    let (func, _) = load_indicator("ma");
+    let registry = make_registry();
+    let helpers = make_helpers();
+
+    let hi = enums
+        .get("MAType")
+        .expect("MAType")
+        .variants
+        .iter()
+        .map(|v| v.value)
+        .max()
+        .expect("members");
+
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+    let gate = format!("(int)optInMAType < 0 || (int)optInMAType > {hi}");
+    // Both tiers: the lookback fails with -1, the guarded call with TA_BAD_PARAM.
+    assert!(
+        c.contains(&format!("{gate} )\n      return -1;")),
+        "C lookback lost the enum domain gate:\n{c}"
+    );
+    assert!(
+        c.contains(&format!("{gate} )\n      return TA_BAD_PARAM;")),
+        "C guarded call lost the enum domain gate:\n{c}"
+    );
+
+    let cs = backends::csharp::generate(&func, &enums, &registry, &helpers);
+    assert!(
+        cs.contains(&format!("(int)optInMAType < 0 || (int)optInMAType > {hi}")),
+        "C# lost the enum domain gate:\n{cs}"
+    );
+
+}
+
+#[test]
+fn the_gate_bound_follows_the_member_set() {
+    // The bound is derived, never spelled. Asserting it against MAType's own max
+    // cannot show that -- a hard-coded 11 and a derived one read identically
+    // while the enum happens to end at 11. So span it against a synthetic enum
+    // that ends somewhere else.
+    use ta_codegen_lib::ir::{EnumDef, EnumVariant, OptInput, ParamType};
+    let mut enums = load_enums();
+    enums.insert(
+        "Tri".to_string(),
+        EnumDef {
+            name: "Tri".to_string(),
+            c_prefix: "TA_Tri_".to_string(),
+            variants: (0..3)
+                .map(|v| EnumVariant {
+                    name: format!("V{v}"),
+                    c_name: format!("TA_Tri_V{v}"),
+                    value: v,
+                })
+                .collect(),
+        },
+    );
+    let opt = OptInput {
+        name: "optInTri".to_string(),
+        param_type: ParamType::Enum("Tri".to_string()),
+        display_name: None,
+        hint: None,
+        range: None,
+        default: Some(0.0),
+        suggested: None,
+        flags: Vec::new(),
+        precision: None,
+    };
+    assert_eq!(
+        backends::common::effective_range(&opt, &enums),
+        Some((0.0, 2.0)),
+        "the domain must span the members, not a hard-coded bound"
+    );
+}
+
+#[test]
+fn a_declared_range_still_wins_over_the_member_span() {
+    // The precedence branch in `effective_range`: an `enum:` parameter that DID
+    // declare a range must keep it, or a narrower intent would be silently
+    // widened to the whole enum. Nothing in the shipped input exercises this.
+    use ta_codegen_lib::ir::{OptInput, ParamType};
+    let enums = load_enums();
+    let opt = OptInput {
+        name: "optInMAType".to_string(),
+        param_type: ParamType::Enum("MAType".to_string()),
+        display_name: None,
+        hint: None,
+        range: Some((0.0, 2.0)),
+        default: Some(0.0),
+        suggested: None,
+        flags: Vec::new(),
+        precision: None,
+    };
+    assert_eq!(
+        backends::common::effective_range(&opt, &enums),
+        Some((0.0, 2.0)),
+        "a declared range must win over the member span"
+    );
+}
 
 #[test]
 fn csharp_matype_emits_every_yaml_variant_with_its_value() {

@@ -289,10 +289,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::IMI_Open`] (composition seam).
-    pub(crate) fn IMI_OpenInternal(
-        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(IMI_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::IMI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::IMI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn IMI_OpenCore(
+        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<IMI_Stream, RetCode> {
         if inOpen.is_empty() || inClose.is_empty() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -309,7 +310,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut lookback: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         outIdx = 0;
@@ -319,11 +319,11 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
-        dummyBegIdx = startIdx;
+        (*outBegIdx) = startIdx;
         while startIdx <= endIdx {
             let mut upsum: f64 = 0.0;
             let mut downsum: f64 = 0.0;
@@ -339,13 +339,13 @@ impl Core {
                 // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
                 // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
                 // oscillator, so no up/down bias returns its neutral center, 50.0.
-                lastValue_outReal = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
+                outReal[(outIdx * outStride) as usize] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
             }
             i = (startIdx as usize) + 1;
             startIdx += 1;
             outIdx += 1;
         }
-        dummyNBElement = outIdx;
+        (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
         let cap_i: i64 = (optInTimePeriod - 1 + 1) as i64;
@@ -363,7 +363,18 @@ impl Core {
             win_i_inOpen,
             win_i_inClose,
         };
-        Ok((IMI_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(IMI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::IMI_Open`] (composition seam).
+    pub(crate) fn IMI_OpenInternal(
+        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(IMI_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.IMI_OpenCore(inOpen, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live IMI stream over the warm-up history; returns the handle and
@@ -401,76 +412,7 @@ impl Core {
     pub fn IMI_OpenAndFill(
         &self, inOpen: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<IMI_Stream, RetCode> {
-        if inOpen.is_empty() || inClose.is_empty() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lookback: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        outIdx = 0;
-        lookback = self.IMI_Lookback(optInTimePeriod);
-        if startIdx < lookback {
-            startIdx = lookback;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        (*outBegIdx) = startIdx;
-        while startIdx <= endIdx {
-            let mut upsum: f64 = 0.0;
-            let mut downsum: f64 = 0.0;
-            let mut i: usize = 0_usize;
-            for i in (startIdx - (((optInTimePeriod - 1)) as usize) as usize)..(startIdx as usize) + 1 {
-                let mut close: f64 = inClose[i];
-                let mut open: f64 = inOpen[i];
-                if close > open {
-                    upsum += close - open;
-                } else {
-                    downsum += open - close;
-                }
-                // #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-                // Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-                // oscillator, so no up/down bias returns its neutral center, 50.0.
-                outReal[outIdx] = (if upsum + downsum == 0.0 { 50.0 } else { 100.0 * (upsum / (upsum + downsum)) });
-            }
-            i = (startIdx as usize) + 1;
-            startIdx += 1;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_i: i64 = (optInTimePeriod - 1 + 1) as i64;
-        if cap_i < 1 || cap_i > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut win_i_inOpen: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inOpen.copy_from_slice(&inOpen[historyLen - cap_i as usize..]);
-        let mut win_i_inClose: Vec<f64> = vec![0.0_f64; cap_i as usize];
-        win_i_inClose.copy_from_slice(&inClose[historyLen - cap_i as usize..]);
-        let state = IMI_StreamState {
-            optInTimePeriod,
-            winPos_i: 0_usize,
-            winCap_i: cap_i as usize,
-            win_i_inOpen,
-            win_i_inClose,
-        };
-        Ok(IMI_Stream { core: self.clone(), state })
+        self.IMI_OpenCore(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

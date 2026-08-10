@@ -460,14 +460,12 @@ static void TA_T3_StepInternal( struct TA_T3_Stream *sp, double inReal, double *
    *outReal= fma(sp->c4, sp->e3, fma(sp->c3, sp->e4, fma(sp->c1, sp->e6, sp->c2 * sp->e5)));
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
+static TA_RetCode TA_T3_OpenCore( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_T3_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -484,221 +482,6 @@ TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   if( optInTimePeriod == 1 )
-   {
-      if( historyLen < TA_T3_Lookback( optInTimePeriod, optInVFactor ) + 1 ) return TA_BAD_PARAM;
-      sp = (struct TA_T3_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->optInVFactor = optInVFactor;
-      *outReal = inReal[historyLen - 1];
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-
-   {
-      int outIdx;
-      int lookbackTotal;
-      int today;
-      int i;
-      double k = 0.0;
-      double one_minus_k = 0.0;
-      double e1 = 0.0;
-      double e2 = 0.0;
-      double e3 = 0.0;
-      double e4 = 0.0;
-      double e5 = 0.0;
-      double e6 = 0.0;
-      double c1 = 0.0;
-      double c2 = 0.0;
-      double c3 = 0.0;
-      double c4 = 0.0;
-      double tempReal;
-      /* For an explanation of this function, please read:
-       *
-       * Magazine articles written by Tim Tillson
-       *
-       * Essentially, a T3 of time serie 't' is:
-       *   EMA1(x,Period) = EMA(x,Period)
-       *   EMA2(x,Period) = EMA(EMA1(x,Period),Period)
-       *   GD(x,Period,vFactor) = (EMA1(x,Period)*(1+vFactor)) - (EMA2(x,Period)*vFactor)
-       *   T3 = GD (GD ( GD(t, Period, vFactor), Period, vFactor), Period, vFactor);
-       *
-       * T3 offers a moving average with less lags then the
-       * traditional EMA.
-       *
-       * Do not confuse a T3 with EMA3. Both are called "Triple EMA"
-       * in the litterature.
-       */
-      lookbackTotal = 6 * (optInTimePeriod - 1) + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_T3,T3);
-      if( startIdx <= lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyNBElement = 0;
-         dummyBegIdx = 0;
-         return TA_BAD_PARAM;
-      }
-      dummyBegIdx = startIdx;
-      today = startIdx - lookbackTotal;
-      k = 2.0 / (optInTimePeriod + 1.0);
-      one_minus_k = 1.0 - k;
-      /* Initialize e1 */
-      tempReal = inReal[today++];
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         tempReal += inReal[today++];
-      }
-      e1 = tempReal / optInTimePeriod;
-      /* Initialize e2 */
-      tempReal = e1;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         tempReal += e1;
-      }
-      e2 = tempReal / optInTimePeriod;
-      /* Initialize e3 */
-      tempReal = e2;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         tempReal += e2;
-      }
-      e3 = tempReal / optInTimePeriod;
-      /* Initialize e4 */
-      tempReal = e3;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         e3 = fma(one_minus_k, e3, k * e2);
-         tempReal += e3;
-      }
-      e4 = tempReal / optInTimePeriod;
-      /* Initialize e5 */
-      tempReal = e4;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         e3 = fma(one_minus_k, e3, k * e2);
-         e4 = fma(one_minus_k, e4, k * e3);
-         tempReal += e4;
-      }
-      e5 = tempReal / optInTimePeriod;
-      /* Initialize e6 */
-      tempReal = e5;
-      for( i = optInTimePeriod - 1; i > 0; i -= 1 )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         e3 = fma(one_minus_k, e3, k * e2);
-         e4 = fma(one_minus_k, e4, k * e3);
-         e5 = fma(one_minus_k, e5, k * e4);
-         tempReal += e5;
-      }
-      e6 = tempReal / optInTimePeriod;
-      /* Skip the unstable period */
-      while( today <= startIdx )
-      {
-         /* Do the calculation but do not write the output */
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         e3 = fma(one_minus_k, e3, k * e2);
-         e4 = fma(one_minus_k, e4, k * e3);
-         e5 = fma(one_minus_k, e5, k * e4);
-         e6 = fma(one_minus_k, e6, k * e5);
-      }
-      /* Calculate the constants */
-      tempReal = optInVFactor * optInVFactor;
-      c1 = 0 - tempReal * optInVFactor;
-      c2 = 3.0 * (tempReal - c1);
-      c3 = (0 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-      c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
-      /* Write the first output */
-      outIdx = 0;
-      lastValue_outReal = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
-      /* Calculate and output the remaining of the range. */
-      while( today <= endIdx )
-      {
-         e1 = fma(one_minus_k, e1, k * inReal[today++]);
-         e2 = fma(one_minus_k, e2, k * e1);
-         e3 = fma(one_minus_k, e3, k * e2);
-         e4 = fma(one_minus_k, e4, k * e3);
-         e5 = fma(one_minus_k, e5, k * e4);
-         e6 = fma(one_minus_k, e6, k * e5);
-         lastValue_outReal = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
-      }
-      /* Indicates to the caller the number of output
-       * successfully calculated.
-       */
-      dummyNBElement = outIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_T3_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->optInVFactor = optInVFactor;
-      sp->k = k;
-      sp->one_minus_k = one_minus_k;
-      sp->e1 = e1;
-      sp->e2 = e2;
-      sp->e3 = e3;
-      sp->e4 = e4;
-      sp->e5 = e5;
-      sp->e6 = e6;
-      sp->c1 = c1;
-      sp->c2 = c2;
-      sp->c3 = c3;
-      sp->c4 = c4;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
-{
-   return TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_T3_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 5;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( optInVFactor == TA_REAL_DEFAULT )
-      optInVFactor = 0.7;
-   else if( optInVFactor < 0e0 || optInVFactor > 1e0 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -718,7 +501,7 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
          *outNBElement = historyLen - fillLb;
          for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
          {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+            outReal[(fillIdx) * outStride] = inReal[fillLb + fillIdx];
          }
       }
       *stream = sp;
@@ -851,7 +634,7 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
       c4 = fma(3.0, tempReal, fma(3.0, optInVFactor, 1.0) - c1);
       /* Write the first output */
       outIdx = 0;
-      outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
+      outReal[outIdx++ * outStride] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
       /* Calculate and output the remaining of the range. */
       while( today <= endIdx )
       {
@@ -861,7 +644,7 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
          e4 = fma(one_minus_k, e4, k * e3);
          e5 = fma(one_minus_k, e5, k * e4);
          e6 = fma(one_minus_k, e6, k * e5);
-         outReal[outIdx++] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
+         outReal[outIdx++ * outStride] = fma(c4, e3, fma(c3, e4, fma(c1, e6, c2 * e5)));
       }
       /* Indicates to the caller the number of output
        * successfully calculated.
@@ -889,6 +672,35 @@ TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inR
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_T3_OpenInternal( struct TA_T3_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_T3_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, optInVFactor, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_T3_Open( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, double *outReal )
+{
+   return TA_T3_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_T3_OpenAndFill( TA_T3_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double optInVFactor, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_T3_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double *outReal )

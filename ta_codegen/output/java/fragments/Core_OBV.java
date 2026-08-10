@@ -282,16 +282,13 @@
       sp.cur_outReal = sp.prevOBV;
       sp.prevReal = tempReal;
    }
-   private RetCode OBV_OpenBody( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
+   private RetCode OBV_OpenCore( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
       double prevReal = 0;
       double tempReal = 0;
       double prevOBV = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inVolume.length != inReal.length ) {
@@ -310,7 +307,7 @@
          } else if( tempReal < prevReal ) {
             prevOBV -= inVolume[i];
          }
-         lastValue_outReal = prevOBV;
+         outReal[outIdx++ * outStride] = prevOBV;
          prevReal = tempReal;
       }
       outBegIdx.value = startIdx;
@@ -318,48 +315,22 @@
       /* Capture the live batch state into the handle. */
       sp.prevReal = prevReal;
       sp.prevOBV = prevOBV;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode OBV_OpenBody( OBV_Stream sp, double inReal[], double inVolume[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return OBV_OpenCore( sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode OBV_OpenAndFillBody( OBV_Stream sp, double inReal[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int i = 0;
-      int outIdx = 0;
-      double prevReal = 0;
-      double tempReal = 0;
-      double prevOBV = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inVolume.length != inReal.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      prevOBV = inVolume[startIdx];
-      prevReal = inReal[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempReal = inReal[i];
-         if( tempReal > prevReal ) {
-            prevOBV += inVolume[i];
-         } else if( tempReal < prevReal ) {
-            prevOBV -= inVolume[i];
-         }
-         outReal[outIdx++] = prevOBV;
-         prevReal = tempReal;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.prevReal = prevReal;
-      sp.prevOBV = prevOBV;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return OBV_OpenCore( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )

@@ -99,6 +99,8 @@ public partial class Core
       }
       if( (int)optInSlowK_MAType == int.MinValue || optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.SMA;
+      } else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 11 ) {
+         return -1;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -107,6 +109,8 @@ public partial class Core
       }
       if( (int)optInSlowD_MAType == int.MinValue || optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.SMA;
+      } else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 11 ) {
+         return -1;
       }
       int retValue = 0;
       /* Account for the initial data needed for Fast-K. */
@@ -170,6 +174,8 @@ public partial class Core
       }
       if( (int)optInSlowK_MAType == int.MinValue || optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.SMA;
+      } else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -178,6 +184,8 @@ public partial class Core
       }
       if( (int)optInSlowD_MAType == int.MinValue || optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.SMA;
+      } else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
@@ -417,6 +425,8 @@ public partial class Core
       }
       if( (int)optInSlowK_MAType == int.MinValue || optInSlowK_MAType == MAType.DEFAULT ) {
          optInSlowK_MAType = MAType.SMA;
+      } else if( (int)optInSlowK_MAType < 0 || (int)optInSlowK_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( optInSlowD_Period == int.MinValue ) {
          optInSlowD_Period = 3;
@@ -425,6 +435,8 @@ public partial class Core
       }
       if( (int)optInSlowD_MAType == int.MinValue || optInSlowD_MAType == MAType.DEFAULT ) {
          optInSlowD_MAType = MAType.SMA;
+      } else if( (int)optInSlowD_MAType < 0 || (int)optInSlowD_MAType > 11 ) {
+         return RetCode.BadParam;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;

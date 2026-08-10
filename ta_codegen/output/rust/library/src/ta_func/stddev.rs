@@ -285,10 +285,11 @@ impl Core {
         (*outReal) = cur_outReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STDDEV_Open`] (composition seam).
-    pub(crate) fn STDDEV_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
-    ) -> Result<(STDDEV_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::STDDEV_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::STDDEV_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn STDDEV_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<STDDEV_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -310,11 +311,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut _begStore: usize = 0;
-        let mut _nbStore: usize = 0;
-        let outBegIdx: &mut usize = &mut _begStore;
-        let outNBElement: &mut usize = &mut _nbStore;
         let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
         let mut i: usize = 0_usize;
         let mut retCode: RetCode = RetCode::Success;
@@ -366,7 +362,23 @@ impl Core {
             optInNbDev,
             sub0,
         };
-        Ok((STDDEV_Stream { core: self.clone(), state }, sc_outReal[*outNBElement - 1]))
+        if outStride == 1 {
+            outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outReal[0] = sc_outReal[*outNBElement - 1];
+        }
+        Ok(STDDEV_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::STDDEV_Open`] (composition seam).
+    pub(crate) fn STDDEV_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64,
+    ) -> Result<(STDDEV_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.STDDEV_OpenCore(inReal, startIdx, optInTimePeriod, optInNbDev, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live STDDEV stream over the warm-up history; returns the handle and
@@ -399,80 +411,7 @@ impl Core {
     pub fn STDDEV_OpenAndFill(
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<STDDEV_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInNbDev == REAL_DEFAULT {
-            optInNbDev = 1e0;
-        } else if (optInNbDev < REAL_MIN) || (optInNbDev > REAL_MAX) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut i: usize = 0_usize;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempReal: f64 = 0.0_f64;
-        // Calculate the variance.
-        // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.VAR_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
-        if retCode != RetCode::Success {
-            return Err(retCode);
-        }
-        // Calculate the square root of each variance, this
-        // is the standard deviation.
-        //
-        // Multiply also by the ratio specified.
-        if optInNbDev != 1.0 {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = sc_outReal[i];
-                if !((tempReal) < 1e-14) {
-                    sc_outReal[i] = (tempReal).sqrt() * optInNbDev;
-                } else {
-                    sc_outReal[i] = 0.0 as f64;
-                }
-                i += 1;
-            }
-        } else {
-            // for( i = 0; i < ((((*outNBElement) as usize)) as usize); i += 1 )
-            i = 0;
-            while i < ((((*outNBElement) as usize)) as usize) {
-                tempReal = sc_outReal[i];
-                if !((tempReal) < 1e-14) {
-                    sc_outReal[i] = (tempReal).sqrt();
-                } else {
-                    sc_outReal[i] = 0.0 as f64;
-                }
-                i += 1;
-            }
-        }
-
-        // Capture the live producer state + sub handles.
-        if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
-        }
-        let state = STDDEV_StreamState {
-            optInTimePeriod,
-            optInNbDev,
-            sub0,
-        };
-        outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        Ok(STDDEV_Stream { core: self.clone(), state })
+        self.STDDEV_OpenCore(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

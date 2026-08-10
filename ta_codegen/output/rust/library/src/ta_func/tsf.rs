@@ -344,164 +344,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TSF_Open`] (composition seam).
-    pub(crate) fn TSF_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(TSF_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut SumX: f64 = 0.0_f64;
-        let mut SumXY: f64 = 0.0_f64;
-        let mut SumY: f64 = 0.0_f64;
-        let mut SumXSqr: f64 = 0.0_f64;
-        let mut Divisor: f64 = 0.0_f64;
-        let mut m: f64 = 0.0_f64;
-        let mut b: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut tempValue1: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        // Linear Regression is a concept also known as the
-        // "least squares method" or "best fit." Linear
-        // Regression attempts to fit a straight line between
-        // several data points in such a way that distance
-        // between each data point and the line is minimized.
-        //
-        // For each point, a straight line over the specified
-        // previous bar period is determined in terms
-        // of y = b + m*x:
-        //
-        // TA_LINEARREG          : Returns b+m*(period-1)
-        // TA_LINEARREG_SLOPE    : Returns 'm'
-        // TA_LINEARREG_ANGLE    : Returns 'm' in degree.
-        // TA_LINEARREG_INTERCEPT: Returns 'b'
-        // TA_TSF                : Returns b+m*(period)
-        // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.TSF_Lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        outIdx = 0;
-        // Index into the output.
-        today = startIdx;
-        trailingIdx = startIdx - lookbackTotal;
-        SumX = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * 0.5;
-        SumXSqr = (optInTimePeriod as f64) * (((optInTimePeriod - 1)) as f64) * (((2 * optInTimePeriod - 1)) as f64) / 6.0;
-        Divisor = SumX * SumX - ((optInTimePeriod) as f64) * SumXSqr;
-        // Prime the two data-dependent window sums for the first output with a
-        // one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
-        // SumY = sum of the window, SumXY = sum of i*value (i the reversed
-        // 0..period-1 position).
-        SumXY = 0.0;
-        SumY = 0.0;
-        // for( i = (optInTimePeriod) as usize; { let _v = i; i = i.wrapping_sub(1); _v } != 0;  )
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } != 0 {
-            tempValue1 = inReal[today - i];
-            SumY += tempValue1;
-            SumXY += (i as f64) * tempValue1;
-        }
-        m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
-        b = (SumY - m * SumX) / (optInTimePeriod as f64);
-        trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        lastValue_outReal = (m as f64).mul_add(optInTimePeriod as f64, b);
-        today += 1;
-        // Slide the window one bar at a time, keeping both sums in O(1): advancing
-        // the window raises every retained value's weight by 1 (adds SumY) and drops
-        // the departing value at full weight (subtracts period*trailingValue). Same
-        // incremental identity as WMA/CORREL; the output arithmetic is unchanged.
-        // (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
-        // Each departing value is read before the output write of the same bar:
-        // with outReal==inReal (in-place, #130) that write lands on the cell the
-        // next iteration departs from.
-        while today <= endIdx {
-            SumXY = SumXY + SumY - (optInTimePeriod as f64) * trailingValue;
-            SumY = SumY - trailingValue + inReal[today];
-            m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
-            b = (SumY - m * SumX) / (optInTimePeriod as f64);
-            trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            lastValue_outReal = (m as f64).mul_add(optInTimePeriod as f64, b);
-            today += 1;
-        }
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = TSF_StreamState {
-            optInTimePeriod,
-            SumX,
-            SumXY,
-            SumY,
-            Divisor,
-            trailingValue,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok((TSF_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live TSF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TSF`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.TSF_Open(&data, 14).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_TSF_Open")]
-    pub fn TSF_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TSF_Stream, f64), RetCode> {
-        self.TSF_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::TSF_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TSF`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_TSF_OpenAndFill")]
-    pub fn TSF_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::TSF_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TSF_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TSF_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TSF_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -516,7 +362,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
@@ -582,8 +428,7 @@ impl Core {
         m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
         b = (SumY - m * SumX) / (optInTimePeriod as f64);
         trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-        outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
-        outIdx += 1;
+        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (m as f64).mul_add(optInTimePeriod as f64, b);
         today += 1;
         // Slide the window one bar at a time, keeping both sums in O(1): advancing
         // the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -599,8 +444,7 @@ impl Core {
             m = (((optInTimePeriod) as f64) * SumXY - SumX * SumY) / Divisor;
             b = (SumY - m * SumX) / (optInTimePeriod as f64);
             trailingValue = inReal[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            outReal[outIdx] = (m as f64).mul_add(optInTimePeriod as f64, b);
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (m as f64).mul_add(optInTimePeriod as f64, b);
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -627,6 +471,50 @@ impl Core {
             ring_trailingIdx_inReal,
         };
         Ok(TSF_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TSF_Open`] (composition seam).
+    pub(crate) fn TSF_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(TSF_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TSF_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live TSF stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::TSF`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.TSF_Open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_TSF_Open")]
+    pub fn TSF_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(TSF_Stream, f64), RetCode> {
+        self.TSF_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::TSF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TSF`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_TSF_OpenAndFill")]
+    pub fn TSF_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<TSF_Stream, RetCode> {
+        self.TSF_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

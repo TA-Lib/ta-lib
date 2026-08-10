@@ -491,6 +491,39 @@ static ErrorNumber testUnstablePeriodBounds( void )
       }
    }
 
+   /* The VALUE dimension. The id has been bounded since #144; the period never
+    * was, and it is added to a lookback that is then used as an index -- so a
+    * huge one overflows the lookback NEGATIVE and the call indexes ~2^31 bars
+    * forward. TA_MAX_INDEX is the ceiling the index space already uses, and a
+    * warm-up beyond it could never produce output anyway.
+    */
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_MAX_INDEX + 1 ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 2147483647u ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 4294967295u ) != TA_BAD_PARAM ||
+       TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 2147483647u ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetUnstablePeriod accepted a period that overflows the lookback\n" );
+      return TA_INTERNAL_UNST_VALUE_FAIL;
+   }
+
+   /* A rejected period must not have been stored, by either the single-id or
+    * the wildcard path -- 7 is what the wildcard set above. */
+   if( TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != 7 ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_ADX ) != 7 )
+   {
+      printf( "\nFailed: a rejected TA_SetUnstablePeriod still wrote the value\n" );
+      return TA_INTERNAL_UNST_VALUE_FAIL;
+   }
+
+   /* The ceiling itself is accepted: the guard is a bound, not an off-by-one. */
+   if( TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, (unsigned int)TA_MAX_INDEX ) != TA_SUCCESS ||
+       TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != (unsigned int)TA_MAX_INDEX )
+   {
+      printf( "\nFailed: TA_SetUnstablePeriod rejected the TA_MAX_INDEX ceiling\n" );
+      return TA_INTERNAL_UNST_VALUE_FAIL;
+   }
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 7 );
+
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_RSI, 3 );
    if( retCode != TA_SUCCESS ||
        TA_GetUnstablePeriod( TA_FUNC_UNST_RSI ) != 3 ||

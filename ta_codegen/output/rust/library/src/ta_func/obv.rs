@@ -216,10 +216,11 @@ impl Core {
         sp.prevReal = tempReal;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::OBV_Open`] (composition seam).
-    pub(crate) fn OBV_OpenInternal(
-        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(OBV_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::OBV_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::OBV_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn OBV_OpenCore(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<OBV_Stream, RetCode> {
         if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
             return Err(RetCode::BadParam);
         }
@@ -231,7 +232,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevReal: f64 = 0.0_f64;
@@ -247,19 +247,30 @@ impl Core {
             } else if tempReal < prevReal {
                 prevOBV -= inVolume[i];
             }
-            lastValue_outReal = prevOBV;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevOBV;
             prevReal = tempReal;
         }
         i = (endIdx as usize) + 1;
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
         let state = OBV_StreamState {
             prevReal,
             prevOBV,
         };
-        Ok((OBV_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(OBV_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::OBV_Open`] (composition seam).
+    pub(crate) fn OBV_OpenInternal(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(OBV_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.OBV_OpenCore(inReal, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live OBV stream over the warm-up history; returns the handle and
@@ -295,46 +306,7 @@ impl Core {
     pub fn OBV_OpenAndFill(
         &self, inReal: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<OBV_Stream, RetCode> {
-        if inReal.is_empty() || inVolume.is_empty() || inVolume.len() != inReal.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevReal: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut prevOBV: f64 = 0.0_f64;
-        prevOBV = inVolume[startIdx];
-        prevReal = inReal[startIdx];
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempReal = inReal[i];
-            if tempReal > prevReal {
-                prevOBV += inVolume[i];
-            } else if tempReal < prevReal {
-                prevOBV -= inVolume[i];
-            }
-            outReal[outIdx] = prevOBV;
-            outIdx += 1;
-            prevReal = tempReal;
-        }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = OBV_StreamState {
-            prevReal,
-            prevOBV,
-        };
-        Ok(OBV_Stream { core: self.clone(), state })
+        self.OBV_OpenCore(inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

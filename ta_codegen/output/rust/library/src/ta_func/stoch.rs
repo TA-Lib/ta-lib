@@ -576,10 +576,11 @@ impl Core {
         (*outSlowD) = cur_outSlowD;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
-    pub(crate) fn STOCH_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType,
-    ) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
+    /// The single whole-history transcription behind [`Core::STOCH_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::STOCH_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn STOCH_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64], outStride: usize,
+    ) -> Result<STOCH_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
         }
@@ -612,12 +613,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outSlowK: f64 = 0.0_f64;
-        let mut lastValue_outSlowD: f64 = 0.0_f64;
-        let mut _begStore: usize = 0;
-        let mut _nbStore: usize = 0;
-        let outBegIdx: &mut usize = &mut _begStore;
-        let outNBElement: &mut usize = &mut _nbStore;
         let mut sc_outSlowK: Vec<f64> = vec![0.0_f64; historyLen];
         let mut sc_outSlowD: Vec<f64> = vec![0.0_f64; historyLen];
         let mut retCode: RetCode = RetCode::Success;
@@ -861,7 +856,29 @@ impl Core {
             sub0,
             sub1,
         };
-        Ok((STOCH_Stream { core: self.clone(), state }, (sc_outSlowK[*outNBElement - 1], sc_outSlowD[*outNBElement - 1])))
+        if outStride == 1 {
+            outSlowK[..*outNBElement].copy_from_slice(&sc_outSlowK[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outSlowK[0] = sc_outSlowK[*outNBElement - 1];
+        }
+        if outStride == 1 {
+            outSlowD[..*outNBElement].copy_from_slice(&sc_outSlowD[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outSlowD[0] = sc_outSlowD[*outNBElement - 1];
+        }
+        Ok(STOCH_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
+    pub(crate) fn STOCH_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType,
+    ) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outSlowK = [0.0_f64; 1];
+        let mut sink_outSlowD = [0.0_f64; 1];
+        let handle = self.STOCH_OpenCore(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSlowK, &mut sink_outSlowD, 0)?;
+        Ok((handle, (sink_outSlowK[0], sink_outSlowD[0])))
     }
 
     /// Open a live STOCH stream over the warm-up history; returns the handle and
@@ -899,287 +916,10 @@ impl Core {
     pub fn STOCH_OpenAndFill(
         &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
     ) -> Result<STOCH_Stream, RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastK_Period) as i32) == (i32::MIN) {
-            optInFastK_Period = 5;
-        } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInSlowK_Period) as i32) == (i32::MIN) {
-            optInSlowK_Period = 3;
-        } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInSlowK_MAType == MAType::DEFAULT {
-            optInSlowK_MAType = MAType::SMA;
-        }
-        if ((optInSlowD_Period) as i32) == (i32::MIN) {
-            optInSlowD_Period = 3;
-        } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInSlowD_MAType == MAType::DEFAULT {
-            optInSlowD_MAType = MAType::SMA;
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut sc_outSlowK: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outSlowD: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut retCode: RetCode = RetCode::Success;
-        let mut lowest: f64 = 0.0_f64;
-        let mut highest: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut diff: f64 = 0.0_f64;
-        let mut tempBuffer: Vec<f64> = Vec::new();
-        let mut outIdx: usize = 0_usize;
-        let mut lowestIdx: i32 = 0_i32;
-        let mut highestIdx: i32 = 0_i32;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut lookbackK: usize = 0_usize;
-        let mut lookbackKSlow: usize = 0_usize;
-        let mut lookbackDSlow: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut bufferIsAllocated: usize = 0_usize;
-        // With stochastic, there is a total of 4 different lines that
-        // are defined: FASTK, FASTD, SLOWK and SLOWD.
-        //
-        // The D is the signal line usually drawn over its
-        // corresponding K function.
-        //
-        //                    (Today's Close - LowestLow)
-        //  FASTK(Kperiod) =  --------------------------- * 100
-        //                     (HighestHigh - LowestLow)
-        //
-        //  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
-        //
-        //  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
-        //
-        //  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
-        //
-        // The HighestHigh and LowestLow are the extreme values among the
-        // last 'Kperiod'.
-        //
-        // SLOWK and FASTD are equivalent when using the same period.
-        //
-        // The following shows how these four lines are made available in TA-LIB:
-        //
-        //  TA_STOCH  : Returns the SLOWK and SLOWD
-        //  TA_STOCHF : Returns the FASTK and FASTD
-        //
-        // The TA_STOCH function correspond to the more widely implemented version
-        // found in many software/charting package. The TA_STOCHF is more rarely
-        // used because its higher volatility cause often whipsaws.
-        // Identify the lookback needed.
-        lookbackK = (optInFastK_Period - 1) as usize;
-        lookbackKSlow = self.MA_Lookback(optInSlowK_Period, optInSlowK_MAType);
-        lookbackDSlow = self.MA_Lookback(optInSlowD_Period, optInSlowD_MAType);
-        lookbackTotal = lookbackK + lookbackDSlow + lookbackKSlow;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            // Succeed... but no data in the output.
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the K calculation:
-        //
-        //    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
-        //
-        // Kt is today stochastic
-        // Ct is today closing price.
-        // Lt is the lowest price of the last K Period (including today)
-        // Ht is the highest price of the last K Period (including today)
-        // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the input and
-        // output to be the same buffer.
-        outIdx = 0;
-        // Calculate just enough K for ending up with the caller
-        // requested range. (The range of k must consider all
-        // the lookback involve with the smoothing).
-        trailingIdx = startIdx - lookbackTotal;
-        today = trailingIdx + lookbackK;
-        highestIdx = 0 - 1;
-        lowestIdx = highestIdx;
-        lowest = 0.0;
-        highest = lowest;
-        diff = highest;
-        // Allocate a temporary buffer large enough to
-        // store the K.
-        //
-        // When outSlowK aliases a price input the caller buffer doubles as the
-        // scratch, saving one allocation: the K writes trail the min/max window
-        // reads, and the final memmove is overlap-safe. outSlowD must NOT be
-        // elected: the %D ma() below would then run in place over the smoothed K
-        // that the memmove into outSlowK still needs (issue #130).
-        bufferIsAllocated = 0;
-        if sc_outSlowK.as_ptr() == inHigh.as_ptr() || sc_outSlowK.as_ptr() == inLow.as_ptr() || sc_outSlowK.as_ptr() == inClose.as_ptr() {
-            tempBuffer = sc_outSlowK.to_vec();
-        } else {
-            bufferIsAllocated = 1;
-            tempBuffer = vec![0.0_f64; ((endIdx - today + 1) * 1) as usize];
-        }
-        // Do the K calculation
-        while today <= endIdx {
-            // Set the lowest low
-            tmp = inLow[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inLow[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inLow[i];
-                    if tmp < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmp;
-                    }
-                }
-                diff = (highest - lowest) / 100.0;
-            } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmp;
-                diff = (highest - lowest) / 100.0;
-            }
-            // Set the highest high
-            tmp = inHigh[today];
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inHigh[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inHigh[i];
-                    if tmp > highest {
-                        highestIdx = (i) as i32;
-                        highest = tmp;
-                    }
-                }
-                diff = (highest - lowest) / 100.0;
-            } else if tmp >= highest {
-                highestIdx = (today) as i32;
-                highest = tmp;
-                diff = (highest - lowest) / 100.0;
-            }
-            // Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-            // a machine-flat window leaves a sub-epsilon residue that an exact check
-            // would divide into [0,100] noise (issue #107 / STOCHRSI).
-            if !((diff).abs() < 1e-14) {
-                tempBuffer[outIdx] = (inClose[today] - lowest) / diff;
-                outIdx += 1;
-            } else {
-                tempBuffer[outIdx] = 0.0;
-                outIdx += 1;
-            }
-            trailingIdx += 1;
-            today += 1;
-        }
-        // Un-smoothed K calculation completed. This K calculation is not returned
-        // to the caller. It is always smoothed and then return.
-        // Some documentation will refer to the smoothed version as being
-        // "K-Slow", but often this end up to be shorten to "K".
-        // Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&tempBuffer[..((outIdx - 1) as usize) + 1], ((0) as usize), optInSlowK_Period, optInSlowK_MAType)?;
-        retCode = { let mut _tempBuffer_alias: Vec<f64> = vec![0.0_f64; tempBuffer.len()]; let _rc = self.MA(0, outIdx - 1, &tempBuffer, optInSlowK_Period, optInSlowK_MAType, outBegIdx, outNBElement, &mut _tempBuffer_alias[..]); std::mem::swap(&mut tempBuffer, &mut _tempBuffer_alias); _rc };
-        if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
-            if bufferIsAllocated != 0 {
-            }
-            // Something wrong happen? No further data?
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Calculate the %D which is simply a moving average of
-        // the already smoothed %K.
-        // Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.MA_OpenInternal(&tempBuffer[..((((*outNBElement) as usize) - 1) as usize) + 1], ((0) as usize), optInSlowD_Period, optInSlowD_MAType)?;
-        retCode = self.MA(0, (((*outNBElement) as usize) - 1) as usize, &tempBuffer, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, &mut sc_outSlowD[..]);
-        // Copy tempBuffer into the caller buffer.
-        // (Calculation could not be done directly in the
-        //  caller buffer because more input data then the
-        //  requested range was needed for doing %D).
-        // memmove, not memcpy: tempBuffer aliases outSlowK when the caller buffer is
-        // reused as scratch, so source and destination overlap (issue #94).
-        {
-            let _n = (((((*outNBElement) as usize)) as usize) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackDSlow) as usize;
-            sc_outSlowK[_di.._di + _n].copy_from_slice(&tempBuffer[_si.._si + _n]);
-        };
-        // Don't need K anymore, free it if it was allocated here.
-        if bufferIsAllocated != 0 {
-        }
-        if retCode != RetCode::Success {
-            // Something wrong happen while processing %D?
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Note: Keep the outBegIdx relative to the
-        //       caller input before returning.
-        (*outBegIdx) = startIdx;
-
-        // Capture the live producer state + sub handles.
-        if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
-        }
-        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
-        if capX < 1 || capX > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut x_inHigh: Vec<f64> = vec![0.0_f64; capX as usize];
-        let mut x_inLow: Vec<f64> = vec![0.0_f64; capX as usize];
-        let mut x_inClose: Vec<f64> = vec![0.0_f64; capX as usize];
-        {
-            let mut fillJ: usize = historyLen - capX as usize;
-            while fillJ < historyLen {
-                x_inHigh[fillJ % capX as usize] = inHigh[fillJ];
-                x_inLow[fillJ % capX as usize] = inLow[fillJ];
-                x_inClose[fillJ % capX as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = STOCH_StreamState {
-            optInFastK_Period,
-            optInSlowK_Period,
-            optInSlowK_MAType,
-            optInSlowD_Period,
-            optInSlowD_MAType,
-            lowest,
-            highest,
-            diff,
-            lowestIdx: (lowestIdx) as i32,
-            highestIdx: (highestIdx) as i32,
-            trailingIdx: (trailingIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
-            xCap: capX as i32,
-            x_inHigh,
-            x_inLow,
-            x_inClose,
-            sub0,
-            sub1,
-        };
-        outSlowK[..*outNBElement].copy_from_slice(&sc_outSlowK[..*outNBElement]);
-        outSlowD[..*outNBElement].copy_from_slice(&sc_outSlowD[..*outNBElement]);
-        Ok(STOCH_Stream { core: self.clone(), state })
+        self.STOCH_OpenCore(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1)
     }
 
 }

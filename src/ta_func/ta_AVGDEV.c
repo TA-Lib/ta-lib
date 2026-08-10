@@ -237,14 +237,12 @@ static void TA_AVGDEV_StepInternal( struct TA_AVGDEV_Stream *sp, double inReal, 
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_AVGDEV_OpenInternal( struct TA_AVGDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+static TA_RetCode TA_AVGDEV_OpenCore( struct TA_AVGDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_AVGDEV_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -257,97 +255,6 @@ TA_RetCode TA_AVGDEV_OpenInternal( struct TA_AVGDEV_Stream **stream, const doubl
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int today;
-      int outIdx;
-      int lookback;
-      lookback = optInTimePeriod - 1;
-      if( startIdx < lookback )
-      {
-         startIdx = lookback;
-      }
-      today = startIdx;
-      /* Make sure there is still something to evaluate. */
-      if( today > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Process the initial DM and TR */
-      dummyBegIdx = today;
-      outIdx = 0;
-      while( today <= endIdx )
-      {
-         double todaySum;
-         double todayDev;
-         int i;
-         todaySum = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 )
-         {
-            todaySum += inReal[today - i];
-         }
-         todayDev = 0.0;
-         for( i = 0; i < optInTimePeriod; i += 1 )
-         {
-            todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
-         }
-         lastValue_outReal = todayDev / optInTimePeriod;
-         outIdx += 1;
-         today += 1;
-      }
-      dummyNBElement = outIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_AVGDEV_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->winCap_i = (int)(optInTimePeriod);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->win_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->win_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->winMirror_i_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
-      if( !sp->winMirror_i_inReal ) { TA_AVGDEV_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      memcpy( sp->win_i_inReal, inReal + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
-      sp->winPos_i = 0;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_AVGDEV_Open( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
-{
-   return TA_AVGDEV_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_AVGDEV_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 14;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -387,7 +294,7 @@ TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const do
          {
             todayDev += fabs(inReal[today - i] - todaySum / optInTimePeriod);
          }
-         outReal[outIdx] = todayDev / optInTimePeriod;
+         outReal[outIdx * outStride] = todayDev / optInTimePeriod;
          outIdx += 1;
          today += 1;
       }
@@ -409,6 +316,35 @@ TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const do
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_AVGDEV_OpenInternal( struct TA_AVGDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_AVGDEV_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_Open( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_AVGDEV_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_AVGDEV_OpenAndFill( TA_AVGDEV_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_AVGDEV_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_AVGDEV_Update( TA_AVGDEV_Stream *stream, double inReal, double *outReal )

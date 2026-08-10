@@ -494,7 +494,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode CORREL_OpenBody( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
+   private RetCode CORREL_OpenCore( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumXY = 0;
       double sumX = 0;
@@ -510,9 +510,6 @@
       int today = 0;
       int trailingIdx = 0;
       int outIdx = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal0.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inReal1.length != inReal0.length ) {
@@ -564,9 +561,9 @@
       trailingY = inReal1[trailingIdx++];
       tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
       if( !(tempReal < 0.00000000000001) ) {
-         lastValue_outReal = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
+         outReal[0 * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
       } else {
-         lastValue_outReal = 0.0;
+         outReal[0 * outStride] = 0.0;
       }
       /* Tight loop to do subsequent values. */
       outIdx = 1;
@@ -593,9 +590,9 @@
          trailingY = inReal1[trailingIdx++];
          tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
          if( !(tempReal < 0.00000000000001) ) {
-            lastValue_outReal = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
+            outReal[outIdx++ * outStride] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
          } else {
-            lastValue_outReal = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          }
       }
       outNBElement.value = outIdx;
@@ -624,142 +621,22 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal0 = capRing_trailingIdx_inReal0;
       sp.ring_trailingIdx_inReal1 = capRing_trailingIdx_inReal1;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CORREL_OpenBody( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return CORREL_OpenCore( sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode CORREL_OpenAndFillBody( CORREL_Stream sp, double inReal0[], double inReal1[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double sumXY = 0;
-      double sumX = 0;
-      double sumY = 0;
-      double sumX2 = 0;
-      double sumY2 = 0;
-      double x = 0;
-      double y = 0;
-      double trailingX = 0;
-      double trailingY = 0;
-      double tempReal = 0;
-      int lookbackTotal = 0;
-      int today = 0;
-      int trailingIdx = 0;
-      int outIdx = 0;
-      int historyLen = inReal0.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inReal1.length != inReal0.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          return RetCode.BadParam;
       }
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      lookbackTotal = optInTimePeriod - 1;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outBegIdx.value = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      /* Calculate the initial values. */
-      sumY2 = 0.0;
-      sumX2 = sumY2;
-      sumY = sumX2;
-      sumX = sumY;
-      sumXY = sumX;
-      for( today = trailingIdx; today <= startIdx; today += 1 ) {
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-      }
-      /* Write the first output.
-       * Save first the trailing values since the input
-       * and output might be the same array,
-       */
-      trailingX = inReal0[trailingIdx];
-      trailingY = inReal1[trailingIdx++];
-      tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-      if( !(tempReal < 0.00000000000001) ) {
-         outReal[0] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-      } else {
-         outReal[0] = 0.0;
-      }
-      /* Tight loop to do subsequent values. */
-      outIdx = 1;
-      while( today <= endIdx ) {
-         /* Remove trailing values */
-         sumX -= trailingX;
-         sumX2 -= trailingX * trailingX;
-         sumXY -= trailingX * trailingY;
-         sumY -= trailingY;
-         sumY2 -= trailingY * trailingY;
-         /* Add new values */
-         x = inReal0[today];
-         sumX += x;
-         sumX2 += x * x;
-         y = inReal1[today++];
-         sumXY += x * y;
-         sumY += y;
-         sumY2 += y * y;
-         /* Output new coefficient.
-          * Save first the trailing values since the input
-          * and output might be the same array,
-          */
-         trailingX = inReal0[trailingIdx];
-         trailingY = inReal1[trailingIdx++];
-         tempReal = (sumX2 - sumX * sumX / optInTimePeriod) * (sumY2 - sumY * sumY / optInTimePeriod);
-         if( !(tempReal < 0.00000000000001) ) {
-            outReal[outIdx++] = (sumXY - sumX * sumY / optInTimePeriod) / Math.sqrt(tempReal);
-         } else {
-            outReal[outIdx++] = 0.0;
-         }
-      }
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal0 = new double[allocN_trailingIdx];
-      System.arraycopy(inReal0, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal0, 0, cap_trailingIdx);
-      double[] capRing_trailingIdx_inReal1 = new double[allocN_trailingIdx];
-      System.arraycopy(inReal1, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal1, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.sumXY = sumXY;
-      sp.sumX = sumX;
-      sp.sumY = sumY;
-      sp.sumX2 = sumX2;
-      sp.sumY2 = sumY2;
-      sp.x = x;
-      sp.y = y;
-      sp.trailingX = trailingX;
-      sp.trailingY = trailingY;
-      sp.tempReal = tempReal;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal0 = capRing_trailingIdx_inReal0;
-      sp.ring_trailingIdx_inReal1 = capRing_trailingIdx_inReal1;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return CORREL_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind CORREL_Open (composition seam). */
    CORREL_Stream CORREL_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )

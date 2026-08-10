@@ -440,253 +440,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CMO_Open`] (composition seam).
-    pub(crate) fn CMO_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CMO_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        if optInTimePeriod == 1 {
-            if historyLen < self.CMO_Lookback(optInTimePeriod) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = CMO_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                prevGain: 0.0_f64,
-                prevLoss: 0.0_f64,
-                prevValue: 0.0_f64,
-            };
-            return Ok((CMO_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
-        }
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut unstablePeriod: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut prevGain: f64 = 0.0_f64;
-        let mut prevLoss: f64 = 0.0_f64;
-        let mut prevValue: f64 = 0.0_f64;
-        let mut savePrevValue: f64 = 0.0_f64;
-        let mut tempValue1: f64 = 0.0_f64;
-        let mut tempValue2: f64 = 0.0_f64;
-        let mut tempValue3: f64 = 0.0_f64;
-        let mut tempValue4: f64 = 0.0_f64;
-        // CMO calculation is mostly identical to RSI.
-        //
-        // The only difference is in the last step of calculation:
-        //
-        //   RSI = gain / (gain+loss)
-        //   CMO = (gain-loss) / (gain+loss)
-        //
-        // See the RSI function for potentially some more info
-        // on this algo.
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.CMO_Lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        outIdx = 0;
-        // Index into the output.
-        // Accumulate Wilder's "Average Gain" and "Average Loss"
-        // among the initial period.
-        today = startIdx - lookbackTotal;
-        prevValue = inReal[today];
-        unstablePeriod = (self.unstable_period[FuncUnstId::CMO as usize]) as usize;
-        // If there is no unstable period,
-        // calculate the 'additional' initial
-        // price bar who is particuliar to
-        // metastock.
-        // If there is an unstable period,
-        // no need to calculate since this
-        // first value will be surely skip.
-        if unstablePeriod == 0 && self.compatibility == Compatibility::Metastock {
-            // Preserve prevValue because it may get
-            // overwritten by the output.
-            // (because output ptr could be the same as input ptr).
-            savePrevValue = prevValue;
-            // No unstable period, so must calculate first output
-            // particular to Metastock.
-            // (Metastock re-use the first price bar, so there
-            //  is no loss/gain at first. Beats me why they
-            //  are doing all this).
-            prevGain = 0.0;
-            prevLoss = 0.0;
-            // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-            i = (optInTimePeriod) as usize;
-            while i > 0 {
-                tempValue1 = inReal[{ let _v = today; today += 1; _v }];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                if tempValue2 < 0_f64 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                i -= 1;
-            }
-            tempValue1 = prevLoss / ((optInTimePeriod) as f64);
-            tempValue2 = prevGain / ((optInTimePeriod) as f64);
-            tempValue3 = tempValue2 - tempValue1;
-            tempValue4 = tempValue1 + tempValue2;
-            // Write the output.
-            if !((tempValue4).abs() < 1e-14) {
-                lastValue_outReal = 100_f64 * (tempValue3 / tempValue4);
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            // Are we done?
-            if today > endIdx {
-                dummyBegIdx = startIdx;
-                dummyNBElement = outIdx;
-                return Err(RetCode::BadParam);
-            }
-            // Start over for the next price bar.
-            today -= (optInTimePeriod) as usize;
-            prevValue = savePrevValue;
-        }
-        // Remaining of the processing is identical
-        // for both Classic calculation and Metastock.
-        prevGain = 0.0;
-        prevLoss = 0.0;
-        today += 1;
-        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
-        while i > 0 {
-            tempValue1 = inReal[{ let _v = today; today += 1; _v }];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            i -= 1;
-        }
-        // Subsequent prevLoss and prevGain are smoothed
-        // using the previous values (Wilder's approach).
-        //  1) Multiply the previous by 'period-1'.
-        //  2) Add today value.
-        //  3) Divide by 'period'.
-        prevLoss /= ((optInTimePeriod) as f64);
-        prevGain /= ((optInTimePeriod) as f64);
-        // Often documentation present the RSI calculation as follow:
-        //    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
-        //
-        // The following is equivalent:
-        //    RSI = 100 * (prevGain/(prevGain+prevLoss))
-        //
-        // The second equation is used here for speed optimization.
-        if today > startIdx {
-            tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
-                lastValue_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
-            } else {
-                lastValue_outReal = 0.0;
-            }
-        } else {
-            // Skip the unstable period. Do the processing
-            // but do not write it in the output.
-            while today < startIdx {
-                tempValue1 = inReal[today];
-                tempValue2 = tempValue1 - prevValue;
-                prevValue = tempValue1;
-                prevLoss *= ((optInTimePeriod - 1) as f64);
-                prevGain *= ((optInTimePeriod - 1) as f64);
-                if tempValue2 < 0_f64 {
-                    prevLoss -= tempValue2;
-                } else {
-                    prevGain += tempValue2;
-                }
-                prevLoss /= ((optInTimePeriod) as f64);
-                prevGain /= ((optInTimePeriod) as f64);
-                today += 1;
-            }
-        }
-        // Unstable period skipped... now continue
-        // processing if needed.
-        while today <= endIdx {
-            tempValue1 = inReal[{ let _v = today; today += 1; _v }];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            prevLoss *= ((optInTimePeriod - 1) as f64);
-            prevGain *= ((optInTimePeriod - 1) as f64);
-            if tempValue2 < 0_f64 {
-                prevLoss -= tempValue2;
-            } else {
-                prevGain += tempValue2;
-            }
-            prevLoss /= ((optInTimePeriod) as f64);
-            prevGain /= ((optInTimePeriod) as f64);
-            tempValue1 = prevGain + prevLoss;
-            if !((tempValue1).abs() < 1e-14) {
-                lastValue_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
-            } else {
-                lastValue_outReal = 0.0;
-            }
-        }
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = CMO_StreamState {
-            optInTimePeriod,
-            prevGain,
-            prevLoss,
-            prevValue,
-        };
-        Ok((CMO_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live CMO stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CMO`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CMO_Open(&data, 14).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_CMO_Open")]
-    pub fn CMO_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMO_Stream, f64), RetCode> {
-        self.CMO_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::CMO_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CMO`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CMO_OpenAndFill")]
-    pub fn CMO_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::CMO_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CMO_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CMO_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CMO_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -701,7 +458,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
@@ -719,7 +476,7 @@ impl Core {
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
             return Ok(CMO_Stream { core: self.clone(), state });
@@ -802,11 +559,9 @@ impl Core {
             tempValue4 = tempValue1 + tempValue2;
             // Write the output.
             if !((tempValue4).abs() < 1e-14) {
-                outReal[outIdx] = 100_f64 * (tempValue3 / tempValue4);
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100_f64 * (tempValue3 / tempValue4);
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             // Are we done?
             if today > endIdx {
@@ -853,11 +608,9 @@ impl Core {
         if today > startIdx {
             tempValue1 = prevGain + prevLoss;
             if !((tempValue1).abs() < 1e-14) {
-                outReal[outIdx] = 100.0 * ((prevGain - prevLoss) / tempValue1);
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevGain - prevLoss) / tempValue1);
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
         } else {
             // Skip the unstable period. Do the processing
@@ -895,11 +648,9 @@ impl Core {
             prevGain /= ((optInTimePeriod) as f64);
             tempValue1 = prevGain + prevLoss;
             if !((tempValue1).abs() < 1e-14) {
-                outReal[outIdx] = 100.0 * ((prevGain - prevLoss) / tempValue1);
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * ((prevGain - prevLoss) / tempValue1);
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
         }
         (*outBegIdx) = startIdx;
@@ -913,6 +664,50 @@ impl Core {
             prevValue,
         };
         Ok(CMO_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CMO_Open`] (composition seam).
+    pub(crate) fn CMO_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(CMO_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.CMO_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live CMO stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CMO`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CMO_Open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_CMO_Open")]
+    pub fn CMO_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMO_Stream, f64), RetCode> {
+        self.CMO_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::CMO_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMO`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CMO_OpenAndFill")]
+    pub fn CMO_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CMO_Stream, RetCode> {
+        self.CMO_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

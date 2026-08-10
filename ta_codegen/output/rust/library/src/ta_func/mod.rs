@@ -8,7 +8,8 @@ pub use types::*;
 /// Moving-average type selected by an `optInMAType` parameter.
 ///
 /// The values are pinned ABI, shared with C's `TA_MAType` and the Java and
-/// C# `MAType`; the list is append-only.
+/// C# `MAType`; the list is append-only. Convert a raw value in with
+/// [`TryFrom<i32>`](MAType::try_from), and out with `as i32`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 #[allow(non_camel_case_types)]

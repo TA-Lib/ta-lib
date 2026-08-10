@@ -94,6 +94,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return -1;
       }
       /* The slow MA is the key factor determining the lookback period. */
       return MA_Lookback(Math.Max(optInSlowPeriod, optInFastPeriod), optInMAType) ;
@@ -136,6 +138,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -206,6 +210,8 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
+      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+         return RetCode.BadParam;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       if( optInSlowPeriod < optInFastPeriod ) {

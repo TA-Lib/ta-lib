@@ -183,10 +183,11 @@ impl Core {
         (*outReal) = (inReal).tan();
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TAN_Open`] (composition seam).
-    pub(crate) fn TAN_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize,
-    ) -> Result<(TAN_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::TAN_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TAN_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TAN_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<TAN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -198,24 +199,34 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
         i = startIdx;
         outIdx = 0;
         while i <= endIdx {
-            lastValue_outReal = (inReal[i]).tan();
+            outReal[(outIdx * outStride) as usize] = (((inReal[i]).tan()) as f64);
             i += 1;
             outIdx += 1;
         }
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
         let state = TAN_StreamState {
         };
-        Ok((TAN_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(TAN_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TAN_Open`] (composition seam).
+    pub(crate) fn TAN_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize,
+    ) -> Result<(TAN_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TAN_OpenCore(inReal, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live TAN stream over the warm-up history; returns the handle and
@@ -248,34 +259,7 @@ impl Core {
     pub fn TAN_OpenAndFill(
         &self, inReal: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<TAN_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        // for( i = startIdx, outIdx = 0; i <= endIdx; i += 1, outIdx += 1 )
-        i = startIdx;
-        outIdx = 0;
-        while i <= endIdx {
-            outReal[outIdx] = (((inReal[i]).tan()) as f64);
-            i += 1;
-            outIdx += 1;
-        }
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-
-        // Capture the live batch state into the handle.
-        let state = TAN_StreamState {
-        };
-        Ok(TAN_Stream { core: self.clone(), state })
+        self.TAN_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

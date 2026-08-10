@@ -366,167 +366,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CCI_Open`] (composition seam).
-    pub(crate) fn CCI_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CCI_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut tempReal2: f64 = 0.0_f64;
-        let mut theAverage: f64 = 0.0_f64;
-        let mut lastValue: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut j: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut circBuffer: Vec<f64> = Vec::new();
-        let mut circBuffer_Idx: usize = 0;
-        let mut maxIdx_circBuffer: usize = 29;
-        // This ptr will points on a circular buffer of
-        // at least "optInTimePeriod" element.
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Allocate a circular buffer equal to the requested
-        // period.
-        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
-        circBuffer = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_circBuffer = ((optInTimePeriod) as usize) - 1;
-        circBuffer_Idx = 0;
-        // Do the MA calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        // Fill up the circular buffer at the same time.
-        i = startIdx - lookbackTotal;
-        if optInTimePeriod > 1 {
-            while i < startIdx {
-                circBuffer[circBuffer_Idx] = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
-                i += 1;
-                circBuffer_Idx += 1;
-                if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
-            }
-        }
-        // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the inReal and
-        // outReal to be the same buffer.
-        outIdx = 0;
-        loop {
-            lastValue = (inHigh[i] + inLow[i] + inClose[i]) / 3_f64;
-            circBuffer[circBuffer_Idx] = lastValue;
-            // Calculate the average for the whole period.
-            theAverage = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
-            j = 0;
-            while j < ((optInTimePeriod) as usize) {
-                theAverage += circBuffer[j];
-                j += 1;
-            }
-            theAverage /= ((optInTimePeriod) as f64);
-            // Do the summation of the ABS(TypePrice-average)
-            // for the whole period.
-            tempReal2 = 0.0;
-            // for( j = 0; j < ((optInTimePeriod) as usize); j += 1 )
-            j = 0;
-            while j < ((optInTimePeriod) as usize) {
-                tempReal2 += (circBuffer[j] - theAverage).abs();
-                j += 1;
-            }
-            // And finally, the CCI...
-            tempReal = lastValue - theAverage;
-            if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
-                lastValue_outReal = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            // Move forward the circular buffer indexes.
-            circBuffer_Idx += 1;
-            if circBuffer_Idx > maxIdx_circBuffer { circBuffer_Idx = 0; }
-            i += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-        // Free the circular buffer if it was dynamically allocated.
-
-        // Capture the live batch state into the handle.
-        let cbSize_circBuffer: usize = maxIdx_circBuffer + 1;
-        if cbSize_circBuffer > historyLen + 1 {
-            return Err(RetCode::InternalError);
-        }
-        let state = CCI_StreamState {
-            optInTimePeriod,
-            tempReal,
-            tempReal2,
-            theAverage,
-            j,
-            circBuffer_Idx,
-            maxIdx_circBuffer,
-            cbSize_circBuffer: cbSize_circBuffer,
-            cb_circBuffer: circBuffer,
-        };
-        Ok((CCI_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live CCI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CCI`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CCI_Open(&high, &low, &close, 14).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9);
-    /// let updated = s.update(101.4, 99.1, 100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_CCI_Open")]
-    pub fn CCI_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(CCI_Stream, f64), RetCode> {
-        self.CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
-    }
-
-    /// [`Core::CCI_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CCI`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CCI_OpenAndFill")]
-    pub fn CCI_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::CCI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CCI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CCI_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CCI_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -541,7 +384,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut tempReal: f64 = 0.0_f64;
@@ -617,11 +460,9 @@ impl Core {
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
             if !((tempReal).abs() < 1e-14) && !((tempReal2).abs() < 1e-14) {
-                outReal[outIdx] = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / (0.015 * (tempReal2 / ((optInTimePeriod) as f64)));
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             // Move forward the circular buffer indexes.
             circBuffer_Idx += 1;
@@ -651,6 +492,54 @@ impl Core {
             cb_circBuffer: circBuffer,
         };
         Ok(CCI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CCI_Open`] (composition seam).
+    pub(crate) fn CCI_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(CCI_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.CCI_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live CCI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CCI`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CCI_Open(&high, &low, &close, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_CCI_Open")]
+    pub fn CCI_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(CCI_Stream, f64), RetCode> {
+        self.CCI_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    }
+
+    /// [`Core::CCI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CCI`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CCI_OpenAndFill")]
+    pub fn CCI_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CCI_Stream, RetCode> {
+        self.CCI_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

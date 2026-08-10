@@ -457,251 +457,10 @@ impl Core {
         (*outReal) = (sp.c4 as f64).mul_add(sp.e3, (sp.c3 as f64).mul_add(sp.e4, (sp.c1 as f64).mul_add(sp.e6, sp.c2 * sp.e5)));
     }
 
-    /// Internal startIdx-anchored open behind [`Core::T3_Open`] (composition seam).
-    pub(crate) fn T3_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64,
-    ) -> Result<(T3_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInVFactor == REAL_DEFAULT {
-            optInVFactor = 7e-1;
-        } else if (optInVFactor < 0e0) || (optInVFactor > 1e0) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        if optInTimePeriod == 1 {
-            if historyLen < self.T3_Lookback(optInTimePeriod, optInVFactor) + 1 {
-                return Err(RetCode::BadParam);
-            }
-            let state = T3_StreamState {
-                optInTimePeriod: optInTimePeriod,
-                optInVFactor: optInVFactor,
-                k: 0.0_f64,
-                one_minus_k: 0.0_f64,
-                e1: 0.0_f64,
-                e2: 0.0_f64,
-                e3: 0.0_f64,
-                e4: 0.0_f64,
-                e5: 0.0_f64,
-                e6: 0.0_f64,
-                c1: 0.0_f64,
-                c2: 0.0_f64,
-                c3: 0.0_f64,
-                c4: 0.0_f64,
-            };
-            return Ok((T3_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
-        }
-        let mut outIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut k: f64 = 0.0_f64;
-        let mut one_minus_k: f64 = 0.0_f64;
-        let mut e1: f64 = 0.0_f64;
-        let mut e2: f64 = 0.0_f64;
-        let mut e3: f64 = 0.0_f64;
-        let mut e4: f64 = 0.0_f64;
-        let mut e5: f64 = 0.0_f64;
-        let mut e6: f64 = 0.0_f64;
-        let mut c1: f64 = 0.0_f64;
-        let mut c2: f64 = 0.0_f64;
-        let mut c3: f64 = 0.0_f64;
-        let mut c4: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        // For an explanation of this function, please read:
-        //
-        // Magazine articles written by Tim Tillson
-        //
-        // Essentially, a T3 of time serie 't' is:
-        //   EMA1(x,Period) = EMA(x,Period)
-        //   EMA2(x,Period) = EMA(EMA1(x,Period),Period)
-        //   GD(x,Period,vFactor) = (EMA1(x,Period)*(1+vFactor)) - (EMA2(x,Period)*vFactor)
-        //   T3 = GD (GD ( GD(t, Period, vFactor), Period, vFactor), Period, vFactor);
-        //
-        // T3 offers a moving average with less lags then the
-        // traditional EMA.
-        //
-        // Do not confuse a T3 with EMA3. Both are called "Triple EMA"
-        // in the litterature.
-        lookbackTotal = (6 * (optInTimePeriod - 1) + self.unstable_period[FuncUnstId::T3 as usize]) as usize;
-        if startIdx <= lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyNBElement = 0;
-            dummyBegIdx = 0;
-            return Err(RetCode::BadParam);
-        }
-        dummyBegIdx = startIdx;
-        today = startIdx - lookbackTotal;
-        k = 2.0 / (((optInTimePeriod) as f64) + 1.0);
-        one_minus_k = 1.0 - k;
-        // Initialize e1
-        tempReal = inReal[{ let _v = today; today += 1; _v }];
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            tempReal += inReal[{ let _v = today; today += 1; _v }];
-            i -= 1;
-        }
-        e1 = tempReal / ((optInTimePeriod) as f64);
-        // Initialize e2
-        tempReal = e1;
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            tempReal += e1;
-            i -= 1;
-        }
-        e2 = tempReal / ((optInTimePeriod) as f64);
-        // Initialize e3
-        tempReal = e2;
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            tempReal += e2;
-            i -= 1;
-        }
-        e3 = tempReal / ((optInTimePeriod) as f64);
-        // Initialize e4
-        tempReal = e3;
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            tempReal += e3;
-            i -= 1;
-        }
-        e4 = tempReal / ((optInTimePeriod) as f64);
-        // Initialize e5
-        tempReal = e4;
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            tempReal += e4;
-            i -= 1;
-        }
-        e5 = tempReal / ((optInTimePeriod) as f64);
-        // Initialize e6
-        tempReal = e5;
-        // for( i = (optInTimePeriod - 1) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod - 1) as usize;
-        while i > 0 {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            tempReal += e5;
-            i -= 1;
-        }
-        e6 = tempReal / ((optInTimePeriod) as f64);
-        // Skip the unstable period
-        while today <= startIdx {
-            // Do the calculation but do not write the output
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
-        }
-        // Calculate the constants
-        tempReal = optInVFactor * optInVFactor;
-        c1 = 0_f64 - tempReal * optInVFactor;
-        c2 = 3.0 * (tempReal - c1);
-        c3 = (0_f64 - 6.0) * tempReal - 3.0 * (optInVFactor - c1);
-        c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
-        // Write the first output
-        outIdx = 0;
-        lastValue_outReal = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
-        // Calculate and output the remaining of the range.
-        while today <= endIdx {
-            e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
-            e2 = (one_minus_k as f64).mul_add(e2, k * e1);
-            e3 = (one_minus_k as f64).mul_add(e3, k * e2);
-            e4 = (one_minus_k as f64).mul_add(e4, k * e3);
-            e5 = (one_minus_k as f64).mul_add(e5, k * e4);
-            e6 = (one_minus_k as f64).mul_add(e6, k * e5);
-            lastValue_outReal = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
-        }
-        // Indicates to the caller the number of output
-        // successfully calculated.
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = T3_StreamState {
-            optInTimePeriod,
-            optInVFactor,
-            k,
-            one_minus_k,
-            e1,
-            e2,
-            e3,
-            e4,
-            e5,
-            e6,
-            c1,
-            c2,
-            c3,
-            c4,
-        };
-        Ok((T3_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live T3 stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::T3`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.T3_Open(&data, 5, 0.7).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_T3_Open")]
-    pub fn T3_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInVFactor: f64) -> Result<(T3_Stream, f64), RetCode> {
-        self.T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor)
-    }
-
-    /// [`Core::T3_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::T3`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_T3_OpenAndFill")]
-    pub fn T3_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::T3_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::T3_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn T3_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<T3_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -721,7 +480,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         if optInTimePeriod == 1 {
@@ -749,7 +508,7 @@ impl Core {
             (*outNBElement) = historyLen - fillLb;
             let mut fillIdx: usize = 0;
             while fillIdx < historyLen - fillLb {
-                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
                 fillIdx += 1;
             }
             return Ok(T3_Stream { core: self.clone(), state });
@@ -887,8 +646,7 @@ impl Core {
         c4 = (3.0 as f64).mul_add(tempReal, (3.0 as f64).mul_add(optInVFactor, 1.0) - c1);
         // Write the first output
         outIdx = 0;
-        outReal[outIdx] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
-        outIdx += 1;
+        outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
         // Calculate and output the remaining of the range.
         while today <= endIdx {
             e1 = (one_minus_k as f64).mul_add(e1, k * inReal[{ let _v = today; today += 1; _v }]);
@@ -897,8 +655,7 @@ impl Core {
             e4 = (one_minus_k as f64).mul_add(e4, k * e3);
             e5 = (one_minus_k as f64).mul_add(e5, k * e4);
             e6 = (one_minus_k as f64).mul_add(e6, k * e5);
-            outReal[outIdx] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (c4 as f64).mul_add(e3, (c3 as f64).mul_add(e4, (c1 as f64).mul_add(e6, c2 * e5)));
         }
         // Indicates to the caller the number of output
         // successfully calculated.
@@ -922,6 +679,50 @@ impl Core {
             c4,
         };
         Ok(T3_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::T3_Open`] (composition seam).
+    pub(crate) fn T3_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64,
+    ) -> Result<(T3_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.T3_OpenCore(inReal, startIdx, optInTimePeriod, optInVFactor, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live T3 stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::T3`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.T3_Open(&data, 5, 0.7).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_T3_Open")]
+    pub fn T3_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInVFactor: f64) -> Result<(T3_Stream, f64), RetCode> {
+        self.T3_OpenInternal(inReal, 0, optInTimePeriod, optInVFactor)
+    }
+
+    /// [`Core::T3_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::T3`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_T3_OpenAndFill")]
+    pub fn T3_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<T3_Stream, RetCode> {
+        self.T3_OpenCore(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

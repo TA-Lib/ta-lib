@@ -431,237 +431,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
-    pub(crate) fn BETA_OpenInternal(
-        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(BETA_Stream, f64), RetCode> {
-        if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal0.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 5;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal0.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut S_xx: f64 = 0.0_f64;
-        let mut S_xy: f64 = 0.0_f64;
-        let mut S_x: f64 = 0.0_f64;
-        let mut S_y: f64 = 0.0_f64;
-        let mut last_price_x: f64 = 0.0_f64;
-        let mut last_price_y: f64 = 0.0_f64;
-        let mut trailing_last_price_x: f64 = 0.0_f64;
-        let mut trailing_last_price_y: f64 = 0.0_f64;
-        let mut tmp_real: f64 = 0.0_f64;
-        let mut x: f64 = 0.0_f64;
-        let mut y: f64 = 0.0_f64;
-        let mut n: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut nbInitialElementNeeded: usize = 0_usize;
-        S_xx = 0.0;
-        S_xy = 0.0;
-        S_x = 0.0;
-        S_y = 0.0;
-        last_price_x = 0.0;
-        last_price_y = 0.0;
-        trailing_last_price_x = 0.0;
-        trailing_last_price_y = 0.0;
-        tmp_real = 0.0;
-        // sum of x * x
-        // sum of x * y
-        // sum of x
-        // sum of y
-        // the last price read from inReal0
-        // the last price read from inReal1
-        // same as last_price_x except used to remove elements from the trailing summation
-        // same as last_price_y except used to remove elements from the trailing summation
-        // temporary variable
-        // the 'x' value, which is the last change between values in inReal0
-        // the 'y' value, which is the last change between values in inReal1
-        // DESCRIPTION OF ALGORITHM:
-        //   The Beta 'algorithm' is a measure of a stocks volatility vs from index. The index prices
-        //   are given in inReal0 and the stock prices are given in inReal1. The size of these vectors
-        //   should be equal. The algorithm is to calculate the change between prices in both vectors
-        //   and then 'plot' these changes are points in the Euclidean plane. The x value of the point
-        //   is market return and the y value is the security return. The beta value is the slope of a
-        //   linear regression through these points. A beta of 1 is simple the line y=x, so the stock
-        //   varies percisely with the market. A beta of less than one means the stock varies less than
-        //   the market and a beta of more than one means the stock varies more than market. A related
-        //   value is the Alpha value (see TA_ALPHA) which is the Y-intercept of the same linear regression.
-        // Validate the calculation method type and
-        // identify the minimum number of input
-        // consume before the first value is output..
-        nbInitialElementNeeded = (optInTimePeriod) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < nbInitialElementNeeded {
-            startIdx = nbInitialElementNeeded;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Consume first input.
-        trailingIdx = startIdx - nbInitialElementNeeded;
-        trailing_last_price_x = inReal0[trailingIdx];
-        last_price_x = trailing_last_price_x;
-        trailing_last_price_y = inReal1[trailingIdx];
-        last_price_y = trailing_last_price_y;
-        // Process remaining of lookback until ready to output the first value.
-        i = { trailingIdx += 1; trailingIdx };
-        while i < startIdx {
-            tmp_real = inReal0[i];
-            if !((last_price_x).abs() < 1e-14) {
-                x = (tmp_real - last_price_x) / last_price_x;
-            } else {
-                x = 0.0;
-            }
-            last_price_x = tmp_real;
-            tmp_real = inReal1[{ let _v = i; i += 1; _v }];
-            if !((last_price_y).abs() < 1e-14) {
-                y = (tmp_real - last_price_y) / last_price_y;
-            } else {
-                y = 0.0;
-            }
-            last_price_y = tmp_real;
-            S_xx += x * x;
-            S_xy += x * y;
-            S_x += x;
-            S_y += y;
-        }
-        outIdx = 0;
-        // First output always start at index zero
-        n = optInTimePeriod as f64;
-        loop {
-            tmp_real = inReal0[i];
-            if !((last_price_x).abs() < 1e-14) {
-                x = (tmp_real - last_price_x) / last_price_x;
-            } else {
-                x = 0.0;
-            }
-            last_price_x = tmp_real;
-            tmp_real = inReal1[{ let _v = i; i += 1; _v }];
-            if !((last_price_y).abs() < 1e-14) {
-                y = (tmp_real - last_price_y) / last_price_y;
-            } else {
-                y = 0.0;
-            }
-            last_price_y = tmp_real;
-            S_xx += x * x;
-            S_xy += x * y;
-            S_x += x;
-            S_y += y;
-            // Always read the trailing before writing the output because the input and output
-            // buffer can be the same.
-            tmp_real = inReal0[trailingIdx];
-            if !((trailing_last_price_x).abs() < 1e-14) {
-                x = (tmp_real - trailing_last_price_x) / trailing_last_price_x;
-            } else {
-                x = 0.0;
-            }
-            trailing_last_price_x = tmp_real;
-            tmp_real = inReal1[{ let _v = trailingIdx; trailingIdx += 1; _v }];
-            if !((trailing_last_price_y).abs() < 1e-14) {
-                y = (tmp_real - trailing_last_price_y) / trailing_last_price_y;
-            } else {
-                y = 0.0;
-            }
-            trailing_last_price_y = tmp_real;
-            // Write the output
-            tmp_real = n * S_xx - S_x * S_x;
-            if !((tmp_real).abs() < 1e-14) {
-                lastValue_outReal = (n * S_xy - S_x * S_y) / tmp_real;
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            // Remove the calculation starting with the trailingIdx.
-            S_xx -= x * x;
-            S_xy -= x * y;
-            S_x -= x;
-            S_y -= y;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal0: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal0[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal0[historyLen - cap_trailingIdx as usize..]);
-        let mut ring_trailingIdx_inReal1: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal1[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal1[historyLen - cap_trailingIdx as usize..]);
-        let state = BETA_StreamState {
-            optInTimePeriod,
-            S_xx,
-            S_xy,
-            S_x,
-            S_y,
-            last_price_x,
-            last_price_y,
-            trailing_last_price_x,
-            trailing_last_price_y,
-            x,
-            y,
-            n,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal0,
-            ring_trailingIdx_inReal1,
-        };
-        Ok((BETA_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live BETA stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::BETA`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let data1: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.BETA_Open(&data0, &data1, 5).expect("enough history");
-    /// let peeked = s.peek(100.9, 101.3);
-    /// let updated = s.update(100.9, 101.3);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_BETA_Open")]
-    pub fn BETA_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BETA_Stream, f64), RetCode> {
-        self.BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
-    }
-
-    /// [`Core::BETA_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::BETA`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_BETA_OpenAndFill")]
-    pub fn BETA_OpenAndFill(
-        &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::BETA_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::BETA_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn BETA_OpenCore(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<BETA_Stream, RetCode> {
         if inReal0.is_empty() || inReal1.is_empty() || inReal1.len() != inReal0.len() {
             return Err(RetCode::BadParam);
@@ -676,7 +449,7 @@ impl Core {
         }
         let historyLen: usize = inReal0.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut S_xx: f64 = 0.0_f64;
@@ -809,11 +582,9 @@ impl Core {
             // Write the output
             tmp_real = n * S_xx - S_x * S_x;
             if !((tmp_real).abs() < 1e-14) {
-                outReal[outIdx] = (n * S_xy - S_x * S_y) / tmp_real;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (n * S_xy - S_x * S_y) / tmp_real;
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             // Remove the calculation starting with the trailingIdx.
             S_xx -= x * x;
@@ -857,6 +628,53 @@ impl Core {
             ring_trailingIdx_inReal1,
         };
         Ok(BETA_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::BETA_Open`] (composition seam).
+    pub(crate) fn BETA_OpenInternal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(BETA_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.BETA_OpenCore(inReal0, inReal1, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live BETA stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::BETA`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data0: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let data1: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 + 0.7).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.BETA_Open(&data0, &data1, 5).expect("enough history");
+    /// let peeked = s.peek(100.9, 101.3);
+    /// let updated = s.update(100.9, 101.3);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_BETA_Open")]
+    pub fn BETA_Open(&self, inReal0: &[f64], inReal1: &[f64], optInTimePeriod: i32) -> Result<(BETA_Stream, f64), RetCode> {
+        self.BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod)
+    }
+
+    /// [`Core::BETA_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::BETA`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_BETA_OpenAndFill")]
+    pub fn BETA_OpenAndFill(
+        &self, inReal0: &[f64], inReal1: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<BETA_Stream, RetCode> {
+        self.BETA_OpenCore(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }
