@@ -67,19 +67,19 @@ TA_LIB_API int TA_MACDEXT_Lookback( int optInFastPeriod, TA_MAType optInFastMATy
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return -1;
-   if( (int)optInFastMAType == (int)0x80000000 )
+   if( (int)optInFastMAType == (int)0x80000000 || optInFastMAType == TA_MAType_DEFAULT )
       optInFastMAType = 0;
    if( (int)optInSlowPeriod == (int)0x80000000 )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return -1;
-   if( (int)optInSlowMAType == (int)0x80000000 )
+   if( (int)optInSlowMAType == (int)0x80000000 || optInSlowMAType == TA_MAType_DEFAULT )
       optInSlowMAType = 0;
    if( (int)optInSignalPeriod == (int)0x80000000 )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return -1;
-   if( (int)optInSignalMAType == (int)0x80000000 )
+   if( (int)optInSignalMAType == (int)0x80000000 || optInSignalMAType == TA_MAType_DEFAULT )
       optInSignalMAType = 0;
    /* Find the MA with the largest lookback */
    lookbackLargest = TA_MA_Lookback(optInFastPeriod,optInFastMAType);
@@ -132,19 +132,19 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastMAType == (int)0x80000000 )
+   if( (int)optInFastMAType == (int)0x80000000 || optInFastMAType == TA_MAType_DEFAULT )
       optInFastMAType = 0;
    if( (int)optInSlowPeriod == (int)0x80000000 )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowMAType == (int)0x80000000 )
+   if( (int)optInSlowMAType == (int)0x80000000 || optInSlowMAType == TA_MAType_DEFAULT )
       optInSlowMAType = 0;
    if( (int)optInSignalPeriod == (int)0x80000000 )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalMAType == (int)0x80000000 )
+   if( (int)optInSignalMAType == (int)0x80000000 || optInSignalMAType == TA_MAType_DEFAULT )
       optInSignalMAType = 0;
    if( !outMACD )
       return TA_BAD_PARAM;
@@ -326,19 +326,19 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastMAType == (int)0x80000000 )
+   if( (int)optInFastMAType == (int)0x80000000 || optInFastMAType == TA_MAType_DEFAULT )
       optInFastMAType = 0;
    if( (int)optInSlowPeriod == (int)0x80000000 )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowMAType == (int)0x80000000 )
+   if( (int)optInSlowMAType == (int)0x80000000 || optInSlowMAType == TA_MAType_DEFAULT )
       optInSlowMAType = 0;
    if( (int)optInSignalPeriod == (int)0x80000000 )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalMAType == (int)0x80000000 )
+   if( (int)optInSignalMAType == (int)0x80000000 || optInSignalMAType == TA_MAType_DEFAULT )
       optInSignalMAType = 0;
    if( !outMACD )
       return TA_BAD_PARAM;
@@ -520,19 +520,19 @@ TA_RetCode TA_MACDEXT_OpenInternal( struct TA_MACDEXT_Stream **stream, const dou
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastMAType == (int)0x80000000 )
+   if( (int)optInFastMAType == (int)0x80000000 || optInFastMAType == TA_MAType_DEFAULT )
       optInFastMAType = 0;
    if( (int)optInSlowPeriod == (int)0x80000000 )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowMAType == (int)0x80000000 )
+   if( (int)optInSlowMAType == (int)0x80000000 || optInSlowMAType == TA_MAType_DEFAULT )
       optInSlowMAType = 0;
    if( (int)optInSignalPeriod == (int)0x80000000 )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalMAType == (int)0x80000000 )
+   if( (int)optInSignalMAType == (int)0x80000000 || optInSignalMAType == TA_MAType_DEFAULT )
       optInSignalMAType = 0;
 
    endIdx = historyLen - 1;
@@ -784,19 +784,19 @@ TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const 
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastMAType == (int)0x80000000 )
+   if( (int)optInFastMAType == (int)0x80000000 || optInFastMAType == TA_MAType_DEFAULT )
       optInFastMAType = 0;
    if( (int)optInSlowPeriod == (int)0x80000000 )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowMAType == (int)0x80000000 )
+   if( (int)optInSlowMAType == (int)0x80000000 || optInSlowMAType == TA_MAType_DEFAULT )
       optInSlowMAType = 0;
    if( (int)optInSignalPeriod == (int)0x80000000 )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalMAType == (int)0x80000000 )
+   if( (int)optInSignalMAType == (int)0x80000000 || optInSignalMAType == TA_MAType_DEFAULT )
       optInSignalMAType = 0;
 
    endIdx = historyLen - 1;

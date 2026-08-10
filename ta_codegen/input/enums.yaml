@@ -25,9 +25,14 @@ MAType:
     - { name: MAMA,  value: 7 }
     - { name: T3,    value: 8 }
     - { name: HMA,   value: 9 }
-    # DISABLED (#93): identity copy, lookback 0, ignores optInTimePeriod. Dispatch
-    # is the pre-switch identity guard in ma/ma.c (batch + stream), not a switch arm.
+    # Neither member below names an average; both select a behaviour. Their prose
+    # lives with the emitters (backends::common::ma_pseudo_member_doc).
+    # DISABLED (#93): dispatch is the pre-switch identity guard in ma/ma.c
+    # (batch + stream), not a switch arm.
     - { name: DISABLED, value: 10 }
+    # DEFAULT (#182): the validation prologue substitutes it before the body
+    # runs, so it never reaches a switch arm either.
+    - { name: DEFAULT,  value: 11 }
 
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h

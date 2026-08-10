@@ -70,7 +70,8 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
@@ -84,7 +85,7 @@ public partial class Core
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return -1;
       }
-      if( (int)optInMAType == int.MinValue ) {
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
       /* Lookback is driven by the slowest MA. */
@@ -127,7 +128,7 @@ public partial class Core
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( (int)optInMAType == int.MinValue ) {
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
       /* Allocate an intermediate buffer. */
@@ -203,7 +204,7 @@ public partial class Core
       } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( (int)optInMAType == int.MinValue ) {
+      if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.EMA;
       }
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
@@ -263,7 +264,8 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">PVO value in percent. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -326,7 +328,8 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Moving average type used for both MAs (default 1 = EMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED; <c>int.MinValue</c> selects the default).</param>
+   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">PVO value in percent. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

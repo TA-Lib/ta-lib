@@ -438,7 +438,7 @@ pub fn generate(
             emit_fastpath_skip(&mut o, func, gap, enums, registry, helpers, &counter);
         }
         StreamPlan::PeriodBank(pbp) => {
-            emit_period_bank(&mut o, func, pbp, registry, helpers, &counter);
+            emit_period_bank(&mut o, func, pbp, registry, helpers, &counter, enums);
         }
     }
 
@@ -1048,7 +1048,7 @@ fn emit_composed_open(
         let _ = writeln!(o, "   {}_Stream *sub{i};", callee_prefix(&sub.callee));
     }
 
-    emit_open_validation(o, func, outputs, inputs, mode);
+    emit_open_validation(o, func, outputs, inputs, mode, enums);
 
     // Scalar: startIdx arrives as a parameter (0 for standalone opens). Fill:
     // it is a local, always 0 (whole-history replay).
@@ -1565,7 +1565,7 @@ fn emit_dispatch_open_and_fill(
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
     let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
     let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
@@ -1691,7 +1691,7 @@ fn emit_dispatch(
         "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
     );
     let _ = writeln!(o, "   (void)startIdx;");
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(
         o,
         "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );"
@@ -2039,7 +2039,7 @@ fn emit_dual_mode(
     for (name, c_type) in &func.private_extra_params {
         let _ = writeln!(o, "   {c_type} {name};");
     }
-    emit_open_validation(o, func, &ma.outputs, &inputs, OutMode::Scalar);
+    emit_open_validation(o, func, &ma.outputs, &inputs, OutMode::Scalar, enums);
     let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
     let _ = writeln!(o, "   dummyBegIdx = 0;");
     let _ = writeln!(o, "   dummyNBElement = 0;");
@@ -2089,7 +2089,7 @@ fn emit_dual_mode(
     // including the union circ hoist and the identity fast path — plus the fill
     // signature + startIdx local + aliasing guards. Reuses body_a/body_b/
     // pred_bare above. -------------------------------------------------------
-    emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, OutMode::Fill);
+    emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, OutMode::Fill, enums);
     let _ = writeln!(o, "\n   if( {pred_bare} )\n   {{");
     emit_open_arm(o, func, ma, &body_a, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "   }}\n   else\n   {{");
@@ -2393,6 +2393,7 @@ fn emit_open_head(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     mode: OutMode,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let n = uname(func);
     let inputs = streaming::input_array_names(func);
@@ -2427,7 +2428,7 @@ fn emit_open_head(
         let _ = writeln!(o, "   {c_type} {name};");
     }
 
-    emit_open_validation(o, func, &model.outputs, &inputs, mode);
+    emit_open_validation(o, func, &model.outputs, &inputs, mode, enums);
 
     // --- initialization (after defaults are substituted) ---------------------
     // Scalar: startIdx arrives as a parameter (0 for standalone opens; the
@@ -2473,7 +2474,7 @@ fn emit_open(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar, enums);
     emit_open_arm(o, func, model, model.body, enums, registry, helpers, counter, OutMode::Scalar);
     let _ = writeln!(o, "}}\n");
     emit_open_wrapper(o, func);
@@ -2512,7 +2513,7 @@ fn emit_open_and_fill_body(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Fill);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Fill, enums);
     emit_open_arm(o, func, model, body, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "}}\n");
 }
@@ -2537,7 +2538,7 @@ fn emit_fastpath_skip(
     emit_release(o, func, model);
     emit_step(o, func, model, enums, registry, helpers, counter);
 
-    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, OutMode::Scalar, enums);
     // prologue ++ general arm ++ epilogue: the Open seeds the general path for
     // every param (the skipped fast-path arm is bit-identical by construction).
     // drop_unused_decls prunes any fast-path-only locals the skipped arm owned.
@@ -2570,6 +2571,7 @@ fn emit_period_bank(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let n = uname(func);
     let pre = callee_prefix(&plan.callee); // e.g. TA_MA
@@ -2625,7 +2627,7 @@ fn emit_period_bank(
         o,
         "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
     );
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     // MAVP's own guard: an inverted [min,max] window is invalid (batch rejects).
     let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
     // Seed EVERY sub-MA at the SHARED max-period lookback, exactly as the batch
@@ -2736,7 +2738,7 @@ fn emit_period_bank(
     if !alias.is_empty() {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(o, "   if( {min} > {max} ) return TA_BAD_PARAM;");
     let _ = writeln!(
         o,
@@ -3284,6 +3286,7 @@ fn emit_open_validation(
     outputs: &[String],
     inputs: &[String],
     mode: OutMode,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
     let _ = writeln!(o, "   *stream = NULL;");
@@ -3334,7 +3337,7 @@ fn emit_open_validation(
             let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
         }
     }
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
 }
 
 /// `if (buf != &local_buf[0]) TA_Free(buf);` for every batch circ storage —

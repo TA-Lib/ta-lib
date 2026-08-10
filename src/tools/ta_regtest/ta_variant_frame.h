@@ -64,12 +64,24 @@ typedef enum {
    TA_VIN_PERIODS      /* MAVP's per-element period series */
 } TA_VInputKind;
 
+/* An enum parameter's domain is its MEMBER LIST, not the numeric span the
+ * other two kinds carry: sampling min/max/interior would silently stop
+ * probing a member the moment one is appended past it. */
+typedef enum {
+   TA_VOPT_INT,
+   TA_VOPT_REAL,
+   TA_VOPT_ENUM
+} TA_VOptKind;
+
+/* Members of the widest enum any optional parameter uses, from enums.yaml. */
+#define TA_V_MAX_ENUM_MEMBERS 12
+
 /* Concrete (never-sentinel) bounds for one optional parameter. */
 typedef struct {
    const char *name;
-   int    isReal;      /* 1 = TA_Real parameter, 0 = integer/enum */
+   TA_VOptKind kind;
    double minValue;
-   double maxValue;
+   double maxValue;   /* TA_VOPT_ENUM: the highest member value */
    double defValue;
 } TA_VOptSpec;
 
@@ -143,7 +155,7 @@ static TA_RetCode TA_ACCBANDS_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ACCBANDS[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_ACCBANDS[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 20.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
 };
 
 static TA_RetCode TA_ACOS_VFrameD( int startIdx, int endIdx,
@@ -302,8 +314,8 @@ static TA_RetCode TA_ADOSC_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ADOSC[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
 static const TA_VOptSpec TA_VOpt_ADOSC[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 3.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 10.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 3.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_ADX_VFrameD( int startIdx, int endIdx,
@@ -345,7 +357,7 @@ static TA_RetCode TA_ADX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ADX[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_ADX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_ADXR_VFrameD( int startIdx, int endIdx,
@@ -387,7 +399,7 @@ static TA_RetCode TA_ADXR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ADXR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_ADXR[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_APO_VFrameD( int startIdx, int endIdx,
@@ -429,9 +441,9 @@ static TA_RetCode TA_APO_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_APO[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_APO[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 12.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 26.0 },
-   { "optInMAType", 0, 0.0, 10.0, 1.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 1.0 },
 };
 
 static TA_RetCode TA_AROON_VFrameD( int startIdx, int endIdx,
@@ -473,7 +485,7 @@ static TA_RetCode TA_AROON_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_AROON[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_AROON[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_AROONOSC_VFrameD( int startIdx, int endIdx,
@@ -513,7 +525,7 @@ static TA_RetCode TA_AROONOSC_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_AROONOSC[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_AROONOSC[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_ASIN_VFrameD( int startIdx, int endIdx,
@@ -625,7 +637,7 @@ static TA_RetCode TA_ATR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ATR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_ATR[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_AVGDEV_VFrameD( int startIdx, int endIdx,
@@ -663,7 +675,7 @@ static TA_RetCode TA_AVGDEV_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_AVGDEV[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_AVGDEV[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_AVGPRICE_VFrameD( int startIdx, int endIdx,
@@ -752,10 +764,10 @@ static TA_RetCode TA_BBANDS_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_BBANDS[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_BBANDS[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 20.0 },
-   { "optInNbDevUp", 1, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
-   { "optInNbDevDn", 1, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
-   { "optInMAType", 0, 0.0, 10.0, 0.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
+   { "optInNbDevUp", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInNbDevDn", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 2.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_BETA_VFrameD( int startIdx, int endIdx,
@@ -795,7 +807,7 @@ static TA_RetCode TA_BETA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_BETA[] = { TA_VIN_REAL, TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_BETA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 5.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
 };
 
 static TA_RetCode TA_BOP_VFrameD( int startIdx, int endIdx,
@@ -878,7 +890,7 @@ static TA_RetCode TA_CCI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CCI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CCI[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_CDL2CROWS_VFrameD( int startIdx, int endIdx,
@@ -1209,7 +1221,7 @@ static TA_RetCode TA_CDLABANDONEDBABY_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLABANDONEDBABY[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLABANDONEDBABY[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLADVANCEBLOCK_VFrameD( int startIdx, int endIdx,
@@ -1499,7 +1511,7 @@ static TA_RetCode TA_CDLDARKCLOUDCOVER_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLDARKCLOUDCOVER[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLDARKCLOUDCOVER[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
 
 static TA_RetCode TA_CDLDOJI_VFrameD( int startIdx, int endIdx,
@@ -1707,7 +1719,7 @@ static TA_RetCode TA_CDLEVENINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLEVENINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGDOJISTAR[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLEVENINGSTAR_VFrameD( int startIdx, int endIdx,
@@ -1751,7 +1763,7 @@ static TA_RetCode TA_CDLEVENINGSTAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLEVENINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLEVENINGSTAR[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLGAPSIDESIDEWHITE_VFrameD( int startIdx, int endIdx,
@@ -2615,7 +2627,7 @@ static TA_RetCode TA_CDLMATHOLD_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMATHOLD[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMATHOLD[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 5.00000000000000000e-1 },
 };
 
 static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameD( int startIdx, int endIdx,
@@ -2659,7 +2671,7 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMORNINGDOJISTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGDOJISTAR[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLMORNINGSTAR_VFrameD( int startIdx, int endIdx,
@@ -2703,7 +2715,7 @@ static TA_RetCode TA_CDLMORNINGSTAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CDLMORNINGSTAR[] = { TA_VIN_OPEN, TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_CDLMORNINGSTAR[] = {
-   { "optInPenetration", 1, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
+   { "optInPenetration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.99999999999999989e-1 },
 };
 
 static TA_RetCode TA_CDLONNECK_VFrameD( int startIdx, int endIdx,
@@ -3479,7 +3491,7 @@ static TA_RetCode TA_CMF_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CMF[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
 static const TA_VOptSpec TA_VOpt_CMF[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 20.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
 };
 
 static TA_RetCode TA_CMO_VFrameD( int startIdx, int endIdx,
@@ -3517,7 +3529,7 @@ static TA_RetCode TA_CMO_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CMO[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_CMO[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_CMOU_VFrameD( int startIdx, int endIdx,
@@ -3555,7 +3567,7 @@ static TA_RetCode TA_CMOU_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CMOU[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_CMOU[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_CORREL_VFrameD( int startIdx, int endIdx,
@@ -3595,7 +3607,7 @@ static TA_RetCode TA_CORREL_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_CORREL[] = { TA_VIN_REAL, TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_CORREL[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_COS_VFrameD( int startIdx, int endIdx,
@@ -3703,7 +3715,7 @@ static TA_RetCode TA_DEMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_DEMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_DEMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_DIV_VFrameD( int startIdx, int endIdx,
@@ -3782,7 +3794,7 @@ static TA_RetCode TA_DX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_DX[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_DX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_EMA_VFrameD( int startIdx, int endIdx,
@@ -3820,7 +3832,7 @@ static TA_RetCode TA_EMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_EMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_EMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_EXP_VFrameD( int startIdx, int endIdx,
@@ -3928,7 +3940,7 @@ static TA_RetCode TA_HMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_HMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_HMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 20.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 20.0 },
 };
 
 static TA_RetCode TA_HT_DCPERIOD_VFrameD( int startIdx, int endIdx,
@@ -4182,7 +4194,7 @@ static TA_RetCode TA_IMI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_IMI[] = { TA_VIN_OPEN, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_IMI[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_KAMA_VFrameD( int startIdx, int endIdx,
@@ -4220,7 +4232,7 @@ static TA_RetCode TA_KAMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_KAMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_KAMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_LINEARREG_VFrameD( int startIdx, int endIdx,
@@ -4258,7 +4270,7 @@ static TA_RetCode TA_LINEARREG_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_LINEARREG[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_LINEARREG[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_LINEARREG_ANGLE_VFrameD( int startIdx, int endIdx,
@@ -4296,7 +4308,7 @@ static TA_RetCode TA_LINEARREG_ANGLE_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_LINEARREG_ANGLE[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_LINEARREG_ANGLE[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameD( int startIdx, int endIdx,
@@ -4334,7 +4346,7 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_LINEARREG_INTERCEPT[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_LINEARREG_INTERCEPT[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_LINEARREG_SLOPE_VFrameD( int startIdx, int endIdx,
@@ -4372,7 +4384,7 @@ static TA_RetCode TA_LINEARREG_SLOPE_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_LINEARREG_SLOPE[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_LINEARREG_SLOPE[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_LN_VFrameD( int startIdx, int endIdx,
@@ -4482,8 +4494,8 @@ static TA_RetCode TA_MA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
-   { "optInMAType", 0, 0.0, 10.0, 0.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_MACD_VFrameD( int startIdx, int endIdx,
@@ -4529,9 +4541,9 @@ static TA_RetCode TA_MACD_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MACD[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MACD[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 12.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 26.0 },
-   { "optInSignalPeriod", 0, 1.0, 100000.0, 9.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
 };
 
 static TA_RetCode TA_MACDEXT_VFrameD( int startIdx, int endIdx,
@@ -4583,12 +4595,12 @@ static TA_RetCode TA_MACDEXT_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MACDEXT[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MACDEXT[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 12.0 },
-   { "optInFastMAType", 0, 0.0, 10.0, 0.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 26.0 },
-   { "optInSlowMAType", 0, 0.0, 10.0, 0.0 },
-   { "optInSignalPeriod", 0, 1.0, 100000.0, 9.0 },
-   { "optInSignalMAType", 0, 0.0, 10.0, 0.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInFastMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInSlowMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
+   { "optInSignalMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_MACDFIX_VFrameD( int startIdx, int endIdx,
@@ -4630,7 +4642,7 @@ static TA_RetCode TA_MACDFIX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MACDFIX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MACDFIX[] = {
-   { "optInSignalPeriod", 0, 1.0, 100000.0, 9.0 },
+   { "optInSignalPeriod", TA_VOPT_INT, 1.0, 100000.0, 9.0 },
 };
 
 static TA_RetCode TA_MAMA_VFrameD( int startIdx, int endIdx,
@@ -4672,8 +4684,8 @@ static TA_RetCode TA_MAMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MAMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MAMA[] = {
-   { "optInFastLimit", 1, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000000e-1 },
-   { "optInSlowLimit", 1, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000028e-2 },
+   { "optInFastLimit", TA_VOPT_REAL, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000000e-1 },
+   { "optInSlowLimit", TA_VOPT_REAL, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000028e-2 },
 };
 
 static TA_RetCode TA_MAVP_VFrameD( int startIdx, int endIdx,
@@ -4717,9 +4729,9 @@ static TA_RetCode TA_MAVP_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MAVP[] = { TA_VIN_REAL, TA_VIN_PERIODS };
 static const TA_VOptSpec TA_VOpt_MAVP[] = {
-   { "optInMinPeriod", 0, 1.0, 100000.0, 2.0 },
-   { "optInMaxPeriod", 0, 1.0, 100000.0, 30.0 },
-   { "optInMAType", 0, 0.0, 10.0, 0.0 },
+   { "optInMinPeriod", TA_VOPT_INT, 1.0, 100000.0, 2.0 },
+   { "optInMaxPeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_MAX_VFrameD( int startIdx, int endIdx,
@@ -4757,7 +4769,7 @@ static TA_RetCode TA_MAX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MAX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MAX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MAXINDEX_VFrameD( int startIdx, int endIdx,
@@ -4795,7 +4807,7 @@ static TA_RetCode TA_MAXINDEX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MAXINDEX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MAXINDEX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MEDPRICE_VFrameD( int startIdx, int endIdx,
@@ -4876,7 +4888,7 @@ static TA_RetCode TA_MFI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MFI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE, TA_VIN_VOLUME };
 static const TA_VOptSpec TA_VOpt_MFI[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_MIDPOINT_VFrameD( int startIdx, int endIdx,
@@ -4914,7 +4926,7 @@ static TA_RetCode TA_MIDPOINT_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MIDPOINT[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MIDPOINT[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_MIDPRICE_VFrameD( int startIdx, int endIdx,
@@ -4954,7 +4966,7 @@ static TA_RetCode TA_MIDPRICE_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MIDPRICE[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_MIDPRICE[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_MIN_VFrameD( int startIdx, int endIdx,
@@ -4992,7 +5004,7 @@ static TA_RetCode TA_MIN_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MIN[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MIN[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MININDEX_VFrameD( int startIdx, int endIdx,
@@ -5030,7 +5042,7 @@ static TA_RetCode TA_MININDEX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MININDEX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MININDEX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MINMAX_VFrameD( int startIdx, int endIdx,
@@ -5070,7 +5082,7 @@ static TA_RetCode TA_MINMAX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MINMAX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MINMAX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MINMAXINDEX_VFrameD( int startIdx, int endIdx,
@@ -5110,7 +5122,7 @@ static TA_RetCode TA_MINMAXINDEX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MINMAXINDEX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MINMAXINDEX[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_MINUS_DI_VFrameD( int startIdx, int endIdx,
@@ -5152,7 +5164,7 @@ static TA_RetCode TA_MINUS_DI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MINUS_DI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_MINUS_DI[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_MINUS_DM_VFrameD( int startIdx, int endIdx,
@@ -5192,7 +5204,7 @@ static TA_RetCode TA_MINUS_DM_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MINUS_DM[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_MINUS_DM[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_MOM_VFrameD( int startIdx, int endIdx,
@@ -5230,7 +5242,7 @@ static TA_RetCode TA_MOM_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_MOM[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_MOM[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 10.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_MULT_VFrameD( int startIdx, int endIdx,
@@ -5309,7 +5321,7 @@ static TA_RetCode TA_NATR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_NATR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_NATR[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_NVI_VFrameD( int startIdx, int endIdx,
@@ -5425,7 +5437,7 @@ static TA_RetCode TA_PLUS_DI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_PLUS_DI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_PLUS_DI[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_PLUS_DM_VFrameD( int startIdx, int endIdx,
@@ -5465,7 +5477,7 @@ static TA_RetCode TA_PLUS_DM_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_PLUS_DM[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_PLUS_DM[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_PPO_VFrameD( int startIdx, int endIdx,
@@ -5507,9 +5519,9 @@ static TA_RetCode TA_PPO_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_PPO[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_PPO[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 12.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 26.0 },
-   { "optInMAType", 0, 0.0, 10.0, 1.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 1.0 },
 };
 
 static TA_RetCode TA_PVI_VFrameD( int startIdx, int endIdx,
@@ -5588,9 +5600,9 @@ static TA_RetCode TA_PVO_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_PVO[] = { TA_VIN_VOLUME };
 static const TA_VOptSpec TA_VOpt_PVO[] = {
-   { "optInFastPeriod", 0, 2.0, 100000.0, 12.0 },
-   { "optInSlowPeriod", 0, 2.0, 100000.0, 26.0 },
-   { "optInMAType", 0, 0.0, 10.0, 1.0 },
+   { "optInFastPeriod", TA_VOPT_INT, 2.0, 100000.0, 12.0 },
+   { "optInSlowPeriod", TA_VOPT_INT, 2.0, 100000.0, 26.0 },
+   { "optInMAType", TA_VOPT_ENUM, 0.0, 11.0, 1.0 },
 };
 
 static TA_RetCode TA_ROC_VFrameD( int startIdx, int endIdx,
@@ -5628,7 +5640,7 @@ static TA_RetCode TA_ROC_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ROC[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_ROC[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 10.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_ROCP_VFrameD( int startIdx, int endIdx,
@@ -5666,7 +5678,7 @@ static TA_RetCode TA_ROCP_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ROCP[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_ROCP[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 10.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_ROCR_VFrameD( int startIdx, int endIdx,
@@ -5704,7 +5716,7 @@ static TA_RetCode TA_ROCR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ROCR[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_ROCR[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 10.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_ROCR100_VFrameD( int startIdx, int endIdx,
@@ -5742,7 +5754,7 @@ static TA_RetCode TA_ROCR100_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ROCR100[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_ROCR100[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 10.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
 static TA_RetCode TA_RSI_VFrameD( int startIdx, int endIdx,
@@ -5780,7 +5792,7 @@ static TA_RetCode TA_RSI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_RSI[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_RSI[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_SAR_VFrameD( int startIdx, int endIdx,
@@ -5822,8 +5834,8 @@ static TA_RetCode TA_SAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SAR[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_SAR[] = {
-   { "optInAcceleration", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
-   { "optInMaximum", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
+   { "optInAcceleration", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInMaximum", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
 };
 
 static TA_RetCode TA_SAREXT_VFrameD( int startIdx, int endIdx,
@@ -5877,14 +5889,14 @@ static TA_RetCode TA_SAREXT_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SAREXT[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const TA_VOptSpec TA_VOpt_SAREXT[] = {
-   { "optInStartValue", 1, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
-   { "optInOffsetOnReverse", 1, 0.0, 3.00000000000000022e37, 0.0 },
-   { "optInAccelerationInitLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
-   { "optInAccelerationLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
-   { "optInAccelerationMaxLong", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
-   { "optInAccelerationInitShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
-   { "optInAccelerationShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
-   { "optInAccelerationMaxShort", 1, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
+   { "optInStartValue", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 0.0 },
+   { "optInOffsetOnReverse", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 0.0 },
+   { "optInAccelerationInitLong", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationLong", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationMaxLong", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
+   { "optInAccelerationInitShort", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationShort", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000004e-2 },
+   { "optInAccelerationMaxShort", TA_VOPT_REAL, 0.0, 3.00000000000000022e37, 2.00000000000000011e-1 },
 };
 
 static TA_RetCode TA_SIN_VFrameD( int startIdx, int endIdx,
@@ -5992,7 +6004,7 @@ static TA_RetCode TA_SMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_SMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_SQRT_VFrameD( int startIdx, int endIdx,
@@ -6067,8 +6079,8 @@ static TA_RetCode TA_STDDEV_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_STDDEV[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_STDDEV[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 5.0 },
-   { "optInNbDev", 1, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+   { "optInNbDev", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
 };
 
 static TA_RetCode TA_STOCH_VFrameD( int startIdx, int endIdx,
@@ -6120,11 +6132,11 @@ static TA_RetCode TA_STOCH_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_STOCH[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_STOCH[] = {
-   { "optInFastK_Period", 0, 1.0, 100000.0, 5.0 },
-   { "optInSlowK_Period", 0, 1.0, 100000.0, 3.0 },
-   { "optInSlowK_MAType", 0, 0.0, 10.0, 0.0 },
-   { "optInSlowD_Period", 0, 1.0, 100000.0, 3.0 },
-   { "optInSlowD_MAType", 0, 0.0, 10.0, 0.0 },
+   { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInSlowK_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
+   { "optInSlowK_MAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
+   { "optInSlowD_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
+   { "optInSlowD_MAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_STOCHF_VFrameD( int startIdx, int endIdx,
@@ -6172,9 +6184,9 @@ static TA_RetCode TA_STOCHF_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_STOCHF[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_STOCHF[] = {
-   { "optInFastK_Period", 0, 1.0, 100000.0, 5.0 },
-   { "optInFastD_Period", 0, 1.0, 100000.0, 3.0 },
-   { "optInFastD_MAType", 0, 0.0, 10.0, 0.0 },
+   { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInFastD_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
+   { "optInFastD_MAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_STOCHRSI_VFrameD( int startIdx, int endIdx,
@@ -6220,10 +6232,10 @@ static TA_RetCode TA_STOCHRSI_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_STOCHRSI[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_STOCHRSI[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
-   { "optInFastK_Period", 0, 1.0, 100000.0, 5.0 },
-   { "optInFastD_Period", 0, 1.0, 100000.0, 3.0 },
-   { "optInFastD_MAType", 0, 0.0, 10.0, 0.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
+   { "optInFastK_Period", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInFastD_Period", TA_VOPT_INT, 1.0, 100000.0, 3.0 },
+   { "optInFastD_MAType", TA_VOPT_ENUM, 0.0, 11.0, 0.0 },
 };
 
 static TA_RetCode TA_SUB_VFrameD( int startIdx, int endIdx,
@@ -6298,7 +6310,7 @@ static TA_RetCode TA_SUM_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_SUM[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_SUM[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_T3_VFrameD( int startIdx, int endIdx,
@@ -6338,8 +6350,8 @@ static TA_RetCode TA_T3_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_T3[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_T3[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 5.0 },
-   { "optInVFactor", 1, 0.0, 1.0, 6.99999999999999956e-1 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInVFactor", TA_VOPT_REAL, 0.0, 1.0, 6.99999999999999956e-1 },
 };
 
 static TA_RetCode TA_TAN_VFrameD( int startIdx, int endIdx,
@@ -6447,7 +6459,7 @@ static TA_RetCode TA_TEMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_TEMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_TEMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_TRANGE_VFrameD( int startIdx, int endIdx,
@@ -6524,7 +6536,7 @@ static TA_RetCode TA_TRIMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_TRIMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_TRIMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_TRIX_VFrameD( int startIdx, int endIdx,
@@ -6562,7 +6574,7 @@ static TA_RetCode TA_TRIX_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_TRIX[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_TRIX[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_TSF_VFrameD( int startIdx, int endIdx,
@@ -6600,7 +6612,7 @@ static TA_RetCode TA_TSF_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_TSF[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_TSF[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_TYPPRICE_VFrameD( int startIdx, int endIdx,
@@ -6685,9 +6697,9 @@ static TA_RetCode TA_ULTOSC_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_ULTOSC[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_ULTOSC[] = {
-   { "optInTimePeriod1", 0, 1.0, 100000.0, 7.0 },
-   { "optInTimePeriod2", 0, 1.0, 100000.0, 14.0 },
-   { "optInTimePeriod3", 0, 1.0, 100000.0, 28.0 },
+   { "optInTimePeriod1", TA_VOPT_INT, 1.0, 100000.0, 7.0 },
+   { "optInTimePeriod2", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
+   { "optInTimePeriod3", TA_VOPT_INT, 1.0, 100000.0, 28.0 },
 };
 
 static TA_RetCode TA_VAR_VFrameD( int startIdx, int endIdx,
@@ -6727,8 +6739,8 @@ static TA_RetCode TA_VAR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_VAR[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_VAR[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 5.0 },
-   { "optInNbDev", 1, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 5.0 },
+   { "optInNbDev", TA_VOPT_REAL, -3.00000000000000022e37, 3.00000000000000022e37, 1.0 },
 };
 
 static TA_RetCode TA_VWMA_VFrameD( int startIdx, int endIdx,
@@ -6768,7 +6780,7 @@ static TA_RetCode TA_VWMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_VWMA[] = { TA_VIN_REAL, TA_VIN_VOLUME };
 static const TA_VOptSpec TA_VOpt_VWMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static TA_RetCode TA_WCLPRICE_VFrameD( int startIdx, int endIdx,
@@ -6849,7 +6861,7 @@ static TA_RetCode TA_WILLR_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_WILLR[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
 static const TA_VOptSpec TA_VOpt_WILLR[] = {
-   { "optInTimePeriod", 0, 2.0, 100000.0, 14.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
 static TA_RetCode TA_WMA_VFrameD( int startIdx, int endIdx,
@@ -6887,7 +6899,7 @@ static TA_RetCode TA_WMA_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_WMA[] = { TA_VIN_REAL };
 static const TA_VOptSpec TA_VOpt_WMA[] = {
-   { "optInTimePeriod", 0, 1.0, 100000.0, 30.0 },
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
 };
 
 static const TA_VariantEntry TA_VariantTable[] = {

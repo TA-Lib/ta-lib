@@ -51,7 +51,7 @@ The lookback is how many inputs are consumed before the first output.
 
 ## Parameters and errors
 
-Integer parameters are `int`; real parameters are `double`; enumerated parameters use their enum type (e.g. `MAType.SMA`). Passing `Integer.MIN_VALUE` for an integer parameter (or the real-default sentinel `-4e37` for a `double` parameter) selects that parameter's documented default.
+Integer parameters are `int`; real parameters are `double`; enumerated parameters use their enum type (e.g. `MAType.SMA`). Passing `Integer.MIN_VALUE` for an integer parameter, the real-default sentinel `-4e37` for a `double` parameter, or `MAType.DEFAULT` for an MA-type parameter selects that parameter's documented default.
 
 Misuse throws rather than returning an error code:
 

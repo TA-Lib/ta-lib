@@ -226,6 +226,14 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
             let values: Vec<String> = m.values.iter().map(|(v, n)| format!("{v}={n}")).collect();
             meta.push(format!("values: {}", values.join(", ")));
         }
+        // The member is Java's only spelling of "use the default" here: the
+        // sentinel the primitive parameters take is unrepresentable at a real
+        // enum (issue #162), which is why this clause names the member instead.
+        if let ParamType::Enum(name) = &opt.param_type {
+            if let Some(v) = super::common::enum_default_variant(enums, name) {
+                meta.push(format!("{{@code {name}.{}}} selects the default", v.name));
+            }
+        }
     } else {
         if let Some(d) = &m.default {
             meta.push(format!("default {d}"));

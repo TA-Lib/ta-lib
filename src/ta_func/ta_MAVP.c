@@ -72,7 +72,7 @@ TA_LIB_API int TA_MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, TA_MATy
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    return TA_MA_Lookback(optInMaxPeriod,optInMAType);
 }
@@ -127,7 +127,7 @@ TA_LIB_API TA_RetCode TA_MAVP( int    startIdx,
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -482,7 +482,7 @@ TA_RetCode TA_S_MAVP( int    startIdx,
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -729,7 +729,7 @@ TA_RetCode TA_MAVP_OpenInternal( struct TA_MAVP_Stream **stream, const double in
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );
@@ -794,7 +794,7 @@ TA_LIB_API TA_RetCode TA_MAVP_OpenAndFill( TA_MAVP_Stream **stream, const double
       optInMaxPeriod = 30;
    else if( (int)optInMaxPeriod < 1 || (int)optInMaxPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( optInMinPeriod > optInMaxPeriod ) return TA_BAD_PARAM;
    lookbackTotal = TA_MA_Lookback( optInMaxPeriod, optInMAType );

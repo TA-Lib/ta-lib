@@ -354,17 +354,33 @@ fn gen_header() -> String {
 /// out-of-range values. One source of truth for both function variants:
 /// guarded functions fail with `TA_BAD_PARAM`, lookback functions fail with
 /// `-1` (the classic lookback bad-param contract that wrappers rely on).
+///
+/// An `enum:` param additionally accepts its type's `DEFAULT` member (#182),
+/// which is the spelling the other backends use and the only one that compiles
+/// in C++ — `TA_INTEGER_DEFAULT` is an `int` with no implicit conversion to an
+/// enum type there. C keeps both, permanently: the sentinel is public header
+/// API already compiled into caller binaries.
 // Integer optional-param defaults and ranges are stored as `f64` in the IR; casting
 // the integer-valued ones to `i32` for literal emission is exact, not truncating.
 #[allow(clippy::cast_possible_truncation)]
-pub(crate) fn emit_opt_param_validation(func: &FuncDef, fail: &str) -> String {
+pub(crate) fn emit_opt_param_validation(
+    func: &FuncDef,
+    fail: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> String {
     let mut out = String::new();
     for opt in &func.optional_inputs {
         match &opt.param_type {
             ParamType::Integer | ParamType::Enum(_) => {
                 if let Some(default_val) = opt.default {
+                    let extra = match &opt.param_type {
+                        ParamType::Enum(e) => super::common::enum_default_variant(enums, e)
+                            .map(|v| format!(" || {} == {}", opt.name, v.c_name))
+                            .unwrap_or_default(),
+                        _ => String::new(),
+                    };
                     out.push_str(&format!(
-                        "   if( (int){name} == (int)0x80000000 )\n      {name} = {val};\n",
+                        "   if( (int){name} == (int)0x80000000{extra} )\n      {name} = {val};\n",
                         name = opt.name,
                         val = default_val as i32
                     ));
@@ -433,7 +449,7 @@ fn gen_lookback(
     // Same param validation as the guarded function, with the lookback
     // bad-param contract: out-of-range returns -1. For Code bodies it is
     // injected after the local declarations (C89 ordering).
-    let validation = emit_opt_param_validation(func, "-1");
+    let validation = emit_opt_param_validation(func, "-1", enums);
 
     let body = match &func.lookback {
         Some(LookbackExpr::Literal(n)) => format!("{validation}   return {n};\n"),
@@ -674,7 +690,7 @@ fn gen_func_inner(
         }
 
         // Optional parameter validation (default + range)
-        out.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM"));
+        out.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
 
         // Output array NULL checks. A nullable output may legitimately be NULL
         // ("compute but don't write it" — see `Output::is_nullable`), so it is

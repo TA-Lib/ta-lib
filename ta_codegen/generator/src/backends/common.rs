@@ -4,7 +4,8 @@
 //! language-specific output, so every backend shares one copy instead of
 //! re-implementing them. New backends import from here rather than copy-pasting.
 
-use crate::ir::{BinOp, Expr, Statement};
+use crate::ir::{BinOp, EnumDef, EnumVariant, Expr, Statement};
+use std::collections::HashMap;
 
 // TA-Lib's parameter sentinels, mirroring include/ta_defs.h. The "use the
 // default" value deliberately sits one step OUTSIDE the legal range so
@@ -33,6 +34,63 @@ pub fn real_bound_literal(v: f64, prefix: &str) -> String {
     } else {
         format!("{v:e}")
     }
+}
+
+/// The name every enum uses for its "let the function choose" member (#182).
+pub(crate) const ENUM_DEFAULT_VARIANT: &str = "DEFAULT";
+
+/// The enum's `DEFAULT` member, when its type declares one.
+///
+/// A parameter typed by such an enum accepts two spellings of "use the documented
+/// default": the generic `TA_INTEGER_DEFAULT` sentinel every integer parameter
+/// takes, and this member. Both resolve to the parameter's own `default:`, which
+/// differs per parameter — so every backend's validation prologue substitutes it
+/// before the body runs, and no switch arm ever sees it.
+#[must_use]
+pub(crate) fn enum_default_variant<'a>(
+    enums: &'a HashMap<String, EnumDef>,
+    enum_name: &str,
+) -> Option<&'a EnumVariant> {
+    enums
+        .get(enum_name)?
+        .variants
+        .iter()
+        .find(|v| v.name == ENUM_DEFAULT_VARIANT)
+}
+
+/// Prose for a `MAType` member that does not name a moving average.
+///
+/// `DISABLED` (#93) and `DEFAULT` (#182) sit in the same list as SMA and EMA but
+/// select a behaviour rather than an average, so every surface that describes the
+/// members one by one would otherwise call them moving averages. Two entries, in
+/// one place, rather than a `doc:` field on a schema whose members are otherwise
+/// pure name-and-value: nothing here can go stale silently, because a member with
+/// no entry gets the "moving average" wording that is right for every real one.
+#[must_use]
+pub(crate) fn ma_pseudo_member_doc(variant: &str) -> Option<&'static str> {
+    match variant {
+        "DISABLED" => Some("Not a moving average: the input is copied through unchanged."),
+        ENUM_DEFAULT_VARIANT => Some(
+            "Not a moving average: selects the documented default of whichever \
+             parameter it is passed to.",
+        ),
+        _ => None,
+    }
+}
+
+/// `Type.MEMBER` for `value`, when the enum declares a member with that value.
+///
+/// Java and C# spell a qualified enum member identically, so both render from
+/// here. They differ only in the fallback for a value no member carries: C# can
+/// cast, Java cannot — hence `Option` rather than a shared default.
+#[must_use]
+pub(crate) fn enum_member_literal(
+    enums: &HashMap<String, EnumDef>,
+    enum_name: &str,
+    value: i32,
+) -> Option<String> {
+    let v = enums.get(enum_name)?.variants.iter().find(|v| v.value == value)?;
+    Some(format!("{enum_name}.{}", v.name))
 }
 
 /// The candlestick helper functions (`ta_candlerange`, `ta_candleaverage`) whose

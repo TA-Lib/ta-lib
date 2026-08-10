@@ -75,7 +75,7 @@ TA_LIB_API int TA_STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period,
       optInFastD_Period = 3;
    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
       return -1;
-   if( (int)optInFastD_MAType == (int)0x80000000 )
+   if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
    /* Account for the initial data needed for Fast-K. */
    retValue = optInFastK_Period - 1;
@@ -133,7 +133,7 @@ TA_LIB_API TA_RetCode TA_STOCHF( int    startIdx,
       optInFastD_Period = 3;
    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastD_MAType == (int)0x80000000 )
+   if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
    if( !outFastK )
       return TA_BAD_PARAM;
@@ -393,7 +393,7 @@ TA_RetCode TA_S_STOCHF( int    startIdx,
       optInFastD_Period = 3;
    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastD_MAType == (int)0x80000000 )
+   if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
    if( !outFastK )
       return TA_BAD_PARAM;
@@ -673,7 +673,7 @@ TA_RetCode TA_STOCHF_OpenInternal( struct TA_STOCHF_Stream **stream, const doubl
       optInFastD_Period = 3;
    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastD_MAType == (int)0x80000000 )
+   if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
 
    endIdx = historyLen - 1;
@@ -1003,7 +1003,7 @@ TA_LIB_API TA_RetCode TA_STOCHF_OpenAndFill( TA_STOCHF_Stream **stream, const do
       optInFastD_Period = 3;
    else if( (int)optInFastD_Period < 1 || (int)optInFastD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInFastD_MAType == (int)0x80000000 )
+   if( (int)optInFastD_MAType == (int)0x80000000 || optInFastD_MAType == TA_MAType_DEFAULT )
       optInFastD_MAType = 0;
 
    endIdx = historyLen - 1;

@@ -64,6 +64,7 @@
 #include "ta_memory.h"
 #include "ta_defs.h"
 #include "ta_common.h"
+#include "ta_abstract.h"
 #include "codegen_pipe.h"
 
 
@@ -195,7 +196,8 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_MAType_MAMA",      7, TA_MAType_MAMA },
       { "TA_MAType_T3",        8, TA_MAType_T3 },
       { "TA_MAType_HMA",       9, TA_MAType_HMA },
-      { "TA_MAType_DISABLED", 10, TA_MAType_DISABLED }
+      { "TA_MAType_DISABLED", 10, TA_MAType_DISABLED },
+      { "TA_MAType_DEFAULT",  11, TA_MAType_DEFAULT }
    };
 
    /* Returned to every caller and mapped by name in the wrappers (ta-lib-python
@@ -256,6 +258,30 @@ static ErrorNumber testEnumValueContract( void )
          printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
                  "        they are the optInMAType a caller passes. Append, never renumber.\n",
                  maPins[i].name, maPins[i].current, maPins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_1;
+      }
+   }
+
+   /* Same completeness rule for MAType, which has no _COUNT to compare against:
+    * use the shipped choice list, generated from the same enums.yaml. Without
+    * this, an appended member sits unpinned and can later be renumbered. */
+   {
+      const TA_FuncHandle *maHandle;
+      const TA_OptInputParameterInfo *maOpt;
+      const int nbMaPins = (int)(sizeof(maPins)/sizeof(maPins[0]));
+      if( TA_GetFuncHandle( "MA", &maHandle ) != TA_SUCCESS ||
+          TA_GetOptInputParameterInfo( maHandle, 1, &maOpt ) != TA_SUCCESS ||
+          maOpt->type != TA_OptInput_IntegerList || !maOpt->dataSet ||
+          strcmp( maOpt->paramName, "optInMAType" ) != 0 )
+      {
+         printf( "\nFailed: cannot reach MA's optInMAType choice list to count MAType members\n" );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_1;
+      }
+      if( (int)((const TA_IntegerList *)maOpt->dataSet)->nbElement != nbMaPins )
+      {
+         printf( "\nFailed: MAType has %d member(s) but %d are pinned. Add the new\n"
+                 "        member's row to maPins[] (append only -- never renumber).\n",
+                 (int)((const TA_IntegerList *)maOpt->dataSet)->nbElement, nbMaPins );
          return TA_INTERNAL_ENUM_CONTRACT_FAIL_1;
       }
    }

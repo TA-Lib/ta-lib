@@ -123,6 +123,24 @@
  * pbBuildServerInputs guards the input bound, the opt loop the param bound. */
 #define PB_MAX_INPUT  8
 #define PB_MAX_OPT    8
+/* MA's shipped optInMAType choice list -- ta_codegen generates it from
+ * enums.yaml, the same human-maintained file the enumerators come from, so it
+ * is how that source of truth reaches a C test. A loop bounded by an enumerator
+ * name (`<= TA_MAType_DISABLED`) silently stops covering whatever is appended
+ * after it and no gate notices. The list carries its own count and the members'
+ * real VALUES, so iterating it needs no cap here and survives a non-contiguous
+ * list too. NULL if the metadata is unreachable (a failure, never a skip). */
+static const TA_IntegerList *pbMaTypeList( void )
+{
+   const TA_FuncHandle *handle;
+   const TA_OptInputParameterInfo *optInfo;
+
+   if( TA_GetFuncHandle( "MA", &handle ) != TA_SUCCESS ) return NULL;
+   if( TA_GetOptInputParameterInfo( handle, 1, &optInfo ) != TA_SUCCESS ) return NULL;
+   if( optInfo->type != TA_OptInput_IntegerList || !optInfo->dataSet ) return NULL;
+   if( strcmp( optInfo->paramName, "optInMAType" ) != 0 ) return NULL;
+   return (const TA_IntegerList *)optInfo->dataSet;
+}
 
 /* An integer max above this is treated as effectively unbounded: we do not
  * probe max+1 (it would overflow a value no caller ever passes) and leave the
@@ -310,6 +328,7 @@ static ErrorNumber pbCheckCallShape( const char *label,
 static ErrorNumber testLookbackContract( void )
 {
    int i;
+   const TA_IntegerList *maTypes;
    TA_RetCode retCode;
 
    /* Period=1 is valid: lookback is 0 plus the unstable-period term
@@ -335,9 +354,16 @@ static ErrorNumber testLookbackContract( void )
    PB_CHECK_INT( "TA_TRIX_Lookback(1)", TA_TRIX_Lookback( 1 ), 1 );
    PB_CHECK_INT( "TA_ULTOSC_Lookback(1,1,1)", TA_ULTOSC_Lookback( 1, 1, 1 ), 1 );
 
-   for( i = 0; i <= (int)TA_MAType_DISABLED; i++ )
+   maTypes = pbMaTypeList();
+   if( !maTypes )
    {
-      PB_CHECK_INT( "TA_MA_Lookback(1,maType)", TA_MA_Lookback( 1, (TA_MAType)i ), 0 );
+      printf( "\nFail: cannot read MA's optInMAType choice list\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( i = 0; i < (int)maTypes->nbElement; i++ )
+   {
+      PB_CHECK_INT( "TA_MA_Lookback(1,maType)",
+                    TA_MA_Lookback( 1, (TA_MAType)maTypes->data[i].value ), 0 );
    }
    /* TA_MAType_DISABLED ignores the period: lookback is 0 at any period. */
    PB_CHECK_INT( "TA_MA_Lookback(30,DISABLED)",  TA_MA_Lookback( 30,  TA_MAType_DISABLED ), 0 );
@@ -430,6 +456,7 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    TA_Integer outBegIdx, outNbElement;
    TA_Integer endIdx = (TA_Integer)(history->nbBars - 1);
    int i;
+   const TA_IntegerList *maTypes;
 
    clearAllBuffers();
    setInputBuffer( 0, history->close, history->nbBars );
@@ -442,13 +469,20 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
     * sweep does not reach.
     */
 
-   /* MA(period=1) for every MAType: the documented "just copy" path
-    * (includes TA_MAType_DISABLED, whose copy is period-independent). */
-   for( i = 0; i <= (int)TA_MAType_DISABLED; i++ )
+   /* MA(period=1) for every MAType: the documented "just copy" path (includes
+    * TA_MAType_DISABLED, whose copy is period-independent, and TA_MAType_DEFAULT,
+    * which the prologue has already resolved to SMA by this point). */
+   maTypes = pbMaTypeList();
+   if( !maTypes )
+   {
+      printf( "\nFail: cannot read MA's optInMAType choice list\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( i = 0; i < (int)maTypes->nbElement; i++ )
    {
       char label[64];
-      snprintf( label, sizeof(label), "MA(1,maType=%d)", i );
-      retCode = TA_MA( 0, endIdx, gBuffer[0].in, 1, (TA_MAType)i,
+      snprintf( label, sizeof(label), "MA(1,maType=%d)", maTypes->data[i].value );
+      retCode = TA_MA( 0, endIdx, gBuffer[0].in, 1, (TA_MAType)maTypes->data[i].value,
                        &outBegIdx, &outNbElement, gBuffer[0].out0 );
       errNb = pbCheckCallShape( label, retCode, outBegIdx, 0, outNbElement, endIdx );
       if( errNb != TA_TEST_PASS ) return errNb;
@@ -652,6 +686,8 @@ static const struct { const char *name; const char *why; } PB_MA_EXEMPT[] =
 {
    { "DISABLED", "dispatch-only sentinel: no function of that name (the "
                  "MA(period=1) loop covers it)" },
+   { "DEFAULT",  "resolved before dispatch: the prologue substitutes this "
+                 "parameter's declared default, whose own row runs the check" },
    { "MAMA",     "no integer-range parameter: its two parameters are the real "
                  "fast/slow limits" },
 };
@@ -1172,7 +1208,8 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
    ErrorNumber errNb;
    TA_Integer outBegIdx, outNbElement;
    TA_Integer endIdx = (TA_Integer)(history->nbBars - 1);
-   int maType;
+   int m;
+   const TA_IntegerList *maTypes;
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
    clearAllBuffers();
@@ -1217,10 +1254,17 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
                                  (const double[]){ 1 }, 1 );
    if( errNb != TA_TEST_PASS ) return errNb;
 
-   /* MACDEXT with signalPeriod=1 for every signal MAType (incl. DISABLED). */
-   for( maType = 0; maType <= (int)TA_MAType_DISABLED; maType++ )
+   /* MACDEXT with signalPeriod=1 for every signal MAType (incl. DISABLED and DEFAULT). */
+   maTypes = pbMaTypeList();
+   if( !maTypes )
+   {
+      printf( "\nFail: cannot read MA's optInMAType choice list\n" );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( m = 0; m < (int)maTypes->nbElement; m++ )
    {
       char label[64];
+      int maType = maTypes->data[m].value;
       snprintf( label, sizeof(label), "MACDEXT(12,26,sig=1,maType=%d)", maType );
 
       retCode = TA_MACDEXT( 0, endIdx, gBuffer[0].in,

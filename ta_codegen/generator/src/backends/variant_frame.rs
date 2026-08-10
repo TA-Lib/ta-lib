@@ -114,24 +114,35 @@ fn flat_inputs(func: &FuncDef) -> Vec<(&'static str, String)> {
     out
 }
 
-/// `(is_real, min, max, default)` for one optional input, as concrete numbers.
+/// `(kind, min, max, default)` for one optional input, as concrete numbers.
 ///
 /// Both variants carry the validation prologue, so both substitute the
 /// `TA_INTEGER_DEFAULT` / `TA_REAL_DEFAULT` sentinels and must agree on the
 /// result. The gate probes the sentinel as well as these resolved values —
 /// see `build_candidates` in `test_variants.c`.
-fn opt_spec(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> (bool, f64, f64, f64) {
-    let is_real = matches!(opt.param_type, ParamType::Real);
+///
+/// An enum's `max` is its highest member value, derived from the values rather
+/// than from `len() - 1`: the two agree only while the list is contiguous, and
+/// the gate enumerates every member from this bound.
+fn opt_spec(opt: &OptInput, enums: &HashMap<String, EnumDef>) -> (&'static str, f64, f64, f64) {
+    let kind = match opt.param_type {
+        ParamType::Real => "TA_VOPT_REAL",
+        ParamType::Enum(_) => "TA_VOPT_ENUM",
+        _ => "TA_VOPT_INT",
+    };
     let (min, max) = match (&opt.range, &opt.param_type) {
         (Some((lo, hi)), _) => (*lo, *hi),
         (None, ParamType::Enum(enum_name)) => {
-            let n = enums.get(enum_name).map_or(1, |e| e.variants.len()).max(1);
-            (0.0, f64::from(u32::try_from(n - 1).unwrap_or(u32::MAX)))
+            let hi = enums
+                .get(enum_name)
+                .and_then(|e| e.variants.iter().map(|v| v.value).max())
+                .unwrap_or(0);
+            (0.0, f64::from(hi))
         }
         (None, _) => (0.0, 0.0),
     };
     let def = opt.default.unwrap_or(min);
-    (is_real, min, max, def)
+    (kind, min, max, def)
 }
 
 /// Render a C double literal that round-trips exactly.
@@ -257,12 +268,39 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
          } TA_VInputKind;\n\n",
     );
     o.push_str(
+        "/* An enum parameter's domain is its MEMBER LIST, not the numeric span the\n\
+         \x20* other two kinds carry: sampling min/max/interior would silently stop\n\
+         \x20* probing a member the moment one is appended past it. */\n\
+         typedef enum {\n\
+         \x20  TA_VOPT_INT,\n\
+         \x20  TA_VOPT_REAL,\n\
+         \x20  TA_VOPT_ENUM\n\
+         } TA_VOptKind;\n\n",
+    );
+    // The gate probes one candidate per member, so the size of its candidate
+    // buffer is a fact about enums.yaml. Emitting it keeps the test from
+    // guessing a cap that silently truncates the day a member is appended.
+    let widest_enum = funcs
+        .iter()
+        .flat_map(|f| &f.optional_inputs)
+        .filter_map(|o| match &o.param_type {
+            ParamType::Enum(n) => enums.get(n).map(|e| e.variants.len()),
+            _ => None,
+        })
+        .max()
+        .unwrap_or(0);
+    let _ = writeln!(
+        o,
+        "/* Members of the widest enum any optional parameter uses, from enums.yaml. */\n\
+         #define TA_V_MAX_ENUM_MEMBERS {widest_enum}\n"
+    );
+    o.push_str(
         "/* Concrete (never-sentinel) bounds for one optional parameter. */\n\
          typedef struct {\n\
          \x20  const char *name;\n\
-         \x20  int    isReal;      /* 1 = TA_Real parameter, 0 = integer/enum */\n\
+         \x20  TA_VOptKind kind;\n\
          \x20  double minValue;\n\
-         \x20  double maxValue;\n\
+         \x20  double maxValue;   /* TA_VOPT_ENUM: the highest member value */\n\
          \x20  double defValue;\n\
          } TA_VOptSpec;\n\n",
     );
@@ -311,12 +349,12 @@ pub fn render(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
         if !func.optional_inputs.is_empty() {
             let _ = writeln!(o, "static const TA_VOptSpec TA_VOpt_{}[] = {{", func.name);
             for opt in &func.optional_inputs {
-                let (is_real, min, max, def) = opt_spec(opt, enums);
+                let (kind, min, max, def) = opt_spec(opt, enums);
                 let _ = writeln!(
                     o,
                     "   {{ \"{}\", {}, {}, {}, {} }},",
                     opt.name,
-                    i32::from(is_real),
+                    kind,
                     c_double(min),
                     c_double(max),
                     c_double(def)

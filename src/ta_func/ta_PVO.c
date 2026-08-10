@@ -66,7 +66,7 @@ TA_LIB_API int TA_PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAT
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
    /* Lookback is driven by the slowest MA. */
    return TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType);
@@ -106,7 +106,7 @@ TA_LIB_API TA_RetCode TA_PVO( int    startIdx,
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -196,7 +196,7 @@ TA_RetCode TA_S_PVO( int    startIdx,
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -309,7 +309,7 @@ TA_RetCode TA_PVO_OpenInternal( struct TA_PVO_Stream **stream, const double inVo
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
 
    endIdx = historyLen - 1;
@@ -455,7 +455,7 @@ TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double i
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
 
    endIdx = historyLen - 1;

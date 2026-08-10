@@ -432,7 +432,7 @@ pub fn generate(
             emit_dispatch(&mut o, func, dp, &stream_fma, enums, registry, helpers, &counter);
         }
         StreamPlan::PeriodBank(pb) => {
-            emit_period_bank(&mut o, func, pb, registry, helpers);
+            emit_period_bank(&mut o, func, pb, registry, helpers, enums);
         }
         StreamPlan::Composed(cp) => {
             emit_composed(&mut o, func, cp, &stream_fma, enums, registry, helpers, &counter);
@@ -1047,7 +1047,7 @@ fn emit_open_prologue(
 ) {
     emit_body_decls(o, func, open_body);
     emit_open_head(o, func, &model.outputs, mode);
-    emit_open_validation(o, func, mode);
+    emit_open_validation(o, func, mode, enums);
     emit_extras_and_candle(o, func, open_body, registry, helpers, counter, stream_fma);
     let _ = enums;
 }
@@ -1121,7 +1121,7 @@ fn emit_open_head(o: &mut String, func: &FuncDef, outputs: &[String], mode: OutM
 }
 
 /// Input-length + optional-param validation, and the Fill-mode aliasing guards.
-fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode) {
+fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
     let mut checks: Vec<String> = vec![format!("historyLen < 1")];
@@ -1138,7 +1138,7 @@ fn emit_open_validation(o: &mut String, func: &FuncDef, mode: OutMode) {
     let _ = writeln!(o, "      if( historyLen > MAX_INDEX + 1 ) {{");
     let _ = writeln!(o, "         return RetCode.OutOfRangeEndIndex;");
     let _ = writeln!(o, "      }}");
-    o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam"));
+    o.push_str(&emit_opt_param_validation(func, "RetCode.BadParam", enums));
     if mode == OutMode::Fill {
         // Output aliasing guards: OpenAndFill writes outputs then reads the
         // input tail to seed rings — the batch tier's in==out allowance is
@@ -1813,7 +1813,7 @@ fn emit_dual_mode(
     for mode in [OutMode::Scalar, OutMode::Fill] {
         emit_open_body_sig(o, func, mode);
         emit_open_head(o, func, &ma.outputs, mode);
-        emit_open_validation(o, func, mode);
+        emit_open_validation(o, func, mode, enums);
         // Identity (HMA period 1) short-circuits ahead of the predicate: the
         // whole union sits at its defaults, and both modes' steps short-circuit
         // on the same guard, so which arm the predicate would pick is moot.
@@ -2033,7 +2033,7 @@ fn emit_dispatch(
         emit_open_body_sig(o, func, mode);
         let first = &inputs[0];
         let _ = writeln!(o, "      int historyLen = {first}.length;");
-        emit_open_validation(o, func, mode);
+        emit_open_validation(o, func, mode, enums);
         // Own-lookback precheck BEFORE delegating: the callee's open would
         // reject too, but with ITS message prefix ("SMA open:" for a MA call)
         // — the documented stable "<NAME> open:" contract requires the reject
@@ -2178,6 +2178,7 @@ fn emit_period_bank(
     plan: &streaming::PeriodBankPlan,
     registry: &Registry,
     helpers: &HelperRegistry,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let _ = helpers;
     let callee = plan.callee.as_str();
@@ -2243,7 +2244,7 @@ fn emit_period_bank(
     let own_lb_call = format!("{base}_Lookback({})", own_lb_args.join(", "));
     emit_open_body_sig(o, func, OutMode::Scalar);
     let _ = writeln!(o, "      int historyLen = {price}.length;");
-    emit_open_validation(o, func, OutMode::Scalar);
+    emit_open_validation(o, func, OutMode::Scalar, enums);
     let _ = writeln!(o, "      /* An inverted [min, max] period window is invalid (batch rejects). */");
     let _ = writeln!(o, "      if( {min} > {max} ) {{");
     let _ = writeln!(o, "         return RetCode.BadParam;");
@@ -2289,7 +2290,7 @@ fn emit_period_bank(
     // updates over the remaining history selecting per bar. ------------------
     emit_open_body_sig(o, func, OutMode::Fill);
     let _ = writeln!(o, "      int historyLen = {price}.length;");
-    emit_open_validation(o, func, OutMode::Fill);
+    emit_open_validation(o, func, OutMode::Fill, enums);
     let _ = writeln!(o, "      /* An inverted [min, max] period window is invalid (batch rejects). */");
     let _ = writeln!(o, "      if( {min} > {max} ) {{");
     let _ = writeln!(o, "         return RetCode.BadParam;");
@@ -2720,7 +2721,7 @@ fn emit_composed_open(
         .collect();
     emit_body_decls(o, func, &combined);
     emit_open_head(o, func, &[], mode);
-    emit_open_validation(o, func, mode);
+    emit_open_validation(o, func, mode, enums);
     // Own-lookback precheck BEFORE opening any sub: a sub's reject would carry
     // the CALLEE's message prefix ("MA open:" for a BBANDS call), breaking the
     // stable "<NAME> open:" contract. Same check the dispatch and period-bank

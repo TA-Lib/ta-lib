@@ -77,7 +77,7 @@ impl Core {
     ///   1..=100000)
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -98,7 +98,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
             optInFastD_MAType = 0;
         }
         let mut retValue: usize = 0_usize;
@@ -133,7 +133,7 @@ impl Core {
     ///   1..=100000)
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outFastK` — Unsmoothed stochastic of the RSI (raw %K)
@@ -221,7 +221,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
             optInFastD_MAType = 0;
         }
         if outFastK.as_ptr() == outFastD.as_ptr() {
@@ -368,7 +368,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
             optInFastD_MAType = 0;
         }
         let historyLen: usize = inReal.len();
@@ -521,7 +521,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
             optInFastD_MAType = 0;
         }
         let historyLen: usize = inReal.len();

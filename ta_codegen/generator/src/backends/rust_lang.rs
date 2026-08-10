@@ -613,7 +613,7 @@ fn gen_lookback(
 
         // Param validation
         for opt in &func.optional_inputs {
-            out.push_str(&gen_opt_param_validation(opt, "        ", true));
+            out.push_str(&gen_opt_param_validation(opt, "        ", true, enums));
         }
 
         // Return lookback expression
@@ -670,7 +670,7 @@ fn gen_guarded_func(
 
     // Param validation
     for opt in &func.optional_inputs {
-        out.push_str(&gen_opt_param_validation(opt, "        ", false));
+        out.push_str(&gen_opt_param_validation(opt, "        ", false, enums));
     }
 
     // Output-distinctness (issue #108): aliasing two different output buffers has
@@ -1313,13 +1313,13 @@ fn gen_generic_output_params(func: &FuncDef) -> String {
 }
 
 /// Generate optional parameter validation code.
-fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool) -> String {
+fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool, enums: &HashMap<String, EnumDef>) -> String {
     let err_return = if is_lookback {
         "return usize::MAX;"
     } else {
         "return RetCode::BadParam;"
     };
-    gen_opt_param_validation_with(opt, pad, err_return)
+    gen_opt_param_validation_with(opt, pad, err_return, enums)
 }
 
 /// Core of the optional-parameter default-substitution + range check, with the
@@ -1331,14 +1331,32 @@ fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool) -> Str
 /// and the substitution is the only thing that maps it to the documented default
 /// (issue #162). They declare no `range:` (see `doc_meta::RangeMeta`), so in
 /// practice only the substitution half is emitted for them.
-pub(crate) fn gen_opt_param_validation_with(opt: &OptInput, pad: &str, err_return: &str) -> String {
+///
+/// Such a param also accepts its type's `DEFAULT` member (#182), emitted as the
+/// bare value because the Rust surface has no `MAType` type yet — the same
+/// reason the generated `DISABLED` comparisons read `== 10`. Both become named
+/// constants when the enum lands (#179).
+pub(crate) fn gen_opt_param_validation_with(
+    opt: &OptInput,
+    pad: &str,
+    err_return: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> String {
     let mut out = String::new();
     let name = &opt.name;
 
     match &opt.param_type {
         ParamType::Integer | ParamType::Enum(_) => {
             if let Some(default) = opt.default {
-                out.push_str(&format!("{pad}if (({name}) as i32) == (i32::MIN) {{\n"));
+                let extra = match &opt.param_type {
+                    ParamType::Enum(e) => super::common::enum_default_variant(enums, e)
+                        .map(|v| format!(" || (({name}) as i32) == ({})", v.value))
+                        .unwrap_or_default(),
+                    _ => String::new(),
+                };
+                out.push_str(&format!(
+                    "{pad}if (({name}) as i32) == (i32::MIN){extra} {{\n"
+                ));
                 #[allow(clippy::cast_possible_truncation)]
                 let default_i64 = default as i64;
                 out.push_str(&format!("{pad}    {name} = {default_i64};\n"));

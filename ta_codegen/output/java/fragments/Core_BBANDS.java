@@ -45,7 +45,8 @@
     *        (default 2; {@code -4e37} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -64,6 +65,9 @@
          optInNbDevDn = 2e0;
       } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
          return -1;
+      }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
       }
       int maLookback;
       int stddevLookback;
@@ -125,6 +129,9 @@
          optInNbDevDn = 2e0;
       } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
          return RetCode.BadParam;
+      }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
       }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
@@ -371,6 +378,9 @@
       } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
          return RetCode.BadParam;
       }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      }
       if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
          return RetCode.BadParam ;
       }
@@ -574,7 +584,8 @@
     *        (default 2; {@code -4e37} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand The moving average. Must hold at least
@@ -654,7 +665,8 @@
     *        (default 2; {@code -4e37} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand The moving average. Must hold at least
@@ -863,6 +875,9 @@
       } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
          return RetCode.BadParam;
       }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      }
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -975,6 +990,9 @@
          optInNbDevDn = 2e0;
       } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
          return RetCode.BadParam;
+      }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
       }
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          return RetCode.BadParam;

@@ -96,7 +96,10 @@
 #define V_MAX_INPUT    6   /* widest is OHLCV + one spare */
 #define V_MAX_OUTPUT   3   /* BBANDS/MACD/MINMAXINDEX are the widest */
 #define V_MAX_OPT      8   /* SAREXT */
-#define V_MAX_CAND     7   /* candidate values probed per optional parameter */
+/* Candidate values probed per optional parameter. An enum contributes one per
+ * member, so the bound is a fact about enums.yaml and comes from the generated
+ * frame rather than being guessed here; 7 is what the integer/real kinds need. */
+#define V_MAX_CAND ((TA_V_MAX_ENUM_MEMBERS + 1) > 7 ? (TA_V_MAX_ENUM_MEMBERS + 1) : 7)
 
 /* Written past the end of every output buffer and re-checked after each call:
  * a variant that writes more elements than it reports is a defect the value
@@ -498,7 +501,17 @@ static int build_candidates( const TA_VOptSpec *spec, double *out )
 
    cand[n++] = spec->defValue;
 
-   if( !spec->isReal )
+   if( spec->kind == TA_VOPT_ENUM )
+   {
+      /* Every member, never a sample of the numeric span: an appended member
+       * would otherwise displace the one below it out of the probe set and the
+       * vector count would not move (#182 did exactly that to DISABLED).
+       * V_MAX_CAND is sized from enums.yaml, so this cannot overflow. */
+      double v;
+      for( v = spec->minValue; v <= spec->maxValue; v += 1.0 )
+         cand[n++] = v;
+   }
+   else if( spec->kind == TA_VOPT_INT )
    {
       cand[n++] = spec->minValue;
       cand[n++] = spec->minValue + 1.0;
@@ -534,7 +547,8 @@ static int build_candidates( const TA_VOptSpec *spec, double *out )
     * default. Both variants carry that prologue, so both must land on the same
     * value and produce the same output. TA_INTEGER_DEFAULT is INT_MIN, exactly
     * representable in double, so the frame's (int) cast round-trips it. */
-   out[j++] = spec->isReal ? (double)TA_REAL_DEFAULT : (double)TA_INTEGER_DEFAULT;
+   out[j++] = ( spec->kind == TA_VOPT_REAL ) ? (double)TA_REAL_DEFAULT
+                                            : (double)TA_INTEGER_DEFAULT;
    return j;
 }
 

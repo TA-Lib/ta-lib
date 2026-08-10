@@ -56,10 +56,11 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
             "MAType values must be contiguous from 0 ({} breaks the sequence)",
             v.c_name
         );
-        s.push_str(&format!(
-            "    /// <summary>The <c>{}</c> moving average.</summary>\n",
-            v.c_name
-        ));
+        let summary = super::common::ma_pseudo_member_doc(&v.name).map_or_else(
+            || format!("The <c>{}</c> moving average.", v.c_name),
+            str::to_string,
+        );
+        s.push_str(&format!("    /// <summary>{summary}</summary>\n"));
         s.push_str(&format!("    {} = {},\n", v.name, v.value));
     }
     s.push_str("}\n");

@@ -96,6 +96,11 @@ pub fn generate_matype(enums: &HashMap<String, EnumDef>, path: &Path) {
             v.c_name
         );
         let comma = if i + 1 == ma.variants.len() { "" } else { "," };
+        // A member that does not name an average carries its own prose; the
+        // rest need none, their name being the description.
+        if let Some(doc) = super::common::ma_pseudo_member_doc(&v.name) {
+            body.push_str(&format!("   /** {doc} */\n"));
+        }
         body.push_str(&format!("   {}{comma}\n", v.name));
     }
     body.push_str("};\n");

@@ -77,7 +77,7 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -93,7 +93,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         return self.MA_Lookback(optInMaxPeriod, optInMAType);
@@ -123,7 +123,7 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — variable-period moving average.
@@ -200,7 +200,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -524,7 +524,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         // An inverted [min, max] period window is invalid (batch rejects).
@@ -606,7 +606,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         // An inverted [min, max] period window is invalid (batch rejects).

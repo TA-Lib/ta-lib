@@ -90,7 +90,7 @@ TA_LIB_API int TA_BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, dou
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    /* A band value needs BOTH the middle-band moving average and the standard
     * deviation of the outer bands, so the first valid output is the later of the
@@ -151,7 +151,7 @@ TA_LIB_API TA_RetCode TA_BBANDS( int    startIdx,
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
@@ -448,7 +448,7 @@ TA_RetCode TA_S_BBANDS( int    startIdx,
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
    if( !outRealUpperBand )
       return TA_BAD_PARAM;
@@ -749,7 +749,7 @@ TA_RetCode TA_BBANDS_OpenInternal( struct TA_BBANDS_Stream **stream, const doubl
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
 
    endIdx = historyLen - 1;
@@ -938,7 +938,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_OpenAndFill( TA_BBANDS_Stream **stream, const do
       optInNbDevDn = 2;
    else if( optInNbDevDn < TA_REAL_MIN || optInNbDevDn > TA_REAL_MAX )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 )
+   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 0;
 
    endIdx = historyLen - 1;

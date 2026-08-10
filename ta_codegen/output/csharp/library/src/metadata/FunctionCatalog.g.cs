@@ -83,6 +83,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         new(8, "T3"),
         new(9, "HMA"),
         new(10, "DISABLED"),
+        new(11, "DEFAULT"),
     ];
 
     /// <summary>The process-wide catalogue.</summary>

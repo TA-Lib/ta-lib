@@ -75,8 +75,9 @@ public partial class Core
    /// <param name="optInFastD_Period">Smoothing period for %D (default 3; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
-   /// <c>int.MinValue</c> selects the default).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
+   /// the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
@@ -95,7 +96,7 @@ public partial class Core
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return -1;
       }
-      if( (int)optInFastD_MAType == int.MinValue ) {
+      if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
       }
       int retValue = 0;
@@ -146,7 +147,7 @@ public partial class Core
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
-      if( (int)optInFastD_MAType == int.MinValue ) {
+      if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
       }
       if( outFastK == outFastD ) {
@@ -250,7 +251,7 @@ public partial class Core
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
-      if( (int)optInFastD_MAType == int.MinValue ) {
+      if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
       }
       if( outFastK == outFastD ) {
@@ -320,8 +321,9 @@ public partial class Core
    /// <param name="optInFastD_Period">Smoothing period for %D (default 3; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
-   /// <c>int.MinValue</c> selects the default).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
+   /// the default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <param name="outFastD">%K smoothed over FastD_Period (signal line) Must hold at least <c>endIdx -
@@ -391,8 +393,9 @@ public partial class Core
    /// <param name="optInFastD_Period">Smoothing period for %D (default 3; range 1..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInFastD_MAType">MA type used to smooth %D (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
-   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED;
-   /// <c>int.MinValue</c> selects the default).</param>
+   /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
+   /// the default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
    /// <param name="outFastD">%K smoothed over FastD_Period (signal line) Must hold at least <c>endIdx -

@@ -79,11 +79,13 @@ impl Core {
     /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -99,7 +101,7 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) || ((optInSlowK_MAType) as i32) == (11) {
             optInSlowK_MAType = 0;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
@@ -107,7 +109,7 @@ impl Core {
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) || ((optInSlowD_MAType) as i32) == (11) {
             optInSlowD_MAType = 0;
         }
         let mut retValue: usize = 0_usize;
@@ -148,11 +150,13 @@ impl Core {
     /// * `optInSlowK_Period` — Smoothing period turning FastK into SlowK (default 3, range
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
@@ -239,7 +243,7 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) || ((optInSlowK_MAType) as i32) == (11) {
             optInSlowK_MAType = 0;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
@@ -247,7 +251,7 @@ impl Core {
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) || ((optInSlowD_MAType) as i32) == (11) {
             optInSlowD_MAType = 0;
         }
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
@@ -592,7 +596,7 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) || ((optInSlowK_MAType) as i32) == (11) {
             optInSlowK_MAType = 0;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
@@ -600,7 +604,7 @@ impl Core {
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) || ((optInSlowD_MAType) as i32) == (11) {
             optInSlowD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();
@@ -914,7 +918,7 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowK_MAType) as i32) == (i32::MIN) || ((optInSlowK_MAType) as i32) == (11) {
             optInSlowK_MAType = 0;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
@@ -922,7 +926,7 @@ impl Core {
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) {
+        if ((optInSlowD_MAType) as i32) == (i32::MIN) || ((optInSlowD_MAType) as i32) == (11) {
             optInSlowD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();

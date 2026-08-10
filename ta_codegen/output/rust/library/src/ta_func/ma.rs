@@ -77,7 +77,8 @@ impl Core {
     ///
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -88,7 +89,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let mut retValue: usize = 0_usize;
@@ -147,6 +148,9 @@ impl Core {
     /// * `TA_MAType_DISABLED` bypasses smoothing explicitly, for any period: the output is a copy
     ///   of the input with a lookback of 0. Every function that takes an MAType parameter accepts
     ///   it.
+    /// * `TA_MAType_DEFAULT` selects the documented default of the parameter it is passed to —
+    ///   SMA here, EMA for APO, PPO and PVO. Every function that takes an MAType parameter accepts
+    ///   it.
     ///
     /// # Arguments
     ///
@@ -155,7 +159,8 @@ impl Core {
     /// * `inReal` — Series to average.
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
-    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Selected moving average of the input.
@@ -221,7 +226,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType);
@@ -392,7 +397,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
@@ -491,7 +496,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();

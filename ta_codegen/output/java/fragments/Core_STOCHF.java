@@ -34,7 +34,8 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType Moving-average type used to smooth Fast-D
     *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).
+    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT;
+    *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -48,6 +49,9 @@
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return -1;
+      }
+      if( optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
       }
       int retValue;
       /* Account for the initial data needed for Fast-K. */
@@ -101,6 +105,9 @@
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
       }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
@@ -326,6 +333,9 @@
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
+      }
       if( outFastK == outFastD ) {
          return RetCode.BadParam ;
       }
@@ -451,7 +461,8 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType Moving-average type used to smooth Fast-D
     *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).
+    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT;
+    *        {@code MAType.DEFAULT} selects the default).
     * @param outFastK Raw %K stochastic line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFastD MA-smoothed %K (signal line) Must hold at least
@@ -522,7 +533,8 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType Moving-average type used to smooth Fast-D
     *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED).
+    *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT;
+    *        {@code MAType.DEFAULT} selects the default).
     * @param outFastK Raw %K stochastic line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFastD MA-smoothed %K (signal line) Must hold at least
@@ -793,6 +805,9 @@
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
+      }
       if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
@@ -1049,6 +1064,9 @@
          optInFastD_Period = 3;
       } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInFastD_MAType == MAType.DEFAULT ) {
+         optInFastD_MAType = MAType.SMA;
       }
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
          return RetCode.BadParam;

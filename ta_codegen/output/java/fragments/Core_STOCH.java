@@ -33,13 +33,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -54,10 +56,16 @@
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
          return -1;
       }
+      if( optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      }
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return -1;
+      }
+      if( optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
       }
       int retValue;
       /* Account for the initial data needed for Fast-K. */
@@ -117,10 +125,16 @@
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      }
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
@@ -356,10 +370,16 @@
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      }
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
       }
       if( outSlowK == outSlowD ) {
          return RetCode.BadParam ;
@@ -490,13 +510,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
@@ -571,13 +593,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
+    *        default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
@@ -858,10 +882,16 @@
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      }
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
       }
       if( historyLen < STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
@@ -1134,10 +1164,16 @@
       } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
          return RetCode.BadParam;
       }
+      if( optInSlowK_MAType == MAType.DEFAULT ) {
+         optInSlowK_MAType = MAType.SMA;
+      }
       if( optInSlowD_Period == Integer.MIN_VALUE ) {
          optInSlowD_Period = 3;
       } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
          return RetCode.BadParam;
+      }
+      if( optInSlowD_MAType == MAType.DEFAULT ) {
+         optInSlowD_MAType = MAType.SMA;
       }
       if( (Object)outSlowK == (Object)inHigh || (Object)outSlowK == (Object)inLow || (Object)outSlowK == (Object)inClose || (Object)outSlowD == (Object)inHigh || (Object)outSlowD == (Object)inLow || (Object)outSlowD == (Object)inClose || (Object)outSlowK == (Object)outSlowD ) {
          return RetCode.BadParam;

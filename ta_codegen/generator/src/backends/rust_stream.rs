@@ -441,7 +441,7 @@ pub fn generate(
             emit_dispatch(&mut o, func, dp, enums, registry, helpers, &counter);
         }
         StreamPlan::PeriodBank(pb) => {
-            emit_period_bank(&mut o, func, pb, registry, helpers);
+            emit_period_bank(&mut o, func, pb, registry, helpers, enums);
         }
         StreamPlan::Composed(cp) => {
             emit_composed(&mut o, func, cp, enums, registry, helpers, &counter);
@@ -890,7 +890,7 @@ fn emit_open_internal(
     mode: OutMode,
 ) {
     emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode);
+    emit_open_validation_head(o, func, mode, enums);
     emit_open_inits(o, func, &model.outputs, typing, registry, helpers, mode);
 
     let fields = state_fields(func, model, typing);
@@ -966,7 +966,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
 /// The open validation head: non-empty (+ equal-length) inputs, the Fill-mode
 /// output-distinctness guard (#108), then optional-param validation. Shared by
 /// every tier.
-fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode) {
+fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<String, EnumDef>) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
     let mut empties: Vec<String> = inputs.iter().map(|i| format!("{i}.is_empty()")).collect();
@@ -1005,6 +1005,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode) {
             p,
             "        ",
             "return Err(RetCode::BadParam);",
+            enums,
         ));
     }
 }
@@ -1920,7 +1921,7 @@ fn emit_dual_open(
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
     emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode);
+    emit_open_validation_head(o, func, mode, enums);
     emit_open_inits(o, func, &ma.outputs, typing, registry, helpers, mode);
 
     let opt_real_params: Vec<String> = func
@@ -2173,7 +2174,7 @@ fn emit_dispatch(
 
     // --- open_internal ------------------------------------------------------
     emit_open_sig(o, func, OutMode::Scalar);
-    emit_open_validation_head(o, func, OutMode::Scalar);
+    emit_open_validation_head(o, func, OutMode::Scalar, enums);
     let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
     if let Some(idp) = &dp.identity {
         // The identity path FIRST (batch order — it applies to every arm).
@@ -2266,7 +2267,7 @@ fn emit_dispatch(
 
     // --- open_and_fill: delegate per arm; identity fills the shifted copy ---
     emit_open_sig(o, func, OutMode::Fill);
-    emit_open_validation_head(o, func, OutMode::Fill);
+    emit_open_validation_head(o, func, OutMode::Fill, enums);
     let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
     if let Some(idp) = &dp.identity {
         let cond = render_expr(&idp.condition, &ctx, &[], registry, helpers);
@@ -2364,6 +2365,7 @@ fn emit_period_bank(
     plan: &streaming::PeriodBankPlan,
     registry: &Registry,
     helpers: &HelperRegistry,
+    enums: &HashMap<String, EnumDef>,
 ) {
     let _ = (registry, helpers);
     let handle = stream_type_name(func);
@@ -2433,7 +2435,7 @@ fn emit_period_bank(
 
     // --- open_internal ------------------------------------------------------
     emit_open_sig(o, func, OutMode::Scalar);
-    emit_open_validation_head(o, func, OutMode::Scalar);
+    emit_open_validation_head(o, func, OutMode::Scalar, enums);
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
     let _ = writeln!(o, "        let historyLen: usize = {price}.len();");
@@ -2475,7 +2477,7 @@ fn emit_period_bank(
     // bank on the first-output-bar prefix, emit that bar, then REPLAY updates
     // over the remaining history selecting the clamped-period slot per bar.
     emit_open_sig(o, func, OutMode::Fill);
-    emit_open_validation_head(o, func, OutMode::Fill);
+    emit_open_validation_head(o, func, OutMode::Fill, enums);
     let _ = writeln!(o, "        // An inverted [min, max] period window is invalid (batch rejects).");
     let _ = writeln!(o, "        if {min} > {max} {{\n            return Err(RetCode::BadParam);\n        }}");
     let _ = writeln!(o, "        let historyLen: usize = {price}.len();");
@@ -2977,7 +2979,7 @@ fn emit_composed_open(
         .collect();
 
     emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode);
+    emit_open_validation_head(o, func, mode, enums);
     emit_open_inits(o, func, outputs, typing, registry, helpers, mode);
     if mode == OutMode::Scalar {
         // Real `&mut usize` bindings under the batch names, so the transcribed

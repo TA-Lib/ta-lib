@@ -170,7 +170,8 @@ typedef enum {
     TA_MAType_MAMA     =  7,
     TA_MAType_T3       =  8,
     TA_MAType_HMA      =  9,
-    TA_MAType_DISABLED = 10
+    TA_MAType_DISABLED = 10,
+    TA_MAType_DEFAULT  = 11
 } TA_MAType;
 
 typedef enum {

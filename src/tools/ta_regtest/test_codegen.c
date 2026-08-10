@@ -127,6 +127,23 @@ static int codegen_lang_can_pass_enum_sentinel(const char *lang)
     return strcmp(lang, "java") != 0;
 }
 
+/* The choice list's DEFAULT member (#182), or -1 when the enum declares none.
+ * This is the spelling a typed enum CAN carry, so it reaches the substitution in
+ * the one backend TA_INTEGER_DEFAULT cannot. Keyed on the name rather than a
+ * literal 11: the value is enums.yaml's to choose. */
+static int codegen_enum_default_member(const TA_OptInputParameterInfo *optInfo)
+{
+    const TA_IntegerList *l;
+    unsigned int e;
+    if( !optInfo || optInfo->type != TA_OptInput_IntegerList ) return -1;
+    l = (const TA_IntegerList *)optInfo->dataSet;
+    if( !l ) return -1;
+    for( e = 0; e < l->nbElement; e++ )
+        if( l->data[e].string && strcmp(l->data[e].string, "DEFAULT") == 0 )
+            return l->data[e].value;
+    return -1;
+}
+
 /* ---- Default-sentinel float leg counters (issue #170) ----
  * The sentinel pass is a SUBSET of the float leg, so it gets its own counters
  * rather than folding into g_floatLegCompared: a small subset behind a big
@@ -1742,7 +1759,8 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * VARIANT gate and the COMPOSITE hand tests (TA_MAType_HMA dispatch parity).
  * When a frozen oracle is re-frozen on a tag that includes #139, raise (or
  * retire) this max accordingly. */
-#define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; HMA(9) added by #139 */
+#define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; 9+ postdate the frozen
+                                        oracles (HMA #139, DISABLED #93, DEFAULT #182) */
 static long long g_frozenEnumSkips = 0;
 
 static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value)
@@ -2050,7 +2068,9 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
     for( i = 0; i < p->funcInfo->nbOptInput; i++ )
     {
         const TA_OptInputParameterInfo *optInfo;
+        int enumDefaultMember;
         TA_GetOptInputParameterInfo(p->funcInfo->handle, i, &optInfo);
+        enumDefaultMember = codegen_enum_default_member(optInfo);
 
         switch( optInfo->type )
         {
@@ -2062,6 +2082,15 @@ static int float_leg_set_sentinels(CodegenRangeTestParam *p)
             if( codegen_lang_can_pass_enum_sentinel(p->langName) )
             {
                 p->optOverride[i] = (double)TA_INTEGER_DEFAULT;
+                nbSent++;
+            }
+            else if( enumDefaultMember >= 0 )
+            {
+                /* Java cannot hold TA_INTEGER_DEFAULT here, but the enum's own
+                 * DEFAULT member carries the identical contract (#182) and IS
+                 * representable — and Java's float overload is the one surface
+                 * whose substitution no other gate reaches. */
+                p->optOverride[i] = (double)enumDefaultMember;
                 nbSent++;
             }
             else
@@ -2260,8 +2289,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         const TA_OptInputParameterInfo *optInfo;
         TA_GetOptInputParameterInfo(funcInfo->handle, i, &optInfo);
 
-        /* Sized past the widest single-param list (MAType: 11 values today, 10
-         * non-default after #93's DISABLED) so the cap below never silently drops
+        /* Sized past the widest single-param list (MAType: 12 values today, 11
+         * non-default after #93's DISABLED and #182's DEFAULT) so the cap below never silently drops
          * a value even if FROZEN_ORACLE_MATYPE_MAX is retired after a re-freeze
          * (which would let all non-default MATypes through). */
         double cand[16];
@@ -2426,8 +2455,8 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 #define STREAM_MAX_OPT 16
 /* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
  * params, so its count is 6*M+1 in the MAType-list length M (base 4 + 3 params *
- * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list)). M=11 today
- * (#93 added TA_MAType_DISABLED) => 67; 128 keeps runway for ~10 more MATypes
+ * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list)). M=12 today
+ * (#93 added DISABLED, #182 DEFAULT) => 73; 128 keeps runway for ~9 more MATypes
  * before MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_VEC 128
 #define STREAM_N       240
@@ -3371,7 +3400,7 @@ static ErrorNumber test_codegen_for_language(
                ctx.error == TA_TEST_PASS ? ", all match ta_ref_serve" : "");
         if( g_frozenEnumSkips > 0 )
             printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
-                   "(#139; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+                   "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                    g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     }
 
@@ -3795,8 +3824,8 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
 #define FUZZ_MAXN     256   /* bars per config (<= MAX_NB_TEST_ELEMENT) */
 #define FUZZ_MAX_OPT  16
 #define FUZZ_MAX_CAND 24    /* candidate values per single param. Only the MAType
-                             * list can approach it: 11 values today (#93 added
-                             * DISABLED) => 10 non-default. Overflow here is
+                             * list can approach it: 12 values today (#93 added
+                             * DISABLED, #182 DEFAULT) => 11 non-default. Overflow here is
                              * counted into *overflow so it fails the run LOUDLY —
                              * without this the MAType sweep would truncate
                              * silently (it never reaches the FUZZ_MAX_VEC guard). */
@@ -3804,8 +3833,8 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
                              * 3 period ranges (<= 6 candidates + 2 reject + 1
                              * sentinel each) + 3 MAType lists (M-1 values + 1
                              * sentinel each, #162) + the defaults vector <= 3*M+28
-                             * in the MAType-list length M. M=11 today => 61 worst
-                             * case, 60 actually built (one of optInSignalPeriod's
+                             * in the MAType-list length M. M=12 today => 64 worst
+                             * case, 63 actually built (one of optInSignalPeriod's
                              * boundary candidates lands on its own default and is
                              * dropped). 80 gives runway to M=17, and still matches
                              * STREAM_MAX_VEC.
@@ -4078,7 +4107,7 @@ static int fuzz_build_vectors(const TA_FuncInfo *fi,
                 /* A MAType list longer than cand[] would otherwise truncate
                  * SILENTLY here (this loop never reaches the FUZZ_MAX_VEC guard
                  * below), quietly dropping arms from the sweep. Count it so the
-                 * run fails loudly instead. #93 took the list to 11 (10
+                 * run fails loudly instead. #93 and #182 took the list to 12 (11
                  * non-default); FUZZ_MAX_CAND keeps headroom above that. */
                 if( nc >= FUZZ_MAX_CAND ) { (*overflow)++; continue; }
                 cand[nc++] = (double)l->data[e2].value;
@@ -4751,7 +4780,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.stochRsiSkipped);
     if( g_frozenEnumSkips > 0 )
         printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
-               "(#139; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+               "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     if( ctx.varianceSkipped > 0 )
         printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",

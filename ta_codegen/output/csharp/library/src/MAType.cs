@@ -59,6 +59,8 @@ public enum MAType
     T3 = 8,
     /// <summary>The <c>TA_MAType_HMA</c> moving average.</summary>
     HMA = 9,
-    /// <summary>The <c>TA_MAType_DISABLED</c> moving average.</summary>
+    /// <summary>Not a moving average: the input is copied through unchanged.</summary>
     DISABLED = 10,
+    /// <summary>Not a moving average: selects the documented default of whichever parameter it is passed to.</summary>
+    DEFAULT = 11,
 }

@@ -278,13 +278,8 @@ pub fn generate(
 /// emits. A value with no named variant falls back to the cast, which is the same
 /// C# value — the enum is an `int` with names, so nothing is lost.
 fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, EnumDef>) -> String {
-    enums
-        .get(enum_name)
-        .and_then(|e| e.variants.iter().find(|v| v.value == value))
-        .map_or_else(
-            || format!("({enum_name}){value}"),
-            |v| format!("{enum_name}.{}", v.name),
-        )
+    super::common::enum_member_literal(enums, enum_name, value)
+        .unwrap_or_else(|| format!("({enum_name}){value}"))
 }
 
 /// Optional-parameter validation prologue (C#): map the `int.MinValue` /
@@ -353,9 +348,13 @@ fn emit_opt_param_validation(
                 if let Some(default_val) = opt.default {
                     // The comparison casts to `int` because C# defines no
                     // implicit enum↔int conversion; the assignment uses the
-                    // qualified member, as the switch labels do.
+                    // qualified member, as the switch labels do. The `DEFAULT`
+                    // member (#182) needs no cast — it is already the enum type.
+                    let extra = super::common::enum_default_variant(enums, enum_name)
+                        .map(|v| format!(" || {} == {enum_name}.{}", opt.name, v.name))
+                        .unwrap_or_default();
                     out.push_str(&format!(
-                        "      if( (int){name} == int.MinValue ) {{\n         {name} = {val};\n      }}",
+                        "      if( (int){name} == int.MinValue{extra} ) {{\n         {name} = {val};\n      }}",
                         name = opt.name,
                         val = csharp_enum_literal(enum_name, default_val as i32, enums)
                     ));

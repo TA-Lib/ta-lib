@@ -73,13 +73,13 @@ TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, 
       optInSlowK_Period = 3;
    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
       return -1;
-   if( (int)optInSlowK_MAType == (int)0x80000000 )
+   if( (int)optInSlowK_MAType == (int)0x80000000 || optInSlowK_MAType == TA_MAType_DEFAULT )
       optInSlowK_MAType = 0;
    if( (int)optInSlowD_Period == (int)0x80000000 )
       optInSlowD_Period = 3;
    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
       return -1;
-   if( (int)optInSlowD_MAType == (int)0x80000000 )
+   if( (int)optInSlowD_MAType == (int)0x80000000 || optInSlowD_MAType == TA_MAType_DEFAULT )
       optInSlowD_MAType = 0;
    /* Account for the initial data needed for Fast-K. */
    retValue = optInFastK_Period - 1;
@@ -142,13 +142,13 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
       optInSlowK_Period = 3;
    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == (int)0x80000000 )
+   if( (int)optInSlowK_MAType == (int)0x80000000 || optInSlowK_MAType == TA_MAType_DEFAULT )
       optInSlowK_MAType = 0;
    if( (int)optInSlowD_Period == (int)0x80000000 )
       optInSlowD_Period = 3;
    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == (int)0x80000000 )
+   if( (int)optInSlowD_MAType == (int)0x80000000 || optInSlowD_MAType == TA_MAType_DEFAULT )
       optInSlowD_MAType = 0;
    if( !outSlowK )
       return TA_BAD_PARAM;
@@ -418,13 +418,13 @@ TA_RetCode TA_S_STOCH( int    startIdx,
       optInSlowK_Period = 3;
    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == (int)0x80000000 )
+   if( (int)optInSlowK_MAType == (int)0x80000000 || optInSlowK_MAType == TA_MAType_DEFAULT )
       optInSlowK_MAType = 0;
    if( (int)optInSlowD_Period == (int)0x80000000 )
       optInSlowD_Period = 3;
    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == (int)0x80000000 )
+   if( (int)optInSlowD_MAType == (int)0x80000000 || optInSlowD_MAType == TA_MAType_DEFAULT )
       optInSlowD_MAType = 0;
    if( !outSlowK )
       return TA_BAD_PARAM;
@@ -714,13 +714,13 @@ TA_RetCode TA_STOCH_OpenInternal( struct TA_STOCH_Stream **stream, const double 
       optInSlowK_Period = 3;
    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == (int)0x80000000 )
+   if( (int)optInSlowK_MAType == (int)0x80000000 || optInSlowK_MAType == TA_MAType_DEFAULT )
       optInSlowK_MAType = 0;
    if( (int)optInSlowD_Period == (int)0x80000000 )
       optInSlowD_Period = 3;
    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == (int)0x80000000 )
+   if( (int)optInSlowD_MAType == (int)0x80000000 || optInSlowD_MAType == TA_MAType_DEFAULT )
       optInSlowD_MAType = 0;
 
    endIdx = historyLen - 1;
@@ -1077,13 +1077,13 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
       optInSlowK_Period = 3;
    else if( (int)optInSlowK_Period < 1 || (int)optInSlowK_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowK_MAType == (int)0x80000000 )
+   if( (int)optInSlowK_MAType == (int)0x80000000 || optInSlowK_MAType == TA_MAType_DEFAULT )
       optInSlowK_MAType = 0;
    if( (int)optInSlowD_Period == (int)0x80000000 )
       optInSlowD_Period = 3;
    else if( (int)optInSlowD_Period < 1 || (int)optInSlowD_Period > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowD_MAType == (int)0x80000000 )
+   if( (int)optInSlowD_MAType == (int)0x80000000 || optInSlowD_MAType == TA_MAType_DEFAULT )
       optInSlowD_MAType = 0;
 
    endIdx = historyLen - 1;

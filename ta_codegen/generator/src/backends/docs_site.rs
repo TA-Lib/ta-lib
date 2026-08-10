@@ -898,9 +898,20 @@ fn build_stability_page(
         for v in &variants {
             let name = &v.name;
             let (state, why) = match stability.get(name.as_str()) {
+                // A member that is not an average has no stability of its own.
+                // DISABLED copies its input, so it is start-independent; DEFAULT
+                // takes the stability of whatever it resolves to, which differs
+                // per parameter, so it names no category. The prose is the
+                // member's own `doc:` either way.
                 None => (
-                    "Start-Independent",
-                    "Not a moving average: the input is copied through unchanged.".to_string(),
+                    if name == super::common::ENUM_DEFAULT_VARIANT {
+                        "&mdash;"
+                    } else {
+                        "Start-Independent"
+                    },
+                    super::common::ma_pseudo_member_doc(name)
+                        .unwrap_or("Not a moving average.")
+                        .to_string(),
                 ),
                 Some(st) if st.intrinsic => (
                     "Initial Unstable Period",

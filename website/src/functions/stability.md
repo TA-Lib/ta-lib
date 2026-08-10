@@ -32,6 +32,7 @@ Some functions take an `optInMAType` parameter selecting how their moving averag
 | [T3](/functions/t3.md) | 8 | Initial Unstable Period | Recursive: each value folds in the previous one. Tunable via T3's own unstable period. |
 | [HMA](/functions/hma.md) | 9 | Start-Independent | A windowed average: it reads a fixed number of bars and forgets everything older. |
 | `DISABLED` | 10 | Start-Independent | Not a moving average: the input is copied through unchanged. |
+| `DEFAULT` | 11 | &mdash; | Not a moving average: selects the documented default of whichever parameter it is passed to. |
 
 ## If Path-Dependent, then... {#path-dependent}
 

@@ -73,13 +73,14 @@ impl Core {
     ///
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -90,7 +91,7 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) {
+        if ((optInFastMAType) as i32) == (i32::MIN) || ((optInFastMAType) as i32) == (11) {
             optInFastMAType = 0;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
@@ -98,7 +99,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) {
+        if ((optInSlowMAType) as i32) == (i32::MIN) || ((optInSlowMAType) as i32) == (11) {
             optInSlowMAType = 0;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
@@ -106,7 +107,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) {
+        if ((optInSignalMAType) as i32) == (i32::MIN) || ((optInSignalMAType) as i32) == (11) {
             optInSignalMAType = 0;
         }
         let mut tempInteger: usize = 0_usize;
@@ -147,13 +148,14 @@ impl Core {
     /// * `inReal` — Source series.
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outMACD` — MACD line: fast MA minus slow MA.
@@ -233,7 +235,7 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) {
+        if ((optInFastMAType) as i32) == (i32::MIN) || ((optInFastMAType) as i32) == (11) {
             optInFastMAType = 0;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
@@ -241,7 +243,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) {
+        if ((optInSlowMAType) as i32) == (i32::MIN) || ((optInSlowMAType) as i32) == (11) {
             optInSlowMAType = 0;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
@@ -249,7 +251,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) {
+        if ((optInSignalMAType) as i32) == (i32::MIN) || ((optInSignalMAType) as i32) == (11) {
             optInSignalMAType = 0;
         }
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
@@ -448,7 +450,7 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) {
+        if ((optInFastMAType) as i32) == (i32::MIN) || ((optInFastMAType) as i32) == (11) {
             optInFastMAType = 0;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
@@ -456,7 +458,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) {
+        if ((optInSlowMAType) as i32) == (i32::MIN) || ((optInSlowMAType) as i32) == (11) {
             optInSlowMAType = 0;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
@@ -464,7 +466,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) {
+        if ((optInSignalMAType) as i32) == (i32::MIN) || ((optInSignalMAType) as i32) == (11) {
             optInSignalMAType = 0;
         }
         let historyLen: usize = inReal.len();
@@ -674,7 +676,7 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) {
+        if ((optInFastMAType) as i32) == (i32::MIN) || ((optInFastMAType) as i32) == (11) {
             optInFastMAType = 0;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
@@ -682,7 +684,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) {
+        if ((optInSlowMAType) as i32) == (i32::MIN) || ((optInSlowMAType) as i32) == (11) {
             optInSlowMAType = 0;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
@@ -690,7 +692,7 @@ impl Core {
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) {
+        if ((optInSignalMAType) as i32) == (i32::MIN) || ((optInSignalMAType) as i32) == (11) {
             optInSignalMAType = 0;
         }
         let historyLen: usize = inReal.len();

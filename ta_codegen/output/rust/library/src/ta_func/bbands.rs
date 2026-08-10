@@ -91,7 +91,8 @@ impl Core {
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
     /// and real parameters `-4e37`, to select their default value.
@@ -112,7 +113,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let mut maLookback: usize = 0_usize;
@@ -169,7 +170,8 @@ impl Core {
     /// * `optInNbDevUp` — Standard-deviation multiplier for the upper band (default 2)
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
-    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED)
+    ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
+    ///   11=DEFAULT)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
@@ -300,7 +302,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
@@ -607,7 +609,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
@@ -777,7 +779,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) {
+        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
