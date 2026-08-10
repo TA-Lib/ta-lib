@@ -1829,8 +1829,10 @@ fn emit_dual_mode(
         emit_open_head(o, func, &ma.outputs, mode);
         emit_open_validation(o, func, mode, enums);
         // Identity (HMA period 1) short-circuits ahead of the predicate: the
-        // whole union sits at its defaults, and both modes' steps short-circuit
-        // on the same guard, so which arm the predicate would pick is moot.
+        // whole union sits at its defaults, including the arrays only the
+        // general arm touches. What keeps that arm from running is the step's
+        // own guard, hoisted ABOVE the mode predicate (the arms no longer carry
+        // it), so which arm the predicate would pick is moot.
         emit_identity_fast_path(o, func, ma, &fields, registry, helpers, stream_fma, counter, mode);
         let pred = render_predicate(&dmp.predicate, &ctx, registry, helpers);
         let _ = writeln!(o, "      if( {pred} ) {{");

@@ -76443,8 +76443,8 @@ public final class Core {
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -76919,8 +76919,8 @@ public final class Core {
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -77038,8 +77038,8 @@ public final class Core {
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.

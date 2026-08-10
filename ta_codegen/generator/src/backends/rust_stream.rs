@@ -1991,8 +1991,10 @@ fn emit_dual_open(
     let fields_a = state_fields_from(func, ma, typing, union_scalars);
     let fields_b = state_fields_from(func, mb, typing, union_scalars);
     // Identity (HMA period 1) short-circuits ahead of the predicate: the whole
-    // union sits at its defaults, and both modes' transitions short-circuit on
-    // the same guard, so which arm the predicate would have picked is moot.
+    // union sits at its defaults, including the buffers only the general arm
+    // touches. What keeps that arm from running is the step's own guard, hoisted
+    // ABOVE the mode predicate (the arms no longer carry it), so which arm the
+    // predicate would have picked is moot.
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
     emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter, mode);
     let _ = writeln!(o, "        if {pred} {{");

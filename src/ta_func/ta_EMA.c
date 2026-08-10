@@ -95,8 +95,8 @@ static TA_RetCode TA_EMA_Private( int    startIdx,
     * These values are going to be related by this equation 99.9% of the
     * time... but there is some exception, this is why both must be provided.
     *
-    * Exception to the exception: at optInTimePeriod == 1 the period wins.
-    * The no-smoothing copy below is taken whatever optInK_1 says.
+    * Exception to the exception: at optInTimePeriod == 1 the period wins --
+    * the no-smoothing copy is taken whatever optInK_1 says.
     */
    /* Identify the minimum number of price bar needed
     * to calculate at least one output.
@@ -382,8 +382,8 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.
@@ -539,8 +539,8 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
        * These values are going to be related by this equation 99.9% of the
        * time... but there is some exception, this is why both must be provided.
        *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
+       * Exception to the exception: at optInTimePeriod == 1 the period wins --
+       * the no-smoothing copy is taken whatever optInK_1 says.
        */
       /* Identify the minimum number of price bar needed
        * to calculate at least one output.

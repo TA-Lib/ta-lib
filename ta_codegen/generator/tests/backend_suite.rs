@@ -7116,6 +7116,43 @@ fn test_c_mama_nullable_fama_batch() {
     );
 }
 
+/// Pin where a dual-mode function's identity path is emitted. HMA is the only
+/// dual-mode function carrying one, and its mode predicate (`period == 2 ||
+/// period == 3`) EXCLUDES the identity value, so an arm-local copy of the
+/// `period == 1` guard is unreachable — the defect this pins against. The guard
+/// belongs above the predicate, once per step, the way Open already emits it.
+///
+/// Values cannot see this: an unreachable branch changes no output, so
+/// ta_regtest, the bitwise stream/OpenAndFill gates, clippy and the C build are
+/// all silent on a regression here. Only a render pin catches it.
+#[test]
+fn test_dual_mode_identity_guard_is_hoisted_above_the_predicate() {
+    let (mut func, enums) = load_indicator("hma");
+    func.streaming = true;
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let c = backends::c::generate(&func, &enums, &registry, &helpers);
+
+    let step = c
+        .split("static void TA_HMA_StepInternal(")
+        .nth(1)
+        .and_then(|s| s.split("\n}\n").next())
+        .expect("step body");
+    assert_eq!(
+        step.matches("sp->optInTimePeriod == 1").count(),
+        1,
+        "exactly one identity guard per step, not one per mode arm:\n{step}"
+    );
+    let guard = step.find("sp->optInTimePeriod == 1").expect("identity guard");
+    let pred = step
+        .find("sp->optInTimePeriod == 2 || sp->optInTimePeriod == 3")
+        .expect("mode predicate");
+    assert!(
+        guard < pred,
+        "the identity guard must precede the mode predicate, not sit inside an arm:\n{step}"
+    );
+}
+
 /// Pin the generated MINUS_DM dual-mode stream section: ONE union state struct,
 /// ONE StepInternal that branches on the stored (immutable) period param — no
 /// separate mode tag — and an OpenInternal that selects the degenerate vs the

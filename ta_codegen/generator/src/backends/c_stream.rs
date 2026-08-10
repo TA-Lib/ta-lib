@@ -2056,10 +2056,12 @@ fn emit_dual_mode(
     );
 
     // Identity (HMA period 1) short-circuits ahead of the predicate: the handle
-    // is memset, so both modes' buffers sit at NULL/0, and both transitions
-    // short-circuit on the same guard — which arm the predicate would have
-    // picked is moot. (The batch's own copy of this branch rides the transcribed
-    // prologue below; `build_open_body_from` drops it, unreachable from here.)
+    // is memset, so both modes' buffers sit at NULL/0 — including the ones only
+    // the general arm dereferences. What keeps that arm from running is the
+    // step's own guard, hoisted ABOVE the mode predicate (the arms no longer
+    // carry it), so which arm the predicate would have picked is moot. (The
+    // batch's own copy of this branch rides the transcribed prologue below;
+    // `build_open_body_from` drops it, unreachable from here.)
     emit_identity_fast_path(o, func, ma, registry, helpers, counter, OutMode::Scalar);
 
     // Each mode transcribes the SHARED PROLOGUE, then its own arm body, then the
