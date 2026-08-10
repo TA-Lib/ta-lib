@@ -717,14 +717,14 @@ static ErrorNumber do_test( const TA_History *history,
       /* The non-optimized reference shall be identical to the optimized
        * TA-Lib implementation.
        *
-       * checkSameContent verify that all value different than NAN in
-       * the first parameter is identical in the second parameter.
+       * Two implementations of one function: compared at a tolerance,
+       * not bit-for-bit.
        */
-      errNb = checkSameContent( gBuffer[1].out0, gBuffer[0].out0 );
+      errNb = checkSameContentApprox( gBuffer[1].out0, gBuffer[0].out0 );
       if( errNb != TA_TEST_PASS )
          return errNb;
 
-      errNb = checkSameContent( gBuffer[1].out1, gBuffer[0].out1 );
+      errNb = checkSameContentApprox( gBuffer[1].out1, gBuffer[0].out1 );
       if( errNb != TA_TEST_PASS )
          return errNb;
    }
@@ -778,9 +778,6 @@ static ErrorNumber do_test( const TA_History *history,
    }
 
    /* The previous call should have the same output as this call.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
     */
    errNb = checkSameContent( gBuffer[0].out0, gBuffer[0].in );
    if( errNb != TA_TEST_PASS )

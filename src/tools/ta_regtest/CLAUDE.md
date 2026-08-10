@@ -107,8 +107,8 @@ hand a finite-window function the loose convergence tolerance and hide a real bu
 | Class | Tolerance | Who |
 |-------|-----------|-----|
 | `TA_STABLE_EXACT` | bit-exact (`==`) | fresh-recomputed finite window (IMI, price transforms, MOM/ROC, MIN/MAX/MIDPOINT/WILLR/AROON, LINEARREG/TSF/AVGDEV, vector math) |
-| `TA_STABLE_EPSILON` | `1e-9` relative | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
-| `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N) | recursive/IIR — anything in `UNSTABLE_MAP` |
+| `TA_STABLE_EPSILON` | `1e-10` absolute | running-accumulator finite window + **default** (SMA, WMA, STDDEV, CORREL, CCI, ULTOSC, MFI, …) |
+| `TA_STABLE_CONVERGING` | warm-up envelope (`0.5/temp`, ignore-first-N), relative to the larger magnitude floored at 0.2 | recursive/IIR — anything in `UNSTABLE_MAP` |
 | `TA_STABLE_SKIP` | not compared | `get_integer_tolerance() == TA_DO_NOT_COMPARE` — the `TA_FUNC_FLG_PATH_DEP`-flagged set (#127): AD, ADOSC, OBV, NVI, PVI, SAR, SAREXT |
 
 `stability_class()` (`test_codegen.c`) assigns the generic-gate class per function

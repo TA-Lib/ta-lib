@@ -622,9 +622,6 @@ static ErrorNumber do_test( const TA_History *history,
       return errNb;
 
    /* The previous call should have the same output as this call.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
     */
    errNb = checkSameContent( gBuffer[0].out0, gBuffer[0].in );
    if( errNb != TA_TEST_PASS )
@@ -699,9 +696,6 @@ static ErrorNumber do_test( const TA_History *history,
 
    /* The previous call to TA_MA should have the same output
     * as this call.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
     */
    errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].in );
    if( errNb != TA_TEST_PASS )
@@ -775,9 +769,6 @@ static ErrorNumber do_test( const TA_History *history,
       return errNb;
 
    /* The previous call should have the same output as this call.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
     */
    errNb = checkSameContent( gBuffer[0].out0, gBuffer[2].in );
    if( errNb != TA_TEST_PASS )

@@ -228,8 +228,8 @@ static TA_Test tableTest[] =
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  88.233,  29,  252-29 },
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   2,  88.034,  29,  252-29 },
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  29,  87.191,  29,  252-29 },
-   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 221, 109.3413, 29,  252-29 },
-   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 222, 109.3466, 29,  252-29 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 221, 109.3466, 29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 222, 109.3413, 29,  252-29 }, /* Last Value */
 
    /*******************************/
    /*   WMA TEST  - METASTOCK     */
@@ -254,8 +254,8 @@ static TA_Test tableTest[] =
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  88.233,  29,  252-29 },
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   2,  88.034,  29,  252-29 },
    { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  29,  87.191,  29,  252-29 },
-   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 221, 109.3413, 29,  252-29 },
-   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 222, 109.3466, 29,  252-29 }, /* Last Value */
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 221, 109.3466, 29,  252-29 },
+   { 0, TA_ANY_MA_TEST, 0, 0, 251, 30, TA_MAType_WMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 222, 109.3413, 29,  252-29 }, /* Last Value */
 
    /*******************************/
    /*   EMA TEST - Classic        */
@@ -738,9 +738,6 @@ static ErrorNumber do_test_ma( const TA_History *history,
 
    /* The previous call to TA_MA should have the same output
     * as this call.
-    *
-    * checkSameContent verify that all value different than NAN in
-    * the first parameter is identical in the second parameter.
     */
    errNb = checkSameContent( gBuffer[0].out0, gBuffer[1].in );
    if( errNb != TA_TEST_PASS )
