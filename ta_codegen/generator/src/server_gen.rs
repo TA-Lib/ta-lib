@@ -1497,7 +1497,11 @@ fn emit_rust_warmup_arms(
     let base = func.name.clone();
     let mut ins = String::new();
     for name in input_names {
-        let _ = write!(ins, "&{name}, ");
+        // Slice to the benched range. Rust derives historyLen from the slice
+        // length, and with use_preloaded the buffer is the whole preloaded
+        // array -- passing it whole would replay a history unrelated to
+        // --points (the C arm passes `endIdx + 1` for the same reason).
+        let _ = write!(ins, "&{name}[..=endIdx], ");
     }
     let mut opts = String::new();
     for opt in &func.optional_inputs {
@@ -1555,6 +1559,13 @@ fn emit_c_warmup_arms(s: &mut String, func: &FuncDef, input_names: &[String]) {
             real_idx += 1;
         }
     }
+    // Compiled out for the frozen reference server, whose library predates the
+    // streaming API and exports no TA_<N>_Open / _Close / _OpenAndFill to link
+    // against -- the same guard every other stream-touching handler here carries.
+    // The `bench_mode != 0` early return above is what keeps that honest: without
+    // it this chain would fall through with rc untouched and report the batch
+    // timing as a warm-up number.
+    s.push_str("#ifndef TA_REF_SERVE\n");
     s.push_str("        else if( bench_mode == 1 ) {\n");
     s.push_str(&format!("            TA_{n}_Stream *_h = NULL;\n"));
     for (k, out) in func.outputs.iter().enumerate() {
@@ -1569,6 +1580,7 @@ fn emit_c_warmup_arms(s: &mut String, func: &FuncDef, input_names: &[String]) {
     s.push_str(&format!("            rc = TA_{n}_OpenAndFill( &_h{open_args}, &outBegIdx, &outNBElement{fill_outs} );\n"));
     s.push_str(&format!("            if( _h ) TA_{n}_Close( _h );\n"));
     s.push_str("        }\n");
+    s.push_str("#endif /* TA_REF_SERVE */\n");
 }
 
 #[allow(clippy::too_many_lines)]
@@ -1691,6 +1703,16 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // every iteration or a 168-function sweep leaks one per iteration, and
         // the free is nanoseconds against a whole-history replay.
         s.push_str("        int bench_mode = json_find_int(json, \"bench_mode\");\n");
+        // The frozen reference server has no streaming API to warm up, exactly as
+        // the C# backend has none -- so it gives the same answer C# does rather
+        // than timing the batch call and reporting it as a warm-up. ta_bench drops
+        // timing_ns 0 as a non-measurement, so the cref column reads blank.
+        s.push_str("#ifdef TA_REF_SERVE\n");
+        s.push_str("        if( bench_mode != 0 ) {\n");
+        s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\");\n");
+        s.push_str("            return;\n");
+        s.push_str("        }\n");
+        s.push_str("#endif /* TA_REF_SERVE */\n");
 
         s.push_str("        TA_RetCode rc = 0;\n");
 
@@ -2524,6 +2546,16 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // discarded warm-up — see the C emitter: it removes the cold-call bias
         // AND makes every correctness gate an idempotency check.
         s.push_str("        int bench_mode = jsonInt(json, \"bench_mode\");\n");
+        // Right-sized input views for the warm-up arms, bound ONCE outside the
+        // timing loop. Java derives historyLen from array.length, and with
+        // use_preloaded the buffer is `new double[MAX_ARRAY_SIZE]` with only
+        // refN points copied in -- passing it whole replays a fixed, oversized
+        // history regardless of --points (the C arm passes `endIdx + 1`).
+        for name in &input_names {
+            s.push_str(&format!(
+                "        double[] _warm_{name} = bench_mode == 0 ? null : java.util.Arrays.copyOfRange({name}, 0, endIdx + 1);\n"
+            ));
+        }
         s.push_str("        long startNs = 0;\n");
         s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
         s.push_str("        if (_bi == 1) startNs = System.nanoTime();\n");
@@ -2547,9 +2579,15 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // GC-managed (no Close) and the public Open throws instead of returning
         // a code, so the arms convert the throw into a RetCode.
         {
+            // Java derives historyLen from array.length, and with
+            // use_preloaded the buffer is `new double[MAX_ARRAY_SIZE]` with only
+            // refN points copied in -- passing it whole replays a fixed,
+            // oversized history regardless of --points. Bind a right-sized view
+            // once, outside the timing loop, so the arm measures the same range
+            // the batch call does (the C arm passes `endIdx + 1`).
             // Join once: a function with no optional params would otherwise
             // emit `Open(inReal, )`.
-            let mut open_args: Vec<String> = input_names.clone();
+            let mut open_args: Vec<String> = input_names.iter().map(|n| format!("_warm_{n}")).collect();
             for opt in &func.optional_inputs {
                 open_args.push(opt.name.clone());
             }
