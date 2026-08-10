@@ -37,8 +37,9 @@
 //!   before producing output — query it with the matching `*_Lookback` method
 //!   (e.g. [`Core::SMA_Lookback`]).
 //! * Integer parameters accept `i32::MIN`, and real parameters `-4e37`, to select their
-//!   default value. A parameter outside its documented range returns
-//!   [`RetCode::BadParam`].
+//!   default value; a moving-average type takes [`MAType::DEFAULT`] instead, the
+//!   sentinel being unrepresentable at a typed enum. A parameter outside its
+//!   documented range returns [`RetCode::BadParam`].
 //! * Every call returns a [`RetCode`]; anything other than [`RetCode::Success`]
 //!   means no output was produced.
 //!

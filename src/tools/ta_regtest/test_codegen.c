@@ -110,9 +110,12 @@ int codegen_lang_needs_transcendental_tol(const char *lang)
 }
 
 /* Which languages can be ASKED whether TA_INTEGER_DEFAULT on an enum:MAType
- * parameter selects the declared default. C, Rust and C# type that parameter as
- * an integer (a C# enum is an int with names), so the sentinel reaches their
- * validation and the substitution is what maps it back (#162). Java's MAType is
+ * parameter selects the declared default. C and C# type that parameter as an
+ * integer (a C# enum is an int with names), so the sentinel reaches their
+ * validation and the substitution is what maps it back (#162). Rust types it as
+ * a real enum yet stays answerable: its library-side TryFrom maps i32::MIN to
+ * MAType::DEFAULT, which the per-slot prologue then substitutes -- do NOT "fix"
+ * that asymmetry by adding rust below, it would delete a working leg. Java's MAType is
  * a real enum and Core takes MAType: the value is unrepresentable rather than
  * mishandled, its server would die constructing one
  * (MAType.values()[Integer.MIN_VALUE] throws), and substituting server-side

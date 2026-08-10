@@ -255,10 +255,6 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
     }
 }
 
-/// Rust type + default of a state-struct field / hoisted local, honoring the
-/// sentinel verdicts — and, for STATE fields only, the extrema-i32 override
-/// (the transcribed open body keeps pure batch typing; the capture epilogue
-/// casts at the struct literal).
 /// `let mut x: T = init;`, or `let mut x: T;` when the type has no neutral
 /// initialiser — an enum-typed local, which the following assignment fills.
 fn decl_line(pad: &str, name: &str, rty: &str, default: Option<&String>) -> String {
@@ -268,6 +264,11 @@ fn decl_line(pad: &str, name: &str, rty: &str, default: Option<&String>) -> Stri
     }
 }
 
+/// Rust type + default of a state-struct field / hoisted local, honoring the
+/// sentinel verdicts — and, for STATE fields only, the extrema-i32 override
+/// (the transcribed open body keeps pure batch typing; the capture epilogue
+/// casts at the struct literal).
+///
 /// `(rust type, initialiser)` for a stream local or state field.
 ///
 /// The initialiser is `None` for an enum-typed local: there is no neutral

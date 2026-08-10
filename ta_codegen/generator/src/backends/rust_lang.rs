@@ -140,16 +140,6 @@ pub struct RustRenderCtx {
     pub circbuf_hybrid_static: std::collections::HashMap<String, i64>,
 }
 
-/// Build the `TA_MAType_*` → value-string map the [`ExprEmitter::var`] hook uses
-/// to render `optInMAType == TA_MAType_SMA` comparisons in the batch functions.
-/// Derived from the `MAType` enum in `enums.yaml` (the value is the enum ordinal
-/// the i32 param carries) — so a new `TA_MAType_X` row needs no generator edit.
-#[allow(clippy::implicit_hasher)]
-/// The Rust type of an optional parameter.
-///
-/// An `enum:` parameter is spelled as its enum, exactly as the YAML declares it
-/// and as C, Java and C# have always emitted it — the backend used to fold it in
-/// with `Integer` and hand callers a bare `i32`.
 /// Locals that carry an enum value, mapped to their Rust type.
 ///
 /// C declares MACDEXT's swap temporary as `int tempMAType;` and only ever
@@ -200,6 +190,11 @@ pub(crate) fn prune_enum_locals(
     }
 }
 
+/// The Rust type of an optional parameter.
+///
+/// An `enum:` parameter is spelled as its enum, exactly as the YAML declares it
+/// and as C, Java and C# have always emitted it — the backend used to fold it in
+/// with `Integer` and hand callers a bare `i32`.
 pub(crate) fn opt_param_type(t: &ParamType) -> String {
     match t {
         ParamType::Real => "f64".to_string(),
@@ -208,6 +203,10 @@ pub(crate) fn opt_param_type(t: &ParamType) -> String {
     }
 }
 
+/// Build the `TA_MAType_*` → qualified-member map the [`ExprEmitter::var`] hook
+/// uses to render `optInMAType == TA_MAType_SMA` comparisons in the batch
+/// functions. Derived from the `MAType` enum in `enums.yaml`, so a new
+/// `TA_MAType_X` row needs no generator edit.
 pub(crate) fn build_matype_map(
     enums: &HashMap<String, EnumDef>,
 ) -> std::collections::HashMap<String, String> {
@@ -1410,16 +1409,9 @@ fn gen_opt_param_validation(opt: &OptInput, pad: &str, is_lookback: bool, enums:
 /// failure statement supplied by the caller (batch returns a bare `RetCode`,
 /// the stream tier returns `Err(RetCode::BadParam)`).
 ///
-/// `enum:` params share the `Integer` arm, exactly as they do in `backends::c`:
-/// the Rust surface types them `i32`, so `i32::MIN` is a value a caller can pass
-/// and the substitution is the only thing that maps it to the documented default
-/// (issue #162). They declare no `range:` (see `doc_meta::RangeMeta`), so in
-/// practice only the substitution half is emitted for them.
-///
-/// Such a param also accepts its type's `DEFAULT` member (#182), emitted as the
-/// bare value because the Rust surface has no `MAType` type yet — the same
-/// reason the generated `DISABLED` comparisons read `== 10`. Both become named
-/// constants when the enum lands (#179).
+/// An `enum:` param gets its own arm: the parameter is typed as its enum, so the
+/// `i32::MIN` sentinel is unrepresentable there and only the `DEFAULT` member
+/// (#182) is left to substitute — the shape Java has always had (#162).
 #[allow(clippy::float_cmp)] // an enum default is an exact integer, not a measurement
 pub(crate) fn gen_opt_param_validation_with(
     opt: &OptInput,
@@ -3891,10 +3883,10 @@ fn render_binop(
         if cmp_right_sentinel && !cmp_left_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
             left_str = wrap_cast(&left_str, "i32");
         }
-        let left_is_i32 = !expr_is_enum_typed(left, ctx)
-            && (expr_is_i32_typed(left) || cmp_left_sentinel || expr_is_matype_const(left, ctx));
-        let right_is_i32 = !expr_is_enum_typed(right, ctx)
-            && (expr_is_i32_typed(right) || cmp_right_sentinel || expr_is_matype_const(right, ctx));
+        let left_is_i32 =
+            !expr_is_enum_typed(left, ctx) && (expr_is_i32_typed(left) || cmp_left_sentinel);
+        let right_is_i32 =
+            !expr_is_enum_typed(right, ctx) && (expr_is_i32_typed(right) || cmp_right_sentinel);
         // i32-typed expressions are NOT float even if heuristics say otherwise
         let left_is_float = expr_is_float_typed_ctx(left, Some(ctx)) && !left_is_i32;
         let right_is_float = expr_is_float_typed_ctx(right, Some(ctx)) && !right_is_i32;
@@ -4055,16 +4047,6 @@ fn expr_is_float_typed_ctx(expr: &Expr, ctx: Option<&RustRenderCtx>) -> bool {
     }
     let view = ctx.map(RustRenderCtx::fma_view);
     fma::expr_is_float_typed(expr, view.as_ref())
-}
-
-/// A `TA_MAType_*` constant, which renders as an i32 `matype::` value.
-///
-/// Without this the parameter beside it — an `i32` — is cast DOWN to `usize` by
-/// the mixed-operand rule, because an unrecognised `Expr::Var` counts as usize.
-/// Keyed on `matype_map`, so the names come from enums.yaml rather than a
-/// prefix spelled here.
-fn expr_is_matype_const(expr: &Expr, ctx: &RustRenderCtx) -> bool {
-    matches!(expr, Expr::Var(name) if ctx.matype_map.contains_key(name))
 }
 
 /// A value of an enum type: an `enum:` parameter, a local derived from one, or

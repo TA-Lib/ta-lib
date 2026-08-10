@@ -7885,6 +7885,68 @@ TA_RetCode bbands( int startIdx, int endIdx,
 // passed vacuously in this repo before.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Rust enum (#179). Same standard as the C# one below: assert on EMITTED
+// CONTENT. Everything here is frozen public API the moment the crate publishes,
+// and until now none of it was asserted anywhere.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rust_matype_emits_every_yaml_variant_and_its_frozen_shape() {
+    let enums = load_enums();
+    let src = backends::rust_enums::render_matype(&enums);
+    let ma = enums.get("MAType").expect("MAType in enums.yaml");
+
+    for v in &ma.variants {
+        let decl = format!("    {} = {},", v.name, v.value);
+        assert!(
+            src.contains(&decl),
+            "Rust MAType is missing `{decl}` -- a dropped variant reorders the \
+             optInMAType ABI:\n{src}"
+        );
+        // The conversion must accept every member, or a value that is legal at
+        // the C ABI would be rejected by the Rust one.
+        let arm = format!("            {} => Self::{},", v.value, v.name);
+        assert!(
+            src.contains(&arm),
+            "TryFrom<i32> is missing `{arm}`:\n{src}"
+        );
+    }
+
+    // An EXTRA emitted member fails too.
+    let emitted = src
+        .lines()
+        .filter(|l| l.starts_with("    ") && l.contains(" = ") && l.trim_end().ends_with(','))
+        .count();
+    assert_eq!(emitted, ma.variants.len(), "emitted {emitted} members");
+
+    // `#[non_exhaustive]` is what lets a member be appended without breaking
+    // every downstream `match`; dropping it is a silent semver break.
+    assert!(src.contains("#[non_exhaustive]"), "MAType lost #[non_exhaustive]");
+
+    // No `#[repr]`: the crate has no FFI, so the layout is unobservable and the
+    // explicit discriminants carry the ABI. Adding one would freeze a size we
+    // deliberately did not promise.
+    assert!(
+        !src.contains("#[repr("),
+        "MAType gained a #[repr]; the crate has no FFI to justify one:\n{src}"
+    );
+
+    // The sentinel arm is load-bearing: the abstract tier stores the bound int
+    // verbatim as C's does, so TA_INTEGER_DEFAULT must still select the
+    // parameter's declared default rather than being rejected (#162).
+    assert!(
+        src.contains("i32::MIN => Self::DEFAULT,"),
+        "TryFrom lost the TA_INTEGER_DEFAULT arm; Rust would drop out of the \
+         choice-list sentinel contract:\n{src}"
+    );
+    assert!(
+        src.contains("_ => return Err(RetCode::BadParam),"),
+        "TryFrom lost its reject arm -- out-of-domain values would not be \
+         rejected by the library:\n{src}"
+    );
+}
+
 #[test]
 fn csharp_matype_emits_every_yaml_variant_with_its_value() {
     let enums = load_enums();

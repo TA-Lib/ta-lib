@@ -34,7 +34,8 @@ pub fn render_matype(enums: &HashMap<String, EnumDef>) -> String {
         "\n/// Moving-average type selected by an `optInMAType` parameter.\n\
          ///\n\
          /// The values are pinned ABI, shared with C's `TA_MAType` and the Java and\n\
-         /// C# `MAType`; the list is append-only.\n\
+         /// C# `MAType`; the list is append-only. Convert a raw value in with\n\
+         /// [`TryFrom<i32>`](MAType::try_from), and out with `as i32`.\n\
          #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]\n\
          #[non_exhaustive]\n\
          #[allow(non_camel_case_types)]\n\
