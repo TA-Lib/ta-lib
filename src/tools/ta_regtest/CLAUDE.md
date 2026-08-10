@@ -312,16 +312,23 @@ rejected outright (an error response where the resolved-default request
 succeeded is a hard failure, not a skip), and the double tier's own
 sentinel-selects-the-default contract belongs to `--xlang-hash` (#148).
 
-Two exclusions, both counted and printed:
+One exclusion, counted and printed:
 
-* **Choice-list slots on Java.** `Core` takes a real `MAType` enum, so
-  `Integer.MIN_VALUE` is unrepresentable and the generated Java server dies
-  constructing one (#162). That slot alone stays at its explicit default — the
-  function's other parameters still ride the sentinel, which beats skipping the
-  function. `codegen_lang_can_pass_enum_sentinel` is the single definition,
-  shared with `--xlang-hash`.
 * **Functions with no optional parameter**, where the pass would re-send the
   request just made.
+
+Choice-list slots on Java used to be a second exclusion: `Core` takes a real
+`MAType` enum, so `Integer.MIN_VALUE` is unrepresentable and the generated Java
+server dies constructing one (#162), and that slot stayed at its explicit
+default. Since #182 the enum has a `DEFAULT` member carrying the identical
+contract, and it *is* representable, so `float_leg_set_sentinels` sends that
+instead (`codegen_enum_default_member`). `g_floatSentinelEnumWithheld` now only
+counts an enum that declares no such member. This matters more than it sounds:
+Java's `DEFAULT` check is the one that is *not* fused into an `INT_MIN` check —
+C, Rust and C# all write `if( sentinel || DEFAULT )` — so its float overload was
+the single surface no gate reached, which is the exact shape of the `TA_S_EMA`
+defect this leg exists to catch. `codegen_lang_can_pass_enum_sentinel` still
+withholds the raw sentinel from Java and is still shared with `--xlang-hash`.
 
 The floor is **per language** and counts comparisons *that diffed output
 elements*: a total would stay green while one server answered every sentinel
