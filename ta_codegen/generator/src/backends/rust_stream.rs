@@ -495,7 +495,7 @@ fn emit_loop(
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Core);
+    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, model);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
@@ -904,7 +904,7 @@ fn map_return_code(v: &str) -> String {
 /// short-circuits it) the body's own dead identity branch deleted — in C it is
 /// merely dead code, but in Rust it may reference output arrays that do not
 /// exist in Scalar mode.
-fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) -> Vec<Statement> {
+fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statement> {
     let outputs = model.outputs.clone();
     let fb_outputs = model.out_feedback.clone();
     let real_outs: HashSet<String> = model
@@ -914,7 +914,6 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
         .filter(|out| out.param_type != ParamType::Integer)
         .map(|out| out.name.clone())
         .collect();
-    debug_assert!(mode == OutMode::Core, "only the merged core transcribes a body");
     let fe = move |e: Expr| -> Expr {
         match e {
             // Previous-output feedback read, scaled like the writes: at stride 1
@@ -992,23 +991,22 @@ fn emit_open_internal(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    mode: OutMode,
 ) {
-    emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode, enums);
-    emit_open_inits(o, func, &model.outputs, typing, registry, helpers, mode);
+    emit_open_sig(o, func, OutMode::Core);
+    emit_open_validation_head(o, func, OutMode::Core, enums);
+    emit_open_inits(o, func, &model.outputs, typing, registry, helpers);
 
     let fields = state_fields(func, model, typing);
-    emit_identity_fast_path(o, func, model, &fields, typing, registry, helpers, counter, mode);
+    emit_identity_fast_path(o, func, model, &fields, typing, registry, helpers, counter);
 
     // --- transcribed batch body --------------------------------------------
-    let open_body = build_open_body_rust(model, body, mode);
+    let open_body = build_open_body_rust(model, body);
     emit_open_region(
         o, func, model, typing, &open_body, enums, registry, helpers, counter, &[],
     );
 
     emit_capture_and_publish(
-        o, func, model, &model.state, typing, registry, helpers, counter, mode, "",
+        o, func, model, &model.state, typing, registry, helpers, counter, "",
     );
     let _ = writeln!(o, "    }}\n");
 }
@@ -1139,36 +1137,20 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
 fn emit_open_inits(
     o: &mut String,
     func: &FuncDef,
-    outputs: &[String],
+    _outputs: &[String],
     typing: &Typing,
     registry: &Registry,
     helpers: &HelperRegistry,
-    mode: OutMode,
 ) {
     let inputs = streaming::input_array_names(func);
     let first = &inputs[0];
     let _ = writeln!(o, "        let historyLen: usize = {first}.len();");
     let _ = writeln!(o, "        let endIdx: usize = historyLen - 1;");
-    match mode {
-        OutMode::Scalar | OutMode::Core => {
-            let _ = writeln!(o, "        let mut startIdx = startIdx;");
-        }
-        OutMode::Fill => {
-            let _ = writeln!(o, "        let mut startIdx: usize = 0;");
-        }
-    }
+    // startIdx is always a parameter of the core: 0 from both public entry
+    // points, the caller's own when a composed function opens this as a sub.
+    let _ = writeln!(o, "        let mut startIdx = startIdx;");
     let _ = writeln!(o, "        let mut dummyBegIdx: usize = 0;");
     let _ = writeln!(o, "        let mut dummyNBElement: usize = 0;");
-    if mode == OutMode::Scalar {
-        for out in outputs {
-            let (t, d) = if out_is_int(func, out) {
-                ("i32", "0_i32")
-            } else {
-                ("f64", "0.0_f64")
-            };
-            let _ = writeln!(o, "        let mut lastValue_{out}: {t} = {d};");
-        }
-    }
     let opt_real_params: Vec<String> = func
         .optional_inputs
         .iter()
@@ -1205,35 +1187,15 @@ fn emit_capture_and_publish(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    mode: OutMode,
     extra_fields: &str,
 ) {
     let handle = stream_type_name(func);
     let _ = writeln!(o, "\n        // Capture the live batch state into the handle.");
-    emit_capture(o, func, model, scalars, typing, registry, helpers, counter, mode, extra_fields);
-    match mode {
-        OutMode::Scalar => {
-            let value = open_value_tuple(model, "lastValue_");
-            let _ = writeln!(
-                o,
-                "        Ok(({handle} {{ core: self.clone(), state }}, {value}))"
-            );
-        }
-        OutMode::Fill | OutMode::Core => {
-            let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
-        }
-    }
+    emit_capture(o, func, model, scalars, typing, registry, helpers, counter, extra_fields);
+    // The core publishes only the handle; the scalar wrapper reads its sink.
+    let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
 }
 
-/// `lastValue_out` / `(lastValue_a, lastValue_b, ...)` in batch output order.
-fn open_value_tuple(model: &StreamModel, prefix: &str) -> String {
-    let vals: Vec<String> = model.outputs.iter().map(|out| format!("{prefix}{out}")).collect();
-    if vals.len() == 1 {
-        vals[0].clone()
-    } else {
-        format!("({})", vals.join(", "))
-    }
-}
 
 /// Render the transcribed open region with batch-identical hoisting: circbuf
 /// prologs, `let mut` declarations for every top-level VarDecl, candle
@@ -1357,7 +1319,6 @@ fn emit_identity_fast_path(
     registry: &Registry,
     helpers: &HelperRegistry,
     _counter: &Cell<usize>,
-    mode: OutMode,
 ) {
     let Some(idp) = &model.identity else { return };
     let handle = stream_type_name(func);
@@ -1384,41 +1345,24 @@ fn emit_identity_fast_path(
         let _ = writeln!(o, "                {name}: {default},");
     }
     let _ = writeln!(o, "            }};");
-    match mode {
-        OutMode::Scalar => {
-            let vals: Vec<String> = idp
-                .pairs
-                .iter()
-                .map(|(_, inp)| format!("{inp}[historyLen - 1]"))
-                .collect();
-            let value = if vals.len() == 1 {
-                vals[0].clone()
-            } else {
-                format!("({})", vals.join(", "))
-            };
-            let _ = writeln!(
-                o,
-                "            return Ok(({handle} {{ core: self.clone(), state }}, {value}));"
-            );
-        }
-        OutMode::Fill | OutMode::Core => {
-            let stride = if mode == OutMode::Core { " * outStride" } else { "" };
-            let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
-            let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
-            let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
-            let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
-            let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
-            for (out, inp) in &idp.pairs {
-                let _ = writeln!(o, "                {out}[fillIdx{stride}] = {inp}[fillLb + fillIdx];");
-            }
-            let _ = writeln!(o, "                fillIdx += 1;");
-            let _ = writeln!(o, "            }}");
-            let _ = writeln!(
-                o,
-                "            return Ok({handle} {{ core: self.clone(), state }});"
-            );
-        }
+    // Fill the whole identity range through the stride: at stride 1 this is
+    // batch(0, len-1) for the identity param; at stride 0 every iteration
+    // rewrites slot 0 and leaves inReal[historyLen - 1] there, which is exactly
+    // what the scalar arm used to return directly.
+    let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
+    let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
+    let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
+    let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
+    let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
+    for (out, inp) in &idp.pairs {
+        let _ = writeln!(o, "                {out}[fillIdx * outStride] = {inp}[fillLb + fillIdx];");
     }
+    let _ = writeln!(o, "                fillIdx += 1;");
+    let _ = writeln!(o, "            }}");
+    let _ = writeln!(
+        o,
+        "            return Ok({handle} {{ core: self.clone(), state }});"
+    );
     let _ = writeln!(o, "        }}");
 }
 
@@ -1442,7 +1386,6 @@ fn emit_capture(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    mode: OutMode,
     extra_fields: &str,
 ) {
     let state = state_type_name(func);
@@ -1591,19 +1534,12 @@ fn emit_capture(
         }
     }
     for name in &model.out_feedback {
-        match mode {
-            OutMode::Scalar => {
-                let _ = writeln!(o, "            lastOut_{name}: lastValue_{name},");
-            }
-            // At stride 0 this resolves to slot 0 — the scalar sink — so one
-            // expression serves both entry points.
-            OutMode::Fill | OutMode::Core => {
-                let _ = writeln!(
-                    o,
-                    "            lastOut_{name}: {name}[(*outNBElement - 1) * outStride],"
-                );
-            }
-        }
+        // At stride 0 this resolves to slot 0 — the scalar sink — so the one
+        // expression serves both entry points.
+        let _ = writeln!(
+            o,
+            "            lastOut_{name}: {name}[(*outNBElement - 1) * outStride],"
+        );
     }
     for lag in &model.lags {
         for k in 1..=lag.depth {
@@ -2020,7 +1956,7 @@ fn emit_dual_mode(
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "    }}\n");
 
-    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Core);
+    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, ma);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
@@ -2045,13 +1981,12 @@ fn emit_dual_open(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    mode: OutMode,
 ) {
     let ma = &dmp.mode_a;
     let mb = &dmp.mode_b;
-    emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode, enums);
-    emit_open_inits(o, func, &ma.outputs, typing, registry, helpers, mode);
+    emit_open_sig(o, func, OutMode::Core);
+    emit_open_validation_head(o, func, OutMode::Core, enums);
+    emit_open_inits(o, func, &ma.outputs, typing, registry, helpers);
 
     let opt_real_params: Vec<String> = func
         .optional_inputs
@@ -2068,7 +2003,7 @@ fn emit_dual_open(
     // union sits at its defaults, and both modes' transitions short-circuit on
     // the same guard, so which arm the predicate would have picked is moot.
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
-    emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter, mode);
+    emit_identity_fast_path(o, func, ma, &union_fields, typing, registry, helpers, counter);
     let _ = writeln!(o, "        if {pred} {{");
     for (k, arm) in [ma, mb].into_iter().enumerate() {
         if k == 1 {
@@ -2083,12 +2018,12 @@ fn emit_dual_open(
         let mut body: Vec<Statement> = dmp.prologue.to_vec();
         body.extend_from_slice(arm.body);
         body.extend_from_slice(dmp.epilogue);
-        let open_body = build_open_body_rust(arm, &body, mode);
+        let open_body = build_open_body_rust(arm, &body);
         let mut s = String::new();
         emit_open_region(&mut s, func, arm, typing, &open_body, enums, registry, helpers, counter, &[]);
         let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
         let complement = dual_complement_literal(own, other);
-        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, registry, helpers, counter, mode, &complement);
+        emit_capture_and_publish(&mut s, func, arm, union_scalars, typing, registry, helpers, counter, &complement);
         o.push_str(&indent_block(&s, 4));
     }
     let _ = writeln!(o, "        }}");
@@ -2123,7 +2058,7 @@ fn emit_fastpath_skip(
     emit_handle_and_state_structs(o, func, model, &typing);
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Core);
+    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter);
     emit_open_internal_wrapper(o, func, model);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
@@ -3091,7 +3026,6 @@ fn emit_composed_open(
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-    mode: OutMode,
 ) {
     // The composed fill/scratch path hardcodes f64 Vecs (mirrors C's assert).
     assert!(
@@ -3109,13 +3043,13 @@ fn emit_composed_open(
         .map(|p| p.name.clone())
         .collect();
 
-    emit_open_sig(o, func, mode);
-    emit_open_validation_head(o, func, mode, enums);
-    emit_open_inits(o, func, outputs, typing, registry, helpers, mode);
+    emit_open_sig(o, func, OutMode::Core);
+    emit_open_validation_head(o, func, OutMode::Core, enums);
+    emit_open_inits(o, func, outputs, typing, registry, helpers);
     // The core already receives real `&mut usize` out-meta under the batch
     // names, so the transcribed tail (deref writes AND sub-call pass-through
     // args) renders exactly like the proven batch text with no shim.
-    debug_assert!(mode == OutMode::Core, "composed opens emit only the merged core");
+
     for out in outputs {
         let _ = writeln!(
             o,
@@ -3223,11 +3157,7 @@ fn emit_composed_open(
     }
     if let Some(model) = &cp.producer {
         emit_capture(
-            o, func, model, &model.state, typing, registry, helpers, counter,
-            // The producer's own outputs never redirect to lastValue_ in the
-            // composed transcription; Scalar semantics for out_feedback do
-            // not arise (composed producers have none).
-            OutMode::Fill, &extra,
+            o, func, model, &model.state, typing, registry, helpers, counter, &extra,
         );
     } else {
         // Loopless pipeline: params + extras + subs/rings only.
@@ -3241,35 +3171,11 @@ fn emit_composed_open(
         o.push_str(&extra);
         let _ = writeln!(o, "        }};");
     }
-    match mode {
-        OutMode::Scalar => {
-            let vals: Vec<String> = outputs
-                .iter()
-                .map(|out| format!("sc_{out}[*outNBElement - 1]"))
-                .collect();
-            let value = if vals.len() == 1 {
-                vals[0].clone()
-            } else {
-                format!("({})", vals.join(", "))
-            };
-            let _ = writeln!(
-                o,
-                "        Ok(({handle} {{ core: self.clone(), state }}, {value}))"
-            );
-        }
-        OutMode::Fill => {
-            for out in outputs {
-                let _ = writeln!(
-                    o,
-                    "        {out}[..*outNBElement].copy_from_slice(&sc_{out}[..*outNBElement]);"
-                );
-            }
-            let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
-        }
+    {
         // Both modes compute into `sc_*`; only the hand-back differs, and it is
         // the ONE place a stride multiply cannot express the difference — a bulk
         // copy takes a base slice, not a subscript.
-        OutMode::Core => {
+        {
             for out in outputs {
                 let _ = writeln!(o, "        if outStride == 1 {{");
                 let _ = writeln!(
@@ -3464,7 +3370,7 @@ fn emit_composed(
         o, func, cp, &typing, &inputs, &outputs, enums, registry, helpers, counter,
     );
     emit_composed_open(
-        o, func, cp, &typing, &outputs, enums, registry, helpers, counter, OutMode::Core,
+        o, func, cp, &typing, &outputs, enums, registry, helpers, counter,
     );
     emit_open_internal_wrapper_named(o, func, &outputs);
     emit_open_wrapper(o, func, enums);
