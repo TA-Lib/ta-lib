@@ -417,194 +417,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CMF_Open`] (composition seam).
-    pub(crate) fn CMF_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CMF_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 20;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut sumMFV: f64 = 0.0_f64;
-        let mut sumVol: f64 = 0.0_f64;
-        let mut high: f64 = 0.0_f64;
-        let mut low: f64 = 0.0_f64;
-        let mut close: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut mfv: f64 = 0.0_f64;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut mfv_flow: Vec<f64> = Vec::new();
-        let mut mfv_volume: Vec<f64> = Vec::new();
-        let mut mfv_Idx: usize = 0;
-        let mut maxIdx_mfv: usize = 49;
-        // Both the per-bar money flow volume and the volume that produced it are
-        // carried in the circular buffer. Keeping the volume here rather than
-        // re-reading inVolume[] at the trailing index is what makes outReal safe to
-        // alias any input: once a bar has been consumed it is never read again.
-        // Id, Type, Static Size
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        if optInTimePeriod < 1 { return Err(RetCode::InternalError); }
-        mfv_flow = vec![0.0_f64; (optInTimePeriod) as usize];
-        mfv_volume = vec![0.0_f64; (optInTimePeriod) as usize];
-        maxIdx_mfv = ((optInTimePeriod) as usize) - 1;
-        mfv_Idx = 0;
-        outIdx = 0;
-        // Accumulate the money flow volume and the volume over the first
-        // complete window, filling the circular buffer as we go.
-        //
-        // The per-bar multiplier is written exactly as in ta_AD.c so that the
-        // Chaikin money flow volume has one definition in the library.
-        today = startIdx - lookbackTotal;
-        sumMFV = 0.0;
-        sumVol = 0.0;
-        // for( i = (optInTimePeriod) as usize; i > 0; i -= 1 )
-        i = (optInTimePeriod) as usize;
-        while i > 0 {
-            high = inHigh[today];
-            low = inLow[today];
-            close = inClose[today];
-            tmp = high - low;
-            if tmp > 0.0 {
-                mfv = (close - low - (high - close)) / tmp * inVolume[today];
-            } else {
-                mfv = 0.0;
-            }
-            mfv_flow[mfv_Idx] = mfv;
-            mfv_volume[mfv_Idx] = inVolume[today];
-            sumMFV += mfv;
-            sumVol += inVolume[today];
-            today += 1;
-            mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
-            i -= 1;
-        }
-        // The first full window is complete: emit its output for startIdx here,
-        // then slide the window over the remaining bars below.
-        //
-        // A window whose volume is entirely zero has no money flow to distribute;
-        // report 0.0 rather than propagating a division by zero (issue #112).
-        if sumVol > 0.0 {
-            lastValue_outReal = sumMFV / sumVol;
-        } else {
-            lastValue_outReal = 0.0;
-        }
-        // Now continue processing the remaining bars.
-        while today <= endIdx {
-            sumMFV -= mfv_flow[mfv_Idx];
-            sumVol -= mfv_volume[mfv_Idx];
-            high = inHigh[today];
-            low = inLow[today];
-            close = inClose[today];
-            tmp = high - low;
-            if tmp > 0.0 {
-                mfv = (close - low - (high - close)) / tmp * inVolume[today];
-            } else {
-                mfv = 0.0;
-            }
-            mfv_flow[mfv_Idx] = mfv;
-            mfv_volume[mfv_Idx] = inVolume[today];
-            sumMFV += mfv;
-            sumVol += inVolume[today];
-            today += 1;
-            if sumVol > 0.0 {
-                lastValue_outReal = sumMFV / sumVol;
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            mfv_Idx += 1;
-            if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
-        }
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cbSize_mfv: usize = maxIdx_mfv + 1;
-        if cbSize_mfv > historyLen + 1 {
-            return Err(RetCode::InternalError);
-        }
-        let state = CMF_StreamState {
-            optInTimePeriod,
-            sumMFV,
-            sumVol,
-            high,
-            low,
-            close,
-            tmp,
-            mfv,
-            mfv_Idx,
-            maxIdx_mfv,
-            cbSize_mfv: cbSize_mfv,
-            cb_mfv_flow: mfv_flow,
-            cb_mfv_volume: mfv_volume,
-        };
-        Ok((CMF_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live CMF stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CMF`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    /// let volume: Vec<f64> = (0..252)
-    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CMF_Open(&high, &low, &close, &volume, 20).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0);
-    /// let updated = s.update(101.4, 99.1, 100.9, 12_345.0);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_CMF_Open")]
-    pub fn CMF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(CMF_Stream, f64), RetCode> {
-        self.CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
-    }
-
-    /// [`Core::CMF_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CMF`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CMF_OpenAndFill")]
-    pub fn CMF_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::CMF_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CMF_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CMF_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CMF_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inVolume.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() || inVolume.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -619,7 +435,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut sumMFV: f64 = 0.0_f64;
@@ -697,11 +513,9 @@ impl Core {
         // A window whose volume is entirely zero has no money flow to distribute;
         // report 0.0 rather than propagating a division by zero (issue #112).
         if sumVol > 0.0 {
-            outReal[outIdx] = sumMFV / sumVol;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sumMFV / sumVol;
         } else {
-            outReal[outIdx] = 0.0;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
         }
         // Now continue processing the remaining bars.
         while today <= endIdx {
@@ -722,11 +536,9 @@ impl Core {
             sumVol += inVolume[today];
             today += 1;
             if sumVol > 0.0 {
-                outReal[outIdx] = sumMFV / sumVol;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sumMFV / sumVol;
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             mfv_Idx += 1;
             if mfv_Idx > maxIdx_mfv { mfv_Idx = 0; }
@@ -755,6 +567,57 @@ impl Core {
             cb_mfv_volume: mfv_volume,
         };
         Ok(CMF_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CMF_Open`] (composition seam).
+    pub(crate) fn CMF_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(CMF_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.CMF_OpenCore(inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live CMF stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CMF`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    /// let volume: Vec<f64> = (0..252)
+    ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CMF_Open(&high, &low, &close, &volume, 20).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9, 12_345.0);
+    /// let updated = s.update(101.4, 99.1, 100.9, 12_345.0);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_CMF_Open")]
+    pub fn CMF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], optInTimePeriod: i32) -> Result<(CMF_Stream, f64), RetCode> {
+        self.CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod)
+    }
+
+    /// [`Core::CMF_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMF`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CMF_OpenAndFill")]
+    pub fn CMF_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], inVolume: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CMF_Stream, RetCode> {
+        self.CMF_OpenCore(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -178,14 +178,12 @@ static void TA_BOP_StepInternal( struct TA_BOP_Stream *sp, double inOpen, double
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_BOP_OpenInternal( struct TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
+static TA_RetCode TA_BOP_OpenCore( struct TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_BOP_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -196,7 +194,6 @@ TA_RetCode TA_BOP_OpenInternal( struct TA_BOP_Stream **stream, const double inOp
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
@@ -210,66 +207,10 @@ TA_RetCode TA_BOP_OpenInternal( struct TA_BOP_Stream **stream, const double inOp
          tempReal = inHigh[i] - inLow[i];
          if( TA_IS_ZERO_OR_NEG(tempReal) )
          {
-            lastValue_outReal = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          } else 
          {
-            lastValue_outReal = (inClose[i] - inOpen[i]) / tempReal;
-         }
-      }
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_BOP_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_BOP_Open( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
-{
-   return TA_BOP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_BOP_OpenAndFill( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_BOP_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int outIdx;
-      int i;
-      double tempReal;
-      /* BOP = (Close - Open)/(High - Low) */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 )
-      {
-         tempReal = inHigh[i] - inLow[i];
-         if( TA_IS_ZERO_OR_NEG(tempReal) )
-         {
-            outReal[outIdx++] = 0.0;
-         } else 
-         {
-            outReal[outIdx++] = (inClose[i] - inOpen[i]) / tempReal;
+            outReal[outIdx++ * outStride] = (inClose[i] - inOpen[i]) / tempReal;
          }
       }
       *outNBElement= outIdx;
@@ -282,6 +223,35 @@ TA_LIB_API TA_RetCode TA_BOP_OpenAndFill( TA_BOP_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_BOP_OpenInternal( struct TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_BOP_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_BOP_Open( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
+{
+   return TA_BOP_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_BOP_OpenAndFill( TA_BOP_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inOpen || (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_BOP_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_BOP_Update( TA_BOP_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )

@@ -348,14 +348,12 @@ static void TA_CDLTRISTAR_StepInternal( struct TA_CDLTRISTAR_Stream *sp, double 
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CDLTRISTAR_OpenInternal( struct TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+static TA_RetCode TA_CDLTRISTAR_OpenCore( struct TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDLTRISTAR_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   int lastValue_outInteger;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -364,155 +362,6 @@ TA_RetCode TA_CDLTRISTAR_OpenInternal( struct TA_CDLTRISTAR_Stream **stream, con
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outInteger = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
-      double BodyPeriodTotal = 0.0;
-      int i;
-      int outIdx;
-      int BodyTrailingIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_CDLTRISTAR_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyPeriodTotal = 0;
-      BodyTrailingIdx = startIdx - 2 - BodyDoji_avgPeriod;
-      i = BodyTrailingIdx;
-      while( i < startIdx - 2 )
-      {
-         BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i);
-         i += 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - 3 consecutive doji days
-       * - the second doji is a star
-       * The meaning of "doji" is specified with TA_SetCandleSettings
-       * outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish
-       */
-      i = startIdx;
-      outIdx = 0;
-      do
-      {
-         if( fabs(inClose[i - 2] - inOpen[i - 2]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 1st: doji */
-             fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) && /* 2nd: doji */
-             fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) )
-         {
-            /* 3rd: doji */
-            lastValue_outInteger = 0;
-            if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
-                max(inOpen[i],inClose[i]) < max(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not higher than 2nd */
-            {
-               lastValue_outInteger = 0 - 100;
-            }
-            if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps down */
-                min(inOpen[i],inClose[i]) > min(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not lower than 2nd */
-            {
-               lastValue_outInteger = 100;
-            }
-            outIdx += 1;
-         } else 
-         {
-            lastValue_outInteger = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         BodyPeriodTotal += TA_CANDLERANGE(BodyDoji,i - 2) - TA_CANDLERANGE(BodyDoji,BodyTrailingIdx);
-         i += 1;
-         BodyTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CDLTRISTAR_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->BodyPeriodTotal = BodyPeriodTotal;
-      sp->ringCap_BodyTrailingIdx = (int)(i - BodyTrailingIdx);
-      if( sp->ringCap_BodyTrailingIdx < 0 || sp->ringCap_BodyTrailingIdx > historyLen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_BodyTrailingIdx > 0 ? sp->ringCap_BodyTrailingIdx : 1);
-        sp->ring_BodyTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyTrailingIdx_inOpen = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inOpen ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_BodyTrailingIdx_inOpen, inOpen + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
-        sp->ring_BodyTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyTrailingIdx_inHigh = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inHigh ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_BodyTrailingIdx_inHigh, inHigh + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
-        sp->ring_BodyTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyTrailingIdx_inLow = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inLow ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_BodyTrailingIdx_inLow, inLow + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
-        sp->ring_BodyTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_BodyTrailingIdx_inClose = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_BodyTrailingIdx_inClose ) { TA_CDLTRISTAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_BodyTrailingIdx_inClose, inClose + (historyLen - sp->ringCap_BodyTrailingIdx), sizeof(double) * (size_t)sp->ringCap_BodyTrailingIdx );
-      }
-      sp->ringPos_BodyTrailingIdx = 0;
-      sp->lag1_inOpen = inOpen[historyLen - 1];
-      sp->lag2_inOpen = inOpen[historyLen - 2];
-      sp->lag1_inHigh = inHigh[historyLen - 1];
-      sp->lag2_inHigh = inHigh[historyLen - 2];
-      sp->lag1_inLow = inLow[historyLen - 1];
-      sp->lag2_inLow = inLow[historyLen - 2];
-      sp->lag1_inClose = inClose[historyLen - 1];
-      sp->lag2_inClose = inClose[historyLen - 2];
-      *outInteger = lastValue_outInteger;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CDLTRISTAR_Open( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
-{
-   return TA_CDLTRISTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
-}
-
-TA_LIB_API TA_RetCode TA_CDLTRISTAR_OpenAndFill( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
-{
-   struct TA_CDLTRISTAR_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -568,21 +417,21 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_OpenAndFill( TA_CDLTRISTAR_Stream **stream, 
              fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyPeriodTotal,i - 2) )
          {
             /* 3rd: doji */
-            outInteger[outIdx] = 0;
+            outInteger[outIdx * outStride] = 0;
             if( ((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps up */
                 max(inOpen[i],inClose[i]) < max(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not higher than 2nd */
             {
-               outInteger[outIdx] = 0 - 100;
+               outInteger[outIdx * outStride] = 0 - 100;
             }
             if( ((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* 2nd gaps down */
                 min(inOpen[i],inClose[i]) > min(inOpen[i - 1],inClose[i - 1]) ) /* 3rd is not lower than 2nd */
             {
-               outInteger[outIdx] = 100;
+               outInteger[outIdx * outStride] = 100;
             }
             outIdx += 1;
          } else 
          {
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -636,6 +485,35 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_OpenAndFill( TA_CDLTRISTAR_Stream **stream, 
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDLTRISTAR_OpenInternal( struct TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_CDLTRISTAR_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CDLTRISTAR_Open( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
+{
+   return TA_CDLTRISTAR_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDLTRISTAR_OpenAndFill( TA_CDLTRISTAR_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_CDLTRISTAR_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Update( TA_CDLTRISTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

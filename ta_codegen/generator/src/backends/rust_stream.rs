@@ -495,20 +495,114 @@ fn emit_loop(
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Scalar);
+    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Core);
+    emit_open_internal_wrapper(o, func, model);
     emit_open_wrapper(o, func, enums);
-    emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Fill);
+    emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func);
     emit_trait_pin(o, func);
 }
 
-/// Output mode for the open family (mirrors `c_stream::OutMode`).
+
+/// `OpenInternal`: the scalar wrapper onto `OpenCore`. One 1-element array per
+/// output stands in for the caller's slice; at stride 0 every per-bar write
+/// lands on slot 0, so after the replay it holds the last history value.
+fn emit_open_internal_wrapper(o: &mut String, func: &FuncDef, model: &StreamModel) {
+    emit_open_internal_wrapper_named(o, func, &model.outputs);
+}
+
+/// [`emit_open_internal_wrapper`] over an explicit output-name list, for tiers
+/// whose outputs come from a plan rather than a `StreamModel`.
+fn emit_open_internal_wrapper_named(o: &mut String, func: &FuncDef, outputs: &[String]) {
+    let sn = snake(func);
+    emit_open_sig(o, func, OutMode::Scalar);
+    let _ = writeln!(o, "        let mut dummyBegIdx: usize = 0;");
+    let _ = writeln!(o, "        let mut dummyNBElement: usize = 0;");
+    for out in outputs {
+        let zero = if out_is_int(func, out) { "0_i32" } else { "0.0_f64" };
+        let _ = writeln!(o, "        let mut sink_{out} = [{zero}; 1];");
+    }
+    let ins: Vec<String> = streaming::input_array_names(func);
+    let opts: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let sinks: Vec<String> = outputs.iter().map(|o2| format!("&mut sink_{o2}")).collect();
+    let mut args = ins.join(", ");
+    let _ = write!(args, ", startIdx");
+    for opt in &opts {
+        let _ = write!(args, ", {opt}");
+    }
+    let _ = writeln!(
+        o,
+        "        let handle = self.{sn}_OpenCore({args}, &mut dummyBegIdx, &mut dummyNBElement, {}, 0)?;",
+        sinks.join(", ")
+    );
+    let vals: Vec<String> = outputs.iter().map(|o2| format!("sink_{o2}[0]")).collect();
+    let value = if vals.len() == 1 { vals[0].clone() } else { format!("({})", vals.join(", ")) };
+    let _ = writeln!(o, "        Ok((handle, {value}))");
+    let _ = writeln!(o, "    }}\n");
+}
+
+/// `OpenAndFill`: the fill wrapper onto `OpenCore`. It owns the output
+/// mutual-distinctness guard (#108) — the capture epilogue reads the input tail
+/// after writing the outputs, and only this path writes caller-owned slices.
+fn emit_open_and_fill_wrapper(
+    o: &mut String,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+) {
+    let sn = snake(func);
+    emit_open_sig(o, func, OutMode::Fill);
+    // Distinctness only; the range/empty checks belong to the core, which runs
+    // them on the very next line.
+    let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
+    for i in 0..outs.len() {
+        for b in &outs[i + 1..] {
+            let _ = writeln!(
+                o,
+                "        if {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}",
+                a = outs[i]
+            );
+        }
+    }
+    let _ = enums;
+    let ins: Vec<String> = streaming::input_array_names(func);
+    let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let mut args = ins.join(", ");
+    let _ = write!(args, ", 0");
+    for opt in &opt_names {
+        let _ = write!(args, ", {opt}");
+    }
+    let _ = writeln!(
+        o,
+        "        self.{sn}_OpenCore({args}, outBegIdx, outNBElement, {}, 1)",
+        outs.join(", ")
+    );
+    let _ = writeln!(o, "    }}\n");
+}
+
+/// Output mode for the open family (mirrors `c_stream`). `Core` is the ONE
+/// transcription both public entry points share: its output writes are
+/// subscripted `out[<idx> * outStride]`, so `OpenAndFill` passes stride 1 and
+/// the caller's slice while `OpenInternal` passes stride 0 and a one-element
+/// sink whose slot 0 ends holding the last history value. `Scalar`/`Fill`
+/// survive only as signature/validation selectors — for the two exempt tiers
+/// (`Dispatch`, `PeriodBank`), which hand-roll two bodies.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum OutMode {
     Scalar,
     Fill,
+    Core,
+}
+
+/// `<idx>` -> `<idx> * outStride`, as IR. Applied to every output subscript in
+/// the transcribed body so the one body serves both entry points.
+fn scale_by_stride(idx: Expr) -> Expr {
+    Expr::BinOp(
+        Box::new(idx),
+        crate::ir::BinOp::Mul,
+        Box::new(Expr::Var("outStride".to_string())),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -820,21 +914,16 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
         .filter(|out| out.param_type != ParamType::Integer)
         .map(|out| out.name.clone())
         .collect();
-    let scalar = mode == OutMode::Scalar;
+    debug_assert!(mode == OutMode::Core, "only the merged core transcribes a body");
     let fe = move |e: Expr| -> Expr {
         match e {
-            Expr::PointerDeref(nm) if scalar && nm == "outBegIdx" => {
-                Expr::Var("dummyBegIdx".into())
-            }
-            Expr::PointerDeref(nm) if scalar && nm == "outNBElement" => {
-                Expr::Var("dummyNBElement".into())
-            }
+            // Previous-output feedback read, scaled like the writes: at stride 1
+            // it reads what the previous bar wrote; at stride 0 it reads slot 0,
+            // which still holds exactly that value.
             Expr::ArrayAccess(nm, idx)
-                if scalar
-                    && fb_outputs.contains(&nm)
-                    && streaming::is_prev_output_read(&idx) =>
+                if fb_outputs.contains(&nm) && streaming::is_prev_output_read(&idx) =>
             {
-                Expr::Var(format!("lastValue_{nm}"))
+                Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx)))
             }
             other => other,
         }
@@ -846,9 +935,7 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
                 value,
                 compound,
             } if outputs.contains(&nm) => {
-                // A float integer literal written to a REAL output types as
-                // f64 (`lastValue_*` is an f64 local; the batch renderer's
-                // ArrayAccess-target wrap is bypassed by the Var rewrite).
+                // A float integer literal written to a REAL output types as f64.
                 let value = match value {
                     Expr::IntLiteral(n) if real_outs.contains(&nm) && !compound =>
                     {
@@ -857,19 +944,11 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement], mode: OutMode) 
                     }
                     other => other,
                 };
-                if scalar {
-                    Some(Statement::Assign {
-                        target: Expr::Var(format!("lastValue_{nm}")),
-                        value,
-                        compound,
-                    })
-                } else {
-                    Some(Statement::Assign {
-                        target: Expr::ArrayAccess(nm, idx),
-                        value,
-                        compound,
-                    })
-                }
+                Some(Statement::Assign {
+                    target: Expr::ArrayAccess(nm, Box::new(scale_by_stride(*idx))),
+                    value,
+                    compound,
+                })
             }
             Statement::Return { value } => {
                 let mapped = match value {
@@ -962,6 +1041,23 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 "    pub(crate) fn {sn}_OpenInternal(\n        &self, {sig_inputs}startIdx: usize{sig_opts},\n    ) -> Result<({handle}, {vt}), RetCode> {{"
             );
         }
+        // The merged worker: the union of both entry points' inputs. `startIdx`
+        // is a parameter (OpenInternal needs it for sub-stream composition) and
+        // `outStride` selects where the per-bar writes land.
+        OutMode::Core => {
+            let mut outs = String::new();
+            for out in &func.outputs {
+                let _ = write!(outs, ", {}: &mut [{}]", out.name, out_rust_type(func, &out.name));
+            }
+            let _ = writeln!(
+                o,
+                "    /// The single whole-history transcription behind [`Core::{sn}_OpenInternal`]\n    /// (stride 0, scalar sink) and [`Core::{sn}_OpenAndFill`] (stride 1, caller slices)."
+            );
+            let _ = writeln!(
+                o,
+                "    pub(crate) fn {sn}_OpenCore(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs}, outStride: usize,\n    ) -> Result<{handle}, RetCode> {{"
+            );
+        }
         // Batch parameter order: inputs, optional params, then the output tail
         // (`outBegIdx`, `outNBElement`, one slice per output) — "open's input
         // head followed by batch's output tail".
@@ -1014,7 +1110,8 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         "        if {first}.len() > MAX_INDEX + 1 {{\n            return Err(RetCode::OutOfRangeEndIndex);\n        }}"
     );
     if mode == OutMode::Fill {
-        // Output mutual-distinctness (#108) — same guard the batch emits.
+        // Output mutual-distinctness (#108) — same guard the batch emits. FILL
+        // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
         let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
         for i in 0..outs.len() {
             for b in &outs[i + 1..] {
@@ -1053,7 +1150,7 @@ fn emit_open_inits(
     let _ = writeln!(o, "        let historyLen: usize = {first}.len();");
     let _ = writeln!(o, "        let endIdx: usize = historyLen - 1;");
     match mode {
-        OutMode::Scalar => {
+        OutMode::Scalar | OutMode::Core => {
             let _ = writeln!(o, "        let mut startIdx = startIdx;");
         }
         OutMode::Fill => {
@@ -1122,7 +1219,7 @@ fn emit_capture_and_publish(
                 "        Ok(({handle} {{ core: self.clone(), state }}, {value}))"
             );
         }
-        OutMode::Fill => {
+        OutMode::Fill | OutMode::Core => {
             let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
         }
     }
@@ -1304,14 +1401,15 @@ fn emit_identity_fast_path(
                 "            return Ok(({handle} {{ core: self.clone(), state }}, {value}));"
             );
         }
-        OutMode::Fill => {
+        OutMode::Fill | OutMode::Core => {
+            let stride = if mode == OutMode::Core { " * outStride" } else { "" };
             let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
             let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
             let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
             let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
             let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
             for (out, inp) in &idp.pairs {
-                let _ = writeln!(o, "                {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+                let _ = writeln!(o, "                {out}[fillIdx{stride}] = {inp}[fillLb + fillIdx];");
             }
             let _ = writeln!(o, "                fillIdx += 1;");
             let _ = writeln!(o, "            }}");
@@ -1497,8 +1595,13 @@ fn emit_capture(
             OutMode::Scalar => {
                 let _ = writeln!(o, "            lastOut_{name}: lastValue_{name},");
             }
-            OutMode::Fill => {
-                let _ = writeln!(o, "            lastOut_{name}: {name}[*outNBElement - 1],");
+            // At stride 0 this resolves to slot 0 — the scalar sink — so one
+            // expression serves both entry points.
+            OutMode::Fill | OutMode::Core => {
+                let _ = writeln!(
+                    o,
+                    "            lastOut_{name}: {name}[(*outNBElement - 1) * outStride],"
+                );
             }
         }
     }
@@ -1917,9 +2020,10 @@ fn emit_dual_mode(
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "    }}\n");
 
-    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Scalar);
+    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Core);
+    emit_open_internal_wrapper(o, func, ma);
     emit_open_wrapper(o, func, enums);
-    emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Fill);
+    emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func);
@@ -2019,9 +2123,10 @@ fn emit_fastpath_skip(
     emit_handle_and_state_structs(o, func, model, &typing);
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Scalar);
+    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Core);
+    emit_open_internal_wrapper(o, func, model);
     emit_open_wrapper(o, func, enums);
-    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Fill);
+    emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
     emit_update_and_peek(o, func);
     emit_trait_pin(o, func);
@@ -3007,15 +3112,10 @@ fn emit_composed_open(
     emit_open_sig(o, func, mode);
     emit_open_validation_head(o, func, mode, enums);
     emit_open_inits(o, func, outputs, typing, registry, helpers, mode);
-    if mode == OutMode::Scalar {
-        // Real `&mut usize` bindings under the batch names, so the transcribed
-        // tail (deref writes AND sub-call pass-through args) renders exactly
-        // like the proven batch text.
-        let _ = writeln!(o, "        let mut _begStore: usize = 0;");
-        let _ = writeln!(o, "        let mut _nbStore: usize = 0;");
-        let _ = writeln!(o, "        let outBegIdx: &mut usize = &mut _begStore;");
-        let _ = writeln!(o, "        let outNBElement: &mut usize = &mut _nbStore;");
-    }
+    // The core already receives real `&mut usize` out-meta under the batch
+    // names, so the transcribed tail (deref writes AND sub-call pass-through
+    // args) renders exactly like the proven batch text with no shim.
+    debug_assert!(mode == OutMode::Core, "composed opens emit only the merged core");
     for out in outputs {
         let _ = writeln!(
             o,
@@ -3166,12 +3266,25 @@ fn emit_composed_open(
             }
             let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
         }
+        // Both modes compute into `sc_*`; only the hand-back differs, and it is
+        // the ONE place a stride multiply cannot express the difference — a bulk
+        // copy takes a base slice, not a subscript.
+        OutMode::Core => {
+            for out in outputs {
+                let _ = writeln!(o, "        if outStride == 1 {{");
+                let _ = writeln!(
+                    o,
+                    "            {out}[..*outNBElement].copy_from_slice(&sc_{out}[..*outNBElement]);"
+                );
+                let _ = writeln!(o, "        }} else if *outNBElement > 0 {{");
+                let _ = writeln!(o, "            {out}[0] = sc_{out}[*outNBElement - 1];");
+                let _ = writeln!(o, "        }}");
+            }
+            let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+        }
     }
     let _ = writeln!(o, "    }}\n");
-    if mode == OutMode::Scalar {
-        let _ = sn;
-        emit_open_wrapper(o, func, enums);
-    }
+    let _ = sn;
 }
 
 /// [`emit_open_region`] without a `StreamModel` (the composed tier may be
@@ -3351,11 +3464,11 @@ fn emit_composed(
         o, func, cp, &typing, &inputs, &outputs, enums, registry, helpers, counter,
     );
     emit_composed_open(
-        o, func, cp, &typing, &outputs, enums, registry, helpers, counter, OutMode::Scalar,
+        o, func, cp, &typing, &outputs, enums, registry, helpers, counter, OutMode::Core,
     );
-    emit_composed_open(
-        o, func, cp, &typing, &outputs, enums, registry, helpers, counter, OutMode::Fill,
-    );
+    emit_open_internal_wrapper_named(o, func, &outputs);
+    emit_open_wrapper(o, func, enums);
+    emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func);

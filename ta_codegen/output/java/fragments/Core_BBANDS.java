@@ -840,7 +840,7 @@
       sp.cur_outRealMiddleBand = cur_tempBuffer1;
       sp.cur_outRealLowerBand = cur_outRealLowerBand;
    }
-   private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   private RetCode BBANDS_OpenCore( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
    {
       RetCode retCode;
       int i = 0;
@@ -850,8 +850,6 @@
       double tempReal2 = 0;
       double[] tempBuffer1;
       double[] tempBuffer2;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -955,129 +953,26 @@
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
       sp.cachedValue = new BBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
+      if( outStride == 1 ) System.arraycopy(sc_outRealUpperBand, 0, outRealUpperBand, 0, outNBElement.value);
+      if( outStride == 1 ) System.arraycopy(sc_outRealMiddleBand, 0, outRealMiddleBand, 0, outNBElement.value);
+      if( outStride == 1 ) System.arraycopy(sc_outRealLowerBand, 0, outRealLowerBand, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      return BBANDS_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
    }
    private RetCode BBANDS_OpenAndFillBody( BBANDS_Stream sp, double inReal[], int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      RetCode retCode;
-      int i = 0;
-      int maBegIdx = 0;
-      int shiftIdx = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 20;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInNbDevUp == REAL_DEFAULT ) {
-         optInNbDevUp = 2e0;
-      } else if( optInNbDevUp < REAL_MIN || optInNbDevUp > REAL_MAX ) {
-         return RetCode.BadParam;
-      }
-      if( optInNbDevDn == REAL_DEFAULT ) {
-         optInNbDevDn = 2e0;
-      } else if( optInNbDevDn < REAL_MIN || optInNbDevDn > REAL_MAX ) {
-         return RetCode.BadParam;
-      }
-      if( optInMAType == MAType.DEFAULT ) {
-         optInMAType = MAType.SMA;
-      }
       if( (Object)outRealUpperBand == (Object)inReal || (Object)outRealMiddleBand == (Object)inReal || (Object)outRealLowerBand == (Object)inReal || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          return RetCode.BadParam;
       }
-      if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outRealUpperBand = new double[historyLen];
-      double[] sc_outRealMiddleBand = new double[historyLen];
-      double[] sc_outRealLowerBand = new double[historyLen];
-      /* General path (every MA type other than SMA): the middle band is the moving
-       * average and the deviation is the standard deviation of the input, combined
-       * at the same bar. Two intermediate buffers are allocated so the input may
-       * safely alias an output (it is only read here).
-       */
-      tempBuffer1 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      tempBuffer2 = new double[(int)((endIdx - startIdx + 1) * 1)];
-      /* Calculate the middle band moving average. */
-      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, optInMAType);
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, tempBuffer1);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Remember where the moving average begins, to realign it below. */
-      maBegIdx = (int)outBegIdx.value;
-      /* Calculate the Standard Deviation into tempBuffer2. */
-      /* Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      STDDEV_Stream sub1 = STDDEV_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), (int)outBegIdx.value, optInTimePeriod, 1.0);
-      retCode = STDDEV_Internal((int)outBegIdx.value, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, tempBuffer2);
-      if( retCode != RetCode.Success ) {
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
-       * begIdx than the moving average did - as with TA_MAType_MAMA (constant
-       * lookback 32) and optInTimePeriod >= 34 - the MA in tempBuffer1 still starts
-       * at the earlier maBegIdx. Copy it forward from that shift into the middle
-       * band so each band value pairs the moving average and standard deviation of
-       * the same bar. The guarded subtraction keeps shiftIdx non-negative even when
-       * the standard deviation produced no output (an empty range leaves *outBegIdx
-       * at 0), which the unconditional copy below then handles as a zero-length move.
-       */
-      if( (int)outBegIdx.value > maBegIdx ) {
-         shiftIdx = (int)outBegIdx.value - maBegIdx;
-      } else {
-         shiftIdx = 0;
-      }
-      System.arraycopy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement.value * 1);
-      /* Now do a tight loop to calculate the upper/lower band at the same time. */
-      if( optInNbDevUp == optInNbDevDn ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = tempBuffer2[i] * optInNbDevUp;
-            tempReal2 = sc_outRealMiddleBand[i];
-            sc_outRealUpperBand[i] = tempReal2 + tempReal;
-            sc_outRealLowerBand[i] = tempReal2 - tempReal;
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal2 = sc_outRealMiddleBand[i];
-            sc_outRealUpperBand[i] = Math.fma(tempBuffer2[i], optInNbDevUp, tempReal2);
-            sc_outRealLowerBand[i] = tempReal2 - tempBuffer2[i] * optInNbDevDn;
-         }
-      }
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.optInNbDevUp = optInNbDevUp;
-      sp.optInNbDevDn = optInNbDevDn;
-      sp.optInMAType = optInMAType;
-      sp.sub0 = sub0;
-      sp.sub1 = sub1;
-      sp.cur_outRealUpperBand = sc_outRealUpperBand[outNBElement.value - 1];
-      sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
-      sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new BBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
-      System.arraycopy(sc_outRealUpperBand, 0, outRealUpperBand, 0, outNBElement.value);
-      System.arraycopy(sc_outRealMiddleBand, 0, outRealMiddleBand, 0, outNBElement.value);
-      System.arraycopy(sc_outRealLowerBand, 0, outRealLowerBand, 0, outNBElement.value);
-      return RetCode.Success;
+      return BBANDS_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
    }
    /* Internal startIdx-anchored open behind BBANDS_Open (composition seam). */
    BBANDS_Stream BBANDS_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )

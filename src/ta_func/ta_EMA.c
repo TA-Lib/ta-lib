@@ -323,14 +323,12 @@ static void TA_EMA_StepInternal( struct TA_EMA_Stream *sp, double inReal, double
    *outReal= sp->prevMA;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+static TA_RetCode TA_EMA_OpenCore( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_EMA_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
    double optInK_1;
 
    if( !stream ) return TA_BAD_PARAM;
@@ -344,175 +342,6 @@ TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inRe
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   if( optInTimePeriod == 1 )
-   {
-      if( historyLen < TA_EMA_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
-      sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->optInK_1 = optInK_1;
-      *outReal = inReal[historyLen - 1];
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-
-   {
-      double tempReal;
-      double prevMA = 0.0;
-      int i;
-      int today;
-      int outIdx;
-      int lookbackTotal;
-      /* Internal implementation can be called from any other TA function.
-       *
-       * Faster because there is no parameter check, but it is a double
-       * edge sword.
-       *
-       * The optInK_1 and optInTimePeriod are usually tightly coupled:
-       *
-       *    optInK_1  = 2 / (optInTimePeriod + 1).
-       *
-       * These values are going to be related by this equation 99.9% of the
-       * time... but there is some exception, this is why both must be provided.
-       *
-       * Exception to the exception: at optInTimePeriod == 1 the period wins.
-       * The no-smoothing copy below is taken whatever optInK_1 says.
-       */
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_EMA_Lookback(optInTimePeriod);
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because at
-       * period 1 optInK_1 is exactly 1.0, so the recursion below reduces to
-       * (x-prev)+prev -- which returns x only while consecutive values stay
-       * within a factor of two of each other. Two-decimal prices already
-       * spend a full mantissa, so a single 3x move breaks it. The unstable
-       * period still delays the first output.
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         outIdx = 0;
-         today = startIdx;
-         while( today <= endIdx )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         dummyNBElement = outIdx;
-         return TA_BAD_PARAM;
-      }
-      dummyBegIdx = startIdx;
-      /* Do the EMA calculation using tight loops. */
-      /* The first EMA is calculated differently. It
-       * then become the seed for subsequent EMA.
-       *
-       * The algorithm for this seed vary widely.
-       * Only 3 are implemented here:
-       *
-       * TA_MA_CLASSIC:
-       *    Use a simple MA of the first 'period'.
-       *    This is the approach most widely documented.
-       *
-       * TA_MA_METASTOCK:
-       *    Use first price bar value as a seed
-       *    from the begining of all the available
-       *    data.
-       *
-       * TA_MA_TRADESTATION:
-       *    Use 4th price bar as a seed, except when
-       *    period is 1 who use 2th price bar or something
-       *    like that... (not an obvious one...).
-       */
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
-      {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 )
-         {
-            tempReal += inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else 
-      {
-         prevMA = inReal[0];
-         today = 1;
-      }
-      while( today <= startIdx )
-      {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-      }
-      lastValue_outReal = prevMA;
-      outIdx = 1;
-      while( today <= endIdx )
-      {
-         prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-         lastValue_outReal = prevMA;
-      }
-      dummyNBElement = outIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_EMA_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->optInK_1 = optInK_1;
-      sp->prevMA = prevMA;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_EMA_Open( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
-{
-   return TA_EMA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_EMA_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-   double optInK_1;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 30;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
@@ -533,7 +362,7 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
          *outNBElement = historyLen - fillLb;
          for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
          {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+            outReal[(fillIdx) * outStride] = inReal[fillLb + fillIdx];
          }
       }
       *stream = sp;
@@ -595,7 +424,7 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
          today = startIdx;
          while( today <= endIdx )
          {
-            outReal[outIdx++] = inReal[today++];
+            outReal[outIdx++ * outStride] = inReal[today++];
          }
          *outNBElement= outIdx;
          return TA_BAD_PARAM;
@@ -641,12 +470,12 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
       {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
       }
-      outReal[0] = prevMA;
+      outReal[0 * outStride] = prevMA;
       outIdx = 1;
       while( today <= endIdx )
       {
          prevMA = (inReal[today++] - prevMA) * optInK_1 + prevMA;
-         outReal[outIdx++] = prevMA;
+         outReal[outIdx++ * outStride] = prevMA;
       }
       *outNBElement= outIdx;
 
@@ -660,6 +489,35 @@ TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_EMA_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_EMA_Open( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_EMA_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_EMA_OpenAndFill( TA_EMA_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_EMA_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_EMA_Update( TA_EMA_Stream *stream, double inReal, double *outReal )

@@ -368,187 +368,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CMOU_Open`] (composition seam).
-    pub(crate) fn CMOU_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(CMOU_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut upSum: f64 = 0.0_f64;
-        let mut downSum: f64 = 0.0_f64;
-        let mut sum: f64 = 0.0_f64;
-        let mut diff: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut prevValue: f64 = 0.0_f64;
-        let mut trailingValue: f64 = 0.0_f64;
-        // CMOU -- unsmoothed Chande Momentum Oscillator (as in TradingView ta.cmo,
-        // QuantConnect, pandas-ta default). Over the trailing optInTimePeriod changes
-        // d = inReal[i]-inReal[i-1]: Su = sum of up-moves (d>0), Sd = sum of
-        // |down-moves| (d<0); CMOU = 100*(Su-Sd)/(Su+Sd), 0 for a flat window. A plain
-        // moving-window sum (drop oldest change, add newest), NOT TA_CMO's Wilder
-        // smoothing -- hence no unstable period.
-        //
-        // In-place safe (outReal == inReal): the trailing read inReal[trailingIdx]
-        // precedes this iteration's write (trailingIdx >= outIdx), and the oldest
-        // change's older endpoint comes from the `trailingValue` cache, not a re-read.
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        lookbackTotal = self.CMOU_Lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        // Accumulate the up/down sums over the first window: the optInTimePeriod
-        // changes ending at startIdx (prices inReal[startIdx-optInTimePeriod ..
-        // startIdx]). `trailingValue` caches the oldest price so the window's oldest
-        // change can later be dropped by reading only the newer of its two prices.
-        // `trailingIdx` points AT that newer price (one past the cached one).
-        today = startIdx - lookbackTotal;
-        trailingIdx = today + 1;
-        prevValue = inReal[today];
-        trailingValue = prevValue;
-        upSum = 0.0;
-        downSum = 0.0;
-        // for( i = 0; i < ((optInTimePeriod) as usize); i += 1 )
-        i = 0;
-        while i < ((optInTimePeriod) as usize) {
-            today += 1;
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            i += 1;
-        }
-        // Emit the first output (bar startIdx). Su+Sd is a sum of non-negative
-        // magnitudes, so it is zero only for an exactly flat window; guard the 0/0
-        // with TA_IS_ZERO (as TA_CMO does for its own gain+loss) and emit 0.0.
-        //
-        // Scale-then-divide -- (100*(Su-Sd))/(Su+Sd), NOT the 100*((Su-Sd)/(Su+Sd))
-        // order TA_CMO/RSI use -- so CMOU is BIT-IDENTICAL to the reference unsmoothed
-        // CMO of Tulip Indicators (ti_cmo) and pandas-ta-classic (cmo, talib=False),
-        // which both scale before dividing. The two orders differ by <=1 ULP.
-        outIdx = 0;
-        sum = upSum + downSum;
-        if !((sum).abs() < 1e-14) {
-            lastValue_outReal = 100.0 * (upSum - downSum) / sum;
-        } else {
-            lastValue_outReal = 0.0;
-        }
-        // Slide the window forward one bar at a time.
-        today += 1;
-        while today <= endIdx {
-            // Drop the oldest change: inReal[trailingIdx] - inReal[trailingIdx-1].
-            // inReal[trailingIdx-1] comes from the cache (already overwritten when
-            // outReal == inReal); inReal[trailingIdx] is read here, before this
-            // iteration writes outReal[outIdx], so it is still the original price.
-            tempReal = inReal[trailingIdx];
-            diff = tempReal - trailingValue;
-            trailingValue = tempReal;
-            trailingIdx += 1;
-            if diff > 0.0 {
-                upSum -= diff;
-            } else if diff < 0.0 {
-                downSum += diff;
-            }
-            // Add the newest change: inReal[today] - inReal[today-1].
-            tempReal = inReal[today];
-            diff = tempReal - prevValue;
-            prevValue = tempReal;
-            if diff > 0.0 {
-                upSum += diff;
-            } else if diff < 0.0 {
-                downSum -= diff;
-            }
-            sum = upSum + downSum;
-            if !((sum).abs() < 1e-14) {
-                lastValue_outReal = 100.0 * (upSum - downSum) / sum;
-            } else {
-                lastValue_outReal = 0.0;
-            }
-            today += 1;
-        }
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_trailingIdx: i64 = (today as i64) - (trailingIdx as i64);
-        if cap_trailingIdx < 0 || cap_trailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_trailingIdx: usize = if cap_trailingIdx > 0 { cap_trailingIdx as usize } else { 1 };
-        let mut ring_trailingIdx_inReal: Vec<f64> = vec![0.0_f64; allocN_trailingIdx];
-        ring_trailingIdx_inReal[..cap_trailingIdx as usize]
-            .copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);
-        let state = CMOU_StreamState {
-            optInTimePeriod,
-            upSum,
-            downSum,
-            sum,
-            prevValue,
-            trailingValue,
-            ringPos_trailingIdx: 0_usize,
-            ringCap_trailingIdx: cap_trailingIdx as usize,
-            ring_trailingIdx_inReal,
-        };
-        Ok((CMOU_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live CMOU stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CMOU`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CMOU_Open(&data, 14).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_CMOU_Open")]
-    pub fn CMOU_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMOU_Stream, f64), RetCode> {
-        self.CMOU_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::CMOU_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CMOU`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CMOU_OpenAndFill")]
-    pub fn CMOU_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::CMOU_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CMOU_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CMOU_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<CMOU_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -563,7 +386,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut outIdx: usize = 0_usize;
@@ -634,11 +457,9 @@ impl Core {
         outIdx = 0;
         sum = upSum + downSum;
         if !((sum).abs() < 1e-14) {
-            outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (upSum - downSum) / sum;
         } else {
-            outReal[outIdx] = 0.0;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
         }
         // Slide the window forward one bar at a time.
         today += 1;
@@ -667,11 +488,9 @@ impl Core {
             }
             sum = upSum + downSum;
             if !((sum).abs() < 1e-14) {
-                outReal[outIdx] = 100.0 * (upSum - downSum) / sum;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 100.0 * (upSum - downSum) / sum;
             } else {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
             today += 1;
         }
@@ -699,6 +518,50 @@ impl Core {
             ring_trailingIdx_inReal,
         };
         Ok(CMOU_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CMOU_Open`] (composition seam).
+    pub(crate) fn CMOU_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(CMOU_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.CMOU_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live CMOU stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CMOU`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CMOU_Open(&data, 14).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_CMOU_Open")]
+    pub fn CMOU_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(CMOU_Stream, f64), RetCode> {
+        self.CMOU_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::CMOU_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CMOU`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CMOU_OpenAndFill")]
+    pub fn CMOU_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CMOU_Stream, RetCode> {
+        self.CMOU_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

@@ -432,7 +432,7 @@
       sp.lag2_inLow = sp.lag1_inLow;
       sp.lag1_inLow = inLow;
    }
-   private RetCode CDLHIKKAKE_OpenBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLHIKKAKE_OpenCore( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -441,9 +441,6 @@
       int cd = 0;
       double savedHigh = 0;
       double savedLow = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -518,14 +515,14 @@
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
-            lastValue_outInteger = patternResult;
+            outInteger[outIdx++ * outStride] = patternResult;
          } else if( cd > 0 &&
              (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
          {
-            lastValue_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+            outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             cd = 0;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          if( cd > 0 ) {
             cd -= 1;
@@ -544,124 +541,22 @@
       sp.lag2_inHigh = inHigh[historyLen - 2];
       sp.lag1_inLow = inLow[historyLen - 1];
       sp.lag2_inLow = inLow[historyLen - 2];
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDLHIKKAKE_OpenBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDLHIKKAKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDLHIKKAKE_OpenAndFillBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int patternResult = 0;
-      int cd = 0;
-      double savedHigh = 0;
-      double savedLow = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* Confirmation-window countdown + cached 2nd-candle high/low: the pattern
-       * state carried without an absolute bar index.
-       */
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDLHIKKAKE_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      cd = 0;
-      patternResult = 0;
-      i = startIdx - 3;
-      while( i < startIdx ) {
-         /* copy here the pattern recognition code below */
-         if( inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = inHigh[i - 1];
-            savedLow = inLow[i - 1];
-            cd = 4;
-         } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
-         {
-            cd = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first and second candle: inside bar (2nd has lower high and higher low than 1st)
-       * - third candle: lower high and lower low than 2nd (higher high and higher low than 2nd)
-       * outInteger[hikkakebar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
-       * Confirmation could come in the next 3 days with:
-       * - a day that closes higher than the high (lower than the low) of the 2nd candle
-       * outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-       * Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-       * overwrites the confirmation of the old hikkake)
-       */
-      outIdx = 0;
-      do {
-         if( inHigh[i - 1] < inHigh[i - 2] &&
-             inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
-         {
-            patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
-            savedHigh = inHigh[i - 1];
-            savedLow = inLow[i - 1];
-            cd = 4;
-            outInteger[outIdx++] = patternResult;
-         } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
-         {
-            outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
-            cd = 0;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         if( cd > 0 ) {
-            cd -= 1;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.patternResult = patternResult;
-      sp.cd = cd;
-      sp.savedHigh = savedHigh;
-      sp.savedLow = savedLow;
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDLHIKKAKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
    CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

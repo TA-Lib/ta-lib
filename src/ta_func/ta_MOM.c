@@ -237,14 +237,12 @@ static void TA_MOM_StepInternal( struct TA_MOM_Stream *sp, double inReal, double
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_MOM_OpenInternal( struct TA_MOM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+static TA_RetCode TA_MOM_OpenCore( struct TA_MOM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_MOM_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -257,122 +255,6 @@ TA_RetCode TA_MOM_OpenInternal( struct TA_MOM_Stream **stream, const double inRe
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int inIdx;
-      int outIdx;
-      int trailingIdx;
-      /* The interpretation of the rate of change varies widely depending
-       * which software and/or books you are refering to.
-       *
-       * The following is the table of Rate-Of-Change implemented in TA-LIB:
-       *       MOM     = (price - prevPrice)         [Momentum]
-       *       ROC     = ((price/prevPrice)-1)*100   [Rate of change]
-       *       ROCP    = (price-prevPrice)/prevPrice [Rate of change Percentage]
-       *       ROCR    = (price/prevPrice)           [Rate of change ratio]
-       *       ROCR100 = (price/prevPrice)*100       [Rate of change ratio 100 Scale]
-       *
-       * Here are the equivalent function in other software:
-       *       TA-Lib  |   Tradestation   |    Metastock
-       *       =================================================
-       *       MOM     |   Momentum       |    ROC (Point)
-       *       ROC     |   ROC            |    ROC (Percent)
-       *       ROCP    |   PercentChange  |    -
-       *       ROCR    |   -              |    -
-       *       ROCR100 |   -              |    MO
-       *
-       * The MOM function is the only one who is not normalized, and thus
-       * should be avoided for comparing different time serie of prices.
-       *
-       * ROC and ROCP are centered at zero and can have positive and negative
-       * value. Here are some equivalence:
-       *    ROC = ROCP/100
-       *        = ((price-prevPrice)/prevPrice)/100
-       *        = ((price/prevPrice)-1)*100
-       *
-       * ROCR and ROCR100 are ratio respectively centered at 1 and 100 and are
-       * always positive values.
-       */
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < optInTimePeriod )
-      {
-         startIdx = optInTimePeriod;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Calculate Momentum:
-       *    Just substract the value from 'period' ago from
-       *    current value.
-       */
-      outIdx = 0;
-      inIdx = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      while( inIdx <= endIdx )
-      {
-         lastValue_outReal = inReal[inIdx++] - inReal[trailingIdx++];
-      }
-      /* Set output limits. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_MOM_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->ringCap_trailingIdx = (int)(inIdx - trailingIdx);
-      if( sp->ringCap_trailingIdx < 0 || sp->ringCap_trailingIdx > historyLen ) { TA_MOM_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      { size_t allocN = (size_t)(sp->ringCap_trailingIdx > 0 ? sp->ringCap_trailingIdx : 1);
-        sp->ring_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ring_trailingIdx_inReal ) { TA_MOM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        sp->ringMirror_trailingIdx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
-        if( !sp->ringMirror_trailingIdx_inReal ) { TA_MOM_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-        memcpy( sp->ring_trailingIdx_inReal, inReal + (historyLen - sp->ringCap_trailingIdx), sizeof(double) * (size_t)sp->ringCap_trailingIdx );
-      }
-      sp->ringPos_trailingIdx = 0;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_MOM_Open( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
-{
-   return TA_MOM_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_MOM_OpenAndFill( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_MOM_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 10;
-   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -435,7 +317,7 @@ TA_LIB_API TA_RetCode TA_MOM_OpenAndFill( TA_MOM_Stream **stream, const double i
       trailingIdx = startIdx - optInTimePeriod;
       while( inIdx <= endIdx )
       {
-         outReal[outIdx++] = inReal[inIdx++] - inReal[trailingIdx++];
+         outReal[outIdx++ * outStride] = inReal[inIdx++] - inReal[trailingIdx++];
       }
       /* Set output limits. */
       *outNBElement= outIdx;
@@ -459,6 +341,35 @@ TA_LIB_API TA_RetCode TA_MOM_OpenAndFill( TA_MOM_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MOM_OpenInternal( struct TA_MOM_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_MOM_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_MOM_Open( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_MOM_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_MOM_OpenAndFill( TA_MOM_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_MOM_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MOM_Update( TA_MOM_Stream *stream, double inReal, double *outReal )

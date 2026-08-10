@@ -604,294 +604,10 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::SAR_Open`] (composition seam).
-    pub(crate) fn SAR_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64,
-    ) -> Result<(SAR_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if optInAcceleration == REAL_DEFAULT {
-            optInAcceleration = 2e-2;
-        } else if (optInAcceleration < 0e0) || (optInAcceleration > REAL_MAX) {
-            return Err(RetCode::BadParam);
-        }
-        if optInMaximum == REAL_DEFAULT {
-            optInMaximum = 2e-1;
-        } else if (optInMaximum < 0e0) || (optInMaximum > REAL_MAX) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut retCode: RetCode = RetCode::Success;
-        let mut isLong: usize = 0_usize;
-        let mut todayIdx: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut tempInt: usize = 0_usize;
-        let mut newHigh: f64 = 0.0_f64;
-        let mut newLow: f64 = 0.0_f64;
-        let mut prevHigh: f64 = 0.0_f64;
-        let mut prevLow: f64 = 0.0_f64;
-        let mut af: f64 = 0.0_f64;
-        let mut ep: f64 = 0.0_f64;
-        let mut sar: f64 = 0.0_f64;
-        let mut ep_temp: [f64; 1 as usize] = [0.0_f64; 1 as usize];
-        // > 0 indicates long. == 0 indicates short
-        // Implementation of the SAR has been a little bit open to interpretation
-        // since Wilder (the original author) did not define a precise algorithm
-        // on how to bootstrap the algorithm. Take any existing software application
-        // and you will see slight variation on how the algorithm was adapted.
-        //
-        // What is the initial trade direction? Long or short?
-        // ===================================================
-        // The interpretation of what should be the initial SAR values is
-        // open to interpretation, particularly since the caller to the function
-        // does not specify the initial direction of the trade.
-        //
-        // In TA-Lib, the following logic is used:
-        //  - Calculate +DM and -DM between the first and
-        //    second bar. The highest directional indication will
-        //    indicate the assumed direction of the trade for the second
-        //    price bar.
-        //  - In the case of a tie between +DM and -DM,
-        //    the direction is LONG by default.
-        //
-        // What is the initial "extreme point" and thus SAR?
-        // =================================================
-        // The following shows how different people took different approach:
-        //  - Metastock use the first price bar high/low depending of
-        //    the direction. No SAR is calculated for the first price
-        //    bar.
-        //  - Tradestation use the closing price of the second bar. No
-        //    SAR are calculated for the first price bar.
-        //  - Wilder (the original author) use the SIP from the
-        //    previous trade (cannot be implement here since the
-        //    direction and length of the previous trade is unknonw).
-        //  - The Magazine TASC seems to follow Wilder approach which
-        //    is not practical here.
-        //
-        // TA-Lib "consume" the first price bar and use its high/low as the
-        // initial SAR of the second price bar. I found that approach to be
-        // the closest to Wilders idea of having the first entry day use
-        // the previous extreme point, except that here the extreme point is
-        // derived solely from the first price bar. I found the same approach
-        // to be used by Metastock.
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        //
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < 1 {
-            startIdx = 1;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Make sure the acceleration and maximum are coherent.
-        // If not, correct the acceleration.
-        af = optInAcceleration;
-        if af > optInMaximum {
-            optInAcceleration = optInMaximum;
-            af = optInAcceleration;
-        }
-        // Identify if the initial direction is long or short.
-        // (ep is just used as a temp buffer here, the name
-        //  of the parameter is not significant).
-        let mut _dup_out: usize = 0_usize;
-        retCode = self.MINUS_DM(startIdx, startIdx, inHigh, inLow, 1, &mut tempInt, &mut _dup_out, &mut ep_temp);
-        if ep_temp[0] > 0_f64 {
-            isLong = 0;
-        } else {
-            isLong = 1;
-        }
-        if retCode != RetCode::Success {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(retCode);
-        }
-        dummyBegIdx = startIdx;
-        outIdx = 0;
-        // Write the first SAR.
-        todayIdx = startIdx;
-        newHigh = inHigh[todayIdx - 1];
-        newLow = inLow[todayIdx - 1];
-        if isLong == 1 {
-            ep = inHigh[todayIdx];
-            sar = newLow;
-        } else {
-            ep = inLow[todayIdx];
-            sar = newHigh;
-        }
-        // Cheat on the newLow and newHigh for the
-        // first iteration.
-        newLow = inLow[todayIdx];
-        newHigh = inHigh[todayIdx];
-        while todayIdx <= endIdx {
-            prevLow = newLow;
-            prevHigh = newHigh;
-            newLow = inLow[todayIdx];
-            newHigh = inHigh[todayIdx];
-            todayIdx += 1;
-            if isLong == 1 {
-                // Switch to short if the low penetrates the SAR value.
-                if newLow <= sar {
-                    // Switch and Overide the SAR with the ep
-                    isLong = 0;
-                    sar = ep;
-                    // Make sure the overide SAR is within
-                    // yesterday's and today's range.
-                    if sar < prevHigh {
-                        sar = prevHigh;
-                    }
-                    if sar < newHigh {
-                        sar = newHigh;
-                    }
-                    // Output the overide SAR
-                    lastValue_outReal = sar;
-                    // Adjust af and ep
-                    af = optInAcceleration;
-                    ep = newLow;
-                    // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
-                    // Make sure the new SAR is within
-                    // yesterday's and today's range.
-                    if sar < prevHigh {
-                        sar = prevHigh;
-                    }
-                    if sar < newHigh {
-                        sar = newHigh;
-                    }
-                } else {
-                    // No switch
-                    // Output the SAR (was calculated in the previous iteration)
-                    lastValue_outReal = sar;
-                    // Adjust af and ep.
-                    if newHigh > ep {
-                        ep = newHigh;
-                        af += optInAcceleration;
-                        if af > optInMaximum {
-                            af = optInMaximum;
-                        }
-                    }
-                    // Calculate the new SAR
-                    sar = (af as f64).mul_add(ep - sar, sar);
-                    // Make sure the new SAR is within
-                    // yesterday's and today's range.
-                    if sar > prevLow {
-                        sar = prevLow;
-                    }
-                    if sar > newLow {
-                        sar = newLow;
-                    }
-                }
-            // Switch to long if the high penetrates the SAR value.
-            } else if newHigh >= sar {
-                // Switch and Overide the SAR with the ep
-                isLong = 1;
-                sar = ep;
-                // Make sure the overide SAR is within
-                // yesterday's and today's range.
-                if sar > prevLow {
-                    sar = prevLow;
-                }
-                if sar > newLow {
-                    sar = newLow;
-                }
-                // Output the overide SAR
-                lastValue_outReal = sar;
-                // Adjust af and ep
-                af = optInAcceleration;
-                ep = newHigh;
-                // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
-                // Make sure the new SAR is within
-                // yesterday's and today's range.
-                if sar > prevLow {
-                    sar = prevLow;
-                }
-                if sar > newLow {
-                    sar = newLow;
-                }
-            } else {
-                // No switch
-                // Output the SAR (was calculated in the previous iteration)
-                lastValue_outReal = sar;
-                // Adjust af and ep.
-                if newLow < ep {
-                    ep = newLow;
-                    af += optInAcceleration;
-                    if af > optInMaximum {
-                        af = optInMaximum;
-                    }
-                }
-                // Calculate the new SAR
-                sar = (af as f64).mul_add(ep - sar, sar);
-                // Make sure the new SAR is within
-                // yesterday's and today's range.
-                if sar < prevHigh {
-                    sar = prevHigh;
-                }
-                if sar < newHigh {
-                    sar = newHigh;
-                }
-            }
-        }
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = SAR_StreamState {
-            optInAcceleration,
-            optInMaximum,
-            isLong,
-            newHigh,
-            newLow,
-            af,
-            ep,
-            sar,
-        };
-        Ok((SAR_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live SAR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::SAR`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.SAR_Open(&high, &low, 0.02, 0.2).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1);
-    /// let updated = s.update(101.4, 99.1);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_SAR_Open")]
-    pub fn SAR_Open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SAR_Stream, f64), RetCode> {
-        self.SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
-    }
-
-    /// [`Core::SAR_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::SAR`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_SAR_OpenAndFill")]
-    pub fn SAR_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::SAR_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::SAR_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn SAR_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<SAR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inLow.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -911,7 +627,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut retCode: RetCode = RetCode::Success;
@@ -1041,8 +757,7 @@ impl Core {
                         sar = newHigh;
                     }
                     // Output the overide SAR
-                    outReal[outIdx] = sar;
-                    outIdx += 1;
+                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
                     // Adjust af and ep
                     af = optInAcceleration;
                     ep = newLow;
@@ -1059,8 +774,7 @@ impl Core {
                 } else {
                     // No switch
                     // Output the SAR (was calculated in the previous iteration)
-                    outReal[outIdx] = sar;
-                    outIdx += 1;
+                    outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
                     // Adjust af and ep.
                     if newHigh > ep {
                         ep = newHigh;
@@ -1094,8 +808,7 @@ impl Core {
                     sar = newLow;
                 }
                 // Output the overide SAR
-                outReal[outIdx] = sar;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
                 // Adjust af and ep
                 af = optInAcceleration;
                 ep = newHigh;
@@ -1112,8 +825,7 @@ impl Core {
             } else {
                 // No switch
                 // Output the SAR (was calculated in the previous iteration)
-                outReal[outIdx] = sar;
-                outIdx += 1;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = sar;
                 // Adjust af and ep.
                 if newLow < ep {
                     ep = newLow;
@@ -1148,6 +860,51 @@ impl Core {
             sar,
         };
         Ok(SAR_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::SAR_Open`] (composition seam).
+    pub(crate) fn SAR_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64,
+    ) -> Result<(SAR_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.SAR_OpenCore(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live SAR stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::SAR`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.SAR_Open(&high, &low, 0.02, 0.2).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1);
+    /// let updated = s.update(101.4, 99.1);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_SAR_Open")]
+    pub fn SAR_Open(&self, inHigh: &[f64], inLow: &[f64], optInAcceleration: f64, optInMaximum: f64) -> Result<(SAR_Stream, f64), RetCode> {
+        self.SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum)
+    }
+
+    /// [`Core::SAR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::SAR`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_SAR_OpenAndFill")]
+    pub fn SAR_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<SAR_Stream, RetCode> {
+        self.SAR_OpenCore(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

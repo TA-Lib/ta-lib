@@ -253,13 +253,10 @@
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
-   private RetCode MULT_OpenBody( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx )
+   private RetCode MULT_OpenCore( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int i = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal0.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inReal1.length != inReal0.length ) {
@@ -271,44 +268,29 @@
       outIdx = 0;
       i = startIdx;
       while( i <= endIdx ) {
-         lastValue_outReal = inReal0[i] * inReal1[i];
+         outReal[outIdx * outStride] = inReal0[i] * inReal1[i];
          outIdx += 1;
          i += 1;
       }
       outNBElement.value = outIdx;
       outBegIdx.value = startIdx;
       /* Capture the live batch state into the handle. */
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode MULT_OpenBody( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return MULT_OpenCore( sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode MULT_OpenAndFillBody( MULT_Stream sp, double inReal0[], double inReal1[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int outIdx = 0;
-      int i = 0;
-      int historyLen = inReal0.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inReal1.length != inReal0.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inReal0 || (Object)outReal == (Object)inReal1 ) {
          return RetCode.BadParam;
       }
-      outIdx = 0;
-      i = startIdx;
-      while( i <= endIdx ) {
-         outReal[outIdx] = inReal0[i] * inReal1[i];
-         outIdx += 1;
-         i += 1;
-      }
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return MULT_OpenCore( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
    MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )

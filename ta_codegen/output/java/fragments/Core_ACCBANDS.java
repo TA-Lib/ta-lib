@@ -558,7 +558,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ACCBANDS_OpenCore( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
    {
       double periodTotalUpper = 0;
       double periodTotalMiddle = 0;
@@ -571,11 +571,6 @@
       int outIdx = 0;
       int trailingIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outRealUpperBand = 0.0;
-      double lastValue_outRealMiddleBand = 0.0;
-      double lastValue_outRealLowerBand = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -673,9 +668,9 @@
          periodTotalMiddle -= inClose[trailingIdx];
          trailingIdx = trailingIdx + 1;
          /* Write the three bands. */
-         lastValue_outRealUpperBand = tempUpper / (double)optInTimePeriod;
-         lastValue_outRealMiddleBand = tempMiddle / (double)optInTimePeriod;
-         lastValue_outRealLowerBand = tempLower / (double)optInTimePeriod;
+         outRealUpperBand[outIdx * outStride] = tempUpper / (double)optInTimePeriod;
+         outRealMiddleBand[outIdx * outStride] = tempMiddle / (double)optInTimePeriod;
+         outRealLowerBand[outIdx * outStride] = tempLower / (double)optInTimePeriod;
          outIdx = outIdx + 1;
       }
       outBegIdx.value = startIdx;
@@ -704,162 +699,27 @@
       sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
       sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
       sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
-      sp.cur_outRealUpperBand = lastValue_outRealUpperBand;
-      sp.cur_outRealMiddleBand = lastValue_outRealMiddleBand;
-      sp.cur_outRealLowerBand = lastValue_outRealLowerBand;
+      sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
+      sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
+      sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
       sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
       return RetCode.Success;
    }
+   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outRealUpperBand = new double[1];
+      double[] sink_outRealMiddleBand = new double[1];
+      double[] sink_outRealLowerBand = new double[1];
+      return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
+   }
    private RetCode ACCBANDS_OpenAndFillBody( ACCBANDS_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
    {
-      double periodTotalUpper = 0;
-      double periodTotalMiddle = 0;
-      double periodTotalLower = 0;
-      double tempUpper = 0;
-      double tempMiddle = 0;
-      double tempLower = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 20;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealUpperBand == (Object)inClose || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inClose || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealLowerBand == (Object)inClose || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
          return RetCode.BadParam;
       }
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = SMA_Lookback(optInTimePeriod);
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Each band is a simple moving average maintained as a running sum over a
-       * shared trailing window (all three share optInTimePeriod, so one trailing
-       * index walks all three windows in lockstep):
-       *    middle = SMA( close )
-       *    upper  = SMA( high * (1 + 4*(high-low)/(high+low)) )
-       *    lower  = SMA( low  * (1 - 4*(high-low)/(high+low)) )
-       * When high+low is zero the upper/lower map degenerates to high/low.
-       * Fusing the three moving averages into one loop is bit-identical to the
-       * former "two scratch buffers + three sma() calls": each accumulator's
-       * add/record/subtract order is unchanged, and the High/Low map is a pure
-       * function recomputed from the raw trailing bar.
-       */
-      periodTotalUpper = 0.0;
-      periodTotalMiddle = 0.0;
-      periodTotalLower = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      /* Warm up the running sums with the initial period,
-       * except for the last value.
-       */
-      i = trailingIdx;
-      while( i < startIdx ) {
-         tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            periodTotalUpper += inHigh[i] * (1 + tempReal);
-            periodTotalLower += inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += inHigh[i];
-            periodTotalLower += inLow[i];
-         }
-         periodTotalMiddle += inClose[i];
-         i = i + 1;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the input and output to be the
-       * same buffer: every trailing bar is read before any output is written.
-       */
-      outIdx = 0;
-      while( i <= endIdx ) {
-         /* Add the incoming bar to each running sum. */
-         tempReal = inHigh[i] + inLow[i];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[i] - inLow[i]) / tempReal;
-            periodTotalUpper += inHigh[i] * (1 + tempReal);
-            periodTotalLower += inLow[i] * (1 - tempReal);
-         } else {
-            periodTotalUpper += inHigh[i];
-            periodTotalLower += inLow[i];
-         }
-         periodTotalMiddle += inClose[i];
-         i = i + 1;
-         /* Record the current window sums. */
-         tempUpper = periodTotalUpper;
-         tempMiddle = periodTotalMiddle;
-         tempLower = periodTotalLower;
-         /* Remove the trailing bar from each running sum. */
-         tempReal = inHigh[trailingIdx] + inLow[trailingIdx];
-         if( !((-0.00000000000001 < tempReal) && (tempReal < 0.00000000000001)) ) {
-            tempReal = 4 * (inHigh[trailingIdx] - inLow[trailingIdx]) / tempReal;
-            periodTotalUpper -= inHigh[trailingIdx] * (1 + tempReal);
-            periodTotalLower -= inLow[trailingIdx] * (1 - tempReal);
-         } else {
-            periodTotalUpper -= inHigh[trailingIdx];
-            periodTotalLower -= inLow[trailingIdx];
-         }
-         periodTotalMiddle -= inClose[trailingIdx];
-         trailingIdx = trailingIdx + 1;
-         /* Write the three bands. */
-         outRealUpperBand[outIdx] = tempUpper / (double)optInTimePeriod;
-         outRealMiddleBand[outIdx] = tempMiddle / (double)optInTimePeriod;
-         outRealLowerBand[outIdx] = tempLower / (double)optInTimePeriod;
-         outIdx = outIdx + 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
-      System.arraycopy(inHigh, historyLen - cap_trailingIdx, capRing_trailingIdx_inHigh, 0, cap_trailingIdx);
-      double[] capRing_trailingIdx_inLow = new double[allocN_trailingIdx];
-      System.arraycopy(inLow, historyLen - cap_trailingIdx, capRing_trailingIdx_inLow, 0, cap_trailingIdx);
-      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-      System.arraycopy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.periodTotalUpper = periodTotalUpper;
-      sp.periodTotalMiddle = periodTotalMiddle;
-      sp.periodTotalLower = periodTotalLower;
-      sp.tempUpper = tempUpper;
-      sp.tempMiddle = tempMiddle;
-      sp.tempLower = tempLower;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
-      sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
-      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
-      sp.cur_outRealUpperBand = outRealUpperBand[outNBElement.value - 1];
-      sp.cur_outRealMiddleBand = outRealMiddleBand[outNBElement.value - 1];
-      sp.cur_outRealLowerBand = outRealLowerBand[outNBElement.value - 1];
-      sp.cachedValue = new ACCBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
-      return RetCode.Success;
+      return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
    }
    /* Internal startIdx-anchored open behind ACCBANDS_Open (composition seam). */
    ACCBANDS_Stream ACCBANDS_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
