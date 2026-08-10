@@ -126570,6 +126570,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126583,9 +126586,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         else { try {
             if (bench_mode == 1) {
-                core.ACCBANDS_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.ACCBANDS_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ACCBANDS_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1, outArr2);
+                core.ACCBANDS_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0, outArr1, outArr2);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -126649,6 +126652,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126659,9 +126663,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ACOS_Open(inReal);
+                core.ACOS_Open(_warm_inReal);
             } else {
-                core.ACOS_OpenAndFill(inReal, outArr0);
+                core.ACOS_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -126726,6 +126730,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126739,9 +126747,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.AD_Open(inHigh, inLow, inClose, inVolume);
+                core.AD_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume);
             } else {
-                core.AD_OpenAndFill(inHigh, inLow, inClose, inVolume, outArr0);
+                core.AD_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -126807,6 +126815,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126818,9 +126828,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ADD_Open(inReal0, inReal1);
+                core.ADD_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.ADD_OpenAndFill(inReal0, inReal1, outArr0);
+                core.ADD_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -126890,6 +126900,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126905,9 +126919,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ADOSC_Open(inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod);
+                core.ADOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod);
             } else {
-                core.ADOSC_OpenAndFill(inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
+                core.ADOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInFastPeriod, optInSlowPeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -126981,6 +126995,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -126994,9 +127011,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ADX_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.ADX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ADX_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.ADX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127065,6 +127082,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127078,9 +127098,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ADXR_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.ADXR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ADXR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.ADXR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127143,6 +127163,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127156,9 +127177,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.APO_Open(inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+                core.APO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.APO_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                core.APO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127220,6 +127241,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127232,9 +127255,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.AROON_Open(inHigh, inLow, optInTimePeriod);
+                core.AROON_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.AROON_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0, outArr1);
+                core.AROON_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127298,6 +127321,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127310,9 +127335,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.AROONOSC_Open(inHigh, inLow, optInTimePeriod);
+                core.AROONOSC_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.AROONOSC_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+                core.AROONOSC_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127369,6 +127394,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127379,9 +127405,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ASIN_Open(inReal);
+                core.ASIN_Open(_warm_inReal);
             } else {
-                core.ASIN_OpenAndFill(inReal, outArr0);
+                core.ASIN_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127434,6 +127460,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127444,9 +127471,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ATAN_Open(inReal);
+                core.ATAN_Open(_warm_inReal);
             } else {
-                core.ATAN_OpenAndFill(inReal, outArr0);
+                core.ATAN_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127509,6 +127536,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127522,9 +127552,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ATR_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.ATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.ATR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.ATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127585,6 +127615,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127596,9 +127627,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.AVGDEV_Open(inReal, optInTimePeriod);
+                core.AVGDEV_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.AVGDEV_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.AVGDEV_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127664,6 +127695,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127677,9 +127712,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.AVGPRICE_Open(inOpen, inHigh, inLow, inClose);
+                core.AVGPRICE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.AVGPRICE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.AVGPRICE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127747,6 +127782,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127761,9 +127797,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         else { try {
             if (bench_mode == 1) {
-                core.BBANDS_Open(inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+                core.BBANDS_Open(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
             } else {
-                core.BBANDS_OpenAndFill(inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
+                core.BBANDS_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outArr0, outArr1, outArr2);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127829,6 +127865,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127841,9 +127879,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.BETA_Open(inReal0, inReal1, optInTimePeriod);
+                core.BETA_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
             } else {
-                core.BETA_OpenAndFill(inReal0, inReal1, optInTimePeriod, outArr0);
+                core.BETA_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127912,6 +127950,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -127925,9 +127967,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.BOP_Open(inOpen, inHigh, inLow, inClose);
+                core.BOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.BOP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.BOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -127998,6 +128040,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128011,9 +128056,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CCI_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.CCI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.CCI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.CCI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128085,6 +128130,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128098,9 +128147,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL2CROWS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL2CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128174,6 +128223,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128187,9 +128240,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3BLACKCROWS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3BLACKCROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3BLACKCROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3BLACKCROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128263,6 +128316,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128276,9 +128333,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3INSIDE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3INSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3INSIDE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3INSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128352,6 +128409,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128365,9 +128426,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3LINESTRIKE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3LINESTRIKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3LINESTRIKE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3LINESTRIKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128441,6 +128502,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128454,9 +128519,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3OUTSIDE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3OUTSIDE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3OUTSIDE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3OUTSIDE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128530,6 +128595,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128543,9 +128612,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3STARSINSOUTH_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3STARSINSOUTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3STARSINSOUTH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3STARSINSOUTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128619,6 +128688,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128632,9 +128705,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDL3WHITESOLDIERS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDL3WHITESOLDIERS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDL3WHITESOLDIERS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDL3WHITESOLDIERS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128709,6 +128782,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128723,9 +128800,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLABANDONEDBABY_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLABANDONEDBABY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLABANDONEDBABY_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLABANDONEDBABY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128800,6 +128877,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128813,9 +128894,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLADVANCEBLOCK_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLADVANCEBLOCK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLADVANCEBLOCK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLADVANCEBLOCK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128889,6 +128970,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128902,9 +128987,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLBELTHOLD_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLBELTHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLBELTHOLD_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLBELTHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -128978,6 +129063,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -128991,9 +129080,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLBREAKAWAY_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLBREAKAWAY_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLBREAKAWAY_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLBREAKAWAY_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129067,6 +129156,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129080,9 +129173,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLCLOSINGMARUBOZU_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLCLOSINGMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCLOSINGMARUBOZU_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLCLOSINGMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129156,6 +129249,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129169,9 +129266,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLCONCEALBABYSWALL_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLCONCEALBABYSWALL_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCONCEALBABYSWALL_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLCONCEALBABYSWALL_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129245,6 +129342,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129258,9 +129359,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLCOUNTERATTACK_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLCOUNTERATTACK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLCOUNTERATTACK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLCOUNTERATTACK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129335,6 +129436,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129349,9 +129454,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLDARKCLOUDCOVER_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLDARKCLOUDCOVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLDARKCLOUDCOVER_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLDARKCLOUDCOVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129426,6 +129531,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129439,9 +129548,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLDOJI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129515,6 +129624,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129528,9 +129641,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLDOJISTAR_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129604,6 +129717,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129617,9 +129734,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLDRAGONFLYDOJI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLDRAGONFLYDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLDRAGONFLYDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLDRAGONFLYDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129693,6 +129810,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129706,9 +129827,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLENGULFING_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLENGULFING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLENGULFING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLENGULFING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129783,6 +129904,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129797,9 +129922,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLEVENINGDOJISTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLEVENINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLEVENINGDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLEVENINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129875,6 +130000,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129889,9 +130018,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLEVENINGSTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLEVENINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLEVENINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLEVENINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -129966,6 +130095,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -129979,9 +130112,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLGAPSIDESIDEWHITE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLGAPSIDESIDEWHITE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLGAPSIDESIDEWHITE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLGAPSIDESIDEWHITE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130055,6 +130188,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130068,9 +130205,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLGRAVESTONEDOJI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLGRAVESTONEDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLGRAVESTONEDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLGRAVESTONEDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130144,6 +130281,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130157,9 +130298,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHAMMER_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHAMMER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130233,6 +130374,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130246,9 +130391,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHANGINGMAN_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHANGINGMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHANGINGMAN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHANGINGMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130322,6 +130467,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130335,9 +130484,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHARAMI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHARAMI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHARAMI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHARAMI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130411,6 +130560,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130424,9 +130577,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHARAMICROSS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHARAMICROSS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHARAMICROSS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHARAMICROSS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130500,6 +130653,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130513,9 +130670,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHIGHWAVE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHIGHWAVE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIGHWAVE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHIGHWAVE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130589,6 +130746,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130602,9 +130763,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHIKKAKE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHIKKAKE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIKKAKE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHIKKAKE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130678,6 +130839,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130691,9 +130856,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHIKKAKEMOD_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHIKKAKEMOD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHIKKAKEMOD_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHIKKAKEMOD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130767,6 +130932,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130780,9 +130949,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLHOMINGPIGEON_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLHOMINGPIGEON_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLHOMINGPIGEON_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLHOMINGPIGEON_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130856,6 +131025,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130869,9 +131042,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLIDENTICAL3CROWS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLIDENTICAL3CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLIDENTICAL3CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLIDENTICAL3CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -130945,6 +131118,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -130958,9 +131135,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLINNECK_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLINNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLINNECK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLINNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131034,6 +131211,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131047,9 +131228,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLINVERTEDHAMMER_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLINVERTEDHAMMER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLINVERTEDHAMMER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLINVERTEDHAMMER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131123,6 +131304,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131136,9 +131321,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLKICKING_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLKICKING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLKICKING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLKICKING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131212,6 +131397,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131225,9 +131414,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLKICKINGBYLENGTH_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLKICKINGBYLENGTH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLKICKINGBYLENGTH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLKICKINGBYLENGTH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131301,6 +131490,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131314,9 +131507,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLLADDERBOTTOM_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLLADDERBOTTOM_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLADDERBOTTOM_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLLADDERBOTTOM_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131390,6 +131583,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131403,9 +131600,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLLONGLEGGEDDOJI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLLONGLEGGEDDOJI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLONGLEGGEDDOJI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLLONGLEGGEDDOJI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131479,6 +131676,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131492,9 +131693,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLLONGLINE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLLONGLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLLONGLINE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLLONGLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131568,6 +131769,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131581,9 +131786,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLMARUBOZU_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLMARUBOZU_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLMARUBOZU_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLMARUBOZU_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131657,6 +131862,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131670,9 +131879,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLMATCHINGLOW_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLMATCHINGLOW_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLMATCHINGLOW_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLMATCHINGLOW_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131747,6 +131956,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131761,9 +131974,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLMATHOLD_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLMATHOLD_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMATHOLD_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLMATHOLD_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131839,6 +132052,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131853,9 +132070,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLMORNINGDOJISTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLMORNINGDOJISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMORNINGDOJISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLMORNINGDOJISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -131931,6 +132148,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -131945,9 +132166,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLMORNINGSTAR_Open(inOpen, inHigh, inLow, inClose, optInPenetration);
+                core.CDLMORNINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration);
             } else {
-                core.CDLMORNINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, optInPenetration, outArr0);
+                core.CDLMORNINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, optInPenetration, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132022,6 +132243,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132035,9 +132260,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLONNECK_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLONNECK_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLONNECK_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLONNECK_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132111,6 +132336,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132124,9 +132353,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLPIERCING_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLPIERCING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLPIERCING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLPIERCING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132200,6 +132429,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132213,9 +132446,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLRICKSHAWMAN_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLRICKSHAWMAN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLRICKSHAWMAN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLRICKSHAWMAN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132289,6 +132522,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132302,9 +132539,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLRISEFALL3METHODS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLRISEFALL3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLRISEFALL3METHODS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLRISEFALL3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132378,6 +132615,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132391,9 +132632,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSEPARATINGLINES_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSEPARATINGLINES_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSEPARATINGLINES_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSEPARATINGLINES_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132467,6 +132708,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132480,9 +132725,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSHOOTINGSTAR_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSHOOTINGSTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSHOOTINGSTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSHOOTINGSTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132556,6 +132801,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132569,9 +132818,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSHORTLINE_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSHORTLINE_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSHORTLINE_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSHORTLINE_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132645,6 +132894,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132658,9 +132911,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSPINNINGTOP_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSPINNINGTOP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSPINNINGTOP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSPINNINGTOP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132734,6 +132987,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132747,9 +133004,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSTALLEDPATTERN_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSTALLEDPATTERN_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSTALLEDPATTERN_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSTALLEDPATTERN_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132823,6 +133080,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132836,9 +133097,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLSTICKSANDWICH_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLSTICKSANDWICH_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLSTICKSANDWICH_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLSTICKSANDWICH_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -132912,6 +133173,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -132925,9 +133190,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLTAKURI_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLTAKURI_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTAKURI_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLTAKURI_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133001,6 +133266,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133014,9 +133283,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLTASUKIGAP_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLTASUKIGAP_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTASUKIGAP_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLTASUKIGAP_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133090,6 +133359,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133103,9 +133376,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLTHRUSTING_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLTHRUSTING_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTHRUSTING_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLTHRUSTING_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133179,6 +133452,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133192,9 +133469,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLTRISTAR_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLTRISTAR_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLTRISTAR_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLTRISTAR_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133268,6 +133545,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133281,9 +133562,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLUNIQUE3RIVER_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLUNIQUE3RIVER_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLUNIQUE3RIVER_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLUNIQUE3RIVER_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133357,6 +133638,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133370,9 +133655,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLUPSIDEGAP2CROWS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLUPSIDEGAP2CROWS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLUPSIDEGAP2CROWS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLUPSIDEGAP2CROWS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133446,6 +133731,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133459,9 +133748,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CDLXSIDEGAP3METHODS_Open(inOpen, inHigh, inLow, inClose);
+                core.CDLXSIDEGAP3METHODS_Open(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.CDLXSIDEGAP3METHODS_OpenAndFill(inOpen, inHigh, inLow, inClose, outArr0);
+                core.CDLXSIDEGAP3METHODS_OpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133523,6 +133812,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133533,9 +133823,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CEIL_Open(inReal);
+                core.CEIL_Open(_warm_inReal);
             } else {
-                core.CEIL_OpenAndFill(inReal, outArr0);
+                core.CEIL_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133601,6 +133891,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133615,9 +133909,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CMF_Open(inHigh, inLow, inClose, inVolume, optInTimePeriod);
+                core.CMF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
             } else {
-                core.CMF_OpenAndFill(inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+                core.CMF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133682,6 +133976,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133693,9 +133988,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CMO_Open(inReal, optInTimePeriod);
+                core.CMO_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.CMO_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.CMO_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133750,6 +134045,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133761,9 +134057,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CMOU_Open(inReal, optInTimePeriod);
+                core.CMOU_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.CMOU_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.CMOU_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133822,6 +134118,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133834,9 +134132,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.CORREL_Open(inReal0, inReal1, optInTimePeriod);
+                core.CORREL_Open(_warm_inReal0, _warm_inReal1, optInTimePeriod);
             } else {
-                core.CORREL_OpenAndFill(inReal0, inReal1, optInTimePeriod, outArr0);
+                core.CORREL_OpenAndFill(_warm_inReal0, _warm_inReal1, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133893,6 +134191,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133903,9 +134202,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.COS_Open(inReal);
+                core.COS_Open(_warm_inReal);
             } else {
-                core.COS_OpenAndFill(inReal, outArr0);
+                core.COS_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -133958,6 +134257,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -133968,9 +134268,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.COSH_Open(inReal);
+                core.COSH_Open(_warm_inReal);
             } else {
-                core.COSH_OpenAndFill(inReal, outArr0);
+                core.COSH_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134024,6 +134324,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134035,9 +134336,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.DEMA_Open(inReal, optInTimePeriod);
+                core.DEMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.DEMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.DEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134095,6 +134396,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134106,9 +134409,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.DIV_Open(inReal0, inReal1);
+                core.DIV_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.DIV_OpenAndFill(inReal0, inReal1, outArr0);
+                core.DIV_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134174,6 +134477,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134187,9 +134493,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.DX_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.DX_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.DX_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.DX_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134251,6 +134557,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134262,9 +134569,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.EMA_Open(inReal, optInTimePeriod);
+                core.EMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.EMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.EMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134318,6 +134625,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134328,9 +134636,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.EXP_Open(inReal);
+                core.EXP_Open(_warm_inReal);
             } else {
-                core.EXP_OpenAndFill(inReal, outArr0);
+                core.EXP_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134383,6 +134691,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134393,9 +134702,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.FLOOR_Open(inReal);
+                core.FLOOR_Open(_warm_inReal);
             } else {
-                core.FLOOR_OpenAndFill(inReal, outArr0);
+                core.FLOOR_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134449,6 +134758,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134460,9 +134770,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.HMA_Open(inReal, optInTimePeriod);
+                core.HMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.HMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.HMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134517,6 +134827,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134527,9 +134838,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.HT_DCPERIOD_Open(inReal);
+                core.HT_DCPERIOD_Open(_warm_inReal);
             } else {
-                core.HT_DCPERIOD_OpenAndFill(inReal, outArr0);
+                core.HT_DCPERIOD_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134583,6 +134894,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134593,9 +134905,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.HT_DCPHASE_Open(inReal);
+                core.HT_DCPHASE_Open(_warm_inReal);
             } else {
-                core.HT_DCPHASE_OpenAndFill(inReal, outArr0);
+                core.HT_DCPHASE_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134650,6 +134962,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134660,9 +134973,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.HT_PHASOR_Open(inReal);
+                core.HT_PHASOR_Open(_warm_inReal);
             } else {
-                core.HT_PHASOR_OpenAndFill(inReal, outArr0, outArr1);
+                core.HT_PHASOR_OpenAndFill(_warm_inReal, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134719,6 +135032,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134729,9 +135043,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.HT_SINE_Open(inReal);
+                core.HT_SINE_Open(_warm_inReal);
             } else {
-                core.HT_SINE_OpenAndFill(inReal, outArr0, outArr1);
+                core.HT_SINE_OpenAndFill(_warm_inReal, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134787,6 +135101,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134797,9 +135112,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.HT_TRENDLINE_Open(inReal);
+                core.HT_TRENDLINE_Open(_warm_inReal);
             } else {
-                core.HT_TRENDLINE_OpenAndFill(inReal, outArr0);
+                core.HT_TRENDLINE_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134853,6 +135168,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134863,9 +135179,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.HT_TRENDMODE_Open(inReal);
+                core.HT_TRENDMODE_Open(_warm_inReal);
             } else {
-                core.HT_TRENDMODE_OpenAndFill(inReal, outArr0);
+                core.HT_TRENDMODE_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134923,6 +135239,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -134935,9 +135253,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.IMI_Open(inOpen, inClose, optInTimePeriod);
+                core.IMI_Open(_warm_inOpen, _warm_inClose, optInTimePeriod);
             } else {
-                core.IMI_OpenAndFill(inOpen, inClose, optInTimePeriod, outArr0);
+                core.IMI_OpenAndFill(_warm_inOpen, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -134996,6 +135314,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135007,9 +135326,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.KAMA_Open(inReal, optInTimePeriod);
+                core.KAMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.KAMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.KAMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135064,6 +135383,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135075,9 +135395,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LINEARREG_Open(inReal, optInTimePeriod);
+                core.LINEARREG_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.LINEARREG_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135132,6 +135452,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135143,9 +135464,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LINEARREG_ANGLE_Open(inReal, optInTimePeriod);
+                core.LINEARREG_ANGLE_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_ANGLE_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.LINEARREG_ANGLE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135200,6 +135521,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135211,9 +135533,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LINEARREG_INTERCEPT_Open(inReal, optInTimePeriod);
+                core.LINEARREG_INTERCEPT_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_INTERCEPT_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.LINEARREG_INTERCEPT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135268,6 +135590,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135279,9 +135602,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LINEARREG_SLOPE_Open(inReal, optInTimePeriod);
+                core.LINEARREG_SLOPE_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.LINEARREG_SLOPE_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.LINEARREG_SLOPE_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135335,6 +135658,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135345,9 +135669,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LN_Open(inReal);
+                core.LN_Open(_warm_inReal);
             } else {
-                core.LN_OpenAndFill(inReal, outArr0);
+                core.LN_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135400,6 +135724,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135410,9 +135735,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.LOG10_Open(inReal);
+                core.LOG10_Open(_warm_inReal);
             } else {
-                core.LOG10_OpenAndFill(inReal, outArr0);
+                core.LOG10_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135467,6 +135792,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135479,9 +135805,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MA_Open(inReal, optInTimePeriod, optInMAType);
+                core.MA_Open(_warm_inReal, optInTimePeriod, optInMAType);
             } else {
-                core.MA_OpenAndFill(inReal, optInTimePeriod, optInMAType, outArr0);
+                core.MA_OpenAndFill(_warm_inReal, optInTimePeriod, optInMAType, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135541,6 +135867,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135554,9 +135881,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         else { try {
             if (bench_mode == 1) {
-                core.MACD_Open(inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
+                core.MACD_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
             } else {
-                core.MACD_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
+                core.MACD_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outArr0, outArr1, outArr2);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135624,6 +135951,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135640,9 +135968,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         else { try {
             if (bench_mode == 1) {
-                core.MACDEXT_Open(inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+                core.MACDEXT_Open(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
             } else {
-                core.MACDEXT_OpenAndFill(inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
+                core.MACDEXT_OpenAndFill(_warm_inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outArr0, outArr1, outArr2);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135708,6 +136036,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135719,9 +136048,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1, outArr2);
         else { try {
             if (bench_mode == 1) {
-                core.MACDFIX_Open(inReal, optInSignalPeriod);
+                core.MACDFIX_Open(_warm_inReal, optInSignalPeriod);
             } else {
-                core.MACDFIX_OpenAndFill(inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
+                core.MACDFIX_OpenAndFill(_warm_inReal, optInSignalPeriod, outArr0, outArr1, outArr2);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135783,6 +136112,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135795,9 +136125,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.MAMA_Open(inReal, optInFastLimit, optInSlowLimit);
+                core.MAMA_Open(_warm_inReal, optInFastLimit, optInSlowLimit);
             } else {
-                core.MAMA_OpenAndFill(inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
+                core.MAMA_OpenAndFill(_warm_inReal, optInFastLimit, optInSlowLimit, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135861,6 +136191,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135875,9 +136207,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MAVP_Open(inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
+                core.MAVP_Open(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType);
             } else {
-                core.MAVP_OpenAndFill(inReal0, inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
+                core.MAVP_OpenAndFill(_warm_inReal0, _warm_inReal1, optInMinPeriod, optInMaxPeriod, optInMAType, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -135937,6 +136269,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -135948,9 +136281,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MAX_Open(inReal, optInTimePeriod);
+                core.MAX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MAX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136005,6 +136338,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136016,9 +136350,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MAXINDEX_Open(inReal, optInTimePeriod);
+                core.MAXINDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MAXINDEX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136076,6 +136410,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136087,9 +136423,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MEDPRICE_Open(inHigh, inLow);
+                core.MEDPRICE_Open(_warm_inHigh, _warm_inLow);
             } else {
-                core.MEDPRICE_OpenAndFill(inHigh, inLow, outArr0);
+                core.MEDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136158,6 +136494,10 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136172,9 +136512,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MFI_Open(inHigh, inLow, inClose, inVolume, optInTimePeriod);
+                core.MFI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod);
             } else {
-                core.MFI_OpenAndFill(inHigh, inLow, inClose, inVolume, optInTimePeriod, outArr0);
+                core.MFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136238,6 +136578,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136249,9 +136590,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MIDPOINT_Open(inReal, optInTimePeriod);
+                core.MIDPOINT_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MIDPOINT_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MIDPOINT_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136310,6 +136651,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136322,9 +136665,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MIDPRICE_Open(inHigh, inLow, optInTimePeriod);
+                core.MIDPRICE_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.MIDPRICE_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+                core.MIDPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136382,6 +136725,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136393,9 +136737,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MIN_Open(inReal, optInTimePeriod);
+                core.MIN_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MIN_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MIN_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136450,6 +136794,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136461,9 +136806,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MININDEX_Open(inReal, optInTimePeriod);
+                core.MININDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MININDEX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MININDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136519,6 +136864,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136530,9 +136876,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.MINMAX_Open(inReal, optInTimePeriod);
+                core.MINMAX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MINMAX_OpenAndFill(inReal, optInTimePeriod, outArr0, outArr1);
+                core.MINMAX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136590,6 +136936,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136601,9 +136948,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.MINMAXINDEX_Open(inReal, optInTimePeriod);
+                core.MINMAXINDEX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MINMAXINDEX_OpenAndFill(inReal, optInTimePeriod, outArr0, outArr1);
+                core.MINMAXINDEX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136669,6 +137016,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136682,9 +137032,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MINUS_DI_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.MINUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.MINUS_DI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.MINUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136750,6 +137100,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136762,9 +137114,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MINUS_DM_Open(inHigh, inLow, optInTimePeriod);
+                core.MINUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.MINUS_DM_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+                core.MINUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136822,6 +137174,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136833,9 +137186,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MOM_Open(inReal, optInTimePeriod);
+                core.MOM_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.MOM_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.MOM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136893,6 +137246,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136904,9 +137259,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.MULT_Open(inReal0, inReal1);
+                core.MULT_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.MULT_OpenAndFill(inReal0, inReal1, outArr0);
+                core.MULT_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -136972,6 +137327,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -136985,9 +137343,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.NATR_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.NATR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.NATR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.NATR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137051,6 +137409,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137062,9 +137422,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.NVI_Open(inClose, inVolume);
+                core.NVI_Open(_warm_inClose, _warm_inVolume);
             } else {
-                core.NVI_OpenAndFill(inClose, inVolume, outArr0);
+                core.NVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137124,6 +137484,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137135,9 +137497,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.OBV_Open(inReal, inVolume);
+                core.OBV_Open(_warm_inReal, _warm_inVolume);
             } else {
-                core.OBV_OpenAndFill(inReal, inVolume, outArr0);
+                core.OBV_OpenAndFill(_warm_inReal, _warm_inVolume, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137203,6 +137565,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137216,9 +137581,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.PLUS_DI_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.PLUS_DI_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.PLUS_DI_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.PLUS_DI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137284,6 +137649,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137296,9 +137663,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.PLUS_DM_Open(inHigh, inLow, optInTimePeriod);
+                core.PLUS_DM_Open(_warm_inHigh, _warm_inLow, optInTimePeriod);
             } else {
-                core.PLUS_DM_OpenAndFill(inHigh, inLow, optInTimePeriod, outArr0);
+                core.PLUS_DM_OpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137358,6 +137725,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137371,9 +137739,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.PPO_Open(inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
+                core.PPO_Open(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.PPO_OpenAndFill(inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                core.PPO_OpenAndFill(_warm_inReal, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137433,6 +137801,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137444,9 +137814,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.PVI_Open(inClose, inVolume);
+                core.PVI_Open(_warm_inClose, _warm_inVolume);
             } else {
-                core.PVI_OpenAndFill(inClose, inVolume, outArr0);
+                core.PVI_OpenAndFill(_warm_inClose, _warm_inVolume, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137505,6 +137875,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137518,9 +137889,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.PVO_Open(inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
+                core.PVO_Open(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType);
             } else {
-                core.PVO_OpenAndFill(inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
+                core.PVO_OpenAndFill(_warm_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137577,6 +137948,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137588,9 +137960,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ROC_Open(inReal, optInTimePeriod);
+                core.ROC_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROC_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.ROC_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137645,6 +138017,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137656,9 +138029,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ROCP_Open(inReal, optInTimePeriod);
+                core.ROCP_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCP_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.ROCP_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137713,6 +138086,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137724,9 +138098,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ROCR_Open(inReal, optInTimePeriod);
+                core.ROCR_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCR_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.ROCR_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137781,6 +138155,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137792,9 +138167,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ROCR100_Open(inReal, optInTimePeriod);
+                core.ROCR100_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.ROCR100_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.ROCR100_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137850,6 +138225,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137861,9 +138237,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.RSI_Open(inReal, optInTimePeriod);
+                core.RSI_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.RSI_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.RSI_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -137923,6 +138299,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -137936,9 +138314,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SAR_Open(inHigh, inLow, optInAcceleration, optInMaximum);
+                core.SAR_Open(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum);
             } else {
-                core.SAR_OpenAndFill(inHigh, inLow, optInAcceleration, optInMaximum, outArr0);
+                core.SAR_OpenAndFill(_warm_inHigh, _warm_inLow, optInAcceleration, optInMaximum, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138008,6 +138386,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138027,9 +138407,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SAREXT_Open(inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
+                core.SAREXT_Open(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
             } else {
-                core.SAREXT_OpenAndFill(inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
+                core.SAREXT_OpenAndFill(_warm_inHigh, _warm_inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138093,6 +138473,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138103,9 +138484,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SIN_Open(inReal);
+                core.SIN_Open(_warm_inReal);
             } else {
-                core.SIN_OpenAndFill(inReal, outArr0);
+                core.SIN_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138158,6 +138539,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138168,9 +138550,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SINH_Open(inReal);
+                core.SINH_Open(_warm_inReal);
             } else {
-                core.SINH_OpenAndFill(inReal, outArr0);
+                core.SINH_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138224,6 +138606,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138235,9 +138618,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SMA_Open(inReal, optInTimePeriod);
+                core.SMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.SMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.SMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138291,6 +138674,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138301,9 +138685,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SQRT_Open(inReal);
+                core.SQRT_Open(_warm_inReal);
             } else {
-                core.SQRT_OpenAndFill(inReal, outArr0);
+                core.SQRT_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138358,6 +138742,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138370,9 +138755,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.STDDEV_Open(inReal, optInTimePeriod, optInNbDev);
+                core.STDDEV_Open(_warm_inReal, optInTimePeriod, optInNbDev);
             } else {
-                core.STDDEV_OpenAndFill(inReal, optInTimePeriod, optInNbDev, outArr0);
+                core.STDDEV_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138441,6 +138826,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138458,9 +138846,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.STOCH_Open(inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                core.STOCH_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
             } else {
-                core.STOCH_OpenAndFill(inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
+                core.STOCH_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138538,6 +138926,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138553,9 +138944,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.STOCHF_Open(inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                core.STOCHF_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             } else {
-                core.STOCHF_OpenAndFill(inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                core.STOCHF_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138624,6 +139015,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138638,9 +139030,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0, outArr1);
         else { try {
             if (bench_mode == 1) {
-                core.STOCHRSI_Open(inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+                core.STOCHRSI_Open(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
             } else {
-                core.STOCHRSI_OpenAndFill(inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
+                core.STOCHRSI_OpenAndFill(_warm_inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outArr0, outArr1);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138703,6 +139095,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal0 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal0, 0, endIdx + 1);
+        double[] _warm_inReal1 = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal1, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138714,9 +139108,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SUB_Open(inReal0, inReal1);
+                core.SUB_Open(_warm_inReal0, _warm_inReal1);
             } else {
-                core.SUB_OpenAndFill(inReal0, inReal1, outArr0);
+                core.SUB_OpenAndFill(_warm_inReal0, _warm_inReal1, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138773,6 +139167,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138784,9 +139179,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.SUM_Open(inReal, optInTimePeriod);
+                core.SUM_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.SUM_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.SUM_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138843,6 +139238,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138855,9 +139251,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.T3_Open(inReal, optInTimePeriod, optInVFactor);
+                core.T3_Open(_warm_inReal, optInTimePeriod, optInVFactor);
             } else {
-                core.T3_OpenAndFill(inReal, optInTimePeriod, optInVFactor, outArr0);
+                core.T3_OpenAndFill(_warm_inReal, optInTimePeriod, optInVFactor, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138912,6 +139308,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138922,9 +139319,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TAN_Open(inReal);
+                core.TAN_Open(_warm_inReal);
             } else {
-                core.TAN_OpenAndFill(inReal, outArr0);
+                core.TAN_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -138977,6 +139374,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -138987,9 +139385,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TANH_Open(inReal);
+                core.TANH_Open(_warm_inReal);
             } else {
-                core.TANH_OpenAndFill(inReal, outArr0);
+                core.TANH_OpenAndFill(_warm_inReal, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139043,6 +139441,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139054,9 +139453,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TEMA_Open(inReal, optInTimePeriod);
+                core.TEMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TEMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.TEMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139118,6 +139517,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139130,9 +139532,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TRANGE_Open(inHigh, inLow, inClose);
+                core.TRANGE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.TRANGE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+                core.TRANGE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139192,6 +139594,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139203,9 +139606,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TRIMA_Open(inReal, optInTimePeriod);
+                core.TRIMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TRIMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.TRIMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139260,6 +139663,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139271,9 +139675,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TRIX_Open(inReal, optInTimePeriod);
+                core.TRIX_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TRIX_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.TRIX_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139328,6 +139732,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139339,9 +139744,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TSF_Open(inReal, optInTimePeriod);
+                core.TSF_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.TSF_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.TSF_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139403,6 +139808,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139415,9 +139823,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.TYPPRICE_Open(inHigh, inLow, inClose);
+                core.TYPPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.TYPPRICE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+                core.TYPPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139487,6 +139895,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139502,9 +139913,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.ULTOSC_Open(inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
+                core.ULTOSC_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
             } else {
-                core.ULTOSC_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
+                core.ULTOSC_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139568,6 +139979,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139580,9 +139992,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.VAR_Open(inReal, optInTimePeriod, optInNbDev);
+                core.VAR_Open(_warm_inReal, optInTimePeriod, optInNbDev);
             } else {
-                core.VAR_OpenAndFill(inReal, optInTimePeriod, optInNbDev, outArr0);
+                core.VAR_OpenAndFill(_warm_inReal, optInTimePeriod, optInNbDev, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139642,6 +140054,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139654,9 +140068,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.VWMA_Open(inReal, inVolume, optInTimePeriod);
+                core.VWMA_Open(_warm_inReal, _warm_inVolume, optInTimePeriod);
             } else {
-                core.VWMA_OpenAndFill(inReal, inVolume, optInTimePeriod, outArr0);
+                core.VWMA_OpenAndFill(_warm_inReal, _warm_inVolume, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139721,6 +140135,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139733,9 +140150,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.WCLPRICE_Open(inHigh, inLow, inClose);
+                core.WCLPRICE_Open(_warm_inHigh, _warm_inLow, _warm_inClose);
             } else {
-                core.WCLPRICE_OpenAndFill(inHigh, inLow, inClose, outArr0);
+                core.WCLPRICE_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139803,6 +140220,9 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139816,9 +140236,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.WILLR_Open(inHigh, inLow, inClose, optInTimePeriod);
+                core.WILLR_Open(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
             } else {
-                core.WILLR_OpenAndFill(inHigh, inLow, inClose, optInTimePeriod, outArr0);
+                core.WILLR_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
@@ -139879,6 +140299,7 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -139890,9 +140311,9 @@ public class TaCodegenServe {
             outBegIdx, outNBElement, outArr0);
         else { try {
             if (bench_mode == 1) {
-                core.WMA_Open(inReal, optInTimePeriod);
+                core.WMA_Open(_warm_inReal, optInTimePeriod);
             } else {
-                core.WMA_OpenAndFill(inReal, optInTimePeriod, outArr0);
+                core.WMA_OpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
             }
             rc = RetCode.Success;
         } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
