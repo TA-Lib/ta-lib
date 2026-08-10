@@ -2776,7 +2776,23 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             }
             else if( variant >= 3 )
             {
-                if( v != 0 ) continue; /* extra shapes: defaults vector only */
+                /* Extra shapes: defaults vector, plus the below-default
+                 * boundary vectors (range.min and min+1).
+                 *
+                 * The v-rotation `(v + variant) % 7` only ever hands a
+                 * non-default vector shape v itself, so before this the
+                 * boundary periods were verified on MONO_UP/MONO_DOWN alone
+                 * and every shape from CONSTANT up was verified at exactly one
+                 * period — the default. That made the cross-tier signed-zero
+                 * arm (#147) INERT for the family it was written for:
+                 * FUZZ_WITH_ZEROS reached MIN/MAX/MINMAX only at period 30,
+                 * where a window with no negative bar (and hence a +/-0
+                 * extremum) does not occur in 240 bars, and reached MIDPOINT at
+                 * 14, where a tie at ONE extremum cannot change the bits of
+                 * (highest+lowest)/2. At range.min/min+1 the same shape carries
+                 * 5-21 windows per function whose emitted bits are a tie-break
+                 * choice. Costs <= 2 extra vectors x 6 shapes per function. */
+                if( v != 0 && !vecIsMin[v] ) continue;
             }
             shape = (variant >= 3) ? variant : (v + variant) % 7;
             stream_build_request(ctx->requestBuf, funcInfo, vec[v],

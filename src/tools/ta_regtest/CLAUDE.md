@@ -397,16 +397,29 @@ class `--fuzz-064` already carries — `a == b` with differing bits can only be
 update, copy-A vs copy-B, the `Integer.MIN_VALUE` sentinel pair. One code path
 run twice has no licence to differ at all. Integer outputs never reach this path.
 
-This landed before anything needed it, on purpose. `FUZZ_WITH_ZEROS` sprinkles
-literal `0.0`/`-0.0` and *does* reach a ±0 tie at the window extremum (its
-stream_verify cell — seed 1240, n=240, period 14 — has 10 such windows on
-`close`), so the first algorithm that gives batch and stream different tie
-behaviour would fail the gate on a difference already ruled benign. Sabotage-
-proven in all three servers: flipping the sign of every zero the batch emits
-keeps the run green while counting it (C 564,415 / Rust 420,421 / Java 480,590
-cases), and perturbing those same values to `1e-300` instead fails loudly with
-`STREAM FILL MISMATCH` and `"benign":0` — so the widened comparator still sees
-every difference that is not a zero's sign.
+This landed before anything needed it, on purpose. The comparator was sabotage-
+proven in all three servers from the start: flipping the sign of every zero the
+batch emits keeps the run green while counting it (C 564,415 / Rust 420,421 /
+Java 480,590 cases), and perturbing those same values to `1e-300` instead fails
+loudly with `STREAM FILL MISMATCH` and `"benign":0` — so the widened comparator
+still sees every difference that is not a zero's sign.
+
+**The comparator being right is not the same as the cell being reachable**, and
+for a full release it was not. `FUZZ_WITH_ZEROS` reaches the family only through
+the defaults vector, because the extra-shape legs used to run on `v == 0` alone
+and the `(v + variant) % 7` rotation hands a non-default vector shape `v` itself.
+At the defaults period that shape produces **no ambiguous window at all**: MIN /
+MAX / MINMAX run at 30, where 240 bars contain no window free of a negative bar,
+and MIDPOINT runs at 14, where the 10 ±0 ties on `close` cannot change the bits
+of `(highest+lowest)/2` — that needs *both* extrema to be zeros, i.e. an
+all-zero window. So a tie-break divergence in the one family the arm was written
+for was invisible: a `<=`→`<` swap in `TA_MIN`'s stream step counted **0**.
+
+Running the extra shapes on the boundary vectors too (`range.min`, `min+1` —
+periods 2 and 3 here) is what makes it live: those cells carry 5–21 ambiguous
+windows per function, and the same sabotage now counts 47. The boundary vectors
+are the right place for it independently of ±0 — they are the degenerate-arm
+periods (#93/#94) and were seeing only `MONO_UP`/`MONO_DOWN`.
 
 Deliberately **not** surfaced in the user-facing docs. The published "bit-identical"
 wording stays as written: the sign of a zero is below the level a caller reasons
