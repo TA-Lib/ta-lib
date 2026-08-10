@@ -149,7 +149,9 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
     * not delegated -- at period 1 they reduce to (x-prev)+prev, which
     * loses the input as soon as consecutive values differ by more than a
     * factor of two, and 2*e1 - e2 then propagates the residue rather
-    * than cancelling it.
+    * than cancelling it. The unstable period still delays the first
+    * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
+    * 1, so the two disagree on alignment when it is non-zero.
     */
    if( optInTimePeriod == 1 )
    {
@@ -478,7 +480,9 @@ TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double in
        * not delegated -- at period 1 they reduce to (x-prev)+prev, which
        * loses the input as soon as consecutive values differ by more than a
        * factor of two, and 2*e1 - e2 then propagates the residue rather
-       * than cancelling it.
+       * than cancelling it. The unstable period still delays the first
+       * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
+       * 1, so the two disagree on alignment when it is non-zero.
        */
       if( optInTimePeriod == 1 )
       {
@@ -702,7 +706,9 @@ TA_LIB_API TA_RetCode TA_DEMA_OpenAndFill( TA_DEMA_Stream **stream, const double
        * not delegated -- at period 1 they reduce to (x-prev)+prev, which
        * loses the input as soon as consecutive values differ by more than a
        * factor of two, and 2*e1 - e2 then propagates the residue rather
-       * than cancelling it.
+       * than cancelling it. The unstable period still delays the first
+       * output, and at twice EMA's rate: TA_MA reports lookback 0 at period
+       * 1, so the two disagree on alignment when it is non-zero.
        */
       if( optInTimePeriod == 1 )
       {
