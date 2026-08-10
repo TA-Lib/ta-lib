@@ -118,7 +118,7 @@ pub struct RustRenderCtx {
     /// of the batch tier's bare `return RetCode::X;`.
     pub result_error_returns: bool,
     /// Fully-qualified MAType constant (`TA_MAType_SMA`) → its Rust rendering
-    /// (the integer value, e.g. `"0"`), derived from `enums.yaml` by
+    /// (`matype::SMA`, the generated crate-internal value), derived by
     /// [`build_matype_map`]. Populated for batch/lookback bodies — the only
     /// place `optInMAType == TA_MAType_*` comparisons render; stream bodies
     /// dispatch MA-type structurally (case labels / sub-opens) and leave this
@@ -144,9 +144,10 @@ pub(crate) fn build_matype_map(
     enums
         .get("MAType")
         .map(|e| {
+            let m = e.name.to_lowercase();
             e.variants
                 .iter()
-                .map(|v| (v.c_name.clone(), v.value.to_string()))
+                .map(|v| (v.c_name.clone(), format!("{m}::{}", v.name)))
                 .collect()
         })
         .unwrap_or_default()
@@ -1350,7 +1351,7 @@ pub(crate) fn gen_opt_param_validation_with(
             if let Some(default) = opt.default {
                 let extra = match &opt.param_type {
                     ParamType::Enum(e) => super::common::enum_default_variant(enums, e)
-                        .map(|v| format!(" || (({name}) as i32) == ({})", v.value))
+                        .map(|v| format!(" || {name} == {}::{}", e.to_lowercase(), v.name))
                         .unwrap_or_default(),
                     _ => String::new(),
                 };
@@ -3772,8 +3773,10 @@ fn render_binop(
         if cmp_right_sentinel && !cmp_left_sentinel && !expr_is_i32_typed(left) && !expr_is_float_typed_ctx(left, Some(ctx)) && !matches!(left, Expr::IntLiteral(_)) {
             left_str = wrap_cast(&left_str, "i32");
         }
-        let left_is_i32 = expr_is_i32_typed(left) || cmp_left_sentinel;
-        let right_is_i32 = expr_is_i32_typed(right) || cmp_right_sentinel;
+        let left_is_i32 =
+            expr_is_i32_typed(left) || cmp_left_sentinel || expr_is_matype_const(left, ctx);
+        let right_is_i32 =
+            expr_is_i32_typed(right) || cmp_right_sentinel || expr_is_matype_const(right, ctx);
         // i32-typed expressions are NOT float even if heuristics say otherwise
         let left_is_float = expr_is_float_typed_ctx(left, Some(ctx)) && !left_is_i32;
         let right_is_float = expr_is_float_typed_ctx(right, Some(ctx)) && !right_is_i32;
@@ -3926,6 +3929,16 @@ fn expr_is_integer(expr: &Expr) -> bool {
 fn expr_is_float_typed_ctx(expr: &Expr, ctx: Option<&RustRenderCtx>) -> bool {
     let view = ctx.map(RustRenderCtx::fma_view);
     fma::expr_is_float_typed(expr, view.as_ref())
+}
+
+/// A `TA_MAType_*` constant, which renders as an i32 `matype::` value.
+///
+/// Without this the parameter beside it — an `i32` — is cast DOWN to `usize` by
+/// the mixed-operand rule, because an unrecognised `Expr::Var` counts as usize.
+/// Keyed on `matype_map`, so the names come from enums.yaml rather than a
+/// prefix spelled here.
+fn expr_is_matype_const(expr: &Expr, ctx: &RustRenderCtx) -> bool {
+    matches!(expr, Expr::Var(name) if ctx.matype_map.contains_key(name))
 }
 
 /// Check if an expression is likely i32-typed (integer optIn params, unstable_period access, etc.)
@@ -5720,7 +5733,6 @@ fn is_likely_index_var(name: &str) -> bool {
         || name == "isLong" || name == "isShort"
         || name == "currentBar"
         || name == "tempInteger" || name == "tempInt"
-        || name == "tempMAType"
         || name == "retValue"
         || name == "trend" || name == "daysInTrend"
         || name == "patternResult" || name == "patternIdx"

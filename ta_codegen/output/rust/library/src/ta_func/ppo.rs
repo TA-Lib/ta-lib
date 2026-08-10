@@ -94,7 +94,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         // Lookback is driven by the slowest MA.
@@ -203,7 +203,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let _assertLb = self.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -326,7 +326,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let historyLen: usize = inReal.len();
@@ -451,7 +451,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let historyLen: usize = inReal.len();

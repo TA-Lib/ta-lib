@@ -97,7 +97,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
             optInFastD_MAType = 0;
         }
         let mut retValue: usize = 0_usize;
@@ -219,7 +219,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
             optInFastD_MAType = 0;
         }
         if outFastK.as_ptr() == outFastD.as_ptr() {
@@ -553,7 +553,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
             optInFastD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();
@@ -854,7 +854,7 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || ((optInFastD_MAType) as i32) == (11) {
+        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
             optInFastD_MAType = 0;
         }
         let historyLen: usize = inHigh.len();

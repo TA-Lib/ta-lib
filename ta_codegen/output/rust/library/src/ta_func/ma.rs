@@ -89,11 +89,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let mut retValue: usize = 0_usize;
-        if optInTimePeriod <= 1 || ((optInMAType) as usize) == 10 {
+        if optInTimePeriod <= 1 || optInMAType == matype::DISABLED {
             return (0) as usize;
         }
         match optInMAType {
@@ -226,7 +226,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType);
@@ -240,7 +240,7 @@ impl Core {
         let mut todayIdx: usize = 0_usize;
         // No-smoothing identity: period 1 (every MA type) or the explicit
         // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
-        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
+        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -340,7 +340,7 @@ enum MA_Sub {
 #[allow(unused_parens)]
 impl Core {
     fn MA_step_internal(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 || ((sp.optInMAType) as usize) == 10 {
+        if sp.optInTimePeriod == 1 || sp.optInMAType == matype::DISABLED {
             (*outReal) = inReal;
             return;
         }
@@ -397,11 +397,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
+        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
@@ -496,11 +496,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || ((optInMAType) as usize) == 10 {
+        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }

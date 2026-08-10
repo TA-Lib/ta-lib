@@ -95,7 +95,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         // The slow MA is the key factor determining the lookback period.
@@ -203,7 +203,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let _assertLb = self.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -314,7 +314,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let historyLen: usize = inReal.len();
@@ -433,7 +433,7 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 1;
         }
         let historyLen: usize = inReal.len();

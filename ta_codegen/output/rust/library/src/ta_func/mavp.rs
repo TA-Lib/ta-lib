@@ -93,7 +93,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         return self.MA_Lookback(optInMaxPeriod, optInMAType);
@@ -200,7 +200,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -524,7 +524,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         // An inverted [min, max] period window is invalid (batch rejects).
@@ -606,7 +606,7 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         // An inverted [min, max] period window is invalid (batch rejects).

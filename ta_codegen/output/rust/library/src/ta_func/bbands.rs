@@ -113,7 +113,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let mut maLookback: usize = 0_usize;
@@ -302,7 +302,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
@@ -323,7 +323,7 @@ impl Core {
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
-        if ((optInMAType) as usize) == 0 {
+        if optInMAType == matype::SMA {
             // SMA fast path: the middle band (SMA) and the standard deviation share one
             // pass over the window below. Bit-identical to the general MA + STDDEV path
             // (which the stream composes for every MA type).
@@ -609,7 +609,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();
@@ -779,7 +779,7 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || ((optInMAType) as i32) == (11) {
+        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
             optInMAType = 0;
         }
         let historyLen: usize = inReal.len();

@@ -5,6 +5,23 @@
 mod types;
 pub use types::*;
 
+/// MAType member values, generated from enums.yaml.
+#[allow(dead_code)]
+pub(crate) mod matype {
+    pub(crate) const SMA: i32 = 0;
+    pub(crate) const EMA: i32 = 1;
+    pub(crate) const WMA: i32 = 2;
+    pub(crate) const DEMA: i32 = 3;
+    pub(crate) const TEMA: i32 = 4;
+    pub(crate) const TRIMA: i32 = 5;
+    pub(crate) const KAMA: i32 = 6;
+    pub(crate) const MAMA: i32 = 7;
+    pub(crate) const T3: i32 = 8;
+    pub(crate) const HMA: i32 = 9;
+    pub(crate) const DISABLED: i32 = 10;
+    pub(crate) const DEFAULT: i32 = 11;
+}
+
 // Hand-written test-only modules (not generated; see templates/rust/).
 #[cfg(test)]
 mod scratch_election;

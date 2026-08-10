@@ -585,7 +585,7 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
     // break the crate.
     if backends_to_run.contains(&"rust") {
         let templates = root.join("ta_codegen/generator/templates/rust");
-        generate_rust_crate_scaffolding(&out_base, all_funcs, &templates);
+        generate_rust_crate_scaffolding(&out_base, all_funcs, &templates, &enums);
     }
 
     backends::func_list::generate(all_funcs, &root.join("ta_func_list.txt"));
@@ -1789,7 +1789,12 @@ const RUST_TEMPLATE_MODULES: &[&str] = &["types", "scratch_election"];
 /// are declared `#[cfg(test)]` in the generated `mod.rs`.
 const RUST_TEST_ONLY_MODULES: &[&str] = &["scratch_election"];
 
-fn generate_rust_crate_scaffolding(out_base: &Path, funcs: &[ir::FuncDef], templates: &Path) {
+fn generate_rust_crate_scaffolding(
+    out_base: &Path,
+    funcs: &[ir::FuncDef],
+    templates: &Path,
+    enums: &std::collections::HashMap<String, ir::EnumDef>,
+) {
     // Single source of truth for the crate version: the VERSION file at the
     // repo root (kept in sync across all packaging by scripts/sync.py).
     // Hardcoding it here once made a release bump fail the regen-check gate.
@@ -2155,6 +2160,27 @@ mod types;
 pub use types::*;
 "#,
     );
+
+    // MAType member values. This backend still types the parameter `i32`, so the
+    // generated bodies compare against these rather than a bare number -- as C,
+    // Java and C# compare against the member name. Crate-internal on purpose:
+    // the public spelling arrives with the enum itself.
+    if let Some(ma) = enums.get("MAType") {
+        mod_rs.push_str(&format!(
+            "\n/// {} member values, generated from enums.yaml.\n\
+             #[allow(dead_code)]\n\
+             pub(crate) mod {} {{\n",
+            ma.name,
+            ma.name.to_lowercase()
+        ));
+        for v in &ma.variants {
+            mod_rs.push_str(&format!(
+                "    pub(crate) const {}: i32 = {};\n",
+                v.name, v.value
+            ));
+        }
+        mod_rs.push_str("}\n");
+    }
 
     // Hand-written test-only modules (not generated; see templates/rust/).
     if !RUST_TEST_ONLY_MODULES.is_empty() {
