@@ -546,10 +546,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLHARAMI_Open`] (composition seam).
-    pub(crate) fn CDLHARAMI_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLHARAMI_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLHARAMI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLHARAMI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLHARAMI_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLHARAMI_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -561,7 +562,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut BodyShortPeriodTotal: f64 = 0.0_f64;
         let mut BodyLongPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
@@ -591,8 +591,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -661,20 +661,20 @@ impl Core {
                     // 2nd: short
                     // 2nd is engulfed by 1st
                     if (inClose[i]).max(inOpen[i]) < (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) > (inClose[i - 1]).min(inOpen[i - 1]) {
-                        lastValue_outInteger = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
+                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
                         // 2nd is engulfed by 1st
                         // (one end of real body can match;
                         // engulfing guaranteed by "long" and "short")
                     } else if (inClose[i]).max(inOpen[i]) <= (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) >= (inClose[i - 1]).min(inOpen[i - 1]) {
-                        lastValue_outInteger = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
+                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
                     } else {
-                        lastValue_outInteger = 0;
+                        outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                     }
                 } else {
-                    lastValue_outInteger = 0;
+                    outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
                 }
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -746,304 +746,6 @@ impl Core {
             if !(i <= endIdx) { break; }
         }
         // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let cap_BodyLongTrailingIdx: i64 = (i as i64) - (BodyLongTrailingIdx as i64);
-        if cap_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_BodyLongTrailingIdx: usize = if cap_BodyLongTrailingIdx > 0 { cap_BodyLongTrailingIdx as usize } else { 1 };
-        let mut ring_BodyLongTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        ring_BodyLongTrailingIdx_inOpen[..cap_BodyLongTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let mut ring_BodyLongTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        ring_BodyLongTrailingIdx_inHigh[..cap_BodyLongTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let mut ring_BodyLongTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        ring_BodyLongTrailingIdx_inLow[..cap_BodyLongTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let mut ring_BodyLongTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyLongTrailingIdx];
-        ring_BodyLongTrailingIdx_inClose[..cap_BodyLongTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_BodyLongTrailingIdx as usize..]);
-        let cap_BodyShortTrailingIdx: i64 = (i as i64) - (BodyShortTrailingIdx as i64);
-        if cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_BodyShortTrailingIdx: usize = if cap_BodyShortTrailingIdx > 0 { cap_BodyShortTrailingIdx as usize } else { 1 };
-        let mut ring_BodyShortTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
-        ring_BodyShortTrailingIdx_inOpen[..cap_BodyShortTrailingIdx as usize]
-            .copy_from_slice(&inOpen[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let mut ring_BodyShortTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
-        ring_BodyShortTrailingIdx_inHigh[..cap_BodyShortTrailingIdx as usize]
-            .copy_from_slice(&inHigh[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let mut ring_BodyShortTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
-        ring_BodyShortTrailingIdx_inLow[..cap_BodyShortTrailingIdx as usize]
-            .copy_from_slice(&inLow[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let mut ring_BodyShortTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_BodyShortTrailingIdx];
-        ring_BodyShortTrailingIdx_inClose[..cap_BodyShortTrailingIdx as usize]
-            .copy_from_slice(&inClose[historyLen - cap_BodyShortTrailingIdx as usize..]);
-        let state = CDLHARAMI_StreamState {
-            BodyShortPeriodTotal,
-            BodyLongPeriodTotal,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag1_inLow: inLow[historyLen - 1],
-            lag1_inClose: inClose[historyLen - 1],
-            ringPos_BodyLongTrailingIdx: 0_usize,
-            ringCap_BodyLongTrailingIdx: cap_BodyLongTrailingIdx as usize,
-            ring_BodyLongTrailingIdx_inOpen,
-            ring_BodyLongTrailingIdx_inHigh,
-            ring_BodyLongTrailingIdx_inLow,
-            ring_BodyLongTrailingIdx_inClose,
-            ringPos_BodyShortTrailingIdx: 0_usize,
-            ringCap_BodyShortTrailingIdx: cap_BodyShortTrailingIdx as usize,
-            ring_BodyShortTrailingIdx_inOpen,
-            ring_BodyShortTrailingIdx_inHigh,
-            ring_BodyShortTrailingIdx_inLow,
-            ring_BodyShortTrailingIdx_inClose,
-        };
-        Ok((CDLHARAMI_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLHARAMI stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLHARAMI`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLHARAMI_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLHARAMI_Open")]
-    pub fn CDLHARAMI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHARAMI_Stream, i32), RetCode> {
-        self.CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLHARAMI_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLHARAMI`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLHARAMI_OpenAndFill")]
-    pub fn CDLHARAMI_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLHARAMI_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut BodyShortPeriodTotal: f64 = 0.0_f64;
-        let mut BodyLongPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut BodyShortTrailingIdx: usize = 0_usize;
-        let mut BodyLongTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let BodyLong_rangeType: i32 = self.candle_settings.body_long.range_type;
-        #[allow(non_snake_case)]
-        let BodyLong_avgPeriod: i32 = self.candle_settings.body_long.avg_period;
-        #[allow(non_snake_case)]
-        let BodyLong_factor: f64 = self.candle_settings.body_long.factor;
-        #[allow(non_snake_case)]
-        let BodyShort_rangeType: i32 = self.candle_settings.body_short.range_type;
-        #[allow(non_snake_case)]
-        let BodyShort_avgPeriod: i32 = self.candle_settings.body_short.avg_period;
-        #[allow(non_snake_case)]
-        let BodyShort_factor: f64 = self.candle_settings.body_short.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLHARAMI_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        BodyLongPeriodTotal = 0.0;
-        BodyShortPeriodTotal = 0.0;
-        BodyLongTrailingIdx = startIdx - 1 - ((BodyLong_avgPeriod) as usize);
-        BodyShortTrailingIdx = startIdx - ((BodyShort_avgPeriod) as usize);
-        i = BodyLongTrailingIdx;
-        while i < startIdx - 1 {
-            let mut _candlerange_10: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_10 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_10 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_10 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_10 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_10;
-            i += 1;
-        }
-        i = BodyShortTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_11: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_11 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_11 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_11 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_11 = 0.0;
-                }
-            }
-            BodyShortPeriodTotal += _candlerange_11;
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - first candle: long white (black) real body
-        // - second candle: short real body totally engulfed by the first
-        // The meaning of "short" and "long" is specified with TA_SetCandleSettings
-        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish:
-        // - 100 is returned when the first candle's real body begins before and ends after the second candle's real body
-        // - 80 is returned when the two real bodies match on one end (Greg Morris contemplate this case in his book
-        //   "Candlestick charting explained")
-        // The user should consider that a harami is significant when it appears in a downtrend if bullish or
-        // in an uptrend when bearish, while this function does not consider the trend
-        outIdx = 0;
-        loop {
-            if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => (inClose[i - 1] - inOpen[i - 1]).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), _ => (inHigh[i - 1]) - (inLow[i - 1]) - ((inClose[i - 1]) - (inOpen[i - 1])).abs() } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // 1st: long
-                if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => (inClose[i] - inOpen[i]).abs(), 1 => (inHigh[i]) - (inLow[i]), _ => (inHigh[i]) - (inLow[i]) - ((inClose[i]) - (inOpen[i])).abs() } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                    // 2nd: short
-                    // 2nd is engulfed by 1st
-                    if (inClose[i]).max(inOpen[i]) < (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) > (inClose[i - 1]).min(inOpen[i - 1]) {
-                        outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
-                        outIdx += 1;
-                        // 2nd is engulfed by 1st
-                        // (one end of real body can match;
-                        // engulfing guaranteed by "long" and "short")
-                    } else if (inClose[i]).max(inOpen[i]) <= (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) >= (inClose[i - 1]).min(inOpen[i - 1]) {
-                        outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 80) as i32;
-                        outIdx += 1;
-                    } else {
-                        outInteger[outIdx] = 0;
-                        outIdx += 1;
-                    }
-                } else {
-                    outInteger[outIdx] = 0;
-                    outIdx += 1;
-                }
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            let mut _candlerange_12: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_12 = (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                1 => {
-                    _candlerange_12 = inHigh[i - 1] - inLow[i - 1];
-                }
-                2 => {
-                    _candlerange_12 = inHigh[i - 1] - inLow[i - 1] - (inClose[i - 1] - inOpen[i - 1]).abs();
-                }
-                _ => {
-                    _candlerange_12 = 0.0;
-                }
-            }
-            let mut _candlerange_13: f64;
-            match BodyLong_rangeType {
-                0 => {
-                    _candlerange_13 = (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
-                }
-                1 => {
-                    _candlerange_13 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx];
-                }
-                2 => {
-                    _candlerange_13 = inHigh[BodyLongTrailingIdx] - inLow[BodyLongTrailingIdx] - (inClose[BodyLongTrailingIdx] - inOpen[BodyLongTrailingIdx]).abs();
-                }
-                _ => {
-                    _candlerange_13 = 0.0;
-                }
-            }
-            BodyLongPeriodTotal += _candlerange_12 - _candlerange_13;
-            let mut _candlerange_14: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_14 = (inClose[i] - inOpen[i]).abs();
-                }
-                1 => {
-                    _candlerange_14 = inHigh[i] - inLow[i];
-                }
-                2 => {
-                    _candlerange_14 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
-                }
-                _ => {
-                    _candlerange_14 = 0.0;
-                }
-            }
-            let mut _candlerange_15: f64;
-            match BodyShort_rangeType {
-                0 => {
-                    _candlerange_15 = (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
-                }
-                1 => {
-                    _candlerange_15 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx];
-                }
-                2 => {
-                    _candlerange_15 = inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx] - (inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx]).abs();
-                }
-                _ => {
-                    _candlerange_15 = 0.0;
-                }
-            }
-            BodyShortPeriodTotal += _candlerange_14 - _candlerange_15;
-            i += 1;
-            BodyLongTrailingIdx += 1;
-            BodyShortTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
         (*outNBElement) = outIdx;
         (*outBegIdx) = startIdx;
 
@@ -1103,6 +805,57 @@ impl Core {
             ring_BodyShortTrailingIdx_inClose,
         };
         Ok(CDLHARAMI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLHARAMI_Open`] (composition seam).
+    pub(crate) fn CDLHARAMI_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLHARAMI_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLHARAMI_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLHARAMI stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLHARAMI`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLHARAMI_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLHARAMI_Open")]
+    pub fn CDLHARAMI_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHARAMI_Stream, i32), RetCode> {
+        self.CDLHARAMI_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLHARAMI_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHARAMI`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLHARAMI_OpenAndFill")]
+    pub fn CDLHARAMI_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLHARAMI_Stream, RetCode> {
+        self.CDLHARAMI_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

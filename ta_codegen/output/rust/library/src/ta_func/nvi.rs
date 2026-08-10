@@ -243,10 +243,11 @@ impl Core {
         sp.prevVolume = tempVolume;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::NVI_Open`] (composition seam).
-    pub(crate) fn NVI_OpenInternal(
-        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
-    ) -> Result<(NVI_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::NVI_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::NVI_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn NVI_OpenCore(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<NVI_Stream, RetCode> {
         if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
             return Err(RetCode::BadParam);
         }
@@ -258,7 +259,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
         let mut prevNVI: f64 = 0.0_f64;
@@ -281,13 +281,13 @@ impl Core {
             if tempVolume < prevVolume && prevClose != 0.0 {
                 prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
             }
-            lastValue_outReal = prevNVI;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevNVI;
             prevClose = tempClose;
             prevVolume = tempVolume;
         }
         i = (endIdx as usize) + 1;
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
 
         // Capture the live batch state into the handle.
         let state = NVI_StreamState {
@@ -295,7 +295,18 @@ impl Core {
             prevClose,
             prevVolume,
         };
-        Ok((NVI_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(NVI_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::NVI_Open`] (composition seam).
+    pub(crate) fn NVI_OpenInternal(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize,
+    ) -> Result<(NVI_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.NVI_OpenCore(inClose, inVolume, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live NVI stream over the warm-up history; returns the handle and
@@ -333,55 +344,7 @@ impl Core {
     pub fn NVI_OpenAndFill(
         &self, inClose: &[f64], inVolume: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<NVI_Stream, RetCode> {
-        if inClose.is_empty() || inVolume.is_empty() || inVolume.len() != inClose.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inClose.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inClose.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut prevNVI: f64 = 0.0_f64;
-        let mut prevClose: f64 = 0.0_f64;
-        let mut prevVolume: f64 = 0.0_f64;
-        let mut tempClose: f64 = 0.0_f64;
-        let mut tempVolume: f64 = 0.0_f64;
-        // The index is a running cumulative value seeded at 1000, updated only on
-        // bars whose volume decreased versus the prior bar (Negative Volume).
-        prevNVI = 1000.0;
-        prevClose = inClose[startIdx];
-        prevVolume = inVolume[startIdx];
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempClose = inClose[i];
-            tempVolume = inVolume[i];
-            // prevClose != 0 guards the percentage-change division: a zero previous
-            // close is a degenerate input that would otherwise emit NaN/Inf; carry
-            // the index forward unchanged instead. Never triggers on real prices.
-            if tempVolume < prevVolume && prevClose != 0.0 {
-                prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
-            }
-            outReal[outIdx] = prevNVI;
-            outIdx += 1;
-            prevClose = tempClose;
-            prevVolume = tempVolume;
-        }
-        i = (endIdx as usize) + 1;
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = NVI_StreamState {
-            prevNVI,
-            prevClose,
-            prevVolume,
-        };
-        Ok(NVI_Stream { core: self.clone(), state })
+        self.NVI_OpenCore(inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

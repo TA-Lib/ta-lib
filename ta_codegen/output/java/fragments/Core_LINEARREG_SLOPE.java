@@ -419,7 +419,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode LINEARREG_SLOPE_OpenBody( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode LINEARREG_SLOPE_OpenCore( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int outIdx = 0;
       int today = 0;
@@ -433,9 +433,6 @@
       int i = 0;
       double tempValue1 = 0;
       double trailingValue = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -496,7 +493,7 @@
          SumXY += (double)i * tempValue1;
       }
       trailingValue = inReal[trailingIdx++];
-      lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+      outReal[outIdx++ * outStride] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
       today += 1;
       /* Slide the window one bar at a time, keeping both sums in O(1): advancing
        * the window raises every retained value's weight by 1 (adds SumY) and drops
@@ -511,7 +508,7 @@
          SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
          SumY = SumY - trailingValue + inReal[today];
          trailingValue = inReal[trailingIdx++];
-         lastValue_outReal = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
+         outReal[outIdx++ * outStride] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -533,126 +530,22 @@
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode LINEARREG_SLOPE_OpenBody( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return LINEARREG_SLOPE_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode LINEARREG_SLOPE_OpenAndFillBody( LINEARREG_SLOPE_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int outIdx = 0;
-      int today = 0;
-      int lookbackTotal = 0;
-      int trailingIdx = 0;
-      double SumX = 0;
-      double SumXY = 0;
-      double SumY = 0;
-      double SumXSqr = 0;
-      double Divisor = 0;
-      int i = 0;
-      double tempValue1 = 0;
-      double trailingValue = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      /* Linear Regression is a concept also known as the
-       * "least squares method" or "best fit." Linear
-       * Regression attempts to fit a straight line between
-       * several data points in such a way that distance
-       * between each data point and the line is minimized.
-       *
-       * For each point, a straight line over the specified
-       * previous bar period is determined in terms
-       * of y = b + m*x:
-       *
-       * TA_LINEARREG          : Returns b+m*(period-1)
-       * TA_LINEARREG_SLOPE    : Returns 'm'
-       * TA_LINEARREG_ANGLE    : Returns 'm' in degree.
-       * TA_LINEARREG_INTERCEPT: Returns 'b'
-       * TA_TSF                : Returns b+m*(period)
-       */
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = LINEARREG_SLOPE_Lookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outIdx = 0;
-      /* Index into the output. */
-      today = startIdx;
-      trailingIdx = startIdx - lookbackTotal;
-      SumX = (double)optInTimePeriod * (optInTimePeriod - 1) * 0.5;
-      SumXSqr = (double)optInTimePeriod * (optInTimePeriod - 1) * (2 * optInTimePeriod - 1) / 6.0;
-      Divisor = SumX * SumX - optInTimePeriod * SumXSqr;
-      /* Prime the two data-dependent window sums for the first output with a
-       * one-time full-window scan. SumX/SumXSqr/Divisor are period-only constants;
-       * SumY = sum of the window, SumXY = sum of i*value (i the reversed
-       * 0..period-1 position).
-       */
-      SumXY = 0;
-      SumY = 0;
-      for( i = optInTimePeriod; i-- != 0;  ) {
-         tempValue1 = inReal[today - i];
-         SumY += tempValue1;
-         SumXY += (double)i * tempValue1;
-      }
-      trailingValue = inReal[trailingIdx++];
-      outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-      today += 1;
-      /* Slide the window one bar at a time, keeping both sums in O(1): advancing
-       * the window raises every retained value's weight by 1 (adds SumY) and drops
-       * the departing value at full weight (subtracts period*trailingValue). Same
-       * incremental identity as WMA/CORREL; the output arithmetic is unchanged.
-       * (perf #103 -- numerics-changing: running total vs per-bar fresh sum.)
-       * Each departing value is read before the output write of the same bar:
-       * with outReal==inReal (in-place, #130) that write lands on the cell the
-       * next iteration departs from.
-       */
-      while( today <= endIdx ) {
-         SumXY = SumXY + SumY - (double)optInTimePeriod * trailingValue;
-         SumY = SumY - trailingValue + inReal[today];
-         trailingValue = inReal[trailingIdx++];
-         outReal[outIdx++] = (optInTimePeriod * SumXY - SumX * SumY) / Divisor;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.SumX = SumX;
-      sp.SumXY = SumXY;
-      sp.SumY = SumY;
-      sp.Divisor = Divisor;
-      sp.trailingValue = trailingValue;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return LINEARREG_SLOPE_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind LINEARREG_SLOPE_Open (composition seam). */
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

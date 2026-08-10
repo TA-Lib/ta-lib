@@ -611,209 +611,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode KAMA_OpenBody( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
-   {
-      double constMax = 0;
-      double constDiff = 0;
-      double tempReal = 0;
-      double tempReal2 = 0;
-      double sumROC1 = 0;
-      double periodROC = 0;
-      double prevKAMA = 0;
-      int i = 0;
-      int today = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int trailingIdx = 0;
-      double trailingValue = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < KAMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.constMax = 0.0;
-         sp.constDiff = 0.0;
-         sp.sumROC1 = 0.0;
-         sp.prevKAMA = 0.0;
-         sp.trailingValue = 0.0;
-         sp.lag1_inReal = 0.0;
-         sp.ringPos_trailingIdx = 0;
-         sp.ringCap_trailingIdx = 0;
-         sp.ring_trailingIdx_inReal = new double[1];
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      constMax = 2.0 / (30.0 + 1.0);
-      constDiff = 2.0 / (2.0 + 1.0) - constMax;
-      /* Default return values */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). The unstable period
-       * still delays the first output for API consistency.
-       */
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = optInTimePeriod + this.unstablePeriod[FuncUnstId.KAMA.ordinal()];
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Initialize the variables by going through
-       * the lookback period.
-       */
-      sumROC1 = 0.0;
-      today = startIdx - lookbackTotal;
-      trailingIdx = today;
-      i = optInTimePeriod;
-      while( i-- > 0 ) {
-         tempReal = inReal[today++];
-         tempReal -= inReal[today];
-         sumROC1 += Math.abs(tempReal);
-      }
-      /* At this point sumROC1 represent the
-       * summation of the 1-day price difference
-       * over the (optInTimePeriod-1)
-       */
-      /* Calculate the first KAMA */
-      /* The yesterday price is used here as the previous KAMA. */
-      prevKAMA = inReal[today - 1];
-      tempReal = inReal[today];
-      tempReal2 = inReal[trailingIdx++];
-      periodROC = tempReal - tempReal2;
-      /* Save the trailing value. Do this because inReal
-       * and outReal can be pointers to the same buffer.
-       */
-      trailingValue = tempReal2;
-      /* Calculate the efficiency ratio */
-      if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
-         tempReal = 1.0;
-      } else {
-         tempReal = Math.abs(periodROC / sumROC1);
-      }
-      /* Calculate the smoothing constant */
-      tempReal = Math.fma(tempReal, constDiff, constMax);
-      tempReal *= tempReal;
-      /* Calculate the KAMA like an EMA, using the
-       * smoothing constant as the adaptive factor.
-       */
-      prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
-      /* 'today' keep track of where the processing is within the
-       * input.
-       */
-      /* Skip the unstable period. Do the whole processing
-       * needed for KAMA, but do not write it in the output.
-       */
-      while( today <= startIdx ) {
-         tempReal = inReal[today];
-         tempReal2 = inReal[trailingIdx++];
-         periodROC = tempReal - tempReal2;
-         /* Adjust sumROC1:
-          *  - Remove trailing ROC1
-          *  - Add new ROC1
-          */
-         sumROC1 -= Math.abs(trailingValue - tempReal2);
-         sumROC1 += Math.abs(tempReal - inReal[today - 1]);
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
-            tempReal = 1.0;
-         } else {
-            tempReal = Math.abs(periodROC / sumROC1);
-         }
-         /* Calculate the smoothing constant */
-         tempReal = Math.fma(tempReal, constDiff, constMax);
-         tempReal *= tempReal;
-         /* Calculate the KAMA like an EMA, using the
-          * smoothing constant as the adaptive factor.
-          */
-         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
-      }
-      /* Write the first value. */
-      lastValue_outReal = prevKAMA;
-      outIdx = 1;
-      outBegIdx.value = today - 1;
-      /* Do the KAMA calculation for the requested range. */
-      while( today <= endIdx ) {
-         tempReal = inReal[today];
-         tempReal2 = inReal[trailingIdx++];
-         periodROC = tempReal - tempReal2;
-         /* Adjust sumROC1:
-          *  - Remove trailing ROC1
-          *  - Add new ROC1
-          */
-         sumROC1 -= Math.abs(trailingValue - tempReal2);
-         sumROC1 += Math.abs(tempReal - inReal[today - 1]);
-         /* Save the trailing value. Do this because inReal
-          * and outReal can be pointers to the same buffer.
-          */
-         trailingValue = tempReal2;
-         /* Calculate the efficiency ratio */
-         if( sumROC1 <= periodROC || ((-0.00000000000001 < sumROC1) && (sumROC1 < 0.00000000000001)) ) {
-            tempReal = 1.0;
-         } else {
-            tempReal = Math.abs(periodROC / sumROC1);
-         }
-         /* Calculate the smoothing constant */
-         tempReal = Math.fma(tempReal, constDiff, constMax);
-         tempReal *= tempReal;
-         /* Calculate the KAMA like an EMA, using the
-          * smoothing constant as the adaptive factor.
-          */
-         prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
-         lastValue_outReal = prevKAMA;
-      }
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = today - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.constMax = constMax;
-      sp.constDiff = constDiff;
-      sp.sumROC1 = sumROC1;
-      sp.prevKAMA = prevKAMA;
-      sp.trailingValue = trailingValue;
-      sp.lag1_inReal = inReal[historyLen - 1];
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = lastValue_outReal;
-      return RetCode.Success;
-   }
-   private RetCode KAMA_OpenAndFillBody( KAMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode KAMA_OpenCore( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double constMax = 0;
       double constDiff = 0;
@@ -830,7 +628,6 @@
       double trailingValue = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      int startIdx = 0;
       if( historyLen < 1 ) {
          return RetCode.BadParam;
       }
@@ -840,9 +637,6 @@
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -863,9 +657,9 @@
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       constMax = 2.0 / (30.0 + 1.0);
@@ -967,7 +761,7 @@
          prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
       }
       /* Write the first value. */
-      outReal[0] = prevKAMA;
+      outReal[0 * outStride] = prevKAMA;
       outIdx = 1;
       outBegIdx.value = today - 1;
       /* Do the KAMA calculation for the requested range. */
@@ -998,7 +792,7 @@
           * smoothing constant as the adaptive factor.
           */
          prevKAMA = Math.fma(inReal[today++] - prevKAMA, tempReal, prevKAMA);
-         outReal[outIdx++] = prevKAMA;
+         outReal[outIdx++ * outStride] = prevKAMA;
       }
       outNBElement.value = outIdx;
       /* Capture the live batch state into the handle. */
@@ -1019,8 +813,22 @@
       sp.ringPos_trailingIdx = 0;
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode KAMA_OpenBody( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return KAMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode KAMA_OpenAndFillBody( KAMA_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal ) {
+         return RetCode.BadParam;
+      }
+      return KAMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind KAMA_Open (composition seam). */
    KAMA_Stream KAMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

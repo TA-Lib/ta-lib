@@ -439,10 +439,11 @@ impl Core {
         (*outMACDHist) = cur_outMACDHist;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MACDEXT_Open`] (composition seam).
-    pub(crate) fn MACDEXT_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType,
-    ) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
+    /// The single whole-history transcription behind [`Core::MACDEXT_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::MACDEXT_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn MACDEXT_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64], outStride: usize,
+    ) -> Result<MACDEXT_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -478,13 +479,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outMACD: f64 = 0.0_f64;
-        let mut lastValue_outMACDSignal: f64 = 0.0_f64;
-        let mut lastValue_outMACDHist: f64 = 0.0_f64;
-        let mut _begStore: usize = 0;
-        let mut _nbStore: usize = 0;
-        let outBegIdx: &mut usize = &mut _begStore;
-        let outNBElement: &mut usize = &mut _nbStore;
         let mut sc_outMACD: Vec<f64> = vec![0.0_f64; historyLen];
         let mut sc_outMACDSignal: Vec<f64> = vec![0.0_f64; historyLen];
         let mut sc_outMACDHist: Vec<f64> = vec![0.0_f64; historyLen];
@@ -625,7 +619,35 @@ impl Core {
             sub1,
             sub2,
         };
-        Ok((MACDEXT_Stream { core: self.clone(), state }, (sc_outMACD[*outNBElement - 1], sc_outMACDSignal[*outNBElement - 1], sc_outMACDHist[*outNBElement - 1])))
+        if outStride == 1 {
+            outMACD[..*outNBElement].copy_from_slice(&sc_outMACD[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outMACD[0] = sc_outMACD[*outNBElement - 1];
+        }
+        if outStride == 1 {
+            outMACDSignal[..*outNBElement].copy_from_slice(&sc_outMACDSignal[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outMACDSignal[0] = sc_outMACDSignal[*outNBElement - 1];
+        }
+        if outStride == 1 {
+            outMACDHist[..*outNBElement].copy_from_slice(&sc_outMACDHist[..*outNBElement]);
+        } else if *outNBElement > 0 {
+            outMACDHist[0] = sc_outMACDHist[*outNBElement - 1];
+        }
+        Ok(MACDEXT_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::MACDEXT_Open`] (composition seam).
+    pub(crate) fn MACDEXT_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType,
+    ) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outMACD = [0.0_f64; 1];
+        let mut sink_outMACDSignal = [0.0_f64; 1];
+        let mut sink_outMACDHist = [0.0_f64; 1];
+        let handle = self.MACDEXT_OpenCore(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMACD, &mut sink_outMACDSignal, &mut sink_outMACDHist, 0)?;
+        Ok((handle, (sink_outMACD[0], sink_outMACDSignal[0], sink_outMACDHist[0])))
     }
 
     /// Open a live MACDEXT stream over the warm-up history; returns the handle and
@@ -660,12 +682,6 @@ impl Core {
     pub fn MACDEXT_OpenAndFill(
         &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MACDEXT_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
         if outMACD.as_ptr() == outMACDSignal.as_ptr() {
             return Err(RetCode::BadParam);
         }
@@ -675,179 +691,7 @@ impl Core {
         if outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastPeriod) as i32) == (i32::MIN) {
-            optInFastPeriod = 12;
-        } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInFastMAType == MAType::DEFAULT {
-            optInFastMAType = MAType::SMA;
-        }
-        if ((optInSlowPeriod) as i32) == (i32::MIN) {
-            optInSlowPeriod = 26;
-        } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInSlowMAType == MAType::DEFAULT {
-            optInSlowMAType = MAType::SMA;
-        }
-        if ((optInSignalPeriod) as i32) == (i32::MIN) {
-            optInSignalPeriod = 9;
-        } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        if optInSignalMAType == MAType::DEFAULT {
-            optInSignalMAType = MAType::SMA;
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut sc_outMACD: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outMACDSignal: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outMACDHist: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut slowMABuffer: Vec<f64> = Vec::new();
-        let mut fastMABuffer: Vec<f64> = Vec::new();
-        let mut retCode: RetCode = RetCode::Success;
-        let mut tempInteger: usize = 0_usize;
-        let mut outBegIdx1: usize = 0_usize;
-        let mut outNbElement1: usize = 0_usize;
-        let mut outBegIdx2: usize = 0_usize;
-        let mut outNbElement2: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut lookbackSignal: usize = 0_usize;
-        let mut lookbackLargest: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut tempMAType: MAType;
-        // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-        // to its single-pass implementation. Period 1 stays on the generic
-        // path: ma() copies the input for it instead of running an EMA
-        // recursion.
-        // Make sure slow is really slower than
-        // the fast period! if not, swap...
-        if optInSlowPeriod < optInFastPeriod {
-            // swap period
-            tempInteger = (optInSlowPeriod) as usize;
-            optInSlowPeriod = optInFastPeriod;
-            optInFastPeriod = (tempInteger) as i32;
-            // swap type
-            tempMAType = optInSlowMAType;
-            optInSlowMAType = optInFastMAType;
-            optInFastMAType = tempMAType;
-        }
-        // Find the MA with the largest lookback
-        lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
-        tempInteger = self.MA_Lookback(optInSlowPeriod, optInSlowMAType);
-        if tempInteger > lookbackLargest {
-            lookbackLargest = tempInteger;
-        }
-        // Add the lookback needed for the signal line
-        lookbackSignal = self.MA_Lookback(optInSignalPeriod, optInSignalMAType);
-        lookbackTotal = lookbackSignal + lookbackLargest;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Allocate intermediate buffer for fast/slow MA.
-        tempInteger = endIdx - startIdx + 1 + lookbackSignal;
-        fastMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        slowMABuffer = vec![0.0_f64; (tempInteger * 1) as usize];
-        // Calculate the slow MA.
-        //
-        // Move back the startIdx to get enough data
-        // for the signal period. That way, once the
-        // signal calculation is done, all the output
-        // will start at the requested 'startIdx'.
-        tempInteger = startIdx - lookbackSignal;
-        // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInSlowPeriod, optInSlowMAType)?;
-        retCode = self.MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..]);
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Calculate the fast MA.
-        // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInFastPeriod, optInFastMAType)?;
-        retCode = self.MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..]);
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Parano tests. Will be removed eventually.
-        if outBegIdx1 != tempInteger || outBegIdx2 != tempInteger || outNbElement1 != outNbElement2 || outNbElement1 != endIdx - startIdx + 1 + lookbackSignal {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Calculate (fast MA) - (slow MA).
-        // for( i = 0; i < outNbElement1; i += 1 )
-        i = 0;
-        while i < outNbElement1 {
-            fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
-            i += 1;
-        }
-        // Copy the result into the output for the caller.
-        // memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
-        // reused as scratch, so source and destination overlap (issue #94).
-        {
-            let _n = ((endIdx - startIdx + 1) * 1) as usize;
-            let _di = (0) as usize;
-            let _si = (lookbackSignal) as usize;
-            sc_outMACD[_di.._di + _n].copy_from_slice(&fastMABuffer[_si.._si + _n]);
-        };
-        // Calculate the signal/trigger line.
-        // Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
-        // sub-call's own startIdx (the seeding point).
-        let (sub2, _) = self.MA_OpenInternal(&fastMABuffer[..((outNbElement1 - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType)?;
-        retCode = self.MA(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, &mut sc_outMACDSignal[..]);
-        if retCode != RetCode::Success {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(retCode);
-        }
-        // Calculate the histogram.
-        // for( i = 0; i < outNbElement2; i += 1 )
-        i = 0;
-        while i < outNbElement2 {
-            sc_outMACDHist[i] = sc_outMACD[i] - sc_outMACDSignal[i];
-            i += 1;
-        }
-        // All done! Indicate the output limits and return success.
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outNbElement2;
-
-        // Capture the live producer state + sub handles.
-        if *outNBElement < 1 {
-            return Err(RetCode::BadParam);
-        }
-        let state = MACDEXT_StreamState {
-            optInFastPeriod,
-            optInFastMAType,
-            optInSlowPeriod,
-            optInSlowMAType,
-            optInSignalPeriod,
-            optInSignalMAType,
-            sub0,
-            sub1,
-            sub2,
-        };
-        outMACD[..*outNBElement].copy_from_slice(&sc_outMACD[..*outNBElement]);
-        outMACDSignal[..*outNBElement].copy_from_slice(&sc_outMACDSignal[..*outNBElement]);
-        outMACDHist[..*outNBElement].copy_from_slice(&sc_outMACDHist[..*outNBElement]);
-        Ok(MACDEXT_Stream { core: self.clone(), state })
+        self.MACDEXT_OpenCore(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

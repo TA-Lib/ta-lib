@@ -7192,7 +7192,7 @@ fn test_c_ht_dcperiod_parity_stream_section() {
         .split("TA_HT_DCPERIOD_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenInternal").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_DCPERIOD_OpenCore").unwrap_or(step.len())];
     assert!(
         step_body.contains("*outReal= sp->smoothPeriod;"),
         "unconditional smoothPeriod output in the step"
@@ -7240,7 +7240,7 @@ fn test_c_ht_phasor_nested_gate_two_outputs_stream_section() {
         .split("TA_HT_PHASOR_StepInternal")
         .nth(1)
         .expect("StepInternal emitted");
-    let step_body = &step[..step.find("TA_HT_PHASOR_OpenInternal").unwrap_or(step.len())];
+    let step_body = &step[..step.find("TA_HT_PHASOR_OpenCore").unwrap_or(step.len())];
     // The step branches on the carried parity, and BOTH outputs are written
     // unconditionally in each arm (the nested `today >= startIdx` gate stripped).
     assert!(step_body.contains("if( sp->streamParity == 0 )"), "parity branch in the step");
@@ -7293,7 +7293,7 @@ fn test_c_ht_sine_two_sin_outputs() {
     let s = ht_stream_section("ht_sine");
     assert!(s.contains("double *cb_smoothPrice;"), "shares DCPHASE's circbuf");
     let step = s.split("TA_HT_SINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_SINE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_SINE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("*outSine="), "outSine written unconditionally");
     assert!(step.contains("*outLeadSine="), "outLeadSine written unconditionally");
     assert!(!step.contains("startIdx") && !step.contains("% 2"), "no cursor leak in the step");
@@ -7307,7 +7307,7 @@ fn test_c_ht_trendline_raw_price_window() {
     assert!(s.contains("double *win_i_inReal;"), "rescan window over raw inReal");
     assert!(!s.contains("cb_smoothPrice"), "no smoothPrice circbuf (removed, issue #88)");
     let step = s.split("TA_HT_TRENDLINE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDLINE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDLINE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("sp->win_i_inReal[(sp->winPos_i + sp->winCap_i - sp->i >= sp->winCap_i) ?"), "de-modulo window read of bar today-i");
     assert!(step.contains("if( sp->i < sp->DCPeriodInt )"), "guarded to the first DCPeriodInt bars");
     assert!(step.contains("*outReal= sp->tempReal2;"), "unconditional trendline output");
@@ -7322,7 +7322,7 @@ fn test_c_ht_trendmode_full_union() {
     assert!(s.contains("double *cb_smoothPrice;"), "smoothPrice circbuf");
     assert!(s.contains("double *win_j_inReal;"), "raw-price rescan window (counter j)");
     let step = s.split("TA_HT_TRENDMODE_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_HT_TRENDMODE_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_HT_TRENDMODE_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("*outInteger="), "integer trend-mode output, unconditional");
     assert!(step.contains("sp->cb_smoothPrice[sp->idx]"), "circbuf DC-phase read");
     assert!(step.contains("sp->win_j_inReal[(sp->winPos_j + sp->winCap_j - sp->j >= sp->winCap_j) ?"), "de-modulo window trendline read");
@@ -7339,7 +7339,7 @@ fn test_c_mama_two_outputs_and_params() {
     assert!(s.contains("double optInFastLimit;") && s.contains("double optInSlowLimit;"), "real params carried in the handle");
     assert!(s.contains("double mama;") && s.contains("double fama;"), "coupled mama/fama carried");
     let step = s.split("TA_MAMA_StepInternal").nth(1).unwrap();
-    let step = &step[..step.find("TA_MAMA_OpenInternal").unwrap_or(step.len())];
+    let step = &step[..step.find("TA_MAMA_OpenCore").unwrap_or(step.len())];
     assert!(step.contains("if( sp->streamParity == 0 )"), "parity branch");
     // MAMA line always written; FAMA (nullable) write is NULL-guarded so the
     // step never dereferences a NULL FAMA pointer (the gate itself is stripped).
@@ -7442,7 +7442,7 @@ fn test_c_midprice_fastpath_skip_stream_section() {
     // The fast-path window-rescan then-arm is NOT transcribed into the Open: no
     // `optInTimePeriod <= 20` branch survives (only the general else arm streams).
     let open = c
-        .split("TA_MIDPRICE_OpenInternal")
+        .split("TA_MIDPRICE_OpenCore")
         .nth(1)
         .expect("OpenInternal emitted");
     assert!(
@@ -7563,16 +7563,19 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         let open_at = c
             .find(&format!("TA_RetCode TA_{upper}_Open"))
             .unwrap_or_else(|| panic!("{upper} composed Open"));
-        // OpenInternal and OpenAndFill each transcribe the region, so every
-        // buffer is checked exactly twice across the two — never four times.
+        // One `OpenCore` transcribes the region for both entry points, so every
+        // buffer is checked exactly once — never twice. (Before the Open family
+        // was merged this read 2, one per transcription; the invariant being
+        // pinned is unchanged: the source's own check must not be emitted
+        // alongside the injected one.)
         let opens = &c[open_at..];
         for buf in buffers {
             let n = opens.matches(&format!("if( !{buf} )")).count();
             assert_eq!(
-                n, 2,
-                "{upper}: `{buf}` must be null-checked once per composed Open \
-                 (2 across OpenInternal + OpenAndFill), found {n} — the source's \
-                 own check is being emitted alongside the injected one again"
+                n, 1,
+                "{upper}: `{buf}` must be null-checked exactly once in the composed \
+                 OpenCore, found {n} — the source's own check is being emitted \
+                 alongside the injected one again"
             );
         }
     }

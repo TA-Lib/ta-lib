@@ -505,10 +505,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDLHIKKAKEMOD_Open`] (composition seam).
-    pub(crate) fn CDLHIKKAKEMOD_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDLHIKKAKEMOD_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDLHIKKAKEMOD_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDLHIKKAKEMOD_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDLHIKKAKEMOD_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -520,7 +521,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut NearPeriodTotal: f64 = 0.0_f64;
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -549,8 +549,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -664,14 +664,14 @@ impl Core {
                 patternHigh = inHigh[i - 1];
                 patternLow = inLow[i - 1];
                 patternCount = 4;
-                lastValue_outInteger = (patternResult) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
             } else if patternCount > 0 &&
                (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
             {
-                lastValue_outInteger = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 patternCount = 0;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             let mut _candlerange_5: f64;
             match Near_rangeType {
@@ -704,317 +704,6 @@ impl Core {
                 }
             }
             NearPeriodTotal += _candlerange_5 - _candlerange_6;
-            NearTrailingIdx += 1;
-            if patternCount > 0 {
-                patternCount -= 1;
-            }
-            i += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
-        let cap_NearTrailingIdx: i64 = capLag_NearTrailingIdx + 3;
-        if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_NearTrailingIdx: usize = if cap_NearTrailingIdx > 0 { cap_NearTrailingIdx as usize } else { 1 };
-        let mut ring_NearTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = CDLHIKKAKEMOD_StreamState {
-            NearPeriodTotal,
-            patternResult,
-            patternCount,
-            patternHigh,
-            patternLow,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag2_inOpen: inOpen[historyLen - 2],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag2_inHigh: inHigh[historyLen - 2],
-            lag3_inHigh: inHigh[historyLen - 3],
-            lag1_inLow: inLow[historyLen - 1],
-            lag2_inLow: inLow[historyLen - 2],
-            lag3_inLow: inLow[historyLen - 3],
-            lag1_inClose: inClose[historyLen - 1],
-            lag2_inClose: inClose[historyLen - 2],
-            ringPos_NearTrailingIdx: historyLen % cap_NearTrailingIdx as usize,
-            ringCap_NearTrailingIdx: cap_NearTrailingIdx as usize,
-            ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
-            ring_NearTrailingIdx_inOpen,
-            ring_NearTrailingIdx_inHigh,
-            ring_NearTrailingIdx_inLow,
-            ring_NearTrailingIdx_inClose,
-        };
-        Ok((CDLHIKKAKEMOD_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDLHIKKAKEMOD stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDLHIKKAKEMOD`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDLHIKKAKEMOD_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDLHIKKAKEMOD_Open")]
-    pub fn CDLHIKKAKEMOD_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
-        self.CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDLHIKKAKEMOD_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDLHIKKAKEMOD`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDLHIKKAKEMOD_OpenAndFill")]
-    pub fn CDLHIKKAKEMOD_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDLHIKKAKEMOD_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut NearPeriodTotal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut NearTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut patternResult: i32 = 0_i32;
-        let mut patternCount: usize = 0_usize;
-        let mut patternHigh: f64 = 0.0_f64;
-        let mut patternLow: f64 = 0.0_f64;
-        #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
-        #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
-        // Confirmation window countdown (replaces the absolute patternIdx guard)
-        // and a cache of the 3rd candle's high/low (replaces inHigh/inLow
-        // [patternIdx-1]) so nothing in the per-bar logic references the cursor.
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDLHIKKAKEMOD_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        NearPeriodTotal = 0.0;
-        NearTrailingIdx = startIdx - 3 - ((Near_avgPeriod) as usize);
-        i = NearTrailingIdx;
-        while i < startIdx - 3 {
-            let mut _candlerange_7: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_7 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_7;
-            i += 1;
-        }
-        patternCount = 0;
-        patternResult = 0;
-        patternHigh = 0.0;
-        patternLow = 0.0;
-        i = startIdx - 3;
-        while i < startIdx {
-            // copy here the pattern recognition code below
-            if inHigh[i - 2] < inHigh[i - 3] &&
-               inLow[i - 2] > inLow[i - 3] &&   // 2nd: lower high and higher low than 1st
-               inHigh[i - 1] < inHigh[i - 2] &&
-               inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
-            {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternHigh = inHigh[i - 1];
-                patternLow = inLow[i - 1];
-                patternCount = 4;
-            } else if patternCount > 0 &&
-               (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
-            {
-                patternCount = 0;
-            }
-            let mut _candlerange_8: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_8 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_8 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_8 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_8 = 0.0;
-                }
-            }
-            let mut _candlerange_9: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_9 = (inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs();
-                }
-                1 => {
-                    _candlerange_9 = inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2];
-                }
-                2 => {
-                    _candlerange_9 = inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2] - (inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs();
-                }
-                _ => {
-                    _candlerange_9 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_8 - _candlerange_9;
-            NearTrailingIdx += 1;
-            if patternCount > 0 {
-                patternCount -= 1;
-            }
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - first candle
-        // - second candle: candle with range less than first candle and close near the bottom (near the top)
-        // - third candle: lower high and higher low than 2nd
-        // - fourth candle: lower high and lower low (higher high and higher low) than 3rd
-        // outInteger[hikkake bar] is positive (1 to 100) or negative (-1 to -100) meaning bullish or bearish hikkake
-        // Confirmation could come in the next 3 days with:
-        // - a day that closes higher than the high (lower than the low) of the 3rd candle
-        // outInteger[confirmationbar] is equal to 100 + the bullish hikkake result or -100 - the bearish hikkake result
-        // Note: if confirmation and a new hikkake come at the same bar, only the new hikkake is reported (the new hikkake
-        // overwrites the confirmation of the old hikkake);
-        // the user should consider that modified hikkake is a reversal pattern, while hikkake could be both a reversal
-        // or a continuation pattern, so bullish (bearish) modified hikkake is significant when appearing in a downtrend
-        // (uptrend)
-        outIdx = 0;
-        loop {
-            if inHigh[i - 2] < inHigh[i - 3] &&
-               inLow[i - 2] > inLow[i - 3] &&   // 2nd: lower high and higher low than 1st
-               inHigh[i - 1] < inHigh[i - 2] &&
-               inLow[i - 1] > inLow[i - 2] &&   // 3rd: lower high and higher low than 2nd
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] && inClose[i - 2] <= inLow[i - 2] + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1] && inClose[i - 2] >= inHigh[i - 2] - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 }))) // (bull) 4th: lower high and lower low (bull) 2nd: close near the low (bear) 4th: higher high and higher low (bull) 2nd: close near the top
-            {
-                patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
-                patternHigh = inHigh[i - 1];
-                patternLow = inLow[i - 1];
-                patternCount = 4;
-                outInteger[outIdx] = (patternResult) as i32;
-                outIdx += 1;
-            } else if patternCount > 0 &&
-               (patternResult > 0 && inClose[i] > patternHigh || patternResult < 0 && inClose[i] < patternLow) // search for confirmation if modified hikkake was no more than 3 bars ago close higher than the high of 3rd close lower than the low of 3rd
-            {
-                outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
-                outIdx += 1;
-                patternCount = 0;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            let mut _candlerange_10: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_10 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_10 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_10 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_10 = 0.0;
-                }
-            }
-            let mut _candlerange_11: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_11 = (inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs();
-                }
-                1 => {
-                    _candlerange_11 = inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2];
-                }
-                2 => {
-                    _candlerange_11 = inHigh[NearTrailingIdx - 2] - inLow[NearTrailingIdx - 2] - (inClose[NearTrailingIdx - 2] - inOpen[NearTrailingIdx - 2]).abs();
-                }
-                _ => {
-                    _candlerange_11 = 0.0;
-                }
-            }
-            NearPeriodTotal += _candlerange_10 - _candlerange_11;
             NearTrailingIdx += 1;
             if patternCount > 0 {
                 patternCount -= 1;
@@ -1090,6 +779,57 @@ impl Core {
             ring_NearTrailingIdx_inClose,
         };
         Ok(CDLHIKKAKEMOD_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDLHIKKAKEMOD_Open`] (composition seam).
+    pub(crate) fn CDLHIKKAKEMOD_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDLHIKKAKEMOD_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDLHIKKAKEMOD stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDLHIKKAKEMOD`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDLHIKKAKEMOD_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDLHIKKAKEMOD_Open")]
+    pub fn CDLHIKKAKEMOD_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDLHIKKAKEMOD_Stream, i32), RetCode> {
+        self.CDLHIKKAKEMOD_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDLHIKKAKEMOD_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDLHIKKAKEMOD`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDLHIKKAKEMOD_OpenAndFill")]
+    pub fn CDLHIKKAKEMOD_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLHIKKAKEMOD_Stream, RetCode> {
+        self.CDLHIKKAKEMOD_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

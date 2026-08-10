@@ -292,139 +292,10 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MIN_Open`] (composition seam).
-    pub(crate) fn MIN_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MIN_Stream, f64), RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut lowest: f64 = 0.0_f64;
-        let mut tmp: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut nbInitialElementNeeded: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut lowestIdx: i32 = 0_i32;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        // Identify the minimum number of price bar needed
-        // to identify at least one output over the specified
-        // period.
-        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < nbInitialElementNeeded {
-            startIdx = nbInitialElementNeeded;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Proceed with the calculation for the requested range.
-        // Note that this algorithm allows the input and
-        // output to be the same buffer.
-        outIdx = 0;
-        today = startIdx;
-        trailingIdx = startIdx - nbInitialElementNeeded;
-        lowestIdx = 0 - 1;
-        lowest = 0.0;
-        while today <= endIdx {
-            tmp = inReal[today];
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inReal[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmp = inReal[i];
-                    if tmp < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmp;
-                    }
-                }
-            } else if tmp <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmp;
-            }
-            lastValue_outReal = lowest;
-            trailingIdx += 1;
-            today += 1;
-        }
-        // Keep the outBegIdx relative to the
-        // caller input before returning.
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
-        if capX < 1 || capX > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
-        {
-            let mut fillJ: usize = historyLen - capX as usize;
-            while fillJ < historyLen {
-                x_inReal[fillJ % capX as usize] = inReal[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = MIN_StreamState {
-            optInTimePeriod,
-            lowest,
-            trailingIdx: (trailingIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            i: (i) as i32,
-            today: (today) as i32,
-            xCap: capX as i32,
-            x_inReal,
-        };
-        Ok((MIN_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live MIN stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MIN`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.MIN_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_MIN_Open")]
-    pub fn MIN_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MIN_Stream, f64), RetCode> {
-        self.MIN_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::MIN_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MIN`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_MIN_OpenAndFill")]
-    pub fn MIN_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::MIN_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::MIN_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn MIN_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<MIN_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -439,7 +310,7 @@ impl Core {
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut lowest: f64 = 0.0_f64;
@@ -490,8 +361,7 @@ impl Core {
                 lowestIdx = (today) as i32;
                 lowest = tmp;
             }
-            outReal[outIdx] = lowest;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = lowest;
             trailingIdx += 1;
             today += 1;
         }
@@ -524,6 +394,50 @@ impl Core {
             x_inReal,
         };
         Ok(MIN_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::MIN_Open`] (composition seam).
+    pub(crate) fn MIN_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MIN_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.MIN_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live MIN stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::MIN`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.MIN_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_MIN_Open")]
+    pub fn MIN_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MIN_Stream, f64), RetCode> {
+        self.MIN_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::MIN_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MIN`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MIN_OpenAndFill")]
+    pub fn MIN_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MIN_Stream, RetCode> {
+        self.MIN_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

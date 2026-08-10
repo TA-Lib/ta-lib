@@ -530,7 +530,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode AROONOSC_OpenBody( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   private RetCode AROONOSC_OpenCore( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double lowest = 0;
       double highest = 0;
@@ -543,9 +543,6 @@
       int highestIdx = 0;
       int today = 0;
       int i = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length ) {
@@ -642,7 +639,7 @@
          /* Note: Do not forget that input and output buffer can be the same,
           *       so writing to the output is the last thing being done here.
           */
-         lastValue_outReal = aroon;
+         outReal[outIdx * outStride] = aroon;
          outIdx += 1;
          trailingIdx += 1;
          today += 1;
@@ -676,158 +673,22 @@
       sp.xCap = capX;
       sp.x_inHigh = capX_inHigh;
       sp.x_inLow = capX_inLow;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode AROONOSC_OpenBody( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return AROONOSC_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode AROONOSC_OpenAndFillBody( AROONOSC_Stream sp, double inHigh[], double inLow[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double factor = 0;
-      double aroon = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int today = 0;
-      int i = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow ) {
          return RetCode.BadParam;
       }
-      /* This code is almost identical to the TA_AROON function
-       * except that instead of outputing ArroonUp and AroonDown
-       * individually, an oscillator is build from both.
-       *
-       *  AroonOsc = AroonUp- AroonDown;
-       */
-      /* This function is using a speed optimized algorithm
-       * for the min/max logic.
-       *
-       * You might want to first look at how TA_MIN/TA_MAX works
-       * and this function will become easier to understand.
-       */
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < optInTimePeriod ) {
-         startIdx = optInTimePeriod;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the input and
-       * output to be the same buffer.
-       */
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - optInTimePeriod;
-      lowestIdx = 0 - 1;
-      highestIdx = 0 - 1;
-      lowest = 0.0;
-      highest = 0.0;
-      factor = (double)100.0 / (double)optInTimePeriod;
-      while( today <= endIdx ) {
-         /* Keep track of the lowestIdx */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp <= lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         /* Keep track of the highestIdx */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp >= highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-         }
-         /* The oscillator is the following:
-          *  AroonUp   = factor*(optInTimePeriod-(today-highestIdx));
-          *  AroonDown = factor*(optInTimePeriod-(today-lowestIdx));
-          *  AroonOsc  = AroonUp-AroonDown;
-          *
-          * An arithmetic simplification give us:
-          *  Aroon = factor*(highestIdx-lowestIdx)
-          */
-         aroon = factor * (highestIdx - lowestIdx);
-         /* Note: Do not forget that input and output buffer can be the same,
-          *       so writing to the output is the last thing being done here.
-          */
-         outReal[outIdx] = aroon;
-         outIdx += 1;
-         trailingIdx += 1;
-         today += 1;
-      }
-      /* Keep the outBegIdx relative to the
-       * caller input before returning.
-       */
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int capX = today - trailingIdx + 1;
-      if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capX_inHigh = new double[capX];
-      double[] capX_inLow = new double[capX];
-      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inHigh[fillJ % capX] = inHigh[fillJ];
-         capX_inLow[fillJ % capX] = inLow[fillJ];
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.lowest = lowest;
-      sp.highest = highest;
-      sp.factor = factor;
-      sp.aroon = aroon;
-      sp.trailingIdx = trailingIdx;
-      sp.lowestIdx = lowestIdx;
-      sp.highestIdx = highestIdx;
-      sp.i = i;
-      sp.today = today;
-      sp.xCap = capX;
-      sp.x_inHigh = capX_inHigh;
-      sp.x_inLow = capX_inLow;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return AROONOSC_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
    AROONOSC_Stream AROONOSC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )

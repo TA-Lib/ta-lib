@@ -213,10 +213,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::BOP_Open`] (composition seam).
-    pub(crate) fn BOP_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(BOP_Stream, f64), RetCode> {
+    /// The single whole-history transcription behind [`Core::BOP_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::BOP_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn BOP_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
+    ) -> Result<BOP_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -228,7 +229,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempReal: f64 = 0.0_f64;
@@ -237,19 +237,30 @@ impl Core {
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
             tempReal = inHigh[i] - inLow[i];
             if (tempReal) < 1e-14 {
-                lastValue_outReal = 0.0;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             } else {
-                lastValue_outReal = (inClose[i] - inOpen[i]) / tempReal;
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((inClose[i] - inOpen[i]) / tempReal) as f64);
             }
         }
         i = (endIdx as usize) + 1;
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
+        (*outNBElement) = outIdx;
+        (*outBegIdx) = startIdx;
 
         // Capture the live batch state into the handle.
         let state = BOP_StreamState {
         };
-        Ok((BOP_Stream { core: self.clone(), state }, lastValue_outReal))
+        Ok(BOP_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::BOP_Open`] (composition seam).
+    pub(crate) fn BOP_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(BOP_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.BOP_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
     }
 
     /// Open a live BOP stream over the warm-up history; returns the handle and
@@ -289,40 +300,7 @@ impl Core {
     pub fn BOP_OpenAndFill(
         &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<BOP_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut outIdx: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut tempReal: f64 = 0.0_f64;
-        // BOP = (Close - Open)/(High - Low)
-        outIdx = 0;
-        for i in (startIdx as usize)..(endIdx as usize) + 1 {
-            tempReal = inHigh[i] - inLow[i];
-            if (tempReal) < 1e-14 {
-                outReal[outIdx] = 0.0;
-                outIdx += 1;
-            } else {
-                outReal[outIdx] = (((inClose[i] - inOpen[i]) / tempReal) as f64);
-                outIdx += 1;
-            }
-        }
-        i = (endIdx as usize) + 1;
-        (*outNBElement) = outIdx;
-        (*outBegIdx) = startIdx;
-
-        // Capture the live batch state into the handle.
-        let state = BOP_StreamState {
-        };
-        Ok(BOP_Stream { core: self.clone(), state })
+        self.BOP_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

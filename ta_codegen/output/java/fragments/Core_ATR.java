@@ -544,7 +544,7 @@
       sp.cur_outReal = sp.prevATR;
       sp.lag1_inClose = inClose;
    }
-   private RetCode ATR_OpenBody( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ATR_OpenCore( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -559,9 +559,6 @@
       double tempCY = 0;
       double tempLT = 0;
       double tempHT = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -679,7 +676,7 @@
        * provided outReal.
        */
       outIdx = 1;
-      lastValue_outReal = prevATR;
+      outReal[0 * outStride] = prevATR;
       /* Now do the number of requested ATR. */
       nbATR = endIdx - startIdx + 1;
       while( --nbATR != 0 ) {
@@ -700,7 +697,7 @@
          prevATR *= optInTimePeriod - 1;
          prevATR += greatest;
          prevATR /= optInTimePeriod;
-         lastValue_outReal = prevATR;
+         outReal[outIdx++ * outStride] = prevATR;
          today += 1;
       }
       outBegIdx.value = startIdx;
@@ -710,178 +707,22 @@
       sp.prevATR = prevATR;
       sp.val3 = val3;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode ATR_OpenBody( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return ATR_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode ATR_OpenAndFillBody( ATR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int i = 0;
-      int outIdx = 0;
-      int today = 0;
-      int lookbackTotal = 0;
-      int nbATR = 0;
-      double prevATR = 0;
-      double periodTotal = 0;
-      double val2 = 0;
-      double val3 = 0;
-      double greatest = 0;
-      double tempCY = 0;
-      double tempLT = 0;
-      double tempHT = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* Average True Range is the greatest of the following:
-       *
-       *  val1 = distance from today's high to today's low.
-       *  val2 = distance from yesterday's close to today's high.
-       *  val3 = distance from yesterday's close to today's low.
-       *
-       * These value are averaged for the specified period using
-       * Wilder method. This method have an unstable period comparable
-       * to and Exponential Moving Average (EMA).
-       */
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = ATR_Lookback(optInTimePeriod);
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-       * so the single general path handles every period >= 1.
-       */
-      /* The True Range of each bar is computed inline in a single
-       * pass. No temporary buffer is needed.
-       *
-       * The arithmetic order below is the bit-exactness contract
-       * (do not reorder or fuse operations):
-       *  - True Range: start from high-low, then compare/replace
-       *    with the two previous-close distances, in that order.
-       *  - Seed: the first 'period' True Range values are summed,
-       *    accumulated from 0.0 in input order, then divided by
-       *    the period.
-       *  - Wilder smoothing: multiply by period-1, add the True
-       *    Range, divide by period, as three separate statements.
-       *
-       * In-place (outReal being one of the input arrays) is
-       * supported: each output is written only after every input
-       * read at or before its bar, and the output index is always
-       * smaller than the bar index of any remaining read.
-       */
-      /* The first True Range needs the two price bars at
-       * startIdx-lookbackTotal+1 (a previous close is consumed).
-       */
-      today = startIdx - lookbackTotal + 1;
-      /* Seed the ATR with a simple average of the True Range
-       * for the first 'period' bars.
-       */
-      periodTotal = 0.0;
-      i = optInTimePeriod;
-      while( i-- > 0 ) {
-         /* Find the greatest of the 3 values. */
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         periodTotal += greatest;
-         today += 1;
-      }
-      prevATR = periodTotal / optInTimePeriod;
-      /* Subsequent value are smoothed using the
-       * previous ATR value (Wilder's approach).
-       *  1) Multiply the previous ATR by 'period-1'.
-       *  2) Add today TR value.
-       *  3) Divide by 'period'.
-       */
-      /* Skip the unstable period. */
-      i = this.unstablePeriod[FuncUnstId.ATR.ordinal()];
-      while( i != 0 ) {
-         /* Find the greatest of the 3 values. */
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
-         today += 1;
-         i -= 1;
-      }
-      /* Now start to write the final ATR in the caller
-       * provided outReal.
-       */
-      outIdx = 1;
-      outReal[0] = prevATR;
-      /* Now do the number of requested ATR. */
-      nbATR = endIdx - startIdx + 1;
-      while( --nbATR != 0 ) {
-         /* Find the greatest of the 3 values. */
-         tempLT = inLow[today];
-         tempHT = inHigh[today];
-         tempCY = inClose[today - 1];
-         greatest = tempHT - tempLT;
-         /* val1 */
-         val2 = Math.abs(tempCY - tempHT);
-         if( val2 > greatest ) {
-            greatest = val2;
-         }
-         val3 = Math.abs(tempCY - tempLT);
-         if( val3 > greatest ) {
-            greatest = val3;
-         }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
-         outReal[outIdx++] = prevATR;
-         today += 1;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.prevATR = prevATR;
-      sp.val3 = val3;
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return ATR_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind ATR_Open (composition seam). */
    ATR_Stream ATR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )

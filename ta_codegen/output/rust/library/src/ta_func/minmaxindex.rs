@@ -346,10 +346,11 @@ impl Core {
         sp.today += 1;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::MINMAXINDEX_Open`] (composition seam).
-    pub(crate) fn MINMAXINDEX_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(MINMAXINDEX_Stream, (i32, i32)), RetCode> {
+    /// The single whole-history transcription behind [`Core::MINMAXINDEX_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::MINMAXINDEX_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn MINMAXINDEX_OpenCore(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32], outStride: usize,
+    ) -> Result<MINMAXINDEX_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
         }
@@ -364,168 +365,6 @@ impl Core {
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
         let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outMinIdx: i32 = 0_i32;
-        let mut lastValue_outMaxIdx: i32 = 0_i32;
-        let mut highest: f64 = 0.0_f64;
-        let mut lowest: f64 = 0.0_f64;
-        let mut tmpHigh: f64 = 0.0_f64;
-        let mut tmpLow: f64 = 0.0_f64;
-        let mut outIdx: usize = 0_usize;
-        let mut nbInitialElementNeeded: usize = 0_usize;
-        let mut trailingIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut highestIdx: i32 = 0_i32;
-        let mut lowestIdx: i32 = 0_i32;
-        // Identify the minimum number of price bar needed
-        // to identify at least one output over the specified
-        // period.
-        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < nbInitialElementNeeded {
-            startIdx = nbInitialElementNeeded;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Proceed with the calculation for the requested range.
-        // (The integer outputs can never share the real input's buffer —
-        // different element type; issue #130.)
-        outIdx = 0;
-        today = startIdx;
-        trailingIdx = startIdx - nbInitialElementNeeded;
-        highestIdx = 0 - 1;
-        highest = 0.0;
-        lowestIdx = 0 - 1;
-        lowest = 0.0;
-        while today <= endIdx {
-            tmpHigh = inReal[today];
-            tmpLow = tmpHigh;
-            if highestIdx < ((trailingIdx) as i32) {
-                highestIdx = (trailingIdx) as i32;
-                highest = inReal[(highestIdx) as usize];
-                i = (highestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmpHigh = inReal[i];
-                    if tmpHigh > highest {
-                        highestIdx = (i) as i32;
-                        highest = tmpHigh;
-                    }
-                }
-            } else if tmpHigh >= highest {
-                highestIdx = (today) as i32;
-                highest = tmpHigh;
-            }
-            if lowestIdx < ((trailingIdx) as i32) {
-                lowestIdx = (trailingIdx) as i32;
-                lowest = inReal[(lowestIdx) as usize];
-                i = (lowestIdx) as usize;
-                while { i += 1; i } <= today {
-                    tmpLow = inReal[i];
-                    if tmpLow < lowest {
-                        lowestIdx = (i) as i32;
-                        lowest = tmpLow;
-                    }
-                }
-            } else if tmpLow <= lowest {
-                lowestIdx = (today) as i32;
-                lowest = tmpLow;
-            }
-            lastValue_outMaxIdx = (highestIdx) as i32;
-            lastValue_outMinIdx = (lowestIdx) as i32;
-            outIdx += 1;
-            trailingIdx += 1;
-            today += 1;
-        }
-        // Keep the outBegIdx relative to the
-        // caller input before returning.
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
-        if capX < 1 || capX > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
-        {
-            let mut fillJ: usize = historyLen - capX as usize;
-            while fillJ < historyLen {
-                x_inReal[fillJ % capX as usize] = inReal[fillJ];
-                fillJ += 1;
-            }
-        }
-        let state = MINMAXINDEX_StreamState {
-            optInTimePeriod,
-            highest,
-            lowest,
-            tmpHigh,
-            tmpLow,
-            trailingIdx: (trailingIdx) as i32,
-            i: (i) as i32,
-            highestIdx: (highestIdx) as i32,
-            lowestIdx: (lowestIdx) as i32,
-            today: (today) as i32,
-            xCap: capX as i32,
-            x_inReal,
-        };
-        Ok((MINMAXINDEX_Stream { core: self.clone(), state }, (lastValue_outMinIdx, lastValue_outMaxIdx)))
-    }
-
-    /// Open a live MINMAXINDEX stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::MINMAXINDEX`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.MINMAXINDEX_Open(&data, 30).expect("enough history");
-    /// let peeked = s.peek(100.9);
-    /// let updated = s.update(100.9);
-    /// assert_eq!(peeked.0, updated.0);
-    /// assert_eq!(peeked.1, updated.1);
-    /// ```
-    #[doc(alias = "TA_MINMAXINDEX_Open")]
-    pub fn MINMAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MINMAXINDEX_Stream, (i32, i32)), RetCode> {
-        self.MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
-    }
-
-    /// [`Core::MINMAXINDEX_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::MINMAXINDEX`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_MINMAXINDEX_OpenAndFill")]
-    pub fn MINMAXINDEX_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
-    ) -> Result<MINMAXINDEX_Stream, RetCode> {
-        if inReal.is_empty() {
-            return Err(RetCode::BadParam);
-        }
-        if inReal.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 30;
-        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inReal.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut highest: f64 = 0.0_f64;
@@ -597,8 +436,8 @@ impl Core {
                 lowestIdx = (today) as i32;
                 lowest = tmpLow;
             }
-            outMaxIdx[outIdx] = (highestIdx) as i32;
-            outMinIdx[outIdx] = (lowestIdx) as i32;
+            outMaxIdx[(outIdx * outStride) as usize] = (highestIdx) as i32;
+            outMinIdx[(outIdx * outStride) as usize] = (lowestIdx) as i32;
             outIdx += 1;
             trailingIdx += 1;
             today += 1;
@@ -636,6 +475,55 @@ impl Core {
             x_inReal,
         };
         Ok(MINMAXINDEX_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::MINMAXINDEX_Open`] (composition seam).
+    pub(crate) fn MINMAXINDEX_OpenInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(MINMAXINDEX_Stream, (i32, i32)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outMinIdx = [0_i32; 1];
+        let mut sink_outMaxIdx = [0_i32; 1];
+        let handle = self.MINMAXINDEX_OpenCore(inReal, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outMinIdx, &mut sink_outMaxIdx, 0)?;
+        Ok((handle, (sink_outMinIdx[0], sink_outMaxIdx[0])))
+    }
+
+    /// Open a live MINMAXINDEX stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::MINMAXINDEX`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.MINMAXINDEX_Open(&data, 30).expect("enough history");
+    /// let peeked = s.peek(100.9);
+    /// let updated = s.update(100.9);
+    /// assert_eq!(peeked.0, updated.0);
+    /// assert_eq!(peeked.1, updated.1);
+    /// ```
+    #[doc(alias = "TA_MINMAXINDEX_Open")]
+    pub fn MINMAXINDEX_Open(&self, inReal: &[f64], optInTimePeriod: i32) -> Result<(MINMAXINDEX_Stream, (i32, i32)), RetCode> {
+        self.MINMAXINDEX_OpenInternal(inReal, 0, optInTimePeriod)
+    }
+
+    /// [`Core::MINMAXINDEX_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::MINMAXINDEX`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_MINMAXINDEX_OpenAndFill")]
+    pub fn MINMAXINDEX_OpenAndFill(
+        &self, inReal: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
+    ) -> Result<MINMAXINDEX_Stream, RetCode> {
+        if outMinIdx.as_ptr() == outMaxIdx.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        self.MINMAXINDEX_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
     }
 
 }

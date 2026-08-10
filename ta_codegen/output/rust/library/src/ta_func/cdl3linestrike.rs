@@ -460,10 +460,11 @@ impl Core {
         }
     }
 
-    /// Internal startIdx-anchored open behind [`Core::CDL3LINESTRIKE_Open`] (composition seam).
-    pub(crate) fn CDL3LINESTRIKE_OpenInternal(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
+    /// The single whole-history transcription behind [`Core::CDL3LINESTRIKE_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::CDL3LINESTRIKE_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn CDL3LINESTRIKE_OpenCore(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32], outStride: usize,
+    ) -> Result<CDL3LINESTRIKE_Stream, RetCode> {
         if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
             return Err(RetCode::BadParam);
         }
@@ -475,7 +476,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut lastValue_outInteger: i32 = 0_i32;
         let mut NearPeriodTotal: [f64; 4 as usize] = [0.0_f64; 4 as usize];
         let mut i: usize = 0_usize;
         let mut outIdx: usize = 0_usize;
@@ -498,8 +498,8 @@ impl Core {
         }
         // Make sure there is still something to evaluate.
         if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
             return Err(RetCode::BadParam);
         }
         // Do the calculation using tight loops.
@@ -565,9 +565,9 @@ impl Core {
                inOpen[i - 1] <= (inOpen[i - 2]).max(inClose[i - 2]) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
                ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) // if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open
             {
-                lastValue_outInteger = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
-                lastValue_outInteger = 0;
+                outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
             }
             // add the current range and subtract the first range: this is done after the pattern recognition
             // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -605,279 +605,6 @@ impl Core {
                     }
                 }
                 NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (_candlerange_4 - _candlerange_5);
-                if totIdx == 2 { break; }
-                totIdx -= 1;
-            }
-            i += 1;
-            NearTrailingIdx += 1;
-            if !(i <= endIdx) { break; }
-        }
-        // All done. Indicate the output limits and return.
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let capLag_NearTrailingIdx: i64 = (i as i64) - (NearTrailingIdx as i64);
-        let cap_NearTrailingIdx: i64 = capLag_NearTrailingIdx + 4;
-        if capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let allocN_NearTrailingIdx: usize = if cap_NearTrailingIdx > 0 { cap_NearTrailingIdx as usize } else { 1 };
-        let mut ring_NearTrailingIdx_inOpen: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx as usize] = inOpen[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inHigh: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx as usize] = inHigh[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inLow: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx as usize] = inLow[fillJ];
-                fillJ += 1;
-            }
-        }
-        let mut ring_NearTrailingIdx_inClose: Vec<f64> = vec![0.0_f64; allocN_NearTrailingIdx];
-        {
-            let mut fillJ: usize = historyLen - cap_NearTrailingIdx as usize;
-            while fillJ < historyLen {
-                ring_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx as usize] = inClose[fillJ];
-                fillJ += 1;
-            }
-        }
-        let cap_totIdx: i64 = (4) as i64;
-        if cap_totIdx < 1 || cap_totIdx > historyLen as i64 {
-            return Err(RetCode::InternalError);
-        }
-        let mut win_totIdx_inOpen: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inOpen.copy_from_slice(&inOpen[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inHigh: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inHigh.copy_from_slice(&inHigh[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inLow: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inLow.copy_from_slice(&inLow[historyLen - cap_totIdx as usize..]);
-        let mut win_totIdx_inClose: Vec<f64> = vec![0.0_f64; cap_totIdx as usize];
-        win_totIdx_inClose.copy_from_slice(&inClose[historyLen - cap_totIdx as usize..]);
-        let state = CDL3LINESTRIKE_StreamState {
-            NearPeriodTotal,
-            totIdx,
-            lag1_inOpen: inOpen[historyLen - 1],
-            lag2_inOpen: inOpen[historyLen - 2],
-            lag3_inOpen: inOpen[historyLen - 3],
-            lag1_inHigh: inHigh[historyLen - 1],
-            lag2_inHigh: inHigh[historyLen - 2],
-            lag3_inHigh: inHigh[historyLen - 3],
-            lag1_inLow: inLow[historyLen - 1],
-            lag2_inLow: inLow[historyLen - 2],
-            lag3_inLow: inLow[historyLen - 3],
-            lag1_inClose: inClose[historyLen - 1],
-            lag2_inClose: inClose[historyLen - 2],
-            lag3_inClose: inClose[historyLen - 3],
-            ringPos_NearTrailingIdx: historyLen % cap_NearTrailingIdx as usize,
-            ringCap_NearTrailingIdx: cap_NearTrailingIdx as usize,
-            ringLag_NearTrailingIdx: capLag_NearTrailingIdx as usize,
-            ring_NearTrailingIdx_inOpen,
-            ring_NearTrailingIdx_inHigh,
-            ring_NearTrailingIdx_inLow,
-            ring_NearTrailingIdx_inClose,
-            winPos_totIdx: 0_usize,
-            winCap_totIdx: cap_totIdx as usize,
-            win_totIdx_inOpen,
-            win_totIdx_inHigh,
-            win_totIdx_inLow,
-            win_totIdx_inClose,
-        };
-        Ok((CDL3LINESTRIKE_Stream { core: self.clone(), state }, lastValue_outInteger))
-    }
-
-    /// Open a live CDL3LINESTRIKE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::CDL3LINESTRIKE`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let open: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
-    ///     .collect();
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.CDL3LINESTRIKE_Open(&open, &high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
-    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
-    /// assert_eq!(peeked, updated);
-    /// ```
-    #[doc(alias = "TA_CDL3LINESTRIKE_Open")]
-    pub fn CDL3LINESTRIKE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
-        self.CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::CDL3LINESTRIKE_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::CDL3LINESTRIKE`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_CDL3LINESTRIKE_OpenAndFill")]
-    pub fn CDL3LINESTRIKE_OpenAndFill(
-        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
-    ) -> Result<CDL3LINESTRIKE_Stream, RetCode> {
-        if inOpen.is_empty() || inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inHigh.len() != inOpen.len() || inLow.len() != inOpen.len() || inClose.len() != inOpen.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inOpen.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inOpen.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut NearPeriodTotal: [f64; 4 as usize] = [0.0_f64; 4 as usize];
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut totIdx: usize = 0_usize;
-        let mut NearTrailingIdx: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        #[allow(non_snake_case)]
-        let Near_rangeType: i32 = self.candle_settings.near.range_type;
-        #[allow(non_snake_case)]
-        let Near_avgPeriod: i32 = self.candle_settings.near.avg_period;
-        #[allow(non_snake_case)]
-        let Near_factor: f64 = self.candle_settings.near.factor;
-        // Identify the minimum number of price bar needed
-        // to calculate at least one output.
-        lookbackTotal = self.CDL3LINESTRIKE_Lookback();
-        // Move up the start index if there is not
-        // enough initial data.
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::BadParam);
-        }
-        // Do the calculation using tight loops.
-        // Add-up the initial period, except for the last value.
-        NearPeriodTotal[3] = 0.0;
-        NearPeriodTotal[2] = 0.0;
-        NearTrailingIdx = startIdx - ((Near_avgPeriod) as usize);
-        i = NearTrailingIdx;
-        while i < startIdx {
-            let mut _candlerange_6: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_6 = (inClose[i - 3] - inOpen[i - 3]).abs();
-                }
-                1 => {
-                    _candlerange_6 = inHigh[i - 3] - inLow[i - 3];
-                }
-                2 => {
-                    _candlerange_6 = inHigh[i - 3] - inLow[i - 3] - (inClose[i - 3] - inOpen[i - 3]).abs();
-                }
-                _ => {
-                    _candlerange_6 = 0.0;
-                }
-            }
-            NearPeriodTotal[3] = NearPeriodTotal[3] + _candlerange_6;
-            let mut _candlerange_7: f64;
-            match Near_rangeType {
-                0 => {
-                    _candlerange_7 = (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                1 => {
-                    _candlerange_7 = inHigh[i - 2] - inLow[i - 2];
-                }
-                2 => {
-                    _candlerange_7 = inHigh[i - 2] - inLow[i - 2] - (inClose[i - 2] - inOpen[i - 2]).abs();
-                }
-                _ => {
-                    _candlerange_7 = 0.0;
-                }
-            }
-            NearPeriodTotal[2] = NearPeriodTotal[2] + _candlerange_7;
-            i += 1;
-        }
-        i = startIdx;
-        // Proceed with the calculation for the requested range.
-        // Must have:
-        // - three white soldiers (three black crows): three white (black) candlesticks with consecutively higher (lower) closes,
-        // each opening within or near the previous real body
-        // - fourth candle: black (white) candle that opens above (below) prior candle's close and closes below (above)
-        // the first candle's open
-        // The meaning of "near" is specified with TA_SetCandleSettings;
-        // outInteger is positive (1 to 100) when bullish or negative (-1 to -100) when bearish;
-        // the user should consider that 3-line strike is significant when it appears in a trend in the same direction of
-        // the first three candles, while this function does not consider it
-        outIdx = 0;
-        loop {
-            if (if inClose[i - 3] >= inOpen[i - 3] { 1 } else { 0 - 1 }) == (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) && // three with same color
-               (if inClose[i - 2] >= inOpen[i - 2] { 1 } else { 0 - 1 }) == (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) &&
-               (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) && // 4th opposite color
-               inOpen[i - 2] >= (inOpen[i - 3]).min(inClose[i - 3]) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 2nd opens within/near 1st rb
-               inOpen[i - 2] <= (inOpen[i - 3]).max(inClose[i - 3]) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[3]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 3] - inOpen[i - 3]).abs(), 1 => (inHigh[i - 3]) - (inLow[i - 3]), _ => (inHigh[i - 3]) - (inLow[i - 3]) - ((inClose[i - 3]) - (inOpen[i - 3])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               inOpen[i - 1] >= (inOpen[i - 2]).min(inClose[i - 2]) - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // 3rd opens within/near 2nd rb
-               inOpen[i - 1] <= (inOpen[i - 2]).max(inClose[i - 2]) + ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal[2]) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => (inClose[i - 2] - inOpen[i - 2]).abs(), 1 => (inHigh[i - 2]) - (inLow[i - 2]), _ => (inHigh[i - 2]) - (inLow[i - 2]) - ((inClose[i - 2]) - (inOpen[i - 2])).abs() } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) &&
-               ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3] || (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3]) // if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open
-            {
-                outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
-                outIdx += 1;
-            } else {
-                outInteger[outIdx] = 0;
-                outIdx += 1;
-            }
-            // add the current range and subtract the first range: this is done after the pattern recognition
-            // when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-            // for( totIdx = 3; totIdx >= 2; totIdx -= 1 )
-            totIdx = 3;
-            loop {
-                let mut _candlerange_8: f64;
-                match Near_rangeType {
-                    0 => {
-                        _candlerange_8 = (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_8 = inHigh[i - totIdx] - inLow[i - totIdx];
-                    }
-                    2 => {
-                        _candlerange_8 = inHigh[i - totIdx] - inLow[i - totIdx] - (inClose[i - totIdx] - inOpen[i - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_8 = 0.0;
-                    }
-                }
-                let mut _candlerange_9: f64;
-                match Near_rangeType {
-                    0 => {
-                        _candlerange_9 = (inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx]).abs();
-                    }
-                    1 => {
-                        _candlerange_9 = inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx];
-                    }
-                    2 => {
-                        _candlerange_9 = inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx] - (inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx]).abs();
-                    }
-                    _ => {
-                        _candlerange_9 = 0.0;
-                    }
-                }
-                NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (_candlerange_8 - _candlerange_9);
                 if totIdx == 2 { break; }
                 totIdx -= 1;
             }
@@ -970,6 +697,57 @@ impl Core {
             win_totIdx_inClose,
         };
         Ok(CDL3LINESTRIKE_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::CDL3LINESTRIKE_Open`] (composition seam).
+    pub(crate) fn CDL3LINESTRIKE_OpenInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outInteger = [0_i32; 1];
+        let handle = self.CDL3LINESTRIKE_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outInteger, 0)?;
+        Ok((handle, sink_outInteger[0]))
+    }
+
+    /// Open a live CDL3LINESTRIKE stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::CDL3LINESTRIKE`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let open: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64 - 0.05).sin())
+    ///     .collect();
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.CDL3LINESTRIKE_Open(&open, &high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(100.2, 101.4, 99.1, 100.9);
+    /// let updated = s.update(100.2, 101.4, 99.1, 100.9);
+    /// assert_eq!(peeked, updated);
+    /// ```
+    #[doc(alias = "TA_CDL3LINESTRIKE_Open")]
+    pub fn CDL3LINESTRIKE_Open(&self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(CDL3LINESTRIKE_Stream, i32), RetCode> {
+        self.CDL3LINESTRIKE_OpenInternal(inOpen, inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::CDL3LINESTRIKE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::CDL3LINESTRIKE`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_CDL3LINESTRIKE_OpenAndFill")]
+    pub fn CDL3LINESTRIKE_OpenAndFill(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDL3LINESTRIKE_Stream, RetCode> {
+        self.CDL3LINESTRIKE_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
 }

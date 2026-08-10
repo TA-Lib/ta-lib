@@ -398,7 +398,7 @@
       cur_outReal = cur_tempBuffer - cur_outReal;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode APO_OpenBody( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   private RetCode APO_OpenCore( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] tempBuffer;
       RetCode retCode;
@@ -407,8 +407,6 @@
       MInteger fastNb = new MInteger();
       int offset = 0;
       int i = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -480,94 +478,22 @@
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
+      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode APO_OpenBody( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return APO_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode APO_OpenAndFillBody( APO_Stream sp, double inReal[], int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double[] tempBuffer;
-      RetCode retCode;
-      int tempInteger = 0;
-      MInteger fastBeg = new MInteger();
-      MInteger fastNb = new MInteger();
-      int offset = 0;
-      int i = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInFastPeriod == Integer.MIN_VALUE ) {
-         optInFastPeriod = 12;
-      } else if( optInFastPeriod < 2 || optInFastPeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInSlowPeriod == Integer.MIN_VALUE ) {
-         optInSlowPeriod = 26;
-      } else if( optInSlowPeriod < 2 || optInSlowPeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInMAType == MAType.DEFAULT ) {
-         optInMAType = MAType.EMA;
-      }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outReal = new double[historyLen];
-      /* Allocate an intermediate buffer. */
-      tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
-      /* Make sure slow is really slower than
-       * the fast period! if not, swap...
-       */
-      if( optInSlowPeriod < optInFastPeriod ) {
-         /* swap */
-         tempInteger = optInSlowPeriod;
-         optInSlowPeriod = optInFastPeriod;
-         optInFastPeriod = tempInteger;
-      }
-      /* Calculate the fast MA into the tempBuffer. */
-      /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInFastPeriod, optInMAType);
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInFastPeriod, optInMAType, fastBeg, fastNb, tempBuffer);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      /* Calculate the slow MA into the output. */
-      /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub1 = MA_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInSlowPeriod, optInMAType);
-      retCode = MA_Internal(startIdx, endIdx, inReal, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, sc_outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
-       * many outputs), so tempBuffer[i+offset] is the fast MA at the same bar as
-       * outReal[i], with a non-negative index. An empty slow MA skips the loop.
-       */
-      offset = fastNb.value - outNBElement.value;
-      /* Calculate (fast MA)-(slow MA) in the output. */
-      for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-         sc_outReal[i] = tempBuffer[i + offset] - sc_outReal[i];
-      }
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      sp.optInFastPeriod = optInFastPeriod;
-      sp.optInSlowPeriod = optInSlowPeriod;
-      sp.optInMAType = optInMAType;
-      sp.sub0 = sub0;
-      sp.sub1 = sub1;
-      sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
-      return RetCode.Success;
+      return APO_OpenCore( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind APO_Open (composition seam). */
    APO_Stream APO_OpenInternal( double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )

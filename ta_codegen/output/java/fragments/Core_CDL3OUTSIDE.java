@@ -345,14 +345,11 @@
       sp.lag2_inClose = sp.lag1_inClose;
       sp.lag1_inClose = inClose;
    }
-   private RetCode CDL3OUTSIDE_OpenBody( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDL3OUTSIDE_OpenCore( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -396,9 +393,9 @@
             /* third candle higher */
             /* black engulfs white */
             /* third candle lower */
-            lastValue_outInteger = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          i += 1;
       } while( i <= endIdx );
@@ -410,77 +407,22 @@
       sp.lag2_inOpen = inOpen[historyLen - 2];
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.lag2_inClose = inClose[historyLen - 2];
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDL3OUTSIDE_OpenBody( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDL3OUTSIDE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDL3OUTSIDE_OpenAndFillBody( CDL3OUTSIDE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      int i = 0;
-      int outIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDL3OUTSIDE_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first: black (white) real body
-       * - second: white (black) real body that engulfs the prior real body
-       * - third: candle that closes higher (lower) than the second candle
-       * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-       * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-       * in an uptrend, while this function does not consider it
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
-            /* white engulfs black */
-            /* third candle higher */
-            /* black engulfs white */
-            /* third candle lower */
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDL3OUTSIDE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDL3OUTSIDE_Open (composition seam). */
    CDL3OUTSIDE_Stream CDL3OUTSIDE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

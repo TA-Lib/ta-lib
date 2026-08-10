@@ -697,7 +697,7 @@
          sp.winPos_totIdx = 0;
       }
    }
-   private RetCode CDLSTALLEDPATTERN_OpenBody( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLSTALLEDPATTERN_OpenCore( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] BodyLongPeriodTotal = new double[3];
       double[] NearPeriodTotal = new double[3];
@@ -711,9 +711,6 @@
       int ShadowVeryShortTrailingIdx = 0;
       int NearTrailingIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -815,9 +812,9 @@
              Math.abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: small real body */
              inOpen[i] >= inClose[i - 1] - Math.abs(inClose[i] - inOpen[i]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* rides on the shoulder of 2nd real body */
          {
-            lastValue_outInteger = 0 - 100;
+            outInteger[outIdx++ * outStride] = 0 - 100;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -987,302 +984,22 @@
       sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
       sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
       sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDLSTALLEDPATTERN_OpenBody( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDLSTALLEDPATTERN_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDLSTALLEDPATTERN_OpenAndFillBody( CDLSTALLEDPATTERN_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      double[] BodyLongPeriodTotal = new double[3];
-      double[] NearPeriodTotal = new double[3];
-      double BodyShortPeriodTotal = 0;
-      double ShadowVeryShortPeriodTotal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int BodyLongTrailingIdx = 0;
-      int BodyShortTrailingIdx = 0;
-      int ShadowVeryShortTrailingIdx = 0;
-      int NearTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      int BodyLong_rangeType = this.candleSettings[CandleSettingType.BodyLong.ordinal()].rangeType.ordinal();
-      int BodyLong_avgPeriod = this.candleSettings[CandleSettingType.BodyLong.ordinal()].avgPeriod;
-      double BodyLong_factor = this.candleSettings[CandleSettingType.BodyLong.ordinal()].factor;
-      int BodyShort_rangeType = this.candleSettings[CandleSettingType.BodyShort.ordinal()].rangeType.ordinal();
-      int BodyShort_avgPeriod = this.candleSettings[CandleSettingType.BodyShort.ordinal()].avgPeriod;
-      double BodyShort_factor = this.candleSettings[CandleSettingType.BodyShort.ordinal()].factor;
-      int Near_rangeType = this.candleSettings[CandleSettingType.Near.ordinal()].rangeType.ordinal();
-      int Near_avgPeriod = this.candleSettings[CandleSettingType.Near.ordinal()].avgPeriod;
-      double Near_factor = this.candleSettings[CandleSettingType.Near.ordinal()].factor;
-      int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].rangeType.ordinal();
-      int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].avgPeriod;
-      double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].factor;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDLSTALLEDPATTERN_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      BodyLongPeriodTotal[2] = 0;
-      BodyLongPeriodTotal[1] = 0;
-      BodyLongPeriodTotal[0] = 0;
-      BodyLongTrailingIdx = startIdx - BodyLong_avgPeriod;
-      BodyShortPeriodTotal = 0;
-      BodyShortTrailingIdx = startIdx - BodyShort_avgPeriod;
-      ShadowVeryShortPeriodTotal = 0;
-      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-      NearPeriodTotal[2] = 0;
-      NearPeriodTotal[1] = 0;
-      NearPeriodTotal[0] = 0;
-      NearTrailingIdx = startIdx - Near_avgPeriod;
-      i = BodyLongTrailingIdx;
-      while( i < startIdx ) {
-         BodyLongPeriodTotal[2] = BodyLongPeriodTotal[2] + ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
-         BodyLongPeriodTotal[1] = BodyLongPeriodTotal[1] + ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = BodyShortTrailingIdx;
-      while( i < startIdx ) {
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)));
-         i += 1;
-      }
-      i = ShadowVeryShortTrailingIdx;
-      while( i < startIdx ) {
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = NearTrailingIdx;
-      while( i < startIdx ) {
-         NearPeriodTotal[2] = NearPeriodTotal[2] + ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
-         NearPeriodTotal[1] = NearPeriodTotal[1] + ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - three white candlesticks with consecutively higher closes
-       * - first candle: long white
-       * - second candle: long white with no or very short upper shadow opening within or near the previous white real body
-       * and closing higher than the prior candle
-       * - third candle: small white that gaps away or "rides on the shoulder" of the prior long real body (= it's at
-       * the upper end of the prior real body)
-       * The meanings of "long", "very short", "short", "near" are specified with TA_SetCandleSettings;
-       * outInteger is negative (-1 to -100): stalled pattern is always bearish;
-       * the user should consider that stalled pattern is significant when it appears in uptrend, while this function
-       * does not consider it
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && /* 1st white */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && /* 2nd white */
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&         /* 3rd white */
-             inClose[i] > inClose[i - 1] &&
-             inClose[i - 1] > inClose[i - 2] &&                      /* consecutive higher closes */
-             Math.abs(inClose[i - 2] - inOpen[i - 2]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[2] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: long real body */
-             Math.abs(inClose[i - 1] - inOpen[i - 1]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal[1] / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: long real body */
-             (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* very short upper shadow */
-             inOpen[i - 1] > inOpen[i - 2] &&                        /* opens within/near 1st real body */
-             inOpen[i - 1] <= inClose[i - 2] + ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[2] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((Near_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((Near_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) &&
-             Math.abs(inClose[i] - inOpen[i]) < ((BodyShort_factor * (((BodyShort_avgPeriod != 0) ? (BodyShortPeriodTotal / BodyShort_avgPeriod) : ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0)))) / ((BodyShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 3rd: small real body */
-             inOpen[i] >= inClose[i - 1] - Math.abs(inClose[i] - inOpen[i]) - ((Near_factor * (((Near_avgPeriod != 0) ? (NearPeriodTotal[1] / Near_avgPeriod) : ((Near_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((Near_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((Near_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((Near_rangeType == 2) ? 2.0 : 1.0)))) ) /* rides on the shoulder of 2nd real body */
-         {
-            outInteger[outIdx++] = 0 - 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         for( totIdx = 2; totIdx >= 1; totIdx -= 1 ) {
-            BodyLongPeriodTotal[totIdx] = BodyLongPeriodTotal[totIdx] + (((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - totIdx] - inLow[i - totIdx]) - Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : 0.0))) - ((BodyLong_rangeType == 0) ? (Math.abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : ((BodyLong_rangeType == 1) ? (inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) : ((BodyLong_rangeType == 2) ? ((inHigh[BodyLongTrailingIdx - totIdx] - inLow[BodyLongTrailingIdx - totIdx]) - Math.abs(inClose[BodyLongTrailingIdx - totIdx] - inOpen[BodyLongTrailingIdx - totIdx])) : 0.0))));
-            NearPeriodTotal[totIdx] = NearPeriodTotal[totIdx] + (((Near_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((Near_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[i - totIdx] - inLow[i - totIdx]) - Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : 0.0))) - ((Near_rangeType == 0) ? (Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : ((Near_rangeType == 1) ? (inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) : ((Near_rangeType == 2) ? ((inHigh[NearTrailingIdx - totIdx] - inLow[NearTrailingIdx - totIdx]) - Math.abs(inClose[NearTrailingIdx - totIdx] - inOpen[NearTrailingIdx - totIdx])) : 0.0))));
-         }
-         BodyShortPeriodTotal += ((BodyShort_rangeType == 0) ? (Math.abs(inClose[i] - inOpen[i])) : ((BodyShort_rangeType == 1) ? (inHigh[i] - inLow[i]) : ((BodyShort_rangeType == 2) ? ((inHigh[i] - inLow[i]) - Math.abs(inClose[i] - inOpen[i])) : 0.0))) - ((BodyShort_rangeType == 0) ? (Math.abs(inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx])) : ((BodyShort_rangeType == 1) ? (inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx]) : ((BodyShort_rangeType == 2) ? ((inHigh[BodyShortTrailingIdx] - inLow[BodyShortTrailingIdx]) - Math.abs(inClose[BodyShortTrailingIdx] - inOpen[BodyShortTrailingIdx])) : 0.0)));
-         ShadowVeryShortPeriodTotal += ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - 1] - inLow[ShadowVeryShortTrailingIdx - 1]) - Math.abs(inClose[ShadowVeryShortTrailingIdx - 1] - inOpen[ShadowVeryShortTrailingIdx - 1])) : 0.0)));
-         i += 1;
-         BodyLongTrailingIdx += 1;
-         BodyShortTrailingIdx += 1;
-         ShadowVeryShortTrailingIdx += 1;
-         NearTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
-      int cap_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx + 3;
-      if( capLag_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
-      double[] capRing_BodyLongTrailingIdx_inOpen = new double[allocN_BodyLongTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyLongTrailingIdx_inOpen[fillJ % cap_BodyLongTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_BodyLongTrailingIdx_inHigh = new double[allocN_BodyLongTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyLongTrailingIdx_inHigh[fillJ % cap_BodyLongTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_BodyLongTrailingIdx_inLow = new double[allocN_BodyLongTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyLongTrailingIdx_inLow[fillJ % cap_BodyLongTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_BodyLongTrailingIdx_inClose = new double[allocN_BodyLongTrailingIdx];
-      for( int fillJ = historyLen - cap_BodyLongTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_BodyLongTrailingIdx_inClose[fillJ % cap_BodyLongTrailingIdx] = inClose[fillJ];
-      }
-      int cap_BodyShortTrailingIdx = i - BodyShortTrailingIdx;
-      if( cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_BodyShortTrailingIdx = (cap_BodyShortTrailingIdx > 0)? cap_BodyShortTrailingIdx : 1;
-      double[] capRing_BodyShortTrailingIdx_inOpen = new double[allocN_BodyShortTrailingIdx];
-      System.arraycopy(inOpen, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inOpen, 0, cap_BodyShortTrailingIdx);
-      double[] capRing_BodyShortTrailingIdx_inHigh = new double[allocN_BodyShortTrailingIdx];
-      System.arraycopy(inHigh, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inHigh, 0, cap_BodyShortTrailingIdx);
-      double[] capRing_BodyShortTrailingIdx_inLow = new double[allocN_BodyShortTrailingIdx];
-      System.arraycopy(inLow, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inLow, 0, cap_BodyShortTrailingIdx);
-      double[] capRing_BodyShortTrailingIdx_inClose = new double[allocN_BodyShortTrailingIdx];
-      System.arraycopy(inClose, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inClose, 0, cap_BodyShortTrailingIdx);
-      int capLag_NearTrailingIdx = i - NearTrailingIdx;
-      int cap_NearTrailingIdx = capLag_NearTrailingIdx + 3;
-      if( capLag_NearTrailingIdx < 0 || cap_NearTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_NearTrailingIdx = (cap_NearTrailingIdx > 0)? cap_NearTrailingIdx : 1;
-      double[] capRing_NearTrailingIdx_inOpen = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inOpen[fillJ % cap_NearTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inHigh = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inHigh[fillJ % cap_NearTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inLow = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inLow[fillJ % cap_NearTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_NearTrailingIdx_inClose = new double[allocN_NearTrailingIdx];
-      for( int fillJ = historyLen - cap_NearTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_NearTrailingIdx_inClose[fillJ % cap_NearTrailingIdx] = inClose[fillJ];
-      }
-      int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
-      int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 2;
-      if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
-      double[] capRing_ShadowVeryShortTrailingIdx_inOpen = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inOpen[fillJ % cap_ShadowVeryShortTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inHigh = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inHigh[fillJ % cap_ShadowVeryShortTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inLow = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inLow[fillJ % cap_ShadowVeryShortTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inClose = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inClose[fillJ % cap_ShadowVeryShortTrailingIdx] = inClose[fillJ];
-      }
-      int cap_totIdx = (int)(3);
-      if( cap_totIdx < 1 || cap_totIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capWin_totIdx_inOpen = new double[cap_totIdx];
-      System.arraycopy(inOpen, historyLen - cap_totIdx, capWin_totIdx_inOpen, 0, cap_totIdx);
-      double[] capWin_totIdx_inHigh = new double[cap_totIdx];
-      System.arraycopy(inHigh, historyLen - cap_totIdx, capWin_totIdx_inHigh, 0, cap_totIdx);
-      double[] capWin_totIdx_inLow = new double[cap_totIdx];
-      System.arraycopy(inLow, historyLen - cap_totIdx, capWin_totIdx_inLow, 0, cap_totIdx);
-      double[] capWin_totIdx_inClose = new double[cap_totIdx];
-      System.arraycopy(inClose, historyLen - cap_totIdx, capWin_totIdx_inClose, 0, cap_totIdx);
-      sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
-      sp.NearPeriodTotal = NearPeriodTotal;
-      sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
-      sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.ringPos_BodyLongTrailingIdx = historyLen % cap_BodyLongTrailingIdx;
-      sp.ringCap_BodyLongTrailingIdx = cap_BodyLongTrailingIdx;
-      sp.ringLag_BodyLongTrailingIdx = capLag_BodyLongTrailingIdx;
-      sp.ring_BodyLongTrailingIdx_inOpen = capRing_BodyLongTrailingIdx_inOpen;
-      sp.ring_BodyLongTrailingIdx_inHigh = capRing_BodyLongTrailingIdx_inHigh;
-      sp.ring_BodyLongTrailingIdx_inLow = capRing_BodyLongTrailingIdx_inLow;
-      sp.ring_BodyLongTrailingIdx_inClose = capRing_BodyLongTrailingIdx_inClose;
-      sp.ringPos_BodyShortTrailingIdx = 0;
-      sp.ringCap_BodyShortTrailingIdx = cap_BodyShortTrailingIdx;
-      sp.ring_BodyShortTrailingIdx_inOpen = capRing_BodyShortTrailingIdx_inOpen;
-      sp.ring_BodyShortTrailingIdx_inHigh = capRing_BodyShortTrailingIdx_inHigh;
-      sp.ring_BodyShortTrailingIdx_inLow = capRing_BodyShortTrailingIdx_inLow;
-      sp.ring_BodyShortTrailingIdx_inClose = capRing_BodyShortTrailingIdx_inClose;
-      sp.ringPos_NearTrailingIdx = historyLen % cap_NearTrailingIdx;
-      sp.ringCap_NearTrailingIdx = cap_NearTrailingIdx;
-      sp.ringLag_NearTrailingIdx = capLag_NearTrailingIdx;
-      sp.ring_NearTrailingIdx_inOpen = capRing_NearTrailingIdx_inOpen;
-      sp.ring_NearTrailingIdx_inHigh = capRing_NearTrailingIdx_inHigh;
-      sp.ring_NearTrailingIdx_inLow = capRing_NearTrailingIdx_inLow;
-      sp.ring_NearTrailingIdx_inClose = capRing_NearTrailingIdx_inClose;
-      sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
-      sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
-      sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
-      sp.ring_ShadowVeryShortTrailingIdx_inOpen = capRing_ShadowVeryShortTrailingIdx_inOpen;
-      sp.ring_ShadowVeryShortTrailingIdx_inHigh = capRing_ShadowVeryShortTrailingIdx_inHigh;
-      sp.ring_ShadowVeryShortTrailingIdx_inLow = capRing_ShadowVeryShortTrailingIdx_inLow;
-      sp.ring_ShadowVeryShortTrailingIdx_inClose = capRing_ShadowVeryShortTrailingIdx_inClose;
-      sp.winPos_totIdx = 0;
-      sp.winCap_totIdx = cap_totIdx;
-      sp.win_totIdx_inOpen = capWin_totIdx_inOpen;
-      sp.win_totIdx_inHigh = capWin_totIdx_inHigh;
-      sp.win_totIdx_inLow = capWin_totIdx_inLow;
-      sp.win_totIdx_inClose = capWin_totIdx_inClose;
-      sp.cs_BodyLong_rangeType = BodyLong_rangeType;
-      sp.cs_BodyLong_avgPeriod = BodyLong_avgPeriod;
-      sp.cs_BodyLong_factor = BodyLong_factor;
-      sp.cs_BodyShort_rangeType = BodyShort_rangeType;
-      sp.cs_BodyShort_avgPeriod = BodyShort_avgPeriod;
-      sp.cs_BodyShort_factor = BodyShort_factor;
-      sp.cs_Near_rangeType = Near_rangeType;
-      sp.cs_Near_avgPeriod = Near_avgPeriod;
-      sp.cs_Near_factor = Near_factor;
-      sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
-      sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
-      sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDLSTALLEDPATTERN_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDLSTALLEDPATTERN_Open (composition seam). */
    CDLSTALLEDPATTERN_Stream CDLSTALLEDPATTERN_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

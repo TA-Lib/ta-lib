@@ -544,14 +544,12 @@ static void TA_CMO_StepInternal( struct TA_CMO_Stream *sp, double inReal, double
    }
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+static TA_RetCode TA_CMO_OpenCore( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_CMO_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -564,287 +562,6 @@ TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inRe
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outReal = 0.0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   if( optInTimePeriod == 1 )
-   {
-      if( historyLen < TA_CMO_Lookback( optInTimePeriod ) + 1 ) return TA_BAD_PARAM;
-      sp = (struct TA_CMO_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      *outReal = inReal[historyLen - 1];
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-
-   {
-      int outIdx;
-      int today;
-      int lookbackTotal;
-      int unstablePeriod;
-      int i;
-      double prevGain = 0.0;
-      double prevLoss = 0.0;
-      double prevValue = 0.0;
-      double savePrevValue;
-      double tempValue1;
-      double tempValue2;
-      double tempValue3;
-      double tempValue4;
-      /* CMO calculation is mostly identical to RSI.
-       *
-       * The only difference is in the last step of calculation:
-       *
-       *   RSI = gain / (gain+loss)
-       *   CMO = (gain-loss) / (gain+loss)
-       *
-       * See the RSI function for potentially some more info
-       * on this algo.
-       */
-      dummyBegIdx = 0;
-      dummyNBElement = 0;
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = TA_CMO_Lookback(optInTimePeriod);
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         return TA_BAD_PARAM;
-      }
-      outIdx = 0;
-      /* Index into the output. */
-      /* Trap special case where the period is '1'.
-       * In that case, just copy the input into the
-       * output for the requested range (as-is !)
-       */
-      if( optInTimePeriod == 1 )
-      {
-         dummyBegIdx = startIdx;
-         i = endIdx - startIdx + 1;
-         dummyNBElement = i;
-         /* Element loop, not a block copy: the C single-precision variant reads a
-          * float array, so a double-sized byte copy would reinterpret and
-          * over-read it (#137). Forward order keeps the in-place case correct (#94).
-          */
-         today = startIdx;
-         for( outIdx = 0; outIdx < i; outIdx += 1 )
-         {
-            lastValue_outReal = inReal[today++];
-         }
-         return TA_BAD_PARAM;
-      }
-      /* Accumulate Wilder's "Average Gain" and "Average Loss"
-       * among the initial period.
-       */
-      today = startIdx - lookbackTotal;
-      prevValue = inReal[today];
-      unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
-      {
-         /* Preserve prevValue because it may get
-          * overwritten by the output.
-          * (because output ptr could be the same as input ptr).
-          */
-         savePrevValue = prevValue;
-         /* No unstable period, so must calculate first output
-          * particular to Metastock.
-          * (Metastock re-use the first price bar, so there
-          *  is no loss/gain at first. Beats me why they
-          *  are doing all this).
-          */
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 )
-         {
-            tempValue1 = inReal[today++];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0 )
-            {
-               prevLoss -= tempValue2;
-            } else 
-            {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / optInTimePeriod;
-         tempValue2 = prevGain / optInTimePeriod;
-         tempValue3 = tempValue2 - tempValue1;
-         tempValue4 = tempValue1 + tempValue2;
-         /* Write the output. */
-         if( !TA_IS_ZERO(tempValue4) )
-         {
-            lastValue_outReal = 100 * (tempValue3 / tempValue4);
-         } else 
-         {
-            lastValue_outReal = 0.0;
-         }
-         /* Are we done? */
-         if( today > endIdx )
-         {
-            dummyBegIdx = startIdx;
-            dummyNBElement = outIdx;
-            return TA_BAD_PARAM;
-         }
-         /* Start over for the next price bar. */
-         today -= optInTimePeriod;
-         prevValue = savePrevValue;
-      }
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
-      prevGain = 0.0;
-      prevLoss = 0.0;
-      today += 1;
-      for( i = optInTimePeriod; i > 0; i -= 1 )
-      {
-         tempValue1 = inReal[today++];
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-      }
-      /* Subsequent prevLoss and prevGain are smoothed
-       * using the previous values (Wilder's approach).
-       *  1) Multiply the previous by 'period-1'.
-       *  2) Add today value.
-       *  3) Divide by 'period'.
-       */
-      prevLoss /= optInTimePeriod;
-      prevGain /= optInTimePeriod;
-      /* Often documentation present the RSI calculation as follow:
-       *    RSI = 100 - (100 / 1 + (prevGain/prevLoss))
-       *
-       * The following is equivalent:
-       *    RSI = 100 * (prevGain/(prevGain+prevLoss))
-       *
-       * The second equation is used here for speed optimization.
-       */
-      if( today > startIdx )
-      {
-         tempValue1 = prevGain + prevLoss;
-         if( !TA_IS_ZERO(tempValue1) )
-         {
-            lastValue_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
-         } else 
-         {
-            lastValue_outReal = 0.0;
-         }
-      } else 
-      {
-         /* Skip the unstable period. Do the processing
-          * but do not write it in the output.
-          */
-         while( today < startIdx )
-         {
-            tempValue1 = inReal[today];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            prevLoss *= optInTimePeriod - 1;
-            prevGain *= optInTimePeriod - 1;
-            if( tempValue2 < 0 )
-            {
-               prevLoss -= tempValue2;
-            } else 
-            {
-               prevGain += tempValue2;
-            }
-            prevLoss /= optInTimePeriod;
-            prevGain /= optInTimePeriod;
-            today += 1;
-         }
-      }
-      /* Unstable period skipped... now continue
-       * processing if needed.
-       */
-      while( today <= endIdx )
-      {
-         tempValue1 = inReal[today++];
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         prevLoss *= optInTimePeriod - 1;
-         prevGain *= optInTimePeriod - 1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-         prevLoss /= optInTimePeriod;
-         prevGain /= optInTimePeriod;
-         tempValue1 = prevGain + prevLoss;
-         if( !TA_IS_ZERO(tempValue1) )
-         {
-            lastValue_outReal = 100.0 * ((prevGain - prevLoss) / tempValue1);
-         } else 
-         {
-            lastValue_outReal = 0.0;
-         }
-      }
-      dummyBegIdx = startIdx;
-      dummyNBElement = outIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CMO_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->optInTimePeriod = optInTimePeriod;
-      sp->prevGain = prevGain;
-      sp->prevLoss = prevLoss;
-      sp->prevValue = prevValue;
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CMO_Open( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
-{
-   return TA_CMO_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_CMO_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
-      optInTimePeriod = 14;
-   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -863,7 +580,7 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
          *outNBElement = historyLen - fillLb;
          for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
          {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+            outReal[(fillIdx) * outStride] = inReal[fillLb + fillIdx];
          }
       }
       *stream = sp;
@@ -925,7 +642,7 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
          today = startIdx;
          for( outIdx = 0; outIdx < i; outIdx += 1 )
          {
-            outReal[outIdx] = inReal[today++];
+            outReal[outIdx * outStride] = inReal[today++];
          }
          return TA_BAD_PARAM;
       }
@@ -978,10 +695,10 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
          /* Write the output. */
          if( !TA_IS_ZERO(tempValue4) )
          {
-            outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
+            outReal[outIdx++ * outStride] = 100 * (tempValue3 / tempValue4);
          } else 
          {
-            outReal[outIdx++] = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          }
          /* Are we done? */
          if( today > endIdx )
@@ -1034,10 +751,10 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
          tempValue1 = prevGain + prevLoss;
          if( !TA_IS_ZERO(tempValue1) )
          {
-            outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+            outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else 
          {
-            outReal[outIdx++] = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          }
       } else 
       {
@@ -1085,10 +802,10 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
          tempValue1 = prevGain + prevLoss;
          if( !TA_IS_ZERO(tempValue1) )
          {
-            outReal[outIdx++] = 100.0 * ((prevGain - prevLoss) / tempValue1);
+            outReal[outIdx++ * outStride] = 100.0 * ((prevGain - prevLoss) / tempValue1);
          } else 
          {
-            outReal[outIdx++] = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          }
       }
       *outBegIdx= startIdx;
@@ -1105,6 +822,35 @@ TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CMO_OpenInternal( struct TA_CMO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_CMO_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CMO_Open( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal )
+{
+   return TA_CMO_OpenInternal( stream, inReal, 0, historyLen, optInTimePeriod, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_CMO_OpenAndFill( TA_CMO_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
+   return TA_CMO_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CMO_Update( TA_CMO_Stream *stream, double inReal, double *outReal )

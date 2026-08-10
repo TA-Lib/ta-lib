@@ -316,7 +316,7 @@
       sp.prevClose = tempClose;
       sp.prevVolume = tempVolume;
    }
-   private RetCode PVI_OpenBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
+   private RetCode PVI_OpenCore( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       int outIdx = 0;
@@ -325,9 +325,6 @@
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inVolume.length != inClose.length ) {
@@ -353,7 +350,7 @@
          if( tempVolume > prevVolume && prevClose != 0.0 ) {
             prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
          }
-         lastValue_outReal = prevPVI;
+         outReal[outIdx++ * outStride] = prevPVI;
          prevClose = tempClose;
          prevVolume = tempVolume;
       }
@@ -363,59 +360,22 @@
       sp.prevPVI = prevPVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode PVI_OpenBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return PVI_OpenCore( sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode PVI_OpenAndFillBody( PVI_Stream sp, double inClose[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int i = 0;
-      int outIdx = 0;
-      double prevPVI = 0;
-      double prevClose = 0;
-      double prevVolume = 0;
-      double tempClose = 0;
-      double tempVolume = 0;
-      int historyLen = inClose.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inVolume.length != inClose.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      /* The index is a running cumulative value seeded at 1000, updated only on
-       * bars whose volume increased versus the prior bar (Positive Volume).
-       */
-      prevPVI = 1000.0;
-      prevClose = inClose[startIdx];
-      prevVolume = inVolume[startIdx];
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 ) {
-         tempClose = inClose[i];
-         tempVolume = inVolume[i];
-         /* prevClose != 0 guards the percentage-change division: a zero previous
-          * close is a degenerate input that would otherwise emit NaN/Inf; carry
-          * the index forward unchanged instead. Never triggers on real prices.
-          */
-         if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
-         }
-         outReal[outIdx++] = prevPVI;
-         prevClose = tempClose;
-         prevVolume = tempVolume;
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      sp.prevPVI = prevPVI;
-      sp.prevClose = prevClose;
-      sp.prevVolume = prevVolume;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return PVI_OpenCore( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
    PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )

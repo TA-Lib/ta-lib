@@ -275,117 +275,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::TRANGE_Open`] (composition seam).
-    pub(crate) fn TRANGE_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
-    ) -> Result<(TRANGE_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut today: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut val2: f64 = 0.0_f64;
-        let mut val3: f64 = 0.0_f64;
-        let mut greatest: f64 = 0.0_f64;
-        let mut tempCY: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        let mut tempHT: f64 = 0.0_f64;
-        // True Range is the greatest of the following:
-        //
-        //  val1 = distance from today's high to today's low.
-        //  val2 = distance from yesterday's close to today's high.
-        //  val3 = distance from yesterday's close to today's low.
-        //
-        // Some books and software makes the first TR value to be
-        // the (high - low) of the first bar. This function instead
-        // ignore the first price bar, and only output starting at the
-        // second price bar are valid. This is done for avoiding
-        // inconsistency.
-        // Move up the start index if there is not
-        // enough initial data.
-        // Always one price bar gets consumed.
-        if startIdx < 1 {
-            startIdx = 1;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            dummyBegIdx = 0;
-            dummyNBElement = 0;
-            return Err(RetCode::BadParam);
-        }
-        outIdx = 0;
-        today = startIdx;
-        while today <= endIdx {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            lastValue_outReal = greatest;
-            today += 1;
-        }
-        dummyNBElement = outIdx;
-        dummyBegIdx = startIdx;
-
-        // Capture the live batch state into the handle.
-        let state = TRANGE_StreamState {
-            val3,
-            lag1_inClose: inClose[historyLen - 1],
-        };
-        Ok((TRANGE_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live TRANGE stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::TRANGE`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.TRANGE_Open(&high, &low, &close).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9);
-    /// let updated = s.update(101.4, 99.1, 100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_TRANGE_Open")]
-    pub fn TRANGE_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TRANGE_Stream, f64), RetCode> {
-        self.TRANGE_OpenInternal(inHigh, inLow, inClose, 0)
-    }
-
-    /// [`Core::TRANGE_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::TRANGE`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_TRANGE_OpenAndFill")]
-    pub fn TRANGE_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::TRANGE_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::TRANGE_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn TRANGE_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<TRANGE_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -395,7 +288,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut today: usize = 0_usize;
@@ -446,8 +339,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            outReal[outIdx] = greatest;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = greatest;
             today += 1;
         }
         (*outNBElement) = outIdx;
@@ -459,6 +351,54 @@ impl Core {
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(TRANGE_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::TRANGE_Open`] (composition seam).
+    pub(crate) fn TRANGE_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize,
+    ) -> Result<(TRANGE_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.TRANGE_OpenCore(inHigh, inLow, inClose, startIdx, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live TRANGE stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::TRANGE`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.TRANGE_Open(&high, &low, &close).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_TRANGE_Open")]
+    pub fn TRANGE_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], ) -> Result<(TRANGE_Stream, f64), RetCode> {
+        self.TRANGE_OpenInternal(inHigh, inLow, inClose, 0)
+    }
+
+    /// [`Core::TRANGE_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::TRANGE`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_TRANGE_OpenAndFill")]
+    pub fn TRANGE_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<TRANGE_Stream, RetCode> {
+        self.TRANGE_OpenCore(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

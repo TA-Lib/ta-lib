@@ -767,7 +767,7 @@
       sp.cur_outFastK = cur_tempBuffer;
       sp.cur_outFastD = cur_outFastD;
    }
-   private RetCode STOCHF_OpenBody( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   private RetCode STOCHF_OpenCore( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[], int outStride )
    {
       RetCode retCode;
       double lowest = 0;
@@ -785,8 +785,6 @@
       int today = 0;
       int i = 0;
       int bufferIsAllocated = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -1026,272 +1024,24 @@
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
       sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
+      if( outStride == 1 ) System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
+      if( outStride == 1 ) System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode STOCHF_OpenBody( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outFastK = new double[1];
+      double[] sink_outFastD = new double[1];
+      return STOCHF_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sink_outFastK, sink_outFastD, 0 );
    }
    private RetCode STOCHF_OpenAndFillBody( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, MInteger outBegIdx, MInteger outNBElement, double outFastK[], double outFastD[] )
    {
-      RetCode retCode;
-      double lowest = 0;
-      double highest = 0;
-      double tmp = 0;
-      double diff = 0;
-      double[] tempBuffer;
-      int outIdx = 0;
-      int lowestIdx = 0;
-      int highestIdx = 0;
-      int lookbackTotal = 0;
-      int lookbackK = 0;
-      int lookbackFastD = 0;
-      int trailingIdx = 0;
-      int today = 0;
-      int i = 0;
-      int bufferIsAllocated = 0;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInFastK_Period == Integer.MIN_VALUE ) {
-         optInFastK_Period = 5;
-      } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInFastD_Period == Integer.MIN_VALUE ) {
-         optInFastD_Period = 3;
-      } else if( optInFastD_Period < 1 || optInFastD_Period > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInFastD_MAType == MAType.DEFAULT ) {
-         optInFastD_MAType = MAType.SMA;
-      }
       if( (Object)outFastK == (Object)inHigh || (Object)outFastK == (Object)inLow || (Object)outFastK == (Object)inClose || (Object)outFastD == (Object)inHigh || (Object)outFastD == (Object)inLow || (Object)outFastD == (Object)inClose || (Object)outFastK == (Object)outFastD ) {
          return RetCode.BadParam;
       }
-      if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outFastK = new double[historyLen];
-      double[] sc_outFastD = new double[historyLen];
-      /* With stochastic, there is a total of 4 different lines that
-       * are defined: FASTK, FASTD, SLOWK and SLOWD.
-       *
-       * The D is the signal line usually drawn over its
-       * corresponding K function.
-       *
-       *                    (Today's Close - LowestLow)
-       *  FASTK(Kperiod) =  --------------------------- * 100
-       *                     (HighestHigh - LowestLow)
-       *
-       *  FASTD(FastDperiod, MA type) = MA Smoothed FASTK over FastDperiod
-       *
-       *  SLOWK(SlowKperiod, MA type) = MA Smoothed FASTK over SlowKperiod
-       *
-       *  SLOWD(SlowDperiod, MA Type) = MA Smoothed SLOWK over SlowDperiod
-       *
-       * The HighestHigh and LowestLow are the extreme values among the
-       * last 'Kperiod'.
-       *
-       * SLOWK and FASTD are equivalent when using the same period.
-       *
-       * The following shows how these four lines are made available in TA-LIB:
-       *
-       *  TA_STOCH  : Returns the SLOWK and SLOWD
-       *  TA_STOCHF : Returns the FASTK and FASTD
-       *
-       * The TA_STOCH function correspond to the more widely implemented version
-       * found in many software/charting package. The TA_STOCHF is more rarely
-       * used because its higher volatility cause often whipsaws.
-       */
-      /* Identify the lookback needed. */
-      lookbackK = optInFastK_Period - 1;
-      lookbackFastD = MA_Lookback(optInFastD_Period, optInFastD_MAType);
-      lookbackTotal = lookbackK + lookbackFastD;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         /* Succeed... but no data in the output. */
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the K calculation:
-       *
-       *    Kt = 100 x ((Ct-Lt)/(Ht-Lt))
-       *
-       * Kt is today stochastic
-       * Ct is today closing price.
-       * Lt is the lowest price of the last K Period (including today)
-       * Ht is the highest price of the last K Period (including today)
-       */
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the input and
-       * output to be the same buffer.
-       */
-      outIdx = 0;
-      /* Calculate just enough K for ending up with the caller
-       * requested range. (The range of k must consider all
-       * the lookback involve with the smoothing).
-       */
-      trailingIdx = startIdx - lookbackTotal;
-      today = trailingIdx + lookbackK;
-      highestIdx = 0 - 1;
-      lowestIdx = highestIdx;
-      lowest = 0.0;
-      highest = lowest;
-      diff = highest;
-      /* Allocate a temporary buffer large enough to
-       * store the K.
-       *
-       * When outFastK aliases a price input the caller buffer doubles as the
-       * scratch, saving one allocation: the K writes trail the min/max window
-       * reads, and the final memmove is overlap-safe. outFastD must NOT be
-       * elected: the %D ma() below would then run in place over the raw K
-       * that the memmove into outFastK still needs (issue #130).
-       */
-      bufferIsAllocated = 0;
-      if( sc_outFastK == inHigh || sc_outFastK == inLow || sc_outFastK == inClose ) {
-         tempBuffer = sc_outFastK;
-      } else {
-         bufferIsAllocated = 1;
-         tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
-      }
-      /* Do the K calculation */
-      while( today <= endIdx ) {
-         /* Set the lowest low */
-         tmp = inLow[today];
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inLow[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmp = inLow[i];
-               if( tmp < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp <= lowest ) {
-            lowestIdx = today;
-            lowest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         /* Set the highest high */
-         tmp = inHigh[today];
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inHigh[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmp = inHigh[i];
-               if( tmp > highest ) {
-                  highestIdx = i;
-                  highest = tmp;
-               }
-            }
-            diff = (highest - lowest) / 100.0;
-         } else if( tmp >= highest ) {
-            highestIdx = today;
-            highest = tmp;
-            diff = (highest - lowest) / 100.0;
-         }
-         /* Calculate stochastic. Guard with TA_IS_ZERO, not an exact `diff != 0.0`:
-          * a machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI).
-          */
-         if( !((-0.00000000000001 < diff) && (diff < 0.00000000000001)) ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
-         } else {
-            tempBuffer[outIdx++] = 0.0;
-         }
-         trailingIdx += 1;
-         today += 1;
-      }
-      /* Fast-K calculation completed. This K calculation is returned
-       * to the caller. It is smoothed to become Fast-D.
-       */
-      /* Sub-stream 0: ma over `tempBuffer`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      MA_Stream sub0 = MA_OpenInternal(java.util.Arrays.copyOfRange(tempBuffer, 0, (outIdx - 1) + 1), 0, optInFastD_Period, optInFastD_MAType);
-      retCode = MA_Internal(0, outIdx - 1, tempBuffer, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, sc_outFastD);
-      if( retCode != RetCode.Success || (int)outNBElement.value == 0 ) {
-         if( (bufferIsAllocated) != 0 ) {
-         }
-         /* Something wrong happen? No further data? */
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Copy tempBuffer into the caller buffer.
-       * (Calculation could not be done directly in the
-       *  caller buffer because more input data then the
-       *  requested range was needed for doing %D).
-       */
-      /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
-       * reused as scratch, so source and destination overlap (issue #94).
-       */
-      System.arraycopy(tempBuffer, lookbackFastD, sc_outFastK, 0, (int)outNBElement.value * 1);
-      /* Don't need K anymore, free it if it was allocated here. */
-      if( (bufferIsAllocated) != 0 ) {
-      }
-      if( retCode != RetCode.Success ) {
-         /* Something wrong happen while processing %D? */
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return retCode ;
-      }
-      /* Note: Keep the outBegIdx relative to the
-       *       caller input before returning.
-       */
-      outBegIdx.value = startIdx;
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      /* Capture the live batch state into the handle. */
-      int capX = today - trailingIdx + 1;
-      if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capX_inHigh = new double[capX];
-      double[] capX_inLow = new double[capX];
-      double[] capX_inClose = new double[capX];
-      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inHigh[fillJ % capX] = inHigh[fillJ];
-         capX_inLow[fillJ % capX] = inLow[fillJ];
-         capX_inClose[fillJ % capX] = inClose[fillJ];
-      }
-      sp.optInFastK_Period = optInFastK_Period;
-      sp.optInFastD_Period = optInFastD_Period;
-      sp.optInFastD_MAType = optInFastD_MAType;
-      sp.lowest = lowest;
-      sp.highest = highest;
-      sp.diff = diff;
-      sp.lowestIdx = lowestIdx;
-      sp.highestIdx = highestIdx;
-      sp.trailingIdx = trailingIdx;
-      sp.i = i;
-      sp.today = today;
-      sp.xCap = capX;
-      sp.x_inHigh = capX_inHigh;
-      sp.x_inLow = capX_inLow;
-      sp.x_inClose = capX_inClose;
-      sp.sub0 = sub0;
-      sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
-      sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
-      sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
-      System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
-      System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
-      return RetCode.Success;
+      return STOCHF_OpenCore( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
    }
    /* Internal startIdx-anchored open behind STOCHF_Open (composition seam). */
    STOCHF_Stream STOCHF_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )

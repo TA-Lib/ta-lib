@@ -372,13 +372,11 @@
       }
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   private RetCode STDDEV_OpenCore( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int i = 0;
       RetCode retCode;
       double tempReal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -441,81 +439,22 @@
       sp.optInNbDev = optInNbDev;
       sp.sub0 = sub0;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
+      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return STDDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode STDDEV_OpenAndFillBody( STDDEV_Stream sp, double inReal[], int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int i = 0;
-      RetCode retCode;
-      double tempReal = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 5;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInNbDev == REAL_DEFAULT ) {
-         optInNbDev = 1e0;
-      } else if( optInNbDev < REAL_MIN || optInNbDev > REAL_MAX ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inReal ) {
          return RetCode.BadParam;
       }
-      if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outReal = new double[historyLen];
-      /* Calculate the variance. */
-      /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      VAR_Stream sub0 = VAR_OpenInternal(java.util.Arrays.copyOfRange(inReal, 0, (endIdx) + 1), startIdx, optInTimePeriod, 1.0);
-      retCode = VAR_Internal(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, sc_outReal);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      /* Calculate the square root of each variance, this
-       * is the standard deviation.
-       *
-       * Multiply also by the ratio specified.
-       */
-      if( optInNbDev != 1.0 ) {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal) * optInNbDev;
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
-         }
-      } else {
-         for( i = 0; i < (int)outNBElement.value; i += 1 ) {
-            tempReal = sc_outReal[i];
-            if( !(tempReal < 0.00000000000001) ) {
-               sc_outReal[i] = Math.sqrt(tempReal);
-            } else {
-               sc_outReal[i] = (double)0.0;
-            }
-         }
-      }
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.optInNbDev = optInNbDev;
-      sp.sub0 = sub0;
-      sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
-      return RetCode.Success;
+      return STDDEV_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind STDDEV_Open (composition seam). */
    STDDEV_Stream STDDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )

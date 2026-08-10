@@ -480,141 +480,7 @@
          sp.ringPos_trailingIdx = 0;
       }
    }
-   private RetCode VWMA_OpenBody( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
-   {
-      double sumPV = 0;
-      double sumV = 0;
-      double tempPV = 0;
-      double tempV = 0;
-      double tempReal = 0;
-      int i = 0;
-      int outIdx = 0;
-      int trailingIdx = 0;
-      int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      if( historyLen < 1 || inVolume.length != inReal.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( optInTimePeriod == 1 ) {
-         if( historyLen < VWMA_Lookback(optInTimePeriod) + 1 ) {
-            return RetCode.OutOfRangeEndIndex;
-         }
-         sp.optInTimePeriod = optInTimePeriod;
-         sp.sumPV = 0.0;
-         sp.sumV = 0.0;
-         sp.tempPV = 0.0;
-         sp.tempV = 0.0;
-         sp.ringPos_trailingIdx = 0;
-         sp.ringCap_trailingIdx = 0;
-         sp.ring_trailingIdx_inReal = new double[1];
-         sp.ring_trailingIdx_inVolume = new double[1];
-         sp.cur_outReal = inReal[historyLen - 1];
-         return RetCode.Success;
-      }
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = (int)(optInTimePeriod - 1);
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* No smoothing at period of 1: the output is a copy of the input
-       * (same convention as TA_MA for every MAType). Explicit because
-       * (P*V)/V round-trips only ~97% of the time in IEEE double, and
-       * because a lone zero volume must give the price, not NaN.
-       */
-      /* Add-up the initial period, except for the last value.
-       *
-       * The price*volume product is kept in its own statement so no compiler may
-       * contract it into an FMA: that would make this function disagree with the
-       * Rust/Java backends under the cross-language bitwise gate, and with the
-       * two-TA_SMA composite reference.
-       */
-      sumPV = 0.0;
-      sumV = 0.0;
-      trailingIdx = startIdx - lookbackTotal;
-      i = trailingIdx;
-      if( optInTimePeriod > 1 ) {
-         while( i < startIdx ) {
-            tempReal = inReal[i] * inVolume[i];
-            sumPV += tempReal;
-            sumV += inVolume[i];
-            i = i + 1;
-         }
-      }
-      /* Proceed with the calculation for the requested range.
-       * Note that this algorithm allows the inReal and
-       * outReal to be the same buffer.
-       */
-      outIdx = 0;
-      while( i <= endIdx ) {
-         tempReal = inReal[i] * inVolume[i];
-         sumPV += tempReal;
-         sumV += inVolume[i];
-         i = i + 1;
-         /* Snapshot both sums before removing the trailing bar, mirroring the
-          * add-new / snapshot / subtract-old order of TA_SMA. That order is what
-          * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
-          */
-         tempPV = sumPV;
-         tempV = sumV;
-         /* Read the trailing values before writing the output, since the caller
-          * may pass the same buffer for an input and the output.
-          */
-         tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
-         sumPV -= tempReal;
-         sumV -= inVolume[trailingIdx];
-         lastValue_outReal = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
-         trailingIdx = trailingIdx + 1;
-         outIdx = outIdx + 1;
-      }
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_trailingIdx = i - trailingIdx;
-      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
-      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
-      double[] capRing_trailingIdx_inVolume = new double[allocN_trailingIdx];
-      System.arraycopy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.sumPV = sumPV;
-      sp.sumV = sumV;
-      sp.tempPV = tempPV;
-      sp.tempV = tempV;
-      sp.ringPos_trailingIdx = 0;
-      sp.ringCap_trailingIdx = cap_trailingIdx;
-      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
-      sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
-      sp.cur_outReal = lastValue_outReal;
-      return RetCode.Success;
-   }
-   private RetCode VWMA_OpenAndFillBody( VWMA_Stream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   private RetCode VWMA_OpenCore( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double sumPV = 0;
       double sumV = 0;
@@ -627,7 +493,6 @@
       int lookbackTotal = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
-      int startIdx = 0;
       if( historyLen < 1 || inVolume.length != inReal.length ) {
          return RetCode.BadParam;
       }
@@ -637,9 +502,6 @@
       if( optInTimePeriod == Integer.MIN_VALUE ) {
          optInTimePeriod = 30;
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
-      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
       if( optInTimePeriod == 1 ) {
@@ -659,9 +521,9 @@
          outBegIdx.value = fillLb;
          outNBElement.value = historyLen - fillLb;
          for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
-            outReal[fillIdx] = inReal[fillLb + fillIdx];
+            outReal[fillIdx * outStride] = inReal[fillLb + fillIdx];
          }
-         sp.cur_outReal = outReal[outNBElement.value - 1];
+         sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
          return RetCode.Success;
       }
       /* Identify the minimum number of price bar needed
@@ -726,7 +588,7 @@
          tempReal = inReal[trailingIdx] * inVolume[trailingIdx];
          sumPV -= tempReal;
          sumV -= inVolume[trailingIdx];
-         outReal[outIdx] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
+         outReal[outIdx * outStride] = tempPV / (double)optInTimePeriod / (tempV / (double)optInTimePeriod);
          trailingIdx = trailingIdx + 1;
          outIdx = outIdx + 1;
       }
@@ -752,8 +614,22 @@
       sp.ringCap_trailingIdx = cap_trailingIdx;
       sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
       sp.ring_trailingIdx_inVolume = capRing_trailingIdx_inVolume;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode VWMA_OpenBody( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return VWMA_OpenCore( sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+   }
+   private RetCode VWMA_OpenAndFillBody( VWMA_Stream sp, double inReal[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      if( (Object)outReal == (Object)inReal || (Object)outReal == (Object)inVolume ) {
+         return RetCode.BadParam;
+      }
+      return VWMA_OpenCore( sp, inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
    VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )

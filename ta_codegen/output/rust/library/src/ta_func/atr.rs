@@ -389,207 +389,10 @@ impl Core {
         sp.lag1_inClose = inClose;
     }
 
-    /// Internal startIdx-anchored open behind [`Core::ATR_Open`] (composition seam).
-    pub(crate) fn ATR_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
-    ) -> Result<(ATR_Stream, f64), RetCode> {
-        if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
-            return Err(RetCode::BadParam);
-        }
-        if inHigh.len() > MAX_INDEX + 1 {
-            return Err(RetCode::OutOfRangeEndIndex);
-        }
-        if ((optInTimePeriod) as i32) == (i32::MIN) {
-            optInTimePeriod = 14;
-        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        let historyLen: usize = inHigh.len();
-        let endIdx: usize = historyLen - 1;
-        let mut startIdx = startIdx;
-        let mut dummyBegIdx: usize = 0;
-        let mut dummyNBElement: usize = 0;
-        let mut lastValue_outReal: f64 = 0.0_f64;
-        let mut i: usize = 0_usize;
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut nbATR: usize = 0_usize;
-        let mut prevATR: f64 = 0.0_f64;
-        let mut periodTotal: f64 = 0.0_f64;
-        let mut val2: f64 = 0.0_f64;
-        let mut val3: f64 = 0.0_f64;
-        let mut greatest: f64 = 0.0_f64;
-        let mut tempCY: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        let mut tempHT: f64 = 0.0_f64;
-        // Average True Range is the greatest of the following:
-        //
-        //  val1 = distance from today's high to today's low.
-        //  val2 = distance from yesterday's close to today's high.
-        //  val3 = distance from yesterday's close to today's low.
-        //
-        // These value are averaged for the specified period using
-        // Wilder method. This method have an unstable period comparable
-        // to and Exponential Moving Average (EMA).
-        dummyBegIdx = 0;
-        dummyNBElement = 0;
-        // Adjust startIdx to account for the lookback period.
-        lookbackTotal = self.ATR_Lookback(optInTimePeriod);
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            return Err(RetCode::BadParam);
-        }
-        // Period 1 needs no smoothing: the Wilder recursion below degenerates
-        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-        // so the single general path handles every period >= 1.
-        // The True Range of each bar is computed inline in a single
-        // pass. No temporary buffer is needed.
-        //
-        // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
-        //  - True Range: start from high-low, then compare/replace
-        //    with the two previous-close distances, in that order.
-        //  - Seed: the first 'period' True Range values are summed,
-        //    accumulated from 0.0 in input order, then divided by
-        //    the period.
-        //  - Wilder smoothing: multiply by period-1, add the True
-        //    Range, divide by period, as three separate statements.
-        //
-        // In-place (outReal being one of the input arrays) is
-        // supported: each output is written only after every input
-        // read at or before its bar, and the output index is always
-        // smaller than the bar index of any remaining read.
-        // The first True Range needs the two price bars at
-        // startIdx-lookbackTotal+1 (a previous close is consumed).
-        today = startIdx - lookbackTotal + 1;
-        // Seed the ATR with a simple average of the True Range
-        // for the first 'period' bars.
-        periodTotal = 0.0;
-        i = (optInTimePeriod) as usize;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            periodTotal += greatest;
-            today += 1;
-        }
-        prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Subsequent value are smoothed using the
-        // previous ATR value (Wilder's approach).
-        //  1) Multiply the previous ATR by 'period-1'.
-        //  2) Add today TR value.
-        //  3) Divide by 'period'.
-        // Skip the unstable period.
-        i = (self.unstable_period[FuncUnstId::ATR as usize]) as usize;
-        while i != 0 {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
-            today += 1;
-            i -= 1;
-        }
-        // Now start to write the final ATR in the caller
-        // provided outReal.
-        outIdx = 1;
-        lastValue_outReal = prevATR;
-        // Now do the number of requested ATR.
-        nbATR = endIdx - startIdx + 1;
-        while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
-            // Find the greatest of the 3 values.
-            tempLT = inLow[today];
-            tempHT = inHigh[today];
-            tempCY = inClose[today - 1];
-            greatest = tempHT - tempLT;
-            // val1
-            val2 = (tempCY - tempHT).abs();
-            if val2 > greatest {
-                greatest = val2;
-            }
-            val3 = (tempCY - tempLT).abs();
-            if val3 > greatest {
-                greatest = val3;
-            }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
-            lastValue_outReal = prevATR;
-            today += 1;
-        }
-        dummyBegIdx = startIdx;
-        dummyNBElement = outIdx;
-
-        // Capture the live batch state into the handle.
-        let state = ATR_StreamState {
-            optInTimePeriod,
-            prevATR,
-            val3,
-            lag1_inClose: inClose[historyLen - 1],
-        };
-        Ok((ATR_Stream { core: self.clone(), state }, lastValue_outReal))
-    }
-
-    /// Open a live ATR stream over the warm-up history; returns the handle and
-    /// the value at the last history bar — bit-identical to [`Core::ATR`] at that bar.
-    ///
-    /// # Errors
-    ///
-    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
-    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
-    ///
-    /// ```
-    /// use ta_lib::Core;
-    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
-    /// let close: Vec<f64> = (0..252)
-    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
-    ///     .collect();
-    ///
-    /// let core = Core::new();
-    /// let (mut s, _last) = core.ATR_Open(&high, &low, &close, 14).expect("enough history");
-    /// let peeked = s.peek(101.4, 99.1, 100.9);
-    /// let updated = s.update(101.4, 99.1, 100.9);
-    /// assert_eq!(peeked.to_bits(), updated.to_bits());
-    /// ```
-    #[doc(alias = "TA_ATR_Open")]
-    pub fn ATR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ATR_Stream, f64), RetCode> {
-        self.ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
-    }
-
-    /// [`Core::ATR_Open`] that also fills the output array(s) bit-identically to
-    /// [`Core::ATR`] over `0..len` in the same single pass. Output slices must hold
-    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
-    #[doc(alias = "TA_ATR_OpenAndFill")]
-    pub fn ATR_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    /// The single whole-history transcription behind [`Core::ATR_OpenInternal`]
+    /// (stride 0, scalar sink) and [`Core::ATR_OpenAndFill`] (stride 1, caller slices).
+    pub(crate) fn ATR_OpenCore(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outStride: usize,
     ) -> Result<ATR_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -604,7 +407,7 @@ impl Core {
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
-        let mut startIdx: usize = 0;
+        let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
         let mut i: usize = 0_usize;
@@ -717,7 +520,7 @@ impl Core {
         // Now start to write the final ATR in the caller
         // provided outReal.
         outIdx = 1;
-        outReal[0] = prevATR;
+        outReal[(0 * outStride) as usize] = prevATR;
         // Now do the number of requested ATR.
         nbATR = endIdx - startIdx + 1;
         while { nbATR = nbATR.wrapping_sub(1); nbATR } != 0 {
@@ -738,8 +541,7 @@ impl Core {
             prevATR *= ((optInTimePeriod - 1) as f64);
             prevATR += greatest;
             prevATR /= ((optInTimePeriod) as f64);
-            outReal[outIdx] = prevATR;
-            outIdx += 1;
+            outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevATR;
             today += 1;
         }
         (*outBegIdx) = startIdx;
@@ -753,6 +555,54 @@ impl Core {
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(ATR_Stream { core: self.clone(), state })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::ATR_Open`] (composition seam).
+    pub(crate) fn ATR_OpenInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(ATR_Stream, f64), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outReal = [0.0_f64; 1];
+        let handle = self.ATR_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, 0)?;
+        Ok((handle, sink_outReal[0]))
+    }
+
+    /// Open a live ATR stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::ATR`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or
+    /// input lengths differ, or the history is shorter than `lookback + 1` bars.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let close: Vec<f64> = (0..252)
+    ///     .map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin() + 0.8 * (0.7 * i as f64).sin())
+    ///     .collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.ATR_Open(&high, &low, &close, 14).expect("enough history");
+    /// let peeked = s.peek(101.4, 99.1, 100.9);
+    /// let updated = s.update(101.4, 99.1, 100.9);
+    /// assert_eq!(peeked.to_bits(), updated.to_bits());
+    /// ```
+    #[doc(alias = "TA_ATR_Open")]
+    pub fn ATR_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInTimePeriod: i32) -> Result<(ATR_Stream, f64), RetCode> {
+        self.ATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod)
+    }
+
+    /// [`Core::ATR_Open`] that also fills the output array(s) bit-identically to
+    /// [`Core::ATR`] over `0..len` in the same single pass. Output slices must hold
+    /// `len - lookback` values; undersized slices panic (the batch sizing contract).
+    #[doc(alias = "TA_ATR_OpenAndFill")]
+    pub fn ATR_OpenAndFill(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<ATR_Stream, RetCode> {
+        self.ATR_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

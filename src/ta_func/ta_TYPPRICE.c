@@ -150,14 +150,12 @@ static void TA_TYPPRICE_StepInternal( struct TA_TYPPRICE_Stream *sp, double inHi
    *outReal= (inHigh + inLow + inClose) / 3.0;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
+static TA_RetCode TA_TYPPRICE_OpenCore( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_TYPPRICE_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -168,7 +166,6 @@ TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const d
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
@@ -178,55 +175,7 @@ TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const d
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 )
       {
-         lastValue_outReal = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
-      }
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_TYPPRICE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_TYPPRICE_Open( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
-{
-   return TA_TYPPRICE_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_TYPPRICE_OpenAndFill( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_TYPPRICE_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inHigh || !inLow || !inClose || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int outIdx;
-      int i;
-      /* Typical price = (High + Low + Close ) / 3 */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 )
-      {
-         outReal[outIdx++] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
+         outReal[outIdx++ * outStride] = (inHigh[i] + inLow[i] + inClose[i]) / 3.0;
       }
       *outNBElement= outIdx;
       *outBegIdx= startIdx;
@@ -238,6 +187,35 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_OpenAndFill( TA_TYPPRICE_Stream **stream, cons
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_TYPPRICE_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_Open( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal )
+{
+   return TA_TYPPRICE_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_TYPPRICE_OpenAndFill( TA_TYPPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_TYPPRICE_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_TYPPRICE_Update( TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

@@ -149,14 +149,12 @@ static void TA_MEDPRICE_StepInternal( struct TA_MEDPRICE_Stream *sp, double inHi
    *outReal= (inHigh + inLow) / 2.0;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_MEDPRICE_OpenInternal( struct TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double *outReal )
+static TA_RetCode TA_MEDPRICE_OpenCore( struct TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[], int outStride )
 {
    struct TA_MEDPRICE_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   double lastValue_outReal;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -167,7 +165,6 @@ TA_RetCode TA_MEDPRICE_OpenInternal( struct TA_MEDPRICE_Stream **stream, const d
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   lastValue_outReal = 0.0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
 
    {
@@ -182,60 +179,7 @@ TA_RetCode TA_MEDPRICE_OpenInternal( struct TA_MEDPRICE_Stream **stream, const d
       outIdx = 0;
       for( i = startIdx; i <= endIdx; i += 1 )
       {
-         lastValue_outReal = (inHigh[i] + inLow[i]) / 2.0;
-      }
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_MEDPRICE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      *outReal = lastValue_outReal;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_MEDPRICE_Open( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double *outReal )
-{
-   return TA_MEDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, outReal );
-}
-
-TA_LIB_API TA_RetCode TA_MEDPRICE_OpenAndFill( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
-{
-   struct TA_MEDPRICE_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inHigh || !inLow || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int outIdx;
-      int i;
-      /* MEDPRICE = (High + Low ) / 2
-       * This is the high and low of the same price bar.
-       *
-       * See MIDPRICE to use instead the highest high and lowest
-       * low over multiple price bar.
-       */
-      outIdx = 0;
-      for( i = startIdx; i <= endIdx; i += 1 )
-      {
-         outReal[outIdx++] = (inHigh[i] + inLow[i]) / 2.0;
+         outReal[outIdx++ * outStride] = (inHigh[i] + inLow[i]) / 2.0;
       }
       *outNBElement= outIdx;
       *outBegIdx= startIdx;
@@ -247,6 +191,35 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_OpenAndFill( TA_MEDPRICE_Stream **stream, cons
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MEDPRICE_OpenInternal( struct TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, double *outReal )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outReal = 0.0;
+   retCode = TA_MEDPRICE_OpenCore( stream, inHigh, inLow, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outReal, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outReal = sink_outReal;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_Open( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, double *outReal )
+{
+   return TA_MEDPRICE_OpenInternal( stream, inHigh, inLow, 0, historyLen, outReal );
+}
+
+TA_LIB_API TA_RetCode TA_MEDPRICE_OpenAndFill( TA_MEDPRICE_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
+   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow ) return TA_BAD_PARAM;
+   return TA_MEDPRICE_OpenCore( stream, inHigh, inLow, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )

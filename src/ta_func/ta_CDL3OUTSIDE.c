@@ -231,14 +231,12 @@ static void TA_CDL3OUTSIDE_StepInternal( struct TA_CDL3OUTSIDE_Stream *sp, doubl
    sp->lag1_inClose = inClose;
 }
 
-/* Private function, not in public API. */
-TA_RetCode TA_CDL3OUTSIDE_OpenInternal( struct TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+static TA_RetCode TA_CDL3OUTSIDE_OpenCore( struct TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[], int outStride )
 {
    struct TA_CDL3OUTSIDE_Stream *sp;
    int endIdx;
    int dummyBegIdx;
    int dummyNBElement;
-   int lastValue_outInteger;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -247,101 +245,6 @@ TA_RetCode TA_CDL3OUTSIDE_OpenInternal( struct TA_CDL3OUTSIDE_Stream **stream, c
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   lastValue_outInteger = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
-
-   {
-      int i;
-      int outIdx;
-      int lookbackTotal;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = TA_CDL3OUTSIDE_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal )
-      {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx )
-      {
-         dummyBegIdx = 0;
-         dummyNBElement = 0;
-         return TA_BAD_PARAM;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first: black (white) real body
-       * - second: white (black) real body that engulfs the prior real body
-       * - third: candle that closes higher (lower) than the second candle
-       * outInteger is positive (1 to 100) for the three outside up or negative (-1 to -100) for the three outside down;
-       * the user should consider that a three outside up must appear in a downtrend and three outside down must appear
-       * in an uptrend, while this function does not consider it
-       */
-      outIdx = 0;
-      do
-      {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] )
-         {
-            /* white engulfs black */
-            /* third candle higher */
-            /* black engulfs white */
-            /* third candle lower */
-            lastValue_outInteger = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
-         } else 
-         {
-            lastValue_outInteger = 0;
-         }
-         i += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      dummyNBElement = outIdx;
-      dummyBegIdx = startIdx;
-
-      /* Capture the live batch state into the handle. */
-      sp = (struct TA_CDL3OUTSIDE_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { return TA_ALLOC_ERR; }
-      memset( sp, 0, sizeof(*sp) );
-      sp->lag1_inOpen = inOpen[historyLen - 1];
-      sp->lag2_inOpen = inOpen[historyLen - 2];
-      sp->lag1_inClose = inClose[historyLen - 1];
-      sp->lag2_inClose = inClose[historyLen - 2];
-      *outInteger = lastValue_outInteger;
-      *stream = sp;
-      return TA_SUCCESS;
-   }
-}
-
-TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
-{
-   return TA_CDL3OUTSIDE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
-}
-
-TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OpenAndFill( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
-{
-   struct TA_CDL3OUTSIDE_Stream *sp;
-   int endIdx;
-   int startIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
-
-   if( !stream ) return TA_BAD_PARAM;
-   *stream = NULL;
-   if( !inOpen || !inHigh || !inLow || !inClose || !outInteger || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
-   if( historyLen < 1 ) return TA_BAD_PARAM;
-   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
-
-   endIdx = historyLen - 1;
-   startIdx = 0;
    dummyBegIdx = 0;
    dummyNBElement = 0;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
@@ -389,10 +292,10 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OpenAndFill( TA_CDL3OUTSIDE_Stream **stream
             /* third candle higher */
             /* black engulfs white */
             /* third candle lower */
-            outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
+            outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else 
          {
-            outInteger[outIdx++] = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          i += 1;
       } while( i <= endIdx );
@@ -411,6 +314,35 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OpenAndFill( TA_CDL3OUTSIDE_Stream **stream
       *stream = sp;
       return TA_SUCCESS;
    }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_CDL3OUTSIDE_OpenInternal( struct TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outInteger )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   int sink_outInteger = 0;
+   retCode = TA_CDL3OUTSIDE_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, &dummyBegIdx, &dummyNBElement, &sink_outInteger, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outInteger = sink_outInteger;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Open( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outInteger )
+{
+   return TA_CDL3OUTSIDE_OpenInternal( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outInteger );
+}
+
+TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OpenAndFill( TA_CDL3OUTSIDE_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !outBegIdx || !outNBElement || !outInteger ) return TA_BAD_PARAM;
+   if( (const void *)outInteger == (const void *)inOpen || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose ) return TA_BAD_PARAM;
+   return TA_CDL3OUTSIDE_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Update( TA_CDL3OUTSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )

@@ -513,7 +513,7 @@
       sp.trailingIdx += 1;
       sp.today += 1;
    }
-   private RetCode MINMAXINDEX_OpenBody( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   private RetCode MINMAXINDEX_OpenCore( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[], int outStride )
    {
       double highest = 0;
       double lowest = 0;
@@ -526,10 +526,6 @@
       int i = 0;
       int highestIdx = 0;
       int lowestIdx = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outMinIdx = 0;
-      int lastValue_outMaxIdx = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -604,8 +600,8 @@
             lowestIdx = today;
             lowest = tmpLow;
          }
-         lastValue_outMaxIdx = highestIdx;
-         lastValue_outMinIdx = lowestIdx;
+         outMaxIdx[outIdx * outStride] = highestIdx;
+         outMinIdx[outIdx * outStride] = lowestIdx;
          outIdx += 1;
          trailingIdx += 1;
          today += 1;
@@ -636,138 +632,25 @@
       sp.today = today;
       sp.xCap = capX;
       sp.x_inReal = capX_inReal;
-      sp.cur_outMinIdx = lastValue_outMinIdx;
-      sp.cur_outMaxIdx = lastValue_outMaxIdx;
+      sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
+      sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];
       sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
       return RetCode.Success;
    }
+   private RetCode MINMAXINDEX_OpenBody( MINMAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outMinIdx = new int[1];
+      int[] sink_outMaxIdx = new int[1];
+      return MINMAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outMinIdx, sink_outMaxIdx, 0 );
+   }
    private RetCode MINMAXINDEX_OpenAndFillBody( MINMAXINDEX_Stream sp, double inReal[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outMinIdx[], int outMaxIdx[] )
    {
-      double highest = 0;
-      double lowest = 0;
-      double tmpHigh = 0;
-      double tmpLow = 0;
-      int outIdx = 0;
-      int nbInitialElementNeeded = 0;
-      int trailingIdx = 0;
-      int today = 0;
-      int i = 0;
-      int highestIdx = 0;
-      int lowestIdx = 0;
-      int historyLen = inReal.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 30;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outMinIdx == (Object)inReal || (Object)outMaxIdx == (Object)inReal || (Object)outMinIdx == (Object)outMaxIdx ) {
          return RetCode.BadParam;
       }
-      /* Identify the minimum number of price bar needed
-       * to identify at least one output over the specified
-       * period.
-       */
-      nbInitialElementNeeded = optInTimePeriod - 1;
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < nbInitialElementNeeded ) {
-         startIdx = nbInitialElementNeeded;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Proceed with the calculation for the requested range.
-       * (The integer outputs can never share the real input's buffer —
-       * different element type; issue #130.)
-       */
-      outIdx = 0;
-      today = startIdx;
-      trailingIdx = startIdx - nbInitialElementNeeded;
-      highestIdx = 0 - 1;
-      highest = 0.0;
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx ) {
-         tmpHigh = inReal[today];
-         tmpLow = tmpHigh;
-         if( highestIdx < trailingIdx ) {
-            highestIdx = trailingIdx;
-            highest = inReal[highestIdx];
-            i = highestIdx;
-            while( ++i <= today ) {
-               tmpHigh = inReal[i];
-               if( tmpHigh > highest ) {
-                  highestIdx = i;
-                  highest = tmpHigh;
-               }
-            }
-         } else if( tmpHigh >= highest ) {
-            highestIdx = today;
-            highest = tmpHigh;
-         }
-         if( lowestIdx < trailingIdx ) {
-            lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
-            i = lowestIdx;
-            while( ++i <= today ) {
-               tmpLow = inReal[i];
-               if( tmpLow < lowest ) {
-                  lowestIdx = i;
-                  lowest = tmpLow;
-               }
-            }
-         } else if( tmpLow <= lowest ) {
-            lowestIdx = today;
-            lowest = tmpLow;
-         }
-         outMaxIdx[outIdx] = highestIdx;
-         outMinIdx[outIdx] = lowestIdx;
-         outIdx += 1;
-         trailingIdx += 1;
-         today += 1;
-      }
-      /* Keep the outBegIdx relative to the
-       * caller input before returning.
-       */
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int capX = today - trailingIdx + 1;
-      if( capX < 1 || capX > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capX_inReal = new double[capX];
-      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inReal[fillJ % capX] = inReal[fillJ];
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.highest = highest;
-      sp.lowest = lowest;
-      sp.tmpHigh = tmpHigh;
-      sp.tmpLow = tmpLow;
-      sp.trailingIdx = trailingIdx;
-      sp.i = i;
-      sp.highestIdx = highestIdx;
-      sp.lowestIdx = lowestIdx;
-      sp.today = today;
-      sp.xCap = capX;
-      sp.x_inReal = capX_inReal;
-      sp.cur_outMinIdx = outMinIdx[outNBElement.value - 1];
-      sp.cur_outMaxIdx = outMaxIdx[outNBElement.value - 1];
-      sp.cachedValue = new MINMAXINDEX_Stream.Value(sp.cur_outMinIdx, sp.cur_outMaxIdx);
-      return RetCode.Success;
+      return MINMAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1 );
    }
    /* Internal startIdx-anchored open behind MINMAXINDEX_Open (composition seam). */
    MINMAXINDEX_Stream MINMAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )

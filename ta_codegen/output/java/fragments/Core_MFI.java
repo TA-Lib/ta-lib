@@ -552,7 +552,7 @@
          sp.mflow_Idx = 0;
       }
    }
-   private RetCode MFI_OpenBody( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   private RetCode MFI_OpenCore( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double posSumMF = 0;
       double negSumMF = 0;
@@ -568,9 +568,6 @@
       double[] mflow_negative;
       int mflow_Idx = 0;
       int maxIdx_mflow = (50)-1;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
@@ -645,9 +642,9 @@
        */
       tempValue1 = posSumMF + negSumMF;
       if( tempValue1 < 1.0 ) {
-         lastValue_outReal = 0.0;
+         outReal[outIdx++ * outStride] = 0.0;
       } else {
-         lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+         outReal[outIdx++ * outStride] = 100.0 * (posSumMF / tempValue1);
       }
       /* Now continue processing the remaining bars. */
       while( today <= endIdx ) {
@@ -675,9 +672,9 @@
          }
          tempValue1 = posSumMF + negSumMF;
          if( tempValue1 < 1.0 ) {
-            lastValue_outReal = 0.0;
+            outReal[outIdx++ * outStride] = 0.0;
          } else {
-            lastValue_outReal = 100.0 * (posSumMF / tempValue1);
+            outReal[outIdx++ * outStride] = 100.0 * (posSumMF / tempValue1);
          }
          mflow_Idx++;
          if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
@@ -701,161 +698,22 @@
       sp.cbSize_mflow = capCb_mflow;
       sp.cb_mflow_positive = mflow_positive;
       sp.cb_mflow_negative = mflow_negative;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode MFI_OpenBody( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return MFI_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode MFI_OpenAndFillBody( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double posSumMF = 0;
-      double negSumMF = 0;
-      double prevValue = 0;
-      double tempValue1 = 0;
-      double tempValue2 = 0;
-      double tempValue3 = 0;
-      int lookbackTotal = 0;
-      int outIdx = 0;
-      int i = 0;
-      int today = 0;
-      double[] mflow_positive;
-      double[] mflow_negative;
-      int mflow_Idx = 0;
-      int maxIdx_mflow = (50)-1;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length || inVolume.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
          return RetCode.BadParam;
       }
-      /* Id, Type, Static Size */
-      if( optInTimePeriod < 1 ) return RetCode.InternalError;
-      mflow_positive = new double[optInTimePeriod];
-      mflow_negative = new double[optInTimePeriod];
-      maxIdx_mflow = (optInTimePeriod)-1;
-      mflow_Idx = 0;
-      outBegIdx.value = 0;
-      outNBElement.value = 0;
-      /* Adjust startIdx to account for the lookback period. */
-      lookbackTotal = optInTimePeriod;
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outIdx = 0;
-      /* Index into the output. */
-      /* Accumulate the positive and negative money flow
-       * among the initial period.
-       */
-      today = startIdx - lookbackTotal;
-      prevValue = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-      posSumMF = 0.0;
-      negSumMF = 0.0;
-      today += 1;
-      for( i = optInTimePeriod; i > 0; i -= 1 ) {
-         tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         tempValue2 = tempValue1 - prevValue;
-         /* Dead-zone scaled to the two typical prices being compared (issue #107).
-          * Captured before prevValue/tempValue1 are repurposed below.
-          */
-         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
-         prevValue = tempValue1;
-         tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         }
-         mflow_Idx++;
-         if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-      }
-      /* The following two equations are equivalent:
-       *    MFI = 100 - (100 / 1 + (posSumMF/negSumMF))
-       *    MFI = 100 * (posSumMF/(posSumMF+negSumMF))
-       * The second equation is used here for speed optimization.
-       */
-      /* The first full window is complete: emit its output for startIdx here,
-       * then slide the window over the remaining bars below.
-       */
-      tempValue1 = posSumMF + negSumMF;
-      if( tempValue1 < 1.0 ) {
-         outReal[outIdx++] = 0.0;
-      } else {
-         outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-      }
-      /* Now continue processing the remaining bars. */
-      while( today <= endIdx ) {
-         posSumMF -= mflow_positive[mflow_Idx];
-         negSumMF -= mflow_negative[mflow_Idx];
-         tempValue1 = (inHigh[today] + inLow[today] + inClose[today]) / 3.0;
-         tempValue2 = tempValue1 - prevValue;
-         /* Dead-zone scaled to the two typical prices being compared (issue #107).
-          * Captured before prevValue/tempValue1 are repurposed below.
-          */
-         tempValue3 = Math.abs(tempValue1) + Math.abs(prevValue);
-         prevValue = tempValue1;
-         tempValue1 *= inVolume[today++];
-         if( (Math.abs(tempValue2) <= 0.00000000000001 * (tempValue3)) ) {
-            mflow_positive[mflow_Idx] = 0.0;
-            mflow_negative[mflow_Idx] = 0.0;
-         } else if( tempValue2 < 0 ) {
-            mflow_negative[mflow_Idx] = tempValue1;
-            negSumMF += tempValue1;
-            mflow_positive[mflow_Idx] = 0.0;
-         } else {
-            mflow_positive[mflow_Idx] = tempValue1;
-            posSumMF += tempValue1;
-            mflow_negative[mflow_Idx] = 0.0;
-         }
-         tempValue1 = posSumMF + negSumMF;
-         if( tempValue1 < 1.0 ) {
-            outReal[outIdx++] = 0.0;
-         } else {
-            outReal[outIdx++] = 100.0 * (posSumMF / tempValue1);
-         }
-         mflow_Idx++;
-         if( mflow_Idx > maxIdx_mflow ) { mflow_Idx = 0; }
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int capCb_mflow = maxIdx_mflow + 1;
-      if( capCb_mflow > historyLen + 1 ) {
-         return RetCode.InternalError;
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.posSumMF = posSumMF;
-      sp.negSumMF = negSumMF;
-      sp.prevValue = prevValue;
-      sp.tempValue1 = tempValue1;
-      sp.tempValue2 = tempValue2;
-      sp.tempValue3 = tempValue3;
-      sp.mflow_Idx = mflow_Idx;
-      sp.maxIdx_mflow = maxIdx_mflow;
-      sp.cbSize_mflow = capCb_mflow;
-      sp.cb_mflow_positive = mflow_positive;
-      sp.cb_mflow_negative = mflow_negative;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return MFI_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind MFI_Open (composition seam). */
    MFI_Stream MFI_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )

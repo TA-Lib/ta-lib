@@ -370,13 +370,10 @@
          sp.winPos_i = 0;
       }
    }
-   private RetCode IMI_OpenBody( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode IMI_OpenCore( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       int lookback = 0;
       int outIdx = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      double lastValue_outReal = 0.0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inClose.length != inOpen.length ) {
@@ -418,7 +415,7 @@
              * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
              * oscillator, so no up/down bias returns its neutral center, 50.0.
              */
-            lastValue_outReal = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
+            outReal[outIdx * outStride] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
          }
          startIdx += 1;
          outIdx += 1;
@@ -438,80 +435,22 @@
       sp.winCap_i = cap_i;
       sp.win_i_inOpen = capWin_i_inOpen;
       sp.win_i_inClose = capWin_i_inClose;
-      sp.cur_outReal = lastValue_outReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode IMI_OpenBody( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return IMI_OpenCore( sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode IMI_OpenAndFillBody( IMI_Stream sp, double inOpen[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      int lookback = 0;
-      int outIdx = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inOpen || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      outIdx = 0;
-      lookback = IMI_Lookback(optInTimePeriod);
-      if( startIdx < lookback ) {
-         startIdx = lookback;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      outBegIdx.value = startIdx;
-      while( startIdx <= endIdx ) {
-         double upsum = 0.0;
-         double downsum = 0.0;
-         int i;
-         for( i = startIdx - (optInTimePeriod - 1); i <= startIdx; i += 1 ) {
-            double close = inClose[i];
-            double open = inOpen[i];
-            if( close > open ) {
-               upsum += close - open;
-            } else {
-               downsum += open - close;
-            }
-            /* #112: an all-flat window (every close==open) leaves upsum==downsum==0.
-             * Guard the 0/0 so a successful call never emits NaN; IMI is a 0..100
-             * oscillator, so no up/down bias returns its neutral center, 50.0.
-             */
-            outReal[outIdx] = (upsum + downsum == 0.0) ? 50.0 : 100.0 * (upsum / (upsum + downsum));
-         }
-         startIdx += 1;
-         outIdx += 1;
-      }
-      outNBElement.value = outIdx;
-      /* Capture the live batch state into the handle. */
-      int cap_i = (int)(optInTimePeriod - 1 + 1);
-      if( cap_i < 1 || cap_i > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capWin_i_inOpen = new double[cap_i];
-      System.arraycopy(inOpen, historyLen - cap_i, capWin_i_inOpen, 0, cap_i);
-      double[] capWin_i_inClose = new double[cap_i];
-      System.arraycopy(inClose, historyLen - cap_i, capWin_i_inClose, 0, cap_i);
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.winPos_i = 0;
-      sp.winCap_i = cap_i;
-      sp.win_i_inOpen = capWin_i_inOpen;
-      sp.win_i_inClose = capWin_i_inClose;
-      sp.cur_outReal = outReal[outNBElement.value - 1];
-      return RetCode.Success;
+      return IMI_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind IMI_Open (composition seam). */
    IMI_Stream IMI_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )

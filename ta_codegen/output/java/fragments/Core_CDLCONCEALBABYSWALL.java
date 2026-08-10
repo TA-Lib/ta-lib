@@ -496,7 +496,7 @@
          sp.winPos_totIdx = 0;
       }
    }
-   private RetCode CDLCONCEALBABYSWALL_OpenBody( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   private RetCode CDLCONCEALBABYSWALL_OpenCore( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[], int outStride )
    {
       double[] ShadowVeryShortPeriodTotal = new double[4];
       int i = 0;
@@ -504,9 +504,6 @@
       int totIdx = 0;
       int ShadowVeryShortTrailingIdx = 0;
       int lookbackTotal = 0;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
-      int lastValue_outInteger = 0;
       int historyLen = inOpen.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
@@ -575,9 +572,9 @@
              inHigh[i] > inHigh[i - 1] &&
              inLow[i] < inLow[i - 1] )                                   /* 4th: engulfs the 3rd including the shadows */
          {
-            lastValue_outInteger = 100;
+            outInteger[outIdx++ * outStride] = 100;
          } else {
-            lastValue_outInteger = 0;
+            outInteger[outIdx++ * outStride] = 0;
          }
          /* add the current range and subtract the first range: this is done after the pattern recognition
           * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
@@ -656,172 +653,22 @@
       sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
       sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
       sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
-      sp.cur_outInteger = lastValue_outInteger;
+      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
+   }
+   private RetCode CDLCONCEALBABYSWALL_OpenBody( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      int[] sink_outInteger = new int[1];
+      return CDLCONCEALBABYSWALL_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outInteger, 0 );
    }
    private RetCode CDLCONCEALBABYSWALL_OpenAndFillBody( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
    {
-      double[] ShadowVeryShortPeriodTotal = new double[4];
-      int i = 0;
-      int outIdx = 0;
-      int totIdx = 0;
-      int ShadowVeryShortTrailingIdx = 0;
-      int lookbackTotal = 0;
-      int historyLen = inOpen.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
       if( (Object)outInteger == (Object)inOpen || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      int ShadowVeryShort_rangeType = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].rangeType.ordinal();
-      int ShadowVeryShort_avgPeriod = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].avgPeriod;
-      double ShadowVeryShort_factor = this.candleSettings[CandleSettingType.ShadowVeryShort.ordinal()].factor;
-      /* Identify the minimum number of price bar needed
-       * to calculate at least one output.
-       */
-      lookbackTotal = CDLCONCEALBABYSWALL_Lookback();
-      /* Move up the start index if there is not
-       * enough initial data.
-       */
-      if( startIdx < lookbackTotal ) {
-         startIdx = lookbackTotal;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      /* Do the calculation using tight loops. */
-      /* Add-up the initial period, except for the last value. */
-      ShadowVeryShortPeriodTotal[3] = 0;
-      ShadowVeryShortPeriodTotal[2] = 0;
-      ShadowVeryShortPeriodTotal[1] = 0;
-      ShadowVeryShortTrailingIdx = startIdx - ShadowVeryShort_avgPeriod;
-      i = ShadowVeryShortTrailingIdx;
-      while( i < startIdx ) {
-         ShadowVeryShortPeriodTotal[3] = ShadowVeryShortPeriodTotal[3] + ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)));
-         ShadowVeryShortPeriodTotal[2] = ShadowVeryShortPeriodTotal[2] + ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)));
-         ShadowVeryShortPeriodTotal[1] = ShadowVeryShortPeriodTotal[1] + ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)));
-         i += 1;
-      }
-      i = startIdx;
-      /* Proceed with the calculation for the requested range.
-       * Must have:
-       * - first candle: black marubozu (very short shadows)
-       * - second candle: black marubozu (very short shadows)
-       * - third candle: black candle that opens gapping down but has an upper shadow that extends into the prior body
-       * - fourth candle: black candle that completely engulfs the third candle, including the shadows
-       * The meanings of "very short shadow" are specified with TA_SetCandleSettings;
-       * outInteger is positive (1 to 100): concealing baby swallow is always bullish;
-       * the user should consider that concealing baby swallow is significant when it appears in downtrend, while
-       * this function does not consider it
-       */
-      outIdx = 0;
-      do {
-         if( ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
-             ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 2nd black */
-             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* 3rd black */
-             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 4th black */
-             (((inClose[i - 3] >= inOpen[i - 3]) ? inOpen[i - 3] : inClose[i - 3]) - inLow[i - 3]) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[3] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st: marubozu */
-             (inHigh[i - 3] - ((inClose[i - 3] >= inOpen[i - 3]) ? inClose[i - 3] : inOpen[i - 3])) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[3] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 3] - inOpen[i - 3])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 3] - inLow[i - 3]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 3] - inLow[i - 3]) - Math.abs(inClose[i - 3] - inOpen[i - 3])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? inOpen[i - 2] : inClose[i - 2]) - inLow[i - 2]) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* 2nd: marubozu */
-             (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[2] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 2] - inOpen[i - 2])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 2] - inLow[i - 2]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 2] - inLow[i - 2]) - Math.abs(inClose[i - 2] - inOpen[i - 2])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) &&
-             (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2])) && /* 3rd: opens gapping down */
-             (inHigh[i - 1] - ((inClose[i - 1] >= inOpen[i - 1]) ? inClose[i - 1] : inOpen[i - 1])) > ((ShadowVeryShort_factor * (((ShadowVeryShort_avgPeriod != 0) ? (ShadowVeryShortPeriodTotal[1] / ShadowVeryShort_avgPeriod) : ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - 1] - inOpen[i - 1])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - 1] - inLow[i - 1]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - 1] - inLow[i - 1]) - Math.abs(inClose[i - 1] - inOpen[i - 1])) : 0.0)))) / ((ShadowVeryShort_rangeType == 2) ? 2.0 : 1.0)))) && /* and HAS an upper shadow */
-             inHigh[i - 1] > inClose[i - 2] &&                           /* that extends into the prior body */
-             inHigh[i] > inHigh[i - 1] &&
-             inLow[i] < inLow[i - 1] )                                   /* 4th: engulfs the 3rd including the shadows */
-         {
-            outInteger[outIdx++] = 100;
-         } else {
-            outInteger[outIdx++] = 0;
-         }
-         /* add the current range and subtract the first range: this is done after the pattern recognition
-          * when avgPeriod is not 0, that means "compare with the previous candles" (it excludes the current candle)
-          */
-         for( totIdx = 3; totIdx >= 1; totIdx -= 1 ) {
-            ShadowVeryShortPeriodTotal[totIdx] = ShadowVeryShortPeriodTotal[totIdx] + (((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[i - totIdx] - inLow[i - totIdx]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[i - totIdx] - inLow[i - totIdx]) - Math.abs(inClose[i - totIdx] - inOpen[i - totIdx])) : 0.0))) - ((ShadowVeryShort_rangeType == 0) ? (Math.abs(inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx])) : ((ShadowVeryShort_rangeType == 1) ? (inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx]) : ((ShadowVeryShort_rangeType == 2) ? ((inHigh[ShadowVeryShortTrailingIdx - totIdx] - inLow[ShadowVeryShortTrailingIdx - totIdx]) - Math.abs(inClose[ShadowVeryShortTrailingIdx - totIdx] - inOpen[ShadowVeryShortTrailingIdx - totIdx])) : 0.0))));
-         }
-         i += 1;
-         ShadowVeryShortTrailingIdx += 1;
-      } while( i <= endIdx );
-      /* All done. Indicate the output limits and return. */
-      outNBElement.value = outIdx;
-      outBegIdx.value = startIdx;
-      /* Capture the live batch state into the handle. */
-      int capLag_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
-      int cap_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx + 4;
-      if( capLag_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
-      double[] capRing_ShadowVeryShortTrailingIdx_inOpen = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inOpen[fillJ % cap_ShadowVeryShortTrailingIdx] = inOpen[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inHigh = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inHigh[fillJ % cap_ShadowVeryShortTrailingIdx] = inHigh[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inLow = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inLow[fillJ % cap_ShadowVeryShortTrailingIdx] = inLow[fillJ];
-      }
-      double[] capRing_ShadowVeryShortTrailingIdx_inClose = new double[allocN_ShadowVeryShortTrailingIdx];
-      for( int fillJ = historyLen - cap_ShadowVeryShortTrailingIdx; fillJ < historyLen; fillJ++ ) {
-         capRing_ShadowVeryShortTrailingIdx_inClose[fillJ % cap_ShadowVeryShortTrailingIdx] = inClose[fillJ];
-      }
-      int cap_totIdx = (int)(4);
-      if( cap_totIdx < 1 || cap_totIdx > historyLen ) {
-         return RetCode.InternalError;
-      }
-      double[] capWin_totIdx_inOpen = new double[cap_totIdx];
-      System.arraycopy(inOpen, historyLen - cap_totIdx, capWin_totIdx_inOpen, 0, cap_totIdx);
-      double[] capWin_totIdx_inHigh = new double[cap_totIdx];
-      System.arraycopy(inHigh, historyLen - cap_totIdx, capWin_totIdx_inHigh, 0, cap_totIdx);
-      double[] capWin_totIdx_inLow = new double[cap_totIdx];
-      System.arraycopy(inLow, historyLen - cap_totIdx, capWin_totIdx_inLow, 0, cap_totIdx);
-      double[] capWin_totIdx_inClose = new double[cap_totIdx];
-      System.arraycopy(inClose, historyLen - cap_totIdx, capWin_totIdx_inClose, 0, cap_totIdx);
-      sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
-      sp.totIdx = totIdx;
-      sp.lag1_inOpen = inOpen[historyLen - 1];
-      sp.lag2_inOpen = inOpen[historyLen - 2];
-      sp.lag3_inOpen = inOpen[historyLen - 3];
-      sp.lag1_inHigh = inHigh[historyLen - 1];
-      sp.lag2_inHigh = inHigh[historyLen - 2];
-      sp.lag3_inHigh = inHigh[historyLen - 3];
-      sp.lag1_inLow = inLow[historyLen - 1];
-      sp.lag2_inLow = inLow[historyLen - 2];
-      sp.lag3_inLow = inLow[historyLen - 3];
-      sp.lag1_inClose = inClose[historyLen - 1];
-      sp.lag2_inClose = inClose[historyLen - 2];
-      sp.lag3_inClose = inClose[historyLen - 3];
-      sp.ringPos_ShadowVeryShortTrailingIdx = historyLen % cap_ShadowVeryShortTrailingIdx;
-      sp.ringCap_ShadowVeryShortTrailingIdx = cap_ShadowVeryShortTrailingIdx;
-      sp.ringLag_ShadowVeryShortTrailingIdx = capLag_ShadowVeryShortTrailingIdx;
-      sp.ring_ShadowVeryShortTrailingIdx_inOpen = capRing_ShadowVeryShortTrailingIdx_inOpen;
-      sp.ring_ShadowVeryShortTrailingIdx_inHigh = capRing_ShadowVeryShortTrailingIdx_inHigh;
-      sp.ring_ShadowVeryShortTrailingIdx_inLow = capRing_ShadowVeryShortTrailingIdx_inLow;
-      sp.ring_ShadowVeryShortTrailingIdx_inClose = capRing_ShadowVeryShortTrailingIdx_inClose;
-      sp.winPos_totIdx = 0;
-      sp.winCap_totIdx = cap_totIdx;
-      sp.win_totIdx_inOpen = capWin_totIdx_inOpen;
-      sp.win_totIdx_inHigh = capWin_totIdx_inHigh;
-      sp.win_totIdx_inLow = capWin_totIdx_inLow;
-      sp.win_totIdx_inClose = capWin_totIdx_inClose;
-      sp.cs_ShadowVeryShort_rangeType = ShadowVeryShort_rangeType;
-      sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;
-      sp.cs_ShadowVeryShort_factor = ShadowVeryShort_factor;
-      sp.cur_outInteger = outInteger[outNBElement.value - 1];
-      return RetCode.Success;
+      return CDLCONCEALBABYSWALL_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
    /* Internal startIdx-anchored open behind CDLCONCEALBABYSWALL_Open (composition seam). */
    CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )

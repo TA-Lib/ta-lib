@@ -383,15 +383,13 @@
       sp.lagRingPos_adx = (sp.lagRingPos_adx + 1) % sp.lagRingCap_adx;
       sp.cur_outReal = cur_outReal;
    }
-   private RetCode ADXR_OpenBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   private RetCode ADXR_OpenCore( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
    {
       double[] adx;
       int adxrLookback = 0;
       int outIdx = 0;
       int nbElement = 0;
       RetCode retCode;
-      MInteger outBegIdx = new MInteger();
-      MInteger outNBElement = new MInteger();
       int historyLen = inHigh.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
@@ -471,100 +469,22 @@
       sp.lagRingCap_adx = lagCap_adx;
       sp.lagRing_adx = lagRing_adx;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
+      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
+   }
+   private RetCode ADXR_OpenBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      return ADXR_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
    }
    private RetCode ADXR_OpenAndFillBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
    {
-      double[] adx;
-      int adxrLookback = 0;
-      int outIdx = 0;
-      int nbElement = 0;
-      RetCode retCode;
-      int historyLen = inHigh.length;
-      int endIdx = historyLen - 1;
-      int startIdx = 0;
-      if( historyLen < 1 || inLow.length != inHigh.length || inClose.length != inHigh.length ) {
-         return RetCode.BadParam;
-      }
-      if( historyLen > MAX_INDEX + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      if( optInTimePeriod == Integer.MIN_VALUE ) {
-         optInTimePeriod = 14;
-      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
-         return RetCode.BadParam;
-      }
       if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose ) {
          return RetCode.BadParam;
       }
-      if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      double[] sc_outReal = new double[historyLen];
-      /* Original implementation from Wilder's book was doing some integer
-       * rounding in its calculations.
-       *
-       * This was understandable in the context that at the time the book
-       * was written, most user were doing the calculation by hand.
-       *
-       * For a computer, rounding is unnecessary (and even problematic when inputs
-       * are close to 1).
-       *
-       * TA-Lib does not do the rounding. Still, if you want to reproduce Wilder's examples,
-       * you can comment out the following #undef/#define and rebuild the library.
-       */
-      /* Move up the start index if there is not
-       * enough initial data.
-       * Always one price bar gets consumed.
-       */
-      adxrLookback = ADXR_Lookback(optInTimePeriod);
-      if( startIdx < adxrLookback ) {
-         startIdx = adxrLookback;
-      }
-      /* Make sure there is still something to evaluate. */
-      if( startIdx > endIdx ) {
-         outBegIdx.value = 0;
-         outNBElement.value = 0;
-         return RetCode.OutOfRangeEndIndex ;
-      }
-      adx = new double[(int)((endIdx - startIdx + optInTimePeriod) * 1)];
-      /* Compute ADX over a range that starts (period-1) bars earlier, so each
-       * ADXR bar can pair the current ADX with the ADX from (period-1) bars ago.
-       */
-      /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
-       * sub-call's own startIdx (the seeding point). */
-      ADX_Stream sub0 = ADX_OpenInternal(java.util.Arrays.copyOfRange(inHigh, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inLow, 0, (endIdx) + 1), java.util.Arrays.copyOfRange(inClose, 0, (endIdx) + 1), startIdx - (optInTimePeriod - 1), optInTimePeriod);
-      retCode = ADX_Internal(startIdx - (optInTimePeriod - 1), endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, adx);
-      if( retCode != RetCode.Success ) {
-         return retCode ;
-      }
-      /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
-       * the ADXR output, the current ADX is adx[k+(period-1)] and the lagged one
-       * is adx[k]; the ADX range holds (period-1) more elements than the output.
-       */
-      nbElement = outNBElement.value - (optInTimePeriod - 1);
-      for( outIdx = 0; outIdx < nbElement; outIdx += 1 ) {
-         sc_outReal[outIdx] = ((adx[outIdx + (optInTimePeriod - 1)] + adx[outIdx]) / 2.0);
-      }
-      outBegIdx.value = startIdx;
-      outNBElement.value = nbElement;
-      /* Capture the live producer state + sub handles. */
-      if( outNBElement.value < 1 ) {
-         return RetCode.OutOfRangeEndIndex;
-      }
-      int lagCap_adx = (int)(optInTimePeriod - 1);
-      double[] lagRing_adx = new double[lagCap_adx];
-      for( int lagI = 0; lagI < lagCap_adx; lagI++ ) {
-         lagRing_adx[lagI] = adx[outNBElement.value + lagI];
-      }
-      sp.optInTimePeriod = optInTimePeriod;
-      sp.sub0 = sub0;
-      sp.lagRingPos_adx = 0;
-      sp.lagRingCap_adx = lagCap_adx;
-      sp.lagRing_adx = lagRing_adx;
-      sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
-      return RetCode.Success;
+      return ADXR_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
    /* Internal startIdx-anchored open behind ADXR_Open (composition seam). */
    ADXR_Stream ADXR_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
