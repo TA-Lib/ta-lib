@@ -16,6 +16,7 @@
  *  070526 MF,CC  Speed optimization: compute the two price EMA, the
  *                signal line and the histogram in a single lockstep
  *                pass (bit-exact, no temporary buffers).
+ *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
  */
 
    /**
@@ -144,6 +145,13 @@
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
+      /* A signal period of 1 disables signal-line smoothing: the signal IS the
+       * MACD line and the histogram is exactly zero. signalK is then exactly
+       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+       * only while consecutive MACD-line values stay within a factor of two of
+       * each other. The MACD line oscillates through zero, so it leaves that
+       * window on ordinary data; hence the explicit arm at each step.
+       */
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
       lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
@@ -234,7 +242,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -248,7 +260,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -374,7 +390,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       outMACD[0] = macdValue;
       outMACDSignal[0] = prevSignal;
@@ -385,7 +405,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;
@@ -654,7 +678,11 @@
       sp.prevFast = Math.fma(tempReal - sp.prevFast, sp.fastK, sp.prevFast);
       sp.prevSlow = Math.fma(tempReal - sp.prevSlow, sp.slowK, sp.prevSlow);
       macdValue = sp.prevFast - sp.prevSlow;
-      sp.prevSignal = Math.fma(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+      if( sp.optInSignalPeriod == 1 ) {
+         sp.prevSignal = macdValue;
+      } else {
+         sp.prevSignal = Math.fma(macdValue - sp.prevSignal, sp.signalK, sp.prevSignal);
+      }
       sp.cur_outMACD = macdValue;
       sp.cur_outMACDSignal = sp.prevSignal;
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
@@ -729,6 +757,13 @@
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
+      /* A signal period of 1 disables signal-line smoothing: the signal IS the
+       * MACD line and the histogram is exactly zero. signalK is then exactly
+       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+       * only while consecutive MACD-line values stay within a factor of two of
+       * each other. The MACD line oscillates through zero, so it leaves that
+       * window on ordinary data; hence the explicit arm at each step.
+       */
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
       lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
@@ -819,7 +854,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -833,7 +872,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
          lastValue_outMACD = macdValue;
          lastValue_outMACDSignal = prevSignal;
          lastValue_outMACDHist = macdValue - prevSignal;
@@ -927,6 +970,13 @@
       } else {
          fastK = 2.0 / (double)(optInFastPeriod + 1);
       }
+      /* A signal period of 1 disables signal-line smoothing: the signal IS the
+       * MACD line and the histogram is exactly zero. signalK is then exactly
+       * 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+       * only while consecutive MACD-line values stay within a factor of two of
+       * each other. The MACD line oscillates through zero, so it leaves that
+       * window on ordinary data; hence the explicit arm at each step.
+       */
       signalK = 2.0 / (double)(optInSignalPeriod + 1);
       lookbackSignal = EMA_Lookback(optInSignalPeriod);
       /* Move up the start index if there is not
@@ -1017,7 +1067,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
       }
       /* Stable zone: keep advancing in lockstep and write the three
        * outputs.
@@ -1031,7 +1085,11 @@
          prevFast = Math.fma(tempReal - prevFast, fastK, prevFast);
          prevSlow = Math.fma(tempReal - prevSlow, slowK, prevSlow);
          macdValue = prevFast - prevSlow;
-         prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         if( optInSignalPeriod == 1 ) {
+            prevSignal = macdValue;
+         } else {
+            prevSignal = Math.fma(macdValue - prevSignal, signalK, prevSignal);
+         }
          outMACD[outIdx] = macdValue;
          outMACDSignal[outIdx] = prevSignal;
          outMACDHist[outIdx] = macdValue - prevSignal;

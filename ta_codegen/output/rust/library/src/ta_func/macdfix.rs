@@ -54,6 +54,7 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  071126 MF,CC  Inline the fixed-26/12 MACD lockstep pass (was a
  *                delegation to macd(...,0,0,...)); bit-exact, streamable.
+ *  080926 MF,CC  Explicit no-smoothing signal at a signal period of 1.
  */
 
 // Import types from parent module
@@ -253,6 +254,12 @@ impl Core {
         //    Fix 26 -> slowK = 0.075
         fastK = 0.15;
         slowK = 0.075;
+        // A signal period of 1 disables signal-line smoothing: the signal IS the
+        // MACD line and the histogram is exactly zero. signalK is then exactly
+        // 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+        // only while consecutive MACD-line values stay within a factor of two of
+        // each other. The MACD line oscillates through zero, so it leaves that
+        // window on ordinary data; hence the explicit arm at each step.
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
         lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
@@ -355,7 +362,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
@@ -368,7 +379,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
             outMACD[outIdx] = macdValue;
             outMACDSignal[outIdx] = prevSignal;
             outMACDHist[outIdx] = macdValue - prevSignal;
@@ -419,7 +434,11 @@ impl Core {
         sp.prevFast = (tempReal - sp.prevFast as f64).mul_add(sp.fastK, sp.prevFast);
         sp.prevSlow = (tempReal - sp.prevSlow as f64).mul_add(sp.slowK, sp.prevSlow);
         macdValue = sp.prevFast - sp.prevSlow;
-        sp.prevSignal = (macdValue - sp.prevSignal as f64).mul_add(sp.signalK, sp.prevSignal);
+        if sp.optInSignalPeriod == 1 {
+            sp.prevSignal = macdValue;
+        } else {
+            sp.prevSignal = (macdValue - sp.prevSignal as f64).mul_add(sp.signalK, sp.prevSignal);
+        }
         (*outMACD) = macdValue;
         (*outMACDSignal) = sp.prevSignal;
         (*outMACDHist) = macdValue - sp.prevSignal;
@@ -473,6 +492,12 @@ impl Core {
         //    Fix 26 -> slowK = 0.075
         fastK = 0.15;
         slowK = 0.075;
+        // A signal period of 1 disables signal-line smoothing: the signal IS the
+        // MACD line and the histogram is exactly zero. signalK is then exactly
+        // 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+        // only while consecutive MACD-line values stay within a factor of two of
+        // each other. The MACD line oscillates through zero, so it leaves that
+        // window on ordinary data; hence the explicit arm at each step.
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
         lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
@@ -575,7 +600,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
@@ -588,7 +617,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
             lastValue_outMACD = macdValue;
             lastValue_outMACDSignal = prevSignal;
             lastValue_outMACDHist = macdValue - prevSignal;
@@ -693,6 +726,12 @@ impl Core {
         //    Fix 26 -> slowK = 0.075
         fastK = 0.15;
         slowK = 0.075;
+        // A signal period of 1 disables signal-line smoothing: the signal IS the
+        // MACD line and the histogram is exactly zero. signalK is then exactly
+        // 1.0, so the recursion below reduces to (x-prev)+prev -- which returns x
+        // only while consecutive MACD-line values stay within a factor of two of
+        // each other. The MACD line oscillates through zero, so it leaves that
+        // window on ordinary data; hence the explicit arm at each step.
         signalK = 2.0 / ((optInSignalPeriod + 1) as f64);
         lookbackSignal = self.EMA_Lookback(optInSignalPeriod);
         // Move up the start index if there is not
@@ -795,7 +834,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
         }
         // Stable zone: keep advancing in lockstep and write the three
         // outputs.
@@ -808,7 +851,11 @@ impl Core {
             prevFast = (tempReal - prevFast as f64).mul_add(fastK, prevFast);
             prevSlow = (tempReal - prevSlow as f64).mul_add(slowK, prevSlow);
             macdValue = prevFast - prevSlow;
-            prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            if optInSignalPeriod == 1 {
+                prevSignal = macdValue;
+            } else {
+                prevSignal = (macdValue - prevSignal as f64).mul_add(signalK, prevSignal);
+            }
             outMACD[outIdx] = macdValue;
             outMACDSignal[outIdx] = prevSignal;
             outMACDHist[outIdx] = macdValue - prevSignal;
