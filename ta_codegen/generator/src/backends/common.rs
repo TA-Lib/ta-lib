@@ -4,8 +4,9 @@
 //! language-specific output, so every backend shares one copy instead of
 //! re-implementing them. New backends import from here rather than copy-pasting.
 
-use crate::ir::{BinOp, EnumDef, EnumVariant, Expr, Statement};
-use std::collections::HashMap;
+use crate::ir::{BinOp, EnumDef, EnumVariant, Expr, FuncDef, ParamType, Statement};
+use crate::registry::Lang;
+use std::collections::{BTreeSet, HashMap};
 
 // TA-Lib's parameter sentinels, mirroring include/ta_defs.h. The "use the
 // default" value deliberately sits one step OUTSIDE the legal range so
@@ -78,24 +79,112 @@ pub(crate) fn ma_pseudo_member_doc(variant: &str) -> Option<&'static str> {
     }
 }
 
-/// The range the validation prologue should enforce for an optional parameter:
-/// its declared `range:`, or — for an `enum:` parameter, which declares none —
-/// the span of its members.
+/// The enum types some function declares an optional parameter with.
+///
+/// Those are the only enums that get generated limit constants, because they are
+/// the only ones whose value crosses the API boundary as a caller-supplied
+/// integer and therefore has to be range-checked. `FuncUnstId` is deliberately
+/// excluded by the same rule: no parameter is typed with it, and its `ALL`
+/// wildcard sits far outside the member span, so limits derived from the members
+/// would describe a domain its API does not have.
+#[must_use]
+pub fn param_enum_names(funcs: &[FuncDef]) -> BTreeSet<String> {
+    funcs
+        .iter()
+        .flat_map(|f| &f.optional_inputs)
+        .filter_map(|opt| match &opt.param_type {
+            ParamType::Enum(name) => Some(name.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// How `lang` spells the generated inclusive value-limit constants of an `enum:`
+/// parameter type — `(min, max)`, or `None` when that backend declares none.
+///
+/// This function is the single registry of both halves: *whether* a backend has
+/// the constants and *what they are called*. The emitter that declares them and
+/// every emitter that references them read the same answer, so a range check can
+/// never name a constant the enum surface did not emit, and appending a member
+/// moves the declaration and every use together.
+///
+/// C and C# have them because both surface the parameter as a plain integer a
+/// caller can put any value in, so both generate a range check that needs a
+/// bound to name. Java and Rust have neither the check nor the constants: their
+/// `MAType` is a real enum, the only values reachable through the typed API are
+/// members, and Rust's `TryFrom<i32>` is itself the domain gate — a second
+/// spelling of the domain there would disagree with it about the
+/// `TA_INTEGER_DEFAULT` sentinel, which `TryFrom` accepts. A future backend that
+/// does need one adds an arm here and a declaration in its enum emitter.
+#[must_use]
+pub fn enum_limit_names_of(def: &EnumDef, lang: Lang) -> Option<(String, String)> {
+    match lang {
+        // Macros rather than enumerators: an enumerator would join the member
+        // list and be an `optInMAType` a caller could pass. The prefix is
+        // upper-cased -- `TA_MAType_` -> `TA_MATYPE_` -- so the macro cannot be
+        // read as one of the members it bounds, which the shared prefix would
+        // otherwise suggest. Uniform, not a MAType special case: an already
+        // upper-case prefix like `TA_FUNC_UNST_` passes through unchanged.
+        Lang::C => {
+            let p = def.c_prefix.to_uppercase();
+            Some((format!("{p}MIN"), format!("{p}MAX")))
+        }
+        // A C# enum cannot hold static members, so they live in the sibling
+        // static class the `FuncUnstIds.Count` companion already established.
+        Lang::CSharp => Some((format!("{}s.Min", def.name), format!("{}s.Max", def.name))),
+        Lang::Java | Lang::Rust => None,
+    }
+}
+
+/// [`enum_limit_names_of`] keyed by type name, for the emitters that hold the
+/// map rather than the definition.
+#[must_use]
+pub(crate) fn enum_limit_names(
+    enums: &HashMap<String, EnumDef>,
+    enum_name: &str,
+    lang: Lang,
+) -> Option<(String, String)> {
+    enum_limit_names_of(enums.get(enum_name)?, lang)
+}
+
+/// The inclusive bounds an integer-valued optional parameter's validation
+/// prologue must compare against, already spelled for `lang`: a declared
+/// `range:` renders as literals, an `enum:` domain names that enum's generated
+/// limit constants instead of repeating their values.
+///
+/// # Panics
+///
+/// If `lang` asks for an `enum:` parameter's bounds but declares no limit
+/// constants for that enum. Emitting the literal span instead would silently
+/// reintroduce the per-call-site copy of the bound this exists to remove, so it
+/// fails the generate rather than the review.
 #[must_use]
 #[allow(clippy::implicit_hasher)]
-pub fn effective_range(
+// Integer optional-param ranges are stored as `f64` in the IR; casting the
+// integer-valued ones for literal emission is exact, not truncating.
+#[allow(clippy::cast_possible_truncation)]
+pub fn int_bound_exprs(
     opt: &crate::ir::OptInput,
     enums: &HashMap<String, EnumDef>,
-) -> Option<(f64, f64)> {
-    if let Some(r) = opt.range {
-        return Some(r);
+    lang: Lang,
+) -> Option<(String, String)> {
+    if let Some((lo, hi)) = opt.range {
+        return Some(((lo as i32).to_string(), (hi as i32).to_string()));
     }
-    match &opt.param_type {
-        crate::ir::ParamType::Enum(name) => {
-            enum_value_bounds(enums, name).map(|(lo, hi)| (f64::from(lo), f64::from(hi)))
-        }
-        _ => None,
-    }
+    let ParamType::Enum(name) = &opt.param_type else {
+        return None;
+    };
+    // Asserts contiguity, so a gapped enum fails here rather than admitting the
+    // missing value through the span the constants describe.
+    enum_value_bounds(enums, name)?;
+    Some(enum_limit_names(enums, name, lang).unwrap_or_else(|| {
+        panic!(
+            "{lang:?} range-checks the enum parameter {} but declares no limit \
+             constants for {name}: add the arm in common::enum_limit_names and the \
+             declaration in that backend's enum emitter.",
+            opt.name
+        )
+    }))
 }
 
 /// The inclusive value range an `enum:` parameter accepts: `0..=max member`.
@@ -108,11 +197,8 @@ pub fn effective_range(
 ///
 /// Derived from the members, so an appended one widens the gate automatically.
 #[must_use]
-pub(crate) fn enum_value_bounds(
-    enums: &HashMap<String, EnumDef>,
-    enum_name: &str,
-) -> Option<(i32, i32)> {
-    let e = enums.get(enum_name)?;
+pub fn enum_value_bounds_of(e: &EnumDef) -> Option<(i32, i32)> {
+    let enum_name = &e.name;
     let lo = e.variants.iter().map(|v| v.value).min()?;
     let hi = e.variants.iter().map(|v| v.value).max()?;
     // A span only describes the member set while the values are contiguous, and
@@ -129,6 +215,15 @@ pub(crate) fn enum_value_bounds(
          Emit a membership test instead of widening this."
     );
     Some((lo, hi))
+}
+
+/// [`enum_value_bounds_of`] keyed by type name.
+#[must_use]
+pub(crate) fn enum_value_bounds(
+    enums: &HashMap<String, EnumDef>,
+    enum_name: &str,
+) -> Option<(i32, i32)> {
+    enum_value_bounds_of(enums.get(enum_name)?)
 }
 
 /// `Type.MEMBER` for `value`, when the enum declares a member with that value.

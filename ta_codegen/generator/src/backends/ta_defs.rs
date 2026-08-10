@@ -7,7 +7,8 @@
 //! function IDs is the `FuncUnstId` enum in `ta_codegen/input/enums.yaml`; the
 //! `TA_FUNC_UNST_ALL` / `_NONE` sentinels are structural and appended here.
 
-use crate::ir::EnumDef;
+use crate::ir::{EnumDef, FuncDef};
+use crate::registry::Lang;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -42,14 +43,49 @@ fn render_enum(def: &EnumDef, type_name: &str) -> String {
     block
 }
 
+/// The inclusive value limits of an enum used as a parameter type, as macros.
+///
+/// A caller reaches `optInMAType` through a plain `int` in every wrapper, so the
+/// generated prologue has to range-check it — and without these it did so
+/// against literals, one copy per prologue, five tiers deep in ten functions.
+/// Naming them puts the bound in one place and makes the check read as what it
+/// is; appending a member widens all of them at once.
+///
+/// Macros rather than enumerators on purpose: an enumerator would join
+/// `TA_MAType`'s member list, and this is not a moving-average type a caller may
+/// pass. Same reasoning, and same spelling, as `TA_FUNC_UNST_COUNT` below.
+///
+/// Public so tests can assert on the emitted text against a synthetic enum —
+/// the only way to tell a derived bound from one that happens to equal MAType's.
+pub fn render_enum_limits(def: &EnumDef, type_name: &str) -> String {
+    let (lo, hi) =
+        super::common::enum_value_bounds_of(def).expect("a parameter enum has members");
+    let (min_name, max_name) = super::common::enum_limit_names_of(def, Lang::C)
+        .expect("C declares enum limit constants");
+    let width = min_name.len().max(max_name.len());
+    // ASCII only: ta_defs.h is the public header every wrapper and compiler sees,
+    // and it carries no non-ASCII byte anywhere else.
+    format!(
+        "/* Inclusive value limits of {type_name}: the domain an optional parameter of\n \
+         * that type accepts. Macros, NOT members -- derived from the member list, so\n \
+         * appending one widens every generated range check that names them.\n \
+         */\n\
+         #define {min_name:<width$} {lo}\n\
+         #define {max_name:<width$} {hi}\n"
+    )
+}
+
 /// Render the SECTION 1 body (between, not including, the marker lines) and splice
 /// it into `ta_defs_path`, preserving everything outside the markers.
 ///
 /// SECTION 1 owns two enums that are pure functions of `enums.yaml`: `TA_MAType`
 /// and `TA_FuncUnstId` (the `TA_FUNC_UNST_ALL` / `_NONE` sentinels are structural
 /// and appended here). Everything else in `ta_defs.h` is hand-written.
+///
+/// `funcs` decides only which enums also get value-limit macros: the ones some
+/// optional parameter is declared with. See [`render_enum_limits`].
 #[allow(clippy::implicit_hasher)]
-pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
+pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
     let ma = enums
         .get("MAType")
         .expect("MAType enum missing from enums.yaml");
@@ -73,6 +109,13 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
     // The count that used to be spelled TA_FUNC_UNST_ALL is emitted separately as
     // TA_FUNC_UNST_COUNT -- a macro, not an enumerator, so it can never be mistaken
     // for an id. It is what sizes unstablePeriod[] and bounds the range checks.
+    //
+    // A COUNT here and MIN/MAX on TA_MAType is not an inconsistency to converge.
+    // COUNT answers "how many ids exist", and every use of it is a table size or a
+    // half-open loop bound, where MAX+1 would be an off-by-one per site. MIN/MAX
+    // answer "what may a caller pass", which for this enum is NOT the member span:
+    // TA_FUNC_UNST_ALL is a legal value sitting far outside it, so a MAX derived
+    // from the members would name something no caller ever sees.
     let fu_width = fu.variants.iter().map(|v| v.c_name.len()).max().unwrap_or(0);
     let mut fu_block = String::from("typedef enum {\n");
     for (i, v) in fu.variants.iter().enumerate() {
@@ -91,8 +134,16 @@ pub fn generate(enums: &HashMap<String, EnumDef>, ta_defs_path: &Path) {
     fu_block.push_str(" */\n");
     fu_block.push_str(&format!("#define TA_FUNC_UNST_COUNT {}\n", fu.variants.len()));
 
-    // TA_MAType then TA_FuncUnstId, separated by a blank line.
-    let block = format!("\n{}\n{}", render_enum(ma, "TA_MAType"), fu_block);
+    // TA_MAType then TA_FuncUnstId, separated by a blank line. MAType's limit
+    // macros follow its declaration; FuncUnstId gets none — no parameter is typed
+    // with it, and its pinned ALL sits outside the member span.
+    let param_enums = super::common::param_enum_names(funcs);
+    let ma_limits = if param_enums.contains(&ma.name) {
+        format!("\n{}", render_enum_limits(ma, "TA_MAType"))
+    } else {
+        String::new()
+    };
+    let block = format!("\n{}{ma_limits}\n{}", render_enum(ma, "TA_MAType"), fu_block);
 
     let existing = std::fs::read_to_string(ta_defs_path)
         .unwrap_or_else(|e| panic!("reading {}: {e}", ta_defs_path.display()));

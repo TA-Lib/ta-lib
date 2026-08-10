@@ -98,7 +98,7 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
-      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+      } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return -1;
       }
       int retValue = 0;
@@ -151,7 +151,7 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
-      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+      } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outFastK == outFastD ) {
@@ -257,7 +257,7 @@ public partial class Core
       }
       if( (int)optInFastD_MAType == int.MinValue || optInFastD_MAType == MAType.DEFAULT ) {
          optInFastD_MAType = MAType.SMA;
-      } else if( (int)optInFastD_MAType < 0 || (int)optInFastD_MAType > 11 ) {
+      } else if( (int)optInFastD_MAType < MATypes.Min || (int)optInFastD_MAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outFastK == outFastD ) {

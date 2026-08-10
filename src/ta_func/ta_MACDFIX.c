@@ -62,7 +62,7 @@
 
 TA_LIB_API int TA_MACDFIX_Lookback( int optInSignalPeriod )
 {
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return -1;
@@ -108,7 +108,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -331,7 +331,7 @@ TA_RetCode TA_S_MACDFIX( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -504,7 +504,7 @@ TA_RetCode TA_MACDFIX_OpenInternal( struct TA_MACDFIX_Stream **stream, const dou
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -743,7 +743,7 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OpenAndFill( TA_MACDFIX_Stream **stream, const 
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;

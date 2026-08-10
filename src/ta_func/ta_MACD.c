@@ -66,15 +66,15 @@
 TA_LIB_API int TA_MACD_Lookback( int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
 {
    int tempInteger;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return -1;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return -1;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return -1;
@@ -131,15 +131,15 @@ TA_LIB_API TA_RetCode TA_MACD( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -382,15 +382,15 @@ TA_RetCode TA_S_MACD( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -583,15 +583,15 @@ TA_RetCode TA_MACD_OpenInternal( struct TA_MACD_Stream **stream, const double in
    if( !inReal || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;
@@ -852,15 +852,15 @@ TA_LIB_API TA_RetCode TA_MACD_OpenAndFill( TA_MACD_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSignalPeriod == (int)0x80000000 )
+   if( (int)optInSignalPeriod == TA_INTEGER_DEFAULT )
       optInSignalPeriod = 9;
    else if( (int)optInSignalPeriod < 1 || (int)optInSignalPeriod > 100000 )
       return TA_BAD_PARAM;

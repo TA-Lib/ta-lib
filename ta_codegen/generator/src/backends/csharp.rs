@@ -290,7 +290,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
 /// `enum:` params get the same treatment, because a C# enum is an `int` with
 /// names: `(MAType)int.MinValue` is a value a caller — or the generated server's
 /// `(MAType)GetInt(p, "optInMAType", 0)` — can produce, so it must resolve the way
-/// C's `if( (int)optInMAType == (int)0x80000000 )` does. The substituted value is
+/// C's `if( (int)optInMAType == TA_INTEGER_DEFAULT )` does. The substituted value is
 /// that parameter's declared default, never a fixed 0: APO, PPO and PVO default to
 /// EMA, the other ten to SMA.
 ///
@@ -361,11 +361,13 @@ fn emit_opt_param_validation(
                     // No shipped enum param declares a `range:`, but emitting the
                     // check keeps a future one from being silently un-gated here
                     // while C (which shares its Integer arm) still enforces it.
-                    if let Some((min, max)) = super::common::effective_range(opt, enums) {
-                        let min_i = min as i32;
-                        let max_i = max as i32;
+                    // The bounds are the enum's generated `<Type>s.Min`/`.Max`,
+                    // never the numbers themselves — see common::enum_limit_names.
+                    if let Some((min, max)) =
+                        super::common::int_bound_exprs(opt, enums, crate::registry::Lang::CSharp)
+                    {
                         out.push_str(&format!(
-                            " else if( (int){name} < {min_i} || (int){name} > {max_i} ) {{\n         return {fail};\n      }}",
+                            " else if( (int){name} < {min} || (int){name} > {max} ) {{\n         return {fail};\n      }}",
                             name = opt.name
                         ));
                     }

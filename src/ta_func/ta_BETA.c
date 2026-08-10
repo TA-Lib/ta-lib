@@ -62,7 +62,7 @@
 
 TA_LIB_API int TA_BETA_Lookback( int optInTimePeriod )
 {
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return -1;
@@ -104,7 +104,7 @@ TA_LIB_API TA_RetCode TA_BETA( int    startIdx,
       return TA_BAD_PARAM;
    if( !inReal1 )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -299,7 +299,7 @@ TA_RetCode TA_S_BETA( int    startIdx,
       return TA_BAD_PARAM;
    if( !inReal1 )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -544,7 +544,7 @@ TA_RetCode TA_BETA_OpenInternal( struct TA_BETA_Stream **stream, const double in
    if( !inReal0 || !inReal1 || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -769,7 +769,7 @@ TA_LIB_API TA_RetCode TA_BETA_OpenAndFill( TA_BETA_Stream **stream, const double
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal0 || (const void *)outReal == (const void *)inReal1 ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 5;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;

@@ -64,17 +64,17 @@
 
 TA_LIB_API int TA_PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType )
 {
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return -1;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return -1;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return -1;
    /* Lookback is driven by the slowest MA. */
    return TA_MA_Lookback(max(optInSlowPeriod,optInFastPeriod),optInMAType);
@@ -106,17 +106,17 @@ TA_LIB_API TA_RetCode TA_PPO( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -198,17 +198,17 @@ TA_RetCode TA_S_PPO( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
    if( !outReal )
       return TA_BAD_PARAM;
@@ -313,17 +313,17 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;
@@ -461,17 +461,17 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInFastPeriod == (int)0x80000000 )
+   if( (int)optInFastPeriod == TA_INTEGER_DEFAULT )
       optInFastPeriod = 12;
    else if( (int)optInFastPeriod < 2 || (int)optInFastPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInSlowPeriod == (int)0x80000000 )
+   if( (int)optInSlowPeriod == TA_INTEGER_DEFAULT )
       optInSlowPeriod = 26;
    else if( (int)optInSlowPeriod < 2 || (int)optInSlowPeriod > 100000 )
       return TA_BAD_PARAM;
-   if( (int)optInMAType == (int)0x80000000 || optInMAType == TA_MAType_DEFAULT )
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
       optInMAType = 1;
-   else if( (int)optInMAType < 0 || (int)optInMAType > 11 )
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
       return TA_BAD_PARAM;
 
    endIdx = historyLen - 1;

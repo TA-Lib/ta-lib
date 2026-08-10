@@ -59,7 +59,7 @@
 
 TA_LIB_API int TA_ROC_Lookback( int optInTimePeriod )
 {
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return -1;
@@ -86,7 +86,7 @@ TA_LIB_API TA_RetCode TA_ROC( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -180,7 +180,7 @@ TA_RetCode TA_S_ROC( int    startIdx,
 
    if( !inReal )
       return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -275,7 +275,7 @@ TA_RetCode TA_ROC_OpenInternal( struct TA_ROC_Stream **stream, const double inRe
    if( !inReal || !outReal ) return TA_BAD_PARAM;
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;
@@ -396,7 +396,7 @@ TA_LIB_API TA_RetCode TA_ROC_OpenAndFill( TA_ROC_Stream **stream, const double i
    if( historyLen < 1 ) return TA_BAD_PARAM;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
-   if( (int)optInTimePeriod == (int)0x80000000 )
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
       return TA_BAD_PARAM;

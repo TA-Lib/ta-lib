@@ -95,7 +95,7 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
-      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+      } else if( (int)optInFastMAType < MATypes.Min || (int)optInFastMAType > MATypes.Max ) {
          return -1;
       }
       if( optInSlowPeriod == int.MinValue ) {
@@ -105,7 +105,7 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
-      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+      } else if( (int)optInSlowMAType < MATypes.Min || (int)optInSlowMAType > MATypes.Max ) {
          return -1;
       }
       if( optInSignalPeriod == int.MinValue ) {
@@ -115,7 +115,7 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
-      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+      } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return -1;
       }
       int tempInteger = 0;
@@ -173,7 +173,7 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
-      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+      } else if( (int)optInFastMAType < MATypes.Min || (int)optInFastMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInSlowPeriod == int.MinValue ) {
@@ -183,7 +183,7 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
-      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+      } else if( (int)optInSlowMAType < MATypes.Min || (int)optInSlowMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInSignalPeriod == int.MinValue ) {
@@ -193,7 +193,7 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
-      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+      } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {
@@ -340,7 +340,7 @@ public partial class Core
       }
       if( (int)optInFastMAType == int.MinValue || optInFastMAType == MAType.DEFAULT ) {
          optInFastMAType = MAType.SMA;
-      } else if( (int)optInFastMAType < 0 || (int)optInFastMAType > 11 ) {
+      } else if( (int)optInFastMAType < MATypes.Min || (int)optInFastMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInSlowPeriod == int.MinValue ) {
@@ -350,7 +350,7 @@ public partial class Core
       }
       if( (int)optInSlowMAType == int.MinValue || optInSlowMAType == MAType.DEFAULT ) {
          optInSlowMAType = MAType.SMA;
-      } else if( (int)optInSlowMAType < 0 || (int)optInSlowMAType > 11 ) {
+      } else if( (int)optInSlowMAType < MATypes.Min || (int)optInSlowMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInSignalPeriod == int.MinValue ) {
@@ -360,7 +360,7 @@ public partial class Core
       }
       if( (int)optInSignalMAType == int.MinValue || optInSignalMAType == MAType.DEFAULT ) {
          optInSignalMAType = MAType.SMA;
-      } else if( (int)optInSignalMAType < 0 || (int)optInSignalMAType > 11 ) {
+      } else if( (int)optInSignalMAType < MATypes.Min || (int)optInSignalMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist ) {

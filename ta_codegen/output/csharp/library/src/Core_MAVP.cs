@@ -93,7 +93,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return -1;
       }
       /* The same cross-parameter constraint mavp() rejects on. Each period is in
@@ -158,7 +158,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       /* An inverted period window (min above max) is an invalid parameter
@@ -428,7 +428,7 @@ public partial class Core
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
          optInMAType = MAType.SMA;
-      } else if( (int)optInMAType < 0 || (int)optInMAType > 11 ) {
+      } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
       if( optInMinPeriod > optInMaxPeriod ) {
