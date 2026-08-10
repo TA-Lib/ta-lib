@@ -89,6 +89,8 @@ TA_LibcPriv *TA_Globals = &ta_theGlobals;
 /**** Global functions definitions.   ****/
 TA_RetCode TA_Initialize( void )
 {
+   TA_RetCode retCode;
+
    /* Initialize the "global variable" used to manage the global
     * variables of all other modules...
     */
@@ -97,8 +99,13 @@ TA_RetCode TA_Initialize( void )
 
    /*** At this point, TA_Shutdown can be called to clean-up. ***/
 
-   /* Set the default value to global variables */
-   TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+   /* Set the default value to global variables. The return is checked: it is
+    * how the defaults table's own completeness guard reaches a caller, and a
+    * library initialized with unset candle settings silently changes every
+    * CDL* result rather than failing. */
+   retCode = TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+   if( retCode != TA_SUCCESS )
+      return retCode;
 
    return TA_SUCCESS;
 }
@@ -162,6 +169,16 @@ TA_RetCode TA_RestoreCandleDefaultSettings( TA_CandleSettingType settingType )
     };
 
     int i;
+
+    /* One row per setting, or the indexing below reads past the end:
+     * TA_AllCandleSettings is the member count as well as the "all" selector.
+     * Constant-folded away when it holds; a setting appended to the enum
+     * without a row here becomes a clean error instead of an over-read.
+     * The enum itself is pinned by testEnumValueContract (ta_regtest). */
+    if( sizeof(TA_CandleDefaultSettings)/sizeof(TA_CandleDefaultSettings[0])
+        != (size_t)TA_AllCandleSettings )
+        return TA_INTERNAL_ERROR;
+
     if( settingType > TA_AllCandleSettings )
         return TA_BAD_PARAM;
     if( settingType == TA_AllCandleSettings )

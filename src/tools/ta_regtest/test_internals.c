@@ -225,8 +225,35 @@ static ErrorNumber testEnumValueContract( void )
       { "TA_UNKNOWN_ERR",              0xFFFF, TA_UNKNOWN_ERR }
    };
 
+   /* TA_SetCandleSettings takes both of these from the caller, so they are ABI
+    * on the same terms. TA_AllCandleSettings is the count as well as the "all"
+    * selector -- it sizes TA_Globals->candleSettings[] -- so it is pinned last
+    * and excluded from the member count below, like TA_FUNC_UNST_ALL. */
+   static const EnumPin candlePins[] = {
+      { "TA_BodyLong",           0, TA_BodyLong },
+      { "TA_BodyVeryLong",       1, TA_BodyVeryLong },
+      { "TA_BodyShort",          2, TA_BodyShort },
+      { "TA_BodyDoji",           3, TA_BodyDoji },
+      { "TA_ShadowLong",         4, TA_ShadowLong },
+      { "TA_ShadowVeryLong",     5, TA_ShadowVeryLong },
+      { "TA_ShadowShort",        6, TA_ShadowShort },
+      { "TA_ShadowVeryShort",    7, TA_ShadowVeryShort },
+      { "TA_Near",               8, TA_Near },
+      { "TA_Far",                9, TA_Far },
+      { "TA_Equal",             10, TA_Equal },
+      { "TA_AllCandleSettings", 11, TA_AllCandleSettings }
+   };
+
+   static const EnumPin rangePins[] = {
+      { "TA_RangeType_RealBody", 0, TA_RangeType_RealBody },
+      { "TA_RangeType_HighLow",  1, TA_RangeType_HighLow },
+      { "TA_RangeType_Shadows",  2, TA_RangeType_Shadows }
+   };
+
    /* Every pinned unstable id except the trailing ALL wildcard. */
    const int nbUnstIds = (int)(sizeof(unstPins)/sizeof(unstPins[0])) - 1;
+   /* Likewise: the real settings, excluding the TA_AllCandleSettings selector. */
+   const int nbCandleTypes = (int)(sizeof(candlePins)/sizeof(candlePins[0])) - 1;
    unsigned int i;
 
    for( i=0; i < sizeof(retCodePins)/sizeof(retCodePins[0]); i++ )
@@ -238,6 +265,75 @@ static ErrorNumber testEnumValueContract( void )
                  retCodePins[i].name, retCodePins[i].current, retCodePins[i].shipped );
          return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
       }
+   }
+
+   /* Completeness for the return codes. There is no TA_RETCODE_COUNT to compare
+    * against -- the list lives in src/ta_common/ta_retcode.csv and is generated
+    * into a table this file cannot see -- but TA_SetRetCodeInfo answers
+    * "TA_UNKNOWN_ERR" for anything absent from that table, so probing the value
+    * space finds a code that was added to the csv and never pinned here. The
+    * 5000-5999 band reports TA_INTERNAL_ERROR for all 1000 values, so only its
+    * first needs a row. */
+   {
+      unsigned long v;
+      for( v = 0; v <= 0xFFFFUL; v++ )
+      {
+         TA_RetCodeInfo info;
+         unsigned int p;
+         int pinned = 0;
+
+         if( v > 5000 && v <= 5999 ) continue;   /* one code, whole band */
+
+         TA_SetRetCodeInfo( (TA_RetCode)v, &info );
+         if( v != 0xFFFFUL && strcmp( info.enumStr, "TA_UNKNOWN_ERR" ) == 0 )
+            continue;                            /* not a defined code */
+
+         for( p=0; p < sizeof(retCodePins)/sizeof(retCodePins[0]); p++ )
+            if( (unsigned long)retCodePins[p].shipped == v ) { pinned = 1; break; }
+
+         if( !pinned )
+         {
+            printf( "\nFailed: TA_RetCode %lu (%s) is defined but not pinned. Add its\n"
+                    "        row to retCodePins[] (append only -- never renumber).\n",
+                    v, info.enumStr );
+            return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+         }
+      }
+   }
+
+   for( i=0; i < sizeof(candlePins)/sizeof(candlePins[0]); i++ )
+   {
+      if( candlePins[i].current != candlePins[i].shipped )
+      {
+         printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
+                 "        a caller passes them to TA_SetCandleSettings. Append, never renumber.\n",
+                 candlePins[i].name, candlePins[i].current, candlePins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+      }
+   }
+
+   for( i=0; i < sizeof(rangePins)/sizeof(rangePins[0]); i++ )
+   {
+      if( rangePins[i].current != rangePins[i].shipped )
+      {
+         printf( "\nFailed: %s is %d but shipped as %d. These values are ABI --\n"
+                 "        a caller passes them to TA_SetCandleSettings. Append, never renumber.\n",
+                 rangePins[i].name, rangePins[i].current, rangePins[i].shipped );
+         return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
+      }
+   }
+
+   /* Same completeness rule as the unstable ids: TA_AllCandleSettings doubles as
+    * the member count, so a new setting that does not gain a row here would sit
+    * unpinned. It also sizes the defaults table in ta_global.c -- see the guard
+    * there, which turns the same mistake into a clean error rather than a read
+    * past the end. */
+   if( (int)TA_AllCandleSettings != nbCandleTypes )
+   {
+      printf( "\nFailed: TA_AllCandleSettings is %d but %d setting(s) are pinned. Add\n"
+              "        the new setting's row to candlePins[] (append only).\n",
+              (int)TA_AllCandleSettings, nbCandleTypes );
+      return TA_INTERNAL_ENUM_CONTRACT_FAIL_3;
    }
 
    for( i=0; i < sizeof(unstPins)/sizeof(unstPins[0]); i++ )
