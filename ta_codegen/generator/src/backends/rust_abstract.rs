@@ -26,10 +26,19 @@ use std::path::Path;
 #[allow(clippy::implicit_hasher)]
 pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &Path) {
     let sorted = rows(funcs, enums);
+    let enum_params = enum_param_types(funcs);
     let n = sorted.len();
 
     let mut o = String::new();
     o.push_str(HEADER);
+    // The enum types the generated thunks convert into, taken from what is
+    // actually used rather than a name spelled here.
+    let mut used: Vec<&String> = enum_params.values().flat_map(HashMap::values).collect();
+    used.sort_unstable();
+    used.dedup();
+    for ty in used {
+        let _ = writeln!(o, "use crate::{ty};");
+    }
 
     // --- FuncId enum (fieldless; doubles as the dense index into FUNCS) ---
     o.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]\n");
@@ -60,7 +69,7 @@ pub fn generate(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>, out_base: &
     o.push_str("];\n\n");
 
     // --- API surface (C-recognizable names, idiomatic shapes) ---
-    emit_api(&mut o, &sorted);
+    emit_api(&mut o, &sorted, &enum_params);
 
     // --- TA_FunctionDescriptionXML analog (embeds the XML data file below) ---
     o.push_str(XML_FN);
@@ -204,7 +213,11 @@ fn emit_domain(o: &mut String, domain: &OptDomain) {
     }
 }
 
-fn emit_api(o: &mut String, sorted: &[FuncRow]) {
+fn emit_api(
+    o: &mut String,
+    sorted: &[FuncRow],
+    enum_params: &HashMap<String, HashMap<String, String>>,
+) {
     o.push_str(
         "/// Resolve a function name (e.g. \"RSI\") to its [`FuncId`].\n\
          ///\n\
@@ -239,7 +252,7 @@ fn emit_api(o: &mut String, sorted: &[FuncRow]) {
     o.push_str("/// All function groups (no allocation, unlike C's `TA_GroupTableAlloc`).\n");
     o.push_str("#[inline] pub fn groups() -> &'static [Group] { Group::ALL }\n");
 
-    emit_binder(o, sorted);
+    emit_binder(o, sorted, enum_params);
 }
 
 
@@ -645,7 +658,11 @@ mod binder_tests {
 /// * **Output aliasing is a compile error.** Binding one buffer to two outputs is
 ///   the #108 rejection every other backend implements as a runtime check; two
 ///   `&mut` to the same slice simply do not coexist.
-fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
+fn emit_binder(
+    o: &mut String,
+    sorted: &[FuncRow],
+    enum_params: &HashMap<String, HashMap<String, String>>,
+) {
     let widest_input = sorted.iter().map(|f| f.inputs.len()).max().unwrap_or(1).max(1);
     let widest_opt = sorted.iter().map(|f| f.opt_inputs.len()).max().unwrap_or(1).max(1);
     let widest_output = sorted.iter().map(|f| f.outputs.len()).max().unwrap_or(1).max(1);
@@ -672,7 +689,7 @@ fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
     );
     for f in sorted {
         let snake = f.name.clone();
-        let args = opt_args(f);
+        let args = opt_args(f, enum_params);
         let _ = writeln!(
             o,
             "            FuncId::{} => self.core.{snake}_Lookback({args}),",
@@ -715,7 +732,7 @@ fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
          \x20       let rc = match self.func {\n",
     );
     for f in sorted {
-        emit_call_arm(o, f);
+        emit_call_arm(o, f, enum_params);
     }
     o.push_str(
         "        };\n\
@@ -726,28 +743,92 @@ fn emit_binder(o: &mut String, sorted: &[FuncRow]) {
     o.push_str(BINDER_TESTS);
 }
 
+/// `function -> parameter -> enum type`, for the optional parameters the Rust
+/// API types as an enum.
+///
+/// The row model describes the C metadata, where a choice list is just a list of
+/// ints, so it carries no enum name — but the generated call needs the Rust
+/// type. Taking it from the `FuncDef` keeps that a codegen concern instead of
+/// widening a model three backends share.
+fn enum_param_types(funcs: &[FuncDef]) -> HashMap<String, HashMap<String, String>> {
+    funcs
+        .iter()
+        .map(|f| {
+            let params = f
+                .optional_inputs
+                .iter()
+                .filter_map(|o| match &o.param_type {
+                    crate::ir::ParamType::Enum(n) => Some((o.name.clone(), n.clone())),
+                    _ => None,
+                })
+                .collect();
+            (f.name.clone(), params)
+        })
+        .collect()
+}
+
 /// The optional-parameter argument list for one function, in declaration order.
-fn opt_args(f: &FuncRow) -> String {
+fn opt_args(f: &FuncRow, enum_params: &HashMap<String, HashMap<String, String>>) -> String {
     f.opt_inputs
         .iter()
         .enumerate()
-        .map(|(i, opt)| match &opt.domain {
-            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
-                format!("self.real_opt[{i}]")
-            }
-            _ => format!("self.int_opt[{i}]"),
-        })
+        .map(|(i, opt)| opt_arg(f, opt, i, enum_params))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// One optional-parameter argument.
+///
+/// An enum-typed parameter converts here, and the conversion is fallible on
+/// purpose: the holder stores whatever integer was bound (as C's does), so an
+/// out-of-domain value must be rejected rather than coerced into a member.
+/// `?` carries that out as `BadParam`.
+///
+/// This diverges from C at the lookback tier, unavoidably: `TA_GetLookback`
+/// computes a real number for an out-of-domain MAType, which a typed parameter
+/// cannot express. Java rejects such a value even earlier, at bind.
+fn opt_arg(
+    f: &FuncRow,
+    opt: &OptRow,
+    i: usize,
+    enum_params: &HashMap<String, HashMap<String, String>>,
+) -> String {
+    match &opt.domain {
+        OptDomain::RealRange { .. } | OptDomain::RealList { .. } => format!("self.real_opt[{i}]"),
+        _ => match enum_params.get(&f.name).and_then(|m| m.get(&opt.param_name)) {
+            Some(ty) => format!("{ty}::try_from(self.int_opt[{i}])?"),
+            None => format!("self.int_opt[{i}]"),
+        },
+    }
 }
 
 /// One `call` match arm. Inputs are read by value (the slices are `Copy` out of
 /// their `Option`), outputs are `take`n so the borrow checker sees no overlap
 /// with `&self`, reborrowed into the call, and put straight back — so a holder
 /// stays reusable, as C's does.
-fn emit_call_arm(o: &mut String, f: &FuncRow) {
+fn emit_call_arm(
+    o: &mut String,
+    f: &FuncRow,
+    enum_params: &HashMap<String, HashMap<String, String>>,
+) {
     let snake = f.name.clone();
     let _ = writeln!(o, "            FuncId::{} => {{", f.name);
+
+    // Enum conversions happen FIRST, before any output is `take`n. A `?` after
+    // the take would leave the holder without its output bindings, so a caller
+    // that bound a bad value and then corrected it would get BadParam forever --
+    // C keeps the holder reusable, and so must this.
+    let mut enum_binds: HashMap<String, String> = HashMap::new();
+    for (i, opt) in f.opt_inputs.iter().enumerate() {
+        if let Some(ty) = enum_params.get(&f.name).and_then(|m| m.get(&opt.param_name)) {
+            let bind = format!("e{i}");
+            let _ = writeln!(
+                o,
+                "                let {bind} = {ty}::try_from(self.int_opt[{i}])?;"
+            );
+            enum_binds.insert(opt.param_name.clone(), bind);
+        }
+    }
 
     let mut args: Vec<String> = vec!["start_idx".into(), "end_idx".into()];
     for (slot, inp) in f.inputs.iter().enumerate() {
@@ -780,11 +861,9 @@ fn emit_call_arm(o: &mut String, f: &FuncRow) {
     }
 
     for (i, opt) in f.opt_inputs.iter().enumerate() {
-        args.push(match &opt.domain {
-            OptDomain::RealRange { .. } | OptDomain::RealList { .. } => {
-                format!("self.real_opt[{i}]")
-            }
-            _ => format!("self.int_opt[{i}]"),
+        args.push(match enum_binds.get(&opt.param_name) {
+            Some(bind) => bind.clone(),
+            None => opt_arg(f, opt, i, enum_params),
         });
     }
     args.push("&mut beg".into());

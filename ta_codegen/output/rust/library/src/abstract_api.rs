@@ -28,6 +28,7 @@
 
 use crate::FuncUnstId;
 
+use crate::MAType;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(u16)]
 #[non_exhaustive]
@@ -2662,7 +2663,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ADOSC => self.core.ADOSC_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::ADX => self.core.ADX_Lookback(self.int_opt[0]),
             FuncId::ADXR => self.core.ADXR_Lookback(self.int_opt[0]),
-            FuncId::APO => self.core.APO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::APO => self.core.APO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::AROON => self.core.AROON_Lookback(self.int_opt[0]),
             FuncId::AROONOSC => self.core.AROONOSC_Lookback(self.int_opt[0]),
             FuncId::ASIN => self.core.ASIN_Lookback(),
@@ -2670,7 +2671,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ATR => self.core.ATR_Lookback(self.int_opt[0]),
             FuncId::AVGDEV => self.core.AVGDEV_Lookback(self.int_opt[0]),
             FuncId::AVGPRICE => self.core.AVGPRICE_Lookback(),
-            FuncId::BBANDS => self.core.BBANDS_Lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3]),
+            FuncId::BBANDS => self.core.BBANDS_Lookback(self.int_opt[0], self.real_opt[1], self.real_opt[2], MAType::try_from(self.int_opt[3])?),
             FuncId::BETA => self.core.BETA_Lookback(self.int_opt[0]),
             FuncId::BOP => self.core.BOP_Lookback(),
             FuncId::CCI => self.core.CCI_Lookback(self.int_opt[0]),
@@ -2763,12 +2764,12 @@ impl<'a> ParamHolder<'a> {
             FuncId::LINEARREG_SLOPE => self.core.LINEARREG_SLOPE_Lookback(self.int_opt[0]),
             FuncId::LN => self.core.LN_Lookback(),
             FuncId::LOG10 => self.core.LOG10_Lookback(),
-            FuncId::MA => self.core.MA_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::MA => self.core.MA_Lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?),
             FuncId::MACD => self.core.MACD_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::MACDEXT => self.core.MACDEXT_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5]),
+            FuncId::MACDEXT => self.core.MACDEXT_Lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
             FuncId::MACDFIX => self.core.MACDFIX_Lookback(self.int_opt[0]),
             FuncId::MAMA => self.core.MAMA_Lookback(self.real_opt[0], self.real_opt[1]),
-            FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::MAX => self.core.MAX_Lookback(self.int_opt[0]),
             FuncId::MAXINDEX => self.core.MAXINDEX_Lookback(self.int_opt[0]),
             FuncId::MEDPRICE => self.core.MEDPRICE_Lookback(),
@@ -2788,9 +2789,9 @@ impl<'a> ParamHolder<'a> {
             FuncId::OBV => self.core.OBV_Lookback(),
             FuncId::PLUS_DI => self.core.PLUS_DI_Lookback(self.int_opt[0]),
             FuncId::PLUS_DM => self.core.PLUS_DM_Lookback(self.int_opt[0]),
-            FuncId::PPO => self.core.PPO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::PPO => self.core.PPO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::PVI => self.core.PVI_Lookback(),
-            FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
+            FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::ROC => self.core.ROC_Lookback(self.int_opt[0]),
             FuncId::ROCP => self.core.ROCP_Lookback(self.int_opt[0]),
             FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
@@ -2803,9 +2804,9 @@ impl<'a> ParamHolder<'a> {
             FuncId::SMA => self.core.SMA_Lookback(self.int_opt[0]),
             FuncId::SQRT => self.core.SQRT_Lookback(),
             FuncId::STDDEV => self.core.STDDEV_Lookback(self.int_opt[0], self.real_opt[1]),
-            FuncId::STOCH => self.core.STOCH_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4]),
-            FuncId::STOCHF => self.core.STOCHF_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
-            FuncId::STOCHRSI => self.core.STOCHRSI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3]),
+            FuncId::STOCH => self.core.STOCH_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?, self.int_opt[3], MAType::try_from(self.int_opt[4])?),
+            FuncId::STOCHF => self.core.STOCHF_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::STOCHRSI => self.core.STOCHRSI_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2], MAType::try_from(self.int_opt[3])?),
             FuncId::SUB => self.core.SUB_Lookback(),
             FuncId::SUM => self.core.SUM_Lookback(self.int_opt[0]),
             FuncId::T3 => self.core.T3_Lookback(self.int_opt[0], self.real_opt[1]),
@@ -2929,10 +2930,11 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::APO => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.APO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.APO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3003,6 +3005,7 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::BBANDS => {
+                let e3 = MAType::try_from(self.int_opt[3])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
@@ -3010,7 +3013,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.BBANDS(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.BBANDS(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], self.real_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -3956,10 +3959,11 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::MA => {
+                let e1 = MAType::try_from(self.int_opt[1])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MA(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MA(start_idx, end_idx, i0, self.int_opt[0], e1, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -3978,6 +3982,9 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::MACDEXT => {
+                let e1 = MAType::try_from(self.int_opt[1])?;
+                let e3 = MAType::try_from(self.int_opt[3])?;
+                let e5 = MAType::try_from(self.int_opt[5])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
@@ -3985,7 +3992,7 @@ impl<'a> ParamHolder<'a> {
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
                 if o2.len() < need { self.real_out[2] = Some(o2); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MACDEXT(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], self.int_opt[5], &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
+                let rc = self.core.MACDEXT(start_idx, end_idx, i0, self.int_opt[0], e1, self.int_opt[2], e3, self.int_opt[4], e5, &mut beg, &mut nb, &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);
@@ -4017,11 +4024,12 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::MAVP => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let i1 = self.real_in[1].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.MAVP(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.MAVP(start_idx, end_idx, i0, i1, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4200,10 +4208,11 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::PPO => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PPO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PPO(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4217,10 +4226,11 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::PVO => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.PVO(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0);
+                let rc = self.core.PVO(start_idx, end_idx, i0_4, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }
@@ -4323,6 +4333,8 @@ impl<'a> ParamHolder<'a> {
                 rc
             }
             FuncId::STOCH => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
+                let e4 = MAType::try_from(self.int_opt[4])?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
@@ -4330,12 +4342,13 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCH(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], self.int_opt[4], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCH(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, self.int_opt[3], e4, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
             FuncId::STOCHF => {
+                let e2 = MAType::try_from(self.int_opt[2])?;
                 let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
                 let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
@@ -4343,18 +4356,19 @@ impl<'a> ParamHolder<'a> {
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCHF(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], self.int_opt[2], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCHF(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], self.int_opt[1], e2, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc
             }
             FuncId::STOCHRSI => {
+                let e3 = MAType::try_from(self.int_opt[3])?;
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 if o1.len() < need { self.real_out[1] = Some(o1); return Err(RetCode::BadParam); } // f64
-                let rc = self.core.STOCHRSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], self.int_opt[3], &mut beg, &mut nb, &mut *o0, &mut *o1);
+                let rc = self.core.STOCHRSI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], self.int_opt[2], e3, &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 rc

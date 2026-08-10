@@ -19,7 +19,7 @@
 //!
 //! 1. **Composition.** `BBANDS` must be bit-identical to `MA` + `STDDEV`
 //!    recomposed through the public API — a genuinely separate code path. This
-//!    covers the SMA fast path (`optInMAType == 0`, where the election happens)
+//!    covers the SMA fast path (`optInMAType == MAType::SMA`, where the election happens)
 //!    and the general MA path (every other type, which must stay untouched).
 //! 2. **No dependence on prior output contents.** Electing an output as scratch
 //!    means the calculation reads a buffer the caller owned. Running the same
@@ -39,7 +39,13 @@ const PERIODS: [i32; 6] = [2, 3, 5, 20, 33, 100];
 const DEVS: [(f64, f64); 4] = [(2.0, 2.0), (0.0, 3.0), (-1.0, 2.0), (1.5, 2.5)];
 /// `SMA` (the fast path that elects) plus `EMA`/`WMA`/`DEMA`/`T3` (the general
 /// path, which keeps its own allocations and must be unaffected).
-const MATYPES: [i32; 5] = [0, 1, 2, 3, 8];
+const MATYPES: [MAType; 5] = [
+    MAType::SMA,
+    MAType::EMA,
+    MAType::WMA,
+    MAType::DEMA,
+    MAType::T3,
+];
 
 /// Bar counts from 1 to 5000: every small length (so the lookback clamps, the
 /// empty-output returns and the single-bar cases are all hit) plus a spread of
@@ -85,7 +91,7 @@ fn bbands(
     period: i32,
     dev_up: f64,
     dev_dn: f64,
-    matype: i32,
+    matype: MAType,
     cap: usize,
     fill: f64,
 ) -> Bands {
@@ -123,7 +129,7 @@ fn bbands_from_ma_and_stddev(
     period: i32,
     dev_up: f64,
     dev_dn: f64,
-    matype: i32,
+    matype: MAType,
 ) -> Option<Bands> {
     let n = input.len();
     let mut ma = vec![f64::NAN; n];
@@ -204,7 +210,7 @@ fn bbands_is_bit_identical_to_ma_plus_stddev() {
                         continue;
                     }
                     let ctx =
-                        format!("matype={matype} period={period} dev=({dev_up},{dev_dn}) n={n}");
+                        format!("matype={matype:?} period={period} dev=({dev_up},{dev_dn}) n={n}");
                     assert_eq!(got.beg, want.beg, "outBegIdx differs ({ctx})");
                     assert_eq!(got.nb, want.nb, "outNBElement differs ({ctx})");
                     assert_same_bits("middle", &got.middle, &want.middle, &ctx);
@@ -241,7 +247,7 @@ fn bbands_ignores_the_prior_contents_of_its_output_slices() {
                         let other =
                             bbands(&core, &input, period, dev_up, dev_dn, matype, n, fill);
                         let ctx = format!(
-                            "matype={matype} period={period} dev=({dev_up},{dev_dn}) n={n} fill={fill:?}"
+                            "matype={matype:?} period={period} dev=({dev_up},{dev_dn}) n={n} fill={fill:?}"
                         );
                         assert_eq!(other.rc, base.rc, "retCode differs ({ctx})");
                         assert_eq!(other.beg, base.beg, "outBegIdx differs ({ctx})");
@@ -287,7 +293,7 @@ fn bbands_is_independent_of_output_slice_capacity() {
                             f64::NAN,
                         );
                         let ctx = format!(
-                            "matype={matype} period={period} dev=({dev_up},{dev_dn}) n={n} cap={}",
+                            "matype={matype:?} period={period} dev=({dev_up},{dev_dn}) n={n} cap={}",
                             n * mult
                         );
                         assert_eq!(wide.rc, base.rc, "retCode differs ({ctx})");

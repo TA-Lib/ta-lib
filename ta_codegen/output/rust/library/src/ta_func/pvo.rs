@@ -72,12 +72,12 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn PVO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn PVO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -88,8 +88,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         // Lookback is driven by the slowest MA.
         return self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
@@ -118,7 +118,7 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — PVO value in percent.
@@ -140,7 +140,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let volume: Vec<f64> = (0..252)
     ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
@@ -152,7 +152,7 @@ impl Core {
     /// let mut out = vec![0.0; 252];
     ///
     /// let ret = core.PVO(
-    ///     0, volume.len() - 1, &volume, 12, 26, 1,
+    ///     0, volume.len() - 1, &volume, 12, 26, MAType::EMA,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -182,7 +182,7 @@ impl Core {
         inVolume: &[f64],
         mut optInFastPeriod: i32,
         mut optInSlowPeriod: i32,
-        mut optInMAType: i32,
+        mut optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outReal: &mut [f64],
@@ -203,8 +203,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let _assertLb = self.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -276,7 +276,7 @@ pub struct PVO_Stream {
 struct PVO_StreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
-    optInMAType: i32,
+    optInMAType: MAType,
     sub0: MA_Stream,
     sub1: MA_Stream,
 }
@@ -308,7 +308,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::PVO_Open`] (composition seam).
     pub(crate) fn PVO_OpenInternal(
-        &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32,
+        &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType,
     ) -> Result<(PVO_Stream, f64), RetCode> {
         if inVolume.is_empty() {
             return Err(RetCode::BadParam);
@@ -326,8 +326,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let historyLen: usize = inVolume.len();
         let endIdx: usize = historyLen - 1;
@@ -414,19 +414,19 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let volume: Vec<f64> = (0..252)
     ///     .map(|i| 10_000.0 + 100.0 * i as f64 + 2_000.0 * (0.3 * i as f64).sin())
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.PVO_Open(&volume, 12, 26, 1).expect("enough history");
+    /// let (mut s, _last) = core.PVO_Open(&volume, 12, 26, MAType::EMA).expect("enough history");
     /// let peeked = s.peek(12_345.0);
     /// let updated = s.update(12_345.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PVO_Open")]
-    pub fn PVO_Open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PVO_Stream, f64), RetCode> {
+    pub fn PVO_Open(&self, inVolume: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PVO_Stream, f64), RetCode> {
         self.PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
@@ -435,7 +435,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PVO_OpenAndFill")]
     pub fn PVO_OpenAndFill(
-        &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVO_Stream, RetCode> {
         if inVolume.is_empty() {
             return Err(RetCode::BadParam);
@@ -453,8 +453,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let historyLen: usize = inVolume.len();
         let endIdx: usize = historyLen - 1;

@@ -110,7 +110,7 @@ pub fn guarded_docs(
          every output slice to the input length is always sufficient.",
     );
 
-    if let Some(example) = example_doctest(func, snake) {
+    if let Some(example) = example_doctest(func, snake, enums) {
         d.blank();
         d.paragraph("# Examples");
         d.blank();
@@ -191,17 +191,16 @@ pub fn lookback_docs(func: &FuncDef, snake: &str, enums: &HashMap<String, EnumDe
 /// the function actually takes. Gated per kind because the two sentinels differ and
 /// several functions take only one kind: SAR and MAMA have no integer optional
 /// parameter at all, so an unconditional `i32::MIN` sentence documents an API they
-/// do not have. `enum:` params count as integer here — the Rust surface types them
-/// `i32` and substitutes the same `i32::MIN` (issue #162). Every function that has
-/// one also has a period today, so this changes no output; keeping the predicate
-/// honest is what stops that being load-bearing.
+/// do not have. An `enum:` parameter is NOT an integer here: it is typed as its
+/// enum, so the sentinel is unrepresentable and its `DEFAULT` member is the
+/// spelling instead — the same split Java has always had (issue #162).
 fn default_sentinel_sentence(func: &FuncDef) -> Option<&'static str> {
     let takes = |want: fn(&ParamType) -> bool| {
         func.optional_inputs
             .iter()
             .any(|o| want(&o.param_type) && o.default.is_some())
     };
-    let has_int = takes(|t| matches!(t, ParamType::Integer | ParamType::Enum(_)));
+    let has_int = takes(|t| matches!(t, ParamType::Integer));
     let has_real = takes(|t| matches!(t, ParamType::Real));
     match (has_int, has_real) {
         (true, true) => Some(
@@ -305,6 +304,14 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         if !m.values.is_empty() {
             let values: Vec<String> = m.values.iter().map(|(v, n)| format!("{v}={n}")).collect();
             meta.push(format!("values: {}", values.join(", ")));
+        }
+        // The member is this parameter's spelling of "use the default": the
+        // integer sentinel the primitive parameters take cannot be represented
+        // at a typed enum.
+        if let ParamType::Enum(name) = &opt.param_type {
+            if let Some(v) = super::common::enum_default_variant(enums, name) {
+                meta.push(format!("`{name}::{}` selects the default", v.name));
+            }
         }
     } else {
         if let Some(d) = &m.default {
@@ -421,10 +428,66 @@ fn example_input(func: &FuncDef, input: &str) -> Option<(&'static str, Vec<Strin
 /// Build a runnable `# Examples` doctest that calls the guarded function on
 /// deterministic synthetic data with every optional parameter at its default,
 /// and asserts success. Returned lines are raw markdown (no `///` prefix).
-fn example_doctest(func: &FuncDef, snake: &str) -> Option<Vec<String>> {
+/// `use ta_lib::X;` or `use ta_lib::{A, B};` — braces only when they are needed,
+/// so a function with no enum parameter keeps the single-item form.
+pub(crate) fn example_use_line(items: &[String]) -> String {
+    if items.len() == 1 {
+        format!("use ta_lib::{};", items[0])
+    } else {
+        format!("use ta_lib::{{{}}};", items.join(", "))
+    }
+}
+
+/// The literal for an optional parameter in a generated example.
+///
+/// An `enum:` parameter is named rather than numbered: the example is the first
+/// thing a reader copies, and a bare `1` would not compile against the typed
+/// parameter. Shared with the streaming examples so both spell it the same way.
+#[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::float_cmp)] // an enum default is an exact integer, not a measurement
+pub(crate) fn example_opt_literal(
+    opt: &crate::ir::OptInput,
+    enums: &HashMap<String, EnumDef>,
+) -> String {
+    let default = opt.default.unwrap_or(0.0);
+    match &opt.param_type {
+        ParamType::Real => fmt_real_literal(default),
+        ParamType::Enum(name) => enums
+            .get(name)
+            .and_then(|e| e.variants.iter().find(|v| f64::from(v.value) == default))
+            .map_or_else(
+                || format!("{}", default as i64),
+                |v| format!("{name}::{}", v.name),
+            ),
+        _ => format!("{}", default as i64),
+    }
+}
+
+/// The enum types a function's optional parameters use, for an example's `use`.
+pub(crate) fn example_enum_imports(func: &FuncDef) -> Vec<String> {
+    let mut v: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .filter_map(|o| match &o.param_type {
+            ParamType::Enum(n) => Some(n.clone()),
+            _ => None,
+        })
+        .collect();
+    v.sort();
+    v.dedup();
+    v
+}
+
+fn example_doctest(
+    func: &FuncDef,
+    snake: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> Option<Vec<String>> {
     let mut lines: Vec<String> = Vec::new();
     lines.push("```".to_string());
-    lines.push("use ta_lib::{Core, RetCode};".to_string());
+    let mut imports = vec!["Core".to_string(), "RetCode".to_string()];
+    imports.extend(example_enum_imports(func));
+    lines.push(example_use_line(&imports));
     lines.push(String::new());
 
     let mut first_series: Option<String> = None;
@@ -439,15 +502,11 @@ fn example_doctest(func: &FuncDef, snake: &str) -> Option<Vec<String>> {
     }
     let first = first_series?;
 
-    // Optional parameters at their documented defaults.
+    // Optional parameters at their documented defaults. An `enum:` parameter is
+    // named, not numbered -- the example is the first thing a reader copies, and
+    // a bare `1` there would not even compile now that the parameter is typed.
     for opt in &func.optional_inputs {
-        let default = opt.default.unwrap_or(0.0);
-        #[allow(clippy::cast_possible_truncation)]
-        let literal = match opt.param_type {
-            ParamType::Real => fmt_real_literal(default),
-            _ => format!("{}", default as i64),
-        };
-        args.push(literal);
+        args.push(example_opt_literal(opt, enums));
     }
 
     lines.push(String::new());

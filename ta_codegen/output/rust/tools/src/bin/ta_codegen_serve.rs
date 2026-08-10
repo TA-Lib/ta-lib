@@ -7,6 +7,7 @@ use std::time::Instant;
 use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};
 use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};
 use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};
+use ta_lib::MAType;
 
 // ---- fuzz_data.h port (issue #113 --xlang-hash) ----
 // fuzz_data.rs — plain-Rust bit-exact port of src/tools/ta_regtest/fuzz_data.h.
@@ -1435,13 +1436,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.APO(
@@ -1453,6 +1458,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -1462,7 +1468,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -1976,7 +1982,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
             let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0) as f64;
             let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0) as f64;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -1985,6 +1993,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.BBANDS(
@@ -1997,6 +2007,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -2008,7 +2019,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -9040,13 +9051,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.MA(
@@ -9057,6 +9072,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -9066,7 +9082,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MA_Lookback(optInTimePeriod, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.MA_Lookback(optInTimePeriod, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -9172,11 +9188,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-            let optInFastMAType = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastMAType_res = MAType::try_from(optInFastMAType_raw);
+            let optInFastMAType = optInFastMAType_res.unwrap_or(MAType::SMA);
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInSlowMAType = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowMAType_res = MAType::try_from(optInSlowMAType_raw);
+            let optInSlowMAType = optInSlowMAType_res.unwrap_or(MAType::SMA);
             let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-            let optInSignalMAType = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+            let optInSignalMAType_res = MAType::try_from(optInSignalMAType_raw);
+            let optInSignalMAType = optInSignalMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -9185,6 +9207,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInFastMAType_res.is_err() || optInSlowMAType_res.is_err() || optInSignalMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.MACDEXT(
@@ -9199,6 +9223,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -9210,7 +9235,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -9390,13 +9415,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
             let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.MAVP(
@@ -9409,6 +9438,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -9418,7 +9448,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -10736,13 +10766,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.PPO(
@@ -10754,6 +10788,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -10763,7 +10798,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -10866,13 +10901,17 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
             let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-            let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+            let optInMAType_res = MAType::try_from(optInMAType_raw);
+            let optInMAType = optInMAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBegIdx: usize = 0;
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInMAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.PVO(
@@ -10884,6 +10923,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -10893,7 +10933,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push('}');
@@ -11695,9 +11735,13 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowK_MAType = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowK_MAType_res = MAType::try_from(optInSlowK_MAType_raw);
+            let optInSlowK_MAType = optInSlowK_MAType_res.unwrap_or(MAType::SMA);
             let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInSlowD_MAType = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInSlowD_MAType_res = MAType::try_from(optInSlowD_MAType_raw);
+            let optInSlowD_MAType = optInSlowD_MAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -11705,6 +11749,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInSlowK_MAType_res.is_err() || optInSlowD_MAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.STOCH(
@@ -11720,6 +11766,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -11730,7 +11777,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -11782,7 +11829,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_res = MAType::try_from(optInFastD_MAType_raw);
+            let optInFastD_MAType = optInFastD_MAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -11790,6 +11839,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInFastD_MAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.STOCHF(
@@ -11803,6 +11854,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -11813,7 +11865,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -11852,7 +11904,9 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
             let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-            let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+            let optInFastD_MAType_res = MAType::try_from(optInFastD_MAType_raw);
+            let optInFastD_MAType = optInFastD_MAType_res.unwrap_or(MAType::SMA);
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
             let mut outBuf1: Vec<f64> = vec![0.0f64; out_size];
@@ -11860,6 +11914,8 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let mut outNBElement: usize = 0;
             let mut rc = RetCode::Success;
             let mut start_time = Instant::now();
+            let _enum_bad = optInFastD_MAType_res.is_err();
+            if _enum_bad { rc = RetCode::BadParam; } else {
             for _bi in 0..=bench_iters {
                 if _bi == 1 { start_time = Instant::now(); }
             rc = core.STOCHRSI(
@@ -11872,6 +11928,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &mut outBegIdx, &mut outNBElement, &mut outBuf0, &mut outBuf1,
             );
             }
+            }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
             if (gen_present != 0 || want_hash != 0) && full_output == 0 {
                 let mut _oh = fuzz_hash_init();
@@ -11882,7 +11939,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback = core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
+            let lookback: i64 = if _enum_bad { -1 } else { core.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) as i64 };
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -14247,7 +14304,11 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -14955,7 +15016,11 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23265,7 +23330,11 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
     }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23461,11 +23530,23 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
     }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
-    let optInFastMAType = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastMAType = match MAType::try_from(optInFastMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInSlowMAType = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowMAType_raw = params["optInSlowMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowMAType = match MAType::try_from(optInSlowMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
-    let optInSignalMAType = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSignalMAType_raw = params["optInSignalMAType"].as_i64().unwrap_or(0) as i32;
+    let optInSignalMAType = match MAType::try_from(optInSignalMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -23770,7 +23851,11 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     }
     let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
     let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -25532,7 +25617,11 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -25711,7 +25800,11 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
-    let optInMAType = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
+    let optInMAType = match MAType::try_from(optInMAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26855,9 +26948,17 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowK_MAType = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowK_MAType = match MAType::try_from(optInSlowK_MAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let optInSlowD_Period = params["optInSlowD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInSlowD_MAType = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowD_MAType_raw = params["optInSlowD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInSlowD_MAType = match MAType::try_from(optInSlowD_MAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26957,7 +27058,11 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType = match MAType::try_from(optInFastD_MAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -27058,7 +27163,11 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
-    let optInFastD_MAType = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
+    let optInFastD_MAType = match MAType::try_from(optInFastD_MAType_raw) {
+        Ok(v) => v,
+        Err(_) => return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}".to_string(),
+    };
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];

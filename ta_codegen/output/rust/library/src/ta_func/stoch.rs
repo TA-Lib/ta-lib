@@ -80,17 +80,17 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32) -> usize {
+    pub fn STOCH_Lookback(&self, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType) -> usize {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -101,16 +101,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) || optInSlowK_MAType == matype::DEFAULT {
-            optInSlowK_MAType = 0;
+        if optInSlowK_MAType == MAType::DEFAULT {
+            optInSlowK_MAType = MAType::SMA;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) || optInSlowD_MAType == matype::DEFAULT {
-            optInSlowD_MAType = 0;
+        if optInSlowD_MAType == MAType::DEFAULT {
+            optInSlowD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
@@ -151,12 +151,12 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
@@ -179,7 +179,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
@@ -194,7 +194,7 @@ impl Core {
     /// let mut slow_d = vec![0.0; 252];
     ///
     /// let ret = core.STOCH(
-    ///     0, high.len() - 1, &high, &low, &close, 5, 3, 0, 3, 0,
+    ///     0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut slow_k, &mut slow_d,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -219,9 +219,9 @@ impl Core {
         inClose: &[f64],
         mut optInFastK_Period: i32,
         mut optInSlowK_Period: i32,
-        mut optInSlowK_MAType: i32,
+        mut optInSlowK_MAType: MAType,
         mut optInSlowD_Period: i32,
-        mut optInSlowD_MAType: i32,
+        mut optInSlowD_MAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outSlowK: &mut [f64],
@@ -243,16 +243,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) || optInSlowK_MAType == matype::DEFAULT {
-            optInSlowK_MAType = 0;
+        if optInSlowK_MAType == MAType::DEFAULT {
+            optInSlowK_MAType = MAType::SMA;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) || optInSlowD_MAType == matype::DEFAULT {
-            optInSlowD_MAType = 0;
+        if optInSlowD_MAType == MAType::DEFAULT {
+            optInSlowD_MAType = MAType::SMA;
         }
         if outSlowK.as_ptr() == outSlowD.as_ptr() {
             return RetCode::BadParam;
@@ -479,9 +479,9 @@ pub struct STOCH_Stream {
 struct STOCH_StreamState {
     optInFastK_Period: i32,
     optInSlowK_Period: i32,
-    optInSlowK_MAType: i32,
+    optInSlowK_MAType: MAType,
     optInSlowD_Period: i32,
-    optInSlowD_MAType: i32,
+    optInSlowD_MAType: MAType,
     lowest: f64,
     highest: f64,
     diff: f64,
@@ -578,7 +578,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::STOCH_Open`] (composition seam).
     pub(crate) fn STOCH_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType,
     ) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -596,16 +596,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) || optInSlowK_MAType == matype::DEFAULT {
-            optInSlowK_MAType = 0;
+        if optInSlowK_MAType == MAType::DEFAULT {
+            optInSlowK_MAType = MAType::SMA;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) || optInSlowD_MAType == matype::DEFAULT {
-            optInSlowD_MAType = 0;
+        if optInSlowD_MAType == MAType::DEFAULT {
+            optInSlowD_MAType = MAType::SMA;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
@@ -873,7 +873,7 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let close: Vec<f64> = (0..252)
@@ -881,14 +881,14 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCH_Open(&high, &low, &close, 5, 3, 0, 3, 0).expect("enough history");
+    /// let (mut s, _last) = core.STOCH_Open(&high, &low, &close, 5, 3, MAType::SMA, 3, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCH_Open")]
-    pub fn STOCH_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: i32, optInSlowD_Period: i32, optInSlowD_MAType: i32) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
+    pub fn STOCH_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInSlowK_Period: i32, optInSlowK_MAType: MAType, optInSlowD_Period: i32, optInSlowD_MAType: MAType) -> Result<(STOCH_Stream, (f64, f64)), RetCode> {
         self.STOCH_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType)
     }
 
@@ -897,7 +897,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCH_OpenAndFill")]
     pub fn STOCH_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: i32, mut optInSlowD_Period: i32, mut optInSlowD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInSlowK_Period: i32, mut optInSlowK_MAType: MAType, mut optInSlowD_Period: i32, mut optInSlowD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outSlowK: &mut [f64], outSlowD: &mut [f64],
     ) -> Result<STOCH_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -918,16 +918,16 @@ impl Core {
         } else if (((optInSlowK_Period) as i32) < 1) || (((optInSlowK_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowK_MAType) as i32) == (i32::MIN) || optInSlowK_MAType == matype::DEFAULT {
-            optInSlowK_MAType = 0;
+        if optInSlowK_MAType == MAType::DEFAULT {
+            optInSlowK_MAType = MAType::SMA;
         }
         if ((optInSlowD_Period) as i32) == (i32::MIN) {
             optInSlowD_Period = 3;
         } else if (((optInSlowD_Period) as i32) < 1) || (((optInSlowD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowD_MAType) as i32) == (i32::MIN) || optInSlowD_MAType == matype::DEFAULT {
-            optInSlowD_MAType = 0;
+        if optInSlowD_MAType == MAType::DEFAULT {
+            optInSlowD_MAType = MAType::SMA;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;

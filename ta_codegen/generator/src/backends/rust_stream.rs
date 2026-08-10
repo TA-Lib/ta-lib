@@ -102,12 +102,12 @@ fn value_type(func: &FuncDef) -> String {
     }
 }
 
-/// Rust type of an optional parameter (batch convention: enums are `i32`).
-fn opt_param_rust_type(p: &ParamType) -> &'static str {
+/// Rust type of an optional parameter. Shares the batch convention, so an
+/// `enum:` parameter is spelled as its enum on the streaming tier too.
+fn opt_param_rust_type(p: &ParamType) -> String {
     match p {
-        ParamType::Real => "f64",
-        ParamType::Integer | ParamType::Enum(_) => "i32",
         ParamType::Price(_) => unreachable!("price optional params do not exist"),
+        other => super::rust_lang::opt_param_type(other),
     }
 }
 
@@ -248,6 +248,7 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
             // Stream bodies dispatch MA-type structurally (case labels /
             // sub-opens), never via `== TA_MAType_*`, so no map is needed.
             matype_map: HashMap::new(),
+            enum_vars: super::rust_lang::enum_local_types(func),
             circbuf_hybrid_static: HashMap::new(),
         },
         extrema_i32,
@@ -258,33 +259,54 @@ fn build_typing_from(func: &FuncDef, body: &[Statement], models: &[&StreamModel]
 /// sentinel verdicts — and, for STATE fields only, the extrema-i32 override
 /// (the transcribed open body keeps pure batch typing; the capture epilogue
 /// casts at the struct literal).
+/// `let mut x: T = init;`, or `let mut x: T;` when the type has no neutral
+/// initialiser — an enum-typed local, which the following assignment fills.
+fn decl_line(pad: &str, name: &str, rty: &str, default: Option<&String>) -> String {
+    match default {
+        Some(d) => format!("{pad}let mut {name}: {rty} = {d};\n"),
+        None => format!("{pad}let mut {name}: {rty};\n"),
+    }
+}
+
+/// `(rust type, initialiser)` for a stream local or state field.
+///
+/// The initialiser is `None` for an enum-typed local: there is no neutral
+/// member to invent, so the declaration is deferred and the assignment that
+/// follows initialises it. Returning an `Option` rather than a string makes
+/// every call site say what it does about that, instead of one of them quietly
+/// emitting a wrong default.
 fn field_type_and_default(
     typing: &Typing,
     name: &str,
     ty: &VarType,
     state: bool,
-) -> (String, String) {
+) -> (String, Option<String>) {
+    // An enum-typed local (MACDEXT's `tempMAType`) carries the parameter's
+    // type, not the `int` its C declaration spells.
+    if let Some(enum_ty) = typing.ctx.enum_vars.get(name) {
+        return (enum_ty.clone(), None);
+    }
     let i32ish = typing.ctx.sentinel_vars.contains(name)
         || (state && typing.extrema_i32.contains(name));
     match ty {
-        VarType::Real => ("f64".into(), "0.0_f64".into()),
+        VarType::Real => ("f64".into(), Some("0.0_f64".into())),
         VarType::Integer | VarType::Index => {
             if i32ish {
-                ("i32".into(), "0_i32".into())
+                ("i32".into(), Some("0_i32".into()))
             } else {
-                ("usize".into(), "0_usize".into())
+                ("usize".into(), Some("0_usize".into()))
             }
         }
-        VarType::RetCodeType => ("RetCode".into(), "RetCode::Success".into()),
-        VarType::RealPointer => ("Vec<f64>".into(), "Vec::new()".into()),
-        VarType::IntPointer => ("Vec<i32>".into(), "Vec::new()".into()),
+        VarType::RetCodeType => ("RetCode".into(), Some("RetCode::Success".into())),
+        VarType::RealPointer => ("Vec<f64>".into(), Some("Vec::new()".into())),
+        VarType::IntPointer => ("Vec<i32>".into(), Some("Vec::new()".into())),
         VarType::RealArray(size) => (
             format!("[f64; {size} as usize]"),
-            format!("[0.0_f64; {size} as usize]"),
+            Some(format!("[0.0_f64; {size} as usize]")),
         ),
         VarType::IntArray(size) => (
             format!("[i32; {size} as usize]"),
-            format!("[0_i32; {size} as usize]"),
+            Some(format!("[0_i32; {size} as usize]")),
         ),
     }
 }
@@ -309,7 +331,7 @@ fn state_fields_from(
         // Params are always captured (identity path included).
         fields.push((
             p.name.clone(),
-            opt_param_rust_type(&p.param_type).to_string(),
+            opt_param_rust_type(&p.param_type),
             p.name.clone(),
         ));
     }
@@ -322,6 +344,9 @@ fn state_fields_from(
     }
     for (name, ty) in scalars {
         let (rty, default) = field_type_and_default(typing, name, ty, true);
+        let default = default.unwrap_or_else(|| {
+            panic!("stream state field `{name}` is enum-typed and has no default to store")
+        });
         fields.push((name.clone(), rty, default));
     }
     for name in &model.out_feedback {
@@ -470,7 +495,7 @@ fn emit_loop(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
     emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Scalar);
-    emit_open_wrapper(o, func);
+    emit_open_wrapper(o, func, enums);
     emit_open_internal(o, func, model, &typing, model.body, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "}}\n");
 
@@ -669,7 +694,7 @@ fn emit_step_body(
     let pad = " ".repeat(indent);
     for (name, ty) in &model.temps {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
-        let _ = writeln!(o, "{pad}let mut {name}: {rty} = {default};");
+        o.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
     emit_extrema_rebase(o, model, indent);
 
@@ -1159,7 +1184,7 @@ fn emit_open_region(
                 continue;
             }
             let (rty, default) = field_type_and_default(typing, name, var_type, false);
-            let _ = writeln!(o, "        let mut {name}: {rty} = {default};");
+            o.push_str(&decl_line("        ", name, &rty, default.as_ref()));
         }
     }
 
@@ -1530,7 +1555,7 @@ fn emit_capture(
 // Public wrappers + handle impl
 // ---------------------------------------------------------------------------
 
-fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
+fn emit_open_wrapper(o: &mut String, func: &FuncDef, enums: &HashMap<String, EnumDef>) {
     let sn = snake(func);
     let n = func.name.to_uppercase();
     let handle = stream_type_name(func);
@@ -1548,7 +1573,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
         let _ = write!(sig_opts, ", {}: {}", p.name, opt_param_rust_type(&p.param_type));
         let _ = write!(fwd_opts, ", {}", p.name);
     }
-    o.push_str(&stream_open_docs(func));
+    o.push_str(&stream_open_docs(func, enums));
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Open\")]");
     let _ = writeln!(
         o,
@@ -1563,7 +1588,7 @@ fn emit_open_wrapper(o: &mut String, func: &FuncDef) {
 }
 
 /// Rustdoc for `<NAME>_Open`, including the peek==update doctest witness.
-fn stream_open_docs(func: &FuncDef) -> String {
+fn stream_open_docs(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
     let sn = snake(func);
     let mut d = String::new();
     let _ = writeln!(
@@ -1575,7 +1600,7 @@ fn stream_open_docs(func: &FuncDef) -> String {
         d,
         "    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when a parameter is out of range, an input is empty or\n    /// input lengths differ, or the history is shorter than `lookback + 1` bars."
     );
-    if let Some(doctest) = stream_doctest(func, &sn) {
+    if let Some(doctest) = stream_doctest(func, &sn, enums) {
         let _ = writeln!(d, "    ///");
         for line in doctest {
             if line.is_empty() {
@@ -1589,10 +1614,16 @@ fn stream_open_docs(func: &FuncDef) -> String {
 }
 
 /// A runnable peek==update doctest (the per-function bit-exactness witness).
-fn stream_doctest(func: &FuncDef, sn: &str) -> Option<Vec<String>> {
+fn stream_doctest(
+    func: &FuncDef,
+    sn: &str,
+    enums: &HashMap<String, EnumDef>,
+) -> Option<Vec<String>> {
     let mut lines: Vec<String> = Vec::new();
     lines.push("```".to_string());
-    lines.push("use ta_lib::Core;".to_string());
+    let mut imports = vec!["Core".to_string()];
+    imports.extend(super::rust_doc::example_enum_imports(func));
+    lines.push(super::rust_doc::example_use_line(&imports));
     let mut args: Vec<String> = Vec::new();
     let mut bar_args: Vec<String> = Vec::new();
     for input in &func.inputs {
@@ -1614,14 +1645,7 @@ fn stream_doctest(func: &FuncDef, sn: &str) -> Option<Vec<String>> {
         bar_args.push(bar.to_string());
     }
     for opt in &func.optional_inputs {
-        let default = opt.default.unwrap_or(0.0);
-        if opt.param_type == ParamType::Real {
-            args.push(format!("{default:?}"));
-        } else {
-            #[allow(clippy::cast_possible_truncation)]
-            let v = default as i64;
-            args.push(format!("{v}"));
-        }
+        args.push(super::rust_doc::example_opt_literal(opt, enums));
     }
     lines.push(String::new());
     lines.push("let core = Core::new();".to_string());
@@ -1893,7 +1917,7 @@ fn emit_dual_mode(
     let _ = writeln!(o, "    }}\n");
 
     emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Scalar);
-    emit_open_wrapper(o, func);
+    emit_open_wrapper(o, func, enums);
     emit_dual_open(o, func, dmp, &typing, &union_scalars, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "}}\n");
 
@@ -1995,7 +2019,7 @@ fn emit_fastpath_skip(
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
     emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Scalar);
-    emit_open_wrapper(o, func);
+    emit_open_wrapper(o, func, enums);
     emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter, OutMode::Fill);
     let _ = writeln!(o, "}}\n");
     emit_update_and_peek(o, func);
@@ -2047,20 +2071,21 @@ fn plan_ctx(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> RustRenderCtx {
         sentinel_vars: HashSet::new(),
         result_error_returns: true,
         // The dispatch identity guard can compare `optInMAType == TA_MAType_*`
-        // (TA_MAType_DISABLED, #93); resolve those to their ordinal like batch.
+        // (TA_MAType_DISABLED, #93); resolve those to the member, like batch.
         matype_map: build_matype_map(enums),
+        enum_vars: super::rust_lang::enum_local_types(func),
         circbuf_hybrid_static: HashMap::new(),
     }
 }
 
-/// Render a dispatch case label (`MAType_SMA`) to its integer literal via the
+/// Render a dispatch case label (`MAType_SMA`) to its qualified member via the
 /// shared enums map (the same `lookup_variant` authority batch switch labels
-/// render through — SMA=0..T3=8) — never hardcoded per function. Panics on a
-/// label that does not resolve.
+/// render through) — never hardcoded per function. Panics on a label that does
+/// not resolve.
 fn dispatch_case_label(label: &str, enums: &HashMap<String, EnumDef>) -> String {
-    let (_, variant) = crate::parser::enums::lookup_variant(label, enums)
+    let (enum_name, variant) = crate::parser::enums::lookup_variant(label, enums)
         .unwrap_or_else(|| panic!("dispatch label `{label}` does not resolve to an enum variant"));
-    variant.value.to_string()
+    format!("{enum_name}::{}", variant.name)
 }
 
 /// Emit the dispatch stream section (MA): a module-private enum over the
@@ -2263,7 +2288,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state }}, value))");
     let _ = writeln!(o, "    }}\n");
 
-    emit_open_wrapper(o, func);
+    emit_open_wrapper(o, func, enums);
 
     // --- open_and_fill: delegate per arm; identity fills the shifted copy ---
     emit_open_sig(o, func, OutMode::Fill);
@@ -2469,7 +2494,7 @@ fn emit_period_bank(
     );
     let _ = writeln!(o, "    }}\n");
 
-    emit_open_wrapper(o, func);
+    emit_open_wrapper(o, func, enums);
 
     // --- open_and_fill ------------------------------------------------------
     // No per-bar output array exists to un-discard (the bank yields one
@@ -2768,12 +2793,12 @@ fn emit_composed_step(
     if let Some(model) = &cp.producer {
         for (name, ty) in &model.temps {
             let (rty, default) = field_type_and_default(typing, name, ty, false);
-            let _ = writeln!(o, "        let mut {name}: {rty} = {default};");
+            o.push_str(&decl_line("        ", name, &rty, default.as_ref()));
         }
     }
     for (name, ty) in &cp.map_temps {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
-        let _ = writeln!(o, "        let mut {name}: {rty} = {default};");
+        o.push_str(&decl_line("        ", name, &rty, default.as_ref()));
     }
     for name in &cur_scalars {
         let _ = writeln!(o, "        let mut cur_{name}: f64 = 0.0_f64;");
@@ -3144,7 +3169,7 @@ fn emit_composed_open(
     let _ = writeln!(o, "    }}\n");
     if mode == OutMode::Scalar {
         let _ = sn;
-        emit_open_wrapper(o, func);
+        emit_open_wrapper(o, func, enums);
     }
 }
 
@@ -3192,7 +3217,7 @@ fn emit_composed_region(
                 continue;
             }
             let (rty, default) = field_type_and_default(typing, name, var_type, false);
-            let _ = writeln!(o, "        let mut {name}: {rty} = {default};");
+            o.push_str(&decl_line("        ", name, &rty, default.as_ref()));
         }
     }
 
@@ -3290,7 +3315,7 @@ fn emit_composed(
         for p in &func.optional_inputs {
             f.push((
                 p.name.clone(),
-                opt_param_rust_type(&p.param_type).to_string(),
+                opt_param_rust_type(&p.param_type),
                 p.name.clone(),
             ));
         }

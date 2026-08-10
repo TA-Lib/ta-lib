@@ -77,12 +77,13 @@ impl Core {
     ///   1..=100000)
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn STOCHRSI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32) -> usize {
+    pub fn STOCHRSI_Lookback(&self, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 14;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -98,8 +99,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
         retValue = self.RSI_Lookback(optInTimePeriod) + self.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -133,7 +134,8 @@ impl Core {
     ///   1..=100000)
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outFastK` — Unsmoothed stochastic of the RSI (raw %K)
@@ -156,7 +158,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
@@ -167,7 +169,7 @@ impl Core {
     /// let mut fast_d = vec![0.0; 252];
     ///
     /// let ret = core.STOCHRSI(
-    ///     0, data.len() - 1, &data, 14, 5, 3, 0,
+    ///     0, data.len() - 1, &data, 14, 5, 3, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut fast_k, &mut fast_d,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -194,7 +196,7 @@ impl Core {
         mut optInTimePeriod: i32,
         mut optInFastK_Period: i32,
         mut optInFastD_Period: i32,
-        mut optInFastD_MAType: i32,
+        mut optInFastD_MAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outFastK: &mut [f64],
@@ -221,8 +223,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
@@ -315,7 +317,7 @@ struct STOCHRSI_StreamState {
     optInTimePeriod: i32,
     optInFastK_Period: i32,
     optInFastD_Period: i32,
-    optInFastD_MAType: i32,
+    optInFastD_MAType: MAType,
     sub0: RSI_Stream,
     sub1: STOCHF_Stream,
 }
@@ -345,7 +347,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::STOCHRSI_Open`] (composition seam).
     pub(crate) fn STOCHRSI_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32,
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType,
     ) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -368,8 +370,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -475,18 +477,18 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCHRSI_Open(&data, 14, 5, 3, 0).expect("enough history");
+    /// let (mut s, _last) = core.STOCHRSI_Open(&data, 14, 5, 3, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHRSI_Open")]
-    pub fn STOCHRSI_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
+    pub fn STOCHRSI_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHRSI_Stream, (f64, f64)), RetCode> {
         self.STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
@@ -495,7 +497,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCHRSI_OpenAndFill")]
     pub fn STOCHRSI_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<STOCHRSI_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -521,8 +523,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

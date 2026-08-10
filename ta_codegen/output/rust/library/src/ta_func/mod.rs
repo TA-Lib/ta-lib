@@ -5,21 +5,73 @@
 mod types;
 pub use types::*;
 
-/// MAType member values, generated from enums.yaml.
-#[allow(dead_code)]
-pub(crate) mod matype {
-    pub(crate) const SMA: i32 = 0;
-    pub(crate) const EMA: i32 = 1;
-    pub(crate) const WMA: i32 = 2;
-    pub(crate) const DEMA: i32 = 3;
-    pub(crate) const TEMA: i32 = 4;
-    pub(crate) const TRIMA: i32 = 5;
-    pub(crate) const KAMA: i32 = 6;
-    pub(crate) const MAMA: i32 = 7;
-    pub(crate) const T3: i32 = 8;
-    pub(crate) const HMA: i32 = 9;
-    pub(crate) const DISABLED: i32 = 10;
-    pub(crate) const DEFAULT: i32 = 11;
+/// Moving-average type selected by an `optInMAType` parameter.
+///
+/// The values are pinned ABI, shared with C's `TA_MAType` and the Java and
+/// C# `MAType`; the list is append-only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+#[allow(non_camel_case_types)]
+pub enum MAType {
+    /// The `TA_MAType_SMA` moving average.
+    SMA = 0,
+    /// The `TA_MAType_EMA` moving average.
+    EMA = 1,
+    /// The `TA_MAType_WMA` moving average.
+    WMA = 2,
+    /// The `TA_MAType_DEMA` moving average.
+    DEMA = 3,
+    /// The `TA_MAType_TEMA` moving average.
+    TEMA = 4,
+    /// The `TA_MAType_TRIMA` moving average.
+    TRIMA = 5,
+    /// The `TA_MAType_KAMA` moving average.
+    KAMA = 6,
+    /// The `TA_MAType_MAMA` moving average.
+    MAMA = 7,
+    /// The `TA_MAType_T3` moving average.
+    T3 = 8,
+    /// The `TA_MAType_HMA` moving average.
+    HMA = 9,
+    /// Not a moving average: the input is copied through unchanged.
+    DISABLED = 10,
+    /// Not a moving average: selects the documented default of whichever parameter it is passed to.
+    DEFAULT = 11,
+}
+
+impl TryFrom<i32> for MAType {
+    type Error = RetCode;
+
+    /// Convert a raw parameter value, as the abstract layer and the JSON-RPC
+    /// server hold it.
+    ///
+    /// `i32::MIN` — C's `TA_INTEGER_DEFAULT` — resolves to the `DEFAULT`
+    /// member, so a value arriving through the abstract layer still selects
+    /// that parameter's documented default exactly as it does in C. Every
+    /// other out-of-domain value is `BadParam`, which is what keeps the
+    /// rejection in this crate rather than in a caller that wraps it.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if the value names no member.
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => Self::SMA,
+            1 => Self::EMA,
+            2 => Self::WMA,
+            3 => Self::DEMA,
+            4 => Self::TEMA,
+            5 => Self::TRIMA,
+            6 => Self::KAMA,
+            7 => Self::MAMA,
+            8 => Self::T3,
+            9 => Self::HMA,
+            10 => Self::DISABLED,
+            11 => Self::DEFAULT,
+            i32::MIN => Self::DEFAULT,
+            _ => return Err(RetCode::BadParam),
+        })
+    }
 }
 
 // Hand-written test-only modules (not generated; see templates/rust/).

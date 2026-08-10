@@ -78,53 +78,53 @@ impl Core {
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn MA_Lookback(&self, mut optInTimePeriod: i32, mut optInMAType: MAType) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 30;
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
-        if optInTimePeriod <= 1 || optInMAType == matype::DISABLED {
+        if optInTimePeriod <= 1 || optInMAType == MAType::DISABLED {
             return (0) as usize;
         }
         match optInMAType {
-            0 => {
+            MAType::SMA => {
                 retValue = self.SMA_Lookback(optInTimePeriod);
             }
-            1 => {
+            MAType::EMA => {
                 retValue = self.EMA_Lookback(optInTimePeriod);
             }
-            2 => {
+            MAType::WMA => {
                 retValue = self.WMA_Lookback(optInTimePeriod);
             }
-            3 => {
+            MAType::DEMA => {
                 retValue = self.DEMA_Lookback(optInTimePeriod);
             }
-            4 => {
+            MAType::TEMA => {
                 retValue = self.TEMA_Lookback(optInTimePeriod);
             }
-            5 => {
+            MAType::TRIMA => {
                 retValue = self.TRIMA_Lookback(optInTimePeriod);
             }
-            6 => {
+            MAType::KAMA => {
                 retValue = self.KAMA_Lookback(optInTimePeriod);
             }
-            7 => {
+            MAType::MAMA => {
                 retValue = self.MAMA_Lookback(0.5, 0.05);
             }
-            8 => {
+            MAType::T3 => {
                 retValue = self.T3_Lookback(optInTimePeriod, 0.7);
             }
-            9 => {
+            MAType::HMA => {
                 retValue = self.HMA_Lookback(optInTimePeriod);
             }
             _ => {
@@ -160,7 +160,7 @@ impl Core {
     /// * `optInTimePeriod` — Averaging window length (default 30, range 1..=100000)
     /// * `optInMAType` — Which moving-average algorithm to dispatch to (default 0 = SMA, values:
     ///   0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Selected moving average of the input.
@@ -182,7 +182,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
@@ -191,7 +191,10 @@ impl Core {
     /// let mut out_nb = 0;
     /// let mut out = vec![0.0; 252];
     ///
-    /// let ret = core.MA(0, data.len() - 1, &data, 30, 0, &mut out_beg, &mut out_nb, &mut out);
+    /// let ret = core.MA(
+    ///     0, data.len() - 1, &data, 30, MAType::SMA,
+    ///     &mut out_beg, &mut out_nb, &mut out,
+    /// );
     /// assert_eq!(ret, RetCode::Success);
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
@@ -210,7 +213,7 @@ impl Core {
         endIdx: usize,
         inReal: &[f64],
         mut optInTimePeriod: i32,
-        mut optInMAType: i32,
+        mut optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outReal: &mut [f64],
@@ -226,8 +229,8 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let _assertLb = self.MA_Lookback(optInTimePeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -240,7 +243,7 @@ impl Core {
         let mut todayIdx: usize = 0_usize;
         // No-smoothing identity: period 1 (every MA type) or the explicit
         // TA_MAType_DISABLED (any period, issue #93). One copy path, lookback 0.
-        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
+        if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             nbElement = endIdx - startIdx + 1;
             (*outNBElement) = nbElement;
             // for( todayIdx = startIdx, outIdx = 0; outIdx < nbElement; outIdx += 1, todayIdx += 1 )
@@ -256,36 +259,36 @@ impl Core {
         }
         // Simply forward the job to the corresponding TA function.
         match optInMAType {
-            0 => {
+            MAType::SMA => {
                 retCode = self.SMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            1 => {
+            MAType::EMA => {
                 retCode = self.EMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            2 => {
+            MAType::WMA => {
                 retCode = self.WMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            3 => {
+            MAType::DEMA => {
                 retCode = self.DEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            4 => {
+            MAType::TEMA => {
                 retCode = self.TEMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            5 => {
+            MAType::TRIMA => {
                 retCode = self.TRIMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            6 => {
+            MAType::KAMA => {
                 retCode = self.KAMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
-            7 => {
+            MAType::MAMA => {
                 // The optInTimePeriod is ignored. FAMA is a nullable output
                 // (issue #125): pass NULL to compute only the MAMA line into outReal.
                 retCode = self.MAMA(startIdx, endIdx, inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; (endIdx - startIdx + 1) as usize][..]);
             }
-            8 => {
+            MAType::T3 => {
                 retCode = self.T3(startIdx, endIdx, inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
             }
-            9 => {
+            MAType::HMA => {
                 retCode = self.HMA(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
             }
             _ => {
@@ -312,7 +315,7 @@ pub struct MA_Stream {
 #[allow(non_snake_case, dead_code)]
 struct MA_StreamState {
     optInTimePeriod: i32,
-    optInMAType: i32,
+    optInMAType: MAType,
     // Sub-stream, tagged by optInMAType; `MA_Sub::Identity` on the identity path.
     sub: MA_Sub,
 }
@@ -340,7 +343,7 @@ enum MA_Sub {
 #[allow(unused_parens)]
 impl Core {
     fn MA_step_internal(&self, sp: &mut MA_StreamState, inReal: f64, outReal: &mut f64) {
-        if sp.optInTimePeriod == 1 || sp.optInMAType == matype::DISABLED {
+        if sp.optInTimePeriod == 1 || sp.optInMAType == MAType::DISABLED {
             (*outReal) = inReal;
             return;
         }
@@ -384,7 +387,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::MA_Open`] (composition seam).
     pub(crate) fn MA_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: i32,
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: MAType,
     ) -> Result<(MA_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -397,11 +400,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
+        if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
@@ -409,43 +412,43 @@ impl Core {
             return Ok((MA_Stream { core: self.clone(), state }, inReal[historyLen - 1]));
         }
         let (sub, value) = match optInMAType {
-            0 => {
+            MAType::SMA => {
                 let (sub, subValue) = self.SMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::SMA(sub), subValue)
             }
-            1 => {
+            MAType::EMA => {
                 let (sub, subValue) = self.EMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::EMA(sub), subValue)
             }
-            2 => {
+            MAType::WMA => {
                 let (sub, subValue) = self.WMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::WMA(sub), subValue)
             }
-            3 => {
+            MAType::DEMA => {
                 let (sub, subValue) = self.DEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::DEMA(sub), subValue)
             }
-            4 => {
+            MAType::TEMA => {
                 let (sub, subValue) = self.TEMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::TEMA(sub), subValue)
             }
-            5 => {
+            MAType::TRIMA => {
                 let (sub, subValue) = self.TRIMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::TRIMA(sub), subValue)
             }
-            6 => {
+            MAType::KAMA => {
                 let (sub, subValue) = self.KAMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::KAMA(sub), subValue)
             }
-            7 => {
+            MAType::MAMA => {
                 let (sub, subValue) = self.MAMA_OpenInternal(inReal, startIdx, 0.5, 0.05)?;
                 (MA_Sub::MAMA(sub), subValue.0)
             }
-            8 => {
+            MAType::T3 => {
                 let (sub, subValue) = self.T3_OpenInternal(inReal, startIdx, optInTimePeriod, 0.7)?;
                 (MA_Sub::T3(sub), subValue)
             }
-            9 => {
+            MAType::HMA => {
                 let (sub, subValue) = self.HMA_OpenInternal(inReal, startIdx, optInTimePeriod)?;
                 (MA_Sub::HMA(sub), subValue)
             }
@@ -464,17 +467,17 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MA_Open(&data, 30, 0).expect("enough history");
+    /// let (mut s, _last) = core.MA_Open(&data, 30, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MA_Open")]
-    pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: i32) -> Result<(MA_Stream, f64), RetCode> {
+    pub fn MA_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInMAType: MAType) -> Result<(MA_Stream, f64), RetCode> {
         self.MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType)
     }
 
@@ -483,7 +486,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MA_OpenAndFill")]
     pub fn MA_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MA_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -496,11 +499,11 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
-        if optInTimePeriod == 1 || optInMAType == matype::DISABLED {
+        if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
             if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
                 return Err(RetCode::BadParam);
             }
@@ -516,34 +519,34 @@ impl Core {
             return Ok(MA_Stream { core: self.clone(), state });
         }
         let sub = match optInMAType {
-            0 => MA_Sub::SMA(
+            MAType::SMA => MA_Sub::SMA(
                 self.SMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            1 => MA_Sub::EMA(
+            MAType::EMA => MA_Sub::EMA(
                 self.EMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            2 => MA_Sub::WMA(
+            MAType::WMA => MA_Sub::WMA(
                 self.WMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            3 => MA_Sub::DEMA(
+            MAType::DEMA => MA_Sub::DEMA(
                 self.DEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            4 => MA_Sub::TEMA(
+            MAType::TEMA => MA_Sub::TEMA(
                 self.TEMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            5 => MA_Sub::TRIMA(
+            MAType::TRIMA => MA_Sub::TRIMA(
                 self.TRIMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            6 => MA_Sub::KAMA(
+            MAType::KAMA => MA_Sub::KAMA(
                 self.KAMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
-            7 => MA_Sub::MAMA(
+            MAType::MAMA => MA_Sub::MAMA(
                 self.MAMA_OpenAndFill(inReal, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
             ),
-            8 => MA_Sub::T3(
+            MAType::T3 => MA_Sub::T3(
                 self.T3_OpenAndFill(inReal, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
             ),
-            9 => MA_Sub::HMA(
+            MAType::HMA => MA_Sub::HMA(
                 self.HMA_OpenAndFill(inReal, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
             ),
             _ => return Err(RetCode::BadParam),

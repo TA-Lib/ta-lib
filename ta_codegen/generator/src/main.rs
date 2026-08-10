@@ -2161,26 +2161,10 @@ pub use types::*;
 "#,
     );
 
-    // MAType member values. This backend still types the parameter `i32`, so the
-    // generated bodies compare against these rather than a bare number -- as C,
-    // Java and C# compare against the member name. Crate-internal on purpose:
-    // the public spelling arrives with the enum itself.
-    if let Some(ma) = enums.get("MAType") {
-        mod_rs.push_str(&format!(
-            "\n/// {} member values, generated from enums.yaml.\n\
-             #[allow(dead_code)]\n\
-             pub(crate) mod {} {{\n",
-            ma.name,
-            ma.name.to_lowercase()
-        ));
-        for v in &ma.variants {
-            mod_rs.push_str(&format!(
-                "    pub(crate) const {}: i32 = {};\n",
-                v.name, v.value
-            ));
-        }
-        mod_rs.push_str("}\n");
-    }
+    // The MAType enum. Rendered by `backends::rust_enums` and spliced here so it
+    // lands in an already-generated file -- see that module for why it carries
+    // no `#[repr]` and why `#[non_exhaustive]` is load-bearing.
+    mod_rs.push_str(&backends::rust_enums::render_matype(enums));
 
     // Hand-written test-only modules (not generated; see templates/rust/).
     if !RUST_TEST_ONLY_MODULES.is_empty() {

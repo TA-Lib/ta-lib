@@ -92,12 +92,12 @@ impl Core {
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`,
     /// and real parameters `-4e37`, to select their default value.
     #[inline]
-    pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: i32) -> usize {
+    pub fn BBANDS_Lookback(&self, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType) -> usize {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
@@ -113,8 +113,8 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let mut maLookback: usize = 0_usize;
         let mut stddevLookback: usize = 0_usize;
@@ -171,7 +171,7 @@ impl Core {
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
@@ -196,7 +196,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
@@ -208,7 +208,7 @@ impl Core {
     /// let mut lower_band = vec![0.0; 252];
     ///
     /// let ret = core.BBANDS(
-    ///     0, data.len() - 1, &data, 20, 2.0, 2.0, 0,
+    ///     0, data.len() - 1, &data, 20, 2.0, 2.0, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut upper_band, &mut middle_band, &mut lower_band,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -234,7 +234,7 @@ impl Core {
         optInTimePeriod: i32,
         optInNbDevUp: f64,
         optInNbDevDn: f64,
-        optInMAType: i32,
+        optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outRealUpperBand: &mut [f64],
@@ -256,7 +256,7 @@ impl Core {
         optInTimePeriod: i32,
         optInNbDevUp: f64,
         optInNbDevDn: f64,
-        optInMAType: i32,
+        optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outRealUpperBand: &mut [f64],
@@ -274,7 +274,7 @@ impl Core {
         mut optInTimePeriod: i32,
         mut optInNbDevUp: f64,
         mut optInNbDevDn: f64,
-        mut optInMAType: i32,
+        mut optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outRealUpperBand: &mut [f64],
@@ -302,8 +302,8 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         if outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() || outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() || outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
             return RetCode::BadParam;
@@ -323,7 +323,7 @@ impl Core {
         let mut tempReal2: f64 = 0.0_f64;
         let mut tempBuffer1: Vec<f64> = Vec::new();
         let mut tempBuffer2: Vec<f64> = Vec::new();
-        if optInMAType == matype::SMA {
+        if optInMAType == MAType::SMA {
             // SMA fast path: the middle band (SMA) and the standard deviation share one
             // pass over the window below. Bit-identical to the general MA + STDDEV path
             // (which the stream composes for every MA type).
@@ -545,7 +545,7 @@ struct BBANDS_StreamState {
     optInTimePeriod: i32,
     optInNbDevUp: f64,
     optInNbDevDn: f64,
-    optInMAType: i32,
+    optInMAType: MAType,
     sub0: MA_Stream,
     sub1: STDDEV_Stream,
 }
@@ -586,7 +586,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::BBANDS_Open`] (composition seam).
     pub(crate) fn BBANDS_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: i32,
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType,
     ) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -609,8 +609,8 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -726,11 +726,11 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.BBANDS_Open(&data, 20, 2.0, 2.0, 0).expect("enough history");
+    /// let (mut s, _last) = core.BBANDS_Open(&data, 20, 2.0, 2.0, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -738,7 +738,7 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_BBANDS_Open")]
-    pub fn BBANDS_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: i32) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
+    pub fn BBANDS_Open(&self, inReal: &[f64], optInTimePeriod: i32, optInNbDevUp: f64, optInNbDevDn: f64, optInMAType: MAType) -> Result<(BBANDS_Stream, (f64, f64, f64)), RetCode> {
         self.BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType)
     }
 
@@ -747,7 +747,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_BBANDS_OpenAndFill")]
     pub fn BBANDS_OpenAndFill(
-        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+        &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
     ) -> Result<BBANDS_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -779,8 +779,8 @@ impl Core {
         } else if (optInNbDevDn < REAL_MIN) || (optInNbDevDn > REAL_MAX) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

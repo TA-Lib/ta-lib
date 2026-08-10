@@ -81,12 +81,12 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT)
+    ///   10=DISABLED, 11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32) -> usize {
+    pub fn STOCHF_Lookback(&self, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType) -> usize {
         if ((optInFastK_Period) as i32) == (i32::MIN) {
             optInFastK_Period = 5;
         } else if (((optInFastK_Period) as i32) < 1) || (((optInFastK_Period) as i32) > 100000) {
@@ -97,8 +97,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let mut retValue: usize = 0_usize;
         // Account for the initial data needed for Fast-K.
@@ -135,7 +135,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT)
+    ///   10=DISABLED, 11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outFastK` — Raw %K stochastic line.
@@ -158,7 +158,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
@@ -173,7 +173,7 @@ impl Core {
     /// let mut fast_d = vec![0.0; 252];
     ///
     /// let ret = core.STOCHF(
-    ///     0, high.len() - 1, &high, &low, &close, 5, 3, 0,
+    ///     0, high.len() - 1, &high, &low, &close, 5, 3, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut fast_k, &mut fast_d,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -197,7 +197,7 @@ impl Core {
         inClose: &[f64],
         mut optInFastK_Period: i32,
         mut optInFastD_Period: i32,
-        mut optInFastD_MAType: i32,
+        mut optInFastD_MAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outFastK: &mut [f64],
@@ -219,8 +219,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         if outFastK.as_ptr() == outFastD.as_ptr() {
             return RetCode::BadParam;
@@ -440,7 +440,7 @@ pub struct STOCHF_Stream {
 struct STOCHF_StreamState {
     optInFastK_Period: i32,
     optInFastD_Period: i32,
-    optInFastD_MAType: i32,
+    optInFastD_MAType: MAType,
     lowest: f64,
     highest: f64,
     diff: f64,
@@ -535,7 +535,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::STOCHF_Open`] (composition seam).
     pub(crate) fn STOCHF_OpenInternal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType,
     ) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -553,8 +553,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;
@@ -809,7 +809,7 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let close: Vec<f64> = (0..252)
@@ -817,14 +817,14 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.STOCHF_Open(&high, &low, &close, 5, 3, 0).expect("enough history");
+    /// let (mut s, _last) = core.STOCHF_Open(&high, &low, &close, 5, 3, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(101.4, 99.1, 100.9);
     /// let updated = s.update(101.4, 99.1, 100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
     /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
     /// ```
     #[doc(alias = "TA_STOCHF_Open")]
-    pub fn STOCHF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: i32) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
+    pub fn STOCHF_Open(&self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], optInFastK_Period: i32, optInFastD_Period: i32, optInFastD_MAType: MAType) -> Result<(STOCHF_Stream, (f64, f64)), RetCode> {
         self.STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType)
     }
 
@@ -833,7 +833,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_STOCHF_OpenAndFill")]
     pub fn STOCHF_OpenAndFill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
     ) -> Result<STOCHF_Stream, RetCode> {
         if inHigh.is_empty() || inLow.is_empty() || inClose.is_empty() || inLow.len() != inHigh.len() || inClose.len() != inHigh.len() {
             return Err(RetCode::BadParam);
@@ -854,8 +854,8 @@ impl Core {
         } else if (((optInFastD_Period) as i32) < 1) || (((optInFastD_Period) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastD_MAType) as i32) == (i32::MIN) || optInFastD_MAType == matype::DEFAULT {
-            optInFastD_MAType = 0;
+        if optInFastD_MAType == MAType::DEFAULT {
+            optInFastD_MAType = MAType::SMA;
         }
         let historyLen: usize = inHigh.len();
         let endIdx: usize = historyLen - 1;

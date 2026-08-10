@@ -77,12 +77,13 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn MAVP_Lookback(&self, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType) -> usize {
         if ((optInMinPeriod) as i32) == (i32::MIN) {
             optInMinPeriod = 2;
         } else if (((optInMinPeriod) as i32) < 1) || (((optInMinPeriod) as i32) > 100000) {
@@ -93,8 +94,8 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         return self.MA_Lookback(optInMaxPeriod, optInMAType);
     }
@@ -123,7 +124,8 @@ impl Core {
     /// * `optInMinPeriod` — Lower clamp for the per-bar period (default 2, range 1..=100000)
     /// * `optInMaxPeriod` — Upper clamp for the per-bar period (default 30, range 1..=100000)
     /// * `optInMAType` — Moving-average type applied (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — variable-period moving average.
@@ -145,7 +147,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let periods = vec![14.0; 252];
@@ -156,7 +158,7 @@ impl Core {
     /// let mut out = vec![0.0; 252];
     ///
     /// let ret = core.MAVP(
-    ///     0, data.len() - 1, &data, &periods, 2, 30, 0,
+    ///     0, data.len() - 1, &data, &periods, 2, 30, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -179,7 +181,7 @@ impl Core {
         inPeriods: &[f64],
         mut optInMinPeriod: i32,
         mut optInMaxPeriod: i32,
-        mut optInMAType: i32,
+        mut optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outReal: &mut [f64],
@@ -200,8 +202,8 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         let _assertLb = self.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -476,7 +478,7 @@ pub struct MAVP_Stream {
 struct MAVP_StreamState {
     optInMinPeriod: i32,
     optInMaxPeriod: i32,
-    optInMAType: i32,
+    optInMAType: MAType,
     // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
     bank: Vec<MA_Stream>,
 }
@@ -506,7 +508,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::MAVP_Open`] (composition seam).
     pub(crate) fn MAVP_OpenInternal(
-        &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32,
+        &self, inReal: &[f64], inPeriods: &[f64], startIdx: usize, mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType,
     ) -> Result<(MAVP_Stream, f64), RetCode> {
         if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
@@ -524,8 +526,8 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {
@@ -568,18 +570,18 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     /// let periods: Vec<f64> = (0..252).map(|i| 5.0 + (i % 10) as f64).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MAVP_Open(&data, &periods, 2, 30, 0).expect("enough history");
+    /// let (mut s, _last) = core.MAVP_Open(&data, &periods, 2, 30, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(100.9, 14.0);
     /// let updated = s.update(100.9, 14.0);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_MAVP_Open")]
-    pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: i32) -> Result<(MAVP_Stream, f64), RetCode> {
+    pub fn MAVP_Open(&self, inReal: &[f64], inPeriods: &[f64], optInMinPeriod: i32, optInMaxPeriod: i32, optInMAType: MAType) -> Result<(MAVP_Stream, f64), RetCode> {
         self.MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType)
     }
 
@@ -588,7 +590,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MAVP_OpenAndFill")]
     pub fn MAVP_OpenAndFill(
-        &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], inPeriods: &[f64], mut optInMinPeriod: i32, mut optInMaxPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<MAVP_Stream, RetCode> {
         if inReal.is_empty() || inPeriods.is_empty() || inPeriods.len() != inReal.len() {
             return Err(RetCode::BadParam);
@@ -606,8 +608,8 @@ impl Core {
         } else if (((optInMaxPeriod) as i32) < 1) || (((optInMaxPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 0;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
         }
         // An inverted [min, max] period window is invalid (batch rejects).
         if optInMinPeriod > optInMaxPeriod {

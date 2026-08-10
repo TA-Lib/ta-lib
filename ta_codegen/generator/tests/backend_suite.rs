@@ -3423,15 +3423,20 @@ fn rust_switch_with_enum_label_lookup() {
     let helpers = make_helpers();
     let rust_out = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
-    // MA's switch should render as match with integer values from enum lookup
+    // MA's switch renders as a match whose arms name the enum members. This
+    // pins the member spelling rather than "some integer": the subject is the
+    // typed parameter, so a bare ordinal would not even compile.
     assert!(
         rust_out.contains("match "),
         "MA Rust should contain match statement: {rust_out}"
     );
-    // The enum variants resolve to integer values (0, 1, 2, etc.)
     assert!(
-        rust_out.contains("0 =>") || rust_out.contains("1 =>"),
-        "MA Rust match should have integer case labels from enum resolution"
+        rust_out.contains("MAType::SMA =>") && rust_out.contains("MAType::EMA =>"),
+        "MA Rust match should have qualified member case labels: {rust_out}"
+    );
+    assert!(
+        !rust_out.contains("            0 => {"),
+        "MA Rust match must not fall back to bare ordinals: {rust_out}"
     );
 }
 

@@ -78,12 +78,12 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn PPO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32) -> usize {
+    pub fn PPO_Lookback(&self, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
@@ -94,8 +94,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         // Lookback is driven by the slowest MA.
         return self.MA_Lookback((optInSlowPeriod).max(optInFastPeriod), optInMAType);
@@ -122,7 +122,7 @@ impl Core {
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInMAType` — Moving average type used for both MAs (default 1 = EMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — PPO value in percent.
@@ -144,7 +144,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
@@ -154,7 +154,7 @@ impl Core {
     /// let mut out = vec![0.0; 252];
     ///
     /// let ret = core.PPO(
-    ///     0, data.len() - 1, &data, 12, 26, 1,
+    ///     0, data.len() - 1, &data, 12, 26, MAType::EMA,
     ///     &mut out_beg, &mut out_nb, &mut out,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -182,7 +182,7 @@ impl Core {
         inReal: &[f64],
         mut optInFastPeriod: i32,
         mut optInSlowPeriod: i32,
-        mut optInMAType: i32,
+        mut optInMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outReal: &mut [f64],
@@ -203,8 +203,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let _assertLb = self.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
@@ -276,7 +276,7 @@ pub struct PPO_Stream {
 struct PPO_StreamState {
     optInFastPeriod: i32,
     optInSlowPeriod: i32,
-    optInMAType: i32,
+    optInMAType: MAType,
     sub0: MA_Stream,
     sub1: MA_Stream,
 }
@@ -308,7 +308,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::PPO_Open`] (composition seam).
     pub(crate) fn PPO_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32,
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType,
     ) -> Result<(PPO_Stream, f64), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -326,8 +326,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -414,17 +414,17 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.PPO_Open(&data, 12, 26, 1).expect("enough history");
+    /// let (mut s, _last) = core.PPO_Open(&data, 12, 26, MAType::EMA).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.to_bits(), updated.to_bits());
     /// ```
     #[doc(alias = "TA_PPO_Open")]
-    pub fn PPO_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: i32) -> Result<(PPO_Stream, f64), RetCode> {
+    pub fn PPO_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInSlowPeriod: i32, optInMAType: MAType) -> Result<(PPO_Stream, f64), RetCode> {
         self.PPO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType)
     }
 
@@ -433,7 +433,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_PPO_OpenAndFill")]
     pub fn PPO_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PPO_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -451,8 +451,8 @@ impl Core {
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInMAType) as i32) == (i32::MIN) || optInMAType == matype::DEFAULT {
-            optInMAType = 1;
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::EMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;

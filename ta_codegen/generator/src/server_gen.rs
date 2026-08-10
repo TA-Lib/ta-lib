@@ -3306,7 +3306,23 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("use std::time::Instant;\n");
     s.push_str("use ta_lib::{Core, CoreBuilder, RetCode, FuncUnstId, MAX_INDEX};\n");
     s.push_str("use ta_lib::{CandleSetting, CandleSettings, CandleSettingType};\n");
-    s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n\n");
+    s.push_str("use ta_lib::abstract_api::{self, InputType, OutputType, OptInputType};\n");
+    // The enum types the handlers convert wire ints into, from what the
+    // definitions actually declare rather than a name spelled here.
+    let mut enum_tys: Vec<&str> = funcs
+        .iter()
+        .flat_map(|f| &f.optional_inputs)
+        .filter_map(|o| match &o.param_type {
+            ParamType::Enum(n) => Some(n.as_str()),
+            _ => None,
+        })
+        .collect();
+    enum_tys.sort_unstable();
+    enum_tys.dedup();
+    for ty in enum_tys {
+        s.push_str(&format!("use ta_lib::{ty};\n"));
+    }
+    s.push('\n');
 
     // Seed-based fuzz input generator + FNV output hasher — a bit-exact port of
     // src/tools/ta_regtest/fuzz_data.h. Powers the cross-language bitwise-parity
@@ -3603,10 +3619,36 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             } else {
                 #[allow(clippy::cast_possible_truncation)]
                 let default_i = default_val as i64;
-                s.push_str(&format!(
-                    "            let {} = params[\"{}\"].as_i64().unwrap_or({}) as i32;\n",
-                    opt.name, opt.name, default_i
-                ));
+                if let ParamType::Enum(enum_name) = &opt.param_type {
+                    // The wire carries a bare int, so an out-of-domain value
+                    // reaches here; a typed enum cannot hold it, so the call is
+                    // skipped and BAD_PARAM reported -- the same rc C gives,
+                    // reached by the type system instead of the prologue. The
+                    // library's `TryFrom` is what decides validity.
+                    let first = enums
+                        .get(enum_name)
+                        .and_then(|e| e.variants.first())
+                        .map_or_else(|| "0".to_string(), |v| format!("{enum_name}::{}", v.name));
+                    s.push_str(&format!(
+                        "            let {n}_raw = params[\"{n}\"].as_i64().unwrap_or({default_i}) as i32;\n",
+                        n = opt.name
+                    ));
+                    s.push_str(&format!(
+                        "            let {n}_res = {enum_name}::try_from({n}_raw);\n",
+                        n = opt.name
+                    ));
+                    // A concrete binding so every downstream use types; it is
+                    // only ever reached when the conversion succeeded.
+                    s.push_str(&format!(
+                        "            let {n} = {n}_res.unwrap_or({first});\n",
+                        n = opt.name
+                    ));
+                } else {
+                    s.push_str(&format!(
+                        "            let {} = params[\"{}\"].as_i64().unwrap_or({}) as i32;\n",
+                        opt.name, opt.name, default_i
+                    ));
+                }
             }
         }
 
@@ -3647,6 +3689,24 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // Guarded timing loop. Iteration 0 is always a discarded warm-up — see
         // the C emitter: cold-call bias, plus a free idempotency check.
         s.push_str("            let mut start_time = Instant::now();\n");
+        // An enum parameter that failed to convert reports its own RetCode and
+        // the call is skipped, so the response matches C's -- which returned
+        // BAD_PARAM from the prologue without running the body either.
+        let enum_opts: Vec<&str> = func
+            .optional_inputs
+            .iter()
+            .filter(|o| matches!(o.param_type, ParamType::Enum(_)))
+            .map(|o| o.name.as_str())
+            .collect();
+        if !enum_opts.is_empty() {
+            let bad = enum_opts
+                .iter()
+                .map(|n| format!("{n}_res.is_err()"))
+                .collect::<Vec<_>>()
+                .join(" || ");
+            s.push_str(&format!("            let _enum_bad = {bad};\n"));
+            s.push_str("            if _enum_bad { rc = RetCode::BadParam; } else {\n");
+        }
         s.push_str("            for _bi in 0..=bench_iters {\n");
         s.push_str("                if _bi == 1 { start_time = Instant::now(); }\n");
         s.push_str(&format!(
@@ -3674,6 +3734,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str(",\n");
         s.push_str("            );\n");
         s.push_str("            }\n"); // end guarded bench loop
+        if !enum_opts.is_empty() {
+            s.push_str("            }\n"); // end enum-conversion guard
+        }
         s.push_str("            let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;\n");
 
         // [fuzz] out_hash mode (--xlang-hash, issue #113): after the GUARDED call —
@@ -3712,14 +3775,29 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // abstract_call reroute returns the `lookback` field the C ta_abstract path
         // exposes; harmless extra field for the regular per-function path. Computed
         // after the unstable-period assignment above so it reflects that state.
-        s.push_str(&format!("            let lookback = core.{fn_name}_Lookback("));
+        // A typed enum cannot carry an out-of-domain value, so there is no
+        // lookback to report for one -- C computes a real number there (19 for
+        // BBANDS, 4 for STOCHF, 18 for STOCHRSI: NOT a uniform 0), and this tier
+        // cannot reproduce it. Report the driver's "rejected" marker rather than
+        // a fabricated number, which is also what the abstract tier returns.
+        if enum_opts.is_empty() {
+            s.push_str(&format!("            let lookback = core.{fn_name}_Lookback("));
+        } else {
+            s.push_str(&format!(
+                "            let lookback: i64 = if _enum_bad {{ -1 }} else {{ core.{fn_name}_Lookback("
+            ));
+        }
         let lb_args: Vec<String> = func
             .optional_inputs
             .iter()
             .map(|o| o.name.clone())
             .collect();
         s.push_str(&lb_args.join(", "));
-        s.push_str(");\n");
+        if enum_opts.is_empty() {
+            s.push_str(");\n");
+        } else {
+            s.push_str(") as i64 };\n");
+        }
 
         // Build the response string manually (not via serde_json) so non-finite
         // f64 outputs serialize as `nan`/`-nan`/`inf`/`-inf` — matching the C
@@ -4355,10 +4433,29 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         } else {
             #[allow(clippy::cast_possible_truncation)]
             let d = p.default.unwrap_or(0.0) as i64;
-            let _ = writeln!(
-                s,
-                "    let {name} = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
-            );
+            if let crate::ir::ParamType::Enum(enum_name) = &p.param_type {
+                // The driver DOES send an out-of-list value here on purpose
+                // (`maxList + 91`, test_codegen.c): batch rejects it at the
+                // dispatch default arm, so the stream must reject too. A typed
+                // enum cannot carry it, so reject at the type level and report
+                // it — the same shape, and the same reason, as the Java server.
+                let _ = writeln!(
+                    s,
+                    "    let {name}_raw = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
+                );
+                let _ = writeln!(s, "    let {name} = match {enum_name}::try_from({name}_raw) {{");
+                s.push_str("        Ok(v) => v,
+");
+                s.push_str("        Err(_) => return \"{\\\"retCode\\\":2,\\\"legs\\\":0,\\\"nb\\\":0,\\\"openRejects\\\":1,\\\"ok\\\":1,\\\"peek_ok\\\":1}\".to_string(),
+");
+                s.push_str("    };
+");
+            } else {
+                let _ = writeln!(
+                    s,
+                    "    let {name} = params[\"{name}\"].as_i64().unwrap_or({d}) as i32;"
+                );
+            }
         }
     }
     // Seeded inputs.

@@ -73,42 +73,44 @@ impl Core {
     ///
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
     #[inline]
-    pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: i32, mut optInSlowPeriod: i32, mut optInSlowMAType: i32, mut optInSignalPeriod: i32, mut optInSignalMAType: i32) -> usize {
+    pub fn MACDEXT_Lookback(&self, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType) -> usize {
         if ((optInFastPeriod) as i32) == (i32::MIN) {
             optInFastPeriod = 12;
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) || optInFastMAType == matype::DEFAULT {
-            optInFastMAType = 0;
+        if optInFastMAType == MAType::DEFAULT {
+            optInFastMAType = MAType::SMA;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) || optInSlowMAType == matype::DEFAULT {
-            optInSlowMAType = 0;
+        if optInSlowMAType == MAType::DEFAULT {
+            optInSlowMAType = MAType::SMA;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return usize::MAX;
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) || optInSignalMAType == matype::DEFAULT {
-            optInSignalMAType = 0;
+        if optInSignalMAType == MAType::DEFAULT {
+            optInSignalMAType = MAType::SMA;
         }
         let mut tempInteger: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
@@ -148,14 +150,16 @@ impl Core {
     /// * `inReal` — Source series.
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
-    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT)
+    ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
+    ///   `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT)
+    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outMACD` — MACD line: fast MA minus slow MA.
@@ -179,7 +183,7 @@ impl Core {
     /// # Examples
     ///
     /// ```
-    /// use ta_lib::{Core, RetCode};
+    /// use ta_lib::{Core, RetCode, MAType};
     ///
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
@@ -191,7 +195,7 @@ impl Core {
     /// let mut macd_hist = vec![0.0; 252];
     ///
     /// let ret = core.MACDEXT(
-    ///     0, data.len() - 1, &data, 12, 0, 26, 0, 9, 0,
+    ///     0, data.len() - 1, &data, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA,
     ///     &mut out_beg, &mut out_nb, &mut macd, &mut macd_signal, &mut macd_hist,
     /// );
     /// assert_eq!(ret, RetCode::Success);
@@ -213,11 +217,11 @@ impl Core {
         endIdx: usize,
         inReal: &[f64],
         mut optInFastPeriod: i32,
-        mut optInFastMAType: i32,
+        mut optInFastMAType: MAType,
         mut optInSlowPeriod: i32,
-        mut optInSlowMAType: i32,
+        mut optInSlowMAType: MAType,
         mut optInSignalPeriod: i32,
-        mut optInSignalMAType: i32,
+        mut optInSignalMAType: MAType,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outMACD: &mut [f64],
@@ -235,24 +239,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) || optInFastMAType == matype::DEFAULT {
-            optInFastMAType = 0;
+        if optInFastMAType == MAType::DEFAULT {
+            optInFastMAType = MAType::SMA;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) || optInSlowMAType == matype::DEFAULT {
-            optInSlowMAType = 0;
+        if optInSlowMAType == MAType::DEFAULT {
+            optInSlowMAType = MAType::SMA;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) || optInSignalMAType == matype::DEFAULT {
-            optInSignalMAType = 0;
+        if optInSignalMAType == MAType::DEFAULT {
+            optInSignalMAType = MAType::SMA;
         }
         if outMACD.as_ptr() == outMACDSignal.as_ptr() || outMACD.as_ptr() == outMACDHist.as_ptr() || outMACDSignal.as_ptr() == outMACDHist.as_ptr() {
             return RetCode::BadParam;
@@ -276,12 +280,12 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut tempMAType: usize = 0_usize;
+        let mut tempMAType: MAType;
         // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
         // to its single-pass implementation. Period 1 stays on the generic
         // path: ma() copies the input for it instead of running an EMA
         // recursion.
-        if optInFastMAType == matype::EMA && optInSlowMAType == matype::EMA && optInSignalMAType == matype::EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+        if optInFastMAType == MAType::EMA && optInSlowMAType == MAType::EMA && optInSignalMAType == MAType::EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
             return self.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
         }
         // Make sure slow is really slower than
@@ -292,9 +296,9 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
             // swap type
-            tempMAType = (optInSlowMAType) as usize;
+            tempMAType = optInSlowMAType;
             optInSlowMAType = optInFastMAType;
-            optInFastMAType = (tempMAType) as i32;
+            optInFastMAType = tempMAType;
         }
         // Find the MA with the largest lookback
         lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
@@ -399,11 +403,11 @@ pub struct MACDEXT_Stream {
 #[allow(non_snake_case, dead_code)]
 struct MACDEXT_StreamState {
     optInFastPeriod: i32,
-    optInFastMAType: i32,
+    optInFastMAType: MAType,
     optInSlowPeriod: i32,
-    optInSlowMAType: i32,
+    optInSlowMAType: MAType,
     optInSignalPeriod: i32,
-    optInSignalMAType: i32,
+    optInSignalMAType: MAType,
     sub0: MA_Stream,
     sub1: MA_Stream,
     sub2: MA_Stream,
@@ -437,7 +441,7 @@ impl Core {
 
     /// Internal startIdx-anchored open behind [`Core::MACDEXT_Open`] (composition seam).
     pub(crate) fn MACDEXT_OpenInternal(
-        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: i32, mut optInSlowPeriod: i32, mut optInSlowMAType: i32, mut optInSignalPeriod: i32, mut optInSignalMAType: i32,
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType,
     ) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -450,24 +454,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) || optInFastMAType == matype::DEFAULT {
-            optInFastMAType = 0;
+        if optInFastMAType == MAType::DEFAULT {
+            optInFastMAType = MAType::SMA;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) || optInSlowMAType == matype::DEFAULT {
-            optInSlowMAType = 0;
+        if optInSlowMAType == MAType::DEFAULT {
+            optInSlowMAType = MAType::SMA;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) || optInSignalMAType == matype::DEFAULT {
-            optInSignalMAType = 0;
+        if optInSignalMAType == MAType::DEFAULT {
+            optInSignalMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -496,7 +500,7 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut tempMAType: usize = 0_usize;
+        let mut tempMAType: MAType;
         // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
         // to its single-pass implementation. Period 1 stays on the generic
         // path: ma() copies the input for it instead of running an EMA
@@ -509,9 +513,9 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
             // swap type
-            tempMAType = (optInSlowMAType) as usize;
+            tempMAType = optInSlowMAType;
             optInSlowMAType = optInFastMAType;
-            optInFastMAType = (tempMAType) as i32;
+            optInFastMAType = tempMAType;
         }
         // Find the MA with the largest lookback
         lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
@@ -633,11 +637,11 @@ impl Core {
     /// input lengths differ, or the history is shorter than `lookback + 1` bars.
     ///
     /// ```
-    /// use ta_lib::Core;
+    /// use ta_lib::{Core, MAType};
     /// let data: Vec<f64> = (0..252).map(|i| 100.0 + 10.0 * (0.1 * i as f64).sin()).collect();
     ///
     /// let core = Core::new();
-    /// let (mut s, _last) = core.MACDEXT_Open(&data, 12, 0, 26, 0, 9, 0).expect("enough history");
+    /// let (mut s, _last) = core.MACDEXT_Open(&data, 12, MAType::SMA, 26, MAType::SMA, 9, MAType::SMA).expect("enough history");
     /// let peeked = s.peek(100.9);
     /// let updated = s.update(100.9);
     /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
@@ -645,7 +649,7 @@ impl Core {
     /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
     /// ```
     #[doc(alias = "TA_MACDEXT_Open")]
-    pub fn MACDEXT_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInFastMAType: i32, optInSlowPeriod: i32, optInSlowMAType: i32, optInSignalPeriod: i32, optInSignalMAType: i32) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
+    pub fn MACDEXT_Open(&self, inReal: &[f64], optInFastPeriod: i32, optInFastMAType: MAType, optInSlowPeriod: i32, optInSlowMAType: MAType, optInSignalPeriod: i32, optInSignalMAType: MAType) -> Result<(MACDEXT_Stream, (f64, f64, f64)), RetCode> {
         self.MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType)
     }
 
@@ -654,7 +658,7 @@ impl Core {
     /// `len - lookback` values; undersized slices panic (the batch sizing contract).
     #[doc(alias = "TA_MACDEXT_OpenAndFill")]
     pub fn MACDEXT_OpenAndFill(
-        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: i32, mut optInSlowPeriod: i32, mut optInSlowMAType: i32, mut optInSignalPeriod: i32, mut optInSignalMAType: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+        &self, inReal: &[f64], mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
     ) -> Result<MACDEXT_Stream, RetCode> {
         if inReal.is_empty() {
             return Err(RetCode::BadParam);
@@ -676,24 +680,24 @@ impl Core {
         } else if (((optInFastPeriod) as i32) < 2) || (((optInFastPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInFastMAType) as i32) == (i32::MIN) || optInFastMAType == matype::DEFAULT {
-            optInFastMAType = 0;
+        if optInFastMAType == MAType::DEFAULT {
+            optInFastMAType = MAType::SMA;
         }
         if ((optInSlowPeriod) as i32) == (i32::MIN) {
             optInSlowPeriod = 26;
         } else if (((optInSlowPeriod) as i32) < 2) || (((optInSlowPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSlowMAType) as i32) == (i32::MIN) || optInSlowMAType == matype::DEFAULT {
-            optInSlowMAType = 0;
+        if optInSlowMAType == MAType::DEFAULT {
+            optInSlowMAType = MAType::SMA;
         }
         if ((optInSignalPeriod) as i32) == (i32::MIN) {
             optInSignalPeriod = 9;
         } else if (((optInSignalPeriod) as i32) < 1) || (((optInSignalPeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInSignalMAType) as i32) == (i32::MIN) || optInSignalMAType == matype::DEFAULT {
-            optInSignalMAType = 0;
+        if optInSignalMAType == MAType::DEFAULT {
+            optInSignalMAType = MAType::SMA;
         }
         let historyLen: usize = inReal.len();
         let endIdx: usize = historyLen - 1;
@@ -715,7 +719,7 @@ impl Core {
         let mut lookbackSignal: usize = 0_usize;
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
-        let mut tempMAType: usize = 0_usize;
+        let mut tempMAType: MAType;
         // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
         // to its single-pass implementation. Period 1 stays on the generic
         // path: ma() copies the input for it instead of running an EMA
@@ -728,9 +732,9 @@ impl Core {
             optInSlowPeriod = optInFastPeriod;
             optInFastPeriod = (tempInteger) as i32;
             // swap type
-            tempMAType = (optInSlowMAType) as usize;
+            tempMAType = optInSlowMAType;
             optInSlowMAType = optInFastMAType;
-            optInFastMAType = (tempMAType) as i32;
+            optInFastMAType = tempMAType;
         }
         // Find the MA with the largest lookback
         lookbackLargest = self.MA_Lookback(optInFastPeriod, optInFastMAType);
