@@ -138,7 +138,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE( int    startIdx,
    double todayValue;
    double smoothPeriod;
    double local_smoothPrice[50];
-   double *smoothPrice;
+   double *smoothPrice = &local_smoothPrice[0];
    int smoothPrice_Idx;
    int maxIdx_smoothPrice;
    int idx;
@@ -579,7 +579,7 @@ TA_RetCode TA_S_HT_DCPHASE( int    startIdx,
    double todayValue;
    double smoothPeriod;
    double local_smoothPrice[50];
-   double *smoothPrice;
+   double *smoothPrice = &local_smoothPrice[0];
    int smoothPrice_Idx;
    int maxIdx_smoothPrice;
    int idx;

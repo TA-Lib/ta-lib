@@ -78,19 +78,19 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
                                    double        outReal[] )
 {
    double local_sufHighest[30];
-   double *sufHighest;
+   double *sufHighest = &local_sufHighest[0];
    int sufHighest_Idx;
    int maxIdx_sufHighest;
    double local_preHighest[30];
-   double *preHighest;
+   double *preHighest = &local_preHighest[0];
    int preHighest_Idx;
    int maxIdx_preHighest;
    double local_sufLowest[30];
-   double *sufLowest;
+   double *sufLowest = &local_sufLowest[0];
    int sufLowest_Idx;
    int maxIdx_sufLowest;
    double local_preLowest[30];
-   double *preLowest;
+   double *preLowest = &local_preLowest[0];
    int preLowest_Idx;
    int maxIdx_preLowest;
    double lowest;
@@ -208,6 +208,7 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
          preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preHighest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
             return TA_ALLOC_ERR;
          }
       }
@@ -223,6 +224,8 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
          sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !sufLowest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+            if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
             return TA_ALLOC_ERR;
          }
       }
@@ -238,6 +241,9 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
          preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preLowest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+            if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
             return TA_ALLOC_ERR;
          }
       }
@@ -339,10 +345,10 @@ TA_LIB_API TA_RetCode TA_MIDPOINT( int    startIdx,
             blockStart = blockStart + optInTimePeriod;
          }
       }
-      if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
-      if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
-      if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-      if( preLowest != &local_preLowest[0] ) TA_Free( preLowest );
+      if( sufHighest != &local_sufHighest[0] ) { TA_Free( sufHighest ); sufHighest = &local_sufHighest[0]; }
+      if( preHighest != &local_preHighest[0] ) { TA_Free( preHighest ); preHighest = &local_preHighest[0]; }
+      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    } else 
    {
       highestIdx = 0 - 1;
@@ -415,19 +421,19 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
                           double        outReal[] )
 {
    double local_sufHighest[30];
-   double *sufHighest;
+   double *sufHighest = &local_sufHighest[0];
    int sufHighest_Idx;
    int maxIdx_sufHighest;
    double local_preHighest[30];
-   double *preHighest;
+   double *preHighest = &local_preHighest[0];
    int preHighest_Idx;
    int maxIdx_preHighest;
    double local_sufLowest[30];
-   double *sufLowest;
+   double *sufLowest = &local_sufLowest[0];
    int sufLowest_Idx;
    int maxIdx_sufLowest;
    double local_preLowest[30];
-   double *preLowest;
+   double *preLowest = &local_preLowest[0];
    int preLowest_Idx;
    int maxIdx_preLowest;
    double lowest;
@@ -497,6 +503,7 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
          preHighest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preHighest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
             return TA_ALLOC_ERR;
          }
       }
@@ -512,6 +519,8 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
          sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !sufLowest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+            if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
             return TA_ALLOC_ERR;
          }
       }
@@ -527,6 +536,9 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
          preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preLowest )
          {
+            if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
+            if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
+            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
             return TA_ALLOC_ERR;
          }
       }
@@ -616,10 +628,10 @@ TA_RetCode TA_S_MIDPOINT( int    startIdx,
             blockStart = blockStart + optInTimePeriod;
          }
       }
-      if( sufHighest != &local_sufHighest[0] ) TA_Free( sufHighest );
-      if( preHighest != &local_preHighest[0] ) TA_Free( preHighest );
-      if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-      if( preLowest != &local_preLowest[0] ) TA_Free( preLowest );
+      if( sufHighest != &local_sufHighest[0] ) { TA_Free( sufHighest ); sufHighest = &local_sufHighest[0]; }
+      if( preHighest != &local_preHighest[0] ) { TA_Free( preHighest ); preHighest = &local_preHighest[0]; }
+      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    } else 
    {
       highestIdx = 0 - 1;

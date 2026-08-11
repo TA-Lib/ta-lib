@@ -94,7 +94,7 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
    int outIdx;
    int lookbackTotal;
    double local_circBuffer[30];
-   double *circBuffer;
+   double *circBuffer = &local_circBuffer[0];
    int circBuffer_Idx;
    int maxIdx_circBuffer;
 
@@ -212,7 +212,7 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
    /* Free the circular buffer if it was dynamically allocated. */
-   if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer );
+   if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); circBuffer = &local_circBuffer[0]; }
    return TA_SUCCESS;
 }
 
@@ -235,7 +235,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
    int outIdx;
    int lookbackTotal;
    double local_circBuffer[30];
-   double *circBuffer;
+   double *circBuffer = &local_circBuffer[0];
    int circBuffer_Idx;
    int maxIdx_circBuffer;
 
@@ -324,7 +324,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
    } while( i <= endIdx );
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
-   if( circBuffer != &local_circBuffer[0] ) TA_Free( circBuffer );
+   if( circBuffer != &local_circBuffer[0] ) { TA_Free( circBuffer ); circBuffer = &local_circBuffer[0]; }
    return TA_SUCCESS;
 }
 

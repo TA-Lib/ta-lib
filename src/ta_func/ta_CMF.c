@@ -88,9 +88,9 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
    int i;
    int today;
    double local_mfv_flow[50];
-   double *mfv_flow;
+   double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
-   double *mfv_volume;
+   double *mfv_volume = &local_mfv_volume[0];
    int mfv_Idx;
    int maxIdx_mfv;
 
@@ -235,8 +235,8 @@ TA_LIB_API TA_RetCode TA_CMF( int    startIdx,
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
    }
-   if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow );
-   if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume );
+   if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); mfv_flow = &local_mfv_flow[0]; }
+   if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); mfv_volume = &local_mfv_volume[0]; }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -265,9 +265,9 @@ TA_RetCode TA_S_CMF( int    startIdx,
    int i;
    int today;
    double local_mfv_flow[50];
-   double *mfv_flow;
+   double *mfv_flow = &local_mfv_flow[0];
    double local_mfv_volume[50];
-   double *mfv_volume;
+   double *mfv_volume = &local_mfv_volume[0];
    int mfv_Idx;
    int maxIdx_mfv;
 
@@ -386,8 +386,8 @@ TA_RetCode TA_S_CMF( int    startIdx,
       mfv_Idx++;
       if( mfv_Idx > maxIdx_mfv ) mfv_Idx = 0;
    }
-   if( mfv_flow != &local_mfv_flow[0] ) TA_Free( mfv_flow );
-   if( mfv_volume != &local_mfv_volume[0] ) TA_Free( mfv_volume );
+   if( mfv_flow != &local_mfv_flow[0] ) { TA_Free( mfv_flow ); mfv_flow = &local_mfv_flow[0]; }
+   if( mfv_volume != &local_mfv_volume[0] ) { TA_Free( mfv_volume ); mfv_volume = &local_mfv_volume[0]; }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;

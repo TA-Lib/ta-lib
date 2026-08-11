@@ -108,7 +108,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
    double halfOut;
    double diffReal;
    double local_dRing[50];
-   double *dRing;
+   double *dRing = &local_dRing[0];
    int dRing_Idx;
    int maxIdx_dRing;
 
@@ -329,7 +329,7 @@ TA_LIB_API TA_RetCode TA_HMA( int    startIdx,
          outReal[outIdx++] = periodSumSqrt / dividerSqrt;
          periodSumSqrt -= periodSubSqrt;
       }
-      if( dRing != &local_dRing[0] ) TA_Free( dRing );
+      if( dRing != &local_dRing[0] ) { TA_Free( dRing ); dRing = &local_dRing[0]; }
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
@@ -373,7 +373,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
    double halfOut;
    double diffReal;
    double local_dRing[50];
-   double *dRing;
+   double *dRing = &local_dRing[0];
    int dRing_Idx;
    int maxIdx_dRing;
 
@@ -532,7 +532,7 @@ TA_RetCode TA_S_HMA( int    startIdx,
          outReal[outIdx++] = periodSumSqrt / dividerSqrt;
          periodSumSqrt -= periodSubSqrt;
       }
-      if( dRing != &local_dRing[0] ) TA_Free( dRing );
+      if( dRing != &local_dRing[0] ) { TA_Free( dRing ); dRing = &local_dRing[0]; }
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;

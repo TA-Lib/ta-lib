@@ -99,9 +99,9 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
    int i;
    int today;
    double local_mflow_positive[50];
-   double *mflow_positive;
+   double *mflow_positive = &local_mflow_positive[0];
    double local_mflow_negative[50];
-   double *mflow_negative;
+   double *mflow_negative = &local_mflow_negative[0];
    int mflow_Idx;
    int maxIdx_mflow;
 
@@ -159,8 +159,8 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
    /* Make sure there is still something to evaluate. */
    if( startIdx > endIdx )
    {
-      if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
-      if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+      if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
+      if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
       return TA_SUCCESS;
    }
    outIdx = 0;
@@ -256,8 +256,8 @@ TA_LIB_API TA_RetCode TA_MFI( int    startIdx,
       mflow_Idx++;
       if( mflow_Idx > maxIdx_mflow ) mflow_Idx = 0;
    }
-   if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
-   if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+   if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
+   if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -285,9 +285,9 @@ TA_RetCode TA_S_MFI( int    startIdx,
    int i;
    int today;
    double local_mflow_positive[50];
-   double *mflow_positive;
+   double *mflow_positive = &local_mflow_positive[0];
    double local_mflow_negative[50];
-   double *mflow_negative;
+   double *mflow_negative = &local_mflow_negative[0];
    int mflow_Idx;
    int maxIdx_mflow;
 
@@ -342,8 +342,8 @@ TA_RetCode TA_S_MFI( int    startIdx,
    }
    if( startIdx > endIdx )
    {
-      if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
-      if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+      if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
+      if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
       return TA_SUCCESS;
    }
    outIdx = 0;
@@ -420,8 +420,8 @@ TA_RetCode TA_S_MFI( int    startIdx,
       mflow_Idx++;
       if( mflow_Idx > maxIdx_mflow ) mflow_Idx = 0;
    }
-   if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
-   if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+   if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
+   if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
@@ -573,8 +573,8 @@ static TA_RetCode TA_MFI_OpenCore( struct TA_MFI_Stream **stream, const double i
       /* Make sure there is still something to evaluate. */
       if( startIdx > endIdx )
       {
-         if( mflow_positive != &local_mflow_positive[0] ) TA_Free( mflow_positive );
-         if( mflow_negative != &local_mflow_negative[0] ) TA_Free( mflow_negative );
+         if( mflow_positive != &local_mflow_positive[0] ) { TA_Free( mflow_positive ); mflow_positive = &local_mflow_positive[0]; }
+         if( mflow_negative != &local_mflow_negative[0] ) { TA_Free( mflow_negative ); mflow_negative = &local_mflow_negative[0]; }
          return TA_BAD_PARAM;
       }
       outIdx = 0;

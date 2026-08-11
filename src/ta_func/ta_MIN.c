@@ -77,11 +77,11 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
                               double        outReal[] )
 {
    double local_sufLowest[30];
-   double *sufLowest;
+   double *sufLowest = &local_sufLowest[0];
    int sufLowest_Idx;
    int maxIdx_sufLowest;
    double local_preLowest[30];
-   double *preLowest;
+   double *preLowest = &local_preLowest[0];
    int preLowest_Idx;
    int maxIdx_preLowest;
    double lowest;
@@ -180,6 +180,7 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
          preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preLowest )
          {
+            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
             return TA_ALLOC_ERR;
          }
       }
@@ -262,8 +263,8 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
             blockStart = blockStart + optInTimePeriod;
          }
       }
-      if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-      if( preLowest != &local_preLowest[0] ) TA_Free( preLowest );
+      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    } else 
    {
       lowestIdx = 0 - 1;
@@ -313,11 +314,11 @@ TA_RetCode TA_S_MIN( int    startIdx,
                      double        outReal[] )
 {
    double local_sufLowest[30];
-   double *sufLowest;
+   double *sufLowest = &local_sufLowest[0];
    int sufLowest_Idx;
    int maxIdx_sufLowest;
    double local_preLowest[30];
-   double *preLowest;
+   double *preLowest = &local_preLowest[0];
    int preLowest_Idx;
    int maxIdx_preLowest;
    double lowest;
@@ -383,6 +384,7 @@ TA_RetCode TA_S_MIN( int    startIdx,
          preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
          if( !preLowest )
          {
+            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
             return TA_ALLOC_ERR;
          }
       }
@@ -453,8 +455,8 @@ TA_RetCode TA_S_MIN( int    startIdx,
             blockStart = blockStart + optInTimePeriod;
          }
       }
-      if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-      if( preLowest != &local_preLowest[0] ) TA_Free( preLowest );
+      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    } else 
    {
       lowestIdx = 0 - 1;

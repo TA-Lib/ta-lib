@@ -120,9 +120,9 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    int periods[3];
    int sortedPeriods[3];
    double local_term_closeMinusTrueLow[32];
-   double *term_closeMinusTrueLow;
+   double *term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
    double local_term_trueRange[32];
-   double *term_trueRange;
+   double *term_trueRange = &local_term_trueRange[0];
    int term_Idx;
    int maxIdx_term;
 
@@ -363,8 +363,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC( int    startIdx,
    /* All done. Indicate the output limits and return. */
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
-   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
-   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0]; }
+   if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); term_trueRange = &local_term_trueRange[0]; }
    return TA_SUCCESS;
 }
 
@@ -407,9 +407,9 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
    int periods[3];
    int sortedPeriods[3];
    double local_term_closeMinusTrueLow[32];
-   double *term_closeMinusTrueLow;
+   double *term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0];
    double local_term_trueRange[32];
-   double *term_trueRange;
+   double *term_trueRange = &local_term_trueRange[0];
    int term_Idx;
    int maxIdx_term;
 
@@ -612,8 +612,8 @@ TA_RetCode TA_S_ULTOSC( int    startIdx,
    }
    *outNBElement= outIdx;
    *outBegIdx= startIdx;
-   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) TA_Free( term_closeMinusTrueLow );
-   if( term_trueRange != &local_term_trueRange[0] ) TA_Free( term_trueRange );
+   if( term_closeMinusTrueLow != &local_term_closeMinusTrueLow[0] ) { TA_Free( term_closeMinusTrueLow ); term_closeMinusTrueLow = &local_term_closeMinusTrueLow[0]; }
+   if( term_trueRange != &local_term_trueRange[0] ) { TA_Free( term_trueRange ); term_trueRange = &local_term_trueRange[0]; }
    return TA_SUCCESS;
 }
 

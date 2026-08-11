@@ -151,6 +151,71 @@ thread_local! {
     /// this — it builds and threads its own [`CRenderCtx::fma`] directly.
     static STREAM_FMA: std::cell::RefCell<Option<FmaVarSets>> =
         const { std::cell::RefCell::new(None) };
+
+    /// Every CIRCBUF the function being generated declares, in declaration
+    /// order, as `(id, storage names)`.
+    ///
+    /// `CIRCBUF_INIT` heap-allocates when the runtime size outgrows the stack
+    /// buffer, and returns `TA_ALLOC_ERR` when that fails. A function holding
+    /// more than one CIRCBUF therefore has an error path that must release the
+    /// buffers the CIRCBUFs before it already took, or the return leaks them.
+    /// That path is emitted deep in the statement walker, which sees one
+    /// statement and has no view of the function, so the order is stashed here
+    /// for the span of one `generate()` (bounded by [`CircBufOrderGuard`]) —
+    /// the same reason [`STREAM_FMA`] exists, and it covers every render path
+    /// (batch, `TA_S_`, and the stream regions) because they all render inside
+    /// that one call.
+    static CIRCBUF_ORDER: std::cell::RefCell<Vec<(String, Vec<String>)>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// RAII guard installing the CIRCBUF declaration order for the current
+/// function; cleared on drop, so one function's buffers can never be freed on
+/// another's error path.
+struct CircBufOrderGuard;
+
+impl CircBufOrderGuard {
+    fn new(order: Vec<(String, Vec<String>)>) -> Self {
+        CIRCBUF_ORDER.with(|c| *c.borrow_mut() = order);
+        CircBufOrderGuard
+    }
+}
+
+impl Drop for CircBufOrderGuard {
+    fn drop(&mut self) {
+        CIRCBUF_ORDER.with(|c| c.borrow_mut().clear());
+    }
+}
+
+/// Collect the CIRCBUFs a body declares, in order, deduplicated by id.
+fn collect_circbuf_order(stmts: &[Statement], out: &mut Vec<(String, Vec<String>)>) {
+    for s in stmts {
+        match s {
+            Statement::CircBuf(CircBuf::Prolog { id, layout, .. }) => {
+                if !out.iter().any(|(seen, _)| seen == id) {
+                    let storages = circbuf_fields(id, layout)
+                        .into_iter()
+                        .map(|(storage, _)| storage)
+                        .collect();
+                    out.push((id.clone(), storages));
+                }
+            }
+            Statement::Block { body } => collect_circbuf_order(body, out),
+            _ => {}
+        }
+    }
+}
+
+/// The storage buffers of every CIRCBUF declared before `id`. These are the
+/// ones an allocation failure inside `id`'s `CIRCBUF_INIT` has to release.
+fn circbufs_declared_before(id: &str) -> Vec<String> {
+    CIRCBUF_ORDER.with(|c| {
+        c.borrow()
+            .iter()
+            .take_while(|(seen, _)| seen != id)
+            .flat_map(|(_, storages)| storages.iter().cloned())
+            .collect()
+    })
 }
 
 /// RAII guard installing the stream FMA sets for the current function; the stash
@@ -200,6 +265,13 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Installed for the whole function so every CIRCBUF_INIT error path can
+    // release the buffers the CIRCBUFs before it already took.
+    let mut circbuf_order = Vec::new();
+    collect_circbuf_order(&func.private_body, &mut circbuf_order);
+    collect_circbuf_order(&func.body, &mut circbuf_order);
+    let _circbuf_order = CircBufOrderGuard::new(circbuf_order);
+
     let mut out = String::new();
     out.push_str(&gen_header());
     out.push_str(&gen_header_comments(func));
@@ -1039,12 +1111,16 @@ impl StatementEmitter for CStmt<'_> {
             CircBuf::Next { id } => {
                 format!("{pad}{id}_Idx++;\n{pad}if( {id}_Idx > maxIdx_{id} ) {id}_Idx = 0;\n")
             }
-            // Free each heap buffer iff it was allocated (pointer != the stack buffer).
+            // Free each heap buffer iff it was allocated (pointer != the stack
+            // buffer), then point it back at the stack buffer. The reset keeps
+            // the pointer answering `!= &local_x[0]` truthfully after the free,
+            // so a later sibling's allocation failure cannot free it twice.
             CircBuf::Destroy { id, layout } => {
                 let mut s = String::new();
                 for (storage, _t) in circbuf_fields(id, layout) {
                     s.push_str(&format!(
-                        "{pad}if( {storage} != &local_{storage}[0] ) TA_Free( {storage} );\n"
+                        "{pad}if( {storage} != &local_{storage}[0] ) \
+                         {{ TA_Free( {storage} ); {storage} = &local_{storage}[0]; }}\n"
                     ));
                 }
                 s
@@ -1078,6 +1154,11 @@ impl StatementEmitter for CStmt<'_> {
                 s.push_str(&format!(
                     "{pad}if( (int){sz} > (int)(sizeof(local_{first})/sizeof({et0})) )\n{pad}{{\n"
                 ));
+                // On failure, release everything already taken: the CIRCBUFs
+                // declared before this one (each still pointing at its stack
+                // buffer if it never allocated, so the guard makes those a
+                // no-op) and this CIRCBUF's own earlier field buffers.
+                let earlier = circbufs_declared_before(id);
                 let mut allocated: Vec<String> = Vec::new();
                 for (storage, t) in &fields {
                     let et = c_type_name(t);
@@ -1087,6 +1168,11 @@ impl StatementEmitter for CStmt<'_> {
                     s.push_str(&format!("{pad}   if( !{storage} )\n{pad}   {{\n"));
                     for prev in &allocated {
                         s.push_str(&format!("{pad}      TA_Free( {prev} );\n"));
+                    }
+                    for prev in &earlier {
+                        s.push_str(&format!(
+                            "{pad}      if( {prev} != &local_{prev}[0] ) TA_Free( {prev} );\n"
+                        ));
                     }
                     s.push_str(&format!("{pad}      return TA_ALLOC_ERR;\n{pad}   }}\n"));
                     allocated.push(storage.clone());
@@ -2337,7 +2423,12 @@ fn emit_c_var_decls(stmt: &Statement, out: &mut String, declared: &mut Vec<Strin
                     } else {
                         VarType::RealPointer
                     };
-                    out.push_str(&format!("   {};\n", c_decl(&ptr_t, &storage)));
+                    // Point at the stack buffer from the outset so `!= &local_x[0]`
+                    // is a valid question before CIRCBUF_INIT runs: a sibling's
+                    // allocation failure frees the buffers taken so far, and it
+                    // must read a defined pointer for the ones that never
+                    // allocated (or never initialized at all).
+                    out.push_str(&format!("   {} = &{local}[0];\n", c_decl(&ptr_t, &storage)));
                 }
             }
             let idx = format!("{id}_Idx");
