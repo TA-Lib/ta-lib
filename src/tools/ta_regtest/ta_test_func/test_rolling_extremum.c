@@ -58,23 +58,32 @@
  *
  * That gives the family a shape the rest of the suite does not probe:
  *
- *  - The scratch is a CIRCBUF sized by the period, stack-resident up to 30
- *    elements and heap-allocated above it. Every other test drives these
- *    functions at period 1, 2, 3, 14 or 30 -- all stack -- so the heap arm and
- *    its allocation-failure unwind had no coverage at all.
- *
- *  - The prefix pass clamps to `endIdx`, so a range length that is not a whole
- *    multiple of the period exercises a different tail every time.
+ *  - The boundary between the two halves moves with the output index, and the
+ *    trailing block is short by (range length mod period). Nothing else varies
+ *    the range length RELATIVE to the period, so the clamp's tail was reached
+ *    only incidentally.
  *
  *  - The hardcoded tables pin values at one period on one 252-bar series; they
- *    cannot sweep.
+ *    cannot sweep. They also predate the rewrite, so they pin the answer, not
+ *    the block structure that now produces it.
  *
- * So this file checks the family against a naive O(n*period) window scan --
- * the definition, not a second clever algorithm -- over a spread of periods
- * that straddle the CIRCBUF stack/heap boundary and the block-structure edges,
- * and over range lengths chosen relative to each period. It also pins the
- * in-place claim ("input and output may alias") that all six carry in their
- * source comment and that nothing else tests.
+ * So this file checks the family against a naive O(n*period) window scan -- the
+ * definition, not a second clever algorithm -- over a spread of periods that
+ * straddle the block-structure edges, and over range lengths chosen relative to
+ * each period. It also pins the in-place claim ("input and output may alias")
+ * that all six carry in their source comment and that only ACCBANDS was
+ * otherwise tested for.
+ *
+ * What this file does NOT claim to be first at: the heap arm of the scratch.
+ * `build_candidates` in test_variants.c probes every integer parameter at
+ * {default, min, min+1, 14, min(max,60), max}, and period 60 already drives all
+ * six past the 30-element stack buffer in both the TA_ and TA_S_ bodies; the
+ * fuzz vectors reach 31 and 33 the same way. The periods here straddle 30
+ * because the block structure changes there too, not because nothing else got
+ * that far. The one path that genuinely had no coverage is the ALLOCATION
+ * FAILURE unwind, and it still has none here -- nothing in the suite makes
+ * TA_Malloc fail. That is gated in the generator instead, by
+ * c_circbuf_alloc_failure_frees_the_circbufs_before_it.
  *
  * On signed zeros: -0.0 and +0.0 compare equal but differ in bits, so which
  * one a window's extremum keeps is a tie-break choice. The block scan's is

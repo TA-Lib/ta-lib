@@ -314,19 +314,29 @@ for s in trend-chop-0.5p trend-chop-1p trend-chop-2p trend-chop-4p; do
 done
 ```
 
-The rolling min/max behind MIN, MAX, MINMAX, MIDPOINT, MIDPRICE, WILLR, STOCH
-and STOCHF caches the window extremum and rescans the window when that extremum
-is the bar dropping out of it, so its cost depends on how often that happens. On
-a zero-drift walk the rate decays as ~1/sqrt(period); on a trending leg it is
-set by the drift/noise ratio instead and barely moves with the period, so the
-two separate further the longer the window (1.1x the rescan rate at period 14,
-3x at period 200). `randwalk` alone cannot see that — issue #147.
+The rolling min/max caches the window extremum and rescans the window when that
+extremum is the bar dropping out of it, so its cost depends on how often that
+happens. On a zero-drift walk the rate decays as ~1/sqrt(period); on a trending
+leg it is set by the drift/noise ratio instead and barely moves with the period,
+so the two separate further the longer the window (1.1x the rescan rate at
+period 14, 3x at period 200). `randwalk` alone cannot see that — issue #147.
 
 The tail shapes are not peers: `constant` is the worst case at `2*(period-1)`
 comparisons per bar, exactly twice `mono-up`/`mono-down`. Flat input pins both
 extrema because the rescan compares with strict `>`/`<` and leaves the cached
 index on `trailingIdx`, so the `>=`/`<=` fast-path arms never run; a monotone
 ramp pins only one of the two.
+
+**Which tier that still describes** matters, because #147 replaced half of it.
+The batch tier of MIN, MAX, MINMAX, MIDPOINT, MIDPRICE and WILLR is now a Van
+Herk / Gil-Werman block scan: branchless, a fixed number of comparisons per bar
+at any period, input-independent. So for those six, `constant`, `mono-*` and
+`trend-chop-*` all cost the same through `ta_bench --language=c` (the batch
+call) and the shape sweep says nothing about them. The rescan — and everything
+above — is still what STOCH and STOCHF run, and still what the *streaming* tier
+of all six runs, which is what `ta_bench --shape=... --mode=open` and
+`ta_bench_stream`'s `update_ns` measure. Reach for the shape sweep when the arm
+under test is one of those; for the six functions' batch arm it is inert.
 
 `--shape` is opt-in and `randwalk` reproduces the pre-corpus series bit for bit,
 so a default run costs and measures exactly what it did before. `--seed` picks
