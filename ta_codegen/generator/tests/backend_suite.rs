@@ -9413,3 +9413,109 @@ fn ta_max_index_agrees_across_every_surface() {
     // and not something a backend picks up silently.
     assert_eq!(first, 100_000_000, "TA_MAX_INDEX changed; update the docs and CHANGELOG with it");
 }
+
+/// Every `CIRCBUF_INIT` allocation-failure path must release the buffers the
+/// CIRCBUFs before it already took.
+///
+/// `CIRCBUF_INIT` heap-allocates when the runtime size outgrows its stack
+/// buffer and returns `TA_ALLOC_ERR` straight out of the function on failure —
+/// so in a function holding more than one CIRCBUF, the later ones' failure
+/// paths leak the earlier ones unless the cascade is emitted. Issue #147's
+/// rolling-extremum block scan brought the first 2- and 4-CIRCBUF functions
+/// into the tree (MIN/MAX take two, MINMAX/MIDPOINT/MIDPRICE/WILLR take four),
+/// which is what made a latent generator gap live.
+///
+/// Swept over every indicator rather than a name list, so a new multi-CIRCBUF
+/// function is covered the day it lands.
+#[test]
+fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
+    let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
+    let registry = make_registry();
+    let helpers = make_helpers();
+
+    let mut names: Vec<String> = std::fs::read_dir(&base)
+        .expect("input dir")
+        .filter_map(|e| {
+            let path = e.ok()?.path();
+            let name = path.file_name()?.to_str()?.to_string();
+            (path.join(format!("{name}.yaml")).is_file() && path.join(format!("{name}.c")).is_file())
+                .then_some(name)
+        })
+        .collect();
+    names.sort();
+    assert!(names.len() > 100, "expected the full indicator set, got {}", names.len());
+
+    let mut multi_circbuf_functions = 0usize;
+    for name in &names {
+        let (func, enums) = load_indicator(name);
+        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+
+        // `declared` resets at each function body: the emitter puts a bare `{`
+        // at column 0 to open one.
+        let mut declared: Vec<String> = Vec::new();
+        let mut pending_alloc: Option<String> = None;
+        let mut in_failure_block: Option<(String, Vec<String>)> = None;
+
+        for line in c_out.lines() {
+            if line == "{" {
+                declared.clear();
+                continue;
+            }
+            let t = line.trim();
+
+            // `double *sufLowest = &local_sufLowest[0];`
+            if let Some(rest) = t.strip_prefix("double *").or_else(|| t.strip_prefix("int *")) {
+                if let Some(storage) = rest.split(" = &local_").next() {
+                    if rest.contains(" = &local_") {
+                        declared.push(storage.to_string());
+                    }
+                }
+            }
+
+            if let Some(rest) = t.strip_prefix("if( !") {
+                if let Some(storage) = rest.split(&[' ', ')'][..]).next() {
+                    if pending_alloc.as_deref() == Some(storage) {
+                        in_failure_block = Some((storage.to_string(), Vec::new()));
+                    }
+                }
+            } else if let Some((_, freed)) = in_failure_block.as_mut() {
+                if t.contains("TA_Free( ") {
+                    let f = t.rsplit("TA_Free( ").next().unwrap_or("");
+                    if let Some(v) = f.split(' ').next() {
+                        freed.push(v.to_string());
+                    }
+                }
+                if t == "return TA_ALLOC_ERR;" {
+                    let (storage, freed) = in_failure_block.take().expect("in block");
+                    let at = declared.iter().position(|d| *d == storage);
+                    if let Some(at) = at {
+                        if at > 0 {
+                            multi_circbuf_functions += 1;
+                        }
+                        for earlier in &declared[..at] {
+                            assert!(
+                                freed.iter().any(|f| f == earlier),
+                                "{name}: allocation failure for `{storage}` returns \
+                                 TA_ALLOC_ERR without releasing `{earlier}`, which was \
+                                 allocated before it — that leaks up to one full scratch \
+                                 buffer per CIRCBUF. Freed here: {freed:?}"
+                            );
+                        }
+                    }
+                }
+            }
+
+            pending_alloc = t
+                .contains("= TA_Malloc(")
+                .then(|| t.split(" = TA_Malloc(").next().unwrap_or("").trim().to_string());
+        }
+    }
+
+    // Guard the gate itself: if the cascade never had a case to cover, the
+    // sweep above would pass vacuously.
+    assert!(
+        multi_circbuf_functions >= 12,
+        "expected the rolling-extremum family's multi-CIRCBUF failure paths to be \
+         swept, saw only {multi_circbuf_functions}"
+    );
+}

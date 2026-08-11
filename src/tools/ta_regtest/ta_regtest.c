@@ -720,6 +720,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cmou,      "CMOU" );
    DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
+   DO_TEST( test_func_rolling_extremum,
+            "MIN,MAX,MINMAX,MIDPOINT,MIDPRICE,WILLR,ROLLING,BLOCKSCAN" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

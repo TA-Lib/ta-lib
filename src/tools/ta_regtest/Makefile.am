@@ -20,6 +20,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_stoch.c \
 	ta_test_func/test_macd.c \
 	ta_test_func/test_minmax.c \
+	ta_test_func/test_rolling_extremum.c \
 	ta_test_func/test_per_hlcv.c \
 	ta_test_func/test_per_cv.c \
 	ta_test_func/test_1in_1out.c \

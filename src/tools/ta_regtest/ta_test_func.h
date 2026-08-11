@@ -33,5 +33,6 @@ ErrorNumber test_func_cmf     ( TA_History *history );
 ErrorNumber test_func_cmou    ( TA_History *history );
 ErrorNumber test_func_variants( TA_History *history );
 ErrorNumber test_candle_precision( TA_History *history );
+ErrorNumber test_func_rolling_extremum( TA_History *history );
 
 #endif
