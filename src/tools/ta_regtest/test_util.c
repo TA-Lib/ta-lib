@@ -526,6 +526,14 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
          return TA_TESTUTIL_TFRR_BAD_BEGIDX;
       }
    }
+   else if( outBegIdx != 0 )
+   {
+      /* A success with no output leaves outBegIdx at 0. Asserted against the
+       * contract rather than expectedBegIdx: some tables carry a stale non-zero
+       * there, never read until now. */
+      printf( "Fail: outBegIdx expected 0 with no output but got %d\n", outBegIdx );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
 
    /* Succeed. */
    return TA_TEST_PASS;
