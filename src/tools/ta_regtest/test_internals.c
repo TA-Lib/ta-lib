@@ -57,6 +57,8 @@
  */
 
 /**** Headers ****/
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -84,6 +86,7 @@
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testBoundedAppend( void );
 static ErrorNumber testUnstablePeriodBounds( void );
+static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
 
 static TA_RetCode circBufferFillFrom0ToSize( int size, int *buffer );
@@ -120,6 +123,13 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Unstable period bound tests (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testCandleSettingsBounds();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Candle settings bound tests (%d)\n", retValue );
       return retValue;
    }
 
@@ -539,6 +549,278 @@ static ErrorNumber testUnstablePeriodBounds( void )
     * down zeroes TA_Globals, so the periods set here cannot leak into any
     * later test.
     */
+   retValue = freeLib();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS;
+}
+
+#define CANDLE_NB_BAR 64
+
+/* Runs CDLDOJI over the whole series and checks the lookback against what the
+ * call reports. Returns the number of pattern hits, or -1 on a parity failure.
+ */
+static int checkDoji( const double *inOpen, const double *inHigh,
+                      const double *inLow,  const double *inClose )
+{
+   int outInteger[CANDLE_NB_BAR];
+   int outBegIdx, outNbElement, lookback, i, nbHit;
+   TA_RetCode retCode;
+
+   lookback = TA_CDLDOJI_Lookback();
+   retCode  = TA_CDLDOJI( 0, CANDLE_NB_BAR-1, inOpen, inHigh, inLow, inClose,
+                          &outBegIdx, &outNbElement, outInteger );
+
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_CDLDOJI RetCode = %d (lookback = %d)\n",
+              (int)retCode, lookback );
+      return -1;
+   }
+
+   /* A negative lookback is the tier disagreeing with itself: the call just
+    * succeeded, so the lookback cannot be saying "rejected".
+    */
+   if( lookback < 0 )
+   {
+      printf( "\nFailed: TA_CDLDOJI_Lookback = %d but the call returned TA_SUCCESS\n",
+              lookback );
+      return -1;
+   }
+
+   /* A lookback longer than the series produces nothing, reported as the
+    * (0,0) empty result rather than as an error.
+    */
+   if( lookback > CANDLE_NB_BAR-1 )
+   {
+      if( outBegIdx != 0 || outNbElement != 0 )
+      {
+         printf( "\nFailed: TA_CDLDOJI returned %d element(s) at lookback %d over %d bars\n",
+                 outNbElement, lookback, CANDLE_NB_BAR );
+         return -1;
+      }
+      return 0;
+   }
+
+   /* startIdx == 0, so the function consumed exactly `lookback` leading bars.
+    * This is what the shift breaks: it reported outBegIdx = 0 with
+    * CANDLE_NB_BAR-lookback... elements while the values were |avgPeriod|
+    * bars later than advertised.
+    */
+   if( outBegIdx != lookback || outNbElement != CANDLE_NB_BAR - lookback )
+   {
+      printf( "\nFailed: TA_CDLDOJI outBegIdx = %d outNbElement = %d, lookback = %d\n",
+              outBegIdx, outNbElement, lookback );
+      return -1;
+   }
+
+   nbHit = 0;
+   for( i=0; i < outNbElement; i++ )
+      if( outInteger[i] != 0 )
+         nbHit++;
+
+   return nbHit;
+}
+
+/* The other global setter, and the same defect (issue #185).
+ * TA_SetCandleSettings validated `settingType` and nothing else, so a negative
+ * `avgPeriod` reached all 61 CDL* bodies: CDLDOJI's lookback returned -1 while
+ * TA_CDLDOJI returned TA_SUCCESS with every value shifted under an *outBegIdx
+ * still reporting startIdx. Above TA_MAX_INDEX is the mirror image -- the
+ * `max(...)+N` lookbacks overflow signed-negative into that same state
+ * (-2147483647 out of CDLEVENINGDOJISTAR in practice).
+ *
+ * The contract asserted here is the lookback/call tier parity the boundary
+ * sweep enforces for a function's OWN optional parameters, which by
+ * construction it cannot reach through a global setter: a setting the setter
+ * ACCEPTS must produce a non-negative lookback and a call whose *outBegIdx and
+ * element count agree with it, and a setting it REJECTS must leave the previous
+ * one in place.
+ *
+ * Non-vacuity: `checkDoji` asserts the parity positively on every accepted
+ * setting (not just the absence of a bad return code), and the final leg
+ * requires a tuned factor to actually change CDLDOJI's output -- a setter that
+ * had started rejecting everything would fail there rather than pass quietly.
+ */
+static ErrorNumber testCandleSettingsBounds( void )
+{
+   double inOpen[CANDLE_NB_BAR], inHigh[CANDLE_NB_BAR];
+   double inLow[CANDLE_NB_BAR], inClose[CANDLE_NB_BAR];
+   ErrorNumber retValue;
+   int nbHitDefault, nbHitTuned;
+   int i;
+
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   /* A deterministic series with a mix of doji and non-doji bars, so the last
+    * leg below can tell "the setting took effect" from "everything matches".
+    */
+   for( i=0; i < CANDLE_NB_BAR; i++ )
+   {
+      inOpen[i]  = 100.0 + (double)(i % 7);
+      inClose[i] = 100.0 + (double)((i * 3) % 5);
+      inHigh[i]  = (inOpen[i] > inClose[i] ? inOpen[i] : inClose[i]) + 1.0;
+      inLow[i]   = (inOpen[i] < inClose[i] ? inOpen[i] : inClose[i]) - 1.0;
+   }
+
+   nbHitDefault = checkDoji( inOpen, inHigh, inLow, inClose );
+   if( nbHitDefault < 0 )
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_0;
+
+   /* The reported defect. Both a plain -1 and the extreme, since a guard
+    * written as a magnitude test rather than a sign test would let INT_MIN
+    * through.
+    */
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, -1, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, -10, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, INT_MIN, 0.1 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted a negative avgPeriod\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+
+   /* The other end: an avgPeriod above the index space overflows the
+    * `max(...)+N` lookbacks. TA_MAX_INDEX is the ceiling TA_SetUnstablePeriod
+    * already uses for the same reason -- a warm-up longer than the largest
+    * addressable series can never produce output.
+    */
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, TA_MAX_INDEX+1, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, INT_MAX, 0.1 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted an avgPeriod that overflows the lookback\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+
+   /* An out-of-domain rangeType reaches the fall-through arm of TA_CANDLERANGE,
+    * which evaluates to 0 -- every range zero, every threshold zero, and a
+    * silently meaningless result rather than an error. The domain is the
+    * member list, so 3 is as invalid as -1.
+    */
+   if( TA_SetCandleSettings( TA_BodyDoji, (TA_RangeType)3, 10, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( TA_BodyDoji, (TA_RangeType)-1, 10, 0.1 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted an out-of-domain rangeType\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+
+   /* factor takes any finite value -- it scales a threshold, never an index --
+    * but not NaN, which silences every comparison it feeds. Both halves are
+    * asserted: a guard written as a range check would accept NaN (every
+    * comparison against it is false), and one written as `!(factor > 0)` would
+    * refuse the legal negative.
+    */
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, NAN ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted a NaN factor\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, -1.0 ) != TA_SUCCESS ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, 0.0 ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_SetCandleSettings refused a legal factor\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+   if( TA_RestoreCandleDefaultSettings( TA_BodyDoji ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_RestoreCandleDefaultSettings( TA_BodyDoji )\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_1;
+   }
+
+   /* Nothing above was stored: the defaults are still in force, and the tiers
+    * still agree.
+    */
+   if( checkDoji( inOpen, inHigh, inLow, inClose ) != nbHitDefault )
+   {
+      printf( "\nFailed: a rejected TA_SetCandleSettings still changed the setting\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_2;
+   }
+
+   /* settingType: the wildcard is not a single-setting target, and a negative
+    * one must not index candleSettings[-1] -- which lands on the tail of
+    * TA_Globals->unstablePeriod[], the same adjacency #144 fixed for the other
+    * setter. Live only where the enum's underlying type is signed (MSVC gives
+    * enums `int`); gcc and clang pick `unsigned int` here because the enum
+    * declares no negative member, so the value already wraps out of range and
+    * this leg is inert there. The periods are parked at 7 first so that ANY of
+    * the four fields the setter writes is detectable -- a fresh library leaves
+    * them at 0, and a clobber that happened to write 0 would look untouched.
+    */
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
+   if( TA_SetCandleSettings( TA_AllCandleSettings, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( (TA_CandleSettingType)-1, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
+       TA_SetCandleSettings( (TA_CandleSettingType)-1000000, TA_RangeType_HighLow, 10, 0.1 ) != TA_BAD_PARAM ||
+       TA_RestoreCandleDefaultSettings( (TA_CandleSettingType)-1 ) != TA_BAD_PARAM )
+   {
+      printf( "\nFailed: TA_SetCandleSettings accepted an out-of-domain settingType\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_3;
+   }
+   for( i=0; i < TA_FUNC_UNST_COUNT; i++ )
+   {
+      if( TA_GetUnstablePeriod( (TA_FuncUnstId)i ) != 7 )
+      {
+         printf( "\nFailed: a rejected settingType wrote onto unstablePeriod[%d]\n", i );
+         return TA_INTERNAL_CANDLE_BOUND_FAIL_3;
+      }
+   }
+   TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+   /* The valid domain still works, bounds included -- the guards are bounds,
+    * not off-by-ones. avgPeriod 0 is the "compare with the current candle"
+    * mode the defaults use for ShadowLong/ShadowVeryLong, and TA_MAX_INDEX is
+    * the ceiling itself.
+    */
+   if( TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_RealBody, 0, 0.1 ) != TA_SUCCESS ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_Shadows, TA_MAX_INDEX, 0.1 ) != TA_SUCCESS ||
+       TA_SetCandleSettings( TA_Equal, TA_RangeType_HighLow, 5, 0.05 ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_SetCandleSettings rejected a valid setting\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
+   }
+
+   /* At TA_MAX_INDEX the lookback swallows the whole series, so the tiers must
+    * still agree on an empty result rather than the call inventing one.
+    */
+   if( checkDoji( inOpen, inHigh, inLow, inClose ) != 0 )
+   {
+      printf( "\nFailed: TA_CDLDOJI produced output at an avgPeriod of TA_MAX_INDEX\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
+   }
+
+   /* ...and the setter still does its job. A huge factor makes every bar a
+    * doji; if this matched the default count the guards would be rejecting
+    * everything and every assertion above would be vacuous.
+    */
+   if( TA_RestoreCandleDefaultSettings( TA_AllCandleSettings ) != TA_SUCCESS ||
+       TA_SetCandleSettings( TA_BodyDoji, TA_RangeType_HighLow, 10, 1.0e9 ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_SetCandleSettings rejected the tuned setting\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
+   }
+   nbHitTuned = checkDoji( inOpen, inHigh, inLow, inClose );
+   if( nbHitTuned < 0 )
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
+   if( nbHitTuned <= nbHitDefault )
+   {
+      printf( "\nFailed: TA_SetCandleSettings had no effect (%d hits, default %d)\n",
+              nbHitTuned, nbHitDefault );
+      return TA_INTERNAL_CANDLE_VACUOUS;
+   }
+
+   /* Leave the globals as they were found: freeLib() zeroes them, but the
+    * defaults are what every later test expects if it does not re-init.
+    */
+   if( TA_RestoreCandleDefaultSettings( TA_AllCandleSettings ) != TA_SUCCESS )
+   {
+      printf( "\nFailed: TA_RestoreCandleDefaultSettings\n" );
+      return TA_INTERNAL_CANDLE_BOUND_FAIL_4;
+   }
+
    retValue = freeLib();
    if( retValue != TA_TEST_PASS )
       return retValue;

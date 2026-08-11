@@ -41,6 +41,10 @@ Range types are `TA_RangeType_RealBody`, `TA_RangeType_HighLow` and
 below. `TA_RestoreCandleDefaultSettings` reverts one setting, or every one when
 passed `TA_AllCandleSettings`.
 
+Returns `TA_BAD_PARAM` unless `settingType` names one setting (`TA_AllCandleSettings`
+is meaningful only for the restore call), `rangeType` is one of the three members,
+`avgPeriod` is between `0` and `TA_MAX_INDEX`, and `factor` is not NaN.
+
 Being globals, choose candle settings **once, from a single thread**, before making
 concurrent calls (see [multi-threading](/api/#multithreading)). They stay in effect
 until changed or restored.
@@ -59,7 +63,9 @@ let core = Core::builder()
     .build();
 ```
 
-`range_type` is `0` = real body, `1` = high-to-low, `2` = shadows.
+`range_type` is `0` = real body, `1` = high-to-low, `2` = shadows. `candle_setting`
+**panics** on any other `range_type`, on an `avg_period` outside `0..=MAX_INDEX`, and
+on a NaN `factor` — the same domain C rejects with `TA_BAD_PARAM`.
 
 There is no restore call and none is needed: a builder starts from the defaults, so
 "restoring" a setting means simply not overriding it. Settings are fixed when the

@@ -2834,6 +2834,11 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* basing on settingType it must be compared with the average \n\
          \x20* of the last avgPeriod candles' rangeType multiplied by factor.\n\
          \x20* This setting is valid until TA_RestoreCandleDefaultSettings is called\n\
+         \x20*\n\
+         \x20* Returns TA_BAD_PARAM unless settingType names a single setting\n\
+         \x20* (TA_AllCandleSettings selects 'all' for the restore call below,\n\
+         \x20* not here), rangeType is a TA_RangeType member, avgPeriod is\n\
+         \x20* between 0 and TA_MAX_INDEX, and factor is not NaN.\n\
          \x20*/\n\
          TA_LIB_API TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,\n\
          \x20                                TA_RangeType rangeType, \n\

@@ -191,6 +191,42 @@ public class CoreApiTest {
         check(outT[rT.count() - 1] == 100, "tuned core: a huge BodyDoji factor calls it a doji");
     }
 
+    /**
+     * The property the {@code avgPeriod} bounds exist to preserve (#185), stated
+     * over the two tiers rather than over the setter: for every setting the
+     * builder accepts, the lookback is a real index count and the call's reported
+     * range agrees with it. An out-of-range {@code avgPeriod} broke exactly this
+     * — a value near {@code Integer.MAX_VALUE} wrapped the
+     * {@code Math.max(...) + N} lookbacks negative.
+     */
+    static void acceptedCandleSettingsKeepTheLookbackAndTheCallInStep() {
+        int n = 40;
+        double[] open = new double[n], high = new double[n], low = new double[n], close = new double[n];
+        for (int i = 0; i < n; i++) {
+            open[i] = 100.0; close[i] = 104.0; high[i] = 105.0; low[i] = 99.0;
+        }
+
+        for (int avgPeriod : new int[] { 0, 1, 5, n - 1, n, 100, Core.MAX_INDEX }) {
+            Core core = Core.builder()
+                .candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, avgPeriod, 0.1)
+                .build();
+            int lookback = core.CDLDOJI_Lookback();
+            check(lookback >= 0 && lookback <= Core.MAX_INDEX,
+                  "avgPeriod " + avgPeriod + ": lookback " + lookback + " is a real index count");
+
+            int[] out = new int[n];
+            OutRange r = core.CDLDOJI(0, n - 1, open, high, low, close, out);
+            if (lookback > n - 1) {
+                check(r.isEmpty(),
+                      "avgPeriod " + avgPeriod + ": a lookback past the series produces nothing");
+            } else {
+                check(r.begIdx() == lookback && r.count() == n - lookback,
+                      "avgPeriod " + avgPeriod + ": begIdx " + r.begIdx() + " / count "
+                      + r.count() + " agree with lookback " + lookback);
+            }
+        }
+    }
+
     static void restoreCandleDefaultUndoesAnOverride() {
         CoreBuilder b = Core.builder()
             .candleSetting(CandleSettingType.BodyDoji, RangeType.RealBody, 3, 42.0);
@@ -316,6 +352,24 @@ public class CoreApiTest {
         checkThrows(IllegalArgumentException.class,
             () -> Core.builder().candleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
             "negative avgPeriod -> IAE");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().candleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, Core.MAX_INDEX + 1, 1.0),
+            "avgPeriod above MAX_INDEX -> IAE");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().candleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, Integer.MAX_VALUE, 1.0),
+            "avgPeriod at Integer.MAX_VALUE -> IAE");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().candleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, 10, Double.NaN),
+            "NaN factor -> IAE");
+        // A negative factor is legal: it scales a threshold nothing can fall
+        // below, so the pattern simply never matches — a plausible thing to ask
+        // for, unlike NaN.
+        check(Core.builder().candleSetting(
+                  CandleSettingType.BodyDoji, RangeType.HighLow, 10, -1.0) != null,
+              "a negative factor is accepted");
         // Core.unstablePeriod(id) reads; CoreBuilder.unstablePeriod(id, period)
         // writes. Same name, different class and arity — the immutable Core has
         // no writer for a `get` prefix to disambiguate against.
@@ -385,6 +439,7 @@ public class CoreApiTest {
         builderAllIsSetAll();
         unstablePeriodReachesTheIndicator();
         candleSettingReachesTheIndicator();
+        acceptedCandleSettingsKeepTheLookbackAndTheCallInStep();
         restoreCandleDefaultUndoesAnOverride();
         builtCoreIsIsolatedFromTheBuilder();
         toBuilderRoundTripsAndDoesNotAlias();

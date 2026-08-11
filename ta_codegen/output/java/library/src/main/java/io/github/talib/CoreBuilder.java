@@ -36,6 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin
  *  CC       Claude Code
  *
  * Change history:
@@ -43,6 +44,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  072526 MF,CC  First Version — builder for the immutable Core.
+ *  081126 KL,MF,CC Bound avgPeriod above and refuse a NaN factor (#185).
  */
 
 package io.github.talib;
@@ -110,10 +112,15 @@ public final class CoreBuilder {
     * Overrides one candlestick setting, mirroring the C
     * {@code TA_SetCandleSettings}.
     *
+    * <p>{@code avgPeriod} is the lookback of every {@code CDL*} function that
+    * reads the setting, so it is bounded like one; {@code factor} scales a
+    * threshold and takes any finite value.
+    *
     * @throws NullPointerException if {@code settingType} or {@code rangeType} is null
     * @throws IllegalArgumentException if {@code settingType} is
     *         {@link CandleSettingType#AllCandleSettings} (not a single-setting
-    *         target), or if {@code avgPeriod} is negative
+    *         target), if {@code avgPeriod} is outside {@code 0..}{@link
+    *         Core#MAX_INDEX}, or if {@code factor} is NaN
     */
    public CoreBuilder candleSetting(CandleSettingType settingType, RangeType rangeType,
       int avgPeriod, double factor) {

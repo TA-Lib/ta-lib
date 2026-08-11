@@ -103,6 +103,13 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
+- (#185) `TA_SetCandleSettings` validated only its `settingType`, so a negative `avgPeriod`
+  was accepted and every `CDL*` function then returned `TA_SUCCESS` with all of its values
+  shifted underneath a correct-looking `outBegIdx`. It now returns `TA_BAD_PARAM` unless
+  `settingType` names one setting, `rangeType` is a `TA_RangeType` member, `avgPeriod` is
+  between 0 and `TA_MAX_INDEX`, and `factor` is not NaN. Same domain in Rust
+  (`CoreBuilder::candle_setting` panics, as it already did for the `AllCandleSettings`
+  wildcard) and in Java (`CoreBuilder.candleSetting` throws). Thanks @kevinlincg !
 - Real optional parameters lost their range check in 0.7.0. Values far outside the
   documented bounds were accepted — `TA_SAR` with a negative acceleration, or
   `TA_CDLDARKCLOUDCOVER` with a penetration of `1e100`, returned `TA_SUCCESS` and a

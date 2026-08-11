@@ -356,18 +356,19 @@ impl CoreBuilder {
     /// That variant is a wildcard, not a setting, so there is nothing to
     /// override — C returns `TA_BAD_PARAM` and Java throws for the same call.
     ///
-    /// Panics if `setting.avg_period` is negative or above [`MAX_INDEX`]. The
-    /// average period is subtracted from `startIdx` to seed the trailing
-    /// average, so a negative one starts the main loop that many bars late
-    /// while `outBegIdx` still reports `startIdx` — every output shifted
-    /// underneath a correct-looking index. C rejects the same value with
-    /// `TA_BAD_PARAM`.
-    ///
-    /// Panics if `setting.factor` is NaN: it makes every comparison it feeds
-    /// silently false, which reads as "no pattern ever matches" rather than as
-    /// a refused setting.
+    /// Panics unless `setting.range_type` is `0`, `1` or `2`,
+    /// `setting.avg_period` is between `0` and [`MAX_INDEX`], and
+    /// `setting.factor` is not NaN. `avg_period` is the lookback of every CDL\*
+    /// function that reads the setting, so it is bounded like one; `factor`
+    /// scales a threshold and takes any finite value. C rejects the same values
+    /// with `TA_BAD_PARAM`.
     #[must_use]
     pub fn candle_setting(mut self, setting_type: CandleSettingType, setting: CandleSetting) -> Self {
+        assert!(
+            (0..=2).contains(&setting.range_type),
+            "range_type must be 0 (RealBody), 1 (HighLow) or 2 (Shadows), got {}",
+            setting.range_type
+        );
         assert!(
             setting.avg_period >= 0,
             "avg_period must be >= 0, got {}",
@@ -549,6 +550,65 @@ mod tests {
             factor: 0.1,
         };
         let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+    }
+
+    #[test]
+    #[should_panic(expected = "range_type must be")]
+    fn candle_setting_rejects_an_out_of_domain_range_type() {
+        // A choice list's domain is its member list. Anything else falls through
+        // every arm of `ta_candlerange` to 0.0 — every range zero, every
+        // threshold zero, and a silently meaningless answer.
+        let custom = CandleSetting { range_type: 3, avg_period: 10, factor: 0.1 };
+        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+    }
+
+    #[test]
+    fn candle_setting_accepts_the_ceilings() {
+        // The upper boundary on the legal side, for both bounded fields.
+        let custom = CandleSetting {
+            range_type: 2,
+            avg_period: i32::try_from(MAX_INDEX).unwrap(),
+            factor: 0.1,
+        };
+        let core = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom).build();
+        assert_eq!(core.candle_settings.body_doji.avg_period, i32::try_from(MAX_INDEX).unwrap());
+        assert_eq!(core.candle_settings.body_doji.range_type, 2);
+    }
+
+    #[test]
+    fn accepted_candle_settings_keep_the_lookback_and_the_call_in_step() {
+        // The property the avg_period bounds exist to preserve, stated over the
+        // two tiers rather than over the setter: for every setting the builder
+        // accepts, the lookback is a real index count and the call's reported
+        // range agrees with it. A negative avg_period broke exactly this — here
+        // it wraps `CDLDOJI_Lookback` to usize::MAX and the call silently
+        // returns nothing, where C shifts the values instead (#185).
+        let n = 40usize;
+        let open = vec![100.0_f64; n];
+        let close = vec![104.0_f64; n];
+        let high = vec![105.0_f64; n];
+        let low = vec![99.0_f64; n];
+        for avg_period in [0, 1, 5, 39, 40, 100] {
+            let core = Core::builder()
+                .candle_setting(
+                    CandleSettingType::BodyDoji,
+                    CandleSetting { range_type: 1, avg_period, factor: 0.1 },
+                )
+                .build();
+            let lookback = core.CDLDOJI_Lookback();
+            assert!(lookback <= MAX_INDEX, "avg_period {avg_period} gave lookback {lookback}");
+
+            let mut out = vec![0_i32; n];
+            let (mut beg, mut nb) = (0usize, 0usize);
+            let rc = core.CDLDOJI(0, n - 1, &open, &high, &low, &close, &mut beg, &mut nb, &mut out);
+            assert_eq!(rc, RetCode::Success);
+            if lookback > n - 1 {
+                assert_eq!((beg, nb), (0, 0), "avg_period {avg_period}");
+            } else {
+                assert_eq!(beg, lookback, "avg_period {avg_period}");
+                assert_eq!(nb, n - lookback, "avg_period {avg_period}");
+            }
+        }
     }
 
     #[test]
