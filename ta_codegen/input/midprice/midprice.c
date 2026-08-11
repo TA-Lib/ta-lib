@@ -32,6 +32,10 @@ TA_RetCode midprice(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
+   CIRCBUF_PROLOG(sufHighest,double,30);
+   CIRCBUF_PROLOG(preHighest,double,30);
+   CIRCBUF_PROLOG(sufLowest,double,30);
+   CIRCBUF_PROLOG(preLowest,double,30);
    double lowest, highest, tmpLow, tmpHigh;
    int outIdx, nbInitialElementNeeded;
    int trailingIdx, lowestIdx, highestIdx, today, i;
@@ -66,16 +70,21 @@ TA_RetCode midprice(int startIdx, int endIdx,
     * Note that this algorithm allows the input and
     * output to be the same buffer.
     *
-    * Two equivalent algorithms, picked by period. Their outputs are
-    * bit-identical; only the scan strategy differs:
+    * Two equivalent algorithms. The batch tier takes the first arm for
+    * every period in range (the threshold is the declared maximum), and
+    * the second arm is what the streaming tier transitions on:
     *
-    * - Small periods (<= 20): rescan the whole window on every bar.
-    *   The two independent comparison chains auto-vectorize on modern
-    *   compilers, which beats any per-bar bookkeeping while the window
-    *   is short. The threshold sits near the measured crossover
-    *   (~period 19-20 with gcc/clang -O3 on x86-64).
+    * - Batch: Van Herk / Gil-Werman block scan, block-batched form. The
+    *   p outputs belonging to one block boundary are produced together:
+    *   one backward pass for the older block's suffix extrema, one
+    *   forward pass for the newer block's prefix extrema, and a third
+    *   pass to combine. High and low travel in the same passes. All the
+    *   loops are straight-line with no data-dependent branching, which
+    *   is what lets a compiler vectorize them, and the work per bar is a
+    *   fixed number of comparisons regardless of period. Every scratch
+    *   array holds COPIES, so input and output may alias.
     *
-    * - Larger periods: cache the highest high/lowest low with its
+    * - Streaming: cache the highest high/lowest low with its
     *   index; the window is rescanned only when the cached extremum
     *   drops out of the window. That is O(1) per bar while the
     *   extremum sits away from the trailing edge, but it is not
@@ -94,24 +103,118 @@ TA_RetCode midprice(int startIdx, int endIdx,
    today       = startIdx;
    trailingIdx = startIdx-nbInitialElementNeeded;
 
-   if( optInTimePeriod <= 20 )
+   if( optInTimePeriod <= 100000 )
    {
+      int blockStart, nAvail, m, blockNext;
+
+      CIRCBUF_INIT( sufHighest, double, optInTimePeriod );
+      CIRCBUF_INIT( preHighest, double, optInTimePeriod );
+      CIRCBUF_INIT( sufLowest, double, optInTimePeriod );
+      CIRCBUF_INIT( preLowest, double, optInTimePeriod );
+
+      blockStart = trailingIdx;
+
       while( today <= endIdx )
       {
-         lowest  = inLow[trailingIdx];
-         highest = inHigh[trailingIdx];
-         trailingIdx++;
-         for( i=trailingIdx; i <= today; i++ )
+         /* Suffix extrema of the block [blockStart, blockStart+p-1], which
+          * is fully available here: today == blockStart+p-1 <= endIdx.
+          * Scanning backward while keeping the incumbent on a tie
+          * leaves the later element holding a tie, which is what lets this
+          * compile to a single min/max instruction.
+          */
+         i = blockStart + optInTimePeriod - 1;
+         highest = inHigh[i];
+         lowest = inLow[i];
+         sufHighest[optInTimePeriod - 1] = highest;
+         sufLowest[optInTimePeriod - 1] = lowest;
+         TA_UNROLL(4)
+         while( i > blockStart )
          {
-            tmpLow = inLow[i];
-            if( tmpLow < lowest ) lowest = tmpLow;
+            i--;
             tmpHigh = inHigh[i];
-            if( tmpHigh > highest ) highest = tmpHigh;
+            if( tmpHigh > highest )
+            {
+               highest = tmpHigh;
+            }
+            tmpLow = inLow[i];
+            if( tmpLow < lowest )
+            {
+               lowest = tmpLow;
+            }
+            sufHighest[i - blockStart] = highest;
+            sufLowest[i - blockStart] = lowest;
          }
 
-         outReal[outIdx++] = (highest+lowest)/2.0;
+         outReal[outIdx++] = (sufHighest[0]+sufLowest[0])/2.0;
+         trailingIdx++;
          today++;
+         if( today > endIdx )
+         {
+            blockStart = blockStart + optInTimePeriod;
+         }
+         else
+         {
+            /* Prefix extrema of the next block, clamped to what remains.
+             * Forward, keeping the incumbent on a tie: earliest wins again.
+             */
+            blockNext = blockStart + optInTimePeriod;
+            nAvail = endIdx - blockNext + 1;
+            if( nAvail > optInTimePeriod - 1 )
+            {
+               nAvail = optInTimePeriod - 1;
+            }
+            highest = inHigh[blockNext];
+            lowest = inLow[blockNext];
+            preHighest[0] = highest;
+            preLowest[0] = lowest;
+            i = 1;
+            TA_UNROLL(4)
+            while( i < nAvail )
+            {
+               tmpHigh = inHigh[blockNext + i];
+               if( tmpHigh > highest )
+               {
+                  highest = tmpHigh;
+               }
+               tmpLow = inLow[blockNext + i];
+               if( tmpLow < lowest )
+               {
+                  lowest = tmpLow;
+               }
+               preHighest[i] = highest;
+               preLowest[i] = lowest;
+               i++;
+            }
+
+            /* Combine. The suffix half is the older one, so preferring it
+             * on a tie keeps the earliest-wins rule.
+             */
+            m = 1;
+            while( m <= nAvail )
+            {
+               highest = sufHighest[m];
+               if( preHighest[m - 1] > highest )
+               {
+                  highest = preHighest[m - 1];
+               }
+               lowest = sufLowest[m];
+               if( preLowest[m - 1] < lowest )
+               {
+                  lowest = preLowest[m - 1];
+               }
+               outReal[outIdx++] = (highest+lowest)/2.0;
+               m++;
+            }
+            trailingIdx = trailingIdx + nAvail;
+            today = today + nAvail;
+            blockStart = blockStart + optInTimePeriod;
+         }
       }
+
+      CIRCBUF_DESTROY(sufHighest);
+      CIRCBUF_DESTROY(preHighest);
+      CIRCBUF_DESTROY(sufLowest);
+      CIRCBUF_DESTROY(preLowest);
    }
    else
    {

@@ -34,6 +34,13 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
+- 2x to 15x on trending or flat data, 1.6x to 4x on random walks: MIN, MAX, MINMAX,
+  MIDPOINT, MIDPRICE and WILLR (#147). The rolling window no longer rescans when its
+  extremum leaves; cost per bar is now a fixed number of comparisons at any period.
+  Measured on Apple clang (arm64 and x86-64), gcc and MSVC. Single-extremum MIN and MAX
+  are slightly slower on strictly monotone input in their own direction (under 1 ns per
+  bar), and recomputing one bar through the batch call rather than the streaming API is
+  slower on clang and faster on MSVC.
 - ~20%: VAR, STDDEV, BBANDS
 - ~10%: ATR and NATR
 

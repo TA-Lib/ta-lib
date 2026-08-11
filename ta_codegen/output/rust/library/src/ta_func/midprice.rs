@@ -180,6 +180,26 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
         let mut startIdx = startIdx;
+        let mut local_sufHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufHighest: Vec<f64> = Vec::new();
+        let mut sufHighest: &mut [f64] = &mut [];
+        let mut sufHighest_Idx: usize = 0;
+        let mut maxIdx_sufHighest: usize = 29;
+        let mut local_preHighest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preHighest: Vec<f64> = Vec::new();
+        let mut preHighest: &mut [f64] = &mut [];
+        let mut preHighest_Idx: usize = 0;
+        let mut maxIdx_preHighest: usize = 29;
+        let mut local_sufLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_sufLowest: Vec<f64> = Vec::new();
+        let mut sufLowest: &mut [f64] = &mut [];
+        let mut sufLowest_Idx: usize = 0;
+        let mut maxIdx_sufLowest: usize = 29;
+        let mut local_preLowest: [f64; 30] = [0.0_f64; 30];
+        let mut heap_preLowest: Vec<f64> = Vec::new();
+        let mut preLowest: &mut [f64] = &mut [];
+        let mut preLowest_Idx: usize = 0;
+        let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
@@ -214,16 +234,21 @@ impl Core {
         // Note that this algorithm allows the input and
         // output to be the same buffer.
         //
-        // Two equivalent algorithms, picked by period. Their outputs are
-        // bit-identical; only the scan strategy differs:
+        // Two equivalent algorithms. The batch tier takes the first arm for
+        // every period in range (the threshold is the declared maximum), and
+        // the second arm is what the streaming tier transitions on:
         //
-        // - Small periods (<= 20): rescan the whole window on every bar.
-        //   The two independent comparison chains auto-vectorize on modern
-        //   compilers, which beats any per-bar bookkeeping while the window
-        //   is short. The threshold sits near the measured crossover
-        //   (~period 19-20 with gcc/clang -O3 on x86-64).
+        // - Batch: Van Herk / Gil-Werman block scan, block-batched form. The
+        //   p outputs belonging to one block boundary are produced together:
+        //   one backward pass for the older block's suffix extrema, one
+        //   forward pass for the newer block's prefix extrema, and a third
+        //   pass to combine. High and low travel in the same passes. All the
+        //   loops are straight-line with no data-dependent branching, which
+        //   is what lets a compiler vectorize them, and the work per bar is a
+        //   fixed number of comparisons regardless of period. Every scratch
+        //   array holds COPIES, so input and output may alias.
         //
-        // - Larger periods: cache the highest high/lowest low with its
+        // - Streaming: cache the highest high/lowest low with its
         //   index; the window is rescanned only when the cached extremum
         //   drops out of the window. That is O(1) per bar while the
         //   extremum sits away from the trailing edge, but it is not
@@ -240,25 +265,124 @@ impl Core {
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
-        if optInTimePeriod <= 20 {
+        if optInTimePeriod <= 100000 {
+            let mut blockStart: usize = 0_usize;
+            let mut nAvail: usize = 0_usize;
+            let mut m: usize = 0_usize;
+            let mut blockNext: usize = 0_usize;
+            if optInTimePeriod < 1 { return RetCode::InternalError; }
+            if (optInTimePeriod) as usize <= 30usize {
+                sufHighest = &mut local_sufHighest;
+            } else {
+                heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+                sufHighest = &mut heap_sufHighest;
+            }
+            maxIdx_sufHighest = ((optInTimePeriod) as usize) - 1;
+            sufHighest_Idx = 0;
+            if optInTimePeriod < 1 { return RetCode::InternalError; }
+            if (optInTimePeriod) as usize <= 30usize {
+                preHighest = &mut local_preHighest;
+            } else {
+                heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+                preHighest = &mut heap_preHighest;
+            }
+            maxIdx_preHighest = ((optInTimePeriod) as usize) - 1;
+            preHighest_Idx = 0;
+            if optInTimePeriod < 1 { return RetCode::InternalError; }
+            if (optInTimePeriod) as usize <= 30usize {
+                sufLowest = &mut local_sufLowest;
+            } else {
+                heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+                sufLowest = &mut heap_sufLowest;
+            }
+            maxIdx_sufLowest = ((optInTimePeriod) as usize) - 1;
+            sufLowest_Idx = 0;
+            if optInTimePeriod < 1 { return RetCode::InternalError; }
+            if (optInTimePeriod) as usize <= 30usize {
+                preLowest = &mut local_preLowest;
+            } else {
+                heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+                preLowest = &mut heap_preLowest;
+            }
+            maxIdx_preLowest = ((optInTimePeriod) as usize) - 1;
+            preLowest_Idx = 0;
+            blockStart = trailingIdx;
             while today <= endIdx {
-                lowest = inLow[trailingIdx];
-                highest = inHigh[trailingIdx];
-                trailingIdx += 1;
-                for i in (trailingIdx as usize)..(today as usize) + 1 {
-                    tmpLow = inLow[i];
-                    if tmpLow < lowest {
-                        lowest = tmpLow;
-                    }
+                // Suffix extrema of the block [blockStart, blockStart+p-1], which
+                // is fully available here: today == blockStart+p-1 <= endIdx.
+                // Scanning backward while keeping the incumbent on a tie
+                // leaves the later element holding a tie, which is what lets this
+                // compile to a single min/max instruction.
+                i = blockStart + ((optInTimePeriod) as usize) - 1;
+                highest = inHigh[i];
+                lowest = inLow[i];
+                sufHighest[(optInTimePeriod - 1) as usize] = highest;
+                sufLowest[(optInTimePeriod - 1) as usize] = lowest;
+                while i > blockStart {
+                    i -= 1;
                     tmpHigh = inHigh[i];
                     if tmpHigh > highest {
                         highest = tmpHigh;
                     }
+                    tmpLow = inLow[i];
+                    if tmpLow < lowest {
+                        lowest = tmpLow;
+                    }
+                    sufHighest[i - blockStart] = highest;
+                    sufLowest[i - blockStart] = lowest;
                 }
-                i = (today as usize) + 1;
-                outReal[outIdx] = (highest + lowest) / 2.0;
+                outReal[outIdx] = (((sufHighest[0] + sufLowest[0]) / 2.0) as f64);
                 outIdx += 1;
+                trailingIdx += 1;
                 today += 1;
+                if today > endIdx {
+                    blockStart = blockStart + ((optInTimePeriod) as usize);
+                } else {
+                    // Prefix extrema of the next block, clamped to what remains.
+                    // Forward, keeping the incumbent on a tie: earliest wins again.
+                    blockNext = blockStart + ((optInTimePeriod) as usize);
+                    nAvail = endIdx - blockNext + 1;
+                    if nAvail > ((optInTimePeriod - 1) as usize) {
+                        nAvail = (optInTimePeriod - 1) as usize;
+                    }
+                    highest = inHigh[blockNext];
+                    lowest = inLow[blockNext];
+                    preHighest[0] = highest;
+                    preLowest[0] = lowest;
+                    i = 1;
+                    while i < nAvail {
+                        tmpHigh = inHigh[blockNext + i];
+                        if tmpHigh > highest {
+                            highest = tmpHigh;
+                        }
+                        tmpLow = inLow[blockNext + i];
+                        if tmpLow < lowest {
+                            lowest = tmpLow;
+                        }
+                        preHighest[i] = highest;
+                        preLowest[i] = lowest;
+                        i += 1;
+                    }
+                    // Combine. The suffix half is the older one, so preferring it
+                    // on a tie keeps the earliest-wins rule.
+                    m = 1;
+                    while m <= nAvail {
+                        highest = sufHighest[m];
+                        if preHighest[m - 1] > highest {
+                            highest = preHighest[m - 1];
+                        }
+                        lowest = sufLowest[m];
+                        if preLowest[m - 1] < lowest {
+                            lowest = preLowest[m - 1];
+                        }
+                        outReal[outIdx] = (highest + lowest) / 2.0;
+                        outIdx += 1;
+                        m += 1;
+                    }
+                    trailingIdx = trailingIdx + nAvail;
+                    today = today + nAvail;
+                    blockStart = blockStart + ((optInTimePeriod) as usize);
+                }
             }
         } else {
             highestIdx = 0 - 1;
@@ -418,6 +542,18 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
+        let mut sufHighest: Vec<f64> = Vec::new();
+        let mut sufHighest_Idx: usize = 0;
+        let mut maxIdx_sufHighest: usize = 29;
+        let mut preHighest: Vec<f64> = Vec::new();
+        let mut preHighest_Idx: usize = 0;
+        let mut maxIdx_preHighest: usize = 29;
+        let mut sufLowest: Vec<f64> = Vec::new();
+        let mut sufLowest_Idx: usize = 0;
+        let mut maxIdx_sufLowest: usize = 29;
+        let mut preLowest: Vec<f64> = Vec::new();
+        let mut preLowest_Idx: usize = 0;
+        let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
@@ -452,16 +588,21 @@ impl Core {
         // Note that this algorithm allows the input and
         // output to be the same buffer.
         //
-        // Two equivalent algorithms, picked by period. Their outputs are
-        // bit-identical; only the scan strategy differs:
+        // Two equivalent algorithms. The batch tier takes the first arm for
+        // every period in range (the threshold is the declared maximum), and
+        // the second arm is what the streaming tier transitions on:
         //
-        // - Small periods (<= 20): rescan the whole window on every bar.
-        //   The two independent comparison chains auto-vectorize on modern
-        //   compilers, which beats any per-bar bookkeeping while the window
-        //   is short. The threshold sits near the measured crossover
-        //   (~period 19-20 with gcc/clang -O3 on x86-64).
+        // - Batch: Van Herk / Gil-Werman block scan, block-batched form. The
+        //   p outputs belonging to one block boundary are produced together:
+        //   one backward pass for the older block's suffix extrema, one
+        //   forward pass for the newer block's prefix extrema, and a third
+        //   pass to combine. High and low travel in the same passes. All the
+        //   loops are straight-line with no data-dependent branching, which
+        //   is what lets a compiler vectorize them, and the work per bar is a
+        //   fixed number of comparisons regardless of period. Every scratch
+        //   array holds COPIES, so input and output may alias.
         //
-        // - Larger periods: cache the highest high/lowest low with its
+        // - Streaming: cache the highest high/lowest low with its
         //   index; the window is rescanned only when the cached extremum
         //   drops out of the window. That is O(1) per bar while the
         //   extremum sits away from the trailing edge, but it is not
