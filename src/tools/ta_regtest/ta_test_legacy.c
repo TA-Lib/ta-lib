@@ -141,7 +141,14 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "LINEARREG_INTERCEPT", 1e-11 },  /* #103  measured 3.21e-12             */
    { "LINEARREG_SLOPE",     2e-12 },  /* #103  measured 3.49e-13             */
 
-   /* --- (a) explicit fma() adoption, PR #96 ------------------------------ */
+   /* --- (a) explicit fma() adoption, PR #96 ------------------------------
+    * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, EMA, SAR, TRIX, MACDFIX
+    * and MAMA contain fma() directly. MA, MAVP and STOCH contain none and
+    * inherit it one dispatch hop away -- MA through its EMA/DEMA/TEMA/T3/MAMA
+    * arms, MAVP through MA, STOCH through the MAType=EMA smoothing of its alt
+    * case (its all-SMA default is bit-exact against v0.6.4). Worth stating
+    * because "STOCH diverges from v0.6.4" looks unexplained until you notice
+    * the parameter set doing it. */
    { "ADOSC",               3e-08 },  /* measured 7.45e-09, output ~4.3e6    */
    { "T3",                  4e-13 },  /* measured 1.28e-13                   */
    { "TEMA",                3e-13 },  /* measured 9.95e-14                   */
@@ -149,10 +156,10 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "SAREXT",              9e-14 },  /* measured 2.84e-14                   */
    { "EMA",                 5e-14 },  /* measured 1.42e-14                   */
    { "MA",                  5e-14 },  /* measured 1.42e-14 (EMA/T3 arms)     */
-   { "MAVP",                5e-14 },  /* measured 1.42e-14                   */
+   { "MAVP",                5e-14 },  /* measured 1.42e-14, via MA->EMA      */
    { "SAR",                 5e-14 },  /* measured 1.42e-14                   */
    { "TRIX",                4e-14 },  /* measured 1.11e-14                   */
-   { "STOCH",               3e-14 },  /* measured 7.11e-15                   */
+   { "STOCH",               3e-14 },  /* measured 7.11e-15, alt/EMA arm only */
    { "MACDFIX",             4e-15 },  /* measured 1.33e-15                   */
 
    /* --- (a) plus the 8-ULP libm floor (atan-derived output) -------------- */
