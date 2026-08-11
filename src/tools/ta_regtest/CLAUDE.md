@@ -478,7 +478,15 @@ near an integer boundary changes the iteration count, so the output moves
 *discontinuously* and no tolerance can bound it; HT_TRENDMODE's output is an
 integer outright. That is not hypothetical here — `scripts/package.py` builds and
 runs `ta_regtest.exe` under **MSVC** on the Windows nightly, against a different
-CRT. Their cross-implementation coverage is `--xlang-hash`, which carries a
+CRT, for **both** `x86_64` and `x86_32`.
+
+The two questions that raises both come out benign, and are worth recording so
+nobody re-derives them: the 32-bit arm does **not** reintroduce x87 80-bit
+intermediates (MSVC has defaulted x86 to `/arch:SSE2` since VS2012, so doubles
+are SSE2 scalar and round to 53 bits like everywhere else), and MSVC being
+outside the `if(NOT MSVC) add_compile_options(-ffp-contract=off)` guard is
+harmless (no `/arch:AVX2`, so there is no FMA instruction for it to contract
+into). What is left is purely the CRT's transcendentals. Their cross-implementation coverage is `--xlang-hash`, which carries a
 transcendental tolerance lane for exactly this reason.
 
 Two functions still reach `atan` and stay in: MAMA (damped adaptive alpha) and
