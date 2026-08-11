@@ -9567,3 +9567,41 @@ fn c_circbuf_omits_the_cursor_when_nothing_reads_it() {
         );
     }
 }
+
+/// A local read ONLY by a `CIRCBUF_INIT` size must survive the dead-store pass.
+///
+/// `drop_unused_decls` (c_stream) removes a hoisted prologue decl the arm never
+/// reads — HMA's degenerate arm inherits `halfPeriod = optInTimePeriod / 2` and
+/// never uses it. The trap is that `walk_stmt_exprs` treats `Statement::CircBuf`
+/// as opaque, so a use-analysis built on it alone cannot see `CIRCBUF_INIT`'s
+/// size expression. HMA's general arm sizes its de-lag ring with `ringSize`,
+/// which is otherwise only ever assigned — miss that read and the pass deletes a
+/// live declaration, emitting C that does not compile.
+///
+/// Both directions are asserted so the pass cannot pass by doing nothing.
+#[test]
+fn c_stream_keeps_a_local_read_only_by_a_circbuf_size() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+    let (func, enums) = load_indicator("hma");
+    let stream_c = backends::c_stream::generate(&func, &enums, &registry, &helpers);
+
+    // Read only through CIRCBUF_INIT's size — the case a naive walker misses.
+    assert!(
+        stream_c.contains("int ringSize;") && stream_c.contains("ringSize = sqrtPeriod - 1;"),
+        "`ringSize` is read only by CIRCBUF_INIT's size expression, so a use-analysis \
+         that does not descend into Statement::CircBuf will drop it and emit C that \
+         references an undeclared variable: {stream_c}"
+    );
+
+    // ...and the dead store the pass exists for is gone. HMA's stream section
+    // carries exactly one `halfPeriod` assignment: the general arm's. The
+    // degenerate arm's copy is the dead one.
+    assert_eq!(
+        stream_c.matches("halfPeriod = optInTimePeriod / 2;").count(),
+        1,
+        "the degenerate arm must not carry a write-only `halfPeriod` (that is a \
+         -Wunused-but-set-variable in the consumer's build), and the general arm \
+         must keep the one it reads: {stream_c}"
+    );
+}

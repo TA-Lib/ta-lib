@@ -2084,28 +2084,169 @@ fn dual_union_circs(func: &FuncDef, ma: &StreamModel, mb: &StreamModel) -> Vec<C
     v
 }
 
-/// Remove top-level `VarDecl`s whose variable is never referenced elsewhere in
-/// `body`. Used only for the dual-mode Open arms: each arm is `shared prologue
-/// ++ its own arm body`, and the prologue declares the UNION of both modes'
-/// function-top scalars, so the degenerate arm would otherwise carry (and
-/// -Wunused-warn on) the Wilder-path accumulators and warm-up counter it never
-/// touches. A decl's own name is not a "use" (only its initializer is walked),
-/// and a decl kept here is exactly one the arm reads or writes — so dropping
-/// the rest is behavior-preserving.
+/// Remove top-level `VarDecl`s whose variable is never READ in `body`, together
+/// with the top-level assignments that only ever wrote it.
+///
+/// Used only for the dual-mode Open arms: each arm is `shared prologue ++ its
+/// own arm body`, and the prologue both declares and INITIALIZES the union of
+/// both modes' function-top scalars. Dropping only the unreferenced decls
+/// leaves the ones the shared prologue assigns — HMA's degenerate arm
+/// (`optInTimePeriod` 2 or 3) inherits `halfPeriod = optInTimePeriod / 2` from
+/// the prologue and then never reads it, because at that period the formula
+/// collapses and the half-period WMA disappears. That is a
+/// `-Wunused-but-set-variable` in the consumer's build, so a write alone must
+/// not count as a use.
+///
+/// Behavior-preserving because the three conditions are checked together: the
+/// variable is never read anywhere in the arm, every assignment to it sits at
+/// the top level (nothing conditional or looped is removed), and every such
+/// right-hand side is call-free, so evaluating it can be observed only through
+/// the variable being dropped.
 fn drop_unused_decls(body: Vec<Statement>) -> Vec<Statement> {
-    let mut used: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for s in &body {
-        streaming::walk_stmt_exprs(s, &mut |e| {
-            streaming::walk_expr(e, &mut |x| {
-                if let Expr::Var(v) = x {
-                    used.insert(v.clone());
-                }
-            });
+    // A plain `x = <expr>` writes x; it does not read it. Every other mention
+    // — a compound assign, an index, a deref, any rvalue — is a read.
+    let mut read: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    let note_reads = |e: &Expr, out: &mut std::collections::BTreeSet<String>| {
+        streaming::walk_expr(e, &mut |x| {
+            if let Expr::Var(v) = x {
+                out.insert(v.clone());
+            }
         });
+    };
+    for s in &body {
+        match s {
+            Statement::Assign { target, value, compound } => {
+                note_reads(value, &mut read);
+                if *compound || !matches!(target, Expr::Var(_)) {
+                    note_reads(target, &mut read);
+                }
+            }
+            other => streaming::walk_stmt_exprs(other, &mut |e| note_reads(e, &mut read)),
+        }
+        // `walk_stmt_exprs` does not descend into CircBuf, but CIRCBUF_INIT's
+        // size IS an expression and reading it is a real use — HMA's general
+        // arm sizes its de-lag ring with `ringSize`, which is otherwise only
+        // ever assigned. Missing this drops a live declaration.
+        collect_circbuf_size_reads(s, &mut |e| note_reads(e, &mut read));
     }
+
+    // Only names the arm writes exclusively from the top level, with a
+    // call-free RHS, are eligible; anything assigned deeper stays untouched.
+    let mut nested_assigned: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for s in &body {
+        if matches!(s, Statement::Assign { .. }) {
+            continue;
+        }
+        collect_assigned_targets(s, &mut nested_assigned);
+    }
+
+    let impure = |e: &Expr| {
+        let mut found = false;
+        streaming::walk_expr(e, &mut |x| {
+            if matches!(x, Expr::FuncCall(..)) {
+                found = true;
+            }
+        });
+        found
+    };
+
+    let droppable = |name: &String, body: &[Statement]| {
+        if read.contains(name) || nested_assigned.contains(name) {
+            return false;
+        }
+        body.iter().all(|s| match s {
+            Statement::Assign { target, value, compound } => {
+                !matches!(target, Expr::Var(v) if v == name) || (!*compound && !impure(value))
+            }
+            _ => true,
+        })
+    };
+
+    let dead: std::collections::BTreeSet<String> = body
+        .iter()
+        .filter_map(|s| match s {
+            Statement::VarDecl { name, .. } if droppable(name, &body) => Some(name.clone()),
+            _ => None,
+        })
+        .collect();
+
     body.into_iter()
-        .filter(|s| !matches!(s, Statement::VarDecl { name, .. } if !used.contains(name)))
+        .filter(|s| match s {
+            Statement::VarDecl { name, .. } => !dead.contains(name),
+            Statement::Assign { target: Expr::Var(v), .. } => !dead.contains(v),
+            _ => true,
+        })
         .collect()
+}
+
+/// Visit the `size` expression of every `CIRCBUF_INIT` reachable from `s`.
+/// [`streaming::walk_stmt_exprs`] treats `Statement::CircBuf` as opaque, so this
+/// is the one expression a use-analysis over it would otherwise miss.
+fn collect_circbuf_size_reads(s: &Statement, f: &mut dyn FnMut(&Expr)) {
+    match s {
+        Statement::CircBuf(crate::ir::CircBuf::Init { size, .. }) => f(size),
+        Statement::CircBuf(_) | Statement::VarDecl { .. } | Statement::Assign { .. }
+        | Statement::Comment(_) | Statement::UnrollHint { .. } | Statement::Break
+        | Statement::Continue | Statement::Return { .. } | Statement::Expr(_) => {}
+        Statement::While { body, .. } | Statement::DoWhile { body, .. }
+        | Statement::For { body, .. } | Statement::Block { body } => {
+            for st in body {
+                collect_circbuf_size_reads(st, f);
+            }
+        }
+        Statement::If { then_body, else_body, .. } => {
+            for st in then_body.iter().chain(else_body) {
+                collect_circbuf_size_reads(st, f);
+            }
+        }
+        Statement::Switch { cases, default, .. } => {
+            for st in cases.iter().flat_map(|(_, b)| b).chain(default) {
+                collect_circbuf_size_reads(st, f);
+            }
+        }
+        Statement::ForC { init, update, body, .. } => {
+            collect_circbuf_size_reads(init, f);
+            collect_circbuf_size_reads(update, f);
+            for st in body {
+                collect_circbuf_size_reads(st, f);
+            }
+        }
+    }
+}
+
+/// Every variable a statement assigns to, at any depth.
+fn collect_assigned_targets(s: &Statement, out: &mut std::collections::BTreeSet<String>) {
+    match s {
+        Statement::Assign { target: Expr::Var(v), .. } => {
+            out.insert(v.clone());
+        }
+        Statement::Assign { .. } | Statement::VarDecl { .. } | Statement::CircBuf(_)
+        | Statement::Comment(_) | Statement::UnrollHint { .. } | Statement::Break
+        | Statement::Continue | Statement::Return { .. } | Statement::Expr(_) => {}
+        Statement::While { body, .. } | Statement::DoWhile { body, .. }
+        | Statement::For { body, .. } | Statement::Block { body } => {
+            for st in body {
+                collect_assigned_targets(st, out);
+            }
+        }
+        Statement::If { then_body, else_body, .. } => {
+            for st in then_body.iter().chain(else_body) {
+                collect_assigned_targets(st, out);
+            }
+        }
+        Statement::Switch { cases, default, .. } => {
+            for st in cases.iter().flat_map(|(_, b)| b).chain(default) {
+                collect_assigned_targets(st, out);
+            }
+        }
+        Statement::ForC { init, update, body, .. } => {
+            collect_assigned_targets(init, out);
+            collect_assigned_targets(update, out);
+            for st in body {
+                collect_assigned_targets(st, out);
+            }
+        }
+    }
 }
 
 /// Emit the full dual-mode stream section: one union struct, one predicate-

@@ -741,7 +741,6 @@ static TA_RetCode TA_HMA_OpenCore( struct TA_HMA_Stream **stream, const double i
    {
       int lookbackTotal;
       int lookbackSqrt;
-      int halfPeriod;
       int sqrtPeriod;
       int wmaStartIdx;
       int today;
@@ -774,7 +773,6 @@ static TA_RetCode TA_HMA_OpenCore( struct TA_HMA_Stream **stream, const double i
        * BIT-IDENTICAL to composing three TA_WMA calls -- the composite
        * differential in test_composite.c holds it to that, memcmp-exact.
        */
-      halfPeriod = optInTimePeriod / 2;
       sqrtPeriod = (int)sqrt((double)optInTimePeriod);
       lookbackSqrt = TA_WMA_Lookback(sqrtPeriod);
       lookbackTotal = TA_WMA_Lookback(optInTimePeriod) + lookbackSqrt;
