@@ -14,7 +14,8 @@ naming — so the `.c` file contains only the algorithm.
 
 ## File contents
 
-Two C functions, named after the directory (`<name>`):
+Two C functions, named after the directory (`<name>`) — plus, where a function
+needs one, an alternate implementation (see `PRAGMA TA_ALT` below):
 
 ```c
 int <name>_lookback( /* optional params */ )
@@ -148,8 +149,56 @@ maps to `TA_SMA(...)` in C, `self.SMA(...)` in Rust, `SMA_Internal(...)` in Java
   on inputs
 - Per-language function signatures/naming, doc comments, file headers, imports
 
+## Alternate implementations — `PRAGMA TA_ALT`
+
+Alongside `<name>`, a file may declare `<name>_ALT1`, `<name>_ALT2`, … — whole
+alternative bodies for the same function, each under a **single-line** decoration:
+
+```c
+/* PRAGMA TA_ALT={<api>,<lang>} free text after the brace is ignored */
+TA_RetCode <name>_ALT<n>( /* the same parameters as <name> */ )
+
+<api>  ::= BATCH | STREAM | ALL_API
+<lang> ::= C | RUST | JAVA | CSHARP | ALL_LANGUAGES
+```
+
+**Later declarations override earlier ones for every cell they claim**, with the
+base as the implicit first entry claiming `{ALL_API,ALL_LANGUAGES}` — so "everyone
+but C" is `ALL_LANGUAGES` followed by `C`, and there is no specificity table to
+learn. An alternate that ends up winning no cell is a hard error, as is a claim
+with no `=`, an unrecognized directive name, a `PRAGMA TA_ALT` on the base, an
+`_ALT<n>` with no decoration, numbering that is not ascending and contiguous from
+1 in file order, and a signature that differs from the base's.
+
+An alternate must be **strictly functionally identical** to the base (some may
+differ within `TA_STABLE_EPSILON`; none may compute something else), and the
+accepted reason to carry one is a significant performance gain — a second copy of
+an algorithm is a maintenance cost. There is no alternate lookback: one
+`<name>_lookback` serves every cell.
+
+Nothing ships a language-scoped claim today. Note before writing the first one
+that `--xlang-hash` holds every language server bit-identical to the in-process C
+library with no tolerance, and C is the golden — so a `{...,C}` alternate that is
+not bit-identical to the others moves the reference and fails all three remaining
+languages at once. That is a loud failure, not a silent one, but it is the gate
+such a change has to answer for.
+
+`_ALT<n>` is **generator input only and never becomes a symbol**. There is still
+one `TA_MIN`, one `TA_MIN_Open`; the claim decides only which body the generator
+transcribes into them. Calling `min(...)` from another indicator resolves exactly
+as it always did, and naming `min_ALT1` in a call is an error. Where an alternate
+wins, the generated file says so: `/* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */`.
+
+`PRAGMA` is the general mechanism, not a `TA_ALT` mechanism: any comment whose
+first word is `PRAGMA` addresses the generator and is stripped from every backend's
+output, several may precede one signature, and an unrecognized name **without** an
+`=` is free-form prose the generator ignores.
+
 ## What the logic file is NOT
 
 - Not a macro template — no `#include`, no preprocessor `#if defined(_RUST)`, no
   `GENCODE` markers
-- Not language-specific — the same `.c` file produces all four target languages
+- Not language-specific in the small — the same `.c` file produces all four target
+  languages. A *whole* alternative algorithm may be selected per language (see
+  `PRAGMA TA_ALT` above): self-contained, co-located, skippable in one read.
+  Scattering per-language conditionals through a single body is still forbidden.

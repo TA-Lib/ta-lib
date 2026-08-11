@@ -12,7 +12,8 @@ there, and runs the usual cross-language gates on the result:
   against the in-process C golden, bitwise (fuzz shapes x seeds x sizes x params).
 
 The point: exercise generator constructs (bitwise operators, truthiness
-conditions, do-while, switch-on-expression, ...) that no shipped indicator uses,
+conditions, do-while, switch-on-expression, `PRAGMA TA_ALT` alternates, ...)
+that no shipped indicator uses,
 with the same end-to-end machinery real functions get — without a fake function
 ever appearing in the shipped API. The gate runs nightly in CI
 (`dev-nightly-tests.yml`, job `synth-gate`) and locally via

@@ -1830,6 +1830,8 @@ fn backends_render_max_min_fmax_fmin_abs() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
 
     let enums = std::collections::HashMap::new();
@@ -2329,6 +2331,8 @@ fn make_func_with_helper_call(
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     }
 }
 
@@ -2476,6 +2480,8 @@ fn inlining_counter_avoids_name_collisions() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4573,6 +4579,8 @@ fn rust_lookback_param_minus() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4617,6 +4625,8 @@ fn rust_lookback_none() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4819,6 +4829,8 @@ fn rust_lookback_code_renders_var_types_correctly() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
     let enums = HashMap::new();
     let registry = make_registry();
@@ -4916,6 +4928,8 @@ fn rust_lookback_body_never_fuses_multiply_add() {
         header_comments: vec![],
         doc: None,
         streaming: false,
+        alternates: vec![],
+        resolved_stream_body: None,
     };
     let enums = HashMap::new();
     let out = backends::rust_lang::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
@@ -5001,6 +5015,8 @@ fn rust_lookback_body_types_locals_by_declaration_not_name() {
             header_comments: vec![],
             doc: None,
             streaming: false,
+            alternates: vec![],
+            resolved_stream_body: None,
         };
         let enums = HashMap::new();
         let registry = make_registry();
@@ -7482,12 +7498,16 @@ fn test_c_trima_dual_mode_rings_stream_section() {
     assert!(c.contains("ringMirror_middleIdx_inReal"), "Peek ring mirror");
 }
 
-/// Pin the generated MIDPRICE fast-path-skip stream section: the `if(period<=20)`
-/// arms are bit-identical (batch perf split), so ONLY the general (else) T4
-/// extrema arm is streamed — one StepInternal, no mode branch, and the Open does
-/// not transcribe the fast-path `period<=20` window-rescan arm.
+/// Pin the generated MIDPRICE stream section: batch runs the block scan and the
+/// stream runs `midprice_ALT1`'s T4 extrema automaton — one StepInternal, no
+/// mode branch, and no trace of the block scan inside the Open.
+///
+/// Every check here asserts on a string the generator DOES produce, in both
+/// directions — present in the batch tier, absent from the Open. An
+/// absence-only assertion starts passing for free the day the generator stops
+/// emitting the string it looks for, and says nothing from then on.
 #[test]
-fn test_c_midprice_fastpath_skip_stream_section() {
+fn test_c_midprice_stream_uses_the_declared_alternate() {
     let (mut func, enums) = load_indicator("midprice");
     func.streaming = true;
     let registry = make_registry();
@@ -7504,16 +7524,33 @@ fn test_c_midprice_fastpath_skip_stream_section() {
         c.contains("*outReal= (sp->highest + sp->lowest) / 2.0;"),
         "midprice combine in the extrema step"
     );
-    // The fast-path window-rescan then-arm is NOT transcribed into the Open: no
-    // `optInTimePeriod <= 20` branch survives (only the general else arm streams).
-    let open = c
-        .split("TA_MIDPRICE_OpenCore")
-        .nth(1)
-        .expect("OpenInternal emitted");
+    // The generated section names the alternate it was built from.
     assert!(
-        !open.contains("optInTimePeriod <= 20"),
-        "the perf fast-path arm must be skipped, not transcribed"
+        c.contains("/* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */"),
+        "the stream section must name the alternate it resolved to"
     );
+
+    // ...and the marker must be telling the truth. A marker is derived from the
+    // resolution, so on its own it would agree with a resolver that picked the
+    // wrong body; these check the emitted CODE. The block scan's scratch and
+    // block cursor appear in the batch tier and nowhere in the Open.
+    let (batch, open) = c
+        .split_once("TA_MIDPRICE_OpenCore")
+        .expect("OpenCore emitted");
+    for marker in ["sufHighest", "preHighest", "blockNext"] {
+        assert!(
+            batch.contains(marker),
+            "batch tier lost the block scan (`{marker}` absent) — the BATCH cell should \
+             resolve to the base body"
+        );
+        assert!(
+            !open.contains(marker),
+            "`{marker}` reached the Open: the STREAM cell resolved to the block scan, not to \
+             midprice_ALT1"
+        );
+    }
+    // The automaton's own state, conversely, must be there.
+    assert!(open.contains("highestIdx"), "the alternate's cached-extremum index");
 }
 
 /// Pin the generated STOCH composed stream section: producer extrema state +
@@ -9163,19 +9200,26 @@ fn rust_batch_stream_halves(name: &str) -> (String, String) {
 #[test]
 fn rust_circbuf_batch_is_hybrid_and_stream_stays_vec() {
     let mut carriers: Vec<(String, Vec<String>)> = Vec::new();
+    let mut stream_checked: Vec<String> = Vec::new();
 
     for name in discover_indicators() {
         let Some((func, enums)) = try_load_indicator(&name) else { continue };
         // CIRCBUF ids come from the IR, not from the rendered text, so a
-        // rendering bug cannot hide a function from this sweep.
-        let ids: Vec<String> = func
-            .body
-            .iter()
-            .filter_map(|s| match s {
-                ir::Statement::CircBuf(ir::CircBuf::Prolog { id, .. }) => Some(id.clone()),
-                _ => None,
-            })
-            .collect();
+        // rendering bug cannot hide a function from this sweep. Per tier,
+        // because the two tiers need not run the same algorithm: the six
+        // rolling-extremum functions carry the block scan's scratch in the
+        // batch body only, and their `PRAGMA TA_ALT={STREAM,...}` alternate
+        // declares no CIRCBUF at all.
+        let prolog_ids = |body: &[ir::Statement]| -> Vec<String> {
+            body.iter()
+                .filter_map(|s| match s {
+                    ir::Statement::CircBuf(ir::CircBuf::Prolog { id, .. }) => Some(id.clone()),
+                    _ => None,
+                })
+                .collect()
+        };
+        let ids = prolog_ids(&func.body);
+        let stream_ids = prolog_ids(func.resolved_for(ir::Lang::Rust).stream_source());
         if ids.is_empty() {
             continue;
         }
@@ -9220,7 +9264,7 @@ fn rust_circbuf_batch_is_hybrid_and_stream_stays_vec() {
             );
 
             // --- stream: owning Vec, and none of the batch's borrowed shape.
-            if !stream.is_empty() {
+            if !stream.is_empty() && stream_ids.contains(id) {
                 assert!(
                     !stream.contains(&format!("local_{id}")),
                     "{name}: stream CIRCBUF `{id}` took the batch stack array — it is moved \
@@ -9240,18 +9284,41 @@ fn rust_circbuf_batch_is_hybrid_and_stream_stays_vec() {
                 );
             }
         }
+        if !stream_ids.is_empty() {
+            stream_checked.push(name.clone());
+        }
         carriers.push((name, ids));
     }
 
-    // Anti-vacuity: the eight carriers that exist today must all be swept. A
-    // filter or discovery regression fails here instead of passing an empty run.
+    // Anti-vacuity: the carriers that exist today must all be swept. A filter or
+    // discovery regression fails here instead of passing an empty run.
     let names: Vec<&str> = carriers.iter().map(|(n, _)| n.as_str()).collect();
     for expected in [
         "cci", "cmf", "mfi", "ultosc", "hma", "ht_dcphase", "ht_sine", "ht_trendmode",
+        "min", "max", "minmax", "midpoint", "midprice", "willr",
     ] {
         assert!(
             names.contains(&expected),
             "CIRCBUF sweep missed {expected}; swept {names:?}"
+        );
+    }
+    // The stream half is now conditional on the id reaching the stream tier, so
+    // pin the functions whose stream genuinely carries one — otherwise a bug
+    // that emptied every stream body would turn that half into a silent skip.
+    let streamed: Vec<&str> = stream_checked.iter().map(String::as_str).collect();
+    for expected in ["cci", "cmf", "mfi", "ultosc"] {
+        assert!(
+            streamed.contains(&expected),
+            "CIRCBUF stream half never ran for {expected}; ran for {streamed:?}"
+        );
+    }
+    // ...and the six rolling-extremum functions must NOT reach it: their scratch
+    // belongs to the batch block scan, and their alternate declares none.
+    for absent in ["min", "max", "minmax", "midpoint", "midprice", "willr"] {
+        assert!(
+            !streamed.contains(&absent),
+            "{absent}: a CIRCBUF reached the stream tier — the STREAM alternate should \
+             declare none"
         );
     }
 }

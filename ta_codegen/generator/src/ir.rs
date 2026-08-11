@@ -39,6 +39,315 @@ pub struct FuncDef {
     /// `generate` if a flagged function is no longer analyzable (the
     /// maintenance-coupling gate).
     pub streaming: bool,
+    /// Alternate implementations declared in the input `.c` as
+    /// `<name>_ALT<n>`, in file order (see [`AltDef`]). Empty for all but a
+    /// handful of functions.
+    pub alternates: Vec<AltDef>,
+    /// Set only by [`FuncDef::resolved_for`], and only when an alternate wins
+    /// the `(STREAM, lang)` cell: the body the streaming tier is derived from.
+    ///
+    /// A separate field rather than an overwrite of `private_body`, because
+    /// `private_body` is a *clone* of `body` for every function that declares no
+    /// `_private`, and code that edits `body` afterwards (the dispatch sabotage
+    /// tests, any future rewrite pass) would find its edit silently ignored by
+    /// the stream analyzers. `None` keeps [`FuncDef::stream_source`] on exactly
+    /// the selection every analyzer already made.
+    pub resolved_stream_body: Option<Vec<Statement>>,
+}
+
+/// The API tier an alternate claims. `AllApi` appears only in a *claim*;
+/// resolution is always asked about a concrete [`Tier`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ApiClaim {
+    Batch,
+    Stream,
+    AllApi,
+}
+
+/// The language an alternate claims. `AllLanguages` appears only in a *claim*;
+/// resolution is always asked about a concrete [`Lang`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LangClaim {
+    C,
+    Rust,
+    Java,
+    CSharp,
+    AllLanguages,
+}
+
+/// One concrete API tier — what a caller resolves against.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tier {
+    Batch,
+    Stream,
+}
+
+/// One concrete backend language — what a caller resolves against.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Lang {
+    C,
+    Rust,
+    Java,
+    CSharp,
+}
+
+/// Every concrete backend language, for the sweeps that must hold in all of
+/// them (the generate-time streamability gate, shadowing analysis).
+pub const ALL_LANGS: [Lang; 4] = [Lang::C, Lang::Rust, Lang::Java, Lang::CSharp];
+
+/// [`FuncDef::resolved_for`] over a whole slice — the resolution point for the
+/// generators that take the entire function list at once (the JSON-RPC servers,
+/// the bench binaries). Borrowed and free while no function declares an
+/// alternate.
+#[must_use]
+pub fn resolve_all(funcs: &[FuncDef], lang: Lang) -> std::borrow::Cow<'_, [FuncDef]> {
+    if funcs.iter().all(|f| f.alternates.is_empty()) {
+        return std::borrow::Cow::Borrowed(funcs);
+    }
+    std::borrow::Cow::Owned(
+        funcs
+            .iter()
+            .map(|f| f.resolved_for(lang).into_owned())
+            .collect(),
+    )
+}
+
+/// Every concrete API tier.
+pub const ALL_TIERS: [Tier; 2] = [Tier::Batch, Tier::Stream];
+
+impl Tier {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Batch => "BATCH",
+            Self::Stream => "STREAM",
+        }
+    }
+}
+
+impl Lang {
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::C => "C",
+            Self::Rust => "RUST",
+            Self::Java => "JAVA",
+            Self::CSharp => "CSHARP",
+        }
+    }
+
+    /// The backend key (`backend.name()`) this language corresponds to.
+    #[must_use]
+    pub fn from_backend_name(name: &str) -> Option<Self> {
+        match name {
+            "c" => Some(Self::C),
+            "rust" => Some(Self::Rust),
+            "java" => Some(Self::Java),
+            "csharp" => Some(Self::CSharp),
+            _ => None,
+        }
+    }
+}
+
+impl ApiClaim {
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "BATCH" => Some(Self::Batch),
+            "STREAM" => Some(Self::Stream),
+            "ALL_API" => Some(Self::AllApi),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Batch => "BATCH",
+            Self::Stream => "STREAM",
+            Self::AllApi => "ALL_API",
+        }
+    }
+
+    #[must_use]
+    pub fn covers(self, tier: Tier) -> bool {
+        match self {
+            Self::AllApi => true,
+            Self::Batch => tier == Tier::Batch,
+            Self::Stream => tier == Tier::Stream,
+        }
+    }
+}
+
+impl LangClaim {
+    #[must_use]
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "C" => Some(Self::C),
+            "RUST" => Some(Self::Rust),
+            "JAVA" => Some(Self::Java),
+            "CSHARP" => Some(Self::CSharp),
+            "ALL_LANGUAGES" => Some(Self::AllLanguages),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::C => "C",
+            Self::Rust => "RUST",
+            Self::Java => "JAVA",
+            Self::CSharp => "CSHARP",
+            Self::AllLanguages => "ALL_LANGUAGES",
+        }
+    }
+
+    #[must_use]
+    pub fn covers(self, lang: Lang) -> bool {
+        match self {
+            Self::AllLanguages => true,
+            Self::C => lang == Lang::C,
+            Self::Rust => lang == Lang::Rust,
+            Self::Java => lang == Lang::Java,
+            Self::CSharp => lang == Lang::CSharp,
+        }
+    }
+}
+
+/// An alternate implementation: a whole second body for the same function,
+/// declared in the input `.c` as `<name>_ALT<n>` under a
+/// `/* PRAGMA TA_ALT={<api>,<lang>} */` decoration.
+///
+/// An alternate is **generator input only** — it never becomes a symbol in any
+/// backend. There is still exactly one `TA_MIN`, one `TA_MIN_Open`, and a
+/// cross-indicator call to `min(...)` resolves the same way it always did; the
+/// claim decides only which body the generator transcribes into those existing
+/// functions. It must be strictly functionally identical to the base, and the
+/// accepted justification for carrying one is a significant performance gain.
+#[derive(Debug, Clone)]
+pub struct AltDef {
+    /// The declared C name, e.g. `min_ALT1`.
+    pub name: String,
+    /// The `<n>` in `_ALT<n>`; ascending and contiguous from 1 in file order,
+    /// so a diff that reorders two alternates fails the gate rather than
+    /// silently changing which one wins.
+    pub index: u32,
+    pub api: ApiClaim,
+    pub lang: LangClaim,
+    pub body: Vec<Statement>,
+}
+
+impl FuncDef {
+    /// The alternate that wins one concrete `(tier, language)` cell, or `None`
+    /// when the base body does.
+    ///
+    /// The whole rule: **later declarations override earlier ones for every
+    /// cell they claim**, with the base as the implicit position-0 entry
+    /// claiming `{ALL_API,ALL_LANGUAGES}`. No specificity table — position
+    /// decides, the way `.gitignore` and the CSS cascade decide.
+    #[must_use]
+    pub fn resolve_alt(&self, tier: Tier, lang: Lang) -> Option<&AltDef> {
+        self.alternates
+            .iter()
+            .rev()
+            .find(|a| a.api.covers(tier) && a.lang.covers(lang))
+    }
+
+    /// The body the batch emitters render for `lang`.
+    #[must_use]
+    pub fn batch_body(&self, lang: Lang) -> &[Statement] {
+        self.resolve_alt(Tier::Batch, lang)
+            .map_or(&self.body[..], |a| &a.body[..])
+    }
+
+    /// The alternate body claiming `(STREAM, lang)`, if one does.
+    #[must_use]
+    pub fn stream_alt_body(&self, lang: Lang) -> Option<&[Statement]> {
+        self.resolve_alt(Tier::Stream, lang).map(|a| &a.body[..])
+    }
+
+    /// The body the streaming tier is derived from.
+    ///
+    /// Naming the selection once is what makes `PRAGMA TA_ALT={STREAM,...}`
+    /// reachable: the six analyzers each spelled this out inline, and a site
+    /// left behind would silently analyze the batch body. Absent a resolved
+    /// alternate it is exactly the choice they all made.
+    #[must_use]
+    pub fn stream_source(&self) -> &[Statement] {
+        if let Some(b) = &self.resolved_stream_body {
+            return b;
+        }
+        if self.has_explicit_private {
+            &self.private_body
+        } else {
+            &self.body
+        }
+    }
+
+    /// One line naming the alternate that won a cell, for the generated output.
+    ///
+    /// `None` when the base won — which is every cell of all but a handful of
+    /// functions, and emitting a "using the base body" line everywhere would
+    /// churn 168 files' output to say nothing. The backends wrap it in their own
+    /// comment syntax.
+    #[must_use]
+    pub fn alt_marker(&self, tier: Tier, lang: Lang) -> Option<String> {
+        self.resolve_alt(tier, lang).map(|a| {
+            format!(
+                "Using {} for TA_ALT={{{},{}}}",
+                a.name,
+                a.api.as_str(),
+                a.lang.as_str()
+            )
+        })
+    }
+
+    /// This definition with its bodies already resolved for one backend
+    /// language: `body` becomes the winner of `(BATCH, lang)` and
+    /// [`stream_source`](Self::stream_source) the winner of `(STREAM, lang)`.
+    ///
+    /// **This is the single resolution point.** Everything downstream — the six
+    /// stream analyzers, the four batch emitters, the FMA fusion-set builders,
+    /// the CIRCBUF prolog lookup, candle-settings detection — keeps reading
+    /// `body` / `stream_source()` and is correct without knowing alternates exist.
+    /// The alternative was teaching ~20 scattered selection sites about the
+    /// language, where *missing one is silent* (it would quietly render the
+    /// base), which is the failure class this construct exists to remove.
+    /// `alternates` is carried through unchanged so the emitters can name the
+    /// winner in the generated output.
+    ///
+    /// Borrowed and free for the 167 functions that declare no alternate.
+    #[must_use]
+    pub fn resolved_for(&self, lang: Lang) -> std::borrow::Cow<'_, Self> {
+        if self.alternates.is_empty() {
+            return std::borrow::Cow::Borrowed(self);
+        }
+        let mut out = self.clone();
+        // Pin BOTH tiers, even where the base wins. `stream_source` falls back
+        // to `body` when nothing claims STREAM, and `body` is about to become
+        // the *batch* winner — so resolving only the claimed side would hand the
+        // streaming tier a batch alternate it was never meant to see.
+        out.resolved_stream_body = Some(
+            self.stream_alt_body(lang)
+                .unwrap_or_else(|| self.stream_source())
+                .to_vec(),
+        );
+        out.body = self.batch_body(lang).to_vec();
+        // Keep `private_body` mirroring `body`, the invariant the parser
+        // establishes for every function that declares no `_private`. Several
+        // batch-side consumers read it as "the body" — the Rust `_private`
+        // renderer, which is where the issue-#160 negative-cast gate runs, and
+        // the C/Java single-precision variants — and a BATCH alternate that left
+        // it pointing at the base would have them validate and render a body
+        // that is no longer emitted. The streaming tier is unaffected: with
+        // alternates present, `stream_source()` always reads
+        // `resolved_stream_body`, which is set unconditionally above.
+        if !self.has_explicit_private {
+            out.private_body.clone_from(&out.body);
+        }
+        std::borrow::Cow::Owned(out)
+    }
 }
 
 /// IR-derived streamability tier (internal — never authored by hand; the

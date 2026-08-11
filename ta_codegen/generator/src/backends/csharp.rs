@@ -238,6 +238,9 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language (ir::FuncDef::resolved_for).
+    let resolved = func.resolved_for(crate::ir::Lang::CSharp);
+    let func: &FuncDef = &resolved;
     let mut out = String::new();
     out.push_str(super::ta_abstract_c::LICENSE);
     let _ = writeln!(
@@ -246,6 +249,11 @@ pub fn generate(
         func.name.to_lowercase()
     );
     out.push_str("using System;\n\n");
+    // Name the alternate that won the batch cell, if one did.
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Batch, crate::ir::Lang::CSharp) {
+        out.push_str(&format!("/* {m} */\n\n"));
+    }
+
     // Generated code carries C's exact statement sequence, so the non-primary
     // variants legitimately hold locals whose last read was in a folded branch
     // (the Rust crate allows `unused_assignments` for the same reason). Scoped

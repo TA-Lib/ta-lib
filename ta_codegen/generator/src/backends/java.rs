@@ -451,11 +451,18 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language (ir::FuncDef::resolved_for).
+    let resolved = func.resolved_for(crate::ir::Lang::Java);
+    let func: &FuncDef = &resolved;
     let mut out = String::new();
     // File-level comments carried from the input .c (e.g. contributors/history).
     for block in &func.header_comments {
         out.push_str(&super::stmt_walk::block_comment(block, 0));
         out.push('\n');
+    }
+    // Name the alternate that won the batch cell, if one did.
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Batch, crate::ir::Lang::Java) {
+        out.push_str(&format!("/* {m} */\n\n"));
     }
     out.push_str(&gen_lookback(func, enums, registry, helpers));
     if func.has_explicit_private {

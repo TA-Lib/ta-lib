@@ -15,6 +15,9 @@ use crate::server_gen::expand_input_names;
 use std::path::Path;
 
 pub fn generate_c_bench(funcs: &[FuncDef]) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language before anything reads a body.
+    let resolved = crate::ir::resolve_all(funcs, crate::ir::Lang::C);
+    let funcs: &[FuncDef] = &resolved;
     let mut s = String::new();
 
     s.push_str("/* Auto-generated direct-call benchmark for ta_codegen C output.\n");
@@ -553,6 +556,9 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
 
 /// Generate the standalone streaming benchmark TU.
 pub fn generate_c_stream_bench(funcs: &[FuncDef]) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language before anything reads a body.
+    let resolved = crate::ir::resolve_all(funcs, crate::ir::Lang::C);
+    let funcs: &[FuncDef] = &resolved;
     let mut s = String::new();
     s.push_str("/* Auto-generated streaming benchmark for ta_codegen C output.\n");
     s.push_str(" * Per streamable function: batch@last vs Update vs Peek (ns) + handle bytes.\n");

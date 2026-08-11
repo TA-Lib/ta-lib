@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Target language for cross-call resolution.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Lang {
-    C,
-    Rust,
-    Java,
-    CSharp,
-}
+/// Target language for cross-call resolution — the same enum `PRAGMA TA_ALT`
+/// resolves against, re-exported here for the many `registry::Lang` call sites.
+/// One type: a second copy would be a second answer to "what are the backends".
+pub use crate::ir::Lang;
 
 /// Registry of discovered indicators, used for cross-function call resolution.
 ///
@@ -122,6 +118,20 @@ impl Registry {
         let Some((indicator, suffix)) = self.parse_func_name(func_name) else {
             return func_name.to_string();
         };
+
+        // An alternate is generator input, not a symbol: there is one `TA_MIN`,
+        // and `PRAGMA TA_ALT` decides only which body it is built from. Left to
+        // the generic rule below this would emit a call to `TA_MIN_ALT1`, which
+        // exists in no backend — a link error instead of a generator error, and
+        // in a body that is emitted for four languages while the claim may cover
+        // one. Reject it at the single choke point every call passes through.
+        assert!(
+            !(suffix.starts_with("ALT") && suffix[3..].bytes().all(|b| b.is_ascii_digit())
+                && suffix.len() > 3),
+            "call to `{func_name}`: an alternate implementation is not callable. Call \
+             `{indicator}(...)` — it resolves to whichever body `PRAGMA TA_ALT` selected \
+             for the tier and language being generated."
+        );
 
         // One rule for every backend: `<NAME>_<Suffix>`, and C alone prefixes
         // `TA_`.

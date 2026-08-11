@@ -85,9 +85,11 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
    int outIdx;
    int nbInitialElementNeeded;
    int trailingIdx;
-   int lowestIdx;
    int today;
    int i;
+   int blockStart;
+   int nAvail;
+   int m;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -126,169 +128,123 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
     * Note that this algorithm allows the input and
     * output to be the same buffer.
     *
-    * Two equivalent algorithms. The batch tier takes the first arm for
-    * every period in range (the threshold is the declared maximum), so
-    * the second arm exists to be the streaming tier's transition; see
-    * issue #147.
+    * Van Herk / Gil-Werman block scan, block-batched form. The p outputs
+    * belonging to one block boundary are produced together: one backward
+    * pass builds the older block's suffix extrema, one forward pass builds
+    * the newer block's prefix extrema, and a third pass combines them. All
+    * three are straight-line loops with no data-dependent branching, which
+    * is what lets a compiler vectorize them, and the work is 3 comparisons
+    * per bar regardless of period. Both scratch arrays hold COPIES, so
+    * input and output may alias.
     *
-    * - Batch: Van Herk / Gil-Werman block scan, block-batched form. The
-    *   p outputs belonging to one block boundary are produced together:
-    *   one backward pass builds the older block's suffix extrema, one
-    *   forward pass builds the newer block's prefix extrema, and a third
-    *   pass combines them. All three are straight-line loops with no
-    *   data-dependent branching, which is what lets a compiler vectorize
-    *   them, and the work is 3 comparisons per bar regardless of period.
-    *   Both scratch arrays hold COPIES, so input and output may alias.
-    *
-    * - Streaming: cache the lowest value with its index; rescan only
-    *   when the cached extremum leaves the window. O(1) per bar while the
-    *   extremum sits away from the trailing edge, but not amortized O(1):
-    *   an extremum on the oldest in-window bar drops out on the very next
-    *   bar, so the rescan repeats and the cost stays O(period) per bar for
-    *   as long as that persists.
+    * Producing a whole block at a time is also why this cannot be turned
+    * into a per-bar automaton, so the streaming tier runs min_ALT1 below.
     */
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   if( optInTimePeriod <= 100000 )
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
-      int blockStart;
-      int nAvail;
-      int m;
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-      if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
+      sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufLowest )
       {
-         sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !sufLowest )
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufLowest = &local_sufLowest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+   {
+      preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preLowest )
+      {
+         if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preLowest = &local_preLowest[0];
+   }
+   blockStart = trailingIdx;
+   while( today <= endIdx )
+   {
+      /* Suffix extrema of the block [blockStart, blockStart+p-1], which
+       * is fully available here: today == blockStart+p-1 <= endIdx.
+       * Scanning backward while keeping the incumbent on a tie
+       * leaves the later element holding a tie, which is what lets this
+       * compile to a single min instruction.
+       */
+      i = blockStart + optInTimePeriod - 1;
+      lowest = inReal[i];
+      sufLowest[optInTimePeriod - 1] = lowest;
+      TA_UNROLL(4)
+      while( i > blockStart )
+      {
+         i -= 1;
+         tmp = inReal[i];
+         if( tmp < lowest )
          {
-            return TA_ALLOC_ERR;
+            lowest = tmp;
          }
+         sufLowest[i - blockStart] = lowest;
       }
-      else
+      lowest = sufLowest[0];
+      outReal[outIdx++] = lowest;
+      trailingIdx += 1;
+      today += 1;
+      if( today > endIdx )
       {
-         sufLowest = &local_sufLowest[0];
-      }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-      if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+         blockStart = blockStart + optInTimePeriod;
+      } else 
       {
-         preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !preLowest )
-         {
-            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-            return TA_ALLOC_ERR;
-         }
-      }
-      else
-      {
-         preLowest = &local_preLowest[0];
-      }
-      blockStart = trailingIdx;
-      while( today <= endIdx )
-      {
-         /* Suffix extrema of the block [blockStart, blockStart+p-1], which
-          * is fully available here: today == blockStart+p-1 <= endIdx.
-          * Scanning backward while keeping the incumbent on a tie
-          * leaves the later element holding a tie, which is what lets this
-          * compile to a single min instruction.
+         /* Prefix extrema of the next block, clamped to what remains.
+          * Forward, keeping the incumbent on a tie: earliest wins again.
           */
-         i = blockStart + optInTimePeriod - 1;
-         lowest = inReal[i];
-         sufLowest[optInTimePeriod - 1] = lowest;
-         TA_UNROLL(4)
-         while( i > blockStart )
+         nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+         if( nAvail > optInTimePeriod - 1 )
          {
-            i -= 1;
-            tmp = inReal[i];
+            nAvail = optInTimePeriod - 1;
+         }
+         lowest = inReal[blockStart + optInTimePeriod];
+         preLowest[0] = lowest;
+         i = 1;
+         TA_UNROLL(4)
+         while( i < nAvail )
+         {
+            tmp = inReal[blockStart + optInTimePeriod + i];
             if( tmp < lowest )
             {
                lowest = tmp;
             }
-            sufLowest[i - blockStart] = lowest;
+            preLowest[i] = lowest;
+            i += 1;
          }
-         lowest = sufLowest[0];
-         outReal[outIdx++] = lowest;
-         trailingIdx += 1;
-         today += 1;
-         if( today > endIdx )
+         /* Combine. The suffix half is the older one, so preferring it
+          * on a tie keeps the earliest-wins rule.
+          */
+         m = 1;
+         while( m <= nAvail )
          {
-            blockStart = blockStart + optInTimePeriod;
-         } else 
-         {
-            /* Prefix extrema of the next block, clamped to what remains.
-             * Forward, keeping the incumbent on a tie: earliest wins again.
-             */
-            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
-            if( nAvail > optInTimePeriod - 1 )
+            lowest = sufLowest[m];
+            if( preLowest[m - 1] < lowest )
             {
-               nAvail = optInTimePeriod - 1;
+               lowest = preLowest[m - 1];
             }
-            lowest = inReal[blockStart + optInTimePeriod];
-            preLowest[0] = lowest;
-            i = 1;
-            TA_UNROLL(4)
-            while( i < nAvail )
-            {
-               tmp = inReal[blockStart + optInTimePeriod + i];
-               if( tmp < lowest )
-               {
-                  lowest = tmp;
-               }
-               preLowest[i] = lowest;
-               i += 1;
-            }
-            /* Combine. The suffix half is the older one, so preferring it
-             * on a tie keeps the earliest-wins rule.
-             */
-            m = 1;
-            while( m <= nAvail )
-            {
-               lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest )
-               {
-                  lowest = preLowest[m - 1];
-               }
-               outReal[outIdx++] = lowest;
-               m += 1;
-            }
-            trailingIdx = trailingIdx + nAvail;
-            today = today + nAvail;
-            blockStart = blockStart + optInTimePeriod;
+            outReal[outIdx++] = lowest;
+            m += 1;
          }
-      }
-      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
-      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
-   } else 
-   {
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx )
-      {
-         tmp = inReal[today];
-         if( lowestIdx < trailingIdx )
-         {
-            lowestIdx = trailingIdx;
-            lowest = inReal[lowestIdx];
-            i = lowestIdx;
-            TA_UNROLL(4)
-            while( ++i <= today )
-            {
-               tmp = inReal[i];
-               if( tmp < lowest )
-               {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest )
-         {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         outReal[outIdx++] = lowest;
-         trailingIdx += 1;
-         today += 1;
+         trailingIdx = trailingIdx + nAvail;
+         today = today + nAvail;
+         blockStart = blockStart + optInTimePeriod;
       }
    }
+   if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+   if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    /* Keep the outBegIdx relative to the
     * caller input before returning.
     */
@@ -314,9 +270,11 @@ TA_RetCode TA_S_MIN( int    startIdx,
    int outIdx;
    int nbInitialElementNeeded;
    int trailingIdx;
-   int lowestIdx;
    int today;
    int i;
+   int blockStart;
+   int nAvail;
+   int m;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -346,139 +304,104 @@ TA_RetCode TA_S_MIN( int    startIdx,
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
-   if( optInTimePeriod <= 100000 )
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
    {
-      int blockStart;
-      int nAvail;
-      int m;
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-      if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
+      sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !sufLowest )
       {
-         sufLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !sufLowest )
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      sufLowest = &local_sufLowest[0];
+   }
+   if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
+   if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+   {
+      preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
+      if( !preLowest )
+      {
+         if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
+         return TA_ALLOC_ERR;
+      }
+   }
+   else
+   {
+      preLowest = &local_preLowest[0];
+   }
+   blockStart = trailingIdx;
+   while( today <= endIdx )
+   {
+      i = blockStart + optInTimePeriod - 1;
+      lowest = (double)inReal[i];
+      sufLowest[optInTimePeriod - 1] = lowest;
+      TA_UNROLL(4)
+      while( i > blockStart )
+      {
+         i -= 1;
+         tmp = (double)inReal[i];
+         if( tmp < lowest )
          {
-            return TA_ALLOC_ERR;
+            lowest = tmp;
          }
+         sufLowest[i - blockStart] = lowest;
       }
-      else
+      lowest = sufLowest[0];
+      outReal[outIdx++] = lowest;
+      trailingIdx += 1;
+      today += 1;
+      if( today > endIdx )
       {
-         sufLowest = &local_sufLowest[0];
-      }
-      if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
-      if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
+         blockStart = blockStart + optInTimePeriod;
+      } else 
       {
-         preLowest = TA_Malloc( sizeof(double)*optInTimePeriod );
-         if( !preLowest )
+         nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
+         if( nAvail > optInTimePeriod - 1 )
          {
-            if( sufLowest != &local_sufLowest[0] ) TA_Free( sufLowest );
-            return TA_ALLOC_ERR;
+            nAvail = optInTimePeriod - 1;
          }
-      }
-      else
-      {
-         preLowest = &local_preLowest[0];
-      }
-      blockStart = trailingIdx;
-      while( today <= endIdx )
-      {
-         i = blockStart + optInTimePeriod - 1;
-         lowest = (double)inReal[i];
-         sufLowest[optInTimePeriod - 1] = lowest;
+         lowest = (double)inReal[blockStart + optInTimePeriod];
+         preLowest[0] = lowest;
+         i = 1;
          TA_UNROLL(4)
-         while( i > blockStart )
+         while( i < nAvail )
          {
-            i -= 1;
-            tmp = (double)inReal[i];
+            tmp = (double)inReal[blockStart + optInTimePeriod + i];
             if( tmp < lowest )
             {
                lowest = tmp;
             }
-            sufLowest[i - blockStart] = lowest;
+            preLowest[i] = lowest;
+            i += 1;
          }
-         lowest = sufLowest[0];
-         outReal[outIdx++] = lowest;
-         trailingIdx += 1;
-         today += 1;
-         if( today > endIdx )
+         m = 1;
+         while( m <= nAvail )
          {
-            blockStart = blockStart + optInTimePeriod;
-         } else 
-         {
-            nAvail = endIdx - (blockStart + optInTimePeriod) + 1;
-            if( nAvail > optInTimePeriod - 1 )
+            lowest = sufLowest[m];
+            if( preLowest[m - 1] < lowest )
             {
-               nAvail = optInTimePeriod - 1;
+               lowest = preLowest[m - 1];
             }
-            lowest = (double)inReal[blockStart + optInTimePeriod];
-            preLowest[0] = lowest;
-            i = 1;
-            TA_UNROLL(4)
-            while( i < nAvail )
-            {
-               tmp = (double)inReal[blockStart + optInTimePeriod + i];
-               if( tmp < lowest )
-               {
-                  lowest = tmp;
-               }
-               preLowest[i] = lowest;
-               i += 1;
-            }
-            m = 1;
-            while( m <= nAvail )
-            {
-               lowest = sufLowest[m];
-               if( preLowest[m - 1] < lowest )
-               {
-                  lowest = preLowest[m - 1];
-               }
-               outReal[outIdx++] = lowest;
-               m += 1;
-            }
-            trailingIdx = trailingIdx + nAvail;
-            today = today + nAvail;
-            blockStart = blockStart + optInTimePeriod;
+            outReal[outIdx++] = lowest;
+            m += 1;
          }
-      }
-      if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
-      if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
-   } else 
-   {
-      lowestIdx = 0 - 1;
-      lowest = 0.0;
-      while( today <= endIdx )
-      {
-         tmp = (double)inReal[today];
-         if( lowestIdx < trailingIdx )
-         {
-            lowestIdx = trailingIdx;
-            lowest = (double)inReal[lowestIdx];
-            i = lowestIdx;
-            TA_UNROLL(4)
-            while( ++i <= today )
-            {
-               tmp = (double)inReal[i];
-               if( tmp < lowest )
-               {
-                  lowestIdx = i;
-                  lowest = tmp;
-               }
-            }
-         } else if( tmp <= lowest )
-         {
-            lowestIdx = today;
-            lowest = tmp;
-         }
-         outReal[outIdx++] = lowest;
-         trailingIdx += 1;
-         today += 1;
+         trailingIdx = trailingIdx + nAvail;
+         today = today + nAvail;
+         blockStart = blockStart + optInTimePeriod;
       }
    }
+   if( sufLowest != &local_sufLowest[0] ) { TA_Free( sufLowest ); sufLowest = &local_sufLowest[0]; }
+   if( preLowest != &local_preLowest[0] ) { TA_Free( preLowest ); preLowest = &local_preLowest[0]; }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
    return TA_SUCCESS;
 }
 
 /**** Streaming API *****/
+
+/* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 struct TA_MIN_Stream {
    int optInTimePeriod;
@@ -595,26 +518,13 @@ static TA_RetCode TA_MIN_OpenCore( struct TA_MIN_Stream **stream, const double i
        * Note that this algorithm allows the input and
        * output to be the same buffer.
        *
-       * Two equivalent algorithms. The batch tier takes the first arm for
-       * every period in range (the threshold is the declared maximum), so
-       * the second arm exists to be the streaming tier's transition; see
-       * issue #147.
-       *
-       * - Batch: Van Herk / Gil-Werman block scan, block-batched form. The
-       *   p outputs belonging to one block boundary are produced together:
-       *   one backward pass builds the older block's suffix extrema, one
-       *   forward pass builds the newer block's prefix extrema, and a third
-       *   pass combines them. All three are straight-line loops with no
-       *   data-dependent branching, which is what lets a compiler vectorize
-       *   them, and the work is 3 comparisons per bar regardless of period.
-       *   Both scratch arrays hold COPIES, so input and output may alias.
-       *
-       * - Streaming: cache the lowest value with its index; rescan only
-       *   when the cached extremum leaves the window. O(1) per bar while the
-       *   extremum sits away from the trailing edge, but not amortized O(1):
-       *   an extremum on the oldest in-window bar drops out on the very next
-       *   bar, so the rescan repeats and the cost stays O(period) per bar for
-       *   as long as that persists.
+       * Cache the lowest value with its index; rescan only when the cached
+       * extremum leaves the window. O(1) per bar while the extremum sits away
+       * from the trailing edge, but not amortized O(1): an extremum on the
+       * oldest in-window bar drops out on the very next bar, so the rescan
+       * repeats and the cost stays O(period) per bar for as long as that
+       * persists. Slower than the block scan the batch tier runs; it is here
+       * because one bar at a time is exactly what the streaming tier needs.
        */
       outIdx = 0;
       today = startIdx;

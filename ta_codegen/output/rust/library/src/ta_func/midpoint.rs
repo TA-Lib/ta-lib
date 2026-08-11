@@ -190,15 +190,16 @@ impl Core {
         let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
-        let mut tmpLow: f64 = 0.0_f64;
         let mut tmpHigh: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut nbInitialElementNeeded: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
-        let mut lowestIdx: i32 = 0_i32;
-        let mut highestIdx: i32 = 0_i32;
         let mut today: usize = 0_usize;
         let mut i: usize = 0_usize;
+        let mut blockStart: usize = 0_usize;
+        let mut nAvail: usize = 0_usize;
+        let mut m: usize = 0_usize;
+        let mut blockNext: usize = 0_usize;
         // Find the highest and lowest value of a timeserie
         // over the period.
         //      MIDPOINT = (Highest Value + Lowest Value)/2
@@ -224,196 +225,132 @@ impl Core {
         // Note that this algorithm allows the input and
         // output to be the same buffer.
         //
-        // The highest/lowest of the window is cached with its
-        // index; the window is rescanned only when the cached
-        // extremum drops out of the window. That is O(1) per bar
-        // while the extremum sits away from the trailing edge, but
-        // it is not amortized O(1): an extremum on the oldest
-        // in-window bar drops out on the very next bar, so the
-        // rescan repeats and the cost stays O(period) per bar for
-        // as long as that persists.
-        //
-        // Tracking both extrema keeps that state going through a
-        // trend: while the high is refreshed by each new bar, the
-        // low stays pinned at the oldest bar for the whole leg
-        // (and the reverse on the way down). A flat stretch pins
-        // both. Random-walk input is the favourable case, where
-        // rescans are rare. See issue #147.
-        //
-        // The batch tier does not use that automaton: it takes the first arm
-        // for every period in range (the threshold is the declared maximum),
-        // and the automaton above is what the streaming tier transitions on.
-        // Batch runs a Van Herk / Gil-Werman block scan in block-batched
-        // form: the p outputs belonging to one block boundary are produced
-        // together, one backward pass for the older block's suffix extrema,
-        // one forward pass for the newer block's prefix extrema, and a third
-        // pass to combine. Both extrema travel in the same passes. All the
-        // loops are straight-line with no data-dependent branching, which is
-        // what lets a compiler vectorize them, and the work per bar is a
-        // fixed number of comparisons regardless of period. Every scratch
+        // Van Herk / Gil-Werman block scan, block-batched form. The p outputs
+        // belonging to one block boundary are produced together: one backward
+        // pass builds the older block's suffix extrema, one forward pass builds
+        // the newer block's prefix extrema, and a third pass combines them.
+        // Both extrema travel in the same passes.
+        // All the loops are straight-line with no data-dependent branching,
+        // which is what lets a compiler vectorize them, and the work per bar is
+        // a fixed number of comparisons regardless of period. Every scratch
         // array holds COPIES, so input and output may alias.
+        //
+        // Producing a whole block at a time is also why this cannot be turned
+        // into a per-bar automaton, so the streaming tier runs midpoint_ALT1
+        // below. See issue #147.
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;
-        if optInTimePeriod <= 100000 {
-            let mut blockStart: usize = 0_usize;
-            let mut nAvail: usize = 0_usize;
-            let mut m: usize = 0_usize;
-            let mut blockNext: usize = 0_usize;
-            if optInTimePeriod < 1 { return RetCode::InternalError; }
-            if (optInTimePeriod) as usize <= 30usize {
-                sufHighest = &mut local_sufHighest;
-            } else {
-                heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
-                sufHighest = &mut heap_sufHighest;
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            sufHighest = &mut local_sufHighest;
+        } else {
+            heap_sufHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+            sufHighest = &mut heap_sufHighest;
+        }
+        maxIdx_sufHighest = ((optInTimePeriod) as usize) - 1;
+        sufHighest_Idx = 0;
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            preHighest = &mut local_preHighest;
+        } else {
+            heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
+            preHighest = &mut heap_preHighest;
+        }
+        maxIdx_preHighest = ((optInTimePeriod) as usize) - 1;
+        preHighest_Idx = 0;
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            sufLowest = &mut local_sufLowest;
+        } else {
+            heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+            sufLowest = &mut heap_sufLowest;
+        }
+        maxIdx_sufLowest = ((optInTimePeriod) as usize) - 1;
+        sufLowest_Idx = 0;
+        if optInTimePeriod < 1 { return RetCode::InternalError; }
+        if (optInTimePeriod) as usize <= 30usize {
+            preLowest = &mut local_preLowest;
+        } else {
+            heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
+            preLowest = &mut heap_preLowest;
+        }
+        maxIdx_preLowest = ((optInTimePeriod) as usize) - 1;
+        preLowest_Idx = 0;
+        blockStart = trailingIdx;
+        while today <= endIdx {
+            // Suffix extrema of the block [blockStart, blockStart+p-1], which
+            // is fully available here: today == blockStart+p-1 <= endIdx.
+            // Scanning backward while keeping the incumbent on a tie
+            // leaves the later element holding a tie, which is what lets this
+            // compile to a single min/max instruction.
+            i = blockStart + ((optInTimePeriod) as usize) - 1;
+            highest = inReal[i];
+            lowest = highest;
+            sufHighest[(optInTimePeriod - 1) as usize] = highest;
+            sufLowest[(optInTimePeriod - 1) as usize] = lowest;
+            while i > blockStart {
+                i -= 1;
+                tmpHigh = inReal[i];
+                if tmpHigh > highest {
+                    highest = tmpHigh;
+                }
+                if tmpHigh < lowest {
+                    lowest = tmpHigh;
+                }
+                sufHighest[i - blockStart] = highest;
+                sufLowest[i - blockStart] = lowest;
             }
-            maxIdx_sufHighest = ((optInTimePeriod) as usize) - 1;
-            sufHighest_Idx = 0;
-            if optInTimePeriod < 1 { return RetCode::InternalError; }
-            if (optInTimePeriod) as usize <= 30usize {
-                preHighest = &mut local_preHighest;
+            outReal[outIdx] = (((sufHighest[0] + sufLowest[0]) / 2.0) as f64);
+            outIdx += 1;
+            trailingIdx += 1;
+            today += 1;
+            if today > endIdx {
+                blockStart = blockStart + ((optInTimePeriod) as usize);
             } else {
-                heap_preHighest = vec![0.0_f64; (optInTimePeriod) as usize];
-                preHighest = &mut heap_preHighest;
-            }
-            maxIdx_preHighest = ((optInTimePeriod) as usize) - 1;
-            preHighest_Idx = 0;
-            if optInTimePeriod < 1 { return RetCode::InternalError; }
-            if (optInTimePeriod) as usize <= 30usize {
-                sufLowest = &mut local_sufLowest;
-            } else {
-                heap_sufLowest = vec![0.0_f64; (optInTimePeriod) as usize];
-                sufLowest = &mut heap_sufLowest;
-            }
-            maxIdx_sufLowest = ((optInTimePeriod) as usize) - 1;
-            sufLowest_Idx = 0;
-            if optInTimePeriod < 1 { return RetCode::InternalError; }
-            if (optInTimePeriod) as usize <= 30usize {
-                preLowest = &mut local_preLowest;
-            } else {
-                heap_preLowest = vec![0.0_f64; (optInTimePeriod) as usize];
-                preLowest = &mut heap_preLowest;
-            }
-            maxIdx_preLowest = ((optInTimePeriod) as usize) - 1;
-            preLowest_Idx = 0;
-            blockStart = trailingIdx;
-            while today <= endIdx {
-                // Suffix extrema of the block [blockStart, blockStart+p-1], which
-                // is fully available here: today == blockStart+p-1 <= endIdx.
-                // Scanning backward while keeping the incumbent on a tie
-                // leaves the later element holding a tie, which is what lets this
-                // compile to a single min/max instruction.
-                i = blockStart + ((optInTimePeriod) as usize) - 1;
-                highest = inReal[i];
+                // Prefix extrema of the next block, clamped to what remains.
+                // Forward, keeping the incumbent on a tie: earliest wins again.
+                blockNext = blockStart + ((optInTimePeriod) as usize);
+                nAvail = endIdx - blockNext + 1;
+                if nAvail > ((optInTimePeriod - 1) as usize) {
+                    nAvail = (optInTimePeriod - 1) as usize;
+                }
+                highest = inReal[blockNext];
                 lowest = highest;
-                sufHighest[(optInTimePeriod - 1) as usize] = highest;
-                sufLowest[(optInTimePeriod - 1) as usize] = lowest;
-                while i > blockStart {
-                    i -= 1;
-                    tmpHigh = inReal[i];
+                preHighest[0] = highest;
+                preLowest[0] = lowest;
+                i = 1;
+                while i < nAvail {
+                    tmpHigh = inReal[blockNext + i];
                     if tmpHigh > highest {
                         highest = tmpHigh;
                     }
                     if tmpHigh < lowest {
                         lowest = tmpHigh;
                     }
-                    sufHighest[i - blockStart] = highest;
-                    sufLowest[i - blockStart] = lowest;
+                    preHighest[i] = highest;
+                    preLowest[i] = lowest;
+                    i += 1;
                 }
-                outReal[outIdx] = (((sufHighest[0] + sufLowest[0]) / 2.0) as f64);
-                outIdx += 1;
-                trailingIdx += 1;
-                today += 1;
-                if today > endIdx {
-                    blockStart = blockStart + ((optInTimePeriod) as usize);
-                } else {
-                    // Prefix extrema of the next block, clamped to what remains.
-                    // Forward, keeping the incumbent on a tie: earliest wins again.
-                    blockNext = blockStart + ((optInTimePeriod) as usize);
-                    nAvail = endIdx - blockNext + 1;
-                    if nAvail > ((optInTimePeriod - 1) as usize) {
-                        nAvail = (optInTimePeriod - 1) as usize;
+                // Combine. The suffix half is the older one, so preferring it
+                // on a tie keeps the earliest-wins rule.
+                m = 1;
+                while m <= nAvail {
+                    highest = sufHighest[m];
+                    if preHighest[m - 1] > highest {
+                        highest = preHighest[m - 1];
                     }
-                    highest = inReal[blockNext];
-                    lowest = highest;
-                    preHighest[0] = highest;
-                    preLowest[0] = lowest;
-                    i = 1;
-                    while i < nAvail {
-                        tmpHigh = inReal[blockNext + i];
-                        if tmpHigh > highest {
-                            highest = tmpHigh;
-                        }
-                        if tmpHigh < lowest {
-                            lowest = tmpHigh;
-                        }
-                        preHighest[i] = highest;
-                        preLowest[i] = lowest;
-                        i += 1;
+                    lowest = sufLowest[m];
+                    if preLowest[m - 1] < lowest {
+                        lowest = preLowest[m - 1];
                     }
-                    // Combine. The suffix half is the older one, so preferring it
-                    // on a tie keeps the earliest-wins rule.
-                    m = 1;
-                    while m <= nAvail {
-                        highest = sufHighest[m];
-                        if preHighest[m - 1] > highest {
-                            highest = preHighest[m - 1];
-                        }
-                        lowest = sufLowest[m];
-                        if preLowest[m - 1] < lowest {
-                            lowest = preLowest[m - 1];
-                        }
-                        outReal[outIdx] = (highest + lowest) / 2.0;
-                        outIdx += 1;
-                        m += 1;
-                    }
-                    trailingIdx = trailingIdx + nAvail;
-                    today = today + nAvail;
-                    blockStart = blockStart + ((optInTimePeriod) as usize);
+                    outReal[outIdx] = (highest + lowest) / 2.0;
+                    outIdx += 1;
+                    m += 1;
                 }
-            }
-        } else {
-            highestIdx = 0 - 1;
-            highest = 0.0;
-            lowestIdx = 0 - 1;
-            lowest = 0.0;
-            while today <= endIdx {
-                tmpHigh = inReal[today];
-                tmpLow = tmpHigh;
-                if highestIdx < ((trailingIdx) as i32) {
-                    highestIdx = (trailingIdx) as i32;
-                    highest = inReal[(highestIdx) as usize];
-                    i = (highestIdx) as usize;
-                    while { i += 1; i } <= today {
-                        tmpHigh = inReal[i];
-                        if tmpHigh > highest {
-                            highestIdx = (i) as i32;
-                            highest = tmpHigh;
-                        }
-                    }
-                } else if tmpHigh >= highest {
-                    highestIdx = (today) as i32;
-                    highest = tmpHigh;
-                }
-                if lowestIdx < ((trailingIdx) as i32) {
-                    lowestIdx = (trailingIdx) as i32;
-                    lowest = inReal[(lowestIdx) as usize];
-                    i = (lowestIdx) as usize;
-                    while { i += 1; i } <= today {
-                        tmpLow = inReal[i];
-                        if tmpLow < lowest {
-                            lowestIdx = (i) as i32;
-                            lowest = tmpLow;
-                        }
-                    }
-                } else if tmpLow <= lowest {
-                    lowestIdx = (today) as i32;
-                    lowest = tmpLow;
-                }
-                outReal[outIdx] = (highest + lowest) / 2.0;
-                outIdx += 1;
-                trailingIdx += 1;
-                today += 1;
+                trailingIdx = trailingIdx + nAvail;
+                today = today + nAvail;
+                blockStart = blockStart + ((optInTimePeriod) as usize);
             }
         }
         // Keep the outBegIdx relative to the
@@ -424,6 +361,8 @@ impl Core {
     }
 }
 /**** Streaming API *****/
+
+/* Using midpoint_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */
 
 /// Live MIDPOINT stream: one value per closed bar, bit-identical to [`Core::MIDPOINT`]
 /// over the same series. Open with [`Core::MIDPOINT_Open`]; dropping the handle
@@ -528,18 +467,6 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sufHighest: Vec<f64> = Vec::new();
-        let mut sufHighest_Idx: usize = 0;
-        let mut maxIdx_sufHighest: usize = 29;
-        let mut preHighest: Vec<f64> = Vec::new();
-        let mut preHighest_Idx: usize = 0;
-        let mut maxIdx_preHighest: usize = 29;
-        let mut sufLowest: Vec<f64> = Vec::new();
-        let mut sufLowest_Idx: usize = 0;
-        let mut maxIdx_sufLowest: usize = 29;
-        let mut preLowest: Vec<f64> = Vec::new();
-        let mut preLowest_Idx: usize = 0;
-        let mut maxIdx_preLowest: usize = 29;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmpLow: f64 = 0.0_f64;
@@ -576,34 +503,22 @@ impl Core {
         // Note that this algorithm allows the input and
         // output to be the same buffer.
         //
-        // The highest/lowest of the window is cached with its
-        // index; the window is rescanned only when the cached
-        // extremum drops out of the window. That is O(1) per bar
-        // while the extremum sits away from the trailing edge, but
-        // it is not amortized O(1): an extremum on the oldest
-        // in-window bar drops out on the very next bar, so the
-        // rescan repeats and the cost stays O(period) per bar for
-        // as long as that persists.
+        // The highest and lowest of the window are cached with their indices;
+        // the window is rescanned only when a cached extremum drops out of it.
+        // That is O(1)
+        // per bar while the extremum sits away from the trailing edge, but it is
+        // not amortized O(1): an extremum on the oldest in-window bar drops out
+        // on the very next bar, so the rescan repeats and the cost stays
+        // O(period) per bar for as long as that persists.
         //
-        // Tracking both extrema keeps that state going through a
-        // trend: while the high is refreshed by each new bar, the
-        // low stays pinned at the oldest bar for the whole leg
-        // (and the reverse on the way down). A flat stretch pins
-        // both. Random-walk input is the favourable case, where
-        // rescans are rare. See issue #147.
+        // Tracking both extrema keeps that state going through a trend: while
+        // the high is refreshed by each new bar, the low stays pinned at the
+        // oldest bar for the whole leg (and the reverse on the way down). A flat
+        // stretch pins both. Random-walk input is the favourable case, where
+        // rescans are rare.
         //
-        // The batch tier does not use that automaton: it takes the first arm
-        // for every period in range (the threshold is the declared maximum),
-        // and the automaton above is what the streaming tier transitions on.
-        // Batch runs a Van Herk / Gil-Werman block scan in block-batched
-        // form: the p outputs belonging to one block boundary are produced
-        // together, one backward pass for the older block's suffix extrema,
-        // one forward pass for the newer block's prefix extrema, and a third
-        // pass to combine. Both extrema travel in the same passes. All the
-        // loops are straight-line with no data-dependent branching, which is
-        // what lets a compiler vectorize them, and the work per bar is a
-        // fixed number of comparisons regardless of period. Every scratch
-        // array holds COPIES, so input and output may alias.
+        // Slower than the block scan the batch tier runs; it is here because one
+        // bar at a time is exactly what the streaming tier needs. See issue #147.
         outIdx = 0;
         today = startIdx;
         trailingIdx = startIdx - nbInitialElementNeeded;

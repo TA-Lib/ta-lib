@@ -77,7 +77,8 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     if !func.streaming {
         return false;
     }
-    streaming::validate_streamable(func, lookup).is_ok()
+    // Resolve `PRAGMA TA_ALT` here, not at the caller — see the Rust twin.
+    streaming::validate_streamable(&func.resolved_for(crate::ir::Lang::Java), lookup).is_ok()
 }
 
 /// The base every Java identifier for this function is spelled from: the YAML
@@ -394,6 +395,9 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` here too — `generate` has direct callers.
+    let resolved = func.resolved_for(crate::ir::Lang::Java);
+    let func: &FuncDef = &resolved;
     assert!(
         func.streaming,
         "java_stream::generate called without a streaming declaration"
@@ -405,8 +409,15 @@ pub fn generate(
     // streamed per-bar code fuses `a*b+c` at the same sites as the batch body
     // (keeps the bitwise batch-vs-stream gate green under FMA). Bar inputs
     // become bare scalar params, so seed them into real_vars explicitly.
+    //
+    // `stream_source()`, not `private_body`: the fusion sets must be derived
+    // from the very body these emitters render, and a
+    // `PRAGMA TA_ALT={STREAM,...}` alternate is the case where the two stop
+    // being the same slice. Deriving them from the batch body would fuse
+    // `a*b+c` at different sites than Rust (which types from the stream model),
+    // surfacing as a ~1 ULP cross-language mismatch with nothing pointing here.
     let mut stream_fma = fma::build_fma_var_sets(
-        &func.private_body,
+        func.stream_source(),
         &func.outputs,
         &fma::INDEX_PARAM_SEEDS,
     );
@@ -418,15 +429,15 @@ pub fn generate(
     let mut o = String::new();
 
     let _ = writeln!(o, "{SECTION_MARKER}\n");
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Stream, crate::ir::Lang::Java) {
+        let _ = writeln!(o, "/* {m} */\n");
+    }
     match &plan {
         StreamPlan::Loop(model) => {
             emit_loop(&mut o, func, model, &stream_fma, enums, registry, helpers, &counter);
         }
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, &stream_fma, enums, registry, helpers, &counter);
-        }
-        StreamPlan::FastPathSkip(fp) => {
-            emit_fastpath_skip(&mut o, func, fp, &stream_fma, enums, registry, helpers, &counter);
         }
         StreamPlan::Dispatch(dp) => {
             emit_dispatch(&mut o, func, dp, &stream_fma, enums, registry, helpers, &counter);
@@ -552,7 +563,7 @@ fn emit_loop(
 }
 
 /// The loop-tier lifecycle over an explicit body region — shared by the plain
-/// loop tier (`model.body`) and fast-path-skip (`prologue ++ general arm ++
+/// loop tier (`model.body`) and dual-mode (`prologue ++ arm body ++
 /// epilogue`).
 #[allow(clippy::too_many_arguments)]
 fn emit_loop_shape(
@@ -1046,7 +1057,7 @@ fn build_open_body_java(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
 /// The open-body emitter: `private RetCode <base>OpenBody(sp, in..., startIdx,
 /// opts...)` (Scalar) or `private RetCode <base>OpenAndFillBody(sp, in...,
 /// opts..., outBegIdx, outNBElement, outs...)` (Fill). `body` is the
-/// transcribed batch region (loop tier: `model.body`; fast-path-skip:
+/// transcribed batch region (loop tier: `model.body`; dual-mode:
 /// `prologue ++ general arm ++ epilogue`).
 #[allow(clippy::too_many_arguments)]
 fn emit_open_body(
@@ -1934,30 +1945,6 @@ fn emit_dual_mode(
     emit_open_and_fill_wrapper(o, func);
 
     emit_open_wrappers(o, func);
-}
-
-// ---------------------------------------------------------------------------
-// Fast-path-skip tier (MIDPRICE): the loop-tier lifecycle on the general arm.
-// ---------------------------------------------------------------------------
-
-#[allow(clippy::too_many_arguments)]
-fn emit_fastpath_skip(
-    o: &mut String,
-    func: &FuncDef,
-    fp: &streaming::FastPathSkipPlan,
-    stream_fma: &FmaVarSets,
-    enums: &HashMap<String, EnumDef>,
-    registry: &Registry,
-    helpers: &HelperRegistry,
-    counter: &Cell<usize>,
-) {
-    // The fast-path `then` arm is a batch-only perf specialization skipped by
-    // the stream (bit-identical by construction; the differential gates
-    // enforce it across the threshold).
-    let mut tbody: Vec<Statement> = fp.prologue.to_vec();
-    tbody.extend_from_slice(fp.model.body);
-    tbody.extend_from_slice(fp.epilogue);
-    emit_loop_shape(o, func, &fp.model, &tbody, stream_fma, enums, registry, helpers, counter);
 }
 
 // ---------------------------------------------------------------------------

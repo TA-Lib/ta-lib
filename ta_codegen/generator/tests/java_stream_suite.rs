@@ -139,7 +139,7 @@ fn test_java_cdl_candle_snapshot() {
 }
 
 // ---------------------------------------------------------------------------
-// Dual-mode / fast-path-skip tiers
+// Dual-mode tier
 // ---------------------------------------------------------------------------
 
 #[test]
@@ -154,11 +154,21 @@ fn test_java_trima_dual_mode() {
 }
 
 #[test]
-fn test_java_midprice_fastpath_skip() {
+fn test_java_midprice_stream_uses_the_declared_alternate() {
     let s = java_stream_section("midprice");
-    // The stream always runs the general arm; the batch fast path never
-    // appears as a param-selected branch in the step.
+    // The stream runs `midprice_ALT1`'s automaton, one unconditional step — the
+    // batch block scan never appears as a param-selected branch.
     assert!(s.contains("void MIDPRICE_StreamStep( MIDPRICE_Stream sp, double inHigh, double inLow )"));
+    assert!(
+        s.contains("/* Using midprice_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */"),
+        "the stream section must name the alternate it resolved to"
+    );
+    for marker in ["sufHighest", "preHighest", "blockNext"] {
+        assert!(
+            !s.contains(marker),
+            "`{marker}` reached the Java stream: it resolved to the block scan, not the alternate"
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------

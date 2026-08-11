@@ -375,6 +375,9 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language (ir::FuncDef::resolved_for).
+    let resolved = func.resolved_for(crate::ir::Lang::Rust);
+    let func: &FuncDef = &resolved;
     let mut out = String::new();
     out.push_str(&gen_header());
     // File-level comments carried from the input .c (e.g. contributors/history).
@@ -383,6 +386,10 @@ pub fn generate(
         out.push('\n');
     }
     out.push_str(&gen_imports());
+    // Name the alternate that won the batch cell, if one did.
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Batch, crate::ir::Lang::Rust) {
+        out.push_str(&format!("/* {m} */\n\n"));
+    }
     out.push_str(&gen_impl_block(func, enums, registry, helpers));
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {

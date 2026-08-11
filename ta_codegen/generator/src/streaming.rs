@@ -422,7 +422,6 @@ pub enum StreamPlan<'a> {
     Dispatch(DispatchPlan<'a>),
     Composed(ComposedPlan<'a>),
     DualMode(DualModePlan<'a>),
-    FastPathSkip(FastPathSkipPlan<'a>),
     PeriodBank(PeriodBankPlan<'a>),
 }
 
@@ -465,27 +464,6 @@ pub struct PeriodBankPlan<'a> {
     pub matype_param: String,
     /// The single real output.
     pub output: String,
-}
-
-/// A recognized param fast-path split whose two arms are bit-identical (a pure
-/// batch perf optimization): `<prologue> if (<param> <= <literal>) { fast-path }
-/// else { general } <epilogue>` (MIDPRICE rescans a short window but caches the
-/// running extremum for long periods; both paths produce identical output).
-/// ONLY the general (else) arm is streamed, for EVERY param — the fast-path
-/// `then` arm is a batch-only specialization skipped by the stream, and the
-/// stream_verify gate enforces bit-exactness across the threshold. The `<=
-/// literal` threshold predicate distinguishes this from a genuine dual-mode
-/// branch (TRIMA's `% 2`, whose arms differ and must both be streamed).
-#[derive(Debug)]
-pub struct FastPathSkipPlan<'a> {
-    pub func: &'a FuncDef,
-    /// The shared prologue (`body[..if_idx]`).
-    pub prologue: &'a [Statement],
-    /// The general (else) arm's stream model (`model.body` is the else slice).
-    pub model: StreamModel<'a>,
-    /// The shared epilogue (`body[if_idx+1..]`): out-meta writes + final return,
-    /// transcribed after the general arm.
-    pub epilogue: &'a [Statement],
 }
 
 /// A recognized param-selected dual-mode body: a shared prologue, then a
@@ -1351,11 +1329,7 @@ fn is_stateful_call(name: &str) -> bool {
 /// composed body, non-scalar state, ...), which drives both the YAML
 /// validation and the census.
 pub fn analyze(func: &FuncDef) -> Result<StreamModel<'_>, StreamError> {
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
+    let body: &[Statement] = func.stream_source();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     for o in &func.outputs {
         if !matches!(o.param_type, ParamType::Real | ParamType::Integer) {
@@ -1571,11 +1545,7 @@ pub fn analyze_region_scoped<'a>(
 /// dual-mode body may carry one too (HMA): it is recognized, excluded from the
 /// arm scan, and attached to BOTH modes.
 pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError> {
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
+    let body: &[Statement] = func.stream_source();
     let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
 
@@ -1639,16 +1609,20 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
             found = Some((i, false));
             break;
         }
-        // If/else form (TRIMA): a real else, each arm is a steady loop, NEITHER
-        // returns (both fall through to a shared epilogue), and NOT a `<= literal`
-        // threshold — that shape is fast-path-skip's (a bit-identical perf split
-        // streams one arm; here the two arms genuinely differ and both stream).
+        // If/else form (TRIMA): a real else, each arm is a steady loop, and
+        // NEITHER returns (both fall through to a shared epilogue).
+        //
+        // A `<param> <= <literal>` threshold is nothing special here. Two
+        // interchangeable bodies — one a perf specialization of the other — are
+        // declared as `<name>` plus a `PRAGMA TA_ALT` alternate, never as two
+        // arms of a branch, so a threshold if/else in a body means what any
+        // other predicate means: two genuinely different arms, both of which
+        // stream.
         if !else_body.is_empty()
             && has_loop(then_body)
             && has_loop(else_body)
             && !ends_in_success(then_body)
             && !ends_in_success(else_body)
-            && !is_threshold_pred(condition, &params)
         {
             found = Some((i, true));
             break;
@@ -1704,68 +1678,6 @@ pub fn analyze_dual_mode(func: &FuncDef) -> Result<DualModePlan<'_>, StreamError
     })
 }
 
-/// Recognize a param fast-path split whose two arms are bit-identical (see
-/// [`FastPathSkipPlan`]): `<prologue> if (<param> <= <lit>) { fast } else {
-/// general } <epilogue>`. Streams the GENERAL (else) arm for every param and
-/// skips the fast-path `then` arm (a batch-only perf specialization); the
-/// stream_verify gate enforces bit-exactness across the threshold. Tried after
-/// [`analyze_dual_mode`], so an early-return degenerate arm is handled there;
-/// the `<= literal` threshold predicate excludes a genuine dual-mode branch
-/// (e.g. TRIMA's `period % 2`, whose arms differ and are not interchangeable).
-pub fn analyze_fastpath_skip(func: &FuncDef) -> Result<FastPathSkipPlan<'_>, StreamError> {
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
-    let params: BTreeSet<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
-
-    let ends_in_return = |b: &[Statement]| matches!(b.last(), Some(Statement::Return { .. }));
-    let mut found: Option<usize> = None;
-    for (i, s) in body.iter().enumerate() {
-        let Statement::If {
-            condition,
-            then_body,
-            else_body,
-            ..
-        } = s
-        else {
-            continue;
-        };
-        // A `param <= literal` (or `<`) threshold, a real else, and NEITHER arm
-        // returns (both fall through to the shared epilogue — the early-return
-        // form is dual-mode's).
-        let is_threshold = matches!(
-            condition,
-            Expr::BinOp(l, BinOp::LessEq | BinOp::Less, r)
-                if matches!(l.as_ref(), Expr::Var(v) if params.contains(v))
-                    && matches!(r.as_ref(), Expr::IntLiteral(_))
-        );
-        if is_threshold
-            && !else_body.is_empty()
-            && !ends_in_return(then_body)
-            && !ends_in_return(else_body)
-        {
-            found = Some(i);
-            break;
-        }
-    }
-    let Some(idx) = found else {
-        return Err(StreamError::NoSteadyLoop);
-    };
-    let Statement::If { else_body, .. } = &body[idx] else {
-        unreachable!("idx indexes the recognized If")
-    };
-    let model = analyze_region_scoped(func, else_body, body, outputs)?;
-    Ok(FastPathSkipPlan {
-        func,
-        prologue: &body[..idx],
-        model,
-        epilogue: &body[idx + 1..],
-    })
-}
-
 /// Recognize a dispatch body: optional identity path, then a single switch
 /// over an enum optional param whose arms delegate the whole range to other
 /// indicator functions, then `return <retcode-var>`.
@@ -1779,11 +1691,7 @@ pub fn analyze_dispatch<'a>(
     func: &'a FuncDef,
     lookup: &dyn CalleeLookup,
 ) -> Result<DispatchPlan<'a>, StreamError> {
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
+    let body: &[Statement] = func.stream_source();
     let bar_inputs = input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     let params: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
@@ -1899,11 +1807,7 @@ pub fn analyze_composed<'a>(
     func: &'a FuncDef,
     lookup: &dyn CalleeLookup,
 ) -> Result<ComposedPlan<'a>, StreamError> {
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
+    let body: &[Statement] = func.stream_source();
     let bar_inputs = input_array_names(func);
     let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
 
@@ -2558,18 +2462,6 @@ fn cursor_plus_expr(idx: &Expr, cursors: &BTreeSet<String>) -> Option<Expr> {
 /// series, pointers, cursors or calls. A sub-output lag depth must be such a
 /// constant-per-stream parameter expression (`optInTimePeriod - 1`).
 /// A `<param> <= <literal>` (or `<`) threshold predicate — the shape of a batch
-/// perf fast-path split ([`analyze_fastpath_skip`], MIDPRICE), as opposed to a
-/// genuine dual-mode branch (TRIMA's `period % 2 == 1`). Used to route the
-/// two if/else recognizers apart.
-fn is_threshold_pred(cond: &Expr, params: &BTreeSet<String>) -> bool {
-    matches!(
-        cond,
-        Expr::BinOp(l, BinOp::LessEq | BinOp::Less, r)
-            if matches!(l.as_ref(), Expr::Var(v) if params.contains(v))
-                && matches!(r.as_ref(), Expr::IntLiteral(_))
-    )
-}
-
 fn expr_is_param_pure(e: &Expr, params: &BTreeSet<String>) -> bool {
     let mut ok = true;
     walk_expr(e, &mut |x| match x {
@@ -3260,7 +3152,7 @@ pub fn analyze_period_bank<'a>(
     }
     // A single streaming callee, itself a 1-input / 1-output / 2-opt MAType
     // dispatch (so a per-period sub-MA can be opened from its public stream).
-    let streaming_names: Vec<String> = find_indicator_calls(&func.body, lookup)
+    let streaming_names: Vec<String> = find_indicator_calls(func.stream_source(), lookup)
         .into_iter()
         .filter(|c| lookup.callee(c).is_some_and(|s| s.streaming))
         .collect();
@@ -3272,7 +3164,7 @@ pub fn analyze_period_bank<'a>(
         return Err(StreamError::NoSteadyLoop);
     }
     // Extract the callee's actual args to learn its price input and opt roles.
-    let args = find_call_args(&func.body, callee, &sig).ok_or(StreamError::NoSteadyLoop)?;
+    let args = find_call_args(func.stream_source(), callee, &sig).ok_or(StreamError::NoSteadyLoop)?;
     let Expr::Var(price_input) = &args[2] else {
         return Err(StreamError::NoSteadyLoop);
     };
@@ -3406,27 +3298,6 @@ pub fn validate_streamable<'a>(
         Err(dual_err) => {
             return Err(format!(
                 "{}: YAML declares `streaming: true` but the dual-mode body is not streamable: {dual_err}",
-                func.name
-            ));
-        }
-    }
-    // General-arm (MIDPRICE): a `param <= literal` fast-path split whose arms are
-    // bit-identical — stream only the general (else) arm. After dual-mode (the
-    // early-return / genuine-branch forms), before dispatch/composed.
-    match analyze_fastpath_skip(func) {
-        Ok(plan) => {
-            build_transition(&plan.model, &GateNames).map_err(|e| {
-                format!(
-                    "{}: general-arm streamable by analysis but the transition cannot be built: {e}",
-                    func.name
-                )
-            })?;
-            return Ok(StreamPlan::FastPathSkip(plan));
-        }
-        Err(StreamError::NoSteadyLoop) => {}
-        Err(arm_err) => {
-            return Err(format!(
-                "{}: YAML declares `streaming: true` but the general-arm body is not streamable: {arm_err}",
                 func.name
             ));
         }
@@ -5964,6 +5835,8 @@ mod tests {
             header_comments: vec![],
             doc: None,
             streaming: false,
+            alternates: vec![],
+            resolved_stream_body: None,
         }
     }
 

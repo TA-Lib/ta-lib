@@ -262,6 +262,10 @@ fn stream_census(seed_yaml: bool) -> i32 {
     let mut seeded = 0usize;
 
     for func in &funcs {
+        // Reported for C. A `PRAGMA TA_ALT={STREAM,<lang>}` claim can give one
+        // backend a different plan; the generate-time gate is what holds every
+        // language to being streamable, so the census stays one line per function.
+        let func = &func.resolved_for(ir::Lang::C);
         // Full validation (analysis + transition build) — the same gate
         // generate() enforces, so census can never seed a function the
         // emitter cannot actually build.
@@ -325,16 +329,6 @@ fn stream_census(seed_yaml: bool) -> i32 {
                             dm.mode_a.state.len(),
                             dm.mode_b.tier.as_str(),
                             dm.mode_b.state.len()
-                        );
-                    }
-                    ta_codegen_lib::streaming::StreamPlan::FastPathSkip(ga) => {
-                        derived_tc += 1;
-                        println!(
-                            "{:<10} {:<14} TC fastpath-skip {} state={}",
-                            status,
-                            func.name,
-                            ga.model.tier.as_str(),
-                            ga.model.state.len()
                         );
                     }
                     ta_codegen_lib::streaming::StreamPlan::PeriodBank(pb) => {
@@ -545,11 +539,19 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // Streaming maintenance-coupling gate (docs/streaming-api-proposal.md):
         // a YAML-declared tier must match the IR-derived shape, so a batch
         // rewrite that breaks stream analyzability fails HERE, not at release.
+        // Run it once per language: a `PRAGMA TA_ALT={STREAM,<lang>}` claim can
+        // hand one backend a different body, so "streamable" is a per-language
+        // property even though today every function resolves the same way for
+        // all four.
         if func_def.streaming {
-            if let Err(e) = ta_codegen_lib::streaming::validate_streamable(&func_def, &registry) {
-                eprintln!("error: {e}");
-                eprintln!("       (run `ta_codegen stream-census` for the full audit)");
-                std::process::exit(1);
+            for lang in ir::ALL_LANGS {
+                let resolved = func_def.resolved_for(lang);
+                if let Err(e) = ta_codegen_lib::streaming::validate_streamable(&resolved, &registry)
+                {
+                    eprintln!("error: [{}] {e}", lang.as_str());
+                    eprintln!("       (run `ta_codegen stream-census` for the full audit)");
+                    std::process::exit(1);
+                }
             }
         }
 

@@ -1017,6 +1017,8 @@ mod tests {
             header_comments: vec![],
             doc: None,
             streaming: false,
+            alternates: vec![],
+            resolved_stream_body: None,
         }
     }
 

@@ -237,12 +237,17 @@ fn validate_func(func: &FuncDef, errors: &mut Vec<String>) {
         check(name, NameKind::Argument, scope, errors);
     }
 
-    // Locals from all three bodies. A name declared in more than one of them
-    // (the usual case — the guarded and private variants share most of the
-    // body) is reported once.
+    // Locals from every body. A name declared in more than one of them (the
+    // usual case — the guarded and private variants share most of the body) is
+    // reported once. Alternates are swept here and not after resolution: this
+    // gate runs once, on the unresolved definition, and a local that is a C#
+    // keyword must be caught even in an alternate no backend selects today.
     let mut declared = BTreeSet::new();
     collect_declared(&func.body, &mut declared);
     collect_declared(&func.private_body, &mut declared);
+    for alt in &func.alternates {
+        collect_declared(&alt.body, &mut declared);
+    }
     if let Some(LookbackExpr::Code(body)) = &func.lookback {
         collect_declared(body, &mut declared);
     }

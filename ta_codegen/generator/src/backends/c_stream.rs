@@ -531,6 +531,11 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` here as well as at the language backend's own
+    // entry: `generate` is called directly by tests and tools, and resolving
+    // twice is idempotent while forgetting once is silent.
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
     assert!(
         func.streaming,
         "c_stream::generate called without a streaming declaration"
@@ -548,8 +553,15 @@ pub fn generate(
     // that carry no prefix, so seed them into real_vars explicitly — else a
     // non-power-of-two input weight would fuse in the batch/Open replay but not in
     // Update. Cleared when the guard drops.
+    //
+    // `stream_source()`, not `private_body`: the fusion sets must be derived
+    // from the very body these emitters render, and a
+    // `PRAGMA TA_ALT={STREAM,...}` alternate is the case where the two stop
+    // being the same slice. Deriving them from the batch body would fuse
+    // `a*b+c` at different sites than Rust (which types from the stream model),
+    // surfacing as a ~1 ULP cross-language mismatch with nothing pointing here.
     let mut stream_fma = fma::build_fma_var_sets(
-        &func.private_body,
+        func.stream_source(),
         &func.outputs,
         &fma::INDEX_PARAM_SEEDS,
     );
@@ -562,6 +574,9 @@ pub fn generate(
     let mut o = String::new();
 
     let _ = writeln!(o, "/**** Streaming API *****/\n");
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Stream, crate::ir::Lang::C) {
+        let _ = writeln!(o, "/* {m} */\n");
+    }
 
     match &plan {
         StreamPlan::Loop(model) => {
@@ -581,9 +596,6 @@ pub fn generate(
         }
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, enums, registry, helpers, &counter);
-        }
-        StreamPlan::FastPathSkip(gap) => {
-            emit_fastpath_skip(&mut o, func, gap, enums, registry, helpers, &counter);
         }
         StreamPlan::PeriodBank(pbp) => {
             emit_period_bank(&mut o, func, pbp, registry, helpers, &counter, enums);
@@ -2637,7 +2649,7 @@ fn emit_used_candle_unpacking(
     out
 }
 
-/// The `OpenInternal` head shared by the loop tier and the fast-path-skip tier:
+/// The `OpenInternal` head shared by the loop tier and dual-mode:
 /// signature, declarations, param validation, initialization, and the identity
 /// fast path. The caller then emits the transcribed body arm(s) and closes the
 /// function.
@@ -2699,7 +2711,7 @@ fn emit_open_head(
 /// The whole Open family for any tier whose core is `emit_open_head` + a single
 /// `emit_open_arm`: the merged `OpenCore`, then `OpenInternal` (stride 0),
 /// the public `Open`, and `OpenAndFill` (stride 1). `body` is the transcribed
-/// batch region — loop: `model.body`; fast-path-skip: `prologue ++ body ++
+/// batch region — loop: `model.body`; dual-mode: `prologue ++ arm body ++
 /// epilogue`.
 #[allow(clippy::too_many_arguments)]
 fn emit_open_core_body(
@@ -2718,40 +2730,6 @@ fn emit_open_core_body(
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
-}
-
-/// Emit the fast-path-skip stream section (MIDPRICE): the standard loop-tier
-/// lifecycle for the general (else) arm's model, except the OpenInternal
-/// transcribes `prologue ++ general-arm body ++ epilogue` — the fast-path
-/// `then` arm is skipped (a batch-only perf specialization). Struct / Step /
-/// Update / Peek / Close are the ordinary single-model emitters.
-#[allow(clippy::too_many_arguments)]
-fn emit_fastpath_skip(
-    o: &mut String,
-    func: &FuncDef,
-    plan: &streaming::FastPathSkipPlan,
-    enums: &HashMap<String, EnumDef>,
-    registry: &Registry,
-    helpers: &HelperRegistry,
-    counter: &Cell<usize>,
-) {
-    let model = &plan.model;
-    emit_state_struct(o, func, model);
-    emit_release(o, func, model);
-    emit_step(o, func, model, enums, registry, helpers, counter);
-
-    // prologue ++ general arm ++ epilogue: the Open seeds the general path for
-    // every param (the skipped fast-path arm is bit-identical by construction).
-    // drop_unused_decls prunes any fast-path-only locals the skipped arm owned.
-    let mut body = plan.prologue.to_vec();
-    body.extend_from_slice(model.body);
-    body.extend_from_slice(plan.epilogue);
-    let body = drop_unused_decls(body);
-    emit_open_core_body(o, func, model, &body, enums, registry, helpers, counter);
-
-    emit_update(o, func);
-    emit_peek(o, func, model);
-    emit_close(o, func, model);
 }
 
 /// Emit the period-bank stream section (MAVP): a moving average whose period
@@ -3560,12 +3538,7 @@ fn circ_static_size(func: &FuncDef, id: &str) -> i64 {
         }
         None
     }
-    let body: &[Statement] = if func.has_explicit_private {
-        &func.private_body
-    } else {
-        &func.body
-    };
-    find(body, id).expect("circbuf prolog present for referenced id")
+    find(func.stream_source(), id).expect("circbuf prolog present for referenced id")
 }
 
 /// Transcribe a batch body region for Open: out-param pointers → dummies,

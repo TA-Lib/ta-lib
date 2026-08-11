@@ -234,5 +234,7 @@ pub fn parse_yaml(path: &Path) -> FuncDef {
         header_comments: vec![],
         doc: None,
         streaming,
+        alternates: vec![],
+        resolved_stream_body: None,
     }
 }

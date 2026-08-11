@@ -57,7 +57,7 @@ touching all three.
 
 | Module | Purpose |
 |--------|---------|
-| `parser` | Parses YAML metadata (via raw serde structs) into `FuncDef`; parses `.c` source directly into IR `Statement`/`Expr` (no intermediate raw-struct stage for the logic) |
+| `parser` | Parses YAML metadata (via raw serde structs) into `FuncDef`; parses `.c` source directly into IR `Statement`/`Expr` (no intermediate raw-struct stage for the logic). Also classifies every function in the file into base / `_private` / `_ALT<n>` and reads their `PRAGMA` decorations (see [Alternate implementations](#alternate-implementations-pragma-ta_alt)) |
 | `ir` | Intermediate representation (`FuncDef`, `ParamType`, `Statement`, `Expr`, etc.) |
 | `backends/c.rs` | Generates C indicator implementations (guarded `TA_<N>` / `TA_S_<N>`, plus `TA_<N>_Private` where declared) |
 | `backends/rust_lang.rs` | Generates Rust indicator implementations (concrete `f64`, guarded `<N>` plus `<N>_Private` where declared) |
@@ -176,6 +176,43 @@ JSON-RPC over stdin/stdout.
 - Price input support (OHLCV arrays) for STOCH, BBANDS, ADX, MACD, etc.
 - Multi-output support (BBANDS=3, MACD=3, STOCH=2) with `outReal`, `outReal1`, `outReal2`
 - Integer output support (CDL* patterns, MINMAXINDEX) with `outInteger`
+
+## Alternate implementations (`PRAGMA TA_ALT`)
+
+Some functions need genuinely different algorithms per API tier: the six
+rolling-extremum functions run a block-batched Van Herk scan in batch, which
+cannot be transcribed into a per-bar automaton. An input `.c` may therefore
+declare `<name>_ALT<n>` alongside `<name>`, decorated with
+`/* PRAGMA TA_ALT={<api>,<lang>} */`; the authoring contract is in
+[docs/ta_codegen_input_code.md](../../docs/ta_codegen_input_code.md).
+
+Two things about the implementation are worth knowing before touching it:
+
+**There is exactly one resolution point.** `ir::FuncDef::resolved_for(lang)`
+returns a view whose `body` is the `(BATCH, lang)` winner and whose
+`stream_source()` is the `(STREAM, lang)` winner. It is called at each language
+backend's `generate` entry (and again inside each `*_stream::generate`, which is
+idempotent and covers the callers that bypass the backend, such as
+`java_shipped::generate_core`). Everything downstream — the six stream analyzers,
+the four batch emitters, the FMA fusion-set builders, the CIRCBUF prolog lookup —
+keeps reading `body` / `stream_source()` and needs to know nothing. The
+alternative was teaching ~20 scattered selection sites about the language, where
+*missing one is silent*: it would quietly render the base.
+
+`resolved_for` pins **both** tiers even where the base wins one of them, because
+`stream_source()` falls back to `body` and `body` is about to become the batch
+winner. The SYNTH6 fixture exists partly to catch that: it is the only shape where
+an alternate claims BATCH, so a resolver that leaked the batch body into the
+stream fails there and nowhere else.
+
+**Nothing but the emitted code can prove which body won.** An alternate is
+generator input, not a symbol, so every value-comparison gate in the tree passes
+whichever body was selected. The generated file names its winner
+(`/* Using min_ALT1 for TA_ALT={STREAM,ALL_LANGUAGES} */`), but a marker is
+rendered *from* the resolution and would agree with a resolver that chose wrong.
+`tests/alt_suite.rs` therefore checks the emitted statements, using SYNTH5 and
+SYNTH6 — the same algorithm with the tiers swapped — so that no always-return-the-
+base or always-return-the-alternate bug satisfies both.
 
 ## The abstract layer: one row model, and one independent oracle
 

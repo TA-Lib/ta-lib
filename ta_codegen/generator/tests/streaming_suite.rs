@@ -6,7 +6,7 @@
 
 use std::path::{Path, PathBuf};
 
-use ta_codegen_lib::ir::{FuncDef, StreamTier};
+use ta_codegen_lib::ir::{self, FuncDef, StreamTier};
 use ta_codegen_lib::parser;
 use ta_codegen_lib::streaming::{self, StreamError};
 
@@ -138,10 +138,10 @@ fn minus_di_derives_dual_mode_plan_with_tr() {
 fn trima_derives_dual_mode_if_else() {
     // TRIMA's `if (period % 2 == 1) { odd } else { even }` arms are genuinely
     // different triangular-sum recurrences (different factor and Step-2 order), so
-    // BOTH stream, as a dual mode selected by parity — NOT fast-path-skip (that
-    // needs a `<= literal` threshold). The two arms (both T3 tier) share rings
-    // (middleIdx, trailingIdx over inReal), so the handle carries one ring set,
-    // and both fall through to a shared epilogue (the if/else form).
+    // BOTH stream, as a dual mode selected by parity. The two arms (both T3
+    // tier) share rings (middleIdx, trailingIdx over inReal), so the handle
+    // carries one ring set, and both fall through to a shared epilogue (the
+    // if/else form).
     let f = load("trima");
     let plan = streaming::validate_streamable(&f, &lookup()).expect("TRIMA derives a plan");
     let streaming::StreamPlan::DualMode(dm) = plan else {
@@ -156,29 +156,47 @@ fn trima_derives_dual_mode_if_else() {
         "both arms carry the SAME rings (union collapses to one set)"
     );
     assert!(!dm.epilogue.is_empty(), "shared epilogue (if/else form)");
-    // A modulo-equality branch, not a threshold (which would be fast-path-skip).
+    // A modulo-equality branch: the predicate is the parity test itself.
     assert!(matches!(
         &dm.predicate,
         ta_codegen_lib::ir::Expr::BinOp(_, ta_codegen_lib::ir::BinOp::Eq, _)
     ));
 }
 
+/// The six rolling-extremum functions run a block-batched Van Herk scan in
+/// batch, which cannot be transcribed per-bar, so each declares a
+/// `PRAGMA TA_ALT={STREAM,ALL_LANGUAGES}` automaton. Resolving that claim is
+/// what makes them streamable at all — and it must produce the *plainest* tier,
+/// an ordinary `Loop` over the alternate, not a special plan kind.
 #[test]
-fn midprice_derives_fastpath_skip_plan() {
-    // MIDPRICE's `if (period <= 20) { window rescan } else { cached extremum }`
-    // arms are bit-identical (a pure batch perf split). Only the general (else)
-    // arm streams — as a T4 extrema automaton — and the fast-path then-arm is
-    // skipped. The `<= 20` threshold predicate is what marks it general-arm
-    // rather than dual-mode (whose arms genuinely differ).
-    let f = load("midprice");
-    let plan = streaming::validate_streamable(&f, &lookup()).expect("MIDPRICE derives a plan");
-    let streaming::StreamPlan::FastPathSkip(ga) = plan else {
-        panic!("expected FastPathSkip, got {plan:?}");
-    };
-    assert_eq!(ga.model.tier, StreamTier::T4);
-    assert!(ga.model.extrema().is_some(), "general arm is an extrema automaton");
-    assert!(!ga.prologue.is_empty(), "shared prologue");
-    assert!(!ga.epilogue.is_empty(), "shared epilogue (out-meta + return)");
+fn rolling_extremum_streams_from_its_stream_alternate() {
+    for name in ["min", "max", "minmax", "midpoint", "midprice", "willr"] {
+        let f = load(name);
+        assert_eq!(f.alternates.len(), 1, "{name}: one alternate");
+        let alt = &f.alternates[0];
+        assert_eq!(alt.name, format!("{name}_ALT1"));
+        assert_eq!(alt.api, ir::ApiClaim::Stream);
+        assert_eq!(alt.lang, ir::LangClaim::AllLanguages);
+
+        for lang in ir::ALL_LANGS {
+            let resolved = f.resolved_for(lang);
+            let plan = streaming::validate_streamable(&resolved, &lookup())
+                .unwrap_or_else(|e| panic!("{name} [{}]: {e}", lang.as_str()));
+            let streaming::StreamPlan::Loop(m) = plan else {
+                panic!("{name}: expected a plain Loop over the alternate, got {plan:?}");
+            };
+            assert_eq!(m.tier, StreamTier::T4);
+            assert!(m.extrema().is_some(), "{name}: the alternate is an extrema automaton");
+        }
+
+        // Without the claim the batch block scan is what the analyzer sees, and
+        // it is genuinely not streamable — so the assertions above are testing
+        // the resolution, not something that would hold anyway.
+        assert!(
+            streaming::validate_streamable(&f, &lookup()).is_err(),
+            "{name}: the batch body must NOT be streamable, or the alternate proves nothing"
+        );
+    }
 }
 
 #[test]
@@ -229,7 +247,13 @@ fn all_declared_functions_are_streamable() {
         }
         let func = load(&name);
         if func.streaming {
-            streaming::validate_streamable(&func, &lk).unwrap_or_else(|e| panic!("{e}"));
+            // Per language: a `PRAGMA TA_ALT={STREAM,<lang>}` claim can hand one
+            // backend a different body, so streamability is a per-language
+            // property. This mirrors the generate-time gate.
+            for lang in ir::ALL_LANGS {
+                streaming::validate_streamable(&func.resolved_for(lang), &lk)
+                    .unwrap_or_else(|e| panic!("[{}] {e}", lang.as_str()));
+            }
             checked += 1;
         }
     }

@@ -353,10 +353,21 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` for this language before anything reads a body.
+    // This sits at the backend entry, not at the orchestrator, because
+    // `generate` has more than one caller (java_shipped::generate_core builds
+    // the shipped Core.java straight from the unresolved definitions) and a
+    // path that skipped resolution would silently emit the base body.
+    let resolved = func.resolved_for(crate::ir::Lang::C);
+    let func: &FuncDef = &resolved;
     // Installed for the whole function so every CIRCBUF_INIT error path can
     // release the buffers the CIRCBUFs before it already took.
     let mut circbuf_order = Vec::new();
-    collect_circbuf_order(&func.private_body, &mut circbuf_order);
+    // The union over every body this file emits. `stream_source()` rather than
+    // `private_body`: the two are the same slice until a
+    // `PRAGMA TA_ALT={STREAM,...}` alternate exists, after which `private_body`
+    // is still the base's clone and would omit a CIRCBUF the stream declares.
+    collect_circbuf_order(func.stream_source(), &mut circbuf_order);
     collect_circbuf_order(&func.body, &mut circbuf_order);
     // A CIRCBUF used only as a period-sized scratch buffer never reads its
     // cursor; declaring and assigning one anyway is a warning in every build
@@ -365,7 +376,7 @@ pub fn generate(
         .iter()
         .map(|(id, _)| id.clone())
         .filter(|id| {
-            !circbuf_index_is_used(&func.body, id) && !circbuf_index_is_used(&func.private_body, id)
+            !circbuf_index_is_used(&func.body, id) && !circbuf_index_is_used(func.stream_source(), id)
         })
         .collect();
     let _circbuf_order = CircBufOrderGuard::new(circbuf_order, idx_unused);
@@ -373,6 +384,12 @@ pub fn generate(
     let mut out = String::new();
     out.push_str(&gen_header());
     out.push_str(&gen_header_comments(func));
+    // Name the alternate that won the batch cell, when one did (see
+    // ir::FuncDef::alt_marker). The base wins for all but a handful of
+    // functions and says nothing worth a line.
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Batch, crate::ir::Lang::C) {
+        out.push_str(&format!("/* {m} */\n\n"));
+    }
     out.push_str(&gen_lookback(func, enums, registry, helpers));
 
     // For functions with an explicit _private, emit Private BEFORE guarded so the

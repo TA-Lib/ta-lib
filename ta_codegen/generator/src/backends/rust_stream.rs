@@ -52,7 +52,10 @@ pub fn emits_stream(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> boo
     }
     // Every StreamPlan tier now emits a Rust stream; a plan failure would have
     // failed `generate`'s analyzability gate long before this predicate runs.
-    streaming::validate_streamable(func, lookup).is_ok()
+    // Resolve `PRAGMA TA_ALT` here rather than at the caller: this predicate
+    // decides the crate's `pub use <N>_Stream` list, and a caller that forgot
+    // would silently drop a function from the public API.
+    streaming::validate_streamable(&func.resolved_for(crate::ir::Lang::Rust), lookup).is_ok()
 }
 
 /// Public handle type name: the function name verbatim + `_Stream`, mirroring
@@ -188,7 +191,7 @@ fn build_typing(func: &FuncDef, model: &StreamModel) -> Typing {
     build_typing_from(func, model.body, &[model])
 }
 
-/// [`build_typing`] over an explicit body region (dual-mode/fast-path-skip:
+/// [`build_typing`] over an explicit body region (dual-mode:
 /// the concatenated `prologue ++ arm(s) ++ epilogue`, so the inference sees
 /// the same statement population batch typing saw) and every arm model (for
 /// the extrema override union).
@@ -442,6 +445,9 @@ pub fn generate(
     registry: &Registry,
     helpers: &HelperRegistry,
 ) -> String {
+    // Resolve `PRAGMA TA_ALT` here too — `generate` has direct callers.
+    let resolved = func.resolved_for(crate::ir::Lang::Rust);
+    let func: &FuncDef = &resolved;
     assert!(
         func.streaming,
         "rust_stream::generate called without a streaming declaration"
@@ -453,15 +459,15 @@ pub fn generate(
     let mut o = String::new();
 
     let _ = writeln!(o, "{SECTION_MARKER}\n");
+    if let Some(m) = func.alt_marker(crate::ir::Tier::Stream, crate::ir::Lang::Rust) {
+        let _ = writeln!(o, "/* {m} */\n");
+    }
     match &plan {
         StreamPlan::Loop(model) => {
             emit_loop(&mut o, func, model, enums, registry, helpers, &counter);
         }
         StreamPlan::DualMode(dmp) => {
             emit_dual_mode(&mut o, func, dmp, enums, registry, helpers, &counter);
-        }
-        StreamPlan::FastPathSkip(fp) => {
-            emit_fastpath_skip(&mut o, func, fp, enums, registry, helpers, &counter);
         }
         StreamPlan::Dispatch(dp) => {
             emit_dispatch(&mut o, func, dp, enums, registry, helpers, &counter);
@@ -1006,7 +1012,7 @@ fn build_open_body_rust(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
 
 /// The open-family emitter: `pub(crate) <NAME>_OpenInternal` (Scalar) or
 /// `pub <NAME>_OpenAndFill` (Fill). `body` is the transcribed batch region
-/// (loop tier: `model.body`; fast-path-skip: `prologue ++ general arm ++
+/// (loop tier: `model.body`; dual-mode: `prologue ++ arm body ++
 /// epilogue`).
 #[allow(clippy::too_many_arguments)]
 fn emit_open_internal(
@@ -1161,7 +1167,7 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
 
 /// The open initialization block: `historyLen`/`endIdx`/`startIdx`, out-meta
 /// dummies, the Scalar-mode `lastValue_*` sinks, and private-extra-param
-/// locals. Shared by the transcribing tiers (loop/fast-path-skip/dual-mode).
+/// locals. Shared by the transcribing tiers (loop and dual-mode).
 fn emit_open_inits(
     o: &mut String,
     func: &FuncDef,
@@ -2068,43 +2074,6 @@ fn emit_dual_open(
     }
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "    }}\n");
-}
-
-// ---------------------------------------------------------------------------
-// Fast-path-skip tier (MIDPRICE): the loop-tier lifecycle on the general arm.
-// ---------------------------------------------------------------------------
-
-/// Emit the fast-path-skip stream section: the standard loop-tier lifecycle
-/// on the general (else) arm's model, except the opens transcribe `prologue
-/// ++ general-arm body ++ epilogue` — the fast-path `then` arm is a batch-only
-/// perf specialization skipped by the stream (its output is bit-identical by
-/// construction; the differential gates enforce it across the threshold).
-#[allow(clippy::too_many_arguments)]
-fn emit_fastpath_skip(
-    o: &mut String,
-    func: &FuncDef,
-    plan: &streaming::FastPathSkipPlan,
-    enums: &HashMap<String, EnumDef>,
-    registry: &Registry,
-    helpers: &HelperRegistry,
-    counter: &Cell<usize>,
-) {
-    let model = &plan.model;
-    let mut tbody: Vec<Statement> = plan.prologue.to_vec();
-    tbody.extend_from_slice(model.body);
-    tbody.extend_from_slice(plan.epilogue);
-    let typing = build_typing_from(func, &tbody, &[model]);
-
-    emit_handle_and_state_structs(o, func, model, &typing);
-    let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
-    emit_step(o, func, model, &typing, enums, registry, helpers, counter);
-    emit_open_internal(o, func, model, &typing, &tbody, enums, registry, helpers, counter);
-    emit_open_internal_wrapper(o, func, model);
-    emit_open_wrapper(o, func, enums);
-    emit_open_and_fill_wrapper(o, func, enums);
-    let _ = writeln!(o, "}}\n");
-    emit_update_and_peek(o, func);
-    emit_trait_pin(o, func);
 }
 
 // ---------------------------------------------------------------------------

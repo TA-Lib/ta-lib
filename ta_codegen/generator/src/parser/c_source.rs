@@ -1,7 +1,10 @@
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-use crate::ir::{BinOp, CircBuf, CircBufLayout, Expr, HelperDef, HelperParam, Statement, VarType};
+use crate::ir::{
+    AltDef, ApiClaim, BinOp, CircBuf, CircBufLayout, Expr, HelperDef, HelperParam, LangClaim,
+    Statement, VarType,
+};
 
 // --- Public API ---
 
@@ -11,6 +14,10 @@ pub struct ParsedCSource {
     /// The lookback function's parameters and C types. Not all integers — 14
     /// shipped lookbacks take a `double` optional input.
     pub lookback_params: Vec<(String, String)>,
+    /// The `PRAGMA` comments decorating the lookback. There is one lookback per
+    /// file and no alternate may declare its own, so a `TA_ALT` here is rejected
+    /// during wiring.
+    pub lookback_pragmas: Vec<Pragma>,
     pub functions: Vec<ParsedCFunction>,
     /// File-level comment blocks that preceded the first function (e.g. the
     /// `List of contributors` / `Change history` block). Each entry is one
@@ -24,7 +31,38 @@ pub struct ParsedCFunction {
     pub body: Vec<Statement>,
     /// Parameter names and C types, in order. E.g., [("startIdx", "int"), ("inReal", "const double *")].
     pub params: Vec<(String, String)>,
+    /// The `PRAGMA` comments sitting between the previous definition and this
+    /// one's signature, in source order. See [`Pragma`].
+    pub pragmas: Vec<Pragma>,
 }
+
+/// A `/* PRAGMA <NAME>[=<value>] <free text> */` comment: an instruction to the
+/// generator, in the spirit of a compiler pragma. Single-line, positioned
+/// anywhere before a function signature, and **never forwarded to a backend** —
+/// which is what lets an unrecognized one sit in the source as a note without
+/// leaking into four generated trees.
+///
+/// The first token after `PRAGMA` is the pragma name. A name followed
+/// immediately by `=` is a *directive* and must be one the generator knows;
+/// anything else is free-form prose the generator ignores. The two error cases
+/// exist so a typo cannot be silently inert: an unknown `NAME=` is rejected, and
+/// so is a known name that forgot its `=`.
+#[derive(Debug, Clone)]
+pub struct Pragma {
+    pub name: String,
+    /// `Some` for the directive form (`NAME=value`), `None` for free-form prose.
+    pub value: Option<String>,
+    /// 1-based source line, for diagnostics.
+    pub line: u32,
+}
+
+/// Directive names the generator answers to. Anything else written as `NAME=`
+/// is an error rather than a silently ignored comment.
+const PRAGMA_DIRECTIVES: &[&str] = &["TA_ALT"];
+
+/// One captured comment: the index of the token it precedes, its cleaned
+/// content lines, and whether it shares a source line with the token before it.
+type CommentAnchor = (usize, Vec<String>, bool);
 
 /// Wire parsed C source (guarded + optional private) into a FuncDef: body,
 /// lookback, header comments, and the private-variant fields
@@ -34,11 +72,13 @@ pub struct ParsedCFunction {
 /// the integration-test fixtures both call it, so tests see exactly the
 /// FuncDef production sees.
 pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSource) {
+    let alternates = classify_functions(func_def, parsed);
     let guarded = parsed
         .functions
         .iter()
-        .find(|f| !f.name.ends_with("_private"))
+        .find(|f| !f.name.ends_with("_private") && !is_alt_name(&f.name))
         .expect("C source must contain at least one function");
+    func_def.alternates = alternates;
     func_def.body.clone_from(&guarded.body);
     func_def.lookback = Some(crate::ir::LookbackExpr::Code(parsed.lookback_body.clone()));
     func_def.header_comments.clone_from(&parsed.header_comments);
@@ -82,6 +122,169 @@ pub fn wire_parsed_source(func_def: &mut crate::ir::FuncDef, parsed: &ParsedCSou
     } else {
         func_def.private_body.clone_from(&func_def.body);
     }
+}
+
+/// `<name>_ALT<n>` with a decimal `<n>`.
+fn alt_index(name: &str) -> Option<u32> {
+    let (_, n) = name.rsplit_once("_ALT")?;
+    if n.is_empty() || !n.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    n.parse().ok()
+}
+
+fn is_alt_name(name: &str) -> bool {
+    alt_index(name).is_some()
+}
+
+/// Classify every function the parser found into base / `_private` / `_ALT<n>`,
+/// rejecting anything that fits none of the three.
+///
+/// This replaces a pair of `.find()` calls that took the first non-`_private`
+/// function as the shipped body and dropped the rest **with no diagnostic** — so
+/// an extra function silently vanished, and one placed above the base silently
+/// became the shipped implementation.
+fn classify_functions(func_def: &crate::ir::FuncDef, parsed: &ParsedCSource) -> Vec<AltDef> {
+    let base_name = func_def.name.to_lowercase();
+    let base_params = base_params(parsed, &base_name);
+    let mut bases: Vec<&str> = Vec::new();
+    let mut alts: Vec<AltDef> = Vec::new();
+    let mut has_private = false;
+
+    for f in &parsed.functions {
+        if f.name.ends_with("_private") {
+            has_private = true;
+            assert!(
+                f.name == format!("{base_name}_private"),
+                "{}: private variant must be named `{base_name}_private`, got `{}`",
+                func_def.name,
+                f.name
+            );
+            reject_ta_alt(&f.pragmas, &f.name, func_def);
+            continue;
+        }
+        let Some(index) = alt_index(&f.name) else {
+            bases.push(f.name.as_str());
+            reject_ta_alt(&f.pragmas, &f.name, func_def);
+            continue;
+        };
+        assert!(
+            f.name == format!("{base_name}_ALT{index}"),
+            "{}: alternate must be named `{base_name}_ALT<n>`, got `{}`",
+            func_def.name,
+            f.name
+        );
+        assert!(
+            f.params == base_params,
+            "{}: `{}` must take the same parameters as `{base_name}` — an alternate is the \
+             same function computed differently, not a different function",
+            func_def.name,
+            f.name
+        );
+        let claims: Vec<&Pragma> = f.pragmas.iter().filter(|p| p.name == "TA_ALT").collect();
+        assert!(
+            claims.len() == 1,
+            "{}: `{}` carries {} `PRAGMA TA_ALT=` decorations; exactly one is required",
+            func_def.name,
+            f.name,
+            claims.len()
+        );
+        let value = claims[0].value.as_deref().unwrap_or_default();
+        let (api, lang) = parse_ta_alt_claim(value, claims[0].line, Some(&func_def.name));
+        alts.push(AltDef { name: f.name.clone(), index, api, lang, body: f.body.clone() });
+    }
+
+    assert!(
+        bases.len() == 1,
+        "{}: expected exactly one base function named `{base_name}`, found {:?}",
+        func_def.name,
+        bases
+    );
+    assert!(
+        bases[0] == base_name,
+        "{}: base function is named `{}` but the directory and YAML say `{base_name}`",
+        func_def.name,
+        bases[0]
+    );
+    reject_ta_alt(&parsed.lookback_pragmas, "the lookback", func_def);
+
+    assert!(
+        alts.is_empty() || !has_private,
+        "{}: an alternate and an explicit `_private` in one file is not supported",
+        func_def.name
+    );
+    check_alt_set(&alts, func_def, &base_name);
+    alts
+}
+
+/// Whole-set checks over a function's alternates: numbering, and the two ways a
+/// body can end up winning no cell at all.
+fn check_alt_set(alts: &[AltDef], func_def: &crate::ir::FuncDef, base_name: &str) {
+    // The `<n>` restates the override order that file position already decides,
+    // so a diff that reorders two alternates fails here instead of silently
+    // changing which one wins.
+    for (pos, a) in alts.iter().enumerate() {
+        let want = u32::try_from(pos + 1).expect("alternate count fits u32");
+        assert!(
+            a.index == want,
+            "{}: alternates must be numbered ascending and contiguous from 1 in file order; \
+             `{}` is at position {want}",
+            func_def.name,
+            a.name
+        );
+    }
+
+    // A body that wins no cell is dead — the "reads as dead code" complaint,
+    // made mechanical. Decide it by running the resolver itself over every cell
+    // and seeing who is ever the winner, rather than comparing claims pairwise:
+    // an alternate can be shadowed by the UNION of two later ones without any
+    // single one covering it (`{ALL_API,C}` under `{BATCH,C}` + `{STREAM,C}`),
+    // and the same sweep answers the base's liveness for free.
+    let mut wins = vec![false; alts.len()];
+    let mut base_wins = false;
+    for &t in &crate::ir::ALL_TIERS {
+        for &l in &crate::ir::ALL_LANGS {
+            match alts.iter().rposition(|a| a.api.covers(t) && a.lang.covers(l)) {
+                Some(i) => wins[i] = true,
+                None => base_wins = true,
+            }
+        }
+    }
+    for (a, won) in alts.iter().zip(&wins) {
+        assert!(
+            *won,
+            "{}: `{}` claims {{{},{}}} but later alternates cover every one of those cells — \
+             it would never be used",
+            func_def.name,
+            a.name,
+            a.api.as_str(),
+            a.lang.as_str()
+        );
+    }
+    assert!(
+        base_wins || alts.is_empty(),
+        "{}: the alternates cover every (tier, language) cell, so `{base_name}` itself would \
+         never be used — an alternate is a specialization of the base, not a replacement",
+        func_def.name
+    );
+}
+
+/// The base function's parameter list, for the same-signature check.
+fn base_params<'a>(parsed: &'a ParsedCSource, base_name: &str) -> &'a [(String, String)] {
+    parsed
+        .functions
+        .iter()
+        .find(|f| f.name == base_name)
+        .map_or(&[][..], |f| &f.params[..])
+}
+
+fn reject_ta_alt(pragmas: &[Pragma], who: &str, func_def: &crate::ir::FuncDef) {
+    assert!(
+        !pragmas.iter().any(|p| p.name == "TA_ALT"),
+        "{}: `PRAGMA TA_ALT=` on {who} — only a `<name>_ALT<n>` function may carry a claim \
+         (the base is the implicit default for every cell)",
+        func_def.name
+    );
 }
 
 /// Parse a `.c` source file containing TA-Lib function definitions.
@@ -381,6 +584,101 @@ fn clean_comment_lines(raw: &str) -> Vec<String> {
     lines
 }
 
+/// `<file>:<line>: ` for a pragma diagnostic, or `` when the source is synthetic.
+fn pragma_loc(file: Option<&str>, line: u32) -> String {
+    match file {
+        Some(f) if line > 0 => format!("{f}:{line}: "),
+        Some(f) => format!("{f}: "),
+        None => String::new(),
+    }
+}
+
+/// Recognize a `PRAGMA` comment. Returns `None` for an ordinary comment, so the
+/// caller can leave it in the stream that backends render.
+///
+/// Aborts on the two shapes a typo takes: an unrecognized directive
+/// (`NAME=value` for a `NAME` the generator does not know) and a recognized
+/// name that forgot its `=`. Both would otherwise be accepted as inert prose,
+/// which is the silent-selection failure this whole construct exists to remove.
+fn parse_pragma(lines: &[String], line: u32, file: Option<&str>) -> Option<Pragma> {
+    let first = lines.first()?.trim();
+    let rest = first.strip_prefix("PRAGMA")?;
+    // `PRAGMAX ...` is an ordinary comment, not a malformed pragma.
+    if !rest.is_empty() && !rest.starts_with(char::is_whitespace) {
+        return None;
+    }
+    let loc = pragma_loc(file, line);
+    assert!(
+        lines.len() == 1,
+        "{loc}a PRAGMA comment must be a single line (got {} lines)",
+        lines.len()
+    );
+    let rest = rest.trim();
+    assert!(!rest.is_empty(), "{loc}PRAGMA with no directive or text");
+
+    // The name runs to the first whitespace or `=`. A directive's `=` must
+    // touch the name, so `TA_ALT = {...}` is reported rather than read as prose.
+    let name_end = rest
+        .find(|c: char| c.is_whitespace() || c == '=')
+        .unwrap_or(rest.len());
+    let name = &rest[..name_end];
+    let after = &rest[name_end..];
+    let known = PRAGMA_DIRECTIVES.contains(&name);
+
+    let Some(v) = after.strip_prefix('=') else {
+        assert!(
+            !known,
+            "{loc}PRAGMA {name} is a directive and must be written `{name}=<value>`"
+        );
+        // Free-form prose addressed to the generator: carried so it is stripped
+        // from the output, otherwise ignored.
+        return Some(Pragma { name: name.to_string(), value: None, line });
+    };
+    assert!(
+        known,
+        "{loc}unknown PRAGMA directive `{name}` (known: {})",
+        PRAGMA_DIRECTIVES.join(", ")
+    );
+    // A brace-wrapped value may contain spaces (`{STREAM, ALL_LANGUAGES}`);
+    // anything else ends at the first whitespace, and the remainder of the line
+    // is free text.
+    let value = if v.starts_with('{') {
+        let close = v
+            .find('}')
+            .unwrap_or_else(|| panic!("{loc}PRAGMA {name}: unterminated `{{`"));
+        &v[..=close]
+    } else {
+        let end = v.find(char::is_whitespace).unwrap_or(v.len());
+        &v[..end]
+    };
+    assert!(!value.is_empty(), "{loc}PRAGMA {name}= with no value");
+    Some(Pragma { name: name.to_string(), value: Some(value.to_string()), line })
+}
+
+/// Parse a `TA_ALT` value: `{<api>,<lang>}`.
+fn parse_ta_alt_claim(
+    value: &str,
+    line: u32,
+    file: Option<&str>,
+) -> (ApiClaim, LangClaim) {
+    let loc = pragma_loc(file, line);
+    let inner = value
+        .strip_prefix('{')
+        .and_then(|v| v.strip_suffix('}'))
+        .unwrap_or_else(|| panic!("{loc}PRAGMA TA_ALT value must be `{{<api>,<lang>}}`, got `{value}`"));
+    let mut parts = inner.split(',');
+    let (Some(api_s), Some(lang_s), None) = (parts.next(), parts.next(), parts.next()) else {
+        panic!("{loc}PRAGMA TA_ALT value must be `{{<api>,<lang>}}`, got `{value}`");
+    };
+    let (api_s, lang_s) = (api_s.trim(), lang_s.trim());
+    let api = ApiClaim::parse(api_s)
+        .unwrap_or_else(|| panic!("{loc}unknown TA_ALT api tier `{api_s}` (BATCH | STREAM | ALL_API)"));
+    let lang = LangClaim::parse(lang_s).unwrap_or_else(|| {
+        panic!("{loc}unknown TA_ALT language `{lang_s}` (C | RUST | JAVA | CSHARP | ALL_LANGUAGES)")
+    });
+    (api, lang)
+}
+
 /// Tokenize, dropping comments — the historical API used throughout the tests.
 #[cfg(test)]
 fn tokenize(input: &str) -> Vec<Token> {
@@ -399,7 +697,7 @@ fn tokenize(input: &str) -> Vec<Token> {
 fn tokenize_with_comments(
     input: &str,
     file: Option<&str>,
-) -> (Vec<Token>, Vec<u32>, Vec<(usize, Vec<String>, bool)>) {
+) -> (Vec<Token>, Vec<u32>, Vec<CommentAnchor>) {
     let input = strip_local_macros(input);
     let mut tokens = Vec::new();
     // 1-based source line of each token, parallel to `tokens`.
@@ -407,7 +705,7 @@ fn tokenize_with_comments(
     // (index of the token this comment precedes, cleaned lines, trailing?).
     // `trailing` = the comment shares a source line with the preceding token
     // (no newline since) — i.e. `x && // note` vs a comment on its own line.
-    let mut comments: Vec<(usize, Vec<String>, bool)> = Vec::new();
+    let mut comments: Vec<CommentAnchor> = Vec::new();
     let chars: Vec<char> = input.chars().collect();
     // 1-based line number of each char position (a '\n' belongs to the line it
     // ends); one sentinel entry past the end for tokens flush at EOF.
@@ -861,10 +1159,10 @@ fn extract_func_params(tokens: &[Token], start: usize) -> Vec<(String, String)> 
 /// is the first body token). The upper bound is inclusive: a comment whose next
 /// token is the closing `}` at `brace_end` sits just before it, inside the body.
 fn body_comments(
-    comments: &[(usize, Vec<String>, bool)],
+    comments: &[CommentAnchor],
     brace_start: usize,
     brace_end: usize,
-) -> Vec<(usize, Vec<String>, bool)> {
+) -> Vec<CommentAnchor> {
     let lo = brace_start + 1;
     comments
         .iter()
@@ -876,39 +1174,47 @@ fn body_comments(
 fn extract_functions(
     tokens: &[Token],
     tok_lines: &[u32],
-    comments: &[(usize, Vec<String>, bool)],
+    comments: &[CommentAnchor],
     file: Option<&str>,
 ) -> ParsedCSource {
     let mut lookback_body = Vec::new();
     let mut functions = Vec::new();
     let mut lookback_params: Vec<(String, String)> = Vec::new();
+    let mut lookback_pragmas: Vec<Pragma> = Vec::new();
     let mut first_func_tok: Option<usize> = None;
+    let mut saw_lookback = false;
     let mut i = 0;
 
+    let (pragmas, plain) = split_pragma_comments(comments, tok_lines, file);
+    let comments: &[CommentAnchor] = &plain;
+    let mut pragma_cursor = 0usize;
+
     while i < tokens.len() {
-        // Look for lookback function:
-        //   Old: int TA_XXX_Lookback ( ... ) { body }
-        //   New: int xxx_lookback ( ... ) { body }
-        if matches!(&tokens[i], Token::Ident(s) if s == "int") {
-            if let Some(Token::Ident(name)) = tokens.get(i + 1) {
-                let is_old_lookback = name.contains("_Lookback") && name.starts_with("TA_");
-                let is_new_lookback = name.ends_with("_lookback");
-                if is_old_lookback || is_new_lookback {
-                    // Skip to opening brace
-                    if let Some(brace_start) = find_open_brace(tokens, i + 2) {
-                        if let Some(brace_end) = find_matching_brace(tokens, brace_start) {
-                            first_func_tok.get_or_insert(i);
-                            let body_tokens = &tokens[brace_start + 1..brace_end];
-                            let body_lines = &tok_lines[brace_start + 1..brace_end];
-                            let body_cmts = body_comments(comments, brace_start, brace_end);
-                            lookback_params = extract_func_params(tokens, i + 2);
-                            lookback_body = parse_body(body_tokens, body_lines, &body_cmts, file);
-                            i = brace_end + 1;
-                            continue;
-                        }
-                    }
-                }
-            }
+        if let Some(brace_end) = lookback_span(tokens, i) {
+            let Token::Ident(name) = &tokens[i + 1] else {
+                unreachable!("lookback_span matched an identifier")
+            };
+            assert!(
+                !saw_lookback,
+                "{}{name}: a second lookback function in one file (only one is wired; the \
+                 extra would be silently discarded)",
+                pragma_loc(file, tok_lines.get(i).copied().unwrap_or(0))
+            );
+            saw_lookback = true;
+            first_func_tok.get_or_insert(i);
+            lookback_pragmas = take_leading(&pragmas, &mut pragma_cursor, i);
+            let brace_start = find_open_brace(tokens, i + 2).expect("lookback_span found it");
+            let body_cmts = body_comments(comments, brace_start, brace_end);
+            lookback_params = extract_func_params(tokens, i + 2);
+            lookback_body = parse_body(
+                &tokens[brace_start + 1..brace_end],
+                &tok_lines[brace_start + 1..brace_end],
+                &body_cmts,
+                file,
+            );
+            reject_pragmas_in_body(&pragmas, &mut pragma_cursor, brace_end, name, file);
+            i = brace_end + 1;
+            continue;
         }
 
         // Look for implementation function:
@@ -938,11 +1244,20 @@ fn extract_functions(
                             let body_tokens = &tokens[brace_start + 1..brace_end];
                             let body_lines = &tok_lines[brace_start + 1..brace_end];
                             let body_cmts = body_comments(comments, brace_start, brace_end);
+                            let pragmas_here = take_leading(&pragmas, &mut pragma_cursor, i);
                             functions.push(ParsedCFunction {
-                                name: func_name,
+                                name: func_name.clone(),
                                 body: parse_body(body_tokens, body_lines, &body_cmts, file),
                                 params,
+                                pragmas: pragmas_here,
                             });
+                            reject_pragmas_in_body(
+                                &pragmas,
+                                &mut pragma_cursor,
+                                brace_end,
+                                &func_name,
+                                file,
+                            );
                             i = brace_end + 1;
                             continue;
                         }
@@ -954,22 +1269,116 @@ fn extract_functions(
         i += 1;
     }
 
-    // File-level comments preceding the first function (e.g. contributors/history).
-    // `<=` because a comment immediately before the first function's first token
-    // anchors *at* that token's index; it is still a file-level header comment
-    // (body comments all anchor past the opening brace, so the two never overlap).
-    let header_start = first_func_tok.unwrap_or(0);
-    let header_comments = comments
-        .iter()
-        .filter(|(a, _, _)| *a <= header_start && first_func_tok.is_some())
-        .map(|(_, lines, _)| lines.clone())
-        .collect();
+    if let Some((_, p)) = pragmas.get(pragma_cursor) {
+        panic!(
+            "{}PRAGMA {} must precede a function signature (nothing follows it)",
+            pragma_loc(file, p.line),
+            p.name
+        );
+    }
+
+    let header_comments = header_comment_blocks(comments, first_func_tok);
 
     ParsedCSource {
         lookback_body,
         lookback_params,
+        lookback_pragmas,
         functions,
         header_comments,
+    }
+}
+
+/// Partition the comment stream into `(PRAGMA directives, everything else)`.
+///
+/// PRAGMA comments are instructions to the generator, so they leave the stream
+/// before anything can render them; without this, one written above the first
+/// function would be captured as a file-level header comment and re-emitted
+/// verbatim into all four backends' banners.
+fn split_pragma_comments(
+    comments: &[CommentAnchor],
+    tok_lines: &[u32],
+    file: Option<&str>,
+) -> (Vec<(usize, Pragma)>, Vec<CommentAnchor>) {
+    let mut pragmas = Vec::new();
+    let mut plain = Vec::new();
+    for (anchor, lines, trailing) in comments {
+        let line = tok_lines.get(*anchor).copied().unwrap_or(0);
+        if let Some(p) = parse_pragma(lines, line, file) {
+            pragmas.push((*anchor, p));
+        } else {
+            plain.push((*anchor, lines.clone(), *trailing));
+        }
+    }
+    (pragmas, plain)
+}
+
+/// A lookback definition starting at token `i` — `int TA_XXX_Lookback(...) {...}`
+/// (old form) or `int xxx_lookback(...) {...}` (new) — returning the index of its
+/// closing brace.
+fn lookback_span(tokens: &[Token], i: usize) -> Option<usize> {
+    if !matches!(&tokens[i], Token::Ident(s) if s == "int") {
+        return None;
+    }
+    let Some(Token::Ident(name)) = tokens.get(i + 1) else {
+        return None;
+    };
+    let is_old = name.contains("_Lookback") && name.starts_with("TA_");
+    if !is_old && !name.ends_with("_lookback") {
+        return None;
+    }
+    find_matching_brace(tokens, find_open_brace(tokens, i + 2)?)
+}
+
+/// File-level comments preceding the first function (e.g. contributors/history).
+///
+/// `<=` because a comment immediately before the first function's first token
+/// anchors *at* that token's index; it is still a file-level header comment
+/// (body comments all anchor past the opening brace, so the two never overlap).
+fn header_comment_blocks(
+    comments: &[CommentAnchor],
+    first_func_tok: Option<usize>,
+) -> Vec<Vec<String>> {
+    let Some(header_start) = first_func_tok else {
+        return Vec::new();
+    };
+    comments
+        .iter()
+        .filter(|(a, _, _)| *a <= header_start)
+        .map(|(_, lines, _)| lines.clone())
+        .collect()
+}
+
+/// The pragmas decorating the signature that starts at token `upto`: everything
+/// up to and including that token. Any pragma left behind once the body has been
+/// consumed sat inside it, and [`reject_pragmas_in_body`] rejects it.
+fn take_leading(pragmas: &[(usize, Pragma)], cursor: &mut usize, upto: usize) -> Vec<Pragma> {
+    let mut out = Vec::new();
+    while *cursor < pragmas.len() && pragmas[*cursor].0 <= upto {
+        out.push(pragmas[*cursor].1.clone());
+        *cursor += 1;
+    }
+    out
+}
+
+/// A PRAGMA whose anchor is inside the body just parsed never reached a
+/// signature. Reject it rather than let it drift onto the *next* function,
+/// which is the one way a correctly-spelled directive could still be applied to
+/// the wrong place.
+fn reject_pragmas_in_body(
+    pragmas: &[(usize, Pragma)],
+    cursor: &mut usize,
+    brace_end: usize,
+    func_name: &str,
+    file: Option<&str>,
+) {
+    if *cursor < pragmas.len() && pragmas[*cursor].0 <= brace_end {
+        let p = &pragmas[*cursor].1;
+        panic!(
+            "{}PRAGMA {} sits inside the body of `{func_name}`; it must precede a \
+             function signature",
+            pragma_loc(file, p.line),
+            p.name
+        );
     }
 }
 
@@ -1103,7 +1512,7 @@ fn find_matching_brace(tokens: &[Token], open: usize) -> Option<usize> {
 fn parse_body(
     tokens: &[Token],
     tok_lines: &[u32],
-    comments: &[(usize, Vec<String>, bool)],
+    comments: &[CommentAnchor],
     file: Option<&str>,
 ) -> Vec<Statement> {
     let mut parser = Parser::with_comments(tokens.to_vec(), comments.to_vec());
@@ -1135,7 +1544,7 @@ struct Parser {
     /// token index it precedes (in this body's re-based token space). Consumed
     /// in order via `comment_idx` and flushed as [`Statement::Comment`] at
     /// statement boundaries in [`parse_statements`](Parser::parse_statements).
-    comments: Vec<(usize, Vec<String>, bool)>,
+    comments: Vec<CommentAnchor>,
     comment_idx: usize,
     /// Function-local `typedef struct {...} Name;` field lists, for CIRCBUF `*_CLASS`.
     struct_defs: HashMap<String, Vec<(String, VarType)>>,
@@ -1150,7 +1559,7 @@ impl Parser {
         Self::with_comments(tokens, Vec::new())
     }
 
-    fn with_comments(tokens: Vec<Token>, comments: Vec<(usize, Vec<String>, bool)>) -> Self {
+    fn with_comments(tokens: Vec<Token>, comments: Vec<CommentAnchor>) -> Self {
         Self {
             tokens,
             pos: 0,
