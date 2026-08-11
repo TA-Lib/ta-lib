@@ -41,6 +41,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_cmf.c \
 	ta_test_func/test_cmou.c \
 	ta_test_func/test_variants.c \
+	ta_test_legacy.c \
 	test_internals.c
 
 ta_regtest_CPPFLAGS = -I../../ta_func \

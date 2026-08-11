@@ -112,7 +112,12 @@ static TA_Test tableTest[] =
 
    { 1, 0, 251, 5, 1.5, TA_SUCCESS,     0, 1.9285,  4,  252-4 }, /* First Value */
    { 0, 0, 251, 5, 1.5, TA_SUCCESS,     1, 0.66937, 4,  252-4 },
-   { 0, 0, 251, 5, 1.5, TA_SUCCESS, 252-5, 1.075,   4,  252-4 } /* Last Value */
+   /* Was 1.075, wrong in the third digit (#188). The table contradicted itself:
+    * its own nbDev=1.0 row is 0.7144 and STDDEV scales linearly with nbDev, so
+    * this must be 0.7144*1.5. Confirmed independently against released v0.6.4,
+    * which gives 0.71435565370949350 at nbDev=1.0 -> 1.0715334805642403 here.
+    * The 0.01 window is why it passed for two decades. */
+   { 0, 0, 251, 5, 1.5, TA_SUCCESS, 252-5, 1.071533, 4,  252-4 } /* Last Value */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))

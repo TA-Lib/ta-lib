@@ -34,7 +34,11 @@ toolchain.
 
 The correctness baseline that all `ta_codegen` backends are verified against is the
 frozen pre-cutover reference (the `reference-pre-cutover` tag, served as `ta_ref_serve`)
-plus the hardcoded `ta_regtest` expected values.
+plus the hardcoded `ta_regtest` expected values — the latter now in two tiers: the
+hand-written per-function tables, and `ta_test_legacy_data.h`, a full-precision freeze
+of what released v0.6.4 answered over the same 252-bar series (issue #188). The freeze
+needs no git tag and no second build, so unlike `--fuzz-064` it runs in every
+`./ta_regtest`. See `src/tools/ta_regtest/CLAUDE.md`.
 
 See `ta_codegen/generator/CLAUDE.md` for ta_codegen internals and
 `src/tools/ta_regtest/CLAUDE.md` for the test-runner spec.

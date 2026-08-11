@@ -722,6 +722,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
    DO_TEST( test_func_rolling_extremum,
             "MIN,MAX,MINMAX,MIDPOINT,MIDPRICE,WILLR,ROLLING,BLOCKSCAN" );
+   DO_TEST( test_func_legacy,    "LEGACY,064,FROZEN" );
 
    return TA_TEST_PASS; /* All tests succeeded. */
 }

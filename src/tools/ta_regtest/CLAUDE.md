@@ -425,6 +425,145 @@ Deliberately **not** surfaced in the user-facing docs. The published "bit-identi
 wording stays as written: the sign of a zero is below the level a caller reasons
 about, and qualifying it there would cost more clarity than it buys.
 
+## `ta_test_legacy` — the frozen v0.6.4 reference (issue #188)
+
+The tight counterpart to the hand-written groups. `ta_test_legacy_data.h` holds
+938 values that released **v0.6.4** produced over the frozen 252-bar series —
+222 cases, 148 functions — each at the full 17 digits that round-trips to the
+exact double. `ta_test_legacy.c` replays every case against the current library
+(tag `LEGACY,064,FROZEN`). It is in the default `./ta_regtest` run: no tag, no
+worktree, no second build, no network.
+
+Note the tag names no function, breaking the house rule that every function a
+group covers appears in its tag — 148 names will not fit, and the group is
+all-or-nothing anyway. So `--function=SMA` does **not** reach it; `--function=LEGACY`
+(or `064`, or `FROZEN`) does, and a bare run always does.
+
+**Why it exists.** `checkExpectedValue` compares against an absolute `0.01`
+window, and the hand-written constants carry 2–6 significant digits. That window
+is scale-blind: 161 of the 531 hand-written expected values sit below magnitude
+10, where `0.01` admits >0.1% relative error, and 89 sit below 1.0, where it
+admits >1%. On a bounded output (BOP, CORREL) the row is close to no assertion.
+Two constants were simply *wrong* and passed for two decades. Freezing full-
+precision values removes transcription as an error source entirely.
+
+**Why freeze when `--fuzz-064` already compares.** That gate needs the `v0.6.4`
+git tag, a `../ta-lib-064` worktree and a second full CMake build; it cannot run
+from a release tarball and it dies if the tag stops being fetchable. This table
+needs none of that. The two are complementary, not redundant: `--fuzz-064` is
+broad (118k comparisons, 7 shapes, extreme magnitudes) and transient; this is
+narrow, permanent, and in every build.
+
+**What it is not.** Not a correctness oracle — v0.6.4 is the same lineage and
+cannot catch a bug it already had. It is a *pin*. Correctness lives in the
+independent oracles: `test_stddev.c`'s two-pass/NIST variance work, the
+candlestick predicate gate, the metamorphic laws.
+
+**Scope: 148 of 168.** 20 are deliberately absent — 7 post-date v0.6.4 (CMF,
+CMOU, HMA, NVI, PVI, PVO, VWMA); STOCHRSI diverges on purpose (#107, pinned by
+`test_stoch.c`); and 12 pure libm passthroughs (ACOS…TANH). That last exclusion
+is the one worth internalising: `atan`/`sin`/`cos`/`exp`/`log` are **not**
+correctly rounded, so a frozen value for them asserts "your libm matches the
+machine that generated this table" and nothing about TA-Lib — it would false-red
+on musl, macOS or a later glibc. `sqrt`/`ceil`/`floor` are correctly rounded and
+stay in scope. This hazard is invisible to `--fuzz-064`, where both sides share
+one libm on one host; hardcoding is what exposes it.
+
+**Tolerances are measured, not contractual.** Of the 83 in-scope functions with a
+real output, **58 reproduce v0.6.4 bit for bit** and carry no row at all; 25 need
+a bound. Each bound is that function's largest measured deviation on this series
+× ~3 — absolute, because there is only one magnitude here, unlike `--fuzz-064`'s
+1e-7…1e9 shapes which need scaled bounds, caps and conditioning gates. The
+result is several orders tighter than the 1e-9 relative FMA contract would be:
+CCI, IMI, KAMA, MACD, MACDEXT, APO, PPO and STOCHF are all in the *exact* tier
+here, because their manifest divergences need extreme magnitudes to appear.
+`LEGACY_TOL` refuses a row for a function outside the freeze and refuses a
+zero/negative bound, so it cannot accumulate dead or vacuous slack.
+
+The one exception to "3× measured" is a floor of **8 ULP at the output
+magnitude** for functions reaching a non-correctly-rounded libm routine (binds
+for MAMA, HT_DCPHASE, HT_SINE). Two exposures are left unpadded on purpose and
+named in the header: HT_TRENDLINE is bit-exact here but reaches `atan`, and
+HT_TRENDMODE reaches `atan` with an **integer** output, where no tolerance can
+absorb a 1-ULP libm shift near a decision boundary.
+
+**Coverage this adds.** The 61 candlestick patterns and the price/vector-math
+family had *no* pinned expected value against the standard series before this —
+`test_candlestick.c` uses synthetic predicate/MC-DC bars instead. 35 of the 61
+patterns fire somewhere on this series; the other 26 never do, so every sample
+for them is 0, which fails a pattern that *starts* firing but cannot see one
+that *stops*. Both sets are listed in the header rather than left implicit.
+
+**Sampling, and the rule that was wrong first.** First/middle/last of each
+output, plus — for every INTEGER output — the first, middle and last occurrence
+of both its minimum and its maximum. The obvious rule (pin the bars where the
+pattern *fires*, i.e. the non-zero ones) reads backwards any discrete output
+whose rare arm is zero. HT_TRENDMODE is the case that proves it: it sits at 1
+for most of the series, so first/middle/last landed on 1, 1, 1 and pinned
+nothing at all. Sabotaging it to return a constant 1 passed under that rule and
+fails under min/max at index 7.
+
+**Non-vacuity.** The group prints and asserts what it actually compared —
+counters incremented *at* each comparison, never from `nbSample`. It fails if the
+comparison count does not equal the table's own total (a silently skipped sample),
+if any case missed the shape check, or if the table has shrunk below the literal
+`LEGACY_FLOOR_*` counts it was frozen with. The floors are literal rather than
+derived, because a floor computed from `TA_LEGACY_CASE` moves with it and would
+let half the rows be deleted while still "passing its floor". Proven: making the
+sample loop skip every second sample fails with *compared 564 value(s) but the
+table carries 938*.
+
+**Sabotage-proven, all three tiers plus a bounded control:**
+
+| probe | result |
+|---|---|
+| `SMA` output `+1e-13` (exact tier) | fails — `[MA] diff 9.95e-14, tolerance 5e-14` |
+| `CDL3INSIDE` starts firing (`0`→`1`) | fails at a sample whose frozen value is 0 |
+| `CDL3INSIDE` stops firing (firing arm → `0`) | fails at index 3, frozen 100 |
+| `HT_TRENDMODE` forced constant `1` | fails at index 7, frozen 0 |
+| `EMA` output `+1e-12` | fails via `[APO]`, tolerance 0 |
+| `ADOSC` output `+1e-8` (below its 3e-8 bound, 10× its ULP) | **passes** |
+| `ADOSC` output `+1e-7` (above the bound) | fails — `diff 1e-07, tolerance 3e-08` |
+
+The last two are the pair that matters: they show the bound is finite and sits
+where the table says, not that the comparison is merely alive.
+
+**Two traps a re-freeze must avoid**, both of which bit during this one and are
+recorded in the data header:
+
+- The server names real inputs **positionally** (`inReal`, or `inReal0`/`inReal1`),
+  *not* by the ta_abstract input name. MAVP is the one function where those differ
+  — its inputs are `inReal` and `inPeriods`. Sending the declared name makes the
+  server find no array and compute on whatever the previous request left in its
+  buffer, with no error. It survived undetected until a case existed whose periods
+  did not saturate to `optInMaxPeriod`, because saturated garbage and saturated
+  `high` give the same answer. That is also why MAVP carries a third
+  `wide-periods` case (`maxPeriod` 200): under the default 30 every bar of `high`
+  clamps to 30, so MAVP's grouping / counting-sort path never runs and its rows
+  were byte-identical to `SMA(30)` and `EMA(35)`.
+- `ta_064_serve` is shadow-patched to emit lossless hex floats. The ordinary
+  `ta_codegen_serve_c` emits `%.15g`, which is lossy and silently costs ~1 ULP —
+  it looked like a real divergence in 75 functions until the transport was the
+  suspect rather than the arithmetic. Only the former is safe to freeze from.
+
+**Maintenance.** The generator was a one-off and is not in the tree — the value
+is the frozen table and its exception comments, which are hand-maintained from
+here. Each case therefore carries everything needed to re-derive it by hand:
+function, every parameter value, sample index, and the pinned
+retCode/outBegIdx/outNbElement. Two things a regeneration must not lose: integer
+periods are never 1 (period-1 is the intentional v0.6.4 divergence fixed for
+#48/#59 — that territory belongs to the PERIOD1/BOUNDARY group) and MAType never
+exceeds 8 (9+ post-date the freeze: HMA #139, DISABLED #93, DEFAULT #182).
+
+The group establishes the state it needs rather than inheriting it: `DO_TEST`
+resets compatibility between groups but not unstable periods or candle settings,
+and earlier groups change both. It zeroes every unstable period (restoring them
+after), and restores the candle defaults.
+
+**At re-freeze:** regenerate against the new reference and delete every
+`LEGACY_TOL` row — both divergence causes are specific to v0.6.4. The libm
+floors are the one part that may need to survive.
+
 ## `--fuzz-064` — bit-exact differential fuzz vs released v0.6.4
 
 An opt-in mode (`ta_regtest --fuzz-064`, never part of default/nightly `--codegen`
