@@ -130,6 +130,13 @@ public final class CoreBuilder {
       if (avgPeriod < 0) {
          throw new IllegalArgumentException("avgPeriod must be >= 0, got " + avgPeriod);
       }
+      if (avgPeriod > Core.MAX_INDEX) {
+         throw new IllegalArgumentException(
+            "avgPeriod must be <= " + Core.MAX_INDEX + ", got " + avgPeriod);
+      }
+      if (Double.isNaN(factor)) {
+         throw new IllegalArgumentException("factor must not be NaN");
+      }
       candleSettings[settingType.ordinal()] =
          new CandleSetting(settingType, rangeType, avgPeriod, factor);
       return this;

@@ -129,6 +129,35 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
     /*printf("setcdlset:%d  ",settingType);*/
     if( settingType >= TA_AllCandleSettings )
         return TA_BAD_PARAM;
+
+    /* The average period is subtracted from startIdx to seed the trailing
+     * average, so a negative one moves the seeding loop's start PAST startIdx:
+     * the `while( i < startIdx )` never runs and the main loop begins
+     * avgPeriod bars late, while *outBegIdx still reports startIdx. Every
+     * output is then shifted underneath a correct-looking outBegIdx -- silent
+     * wrong values rather than a memory error. It also makes the lookback
+     * report a negative while the call returns TA_SUCCESS, which the
+     * lookback/call invariant forbids.
+     *
+     * The ceiling is the one TA_SetUnstablePeriod already uses for the same
+     * reason (#144): the period is added to a lookback that becomes an index,
+     * and an average longer than the largest addressable series could never
+     * produce output, so nothing legitimate is refused. Guarding here rather
+     * than in each of the 61 CDL* bodies keeps the invariant in one place.
+     */
+    if( avgPeriod < 0 || avgPeriod > TA_MAX_INDEX )
+        return TA_BAD_PARAM;
+
+    /* factor scales a range that is already non-negative, and every CDL*
+     * body multiplies rather than indexes with it, so a negative one cannot
+     * misalign output -- it only makes the comparison it feeds always false.
+     * NaN is the exception worth refusing: it makes every comparison false
+     * silently, which reads as "no pattern ever matches" rather than as a
+     * rejected setting.
+     */
+    if( factor != factor )
+        return TA_BAD_PARAM;
+
     TA_Globals->candleSettings[settingType].settingType = settingType;
     TA_Globals->candleSettings[settingType].rangeType = rangeType;
     TA_Globals->candleSettings[settingType].avgPeriod = avgPeriod;
