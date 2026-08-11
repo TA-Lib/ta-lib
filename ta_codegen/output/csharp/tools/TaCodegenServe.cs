@@ -621,6 +621,9 @@ public class TaCodegenServe {
             else if (method == "set_unstable_period") {
                 int id = GetInt(p, "id", -1);
                 int period = GetInt(p, "period", 0);
+                if (period < 0 || period > Core.MAX_INDEX) {
+                    return "{\"error\":\"Invalid unstable period value\"}";
+                }
                 if (id == (int)FuncUnstId.ALL) {
                     for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;
                     return "{\"status\":\"ok\"}";

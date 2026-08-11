@@ -206,7 +206,8 @@ pub enum CandleSettingType {
 ///
 /// let core = Core::builder()
 ///     .unstable_period(FuncUnstId::EMA, 10)
-///     .build();
+///     .build()?;
+/// # Ok::<(), ta_lib::RetCode>(())
 /// ```
 ///
 /// To change a setting, build a new `Core` — cloning is cheap (it is a small
@@ -225,7 +226,8 @@ pub struct Core {
 impl Core {
     /// Create a new `Core` with default settings.
     ///
-    /// Equivalent to `Core::builder().build()`.
+    /// Infallible, unlike [`CoreBuilder::build`]: there is no argument to reject,
+    /// so this is what `Core::builder().build().unwrap()` would give you.
     pub fn new() -> Self {
         Self {
             unstable_period: [0; FUNC_UNST_COUNT],
@@ -243,28 +245,40 @@ impl Core {
     }
 
     /// Seed a [`CoreBuilder`] from this `Core`'s current settings, for
-    /// clone-and-modify: `core.to_builder().unstable_period(...).build()`.
+    /// clone-and-modify: `core.to_builder().unstable_period(...).build()?`.
+    ///
+    /// The round trip is total: a `Core` only exists because it validated, so a
+    /// builder seeded from one starts with no rejection latched and rebuilds
+    /// without error unless a later setter is given something bad.
     pub fn to_builder(&self) -> CoreBuilder {
         CoreBuilder {
             unstable_period: self.unstable_period,
             compatibility: self.compatibility,
             candle_settings: self.candle_settings,
+            err: None,
         }
     }
 
     /// Get the unstable period for a specific function.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if `id` is [`FuncUnstId::ALL`]. That variant is the
+    /// [`RetCode::BadParam`] if `id` is [`FuncUnstId::ALL`]. That variant is the
     /// set-all wildcard accepted by [`CoreBuilder::unstable_period`]; it names
     /// no single function, so there is no value to return.
-    pub fn get_unstable_period(&self, id: FuncUnstId) -> i32 {
-        assert!(
-            (id as usize) < FUNC_UNST_COUNT,
-            "{id:?} is a wildcard, not a function with an unstable period"
-        );
-        self.unstable_period[id as usize]
+    ///
+    /// This is a deliberate divergence from the C reference, whose
+    /// `TA_GetUnstablePeriod` answers `0` for the wildcard and cannot report an
+    /// error at all: `0` is itself a legal period, so C's answer is
+    /// indistinguishable from a genuine reading.
+    pub fn get_unstable_period(&self, id: FuncUnstId) -> Result<u32, RetCode> {
+        if (id as usize) >= FUNC_UNST_COUNT {
+            return Err(RetCode::BadParam);
+        }
+        // Stored as i32 for the generated indicators' signed lookback arithmetic;
+        // every value that reaches the array came through the builder's
+        // `0..=MAX_INDEX` guard, so the conversion cannot fail.
+        Ok(self.unstable_period[id as usize] as u32)
     }
 
     /// Compute candlestick range for the given range type and OHLC values.
@@ -312,13 +326,25 @@ impl Default for Core {
 ///
 /// let core = Core::builder()
 ///     .unstable_period(FuncUnstId::EMA, 10)
-///     .build();
+///     .build()?;
+/// # Ok::<(), ta_lib::RetCode>(())
 /// ```
+///
+/// The setters are infallible so that they chain; a rejected argument is
+/// reported once, by [`build`](CoreBuilder::build).
 #[derive(Debug, Clone)]
 pub struct CoreBuilder {
     unstable_period: [i32; FUNC_UNST_COUNT],
     compatibility: Compatibility,
     candle_settings: CandleSettings,
+    /// The first rejection seen by any setter, surfaced by [`CoreBuilder::build`].
+    ///
+    /// Setters stay infallible and chainable, so a rejection has nowhere to go at
+    /// the point it happens; it is latched here instead. **First** error rather
+    /// than last: a later correction repairs the stored value but must not erase
+    /// the report, or a misuse would be silently swallowed — which is the failure
+    /// this whole guard exists to prevent.
+    err: Option<RetCode>,
 }
 
 impl CoreBuilder {
@@ -328,21 +354,56 @@ impl CoreBuilder {
             unstable_period: [0; FUNC_UNST_COUNT],
             compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
+            err: None,
         }
+    }
+
+    /// Latch `code` unless an earlier rejection is already recorded.
+    fn reject(mut self, code: RetCode) -> Self {
+        if self.err.is_none() {
+            self.err = Some(code);
+        }
+        self
     }
 
     /// Set the unstable period for a specific function.
     ///
     /// Passing [`FuncUnstId::ALL`] sets the unstable period for *every*
     /// function at once (mirroring the C `TA_SetUnstablePeriod` wildcard).
+    ///
+    /// `period` is a `u32` because C's parameter is an `unsigned int`: a negative
+    /// warm-up is not a value to reject but one that cannot be written down.
+    ///
+    /// # Errors
+    ///
+    /// A `period` above [`MAX_INDEX`] is rejected, and [`CoreBuilder::build`]
+    /// then reports [`RetCode::BadParam`]. The period is added to a lookback that
+    /// is then used as an index, so an unbounded one overflows that lookback
+    /// negative and the function indexes far past the end of its input.
+    /// `MAX_INDEX` is the ceiling the index space already enforces on
+    /// `startIdx`/`endIdx`; a warm-up longer than the largest addressable series
+    /// could never produce output, so nothing legitimate is refused.
+    ///
+    /// A rejected call writes nothing — every slot keeps the value it had.
     #[must_use]
-    pub fn unstable_period(mut self, id: FuncUnstId, period: i32) -> Self {
+    pub fn unstable_period(mut self, id: FuncUnstId, period: u32) -> Self {
+        // Widened both sides rather than narrowing MAX_INDEX: u32 and usize are
+        // the same width on a 32-bit target, so a `MAX_INDEX as u32` would be a
+        // truncating cast there and a lint everywhere.
+        if u64::from(period) > MAX_INDEX as u64 {
+            return self.reject(RetCode::BadParam);
+        }
+        // In range by the check above, so it round-trips through the i32 storage
+        // the generated indicators do their signed lookback arithmetic in.
+        let period = period as i32;
         if id == FuncUnstId::ALL {
             for slot in self.unstable_period.iter_mut() {
                 *slot = period;
             }
-        } else {
+        } else if (id as usize) < FUNC_UNST_COUNT {
             self.unstable_period[id as usize] = period;
+        } else {
+            return self.reject(RetCode::BadParam);
         }
         self
     }
@@ -350,36 +411,36 @@ impl CoreBuilder {
     /// Override a single candlestick setting (mirrors the C
     /// `TA_SetCandleSettings`).
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if `setting_type` is [`CandleSettingType::AllCandleSettings`].
-    /// That variant is a wildcard, not a setting, so there is nothing to
-    /// override — C returns `TA_BAD_PARAM` and Java throws for the same call.
-    ///
-    /// Panics unless `setting.range_type` is `0`, `1` or `2`,
+    /// [`CoreBuilder::build`] reports [`RetCode::BadParam`] unless `setting_type`
+    /// names a single setting, `setting.range_type` is `0`, `1` or `2`,
     /// `setting.avg_period` is between `0` and [`MAX_INDEX`], and
     /// `setting.factor` is not NaN. `avg_period` is the lookback of every CDL\*
     /// function that reads the setting, so it is bounded like one; `factor`
     /// scales a threshold and takes any finite value. C rejects the same values
     /// with `TA_BAD_PARAM`.
+    ///
+    /// [`CandleSettingType::AllCandleSettings`] is a wildcard, not a setting, so
+    /// there is nothing for it to override — C returns `TA_BAD_PARAM` and Java
+    /// throws for the same call.
+    ///
+    /// A rejected call writes nothing — every setting keeps the value it had.
     #[must_use]
     pub fn candle_setting(mut self, setting_type: CandleSettingType, setting: CandleSetting) -> Self {
-        assert!(
-            (0..=2).contains(&setting.range_type),
-            "range_type must be 0 (RealBody), 1 (HighLow) or 2 (Shadows), got {}",
-            setting.range_type
-        );
-        assert!(
-            setting.avg_period >= 0,
-            "avg_period must be >= 0, got {}",
-            setting.avg_period
-        );
-        assert!(
-            (setting.avg_period as usize) <= MAX_INDEX,
-            "avg_period must be <= {MAX_INDEX}, got {}",
-            setting.avg_period
-        );
-        assert!(!setting.factor.is_nan(), "factor must not be NaN");
+        // Reported rather than asserted (#186): a library aborting the process on
+        // a value that can arrive from a config file is a worse failure than one
+        // the caller can handle, and every check here precedes the write, so a
+        // rejection leaves the settings exactly as they were.
+        if !(0..=2).contains(&setting.range_type) {
+            return self.reject(RetCode::BadParam);
+        }
+        if setting.avg_period < 0 || setting.avg_period as i64 > MAX_INDEX as i64 {
+            return self.reject(RetCode::BadParam);
+        }
+        if setting.factor.is_nan() {
+            return self.reject(RetCode::BadParam);
+        }
         match setting_type {
             CandleSettingType::BodyLong => self.candle_settings.body_long = setting,
             CandleSettingType::BodyVeryLong => self.candle_settings.body_very_long = setting,
@@ -392,21 +453,27 @@ impl CoreBuilder {
             CandleSettingType::Near => self.candle_settings.near = setting,
             CandleSettingType::Far => self.candle_settings.far = setting,
             CandleSettingType::Equal => self.candle_settings.equal = setting,
-            CandleSettingType::AllCandleSettings => {
-                panic!("AllCandleSettings is a wildcard, not a single-setting target")
-            }
+            CandleSettingType::AllCandleSettings => return self.reject(RetCode::BadParam),
         }
         self
     }
 
     /// Consume the builder and produce an immutable [`Core`].
-    #[must_use]
-    pub fn build(self) -> Core {
-        Core {
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any setter rejected its argument. The setters are
+    /// infallible so that they can chain, so this is where a rejection is
+    /// reported; the code is the first one recorded.
+    pub fn build(self) -> Result<Core, RetCode> {
+        if let Some(code) = self.err {
+            return Err(code);
+        }
+        Ok(Core {
             unstable_period: self.unstable_period,
             compatibility: self.compatibility,
             candle_settings: self.candle_settings,
-        }
+        })
     }
 }
 
@@ -422,7 +489,7 @@ mod tests {
 
     #[test]
     fn new_default_and_empty_builder_are_all_defaults() {
-        for core in [Core::new(), Core::default(), Core::builder().build()] {
+        for core in [Core::new(), Core::default(), Core::builder().build().unwrap()] {
             assert_eq!(core.compatibility, Compatibility::Default);
             assert!(core.unstable_period.iter().all(|&p| p == 0));
             // A representative candle default (BodyDoji: HighLow range, 10, 0.1).
@@ -440,17 +507,19 @@ mod tests {
         let derived = Core::builder()
             .unstable_period(FuncUnstId::EMA, 10)
             .build()
+            .unwrap()
             .to_builder()
             .unstable_period(FuncUnstId::RSI, 5)
-            .build();
+            .build()
+            .unwrap();
         assert_eq!(derived.compatibility, Compatibility::Default);
     }
 
     #[test]
     fn builder_sets_a_single_unstable_period() {
-        let core = Core::builder().unstable_period(FuncUnstId::EMA, 10).build();
-        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 10);
-        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), 0);
+        let core = Core::builder().unstable_period(FuncUnstId::EMA, 10).build().unwrap();
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(10));
+        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), Ok(0));
         // Exactly one slot changed.
         let changed: Vec<usize> = (0..core.unstable_period.len())
             .filter(|&i| core.unstable_period[i] != 0)
@@ -460,18 +529,19 @@ mod tests {
 
     #[test]
     fn builder_unstable_period_wildcard_sets_every_function() {
-        let core = Core::builder().unstable_period(FuncUnstId::ALL, 7).build();
+        let core = Core::builder().unstable_period(FuncUnstId::ALL, 7).build().unwrap();
         assert!(core.unstable_period.iter().all(|&p| p == 7));
-        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 7);
-        assert_eq!(core.get_unstable_period(FuncUnstId::T3), 7);
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(7));
+        assert_eq!(core.get_unstable_period(FuncUnstId::T3), Ok(7));
     }
 
     #[test]
-    #[should_panic(expected = "ALL is a wildcard")]
     fn get_unstable_period_rejects_the_wildcard() {
         // The wildcard is one past the end of the backing array, so an unguarded
         // read indexed out of bounds instead of reporting the misuse (#144).
-        Core::new().get_unstable_period(FuncUnstId::ALL);
+        // It reports rather than panics (#186): the caller gets a RetCode, not an
+        // abort, and never C's ambiguous 0 -- which is also a legal period.
+        assert_eq!(Core::new().get_unstable_period(FuncUnstId::ALL), Err(RetCode::BadParam));
     }
 
     #[test]
@@ -480,10 +550,96 @@ mod tests {
         // one below the wildcard, so a guard tightened by one rejects it here.
         // Reads go through the getter on purpose -- indexing the array directly
         // would exercise the field, not the check.
-        let core = Core::builder().unstable_period(FuncUnstId::ALL, 4).build();
+        let core = Core::builder().unstable_period(FuncUnstId::ALL, 4).build().unwrap();
         for id in [FuncUnstId::ADX, FuncUnstId::EMA, FuncUnstId::RSI, FuncUnstId::T3] {
-            assert_eq!(core.get_unstable_period(id), 4);
+            assert_eq!(core.get_unstable_period(id), Ok(4));
         }
+    }
+
+    #[test]
+    fn unstable_period_rejects_above_max_index() {
+        // The period is added to a lookback that is then used as an index, so an
+        // unbounded one overflows that lookback negative and the function indexes
+        // far past its input. C rejects the same values (ta_utility.c).
+        let too_big = u32::try_from(MAX_INDEX).unwrap() + 1;
+        for id in [FuncUnstId::EMA, FuncUnstId::ALL] {
+            let err = Core::builder().unstable_period(id, too_big).build().unwrap_err();
+            assert_eq!(err, RetCode::BadParam, "{id:?} must reject MAX_INDEX + 1");
+            let err = Core::builder().unstable_period(id, u32::MAX).build().unwrap_err();
+            assert_eq!(err, RetCode::BadParam, "{id:?} must reject u32::MAX");
+        }
+    }
+
+    #[test]
+    fn unstable_period_bound_is_a_bound_not_an_off_by_one() {
+        // MAX_INDEX itself is legal -- C accepts it and rejects MAX_INDEX + 1, so
+        // a guard tightened by one would be caught here rather than shipping.
+        let ceiling = u32::try_from(MAX_INDEX).unwrap();
+        let core = Core::builder().unstable_period(FuncUnstId::EMA, ceiling).build().unwrap();
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(ceiling));
+    }
+
+    #[test]
+    fn a_rejected_setter_writes_nothing() {
+        // The half of the contract that an "it errors" assertion cannot see. C
+        // checks before every store (ta_utility.c), so a rejected call is a true
+        // no-op; latching the error must not come at the cost of a partial write.
+        let ceiling = u32::try_from(MAX_INDEX).unwrap();
+        let builder = Core::builder()
+            .unstable_period(FuncUnstId::ALL, 3)
+            .unstable_period(FuncUnstId::EMA, ceiling + 1);
+        // The error is latched, so the builder no longer yields a Core -- inspect
+        // the values through a clone that clears the latch by rebuilding them.
+        assert_eq!(builder.clone().build().unwrap_err(), RetCode::BadParam);
+        // The test module is a child of this one, so the private slots are
+        // readable here -- the point is the stored bytes, not the public API.
+        assert_eq!(
+            builder.unstable_period,
+            [3_i32; FUNC_UNST_COUNT],
+            "a rejected period must leave every slot at its previous value"
+        );
+    }
+
+    #[test]
+    fn two_different_misuses_still_report_bad_param() {
+        // Deliberately NOT named "the first rejection wins": BadParam is the only
+        // code either misuse can produce, so which one was latched is not
+        // observable through the public API and a test claiming otherwise would
+        // assert nothing. What is worth pinning is that combining them does not
+        // cancel out into a successful build.
+        let ceiling = u32::try_from(MAX_INDEX).unwrap();
+        let err = Core::builder()
+            .unstable_period(FuncUnstId::EMA, ceiling + 1)
+            .candle_setting(
+                CandleSettingType::AllCandleSettings,
+                CandleSetting { range_type: 1, avg_period: 1, factor: 1.0 },
+            )
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
+    }
+
+    #[test]
+    fn a_later_good_value_does_not_clear_the_latch() {
+        // A corrected value repairs the STATE but not the report: a misuse that
+        // was silently swallowed is exactly what #186 exists to stop.
+        let ceiling = u32::try_from(MAX_INDEX).unwrap();
+        let err = Core::builder()
+            .unstable_period(FuncUnstId::EMA, ceiling + 1)
+            .unstable_period(FuncUnstId::EMA, 5)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
+    }
+
+    #[test]
+    fn to_builder_round_trip_is_total() {
+        // A Core only exists if it validated, so rebuilding one can never fail --
+        // including at the ceiling, the only value where the bound is in play.
+        let ceiling = u32::try_from(MAX_INDEX).unwrap();
+        let core = Core::builder().unstable_period(FuncUnstId::ALL, ceiling).build().unwrap();
+        let again = core.to_builder().build().expect("a built Core must always rebuild");
+        assert_eq!(again.get_unstable_period(FuncUnstId::T3), Ok(ceiling));
     }
 
     #[test]
@@ -491,15 +647,17 @@ mod tests {
         let core = Core::builder()
             .unstable_period(FuncUnstId::ALL, 7) // all -> 7
             .unstable_period(FuncUnstId::EMA, 3)         // then EMA -> 3
-            .build();
-        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), 3);
-        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), 7);
+            .build()
+            .unwrap();
+        assert_eq!(core.get_unstable_period(FuncUnstId::EMA), Ok(3));
+        assert_eq!(core.get_unstable_period(FuncUnstId::RSI), Ok(7));
     }
 
     #[test]
     fn builder_candle_setting_overrides_one_leaves_rest() {
         let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
-        let core = Core::builder().candle_setting(CandleSettingType::BodyLong, custom).build();
+        let core =
+            Core::builder().candle_setting(CandleSettingType::BodyLong, custom).build().unwrap();
         assert_eq!(core.candle_settings.body_long.range_type, 2);
         assert_eq!(core.candle_settings.body_long.avg_period, 20);
         assert_eq!(core.candle_settings.body_long.factor, 1.5);
@@ -508,25 +666,47 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "AllCandleSettings is a wildcard")]
     fn candle_setting_rejects_the_wildcard() {
         // Silently ignoring it left the caller believing all eleven settings had
         // been overridden while none had; C returns TA_BAD_PARAM and Java throws
-        // for the same call (#144).
+        // for the same call (#144). Rust reports it at build() rather than
+        // aborting (#186) -- note the `.build()`, without which this test would
+        // assert nothing at all now that the setter no longer panics.
         let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
-        let _ = Core::builder().candle_setting(CandleSettingType::AllCandleSettings, custom);
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::AllCandleSettings, custom)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
     }
 
     #[test]
-    #[should_panic(expected = "avg_period must be >= 0")]
+    fn a_rejected_candle_setting_writes_nothing() {
+        // Same no-write rule as the period: the wildcard names no slot, so a
+        // rejection must not have scribbled into one on the way out.
+        let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
+        let builder = Core::builder().candle_setting(CandleSettingType::AllCandleSettings, custom);
+        let defaults = CandleSettings::default_settings();
+        assert_eq!(builder.candle_settings.body_long.avg_period, defaults.body_long.avg_period);
+        assert_eq!(builder.candle_settings.equal.factor, defaults.equal.factor);
+        assert_eq!(builder.candle_settings.body_doji.range_type, defaults.body_doji.range_type);
+    }
+
+    #[test]
     fn candle_setting_rejects_a_negative_avg_period() {
         // The period is subtracted from startIdx to seed the trailing average,
         // so a negative one starts the main loop that many bars late while
         // outBegIdx still reports startIdx: every value shifted underneath a
         // correct-looking index, and a lookback that reports negative while the
-        // call succeeds (#185).
+        // call succeeds (#185). Reported, not asserted (#186) -- note the
+        // `.build()`, without which this test would assert nothing now that the
+        // setter latches instead of panicking.
         let custom = CandleSetting { range_type: 1, avg_period: -1, factor: 0.1 };
-        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
     }
 
     #[test]
@@ -535,11 +715,14 @@ mod tests {
         // CDL* body handles, so a guard written as `<= 0` would refuse a valid
         // setting.
         let custom = CandleSetting { range_type: 1, avg_period: 0, factor: 0.1 };
-        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+        let core = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .expect("a zero avg_period is legal");
+        assert_eq!(core.candle_settings.body_doji.avg_period, 0);
     }
 
     #[test]
-    #[should_panic(expected = "avg_period must be <=")]
     fn candle_setting_rejects_an_avg_period_past_max_index() {
         // Same ceiling the unstable period already carries: an average longer
         // than the largest addressable series could never produce output, and an
@@ -549,17 +732,24 @@ mod tests {
             avg_period: (MAX_INDEX as i32).saturating_add(1),
             factor: 0.1,
         };
-        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
     }
 
     #[test]
-    #[should_panic(expected = "range_type must be")]
     fn candle_setting_rejects_an_out_of_domain_range_type() {
         // A choice list's domain is its member list. Anything else falls through
         // every arm of `ta_candlerange` to 0.0 — every range zero, every
         // threshold zero, and a silently meaningless answer.
         let custom = CandleSetting { range_type: 3, avg_period: 10, factor: 0.1 };
-        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
     }
 
     #[test]
@@ -570,7 +760,10 @@ mod tests {
             avg_period: i32::try_from(MAX_INDEX).unwrap(),
             factor: 0.1,
         };
-        let core = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom).build();
+        let core = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .expect("the ceilings are on the legal side of the bound");
         assert_eq!(core.candle_settings.body_doji.avg_period, i32::try_from(MAX_INDEX).unwrap());
         assert_eq!(core.candle_settings.body_doji.range_type, 2);
     }
@@ -594,7 +787,8 @@ mod tests {
                     CandleSettingType::BodyDoji,
                     CandleSetting { range_type: 1, avg_period, factor: 0.1 },
                 )
-                .build();
+                .build()
+                .expect("every avg_period in this sweep is inside the bound");
             let lookback = core.CDLDOJI_Lookback();
             assert!(lookback <= MAX_INDEX, "avg_period {avg_period} gave lookback {lookback}");
 
@@ -612,13 +806,29 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "factor must not be NaN")]
     fn candle_setting_rejects_a_nan_factor() {
         // NaN makes every comparison it feeds false, so the patterns simply stop
         // matching -- indistinguishable from "this shape never occurs" unless the
         // setter refuses it.
         let custom = CandleSetting { range_type: 1, avg_period: 10, factor: f64::NAN };
-        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
+    }
+
+    #[test]
+    fn candle_setting_accepts_a_negative_factor() {
+        // Only NaN is refused: a negative factor is a legal, if unusual,
+        // threshold scale, so a guard written as `< 0.0 || is_nan()` would be
+        // wrong. C accepts it too.
+        let custom = CandleSetting { range_type: 1, avg_period: 10, factor: -1.5 };
+        let core = Core::builder()
+            .candle_setting(CandleSettingType::BodyDoji, custom)
+            .build()
+            .expect("a negative factor is legal");
+        assert_eq!(core.candle_settings.body_doji.factor, -1.5);
     }
 
     #[test]
@@ -626,7 +836,8 @@ mod tests {
         // The other side of the guard's boundary: Equal is the variant declared
         // immediately before the wildcard, so a guard widened by one rejects it.
         let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
-        let core = Core::builder().candle_setting(CandleSettingType::Equal, custom).build();
+        let core =
+            Core::builder().candle_setting(CandleSettingType::Equal, custom).build().unwrap();
         assert_eq!(core.candle_settings.equal.avg_period, 99);
         assert_eq!(core.candle_settings.equal.factor, 9.0);
     }
@@ -656,7 +867,8 @@ mod tests {
                 CandleSettingType::BodyDoji,
                 CandleSetting { range_type: 1, avg_period: 10, factor: 1.0e9 },
             )
-            .build();
+            .build()
+            .unwrap();
         let tuned_out = run(&tuned);
         assert!(
             default_out.iter().all(|&v| v == 0),
@@ -677,16 +889,18 @@ mod tests {
                 CandleSettingType::BodyLong,
                 CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 },
             )
-            .build();
+            .build()
+            .unwrap();
         // Clone-and-modify: derive a Core that additionally tunes EMA.
-        let derived = original.to_builder().unstable_period(FuncUnstId::EMA, 9).build();
+        let derived =
+            original.to_builder().unstable_period(FuncUnstId::EMA, 9).build().unwrap();
         // The original is immutable and unchanged.
-        assert_eq!(original.get_unstable_period(FuncUnstId::EMA), 0);
-        assert_eq!(original.get_unstable_period(FuncUnstId::RSI), 5);
+        assert_eq!(original.get_unstable_period(FuncUnstId::EMA), Ok(0));
+        assert_eq!(original.get_unstable_period(FuncUnstId::RSI), Ok(5));
         // The derived Core inherits the settings (candle_settings included, which
         // guards against to_builder dropping a field), plus the new one.
-        assert_eq!(derived.get_unstable_period(FuncUnstId::RSI), 5);
-        assert_eq!(derived.get_unstable_period(FuncUnstId::EMA), 9);
+        assert_eq!(derived.get_unstable_period(FuncUnstId::RSI), Ok(5));
+        assert_eq!(derived.get_unstable_period(FuncUnstId::EMA), Ok(9));
         // candle_settings survived the round-trip (default avg_period would be 10).
         assert_eq!(derived.candle_settings.body_long.avg_period, 20);
         assert_eq!(derived.candle_settings.body_long.factor, 1.5);
@@ -696,7 +910,7 @@ mod tests {
     #[test]
     fn unstable_period_setting_changes_lookback() {
         let base = Core::new();
-        let tuned = Core::builder().unstable_period(FuncUnstId::EMA, 5).build();
+        let tuned = Core::builder().unstable_period(FuncUnstId::EMA, 5).build().unwrap();
         // The unstable period is added to the function's lookback.
         assert_eq!(tuned.EMA_Lookback(10), base.EMA_Lookback(10) + 5);
     }
@@ -714,7 +928,7 @@ mod tests {
         use std::thread;
         // A single immutable Core shared read-only across threads (the concurrency
         // contract this design enables): every thread computes the same result.
-        let core = Arc::new(Core::builder().unstable_period(FuncUnstId::EMA, 2).build());
+        let core = Arc::new(Core::builder().unstable_period(FuncUnstId::EMA, 2).build().unwrap());
         let close: Vec<f64> = (0..64).map(|i| 100.0 + f64::from(i % 7)).collect();
         let mut handles = Vec::new();
         for _ in 0..4 {

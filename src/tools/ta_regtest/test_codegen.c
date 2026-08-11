@@ -3205,6 +3205,149 @@ static ErrorNumber test_unstable_wildcard(CodegenPipe *cp, const CodegenLanguage
     #undef UW_SLOW
 }
 
+/* The unstable period's VALUE domain, held identical on every server (#186).
+ *
+ * The wildcard probe above proves a legal period reaches every function; this
+ * proves an illegal one reaches none of them. Until #186 the four backends
+ * disagreed outright — C bounded the value, Java bounded only the low end, Rust
+ * bounded nothing and took a signed parameter, C# had no setter at all — and no
+ * cross-language run could see it, because every period the harness had ever
+ * sent was legal.
+ *
+ * Three things are asserted, in the order that makes each one non-vacuous:
+ *   1. TA_MAX_INDEX itself is ACCEPTED. Without this the whole check passes
+ *      against a server that rejects everything, and a guard tightened by one
+ *      ships unnoticed.
+ *   2. TA_MAX_INDEX + 1 and 2^31-1 are REJECTED, on the single-id path and on
+ *      the set-all wildcard alike.
+ *   3. A rejected call WROTE NOTHING. This is the half an "it errored" check
+ *      cannot see, and the half C's own test pins (test_internals.c). ADOSC is
+ *      the probe for the same reason the wildcard test uses it: it carries no
+ *      `unstablePeriod` request field, so the call cannot re-set what it reads,
+ *      yet its lookback is TA_EMA_Lookback and so moves with EMA's period. */
+static ErrorNumber test_unstable_bounds(CodegenPipe *cp, const CodegenLanguage *lang,
+                                        char *reqBuf, char *respBuf)
+{
+    #define UB_NBBAR 60
+    #define UB_FAST  3
+    #define UB_SLOW  10
+    TA_Real h[UB_NBBAR], l[UB_NBBAR], c[UB_NBBAR], v[UB_NBBAR];
+    /* Values every backend must refuse. TA_MAX_INDEX+1 is the first one past the
+     * ceiling; 2^31-1 is the value that overflowed the lookback negative. */
+    const long long rejects[2] = { (long long)TA_MAX_INDEX + 1, 2147483647LL };
+    const int ids[2] = { (int)TA_FUNC_UNST_EMA, (int)TA_FUNC_UNST_ALL };
+    const int marker = 4;   /* the good value a rejected call must not disturb */
+    int expected, i, k, r;
+
+    for( i = 0; i < UB_NBBAR; i++ )
+    {
+        double base = 100.0 + (double)((i * 7) % 13);
+        h[i] = base + 2.0;
+        l[i] = base - 2.0;
+        c[i] = base + 0.5;
+        v[i] = 1000.0 + (double)((i * 3) % 17) * 10.0;
+    }
+
+    /* (1) The ceiling is a bound, not an off-by-one: TA_MAX_INDEX is legal. */
+    for( k = 0; k < 2; k++ )
+    {
+        codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%d}}",
+                ids[k], (int)TA_MAX_INDEX);
+        if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+            || json_is_error(respBuf) )
+        {
+            printf("  UNSTABLE BOUND [%s]: id %d rejected the TA_MAX_INDEX ceiling (%d), "
+                   "which C accepts: %s\n", lang->display, ids[k], (int)TA_MAX_INDEX, respBuf);
+            return TA_UNSTABLE_BOUND_CEILING;
+        }
+    }
+
+    /* Park a known-good value so step (3) has something to observe. */
+    codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+            "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%d}}",
+            (int)TA_FUNC_UNST_ALL, marker);
+    if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+        || json_is_error(respBuf) )
+    {
+        printf("  UNSTABLE BOUND [%s]: could not park the marker period: %s\n",
+               lang->display, respBuf);
+        return TA_UNSTABLE_BOUND_CEILING;
+    }
+
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, (unsigned int)marker);
+    expected = TA_ADOSC_Lookback(UB_FAST, UB_SLOW);
+    TA_SetUnstablePeriod(TA_FUNC_UNST_ALL, 0);
+
+    /* (2) and (3): each out-of-range value is refused, and leaves the marker. */
+    for( r = 0; r < 2; r++ )
+    {
+        for( k = 0; k < 2; k++ )
+        {
+            codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                    "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":%lld}}",
+                    ids[k], rejects[r]);
+            if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
+            {
+                printf("  UNSTABLE BOUND [%s]: transport failed for id %d period %lld\n",
+                       lang->display, ids[k], rejects[r]);
+                return TA_UNSTABLE_BOUND_NOT_REJECTED;
+            }
+            if( !json_is_error(respBuf) )
+            {
+                printf("  UNSTABLE BOUND [%s]: id %d ACCEPTED period %lld, which C rejects "
+                       "with TA_BAD_PARAM: %s\n",
+                       lang->display, ids[k], rejects[r], respBuf);
+                return TA_UNSTABLE_BOUND_NOT_REJECTED;
+            }
+
+            /* The rejected call must not have written. */
+            int pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+                    "{\"method\":\"TA_ADOSC\",\"params\":{\"startIdx\":0,\"endIdx\":%d,"
+                    "\"optInFastPeriod\":%d,\"optInSlowPeriod\":%d,\"inHigh\":",
+                    UB_NBBAR - 1, UB_FAST, UB_SLOW);
+            pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, h, UB_NBBAR, 0);
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inLow\":");
+            pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, l, UB_NBBAR, 0);
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inClose\":");
+            pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, c, UB_NBBAR, 0);
+            pos = codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, ",\"inVolume\":");
+            pos = json_write_double_array(reqBuf, JSON_BUF_SIZE, pos, v, UB_NBBAR, 0);
+            codegen_appendf(reqBuf, JSON_BUF_SIZE, pos, "}}");
+
+            if( codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS
+                || json_is_error(respBuf) )
+            {
+                printf("  UNSTABLE BOUND [%s]: TA_ADOSC call failed after a rejected "
+                       "period: %s\n", lang->display, respBuf);
+                return TA_UNSTABLE_BOUND_WROTE_ANYWAY;
+            }
+            if( json_get_int(respBuf, "outBegIdx") != expected )
+            {
+                printf("  UNSTABLE BOUND [%s]: id %d period %lld was refused but still "
+                       "changed the stored state — ADOSC outBegIdx = %d, expected %d "
+                       "(the marker %d)\n",
+                       lang->display, ids[k], rejects[r],
+                       json_get_int(respBuf, "outBegIdx"), expected, marker);
+                return TA_UNSTABLE_BOUND_WROTE_ANYWAY;
+            }
+        }
+    }
+
+    /* Leave the server as we found it. */
+    codegen_appendf(reqBuf, JSON_BUF_SIZE, 0,
+            "{\"method\":\"set_unstable_period\",\"params\":{\"id\":%d,\"period\":0}}",
+            (int)TA_FUNC_UNST_ALL);
+    codegen_pipe_call(cp, reqBuf, respBuf, JSON_BUF_SIZE);
+
+    printf("  Unstable-period bounds: %d accepted, %lld and %lld refused with no write\n",
+           (int)TA_MAX_INDEX, rejects[0], rejects[1]);
+    return TA_TEST_PASS;
+    #undef UB_NBBAR
+    #undef UB_FAST
+    #undef UB_SLOW
+}
+
 /* Fuzz-port self-check for stream-capable servers (capability-gated): a
  * server that PORTS fuzz_gen (Java FuzzData, Rust fuzz.rs) must reproduce the
  * driver's inputs byte-identically, or every stream leg silently exercises
@@ -3368,6 +3511,19 @@ static ErrorNumber test_codegen_for_language(
         if( unstErr != TA_TEST_PASS )
         {
             ctx.error = unstErr;
+            ctx.failed++;
+        }
+    }
+
+    /* The value domain that wildcard leaves untested: TA_MAX_INDEX accepted,
+     * anything above it refused with no write, on every server (#186). Also
+     * leaves the server back at all-zeros. */
+    if( ctx.error == TA_TEST_PASS )
+    {
+        ErrorNumber boundErr = test_unstable_bounds(&cp, lang, requestBuf, responseBuf);
+        if( boundErr != TA_TEST_PASS )
+        {
+            ctx.error = boundErr;
             ctx.failed++;
         }
     }

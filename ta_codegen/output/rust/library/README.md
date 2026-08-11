@@ -49,8 +49,11 @@ use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
     .unstable_period(FuncUnstId::EMA, 10)
-    .build();
+    .build()?;
 ```
+
+The setters are infallible so that they chain; a rejected argument is reported
+once, by `build()`, as `RetCode::BadParam`.
 
 Because a configured `Core` only ever reads its settings, it is `Send + Sync` and
 can be shared read-only across threads (e.g. an `Arc<Core>` with concurrent

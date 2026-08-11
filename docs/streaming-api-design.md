@@ -222,7 +222,7 @@ Integer-output functions (CDL\*) use `int *outInteger`.
 Rust:
 
 ```rust
-let core = Core::builder().build();               // immutable settings (issue #104)
+let core = Core::builder().build()?;              // immutable settings (issue #104)
 let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
                                                   // handle holds its own Core
                                                   // (a cheap by-value clone)

@@ -127834,6 +127834,9 @@ public class TaCodegenServe {
         else if (json.contains("\"set_unstable_period\"")) {
             int id = jsonInt(json, "id");
             int period = jsonInt(json, "period");
+            if (period < 0 || period > Core.MAX_INDEX) {
+                return "{\"error\":\"Invalid unstable period value\"}"; 
+            }
             if (id == FuncUnstId.ALL.value()) {
                 for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;
                 return "{\"status\":\"ok\"}"; 

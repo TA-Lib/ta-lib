@@ -832,15 +832,24 @@ fn func_unst_id_from_int(id: usize) -> Option<FuncUnstId> {
     }
 }
 
-fn apply_unstable_period(core: &mut Core, id: usize, period: i32) -> bool {
-    if id == FuncUnstId::ALL as usize {
-        *core = core.to_builder().unstable_period(FuncUnstId::ALL, period).build();
-        true
+fn apply_unstable_period(core: &mut Core, id: usize, period: i64) -> Result<(), &'static str> {
+    let Ok(period) = u32::try_from(period) else {
+        return Err("Invalid unstable period value");
+    };
+    let cb = core.to_builder();
+    let cb = if id == FuncUnstId::ALL as usize {
+        cb.unstable_period(FuncUnstId::ALL, period)
     } else if let Some(uid) = func_unst_id_from_int(id) {
-        *core = core.to_builder().unstable_period(uid, period).build();
-        true
+        cb.unstable_period(uid, period)
     } else {
-        false
+        return Err("Invalid unstable period id");
+    };
+    match cb.build() {
+        Ok(built) => {
+            *core = built;
+            Ok(())
+        }
+        Err(_) => Err("Invalid unstable period value"),
     }
 }
 
@@ -1341,7 +1350,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 0, period as i32);
+                let _ = apply_unstable_period(core, 0, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -1883,7 +1892,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 2, period as i32);
+                let _ = apply_unstable_period(core, 2, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -8181,7 +8190,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 3, period as i32);
+                let _ = apply_unstable_period(core, 3, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -8691,7 +8700,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 4, period as i32);
+                let _ = apply_unstable_period(core, 4, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -8765,7 +8774,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 5, period as i32);
+                let _ = apply_unstable_period(core, 5, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9039,7 +9048,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 6, period as i32);
+                let _ = apply_unstable_period(core, 6, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9109,7 +9118,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 7, period as i32);
+                let _ = apply_unstable_period(core, 7, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9179,7 +9188,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 8, period as i32);
+                let _ = apply_unstable_period(core, 8, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9252,7 +9261,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 9, period as i32);
+                let _ = apply_unstable_period(core, 9, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9325,7 +9334,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 10, period as i32);
+                let _ = apply_unstable_period(core, 10, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -9395,7 +9404,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inReal = &_json_inReal;
             }
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 11, period as i32);
+                let _ = apply_unstable_period(core, 11, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outIntBuf0: Vec<i32> = vec![0i32; out_size];
@@ -9543,7 +9552,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 13, period as i32);
+                let _ = apply_unstable_period(core, 13, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -10350,7 +10359,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInFastLimit = params["optInFastLimit"].as_f64().unwrap_or(0.5) as f64;
             let optInSlowLimit = params["optInSlowLimit"].as_f64().unwrap_or(0.05) as f64;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 14, period as i32);
+                let _ = apply_unstable_period(core, 14, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11260,7 +11269,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 16, period as i32);
+                let _ = apply_unstable_period(core, 16, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11341,7 +11350,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 17, period as i32);
+                let _ = apply_unstable_period(core, 17, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11572,7 +11581,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 18, period as i32);
+                let _ = apply_unstable_period(core, 18, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11810,7 +11819,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 19, period as i32);
+                let _ = apply_unstable_period(core, 19, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11891,7 +11900,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 20, period as i32);
+                let _ = apply_unstable_period(core, 20, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -12471,7 +12480,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 21, period as i32);
+                let _ = apply_unstable_period(core, 21, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -13482,7 +13491,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
             let optInVFactor = params["optInVFactor"].as_f64().unwrap_or(0.7) as f64;
             if let Some(period) = params["unstablePeriod"].as_i64() {
-                apply_unstable_period(core, 23, period as i32);
+                let _ = apply_unstable_period(core, 23, period);
             }
             let out_size = if endIdx >= startIdx { endIdx - startIdx + 1 } else { 0 };
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -14748,11 +14757,10 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
         }
         "set_unstable_period" => {
             let id = params["id"].as_u64().unwrap_or(99) as usize;
-            let period = params["period"].as_i64().unwrap_or(0) as i32;
-            if apply_unstable_period(core, id, period) {
-                "{\"status\":\"ok\"}".to_string()
-            } else {
-                "{\"error\":\"Invalid unstable period id\"}".to_string()
+            let period = params["period"].as_i64().unwrap_or(0);
+            match apply_unstable_period(core, id, period) {
+                Ok(()) => "{\"status\":\"ok\"}".to_string(),
+                Err(msg) => format!("{{\"error\":\"{msg}\"}}"),
             }
         }
         "set_compatibility" => {
@@ -15185,7 +15193,10 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15214,7 +15225,10 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ACCBANDS(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.ACCBANDS_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -15286,7 +15300,10 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15312,7 +15329,10 @@ fn sv_acos(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ACOS(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.ACOS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -15372,7 +15392,10 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15398,7 +15421,10 @@ fn sv_ad(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.AD(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.AD_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -15458,7 +15484,10 @@ fn sv_add(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15484,7 +15513,10 @@ fn sv_add(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ADD(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.ADD_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -15544,7 +15576,10 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15573,7 +15608,10 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ADOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ADOSC_Lookback(optInFastPeriod, optInSlowPeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -15633,7 +15671,10 @@ fn sv_adx(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15661,7 +15702,10 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(0usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ADX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ADX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -15721,7 +15765,10 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15749,7 +15796,10 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(0usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ADXR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ADXR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -15809,7 +15859,10 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15846,7 +15899,10 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.APO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -15906,7 +15962,10 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -15934,7 +15993,10 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.AROON(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.AROON_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16000,7 +16062,10 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16027,7 +16092,10 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.AROONOSC(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.AROONOSC_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16087,7 +16155,10 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16113,7 +16184,10 @@ fn sv_asin(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ASIN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.ASIN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -16173,7 +16247,10 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16199,7 +16276,10 @@ fn sv_atan(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ATAN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.ATAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -16259,7 +16339,10 @@ fn sv_atr(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16287,7 +16370,10 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(2usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ATR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16347,7 +16433,10 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16374,7 +16463,10 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.AVGDEV(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.AVGDEV_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16434,7 +16526,10 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16460,7 +16555,10 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.AVGPRICE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.AVGPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -16520,7 +16618,10 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16560,7 +16661,10 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.BBANDS(0, svN - 1, &fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -16632,7 +16736,10 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16659,7 +16766,10 @@ fn sv_beta(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.BETA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.BETA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16719,7 +16829,10 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16745,7 +16858,10 @@ fn sv_bop(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.BOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.BOP_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -16805,7 +16921,10 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16832,7 +16951,10 @@ fn sv_cci(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CCI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.CCI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -16892,7 +17014,10 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -16920,7 +17045,10 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL2CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -16982,7 +17110,10 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17010,7 +17141,10 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3BLACKCROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3BLACKCROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17072,7 +17206,10 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17100,7 +17237,10 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3INSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3INSIDE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17162,7 +17302,10 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17190,7 +17333,10 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3LINESTRIKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3LINESTRIKE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17252,7 +17398,10 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17280,7 +17429,10 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3OUTSIDE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3OUTSIDE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17342,7 +17494,10 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17370,7 +17525,10 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3STARSINSOUTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3STARSINSOUTH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17432,7 +17590,10 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17460,7 +17621,10 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDL3WHITESOLDIERS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDL3WHITESOLDIERS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17522,7 +17686,10 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17551,7 +17718,10 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLABANDONEDBABY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLABANDONEDBABY_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -17613,7 +17783,10 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17641,7 +17814,10 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLADVANCEBLOCK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLADVANCEBLOCK_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17703,7 +17879,10 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17731,7 +17910,10 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLBELTHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLBELTHOLD_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17793,7 +17975,10 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17821,7 +18006,10 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLBREAKAWAY(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLBREAKAWAY_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17883,7 +18071,10 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -17911,7 +18102,10 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLCLOSINGMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLCLOSINGMARUBOZU_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -17973,7 +18167,10 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18001,7 +18198,10 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLCONCEALBABYSWALL(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLCONCEALBABYSWALL_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18063,7 +18263,10 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18091,7 +18294,10 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLCOUNTERATTACK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLCOUNTERATTACK_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18153,7 +18359,10 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18182,7 +18391,10 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLDARKCLOUDCOVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLDARKCLOUDCOVER_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -18244,7 +18456,10 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18272,7 +18487,10 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18334,7 +18552,10 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18362,7 +18583,10 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLDOJISTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18424,7 +18648,10 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18452,7 +18679,10 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLDRAGONFLYDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLDRAGONFLYDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18514,7 +18744,10 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18542,7 +18775,10 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLENGULFING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLENGULFING_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18604,7 +18840,10 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18633,7 +18872,10 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLEVENINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLEVENINGDOJISTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -18695,7 +18937,10 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18724,7 +18969,10 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLEVENINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLEVENINGSTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -18786,7 +19034,10 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18814,7 +19065,10 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLGAPSIDESIDEWHITE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLGAPSIDESIDEWHITE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18876,7 +19130,10 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18904,7 +19161,10 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLGRAVESTONEDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLGRAVESTONEDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -18966,7 +19226,10 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -18994,7 +19257,10 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHAMMER_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19056,7 +19322,10 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19084,7 +19353,10 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHANGINGMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHANGINGMAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19146,7 +19418,10 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19174,7 +19449,10 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHARAMI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHARAMI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19236,7 +19514,10 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19264,7 +19545,10 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHARAMICROSS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHARAMICROSS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19326,7 +19610,10 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19354,7 +19641,10 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHIGHWAVE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHIGHWAVE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19416,7 +19706,10 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19444,7 +19737,10 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHIKKAKE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHIKKAKE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19506,7 +19802,10 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19534,7 +19833,10 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHIKKAKEMOD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHIKKAKEMOD_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19596,7 +19898,10 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19624,7 +19929,10 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLHOMINGPIGEON(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLHOMINGPIGEON_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19686,7 +19994,10 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19714,7 +20025,10 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLIDENTICAL3CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLIDENTICAL3CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19776,7 +20090,10 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19804,7 +20121,10 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLINNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLINNECK_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19866,7 +20186,10 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19894,7 +20217,10 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLINVERTEDHAMMER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLINVERTEDHAMMER_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -19956,7 +20282,10 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -19984,7 +20313,10 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLKICKING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLKICKING_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20046,7 +20378,10 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20074,7 +20409,10 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLKICKINGBYLENGTH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLKICKINGBYLENGTH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20136,7 +20474,10 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20164,7 +20505,10 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLLADDERBOTTOM(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLLADDERBOTTOM_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20226,7 +20570,10 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20254,7 +20601,10 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLLONGLEGGEDDOJI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLLONGLEGGEDDOJI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20316,7 +20666,10 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20344,7 +20697,10 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLLONGLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLLONGLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20406,7 +20762,10 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20434,7 +20793,10 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLMARUBOZU(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLMARUBOZU_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20496,7 +20858,10 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20524,7 +20889,10 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLMATCHINGLOW(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLMATCHINGLOW_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20586,7 +20954,10 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20615,7 +20986,10 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLMATHOLD(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLMATHOLD_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -20677,7 +21051,10 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20706,7 +21083,10 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLMORNINGDOJISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLMORNINGDOJISTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -20768,7 +21148,10 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20797,7 +21180,10 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLMORNINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLMORNINGSTAR_Lookback(optInPenetration);
         if rc != RetCode::Success || nb == 0 {
@@ -20859,7 +21245,10 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20887,7 +21276,10 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLONNECK(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLONNECK_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -20949,7 +21341,10 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -20977,7 +21372,10 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLPIERCING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLPIERCING_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21039,7 +21437,10 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21067,7 +21468,10 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLRICKSHAWMAN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLRICKSHAWMAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21129,7 +21533,10 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21157,7 +21564,10 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLRISEFALL3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLRISEFALL3METHODS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21219,7 +21629,10 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21247,7 +21660,10 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSEPARATINGLINES(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSEPARATINGLINES_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21309,7 +21725,10 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21337,7 +21756,10 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSHOOTINGSTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSHOOTINGSTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21399,7 +21821,10 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21427,7 +21852,10 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSHORTLINE(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSHORTLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21489,7 +21917,10 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21517,7 +21948,10 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSPINNINGTOP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSPINNINGTOP_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21579,7 +22013,10 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21607,7 +22044,10 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSTALLEDPATTERN(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSTALLEDPATTERN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21669,7 +22109,10 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21697,7 +22140,10 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLSTICKSANDWICH(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLSTICKSANDWICH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21759,7 +22205,10 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21787,7 +22236,10 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLTAKURI(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLTAKURI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21849,7 +22301,10 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21877,7 +22332,10 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLTASUKIGAP(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLTASUKIGAP_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -21939,7 +22397,10 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -21967,7 +22428,10 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLTHRUSTING(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLTHRUSTING_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22029,7 +22493,10 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22057,7 +22524,10 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLTRISTAR(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLTRISTAR_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22119,7 +22589,10 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22147,7 +22620,10 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLUNIQUE3RIVER(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLUNIQUE3RIVER_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22209,7 +22685,10 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22237,7 +22716,10 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLUPSIDEGAP2CROWS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLUPSIDEGAP2CROWS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22299,7 +22781,10 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22327,7 +22812,10 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         cb = sv_apply_candles(cb, &sv_candle_settings(rd));
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CDLXSIDEGAP3METHODS(0, svN - 1, &fz_o, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CDLXSIDEGAP3METHODS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22389,7 +22877,10 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22415,7 +22906,10 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CEIL(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.CEIL_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22475,7 +22969,10 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22502,7 +22999,10 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CMF(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.CMF_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -22562,7 +23062,10 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22590,7 +23093,10 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(3usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CMO(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.CMO_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -22650,7 +23156,10 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22677,7 +23186,10 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CMOU(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.CMOU_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -22737,7 +23249,10 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22764,7 +23279,10 @@ fn sv_correl(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.CORREL(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.CORREL_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -22824,7 +23342,10 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22850,7 +23371,10 @@ fn sv_cos(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.COS(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.COS_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22910,7 +23434,10 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -22936,7 +23463,10 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.COSH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.COSH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -22996,7 +23526,10 @@ fn sv_dema(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23024,7 +23557,10 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.DEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.DEMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -23084,7 +23620,10 @@ fn sv_div(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23110,7 +23649,10 @@ fn sv_div(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.DIV(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.DIV_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23170,7 +23712,10 @@ fn sv_dx(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23198,7 +23743,10 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(4usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.DX(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.DX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -23258,7 +23806,10 @@ fn sv_ema(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23286,7 +23837,10 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.EMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.EMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -23346,7 +23900,10 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23372,7 +23929,10 @@ fn sv_exp(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.EXP(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.EXP_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23432,7 +23992,10 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23458,7 +24021,10 @@ fn sv_floor(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.FLOOR(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.FLOOR_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23518,7 +24084,10 @@ fn sv_hma(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23545,7 +24114,10 @@ fn sv_hma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.HMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -23605,7 +24177,10 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23632,7 +24207,10 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(6usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_DCPERIOD(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.HT_DCPERIOD_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23692,7 +24270,10 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23719,7 +24300,10 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(7usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_DCPHASE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.HT_DCPHASE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23779,7 +24363,10 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23807,7 +24394,10 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(8usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_PHASOR(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.HT_PHASOR_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23873,7 +24463,10 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23901,7 +24494,10 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(9usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_SINE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.HT_SINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -23967,7 +24563,10 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -23994,7 +24593,10 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(10usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_TRENDLINE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.HT_TRENDLINE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -24054,7 +24656,10 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24081,7 +24686,10 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(11usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.HT_TRENDMODE(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.HT_TRENDMODE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -24141,7 +24749,10 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24168,7 +24779,10 @@ fn sv_imi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.IMI(0, svN - 1, &fz_o, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.IMI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24228,7 +24842,10 @@ fn sv_kama(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24256,7 +24873,10 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.KAMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.KAMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24316,7 +24936,10 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24343,7 +24966,10 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LINEARREG(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.LINEARREG_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24403,7 +25029,10 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24430,7 +25059,10 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LINEARREG_ANGLE(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.LINEARREG_ANGLE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24490,7 +25122,10 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24517,7 +25152,10 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LINEARREG_INTERCEPT(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.LINEARREG_INTERCEPT_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24577,7 +25215,10 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24604,7 +25245,10 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LINEARREG_SLOPE(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.LINEARREG_SLOPE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -24664,7 +25308,10 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24690,7 +25337,10 @@ fn sv_ln(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.LN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -24750,7 +25400,10 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24776,7 +25429,10 @@ fn sv_log10(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.LOG10(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.LOG10_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -24836,7 +25492,10 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24872,7 +25531,10 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MA(0, svN - 1, &fz_c, optInTimePeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.MA_Lookback(optInTimePeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -24932,7 +25594,10 @@ fn sv_macd(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -24964,7 +25629,10 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MACD(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.MACD_Lookback(optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25036,7 +25704,10 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25086,7 +25757,10 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MACDEXT(0, svN - 1, &fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -25158,7 +25832,10 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25188,7 +25865,10 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MACDFIX(0, svN - 1, &fz_c, optInSignalPeriod, &mut beg, &mut nb, &mut b0, &mut b1, &mut b2);
         let lb = c2.MACDFIX_Lookback(optInSignalPeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25260,7 +25940,10 @@ fn sv_mama(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25290,7 +25973,10 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MAMA(0, svN - 1, &fz_c, optInFastLimit, optInSlowLimit, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.MAMA_Lookback(optInFastLimit, optInSlowLimit);
         if rc != RetCode::Success || nb == 0 {
@@ -25356,7 +26042,10 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25394,7 +26083,10 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MAVP(0, svN - 1, &fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.MAVP_Lookback(optInMinPeriod, optInMaxPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -25454,7 +26146,10 @@ fn sv_max(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25481,7 +26176,10 @@ fn sv_max(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MAX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MAX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25541,7 +26239,10 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25568,7 +26269,10 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MAXINDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25628,7 +26332,10 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25654,7 +26361,10 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MEDPRICE(0, svN - 1, &fz_h, &fz_l, &mut beg, &mut nb, &mut b0);
         let lb = c2.MEDPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -25714,7 +26424,10 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25741,7 +26454,10 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MFI(0, svN - 1, &fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MFI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25801,7 +26517,10 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25828,7 +26547,10 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MIDPOINT(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MIDPOINT_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25888,7 +26610,10 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -25915,7 +26640,10 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MIDPRICE(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MIDPRICE_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -25975,7 +26703,10 @@ fn sv_min(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26002,7 +26733,10 @@ fn sv_min(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MIN(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MIN_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26062,7 +26796,10 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26089,7 +26826,10 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MININDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MININDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26149,7 +26889,10 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26177,7 +26920,10 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MINMAX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.MINMAX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26243,7 +26989,10 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26271,7 +27020,10 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MINMAXINDEX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.MINMAXINDEX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26337,7 +27089,10 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26365,7 +27120,10 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(16usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MINUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MINUS_DI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26425,7 +27183,10 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26453,7 +27214,10 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(17usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MINUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MINUS_DM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26513,7 +27277,10 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26540,7 +27307,10 @@ fn sv_mom(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MOM(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.MOM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26600,7 +27370,10 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26626,7 +27399,10 @@ fn sv_mult(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.MULT(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.MULT_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -26686,7 +27462,10 @@ fn sv_natr(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26714,7 +27493,10 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(18usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.NATR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.NATR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -26774,7 +27556,10 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26800,7 +27585,10 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.NVI(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.NVI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -26860,7 +27648,10 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26886,7 +27677,10 @@ fn sv_obv(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.OBV(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.OBV_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -26946,7 +27740,10 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -26974,7 +27771,10 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(19usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.PLUS_DI(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.PLUS_DI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27034,7 +27834,10 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27062,7 +27865,10 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(20usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.PLUS_DM(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.PLUS_DM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27122,7 +27928,10 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27159,7 +27968,10 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.PPO(0, svN - 1, &fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -27219,7 +28031,10 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27245,7 +28060,10 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.PVI(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.PVI_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -27305,7 +28123,10 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27342,7 +28163,10 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.PVO(0, svN - 1, &fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut beg, &mut nb, &mut b0);
         let lb = c2.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
         if rc != RetCode::Success || nb == 0 {
@@ -27402,7 +28226,10 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27429,7 +28256,10 @@ fn sv_roc(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ROC(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ROC_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27489,7 +28319,10 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27516,7 +28349,10 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ROCP(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ROCP_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27576,7 +28412,10 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27603,7 +28442,10 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ROCR(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ROCR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27663,7 +28505,10 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27690,7 +28535,10 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ROCR100(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.ROCR100_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27750,7 +28598,10 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27778,7 +28629,10 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.RSI(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.RSI_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -27838,7 +28692,10 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27866,7 +28723,10 @@ fn sv_sar(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SAR(0, svN - 1, &fz_h, &fz_l, optInAcceleration, optInMaximum, &mut beg, &mut nb, &mut b0);
         let lb = c2.SAR_Lookback(optInAcceleration, optInMaximum);
         if rc != RetCode::Success || nb == 0 {
@@ -27926,7 +28786,10 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -27960,7 +28823,10 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SAREXT(0, svN - 1, &fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut beg, &mut nb, &mut b0);
         let lb = c2.SAREXT_Lookback(optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
         if rc != RetCode::Success || nb == 0 {
@@ -28020,7 +28886,10 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28046,7 +28915,10 @@ fn sv_sin(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SIN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.SIN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -28106,7 +28978,10 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28132,7 +29007,10 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SINH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.SINH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -28192,7 +29070,10 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28219,7 +29100,10 @@ fn sv_sma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.SMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -28279,7 +29163,10 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28305,7 +29192,10 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SQRT(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.SQRT_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -28365,7 +29255,10 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28393,7 +29286,10 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.STDDEV(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
         let lb = c2.STDDEV_Lookback(optInTimePeriod, optInNbDev);
         if rc != RetCode::Success || nb == 0 {
@@ -28453,7 +29349,10 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28497,7 +29396,10 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.STOCH(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -28563,7 +29465,10 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28601,7 +29506,10 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.STOCHF(0, svN - 1, &fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -28667,7 +29575,10 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28707,7 +29618,10 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         if let Some(id) = func_unst_id_from_int(13usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(21usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.STOCHRSI(0, svN - 1, &fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut beg, &mut nb, &mut b0, &mut b1);
         let lb = c2.STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
         if rc != RetCode::Success || nb == 0 {
@@ -28773,7 +29687,10 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28799,7 +29716,10 @@ fn sv_sub(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SUB(0, svN - 1, &fz_c, &fz_v, &mut beg, &mut nb, &mut b0);
         let lb = c2.SUB_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -28859,7 +29779,10 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28886,7 +29809,10 @@ fn sv_sum(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.SUM(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.SUM_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -28946,7 +29872,10 @@ fn sv_t3(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -28975,7 +29904,10 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.T3(0, svN - 1, &fz_c, optInTimePeriod, optInVFactor, &mut beg, &mut nb, &mut b0);
         let lb = c2.T3_Lookback(optInTimePeriod, optInVFactor);
         if rc != RetCode::Success || nb == 0 {
@@ -29035,7 +29967,10 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29061,7 +29996,10 @@ fn sv_tan(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TAN(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.TAN_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -29121,7 +30059,10 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29147,7 +30088,10 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TANH(0, svN - 1, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.TANH_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -29207,7 +30151,10 @@ fn sv_tema(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29235,7 +30182,10 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TEMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.TEMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -29295,7 +30245,10 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29321,7 +30274,10 @@ fn sv_trange(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TRANGE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.TRANGE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -29381,7 +30337,10 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29408,7 +30367,10 @@ fn sv_trima(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TRIMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.TRIMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -29468,7 +30430,10 @@ fn sv_trix(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29496,7 +30461,10 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         let _ = rd;
         let mut cb = core.to_builder();
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TRIX(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.TRIX_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -29556,7 +30524,10 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29583,7 +30554,10 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TSF(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.TSF_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -29643,7 +30617,10 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29669,7 +30646,10 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.TYPPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.TYPPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -29729,7 +30709,10 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29758,7 +30741,10 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.ULTOSC(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut beg, &mut nb, &mut b0);
         let lb = c2.ULTOSC_Lookback(optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
         if rc != RetCode::Success || nb == 0 {
@@ -29818,7 +30804,10 @@ fn sv_var(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29846,7 +30835,10 @@ fn sv_var(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.VAR(0, svN - 1, &fz_c, optInTimePeriod, optInNbDev, &mut beg, &mut nb, &mut b0);
         let lb = c2.VAR_Lookback(optInTimePeriod, optInNbDev);
         if rc != RetCode::Success || nb == 0 {
@@ -29906,7 +30898,10 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -29933,7 +30928,10 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.VWMA(0, svN - 1, &fz_c, &fz_v, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.VWMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -29993,7 +30991,10 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -30019,7 +31020,10 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.WCLPRICE(0, svN - 1, &fz_h, &fz_l, &fz_c, &mut beg, &mut nb, &mut b0);
         let lb = c2.WCLPRICE_Lookback();
         if rc != RetCode::Success || nb == 0 {
@@ -30079,7 +31083,10 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -30106,7 +31113,10 @@ fn sv_willr(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.WILLR(0, svN - 1, &fz_h, &fz_l, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.WILLR_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {
@@ -30166,7 +31176,10 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
     if svN < 2 { svN = 2; }
     if svN > 256 { svN = 256; }
-    let svK = params["unstablePeriod"].as_i64().unwrap_or(0) as i32;
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
     let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
     if svCompat != 0 {
         return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
@@ -30193,7 +31206,10 @@ fn sv_wma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let cb = core.to_builder();
-        let c2 = cb.build();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
         let rc = c2.WMA(0, svN - 1, &fz_c, optInTimePeriod, &mut beg, &mut nb, &mut b0);
         let lb = c2.WMA_Lookback(optInTimePeriod);
         if rc != RetCode::Success || nb == 0 {

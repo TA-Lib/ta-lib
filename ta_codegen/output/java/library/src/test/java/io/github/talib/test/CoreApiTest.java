@@ -339,6 +339,20 @@ public class CoreApiTest {
             () -> Core.builder().unstablePeriod(null, 1), "null FuncUnstId -> NPE");
         checkThrows(IllegalArgumentException.class,
             () -> Core.builder().unstablePeriod(FuncUnstId.RSI, -1), "negative period -> IAE");
+        // The period is added to a lookback that is then used as an index, so an
+        // unbounded one overflows that lookback negative and the function indexes
+        // past its input. C rejects anything above TA_MAX_INDEX
+        // (src/ta_func/ta_utility.c) and Java must agree, on the single-id path
+        // and on the set-all wildcard alike.
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().unstablePeriod(FuncUnstId.RSI, Core.MAX_INDEX + 1),
+            "period above MAX_INDEX -> IAE");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().unstablePeriod(FuncUnstId.RSI, Integer.MAX_VALUE),
+            "Integer.MAX_VALUE period -> IAE");
+        checkThrows(IllegalArgumentException.class,
+            () -> Core.builder().unstablePeriod(FuncUnstId.ALL, Core.MAX_INDEX + 1),
+            "wildcard period above MAX_INDEX -> IAE");
         checkThrows(NullPointerException.class,
             () -> Core.builder().candleSetting(null, RangeType.HighLow, 1, 1.0),
             "null CandleSettingType -> NPE");
@@ -433,6 +447,43 @@ public class CoreApiTest {
         check(problems.isEmpty(), "8 threads sharing one Core agree bitwise " + problems);
     }
 
+    /**
+     * The accepting side of the period bound, and the rule that makes the bound
+     * worth having: a rejected call must leave the builder exactly as it was.
+     * Asserting only that bad input throws would pass just as well against an
+     * implementation that threw <em>after</em> writing.
+     */
+    static void unstablePeriodBoundIsABoundNotAnOffByOne() {
+        // MAX_INDEX itself is legal — C accepts it and rejects MAX_INDEX + 1.
+        final Core ceiling = Core.builder().unstablePeriod(FuncUnstId.RSI, Core.MAX_INDEX).build();
+        check(ceiling.unstablePeriod(FuncUnstId.RSI) == Core.MAX_INDEX,
+            "the MAX_INDEX ceiling is accepted, not rejected");
+
+        // A rejected call writes nothing: set a good value, have the next call be
+        // refused, and the good value must survive untouched.
+        final CoreBuilder b = Core.builder().unstablePeriod(FuncUnstId.EMA, 7);
+        checkThrows(IllegalArgumentException.class,
+            () -> b.unstablePeriod(FuncUnstId.EMA, Core.MAX_INDEX + 1),
+            "the rejected overwrite still throws");
+        check(b.build().unstablePeriod(FuncUnstId.EMA) == 7,
+            "a rejected unstablePeriod leaves the previous value in place");
+
+        // The wildcard path writes 24 slots, so a rejection there must not have
+        // filled any of them before noticing.
+        final CoreBuilder w = Core.builder().unstablePeriod(FuncUnstId.ALL, 3);
+        checkThrows(IllegalArgumentException.class,
+            () -> w.unstablePeriod(FuncUnstId.ALL, Integer.MAX_VALUE),
+            "the rejected wildcard still throws");
+        final Core after = w.build();
+        boolean allIntact = true;
+        for (FuncUnstId id : FuncUnstId.values()) {
+            if (id != FuncUnstId.ALL && after.unstablePeriod(id) != 3) {
+                allIntact = false;
+            }
+        }
+        check(allIntact, "a rejected wildcard leaves all 24 slots at their previous value");
+    }
+
     public static void main(String[] args) throws Exception {
         defaultsAreDefaults();
         builderSetsOnePeriod();
@@ -448,6 +499,7 @@ public class CoreApiTest {
         configClassesAreFinal();
         compatibilityIsGone();
         misuseThrows();
+        unstablePeriodBoundIsABoundNotAnOffByOne();
         sharedAcrossThreads();
 
         if (failures == 0) {

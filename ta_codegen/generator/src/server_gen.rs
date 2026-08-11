@@ -1961,8 +1961,23 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("    else if ( methodLen == 19 && strncmp(method, \"set_unstable_period\", 19) == 0 ) {\n");
     s.push_str("        int id = json_find_int(json, \"id\");\n");
     s.push_str("        int period = json_find_int(json, \"period\");\n");
-    s.push_str("        TA_SetUnstablePeriod((TA_FuncUnstId)id, (unsigned int)period);\n");
-    s.push_str("        snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
+    // The RetCode is reported, not discarded. Left unchecked, the one server that
+    // IS the C library answered "ok" to calls the C library rejects -- so C, the
+    // control arm of every cross-language comparison, was the only backend that
+    // could not be held to its own contract (#186).
+    s.push_str("        TA_RetCode unstRc;\n");
+    s.push_str("        if( period < 0 ) {\n");
+    s.push_str("           /* The C parameter is unsigned, so a negative would wrap to a huge\n");
+    s.push_str("            * value rather than be rejected. Caught on the wire instead.\n");
+    s.push_str("            */\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\");\n");
+    s.push_str("        } else {\n");
+    s.push_str("           unstRc = TA_SetUnstablePeriod((TA_FuncUnstId)id, (unsigned int)period);\n");
+    s.push_str("           if( unstRc == TA_SUCCESS )\n");
+    s.push_str("              snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
+    s.push_str("           else\n");
+    s.push_str("              snprintf(resp, resp_size, \"{\\\"error\\\":\\\"Invalid unstable period id or value\\\"}\");\n");
+    s.push_str("        }\n");
     s.push_str("    }\n");
 
     // set_compatibility method — {"method":"set_compatibility","params":{"mode":1}}
@@ -2378,6 +2393,11 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        else if (json.contains(\"\\\"set_unstable_period\\\"\")) {\n");
     s.push_str("            int id = jsonInt(json, \"id\");\n");
     s.push_str("            int period = jsonInt(json, \"period\");\n");
+    // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
+    // store, so a rejected call leaves every slot as it was (#186).
+    s.push_str("            if (period < 0 || period > Core.MAX_INDEX) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\"; \n");
+    s.push_str("            }\n");
     // FuncUnstId.ALL is the "set all" sentinel (matches C TA_SetUnstablePeriod).
     s.push_str("            if (id == FuncUnstId.ALL.value()) {\n");
     s.push_str("                for (int i = 0; i < core.unstablePeriod.length; i++) core.unstablePeriod[i] = period;\n");
@@ -3056,6 +3076,11 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("            else if (method == \"set_unstable_period\") {\n");
     s.push_str("                int id = GetInt(p, \"id\", -1);\n");
     s.push_str("                int period = GetInt(p, \"period\", 0);\n");
+    // The same 0..=MAX_INDEX domain the C library enforces. Checked before any
+    // store, so a rejected call leaves every slot as it was (#186).
+    s.push_str("                if (period < 0 || period > Core.MAX_INDEX) {\n");
+    s.push_str("                    return \"{\\\"error\\\":\\\"Invalid unstable period value\\\"}\";\n");
+    s.push_str("                }\n");
     s.push_str("                if (id == (int)FuncUnstId.ALL) {\n");
     s.push_str("                    for (int i = 0; i < core.unstablePeriod.Length; i++) core.unstablePeriod[i] = period;\n");
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
@@ -3625,15 +3650,31 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     // setters). Handles the `ALL` "set all" wildcard (id == ALL as
     // usize); returns false on an out-of-range id. Shared by the `set_unstable_period`
     // RPC and the inline per-function `unstablePeriod` override.
-    s.push_str("fn apply_unstable_period(core: &mut Core, id: usize, period: i32) -> bool {\n");
-    s.push_str("    if id == FuncUnstId::ALL as usize {\n");
-    s.push_str("        *core = core.to_builder().unstable_period(FuncUnstId::ALL, period).build();\n");
-    s.push_str("        true\n");
+    // The period arrives as the raw wire i64 and is range-checked HERE, before any
+    // cast: `as u32` on a negative would wrap it to a huge value, which is exactly
+    // what C's `unsigned int` parameter exists to make unrepresentable. `*core` is
+    // reassigned only on success, so a rejected RPC leaves the server's Core
+    // untouched -- the same no-write rule the C library follows.
+    s.push_str(
+        "fn apply_unstable_period(core: &mut Core, id: usize, period: i64) -> Result<(), &'static str> {\n",
+    );
+    s.push_str("    let Ok(period) = u32::try_from(period) else {\n");
+    s.push_str("        return Err(\"Invalid unstable period value\");\n");
+    s.push_str("    };\n");
+    s.push_str("    let cb = core.to_builder();\n");
+    s.push_str("    let cb = if id == FuncUnstId::ALL as usize {\n");
+    s.push_str("        cb.unstable_period(FuncUnstId::ALL, period)\n");
     s.push_str("    } else if let Some(uid) = func_unst_id_from_int(id) {\n");
-    s.push_str("        *core = core.to_builder().unstable_period(uid, period).build();\n");
-    s.push_str("        true\n");
+    s.push_str("        cb.unstable_period(uid, period)\n");
     s.push_str("    } else {\n");
-    s.push_str("        false\n");
+    s.push_str("        return Err(\"Invalid unstable period id\");\n");
+    s.push_str("    };\n");
+    s.push_str("    match cb.build() {\n");
+    s.push_str("        Ok(built) => {\n");
+    s.push_str("            *core = built;\n");
+    s.push_str("            Ok(())\n");
+    s.push_str("        }\n");
+    s.push_str("        Err(_) => Err(\"Invalid unstable period value\"),\n");
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
@@ -3833,7 +3874,7 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         if let Some(id) = func_unst_id(&func.name, enums) {
             s.push_str("            if let Some(period) = params[\"unstablePeriod\"].as_i64() {\n");
             s.push_str(&format!(
-                "                apply_unstable_period(core, {id}, period as i32);\n"
+                "                let _ = apply_unstable_period(core, {id}, period);\n"
             ));
             s.push_str("            }\n");
         }
@@ -4028,17 +4069,18 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         "            let id = params[\"id\"].as_u64().unwrap_or(99) as usize;\n",
     );
     s.push_str(
-        "            let period = params[\"period\"].as_i64().unwrap_or(0) as i32;\n",
+        "            let period = params[\"period\"].as_i64().unwrap_or(0);\n",
     );
     // apply_unstable_period rebuilds the immutable Core via the builder and handles
-    // the `ALL` "set all" sentinel (matches C TA_SetUnstablePeriod).
-    s.push_str("            if apply_unstable_period(core, id, period) {\n");
+    // the `ALL` "set all" sentinel (matches C TA_SetUnstablePeriod). It reports an
+    // out-of-range id and an out-of-range value distinctly, so a cross-language
+    // failure names which half of the contract was broken.
+    s.push_str("            match apply_unstable_period(core, id, period) {\n");
     s.push_str(
-        "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
+        "                Ok(()) => \"{\\\"status\\\":\\\"ok\\\"}\".to_string(),\n",
     );
-    s.push_str("            } else {\n");
     s.push_str(
-        "                \"{\\\"error\\\":\\\"Invalid unstable period id\\\"}\".to_string()\n",
+        "                Err(msg) => format!(\"{{\\\"error\\\":\\\"{msg}\\\"}}\"),\n",
     );
     s.push_str("            }\n");
     s.push_str("        }\n");
@@ -4591,7 +4633,13 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    let svSeed = params[\"gen_seed\"].as_i64().unwrap_or(0) as i32;\n");
     s.push_str("    let mut svN = params[\"gen_n\"].as_i64().unwrap_or(0) as usize;\n");
     s.push_str("    if svN < 2 { svN = 2; }\n    if svN > 256 { svN = 256; }\n");
-    s.push_str("    let svK = params[\"unstablePeriod\"].as_i64().unwrap_or(0) as i32;\n");
+    // u32 to match the builder's setter. Refused rather than clamped: silently
+    // reading a negative warm-up as 0 would make this arm pass while measuring
+    // something the C side never asked for.
+    s.push_str("    let svK = match u32::try_from(params[\"unstablePeriod\"].as_i64().unwrap_or(0)) {\n");
+    s.push_str("        Ok(v) => v,\n");
+    s.push_str("        Err(_) => return \"{\\\"error\\\":\\\"negative unstablePeriod\\\"}\".to_string(),\n");
+    s.push_str("    };\n");
     s.push_str("    let svCompat = params[\"compatibility\"].as_i64().unwrap_or(0) as i32;\n");
     // Compatibility is pinned to Default in the Rust crate; a Metastock leg would
     // silently re-run the Default one, so refuse it instead of passing vacuously.
@@ -4736,7 +4784,15 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     if candle {
         s.push_str("        cb = sv_apply_candles(cb, &sv_candle_settings(rd));\n");
     }
-    s.push_str("        let c2 = cb.build();\n");
+    // Reported, never unwrapped: this runs in a subprocess ta_regtest drives over
+    // a pipe, so a panic here would surface as a dead pipe rather than a
+    // diagnosable BadParam.
+    s.push_str("        let c2 = match cb.build() {\n");
+    s.push_str("            Ok(c) => c,\n");
+    s.push_str(
+        "            Err(_) => return \"{\\\"error\\\":\\\"unstablePeriod out of range\\\"}\".to_string(),\n",
+    );
+    s.push_str("        };\n");
 
     // Expected-reject precheck (dispatch / period-bank arms without a stream).
     if let Some(guard) = sv_reject_condition(func, funcs, None) {

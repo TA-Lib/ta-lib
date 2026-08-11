@@ -53,8 +53,12 @@
 //!
 //! let core = Core::builder()
 //!     .unstable_period(FuncUnstId::EMA, 10)
-//!     .build();
+//!     .build()?;
+//! # Ok::<(), ta_lib::RetCode>(())
 //! ```
+//!
+//! The setters are infallible so that they chain; a rejected argument is
+//! reported once, by `build()`, as [`RetCode::BadParam`].
 //!
 //! To change a setting, build a new `Core` (cloning is cheap); [`Core::to_builder()`]
 //! seeds a builder from an existing instance.

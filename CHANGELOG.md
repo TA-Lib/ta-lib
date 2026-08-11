@@ -22,6 +22,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
+- (#186) C#: `Core.Builder()`, `Core.ToBuilder()` and `Core.UnstablePeriod(id)`. C# had no
+  way to set an unstable period at all — the field existed but was internal. Candlestick
+  thresholds remain unconfigurable from C#.
 - TA_MATYPE_MIN / TA_MATYPE_MAX in ta_defs.h (MATypes.Min / MATypes.Max in C#): the
   inclusive value limits of the MA type list, so a caller can range-check an
   optInMAType without hard-coding how many members there are.
@@ -83,6 +86,16 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   Use the new `TA_FUNC_UNST_COUNT` macro to size a table of unstable periods.
 - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
+- (#186) API: the unstable period is now held to `0..=TA_MAX_INDEX` in every language,
+  where only C enforced it. The period is added to a lookback that is then used as an
+  index, so an unbounded one overflowed that lookback negative and the function indexed
+  past its input. Java and C# throw on an out-of-range value; Rust takes a `u32` (C's
+  parameter is an `unsigned int`, so a negative is now unrepresentable rather than
+  rejected) and reports the rejection from `CoreBuilder::build()`, which returns
+  `Result<Core, RetCode>` instead of `Core`. `Core::get_unstable_period` likewise returns
+  `Result<u32, RetCode>`, and neither it nor `CoreBuilder::candle_setting` panics on the
+  wildcard any more. A rejected setting is never written in any language. Rust and C# are
+  unpublished, so no released package changes.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 
 ### Deprecated

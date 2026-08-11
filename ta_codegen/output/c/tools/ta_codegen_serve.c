@@ -31158,8 +31158,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     else if ( methodLen == 19 && strncmp(method, "set_unstable_period", 19) == 0 ) {
         int id = json_find_int(json, "id");
         int period = json_find_int(json, "period");
-        TA_SetUnstablePeriod((TA_FuncUnstId)id, (unsigned int)period);
-        snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+        TA_RetCode unstRc;
+        if( period < 0 ) {
+           /* The C parameter is unsigned, so a negative would wrap to a huge
+            * value rather than be rejected. Caught on the wire instead.
+            */
+           snprintf(resp, resp_size, "{\"error\":\"Invalid unstable period value\"}");
+        } else {
+           unstRc = TA_SetUnstablePeriod((TA_FuncUnstId)id, (unsigned int)period);
+           if( unstRc == TA_SUCCESS )
+              snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+           else
+              snprintf(resp, resp_size, "{\"error\":\"Invalid unstable period id or value\"}");
+        }
     }
     else if ( methodLen == 17 && strncmp(method, "set_compatibility", 17) == 0 ) {
         int mode = json_find_int(json, "mode");

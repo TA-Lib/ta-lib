@@ -60,7 +60,7 @@ let core = Core::builder()
         CandleSettingType::BodyLong,
         CandleSetting { range_type: 0, avg_period: 10, factor: 1.2 },
     )
-    .build();
+    .build()?;
 ```
 
 `range_type` is `0` = real body, `1` = high-to-low, `2` = shadows. `candle_setting`
@@ -73,8 +73,12 @@ There is no restore call and none is needed: a builder starts from the defaults,
 build another `Core`.
 
 `CandleSettingType::AllCandleSettings` is a wildcard for the C restore call, not a
-setting. Passing it to `candle_setting` **panics**, where C returns
-`TA_BAD_PARAM` — there is no single setting for it to write.
+setting — there is no single setting for it to write. Passing it to
+`candle_setting` is refused, and `build()` reports `RetCode::BadParam`, the same
+code C returns. The setters chain, so they cannot report a rejection at the point
+it happens; the first one is latched and surfaced by `build()`. Check that
+`Result` — a discarded one loses the whole configuration, not just the offending
+setting.
 
 :::
 

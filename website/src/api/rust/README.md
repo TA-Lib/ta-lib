@@ -230,8 +230,11 @@ use ta_lib::{Core, FuncUnstId};
 
 let core = Core::builder()
     .unstable_period(FuncUnstId::EMA, 10)
-    .build();
+    .build()?;
 ```
+
+The setters are infallible so that they chain; `build()` reports a rejected
+argument once, as `RetCode::BadParam`.
 
 ### 4.3 Candlestick Settings {#candle_settings}
 
@@ -245,7 +248,7 @@ let core = Core::builder()
         CandleSettingType::BodyLong,
         CandleSetting { range_type: 0, avg_period: 10, factor: 1.2 },
     )
-    .build();
+    .build()?;
 ```
 
 ### 4.4 Input Type {#input_type}

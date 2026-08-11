@@ -91,7 +91,8 @@ public final class CoreBuilder {
     * mirroring the C {@code TA_SetUnstablePeriod} wildcard.
     *
     * @throws NullPointerException if {@code id} is null
-    * @throws IllegalArgumentException if {@code period} is negative
+    * @throws IllegalArgumentException if {@code period} is negative or above
+    *         {@link Core#MAX_INDEX}
     */
    public CoreBuilder unstablePeriod(FuncUnstId id, int period) {
       if (id == null) {
@@ -99,6 +100,17 @@ public final class CoreBuilder {
       }
       if (period < 0) {
          throw new IllegalArgumentException("unstablePeriod must be >= 0, got " + period);
+      }
+      /* The period is added to a lookback which is then used as an index, so an
+       * unbounded one overflows that lookback negative and the function indexes
+       * far past the end of its input. MAX_INDEX is the ceiling the index space
+       * already enforces on startIdx/endIdx; a warm-up longer than the largest
+       * addressable series could never produce output, so nothing legitimate is
+       * refused. C applies the same bound in TA_SetUnstablePeriod.
+       */
+      if (period > Core.MAX_INDEX) {
+         throw new IllegalArgumentException(
+            "unstablePeriod must be <= " + Core.MAX_INDEX + ", got " + period);
       }
       if (id == FuncUnstId.ALL) {
          java.util.Arrays.fill(unstablePeriod, period);
