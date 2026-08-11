@@ -128,7 +128,14 @@ static TA_Test tableTest[] =
     * value you are expecting.
     */
 
-   { 1, TA_BETA_TEST,  0, 251, 5, TA_SUCCESS,      0, 0.62907,  5,  252-5 },
+   /* Was 0.62907 (#188). BETA's documented formula,
+    * beta = (n*Sxy - Sx*Sy) / (n*Sxx - Sx^2) over the 5 most recent return
+    * pairs of (high, low), recomputed from the raw series gives
+    * 0.629706508875607. The written value is that with "70" transposed to
+    * "07" -- the same slip as the WMA pair fixed in 7704dc8f. Constant and
+    * algorithm were added together in 2037a0ac (2007) and ta_BETA.c has not
+    * changed materially since, so the typo dates from the keystroke. */
+   { 1, TA_BETA_TEST,  0, 251, 5, TA_SUCCESS,      0, 0.629706509,  5,  252-5 },
    { 0, TA_BETA_TEST,  0, 251, 5, TA_SUCCESS,      1, 0.83604,  5,  252-5 },
 
    /*****************/

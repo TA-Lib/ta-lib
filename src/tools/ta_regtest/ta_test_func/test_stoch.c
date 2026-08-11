@@ -150,7 +150,14 @@ static TA_Test tableTest[] =
 
 
    { TEST_STOCH, 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 3, TA_MAType_SMA, TA_SUCCESS,  8,  252-8,
-                                                          0, 24.0128,
+                                                       /* Was 24.0128 (#188):
+                                                        * 100*(C-LLV5)/(HHV5-LLV5)
+                                                        * smoothed by SMA(3) is
+                                                        * 24.0121837600364 at bar
+                                                        * 8; the written value
+                                                        * dropped a digit
+                                                        * (24.012|1|8). */
+                                                          0, 24.0121838,
                                                           0, 36.254,   }, /* First Value */
 
    { TEST_STOCH, 0, 0, 0, 251, 5, 3, TA_MAType_SMA, 4, TA_MAType_SMA, TA_SUCCESS,  9,  252-9,

@@ -132,7 +132,10 @@ static TA_Test tableTest[] =
    { TST_ADXR,0, 0, 0, 251, 14, TA_SUCCESS, 211, 20.4920,   40,  252-40 }, /* Last Value */
 
    { TST_PLUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   10.28,  13,  252-13 }, /* First Value */
-   { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 10.317, 13,  252-13 },
+   /* Was 10.317 (#188). Wilder's +DM recomputed from the raw high/low series
+    * (seed = sum of the first 13 DMs, then prev - prev/14 + DM) is
+    * 10.3240037882024 at bar 250. */
+   { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237, 10.3240038, 13,  252-13 },
    { TST_PLUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.58,  13,  252-13 }, /* Last Value */
 
    { TST_PLUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   20.3781,   14,  252-14 }, /* First Value */
@@ -143,7 +146,9 @@ static TA_Test tableTest[] =
 
    { TST_MINUS_DM, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   12.995,  13,  252-13 }, /* First Value */
    { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 237,  8.33,   13,  252-13 },
-   { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.672,  13,  252-13 }, /* Last Value */
+   /* Was 9.672 (#188). Same Wilder recomputation as +DM above:
+    * 9.6775453701607 at bar 251. */
+   { TST_MINUS_DM, 0, 0, 0, 251, 14, TA_SUCCESS, 238,  9.67754537,  13,  252-13 }, /* Last Value */
 
    { TST_MINUS_DI, 1, 0, 0, 251, 14, TA_SUCCESS, 0,   30.1684,   14,  252-14 }, /* First Value */
    { TST_MINUS_DI, 0, 0, 0, 251, 14, TA_SUCCESS, 14,  24.969182,   14,  252-14 },
