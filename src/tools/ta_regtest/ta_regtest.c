@@ -92,6 +92,7 @@ static int doCodegenTest = 0;
 static int doFuzz064 = 0;
 static int doXlangHash = 0;
 static const char *codegenLanguageFilter = NULL;
+static unsigned int randSeed = 0;   /* 0 = pick one from the clock */
 
 /**** Local declarations.              ****/
 /* None */
@@ -178,6 +179,10 @@ int main( int argc, char **argv )
          {
             doXlangHash = 1;
          }
+         else if( strncmp(argv[i], "--seed=", 7) == 0 )
+         {
+            randSeed = (unsigned int)strtoul( argv[i] + 7, NULL, 10 );
+         }
          else if( strcmp(argv[i], "--no-guarded") == 0 )
          {
             extern int g_hideGuarded;
@@ -191,8 +196,13 @@ int main( int argc, char **argv )
       }
    }
 
-   /* Some tests are using randomness. */
-   srand( (unsigned)time( NULL ) );
+   /* Some tests are using randomness: the range sweeps pick their startIdx and
+    * sizes with rand(), so each run covers a different subset. Printed so a
+    * failure can be replayed with --seed=N. */
+   if( randSeed == 0 )
+      randSeed = (unsigned int)time( NULL );
+   printf( "Random seed: %u  (replay with --seed=%u)\n", randSeed, randSeed );
+   srand( randSeed );
 
    /* Opt-in bit-exact differential fuzz vs released v0.6.4 (ta_064_serve).
     * Self-contained: init the lib, run the fuzz, done — skips the rest. */
@@ -755,6 +765,10 @@ static void printUsage(void)
       printf( "       seed-generated inputs, comparing full-precision output hashes\n" );
       printf( "       with no tolerance. Honors --function and --language (rust today).\n" );
       printf( "       Run from the bin directory (needs the language servers).\n" );
+      printf( "\n" );
+      printf( "    --seed=N\n" );
+      printf( "       Seed the range sweeps, replaying a previous run. Each run\n" );
+      printf( "       otherwise picks its own seed and prints it.\n" );
       printf( "\n" );
       printf( "   On success, the exit code is 0.\n" );
       printf( "   On failure, the exit code is a number that can be\n" );

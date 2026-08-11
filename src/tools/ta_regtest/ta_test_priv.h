@@ -237,7 +237,7 @@ typedef enum
    TA_STABLE_EXACT,      /* Fresh-recomputed finite window -> bit-exact across
                           * ranges; any difference is a bug (e.g. IMI). */
    TA_STABLE_EPSILON,    /* Finite window via a running accumulator / algebraic
-                          * re-order -> ~1e-9 FP drift only (e.g. MFI, running-
+                          * re-order -> ~1e-10 FP drift only (e.g. MFI, running-
                           * sum MAs). */
    TA_STABLE_CONVERGING, /* Recursive / IIR -> the value depends on how far back
                           * the recursion started; the unstable period bounds the

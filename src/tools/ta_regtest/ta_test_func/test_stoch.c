@@ -714,10 +714,7 @@ static ErrorNumber do_test( const TA_History *history,
       CHECK_EXPECTED_VALUE( gBuffer[1].out0, 0 );
       CHECK_EXPECTED_VALUE( gBuffer[1].out1, 1 );
 
-      /* The non-optimized reference shall be identical to the optimized
-       * TA-Lib implementation.
-       *
-       * Two implementations of one function: compared at a tolerance,
+      /* Two implementations of one function: compared at a tolerance,
        * not bit-for-bit.
        */
       errNb = checkSameContentApprox( gBuffer[1].out0, gBuffer[0].out0 );

@@ -538,7 +538,7 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
  *   - integerTolerance == TA_DO_NOT_COMPARE -> TA_STABLE_SKIP
  *   - unstId != TA_TEST_UNST_NONE           -> TA_STABLE_CONVERGING
  *   - otherwise                             -> TA_STABLE_EPSILON
- * It never yields TA_STABLE_EXACT: a legacy site asking for the tight (~1e-9)
+ * It never yields TA_STABLE_EXACT: a legacy site asking for the tight (~1e-10)
  * comparison is a safe superset of bit-exact, so nothing regresses. Sites that
  * want strict bit-exactness call doRangeTestEx(TA_STABLE_EXACT, ...) directly
  * (e.g. test_imi.c), and the generic codegen gate classifies each function
@@ -1190,10 +1190,6 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
     *
     * Value 10      -> A tolerance of 1/10  is used.
     *
-    * Value 100     -> A tolerance of 1/100 is used.
-    *
-    * Value 1000    -> A tolerance of 1/1000 is used.
-    *
     * Value 360     -> Useful when the output are
     *                  degrees. In that case, a fix
     *                  tolerance of 1 degree is used.
@@ -1220,58 +1216,10 @@ static int dataWithinReasonableRange( TA_Real val1, TA_Real val2,
       break;
    }
 
-   if( integerTolerance == 1000 )
+   if( integerTolerance == 10 )
    {
       /* Check for no difference of more
-       * than 1/1000
-       */
-      if( val1 > val2 )
-         difference = (val1-val2);
-      else
-         difference = (val2-val1);
-
-      difference *= 1000.0;
-
-      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
-      if( temp <= periodToIgnore )
-      {
-         /* Pretend it is fine. */
-         return 1;
-      }
-      else if( (int)difference > 1 )
-      {
-         printf( "\nFail: Value diffferent by more than 1/1000 (%f)\n", difference );
-         return 0;
-      }
-   }
-   else if( integerTolerance == 100 )
-   {
-      /* Check for no difference of more
-       * than 1/1000
-       */
-      if( val1 > val2 )
-         difference = (val1-val2);
-      else
-         difference = (val2-val1);
-
-      difference *= 100.0;
-
-      temp = outputPosition+TA_GetUnstablePeriod(unstId)+1;
-      if( temp <= periodToIgnore )
-      {
-         /* Pretend it is fine. */
-         return 1;
-      }
-      else if( (int)difference > 1 )
-      {
-         printf( "\nFail: Value diffferent by more than 1/100 (%f)\n", difference );
-         return 0;
-      }
-   }
-   else if( integerTolerance == 10 )
-   {
-      /* Check for no difference of more
-       * than 1/1000
+       * than 1/10
        */
       if( val1 > val2 )
          difference = (val1-val2);
