@@ -355,8 +355,30 @@ impl CoreBuilder {
     /// Panics if `setting_type` is [`CandleSettingType::AllCandleSettings`].
     /// That variant is a wildcard, not a setting, so there is nothing to
     /// override — C returns `TA_BAD_PARAM` and Java throws for the same call.
+    ///
+    /// Panics if `setting.avg_period` is negative or above [`MAX_INDEX`]. The
+    /// average period is subtracted from `startIdx` to seed the trailing
+    /// average, so a negative one starts the main loop that many bars late
+    /// while `outBegIdx` still reports `startIdx` — every output shifted
+    /// underneath a correct-looking index. C rejects the same value with
+    /// `TA_BAD_PARAM`.
+    ///
+    /// Panics if `setting.factor` is NaN: it makes every comparison it feeds
+    /// silently false, which reads as "no pattern ever matches" rather than as
+    /// a refused setting.
     #[must_use]
     pub fn candle_setting(mut self, setting_type: CandleSettingType, setting: CandleSetting) -> Self {
+        assert!(
+            setting.avg_period >= 0,
+            "avg_period must be >= 0, got {}",
+            setting.avg_period
+        );
+        assert!(
+            (setting.avg_period as usize) <= MAX_INDEX,
+            "avg_period must be <= {MAX_INDEX}, got {}",
+            setting.avg_period
+        );
+        assert!(!setting.factor.is_nan(), "factor must not be NaN");
         match setting_type {
             CandleSettingType::BodyLong => self.candle_settings.body_long = setting,
             CandleSettingType::BodyVeryLong => self.candle_settings.body_very_long = setting,
@@ -492,6 +514,51 @@ mod tests {
         // for the same call (#144).
         let custom = CandleSetting { range_type: 2, avg_period: 99, factor: 9.0 };
         let _ = Core::builder().candle_setting(CandleSettingType::AllCandleSettings, custom);
+    }
+
+    #[test]
+    #[should_panic(expected = "avg_period must be >= 0")]
+    fn candle_setting_rejects_a_negative_avg_period() {
+        // The period is subtracted from startIdx to seed the trailing average,
+        // so a negative one starts the main loop that many bars late while
+        // outBegIdx still reports startIdx: every value shifted underneath a
+        // correct-looking index, and a lookback that reports negative while the
+        // call succeeds (#185).
+        let custom = CandleSetting { range_type: 1, avg_period: -1, factor: 0.1 };
+        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+    }
+
+    #[test]
+    fn candle_setting_accepts_a_zero_avg_period() {
+        // The boundary on the legal side: zero means "no averaging", which every
+        // CDL* body handles, so a guard written as `<= 0` would refuse a valid
+        // setting.
+        let custom = CandleSetting { range_type: 1, avg_period: 0, factor: 0.1 };
+        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+    }
+
+    #[test]
+    #[should_panic(expected = "avg_period must be <=")]
+    fn candle_setting_rejects_an_avg_period_past_max_index() {
+        // Same ceiling the unstable period already carries: an average longer
+        // than the largest addressable series could never produce output, and an
+        // unbounded one overflows the lookback it feeds.
+        let custom = CandleSetting {
+            range_type: 1,
+            avg_period: (MAX_INDEX as i32).saturating_add(1),
+            factor: 0.1,
+        };
+        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
+    }
+
+    #[test]
+    #[should_panic(expected = "factor must not be NaN")]
+    fn candle_setting_rejects_a_nan_factor() {
+        // NaN makes every comparison it feeds false, so the patterns simply stop
+        // matching -- indistinguishable from "this shape never occurs" unless the
+        // setter refuses it.
+        let custom = CandleSetting { range_type: 1, avg_period: 10, factor: f64::NAN };
+        let _ = Core::builder().candle_setting(CandleSettingType::BodyDoji, custom);
     }
 
     #[test]
