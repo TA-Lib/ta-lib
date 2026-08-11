@@ -69,24 +69,28 @@ namespace TALib;
 /// is identical in both.</para>
 /// <para>A builder is <b>not</b> thread-safe (the standard builder contract —
 /// confine it to one thread); the <c>Core</c> it produces is.</para>
-/// <para>Candlestick thresholds are not configurable from C# yet — this builder
-/// covers the unstable period only.</para>
 /// </remarks>
 public sealed class CoreBuilder
 {
     /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
     private readonly int[] unstablePeriod;
 
+    /* In CandleSettingType order; the AllCandleSettings wildcard gets no slot. */
+    private readonly CandleSetting[] candleSettings;
+
     /// <summary>A builder seeded with TA-Lib's defaults.</summary>
     public CoreBuilder()
     {
         unstablePeriod = new int[FuncUnstIds.Count];
+        // CandleSetting is immutable, so the default instances are shared, not copied.
+        candleSettings = (CandleSetting[])Core.DefaultCandleSettings.Clone();
     }
 
     /* Seeded from an existing Core's settings (see Core.ToBuilder). */
-    internal CoreBuilder(int[] seed)
+    internal CoreBuilder(int[] seedPeriods, CandleSetting[] seedCandles)
     {
-        unstablePeriod = (int[])seed.Clone();
+        unstablePeriod = (int[])seedPeriods.Clone();
+        candleSettings = (CandleSetting[])seedCandles.Clone();
     }
 
     /// <summary>Sets the unstable period for one function, or for every
@@ -138,6 +142,85 @@ public sealed class CoreBuilder
         return this;
     }
 
+    /// <summary>Overrides one candlestick threshold, mirroring C's
+    /// <c>TA_SetCandleSettings</c>.</summary>
+    /// <param name="settingType">Which threshold to override.</param>
+    /// <param name="rangeType">What the candle dimension is measured against.</param>
+    /// <param name="avgPeriod">How many prior bars to average, in
+    /// <c>0</c>..<see cref="Core.MAX_INDEX"/>. <c>0</c> means no averaging.</param>
+    /// <param name="factor">The multiplier applied to that average. Any value
+    /// except NaN, negatives included.</param>
+    /// <returns>This builder, for chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="settingType"/>
+    /// does not name a single setting (<see cref="CandleSettingType.AllCandleSettings"/>
+    /// is a wildcard, meaningful only for <see cref="RestoreCandleDefault"/>),
+    /// <paramref name="rangeType"/> is not a <see cref="TALib.RangeType"/> member,
+    /// <paramref name="avgPeriod"/> is outside its range, or
+    /// <paramref name="factor"/> is NaN. A rejected call writes nothing.</exception>
+    public CoreBuilder CandleSetting(CandleSettingType settingType, RangeType rangeType,
+                                     int avgPeriod, double factor)
+    {
+        int slot = (int)settingType;
+        if (slot < 0 || slot >= candleSettings.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
+                "not a single candlestick setting");
+        }
+        /* A choice list's domain is its member list. Anything else falls through
+         * every arm of the range computation to 0.0 -- every range zero, every
+         * threshold zero, and a silently meaningless answer. */
+        if (rangeType != TALib.RangeType.RealBody
+            && rangeType != TALib.RangeType.HighLow
+            && rangeType != TALib.RangeType.Shadows)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rangeType), rangeType,
+                "not a range type");
+        }
+        /* avgPeriod is the lookback of every CDL* function that reads the
+         * setting, so it is bounded like one: a negative starts the main loop
+         * that many bars late while outBegIdx still reports startIdx, shifting
+         * every value underneath a correct-looking index. */
+        if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX)
+        {
+            throw new ArgumentOutOfRangeException(nameof(avgPeriod), avgPeriod,
+                "avgPeriod must be in 0.." + Core.MAX_INDEX);
+        }
+        /* Only NaN is refused -- a negative factor is an unusual but legal
+         * threshold scale. NaN makes every comparison it feeds false, so the
+         * patterns simply stop matching, indistinguishable from "this shape
+         * never occurs". */
+        if (double.IsNaN(factor))
+        {
+            throw new ArgumentOutOfRangeException(nameof(factor), factor,
+                "factor must not be NaN");
+        }
+        candleSettings[slot] = new CandleSetting(rangeType, avgPeriod, factor);
+        return this;
+    }
+
+    /// <summary>Restores one candlestick threshold to its TA-Lib default, or
+    /// every one when given <see cref="CandleSettingType.AllCandleSettings"/>.</summary>
+    /// <param name="settingType">The setting to restore, or the wildcard.</param>
+    /// <returns>This builder, for chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="settingType"/>
+    /// is neither a setting nor the wildcard.</exception>
+    public CoreBuilder RestoreCandleDefault(CandleSettingType settingType)
+    {
+        if (settingType == CandleSettingType.AllCandleSettings)
+        {
+            Array.Copy(Core.DefaultCandleSettings, candleSettings, candleSettings.Length);
+            return this;
+        }
+        int slot = (int)settingType;
+        if (slot < 0 || slot >= candleSettings.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
+                "not a candlestick setting, and not the wildcard");
+        }
+        candleSettings[slot] = Core.DefaultCandleSettings[slot];
+        return this;
+    }
+
     /// <summary>Produces the immutable <see cref="Core"/>. The builder stays
     /// usable afterwards, and the <c>Core</c> does not alias it.</summary>
     /// <returns>A configured <see cref="Core"/>.</returns>
@@ -146,10 +229,15 @@ public sealed class CoreBuilder
         return new Core(this);
     }
 
-    /* Defensive copy handed to Core's constructor -- the builder keeps its own
-     * array, so later builder calls cannot reach into a built Core. */
+    /* Defensive copies handed to Core's constructor -- the builder keeps its own
+     * arrays, so later builder calls cannot reach into a built Core. */
     internal int[] SnapshotUnstablePeriod()
     {
         return (int[])unstablePeriod.Clone();
+    }
+
+    internal CandleSetting[] SnapshotCandleSettings()
+    {
+        return (CandleSetting[])candleSettings.Clone();
     }
 }

@@ -1,6 +1,6 @@
 ---
 title: Candlestick Settings
-description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C and Rust."
+description: "Tune the thresholds the CDL* pattern functions judge candles against: body length, shadows, near-equal candles. Defaults, and how to set them in C, Rust and C#."
 toc: false
 ---
 
@@ -63,9 +63,10 @@ let core = Core::builder()
     .build()?;
 ```
 
-`range_type` is `0` = real body, `1` = high-to-low, `2` = shadows. `candle_setting`
-**panics** on any other `range_type`, on an `avg_period` outside `0..=MAX_INDEX`, and
-on a NaN `factor` — the same domain C rejects with `TA_BAD_PARAM`.
+`range_type` is `0` = real body, `1` = high-to-low, `2` = shadows. Any other
+`range_type`, an `avg_period` outside `0..=MAX_INDEX`, or a NaN `factor` is
+refused, and `build()` reports `RetCode::BadParam` — the same domain C rejects
+with `TA_BAD_PARAM`.
 
 There is no restore call and none is needed: a builder starts from the defaults, so
 "restoring" a setting means simply not overriding it. Settings are fixed when the
@@ -80,12 +81,34 @@ it happens; the first one is latched and surfaced by `build()`. Check that
 `Result` — a discarded one loses the whole configuration, not just the offending
 setting.
 
+@tab C#
+
+```csharp
+using TALib;
+
+// Treat a "long body" as 1.2x the average real body of the last 10 candles:
+Core core = Core.Builder()
+    .CandleSetting(CandleSettingType.BodyLong, RangeType.RealBody, 10, 1.2)
+    .Build();
+
+// ...restore one setting, or every one with AllCandleSettings:
+Core restored = core.ToBuilder()
+    .RestoreCandleDefault(CandleSettingType.BodyLong)
+    .Build();
+```
+
+The same domain applies. A value outside it throws
+`ArgumentOutOfRangeException` rather than returning a code — no public C# path
+surfaces a `RetCode` — and a rejected call leaves the previous setting in place.
+Read a threshold back with `core.CandleSettings(CandleSettingType.BodyLong)`.
+
 :::
 
 ## Setting types and defaults
 
 The setting types, with the defaults every binding starts from. C spells them
-`TA_BodyLong`; Rust spells them `CandleSettingType::BodyLong`.
+`TA_BodyLong`; Rust and C# spell them `CandleSettingType::BodyLong` and
+`CandleSettingType.BodyLong`.
 
 | Setting            | Range type | avgPeriod | factor |
 |--------------------|------------|-----------|--------|

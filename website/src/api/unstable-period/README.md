@@ -1,6 +1,6 @@
 ---
 title: Unstable Period
-description: "How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C and Rust."
+description: "How many warm-up bars TA-Lib discards from recursive indicators such as EMA, RSI and ADX before reporting their output, and how to set it in C, Rust and C#."
 toc: false
 ---
 
@@ -84,6 +84,29 @@ Ids are spelled `FuncUnstId::<NAME>`, so `TA_FUNC_UNST_HT_DCPERIOD` is
 There is no global to guard here: the period is fixed when the [`Core`](/api/rust/)
 is built and cannot change afterwards, which is what makes a `Core` `Send + Sync`.
 To use a different period, build another `Core` (or derive one with `to_builder()`).
+
+@tab C#
+
+```csharp
+using TALib;
+
+// Strip 30 extra bars from every EMA-based calculation:
+Core core = Core.Builder()
+    .UnstablePeriod(FuncUnstId.EMA, 30)
+    .Build();
+
+// Apply the same unstable period to ALL affected functions at once:
+Core all = Core.Builder()
+    .UnstablePeriod(FuncUnstId.ALL, 30)
+    .Build();
+
+int n = core.UnstablePeriod(FuncUnstId.EMA);   // read it back
+```
+
+The same `0`..`MAX_INDEX` domain applies; a value outside it throws
+`ArgumentOutOfRangeException`, as does reading back the `ALL` wildcard, which
+names no single function. Like Rust's, a C# `Core` is immutable once built, so
+its settings cannot change under a concurrent call.
 
 :::
 

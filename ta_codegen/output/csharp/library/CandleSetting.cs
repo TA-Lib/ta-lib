@@ -44,6 +44,21 @@ public sealed class CandleSetting
     internal readonly int avgPeriod;
     internal readonly double factor;
 
+    /* Read accessors, matching Java's. The fields stay internal because the
+     * generated indicator bodies read them directly; these are what a caller
+     * outside the assembly sees. */
+
+    /// <summary>What the candle dimension is measured against.</summary>
+    public RangeType RangeType => rangeType;
+
+    /// <summary>How many prior bars are averaged (<c>0</c> means no averaging —
+    /// the current candle only).</summary>
+    public int AvgPeriod => avgPeriod;
+
+    /// <summary>The multiplier applied to that average to form the
+    /// threshold.</summary>
+    public double Factor => factor;
+
     internal CandleSetting(RangeType rangeType, int avgPeriod, double factor)
     {
         this.rangeType = rangeType;

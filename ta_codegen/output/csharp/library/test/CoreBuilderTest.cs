@@ -151,15 +151,15 @@ public static class CoreBuilderTest
         // (FuncUnstId)9999 are representable values a caller can pass, and both
         // index off the end of a 24-slot array. C guards this with an unsigned
         // compare for exactly that reason (#144).
-        CheckThrows<ArgumentException>(
+        CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().UnstablePeriod((FuncUnstId)(-1), 1),
-            "a negative id cast into the enum -> ArgumentException");
-        CheckThrows<ArgumentException>(
+            "a negative id cast into the enum -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
             () => Core.Builder().UnstablePeriod((FuncUnstId)9999, 1),
-            "an out-of-range id cast into the enum -> ArgumentException");
-        CheckThrows<ArgumentException>(
+            "an out-of-range id cast into the enum -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
             () => new Core().UnstablePeriod(FuncUnstId.ALL),
-            "the wildcard has no single value to read -> ArgumentException");
+            "the wildcard has no single value to read -> ArgumentOutOfRangeException");
     }
 
     private static void BoundIsABoundNotAnOffByOne()
@@ -175,7 +175,7 @@ public static class CoreBuilderTest
     {
         // The half of the contract an "it throws" assertion cannot see.
         CoreBuilder b = Core.Builder().UnstablePeriod(FuncUnstId.EMA, 7);
-        CheckThrows<ArgumentException>(
+        CheckThrows<ArgumentOutOfRangeException>(
             () => b.UnstablePeriod(FuncUnstId.EMA, Core.MAX_INDEX + 1),
             "the rejected overwrite still throws");
         Check(b.Build().UnstablePeriod(FuncUnstId.EMA) == 7,
@@ -184,7 +184,7 @@ public static class CoreBuilderTest
         // The wildcard path writes 24 slots, so a rejection there must not have
         // filled any of them before noticing.
         CoreBuilder w = Core.Builder().UnstablePeriod(FuncUnstId.ALL, 3);
-        CheckThrows<ArgumentException>(
+        CheckThrows<ArgumentOutOfRangeException>(
             () => w.UnstablePeriod(FuncUnstId.ALL, int.MaxValue),
             "the rejected wildcard still throws");
         Core after = w.Build();
@@ -210,11 +210,179 @@ public static class CoreBuilderTest
 
     private static void ToBuilderRoundTrips()
     {
-        Core original = Core.Builder().UnstablePeriod(FuncUnstId.RSI, 5).Build();
+        Core original = Core.Builder()
+            .UnstablePeriod(FuncUnstId.RSI, 5)
+            .CandleSetting(CandleSettingType.BodyLong, RangeType.Shadows, 20, 1.5)
+            .Build();
         Core derived = original.ToBuilder().UnstablePeriod(FuncUnstId.EMA, 9).Build();
         Check(original.UnstablePeriod(FuncUnstId.EMA) == 0, "the original is untouched");
         Check(derived.UnstablePeriod(FuncUnstId.RSI) == 5, "the derived Core inherits RSI");
         Check(derived.UnstablePeriod(FuncUnstId.EMA) == 9, "the derived Core gains EMA");
+        // Candle settings survive the round trip too -- this is what catches
+        // ToBuilder dropping a field, which a periods-only check cannot see.
+        CandleSetting carried = derived.CandleSettings(CandleSettingType.BodyLong);
+        Check(carried.AvgPeriod == 20 && carried.Factor == 1.5
+              && carried.RangeType == RangeType.Shadows,
+            "the derived Core inherits the candle settings");
+    }
+
+    private static void CandleDefaultsAreTheDocumentedOnes()
+    {
+        Core core = Core.Builder().Build();
+        // A representative default (BodyDoji: HighLow range, 10 bars, 0.1).
+        CandleSetting doji = core.CandleSettings(CandleSettingType.BodyDoji);
+        Check(doji.RangeType == RangeType.HighLow, "BodyDoji defaults to the HighLow range");
+        Check(doji.AvgPeriod == 10, "BodyDoji defaults to a 10-bar average");
+        Check(doji.Factor == 0.1, "BodyDoji defaults to a 0.1 factor");
+    }
+
+    private static void CandleSettingOverridesOneLeavesTheRest()
+    {
+        Core core = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyLong, RangeType.Shadows, 20, 1.5)
+            .Build();
+        CandleSetting bodyLong = core.CandleSettings(CandleSettingType.BodyLong);
+        Check(bodyLong.RangeType == RangeType.Shadows, "BodyLong took the new range type");
+        Check(bodyLong.AvgPeriod == 20, "BodyLong took the new avgPeriod");
+        Check(bodyLong.Factor == 1.5, "BodyLong took the new factor");
+        Check(core.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == 10,
+            "a different setting keeps its default");
+    }
+
+    private static void CandleSettingReachesTheIndicator()
+    {
+        // A behavioural witness, not a getter echo: identical clear candles --
+        // real body 4, high-low range 6 -- are never dojis at the default
+        // BodyDoji threshold (0.1), but a huge factor makes the threshold
+        // enormous so every candle qualifies.
+        const int n = 20;
+        double[] open = new double[n], high = new double[n], low = new double[n], close = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            open[i] = 100.0;
+            close[i] = 104.0;
+            high[i] = 105.0;
+            low[i] = 99.0;
+        }
+
+        int[] outDefault = new int[n], outTuned = new int[n];
+        OutRange rd = new Core().CDLDOJI(0, n - 1, open, high, low, close, outDefault);
+        Core tuned = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, 1.0e9)
+            .Build();
+        OutRange rt = tuned.CDLDOJI(0, n - 1, open, high, low, close, outTuned);
+
+        bool noneByDefault = true, allWhenTuned = true;
+        for (int i = 0; i < rd.Count; i++)
+        {
+            if (outDefault[i] != 0) { noneByDefault = false; }
+        }
+        for (int i = 0; i < rt.Count; i++)
+        {
+            if (outTuned[i] != 100) { allWhenTuned = false; }
+        }
+        Check(rd.Count > 0 && rt.Count > 0, "both CDLDOJI calls produced values");
+        Check(noneByDefault, "clear candles are not dojis at the default threshold");
+        Check(allWhenTuned, "a huge BodyDoji factor marks every candle a doji");
+    }
+
+    private static void CandleMisuseThrows()
+    {
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.AllCandleSettings, RangeType.HighLow, 10, 1.0),
+            "AllCandleSettings as a single-setting target -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.BodyDoji, (RangeType)3, 10, 1.0),
+            "a range type outside the enum -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
+            "negative avgPeriod -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, Core.MAX_INDEX + 1, 1.0),
+            "avgPeriod above MAX_INDEX -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => Core.Builder().CandleSetting(
+                CandleSettingType.BodyDoji, RangeType.HighLow, 10, double.NaN),
+            "NaN factor -> ArgumentOutOfRangeException");
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => new Core().CandleSettings(CandleSettingType.AllCandleSettings),
+            "AllCandleSettings has no single value to read -> ArgumentOutOfRangeException");
+    }
+
+    private static void CandleBoundsAreBoundsNotOffByOnes()
+    {
+        // Every accepted boundary on the legal side, so a guard tightened by one
+        // is caught here rather than shipping.
+        Core zero = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 0, 0.1).Build();
+        Check(zero.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == 0,
+            "a zero avgPeriod means no averaging and is legal");
+
+        Core ceiling = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.Shadows, Core.MAX_INDEX, 0.1).Build();
+        Check(ceiling.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == Core.MAX_INDEX,
+            "the MAX_INDEX ceiling is accepted, not rejected");
+
+        // Only NaN is refused; a negative factor is unusual but legal, and C
+        // accepts it too.
+        Core negative = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, 10, -1.5).Build();
+        Check(negative.CandleSettings(CandleSettingType.BodyDoji).Factor == -1.5,
+            "a negative factor is legal");
+    }
+
+    private static void ARejectedCandleSettingWritesNothing()
+    {
+        CoreBuilder b = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.Shadows, 7, 2.5);
+        CheckThrows<ArgumentOutOfRangeException>(
+            () => b.CandleSetting(CandleSettingType.BodyDoji, RangeType.HighLow, -1, 1.0),
+            "the rejected overwrite still throws");
+        CandleSetting kept = b.Build().CandleSettings(CandleSettingType.BodyDoji);
+        Check(kept.AvgPeriod == 7 && kept.Factor == 2.5 && kept.RangeType == RangeType.Shadows,
+            "a rejected candle setting leaves the previous one in place");
+    }
+
+    private static void RestoreCandleDefaultUndoesAnOverride()
+    {
+        CoreBuilder b = Core.Builder()
+            .CandleSetting(CandleSettingType.BodyDoji, RangeType.Shadows, 33, 9.0)
+            .CandleSetting(CandleSettingType.Equal, RangeType.RealBody, 44, 8.0);
+
+        Core one = b.RestoreCandleDefault(CandleSettingType.BodyDoji).Build();
+        Check(one.CandleSettings(CandleSettingType.BodyDoji).AvgPeriod == 10,
+            "restoring one setting returns it to its default");
+        Check(one.CandleSettings(CandleSettingType.Equal).AvgPeriod == 44,
+            "restoring one setting leaves the others overridden");
+
+        // Both witnesses read Equal, the ONLY setting still overridden at this
+        // point -- reading BodyDoji here would prove nothing, because the line
+        // above restored it individually.
+        Core all = b.RestoreCandleDefault(CandleSettingType.AllCandleSettings).Build();
+        Check(all.CandleSettings(CandleSettingType.Equal).AvgPeriod == 5,
+            "the wildcard restores every setting");
+        Check(all.CandleSettings(CandleSettingType.Equal).Factor == 0.05,
+            "the wildcard restores every setting's factor too");
+        Check(all.CandleSettings(CandleSettingType.Equal).RangeType == RangeType.HighLow,
+            "the wildcard restores every setting's range type too");
+    }
+
+    private static void BuiltCoreDoesNotAliasTheBuildersCandles()
+    {
+        CoreBuilder b = Core.Builder()
+            .CandleSetting(CandleSettingType.Near, RangeType.HighLow, 12, 0.3);
+        Core core = b.Build();
+        b.CandleSetting(CandleSettingType.Near, RangeType.RealBody, 99, 7.0);
+        Check(core.CandleSettings(CandleSettingType.Near).AvgPeriod == 12,
+            "a built Core does not alias the builder's candle array");
+
+        // ...and the shared defaults array is never written through.
+        Check(Core.DefaultCandleSettings[(int)CandleSettingType.Near].AvgPeriod == 5,
+            "overriding a setting never mutates the shared defaults");
     }
 
     /// <summary>Runs every check in this suite.</summary>
@@ -230,6 +398,14 @@ public static class CoreBuilderTest
         ARejectedCallWritesNothing();
         BuiltCoreIsIsolatedFromTheBuilder();
         ToBuilderRoundTrips();
+        CandleDefaultsAreTheDocumentedOnes();
+        CandleSettingOverridesOneLeavesTheRest();
+        CandleSettingReachesTheIndicator();
+        CandleMisuseThrows();
+        CandleBoundsAreBoundsNotOffByOnes();
+        ARejectedCandleSettingWritesNothing();
+        RestoreCandleDefaultUndoesAnOverride();
+        BuiltCoreDoesNotAliasTheBuildersCandles();
 
         if (_failures == 0)
         {

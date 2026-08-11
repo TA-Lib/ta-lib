@@ -50,10 +50,10 @@ namespace TALib;
 /// query it with the matching <c>*Lookback</c> method. Integer parameters
 /// accept <c>int.MinValue</c>, and real parameters <c>-4e37</c>, to select
 /// their documented default.
-/// <para>Per-instance settings take their documented defaults unless chosen up
-/// front with <see cref="Builder"/>; unstable periods are configurable that way,
-/// candlestick thresholds not yet. A <c>Core</c> whose settings are never
-/// mutated is safe to share read-only across threads.</para>
+/// <para>Per-instance settings — unstable periods and candlestick thresholds —
+/// take their documented defaults unless chosen up front with
+/// <see cref="Builder"/>. A <c>Core</c> whose settings are never mutated is safe
+/// to share read-only across threads.</para>
 /// </remarks>
 public partial class Core
 {
@@ -87,9 +87,12 @@ public partial class Core
     /* Sized by the id count, so the ALL wildcard gets no slot (#144). */
     internal readonly int[] unstablePeriod = new int[FuncUnstIds.Count];
 
-    /* candleSettings[] in CandleSettingType order. Defaults from
-     * TA_RestoreCandleDefaultSettings in ta_global.c. */
-    internal readonly CandleSetting[] candleSettings =
+    /* The 11 defaults, in CandleSettingType order, from
+     * TA_RestoreCandleDefaultSettings in ta_global.c. ONE source of truth: both a
+     * fresh Core and CoreBuilder.RestoreCandleDefault read this array, so the
+     * literals cannot drift between the two the way two copies would. Safe to
+     * share rather than clone because CandleSetting is immutable. */
+    internal static readonly CandleSetting[] DefaultCandleSettings =
     {
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong
         new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong
@@ -104,6 +107,9 @@ public partial class Core
         new CandleSetting(RangeType.HighLow,  5,  0.05),  // Equal
     };
 
+    /* candleSettings[] in CandleSettingType order. */
+    internal readonly CandleSetting[] candleSettings = (CandleSetting[])DefaultCandleSettings.Clone();
+
     /// <summary>Create a Core with every setting at its documented
     /// default.</summary>
     public Core()
@@ -115,6 +121,7 @@ public partial class Core
     internal Core(CoreBuilder builder)
     {
         unstablePeriod = builder.SnapshotUnstablePeriod();
+        candleSettings = builder.SnapshotCandleSettings();
     }
 
     /// <summary>Start building a <c>Core</c> with non-default settings.</summary>
@@ -129,7 +136,24 @@ public partial class Core
     /// <returns>A builder carrying this instance's current settings.</returns>
     public CoreBuilder ToBuilder()
     {
-        return new CoreBuilder(unstablePeriod);
+        return new CoreBuilder(unstablePeriod, candleSettings);
+    }
+
+    /// <summary>Reads one candlestick threshold.</summary>
+    /// <param name="settingType">The setting to query.</param>
+    /// <returns>Its range type, averaging period and factor.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="settingType"/>
+    /// is <see cref="CandleSettingType.AllCandleSettings"/>, which is a wildcard
+    /// naming no single setting, or is not a setting at all.</exception>
+    public CandleSetting CandleSettings(CandleSettingType settingType)
+    {
+        int slot = (int)settingType;
+        if (slot < 0 || slot >= DefaultCandleSettings.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(settingType), settingType,
+                "not a single candlestick setting");
+        }
+        return candleSettings[slot];
     }
 
     /// <summary>Reads the unstable period configured for one function.</summary>
