@@ -83,20 +83,12 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
 {
    double local_sufHighest[30];
    double *sufHighest = &local_sufHighest[0];
-   int sufHighest_Idx;
-   int maxIdx_sufHighest;
    double local_preHighest[30];
    double *preHighest = &local_preHighest[0];
-   int preHighest_Idx;
-   int maxIdx_preHighest;
    double local_sufLowest[30];
    double *sufLowest = &local_sufLowest[0];
-   int sufLowest_Idx;
-   int maxIdx_sufLowest;
    double local_preLowest[30];
    double *preLowest = &local_preLowest[0];
-   int preLowest_Idx;
-   int maxIdx_preLowest;
    double lowest;
    double highest;
    double tmpLow;
@@ -204,8 +196,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
       {
          sufHighest = &local_sufHighest[0];
       }
-      maxIdx_sufHighest = (optInTimePeriod-1);
-      sufHighest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
       {
@@ -220,8 +210,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
       {
          preHighest = &local_preHighest[0];
       }
-      maxIdx_preHighest = (optInTimePeriod-1);
-      preHighest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
       {
@@ -237,8 +225,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
       {
          sufLowest = &local_sufLowest[0];
       }
-      maxIdx_sufLowest = (optInTimePeriod-1);
-      sufLowest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
       {
@@ -255,8 +241,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE( int    startIdx,
       {
          preLowest = &local_preLowest[0];
       }
-      maxIdx_preLowest = (optInTimePeriod-1);
-      preLowest_Idx = 0;
       blockStart = trailingIdx;
       while( today <= endIdx )
       {
@@ -429,20 +413,12 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
 {
    double local_sufHighest[30];
    double *sufHighest = &local_sufHighest[0];
-   int sufHighest_Idx;
-   int maxIdx_sufHighest;
    double local_preHighest[30];
    double *preHighest = &local_preHighest[0];
-   int preHighest_Idx;
-   int maxIdx_preHighest;
    double local_sufLowest[30];
    double *sufLowest = &local_sufLowest[0];
-   int sufLowest_Idx;
-   int maxIdx_sufLowest;
    double local_preLowest[30];
    double *preLowest = &local_preLowest[0];
-   int preLowest_Idx;
-   int maxIdx_preLowest;
    double lowest;
    double highest;
    double tmpLow;
@@ -504,8 +480,6 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
       {
          sufHighest = &local_sufHighest[0];
       }
-      maxIdx_sufHighest = (optInTimePeriod-1);
-      sufHighest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preHighest)/sizeof(double)) )
       {
@@ -520,8 +494,6 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
       {
          preHighest = &local_preHighest[0];
       }
-      maxIdx_preHighest = (optInTimePeriod-1);
-      preHighest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_sufLowest)/sizeof(double)) )
       {
@@ -537,8 +509,6 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
       {
          sufLowest = &local_sufLowest[0];
       }
-      maxIdx_sufLowest = (optInTimePeriod-1);
-      sufLowest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
       {
@@ -555,8 +525,6 @@ TA_RetCode TA_S_MIDPRICE( int    startIdx,
       {
          preLowest = &local_preLowest[0];
       }
-      maxIdx_preLowest = (optInTimePeriod-1);
-      preLowest_Idx = 0;
       blockStart = trailingIdx;
       while( today <= endIdx )
       {

@@ -9519,3 +9519,51 @@ fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
          swept, saw only {multi_circbuf_functions}"
     );
 }
+
+/// A CIRCBUF whose cursor is never read gets no cursor.
+///
+/// `CIRCBUF_PROLOG` used to declare `<id>_Idx` and `maxIdx_<id>` unconditionally
+/// and `CIRCBUF_INIT` to assign them, which is right for a ring (the body
+/// advances with `CIRCBUF_NEXT` and indexes with the cursor) and wrong for a
+/// CIRCBUF used only as a period-sized scratch buffer. The #147 block scan
+/// indexes its arrays directly, so the six rolling-extremum functions were
+/// emitting eight write-only ints apiece — 80 `-Wunused-but-set-variable`
+/// across the family in any consumer building with `-Wall -Wextra`.
+///
+/// Both halves are asserted: the scratch users must NOT carry the pair, and the
+/// ring users must still carry it. Dropping it from a ring would not compile,
+/// but this says so at the generator rather than in a downstream build.
+#[test]
+fn c_circbuf_omits_the_cursor_when_nothing_reads_it() {
+    let registry = make_registry();
+    let helpers = make_helpers();
+
+    for name in ["min", "max", "minmax", "midpoint", "midprice", "willr"] {
+        let (func, enums) = load_indicator(name);
+        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+        for decl in ["_Idx;", "maxIdx_"] {
+            assert!(
+                !c_out.contains(decl),
+                "{name} uses its CIRCBUFs as plain scratch, so `{decl}` must not be \
+                 emitted — a write-only int is a -Wunused-but-set-variable in every \
+                 consumer's build: {c_out}"
+            );
+        }
+        // The buffers themselves must survive: this trims the cursor, not the scratch.
+        assert!(
+            c_out.contains("= &local_") && c_out.contains("TA_Malloc("),
+            "{name} must still declare and size its scratch buffers: {c_out}"
+        );
+    }
+
+    // The ring users are the control arm — if the predicate went blanket-true,
+    // these would lose a cursor they genuinely read and this test would say so.
+    for name in ["cci", "ultosc"] {
+        let (func, enums) = load_indicator(name);
+        let c_out = backends::c::generate(&func, &enums, &registry, &helpers);
+        assert!(
+            c_out.contains("_Idx;") && c_out.contains("maxIdx_"),
+            "{name} advances a real ring, so it must keep its cursor: {c_out}"
+        );
+    }
+}

@@ -78,12 +78,8 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
 {
    double local_sufLowest[30];
    double *sufLowest = &local_sufLowest[0];
-   int sufLowest_Idx;
-   int maxIdx_sufLowest;
    double local_preLowest[30];
    double *preLowest = &local_preLowest[0];
-   int preLowest_Idx;
-   int maxIdx_preLowest;
    double lowest;
    double tmp;
    int outIdx;
@@ -172,8 +168,6 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
       {
          sufLowest = &local_sufLowest[0];
       }
-      maxIdx_sufLowest = (optInTimePeriod-1);
-      sufLowest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
       {
@@ -188,8 +182,6 @@ TA_LIB_API TA_RetCode TA_MIN( int    startIdx,
       {
          preLowest = &local_preLowest[0];
       }
-      maxIdx_preLowest = (optInTimePeriod-1);
-      preLowest_Idx = 0;
       blockStart = trailingIdx;
       while( today <= endIdx )
       {
@@ -315,12 +307,8 @@ TA_RetCode TA_S_MIN( int    startIdx,
 {
    double local_sufLowest[30];
    double *sufLowest = &local_sufLowest[0];
-   int sufLowest_Idx;
-   int maxIdx_sufLowest;
    double local_preLowest[30];
    double *preLowest = &local_preLowest[0];
-   int preLowest_Idx;
-   int maxIdx_preLowest;
    double lowest;
    double tmp;
    int outIdx;
@@ -376,8 +364,6 @@ TA_RetCode TA_S_MIN( int    startIdx,
       {
          sufLowest = &local_sufLowest[0];
       }
-      maxIdx_sufLowest = (optInTimePeriod-1);
-      sufLowest_Idx = 0;
       if( optInTimePeriod < 1 ) return TA_INTERNAL_ERROR(137);
       if( (int)optInTimePeriod > (int)(sizeof(local_preLowest)/sizeof(double)) )
       {
@@ -392,8 +378,6 @@ TA_RetCode TA_S_MIN( int    startIdx,
       {
          preLowest = &local_preLowest[0];
       }
-      maxIdx_preLowest = (optInTimePeriod-1);
-      preLowest_Idx = 0;
       blockStart = trailingIdx;
       while( today <= endIdx )
       {

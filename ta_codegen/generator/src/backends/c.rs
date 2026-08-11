@@ -167,6 +167,13 @@ thread_local! {
     /// that one call.
     static CIRCBUF_ORDER: std::cell::RefCell<Vec<(String, Vec<String>)>> =
         const { std::cell::RefCell::new(Vec::new()) };
+
+    /// The CIRCBUFs of the function being generated whose cursor is never read.
+    /// See [`circbuf_index_is_used`]: these get no `<id>_Idx` / `maxIdx_<id>`
+    /// declaration and no assignment, because a variable that is only ever
+    /// written is a `-Wunused-but-set-variable` in every consumer's build.
+    static CIRCBUF_IDX_UNUSED: std::cell::RefCell<std::collections::BTreeSet<String>> =
+        const { std::cell::RefCell::new(std::collections::BTreeSet::new()) };
 }
 
 /// RAII guard installing the CIRCBUF declaration order for the current
@@ -175,8 +182,9 @@ thread_local! {
 struct CircBufOrderGuard;
 
 impl CircBufOrderGuard {
-    fn new(order: Vec<(String, Vec<String>)>) -> Self {
+    fn new(order: Vec<(String, Vec<String>)>, idx_unused: std::collections::BTreeSet<String>) -> Self {
         CIRCBUF_ORDER.with(|c| *c.borrow_mut() = order);
+        CIRCBUF_IDX_UNUSED.with(|c| *c.borrow_mut() = idx_unused);
         CircBufOrderGuard
     }
 }
@@ -184,6 +192,7 @@ impl CircBufOrderGuard {
 impl Drop for CircBufOrderGuard {
     fn drop(&mut self) {
         CIRCBUF_ORDER.with(|c| c.borrow_mut().clear());
+        CIRCBUF_IDX_UNUSED.with(|c| c.borrow_mut().clear());
     }
 }
 
@@ -204,6 +213,85 @@ fn collect_circbuf_order(stmts: &[Statement], out: &mut Vec<(String, Vec<String>
             _ => {}
         }
     }
+}
+
+/// Does anything in `stmts` read `<id>_Idx` or `maxIdx_<id>`?
+///
+/// A CIRCBUF used as a ring needs both — `CIRCBUF_NEXT` advances the cursor and
+/// the body indexes with it. A CIRCBUF used only as a period-sized scratch
+/// buffer (the #147 block scan indexes its two arrays directly) needs neither,
+/// and emitting them anyway costs a `-Wunused-but-set-variable` per pair.
+fn circbuf_index_is_used(stmts: &[Statement], id: &str) -> bool {
+    let idx = format!("{id}_Idx");
+    let max_idx = format!("maxIdx_{id}");
+    let mut vars = std::collections::BTreeSet::new();
+    collect_stmt_vars(stmts, &mut vars);
+    vars.contains(&idx) || vars.contains(&max_idx)
+}
+
+/// Every variable name mentioned anywhere in `stmts`. `CircBuf::Next` is the one
+/// statement whose *rendering* names the cursor without holding it in an `Expr`,
+/// so it is counted explicitly.
+fn collect_stmt_vars(stmts: &[Statement], out: &mut std::collections::BTreeSet<String>) {
+    for s in stmts {
+        match s {
+            Statement::CircBuf(CircBuf::Next { id }) => {
+                out.insert(format!("{id}_Idx"));
+                out.insert(format!("maxIdx_{id}"));
+            }
+            Statement::CircBuf(_) | Statement::UnrollHint { .. } | Statement::Comment(_)
+            | Statement::Break | Statement::Continue => {}
+            Statement::VarDecl { init, .. } => {
+                if let Some(e) = init {
+                    crate::stability::collect_vars(e, out);
+                }
+            }
+            Statement::Assign { target, value, .. } => {
+                crate::stability::collect_vars(target, out);
+                crate::stability::collect_vars(value, out);
+            }
+            Statement::While { condition, body } | Statement::DoWhile { condition, body } => {
+                crate::stability::collect_vars(condition, out);
+                collect_stmt_vars(body, out);
+            }
+            Statement::For { count, body, .. } => {
+                crate::stability::collect_vars(count, out);
+                collect_stmt_vars(body, out);
+            }
+            Statement::ForC { init, condition, update, body } => {
+                collect_stmt_vars(std::slice::from_ref(init), out);
+                collect_stmt_vars(std::slice::from_ref(update), out);
+                crate::stability::collect_vars(condition, out);
+                collect_stmt_vars(body, out);
+            }
+            Statement::If { condition, then_body, else_body, .. } => {
+                crate::stability::collect_vars(condition, out);
+                collect_stmt_vars(then_body, out);
+                collect_stmt_vars(else_body, out);
+            }
+            Statement::Switch { expr, cases, default } => {
+                crate::stability::collect_vars(expr, out);
+                for (_label, body) in cases {
+                    collect_stmt_vars(body, out);
+                }
+                collect_stmt_vars(default, out);
+            }
+            Statement::Block { body } => collect_stmt_vars(body, out),
+            Statement::Return { value } => {
+                if let Some(e) = value {
+                    crate::stability::collect_vars(e, out);
+                }
+            }
+            Statement::Expr(e) => crate::stability::collect_vars(e, out),
+        }
+    }
+}
+
+/// True when this function never reads `<id>_Idx` / `maxIdx_<id>`, so neither
+/// should be declared or assigned. Read from the same per-function stash as
+/// [`circbufs_declared_before`].
+fn circbuf_index_unused(id: &str) -> bool {
+    CIRCBUF_IDX_UNUSED.with(|c| c.borrow().contains(id))
 }
 
 /// The storage buffers of every CIRCBUF declared before `id`. These are the
@@ -270,7 +358,17 @@ pub fn generate(
     let mut circbuf_order = Vec::new();
     collect_circbuf_order(&func.private_body, &mut circbuf_order);
     collect_circbuf_order(&func.body, &mut circbuf_order);
-    let _circbuf_order = CircBufOrderGuard::new(circbuf_order);
+    // A CIRCBUF used only as a period-sized scratch buffer never reads its
+    // cursor; declaring and assigning one anyway is a warning in every build
+    // that turns -Wunused-but-set-variable on.
+    let idx_unused: std::collections::BTreeSet<String> = circbuf_order
+        .iter()
+        .map(|(id, _)| id.clone())
+        .filter(|id| {
+            !circbuf_index_is_used(&func.body, id) && !circbuf_index_is_used(&func.private_body, id)
+        })
+        .collect();
+    let _circbuf_order = CircBufOrderGuard::new(circbuf_order, idx_unused);
 
     let mut out = String::new();
     out.push_str(&gen_header());
@@ -1132,12 +1230,14 @@ impl StatementEmitter for CStmt<'_> {
                 for (storage, _t) in &fields {
                     s.push_str(&format!("{pad}{storage} = &local_{storage}[0];\n"));
                 }
-                let (first, first_t) = &fields[0];
-                let et = c_type_name(first_t);
-                s.push_str(&format!(
-                    "{pad}maxIdx_{id} = (int)(sizeof(local_{first})/sizeof({et}))-1;\n"
-                ));
-                s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                if !circbuf_index_unused(id) {
+                    let (first, first_t) = &fields[0];
+                    let et = c_type_name(first_t);
+                    s.push_str(&format!(
+                        "{pad}maxIdx_{id} = (int)(sizeof(local_{first})/sizeof({et}))-1;\n"
+                    ));
+                    s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                }
                 s
             }
             // Stack-first hybrid (ta_memory.h #else): heap-allocate only when the runtime
@@ -1182,8 +1282,10 @@ impl StatementEmitter for CStmt<'_> {
                     s.push_str(&format!("{pad}   {storage} = &local_{storage}[0];\n"));
                 }
                 s.push_str(&format!("{pad}}}\n"));
-                s.push_str(&format!("{pad}maxIdx_{id} = ({sz}-1);\n"));
-                s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                if !circbuf_index_unused(id) {
+                    s.push_str(&format!("{pad}maxIdx_{id} = ({sz}-1);\n"));
+                    s.push_str(&format!("{pad}{id}_Idx = 0;\n"));
+                }
                 s
             }
         }
@@ -2431,15 +2533,20 @@ fn emit_c_var_decls(stmt: &Statement, out: &mut String, declared: &mut Vec<Strin
                     out.push_str(&format!("   {} = &{local}[0];\n", c_decl(&ptr_t, &storage)));
                 }
             }
-            let idx = format!("{id}_Idx");
-            if !declared.contains(&idx) {
-                declared.push(idx.clone());
-                out.push_str(&format!("   int {idx};\n"));
-            }
-            let maxidx = format!("maxIdx_{id}");
-            if !declared.contains(&maxidx) {
-                declared.push(maxidx.clone());
-                out.push_str(&format!("   int {maxidx};\n"));
+            // Omitted entirely when nothing reads the cursor — see
+            // `circbuf_index_is_used`. CIRCBUF_INIT skips the matching
+            // assignments, so the pair is absent rather than write-only.
+            if !circbuf_index_unused(id) {
+                let idx = format!("{id}_Idx");
+                if !declared.contains(&idx) {
+                    declared.push(idx.clone());
+                    out.push_str(&format!("   int {idx};\n"));
+                }
+                let maxidx = format!("maxIdx_{id}");
+                if !declared.contains(&maxidx) {
+                    declared.push(maxidx.clone());
+                    out.push_str(&format!("   int {maxidx};\n"));
+                }
             }
         }
         _ => {}

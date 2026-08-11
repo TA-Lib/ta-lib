@@ -191,7 +191,7 @@ fn walk_stmt_predicated(
 }
 
 /// Every variable name appearing in an expression.
-fn collect_vars(expr: &Expr, out: &mut BTreeSet<String>) {
+pub(crate) fn collect_vars(expr: &Expr, out: &mut BTreeSet<String>) {
     match expr {
         Expr::Var(v) | Expr::PointerDeref(v) => {
             out.insert(v.clone());
