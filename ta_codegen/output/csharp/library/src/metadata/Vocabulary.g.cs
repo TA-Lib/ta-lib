@@ -124,6 +124,9 @@ public enum FunctionFlags : uint
 
     /// <summary>Output depends on where the caller started, so it never converges across ranges.</summary>
     PathDependent = 0x20000000,
+
+    /// <summary>Some inputs have no finite result, so a successful call can return NaN or +/-Infinity.</summary>
+    NanInfOutput = 0x40000000,
 }
 
 /// <summary>Which OHLCV components a price input consumes. Values match C's <c>TA_IN_PRICE_*</c>.</summary>

@@ -350,7 +350,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ACOS",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ACos",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -580,7 +580,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "ASIN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Trigonometric ASin",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2432,7 +2432,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DIV",
         group: FunctionGroup.MathOperators,
         hint: "Vector Arithmetic Div",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2876,7 +2876,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LN",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log Natural",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -2899,7 +2899,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "LOG10",
         group: FunctionGroup.MathTransform,
         hint: "Vector Log10",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -3924,7 +3924,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SQRT",
         group: FunctionGroup.MathTransform,
         hint: "Vector Square Root",
-        flags: FunctionFlags.Stream,
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [
@@ -4392,7 +4392,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "VWMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Volume Weighted Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.NanInfOutput,
         unstableId: null,
         inputs:
         [

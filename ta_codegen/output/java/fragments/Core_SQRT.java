@@ -76,6 +76,10 @@
     * <pre>{@code
     * outReal[i] = sqrt(inReal[i])
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -115,6 +119,10 @@
     * <pre>{@code
     * outReal[i] = sqrt(inReal[i])
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>A negative input has no real square root, so those elements come out NaN.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

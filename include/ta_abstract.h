@@ -197,6 +197,23 @@ typedef int TA_FuncFlags;
                                           * e.g. AD, ADOSC, OBV, NVI, PVI, SAR,
                                           * SAREXT.
                                           */
+#define TA_FUNC_FLG_NAN_INF_OUT 0x40000000 /* Some inputs of ordinary
+                                          * magnitude have no finite result, so
+                                          * a successful call can write NaN or
+                                          * +/-Inf (e.g. ACOS outside [-1,1],
+                                          * LN of a negative value or of zero,
+                                          * 0/0, x/0). Not set where a
+                                          * non-finite value needs magnitudes
+                                          * large enough to overflow the
+                                          * intermediate arithmetic (~1e160 and
+                                          * up), which no flag describes. The
+                                          * function's page on ta-lib.org says
+                                          * when. ta_regtest holds every
+                                          * function WITHOUT this flag to
+                                          * finite output.
+                                          * ACOS, ASIN, DIV, LN, LOG10, SQRT,
+                                          * VWMA -- and no others.
+                                          */
 
 typedef struct TA_FuncInfo
 {

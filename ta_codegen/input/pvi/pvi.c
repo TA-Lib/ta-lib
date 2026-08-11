@@ -28,7 +28,7 @@ TA_RetCode pvi(int startIdx, int endIdx,
 {
    int i;
    int outIdx;
-   double prevPVI, prevClose, prevVolume, tempClose, tempVolume;
+   double prevPVI, prevClose, prevVolume, tempClose, tempVolume, tempPVI;
 
    /* The index is a running cumulative value seeded at 1000, updated only on
     * bars whose volume increased versus the prior bar (Positive Volume).
@@ -47,7 +47,23 @@ TA_RetCode pvi(int startIdx, int endIdx,
        * close is a degenerate input that would otherwise emit NaN/Inf; carry
        * the index forward unchanged instead. Never triggers on real prices. */
       if( (tempVolume > prevVolume) && (prevClose != 0.0) )
-         prevPVI += ((tempClose-prevClose)/prevClose) * prevPVI;
+      {
+         /* The index is a running product, so it has no upper bound: enough
+          * compounding gains push it past the largest double. Keep the last
+          * representable value instead of writing +/-Inf, which no caller can
+          * chart and which poisons every arithmetic downstream of it. Real
+          * price series never come close.
+          *
+          * Written as a compound assignment on the copy, exactly as the update
+          * was before the guard: spelling it `a + r*a` would match the FMA
+          * fusion detector and silently re-round every bar, not just the
+          * overflowing one.
+          */
+         tempPVI = prevPVI;
+         tempPVI += ((tempClose-prevClose)/prevClose) * tempPVI;
+         if( IS_FINITE(tempPVI) )
+            prevPVI = tempPVI;
+      }
 
       outReal[outIdx++] = prevPVI;
       prevClose  = tempClose;

@@ -76,6 +76,10 @@
     * <pre>{@code
     * outReal[i] = log(inReal[i])
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -119,6 +123,10 @@
     * <pre>{@code
     * outReal[i] = log(inReal[i])
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

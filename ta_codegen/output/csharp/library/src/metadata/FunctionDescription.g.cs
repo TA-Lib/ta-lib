@@ -126,6 +126,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -544,6 +545,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3741,6 +3743,7 @@ public static class FunctionDescription
 		<GroupId>Math Operators</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4389,6 +4392,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4415,6 +4419,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6324,6 +6329,7 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7201,6 +7207,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Can Output NaN or +/-Inf</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

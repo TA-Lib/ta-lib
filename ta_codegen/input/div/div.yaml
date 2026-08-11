@@ -1,7 +1,7 @@
 name: DIV
 group: Math Operators
 hint: Vector Arithmetic Div
-flags: [stream]
+flags: [stream, nan_inf_output]
 inputs:
   - name: inReal0
     type: real

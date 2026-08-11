@@ -106,6 +106,7 @@ pub enum SpecialBuiltin {
     IsZero,
     IsZeroScaled,
     IsZeroOrNeg,
+    IsFinite,
     ArrayCopy,
     PerToK,
 }
@@ -119,6 +120,7 @@ impl SpecialBuiltin {
             "IS_ZERO" => Self::IsZero,
             "IS_ZERO_SCALED" => Self::IsZeroScaled,
             "IS_ZERO_OR_NEG" => Self::IsZeroOrNeg,
+            "IS_FINITE" => Self::IsFinite,
             "ARRAY_COPY" => Self::ArrayCopy,
             "PER_TO_K" => Self::PerToK,
             _ => return None,

@@ -78,6 +78,10 @@
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -123,6 +127,10 @@
     * <pre>{@code
     * outReal[i] = inReal0[i] / inReal1[i]
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

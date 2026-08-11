@@ -1711,8 +1711,8 @@ pub(crate) fn render_expr(
     CsExpr { ctx, registry, helpers }.walk(expr)
 }
 
-/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
-/// IS_ZERO_OR_NEG) in C# from already-rendered argument strings. Single source
+/// Render one of the boolean value builtins (the near-zero trio IS_ZERO /
+/// IS_ZERO_SCALED / IS_ZERO_OR_NEG, plus the exact IS_FINITE) in C# from already-rendered argument strings. Single source
 /// of the C# form for these predicates — used by both the indicator render path
 /// and the `eval_predicate` server handler. The epsilon literals are
 /// character-for-character the Java/C forms (they feed the bitwise gate).
@@ -1732,6 +1732,9 @@ pub fn csharp_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String {
         SpecialBuiltin::IsZeroOrNeg => args
             .first()
             .map_or_else(|| "false".to_string(), |x| format!("({x} < 0.00000000000001)")),
+        SpecialBuiltin::IsFinite => args
+            .first()
+            .map_or_else(|| "false".to_string(), |x| format!("(double.IsFinite({x}))")),
         _ => "false".to_string(),
     }
 }
@@ -1822,7 +1825,8 @@ fn render_func_call(
             }
             pred @ (SpecialBuiltin::IsZero
             | SpecialBuiltin::IsZeroScaled
-            | SpecialBuiltin::IsZeroOrNeg) => {
+            | SpecialBuiltin::IsZeroOrNeg
+            | SpecialBuiltin::IsFinite) => {
                 let rendered: Vec<String> = args
                     .iter()
                     .map(|a| render_expr(a, ctx, registry, helpers))

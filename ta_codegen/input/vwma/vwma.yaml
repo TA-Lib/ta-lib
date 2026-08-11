@@ -1,7 +1,7 @@
 name: VWMA
 group: Overlap Studies
 hint: Volume Weighted Moving Average
-flags: [overlap, stream]
+flags: [overlap, stream, nan_inf_output]
 inputs:
   - name: inReal
     type: real

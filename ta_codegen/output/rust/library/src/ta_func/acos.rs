@@ -76,6 +76,11 @@ impl Core {
     /// outReal[i] = acos(inReal[i])
     /// ```
     ///
+    /// # Notes
+    ///
+    /// * Outside \[-1, 1] there is no angle whose cosine is that value, so those elements come out
+    ///   NaN.
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

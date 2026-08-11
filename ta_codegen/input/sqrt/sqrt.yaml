@@ -1,7 +1,7 @@
 name: SQRT
 group: Math Transform
 hint: Vector Square Root
-flags: [stream]
+flags: [stream, nan_inf_output]
 inputs:
   - name: inReal
     type: real

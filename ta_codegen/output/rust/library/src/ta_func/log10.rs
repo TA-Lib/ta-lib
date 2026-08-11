@@ -75,6 +75,11 @@ impl Core {
     /// outReal[i] = log10(inReal[i])
     /// ```
     ///
+    /// # Notes
+    ///
+    /// * The logarithm is defined only for positive values: a negative input gives NaN, and a zero
+    ///   input gives negative infinity.
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

@@ -89,6 +89,7 @@ public partial class Core
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
+      double tempNVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -110,7 +111,22 @@ public partial class Core
           * the index forward unchanged instead. Never triggers on real prices.
           */
          if( tempVolume < prevVolume && prevClose != 0.0 ) {
-            prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempNVI = prevNVI;
+            tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+            if( (double.IsFinite(tempNVI)) ) {
+               prevNVI = tempNVI;
+            }
          }
          outReal[outIdx++] = prevNVI;
          prevClose = tempClose;
@@ -137,6 +153,7 @@ public partial class Core
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
+      double tempNVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -151,7 +168,11 @@ public partial class Core
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
          if( tempVolume < prevVolume && prevClose != 0.0 ) {
-            prevNVI += (tempClose - prevClose) / prevClose * prevNVI;
+            tempNVI = prevNVI;
+            tempNVI += (tempClose - prevClose) / prevClose * tempNVI;
+            if( (double.IsFinite(tempNVI)) ) {
+               prevNVI = tempNVI;
+            }
          }
          outReal[outIdx++] = prevNVI;
          prevClose = tempClose;
@@ -179,6 +200,9 @@ public partial class Core
    /// The index carries forward unchanged on bars whose volume did not fall (and on the
    /// degenerate case of a zero previous close, which would otherwise divide by zero).
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -231,6 +255,9 @@ public partial class Core
    /// The index carries forward unchanged on bars whose volume did not fall (and on the
    /// degenerate case of a zero previous close, which would otherwise divide by zero).
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

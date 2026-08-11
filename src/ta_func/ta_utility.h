@@ -128,6 +128,12 @@
  * form: `fabs(v) - E*scale <= 0` would contract to an FMA and diverge per-backend. */
 #define TA_IS_ZERO_SCALED(v,scale) (fabs(v) <= (TA_EPSILON*(scale)))
 
+/* True when v is a usable number: neither NaN nor +/-Inf. Unlike the macros
+ * above this is exact, not an epsilon band. Used by the running-product indices
+ * (NVI, PVI), which have no upper bound and would otherwise hand the caller an
+ * Inf that poisons every later arithmetic. */
+#define TA_IS_FINITE(v) (isfinite(v))
+
 /* The following macros are being used to do
  * the Hilbert Transform logic as documented
  * in John Ehlers books "Rocket Science For Traders".

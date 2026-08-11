@@ -8,6 +8,10 @@ Element-wise arcsine (inverse sine) of each input value. A vector math transform
 
 outReal[i] = asin(inReal[i])
 
+## Notes
+
+- Outside [-1, 1] there is no angle whose sine is that value, so those elements come out NaN.
+
 ## Inputs
 
 - `inReal` — Input values (domain [-1,1] for a real result)

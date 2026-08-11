@@ -69,6 +69,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 #include "ta_test_priv.h"
 
 /**** External functions declarations. ****/
@@ -2128,6 +2129,41 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
       return TA_ABS_TST_FAIL_CALLFUNC_3;
    }
 
+   /* A successful call writes finite values -- unless the function declares
+    * TA_FUNC_FLG_NAN_INF_OUT, the seven whose own domain has holes (ACOS/ASIN
+    * outside [-1,1], LN/LOG10/SQRT on a negative, DIV on 0/0 or x/0, VWMA on a
+    * volume-less window). Those are exempt; every other function is held to
+    * finite output on all five datasets, which is what makes the flag a
+    * contract rather than a docs annotation (issue #191).
+    *
+    * Placed HERE, against the call above, and not further down: the server
+    * verification and d2_param_vectors both re-issue TA_CallFunc into these
+    * same output buffers, so anywhere after them this would be reading another
+    * vector's output against this call's outNbElement.
+    *
+    * The datasets stay well inside double's range, so this cannot fire on the
+    * overflow class (non-finite only past ~1e160 of input) that is deliberately
+    * unflagged.
+    */
+   if( !(funcInfo->flags & TA_FUNC_FLG_NAN_INF_OUT) )
+   {
+      for( i=0; i < funcInfo->nbOutput; i++ )
+      {
+         TA_GetOutputParameterInfo( handle, i, &outputInfo );
+         if( outputInfo->type != TA_Output_Real )
+            continue;
+         for( j=0; j < outNbElement; j++ )
+         {
+            if( !isfinite(output[i][j]) )
+            {
+               printf( "Failed: non-finite output[%d][%d] = %e\n", i, j, output[i][j] );
+               TA_ParamHolderFree( paramHolder );
+               return TA_ABS_TST_FAIL_INVALID_OUTPUT;
+            }
+         }
+      }
+   }
+
    /* If server is connected, verify TA_GetLookback independently. */
    if( g_abstractPipe )
    {
@@ -2200,27 +2236,6 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
          }
       }
    }
-
-   /* TODO Add back nan/inf tests.
-   for( i=0; i < funcInfo->nbOutput; i++ )
-   {
-	  switch(outputInfo->type)
-	  {
-	  case TA_Output_Real:
-		for( j=0; j < outNbElement; j++ )
-		{
-			if( trio_isnan(output[i][j]) ||
-                trio_isinf(output[i][j]))
-			{
-				printf( "Failed for output[%d][%d] = %e\n", i, j, output[i][j] );
-				return TA_ABS_TST_FAIL_INVALID_OUTPUT;
-			}
-		}
-		break;
-	  case TA_Output_Integer:
-		break;
-	  }
-   }*/
 
    /* Do another function call where startIdx == endIdx == 0.
     * In that case, outBegIdx should ALWAYS be zero.

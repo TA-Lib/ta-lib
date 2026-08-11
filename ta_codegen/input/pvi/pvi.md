@@ -20,6 +20,10 @@ For each subsequent bar i:
 The index carries forward unchanged on bars whose volume did not rise (and on the
 degenerate case of a zero previous close, which would otherwise divide by zero).
 
+## Notes
+
+- The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.
+
 ## Inputs
 
 - `inClose` — Close price of each bar

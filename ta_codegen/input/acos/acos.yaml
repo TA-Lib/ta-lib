@@ -1,7 +1,7 @@
 name: ACOS
 group: Math Transform
 hint: Vector Trigonometric ACos
-flags: [stream]
+flags: [stream, nan_inf_output]
 inputs:
   - name: inReal
     type: real

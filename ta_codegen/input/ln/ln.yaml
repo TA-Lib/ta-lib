@@ -1,7 +1,7 @@
 name: LN
 group: Math Transform
 hint: Vector Log Natural
-flags: [stream]
+flags: [stream, nan_inf_output]
 inputs:
   - name: inReal
     type: real

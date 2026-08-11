@@ -142,6 +142,7 @@ Each backend renders enums appropriately:
 | `candlestick` | Output is a candlestick pattern signal | `TA_FUNC_FLG_CANDLESTICK` |
 | `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
 | `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
+| `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
 
 ```yaml
 flags: [overlap, unstable_period]
@@ -152,6 +153,31 @@ it from `TA_FuncInfo.flags`, and the `ta_regtest` range sweep reads the same bit
 to decide it cannot cross-compare the function's values across ranges. Dropping
 it is fail-safe — the sweep then value-compares the function and fails loudly if
 it is genuinely start-dependent (issue #98).
+
+`nan_inf_output` (issue #191) marks the seven functions with a hole in their own
+domain — `ACOS`/`ASIN` outside [-1,1], `LN`/`LOG10`/`SQRT` on a negative value
+(and `LN`/`LOG10` on zero, which is -Inf), `DIV` on 0/0 or x/0, `VWMA` on a
+window with no volume at all. Each one's `<name>.md` says when, in a `## Notes`
+bullet, and the website renders the flag as a `Can Output NaN or ±Inf` display
+flag. It is not set for a non-finite value that only appears once the
+intermediate arithmetic overflows on the *input* magnitudes themselves (around
+1e160 and up), which is a property of `double`, not of the indicator.
+
+`NVI` and `PVI` were the eighth and ninth candidates and are deliberately not
+flagged: they are running *products* with no upper bound, so sustained gains on
+their qualifying bars used to compound past the range of a double (reachable in
+~460 bars with prices held inside [1, 100], and hit for real by the 2000-bar
+random dataset). Rather than declare that, both now carry the last representable
+value forward instead of writing Inf — the `IS_FINITE(...)` guard in
+`input/nvi/nvi.c` and `input/pvi/pvi.c`. No other library guards this (Tulip,
+ta4j and bukosabino/ta all compound unguarded; pandas-ta side-steps it by
+summing returns instead of compounding them), so the choice was ours to make.
+
+The flag is a **contract, not an annotation**: `test_abstract.c` holds every
+function *without* it to finite output across all five of its datasets
+(negative, zero, two epsilon sets, random), so adding a function that emits NaN
+or Inf on ordinary input fails the suite until the flag — and the `## Notes`
+sentence explaining when — are written.
 
 ### Optional Input Flags
 

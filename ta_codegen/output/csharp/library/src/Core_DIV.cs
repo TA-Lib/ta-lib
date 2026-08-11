@@ -128,6 +128,9 @@ public partial class Core
    /// <code>
    /// outReal[i] = inReal0[i] / inReal1[i]
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -171,6 +174,9 @@ public partial class Core
    /// <code>
    /// outReal[i] = inReal0[i] / inReal1[i]
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error — the quotient is written as computed.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

@@ -90,6 +90,12 @@ impl Core {
     /// degenerate case of a zero previous close, which would otherwise divide by zero).
     /// ```
     ///
+    /// # Notes
+    ///
+    /// * The index compounds, so it has no upper bound. If a run of large rises ever pushes it past
+    ///   the largest representable number, the last representable value is carried forward instead
+    ///   of returning infinity. Real price series stay far away from that.
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.
@@ -173,6 +179,7 @@ impl Core {
         let mut prevVolume: f64 = 0.0_f64;
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
+        let mut tempPVI: f64 = 0.0_f64;
         // The index is a running cumulative value seeded at 1000, updated only on
         // bars whose volume increased versus the prior bar (Positive Volume).
         prevPVI = 1000.0;
@@ -186,7 +193,21 @@ impl Core {
             // close is a degenerate input that would otherwise emit NaN/Inf; carry
             // the index forward unchanged instead. Never triggers on real prices.
             if tempVolume > prevVolume && prevClose != 0.0 {
-                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+                // The index is a running product, so it has no upper bound: enough
+                // compounding gains push it past the largest double. Keep the last
+                // representable value instead of writing +/-Inf, which no caller can
+                // chart and which poisons every arithmetic downstream of it. Real
+                // price series never come close.
+                //
+                // Written as a compound assignment on the copy, exactly as the update
+                // was before the guard: spelling it `a + r*a` would match the FMA
+                // fusion detector and silently re-round every bar, not just the
+                // overflowing one.
+                tempPVI = prevPVI;
+                tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+                if (tempPVI).is_finite() {
+                    prevPVI = tempPVI;
+                }
             }
             outReal[outIdx] = prevPVI;
             outIdx += 1;
@@ -218,6 +239,7 @@ struct PVI_StreamState {
     prevPVI: f64,
     prevClose: f64,
     prevVolume: f64,
+    tempPVI: f64,
 }
 
 #[allow(non_snake_case)]
@@ -236,7 +258,21 @@ impl Core {
         // close is a degenerate input that would otherwise emit NaN/Inf; carry
         // the index forward unchanged instead. Never triggers on real prices.
         if tempVolume > sp.prevVolume && sp.prevClose != 0.0 {
-            sp.prevPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.prevPVI;
+            // The index is a running product, so it has no upper bound: enough
+            // compounding gains push it past the largest double. Keep the last
+            // representable value instead of writing +/-Inf, which no caller can
+            // chart and which poisons every arithmetic downstream of it. Real
+            // price series never come close.
+            //
+            // Written as a compound assignment on the copy, exactly as the update
+            // was before the guard: spelling it `a + r*a` would match the FMA
+            // fusion detector and silently re-round every bar, not just the
+            // overflowing one.
+            sp.tempPVI = sp.prevPVI;
+            sp.tempPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempPVI;
+            if (sp.tempPVI).is_finite() {
+                sp.prevPVI = sp.tempPVI;
+            }
         }
         (*outReal) = sp.prevPVI;
         sp.prevClose = tempClose;
@@ -266,6 +302,7 @@ impl Core {
         let mut prevVolume: f64 = 0.0_f64;
         let mut tempClose: f64 = 0.0_f64;
         let mut tempVolume: f64 = 0.0_f64;
+        let mut tempPVI: f64 = 0.0_f64;
         // The index is a running cumulative value seeded at 1000, updated only on
         // bars whose volume increased versus the prior bar (Positive Volume).
         prevPVI = 1000.0;
@@ -279,7 +316,21 @@ impl Core {
             // close is a degenerate input that would otherwise emit NaN/Inf; carry
             // the index forward unchanged instead. Never triggers on real prices.
             if tempVolume > prevVolume && prevClose != 0.0 {
-                prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+                // The index is a running product, so it has no upper bound: enough
+                // compounding gains push it past the largest double. Keep the last
+                // representable value instead of writing +/-Inf, which no caller can
+                // chart and which poisons every arithmetic downstream of it. Real
+                // price series never come close.
+                //
+                // Written as a compound assignment on the copy, exactly as the update
+                // was before the guard: spelling it `a + r*a` would match the FMA
+                // fusion detector and silently re-round every bar, not just the
+                // overflowing one.
+                tempPVI = prevPVI;
+                tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+                if (tempPVI).is_finite() {
+                    prevPVI = tempPVI;
+                }
             }
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevPVI;
             prevClose = tempClose;
@@ -294,6 +345,7 @@ impl Core {
             prevPVI,
             prevClose,
             prevVolume,
+            tempPVI,
         };
         Ok(PVI_Stream { core: self.clone(), state })
     }

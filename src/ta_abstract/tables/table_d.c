@@ -83,7 +83,7 @@ static const TA_OptInputParameterInfo *TA_DIV_OptInputs[] =
 DEF_FUNCTION( DIV,
               TA_GroupId_MathOperators,
               "Vector Arithmetic Div",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* DIV END */
 

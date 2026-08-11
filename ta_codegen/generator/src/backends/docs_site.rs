@@ -295,7 +295,10 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   ta-lib-python issues like #513).
 /// * **`Display Flags`** column — `Overlap Input` (output shares the input price
 ///   scale, drawn over price) and its complement `Independent Y-Axis` (own pane) —
-///   one of the two is always checked — plus `Candlestick` (integer pattern signal).
+///   one of the two is always checked — plus `Candlestick` (integer pattern signal)
+///   and `Can Output NaN or ±Inf` (`nan_inf_output`; a value the chart has no
+///   point to plot, so the caller has to decide what to draw there — the page's
+///   `## Notes` say which inputs cause it).
 ///
 /// `stream` (internal codegen concern) and `volume` (in the ABI but set by no
 /// function) are not surfaced.
@@ -328,6 +331,12 @@ fn inject_flags(
             "Candlestick",
             has("candlestick"),
             "Output is an integer candlestick-pattern signal (e.g. -100 / 0 / +100).",
+        ),
+        (
+            "Can Output NaN or ±Inf",
+            has("nan_inf_output"),
+            "Some inputs have no finite result, so a successful call can return NaN or ±Inf — \
+             a gap with nothing to plot. See Notes for when.",
         ),
     ];
 

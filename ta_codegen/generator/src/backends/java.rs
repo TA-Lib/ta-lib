@@ -158,7 +158,10 @@ pub(crate) fn is_boolean_expr(expr: &Expr, helpers: &HelperRegistry) -> bool {
         ),
         Expr::Not(_) => true,
         Expr::FuncCall(name, args) => {
-            if matches!(name.as_str(), "IS_ZERO" | "IS_ZERO_SCALED" | "IS_ZERO_OR_NEG") {
+            if matches!(
+                name.as_str(),
+                "IS_ZERO" | "IS_ZERO_SCALED" | "IS_ZERO_OR_NEG" | "IS_FINITE"
+            ) {
                 return true;
             }
             if let Some(helper) = helpers.get(name) {
@@ -2048,8 +2051,8 @@ pub(crate) fn render_expr(
     JavaExpr { ctx, registry, helpers }.walk(expr)
 }
 
-/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
-/// IS_ZERO_OR_NEG) in Java from already-rendered argument strings. Single source
+/// Render one of the boolean value builtins (the near-zero trio IS_ZERO /
+/// IS_ZERO_SCALED / IS_ZERO_OR_NEG, plus the exact IS_FINITE) in Java from already-rendered argument strings. Single source
 /// of the Java form for these predicates — used by both the indicator render path
 /// and the `eval_predicate` server handler (see the C backend for the rationale).
 pub(crate) fn java_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String {
@@ -2068,6 +2071,9 @@ pub(crate) fn java_predicate_expr(which: SpecialBuiltin, args: &[String]) -> Str
         SpecialBuiltin::IsZeroOrNeg => args
             .first()
             .map_or_else(|| "false".to_string(), |x| format!("({x} < 0.00000000000001)")),
+        SpecialBuiltin::IsFinite => args
+            .first()
+            .map_or_else(|| "false".to_string(), |x| format!("(Double.isFinite({x}))")),
         _ => "false".to_string(),
     }
 }
@@ -2188,8 +2194,9 @@ fn render_func_call(
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled
-                   | SpecialBuiltin::IsZeroOrNeg) => {
-                // IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG -> the Java epsilon form.
+                   | SpecialBuiltin::IsZeroOrNeg
+                   | SpecialBuiltin::IsFinite) => {
+                // The near-zero trio -> the Java epsilon form; IS_FINITE -> Double.isFinite.
                 // java_predicate_expr is the single source of that form (also used by
                 // the eval_predicate server handler).
                 let rendered: Vec<String> = args

@@ -516,6 +516,7 @@ pub fn func_flag_bits(flags: &[String]) -> u32 {
             "unstable_period" => b |= 0x0800_0000,
             "candlestick" => b |= 0x1000_0000,
             "path_dependent" => b |= 0x2000_0000, // TA_FUNC_FLG_PATH_DEP
+            "nan_inf_output" => b |= 0x4000_0000, // TA_FUNC_FLG_NAN_INF_OUT
             _ => {}
         }
     }

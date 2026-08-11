@@ -1526,6 +1526,7 @@ pub(crate) fn func_flag_to_c(flag: &str) -> Option<&'static str> {
         "unstable_period" => Some("TA_FUNC_FLG_UNST_PER"),
         "candlestick" => Some("TA_FUNC_FLG_CANDLESTICK"),
         "path_dependent" => Some("TA_FUNC_FLG_PATH_DEP"),
+        "nan_inf_output" => Some("TA_FUNC_FLG_NAN_INF_OUT"),
         _ => None,
     }
 }

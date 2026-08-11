@@ -63,4 +63,7 @@ public final class FuncFlags {
    /** Output depends on where the caller started, so it never converges across ranges. */
    public static final int PATH_DEPENDENT = 0x20000000;
 
+   /** Some inputs have no finite result, so a successful call can return NaN or +/-Infinity. */
+   public static final int NAN_INF_OUTPUT = 0x40000000;
+
 }

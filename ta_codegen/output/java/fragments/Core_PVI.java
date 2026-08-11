@@ -43,6 +43,7 @@
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
+      double tempPVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -64,7 +65,22 @@
           * the index forward unchanged instead. Never triggers on real prices.
           */
          if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( (Double.isFinite(tempPVI)) ) {
+               prevPVI = tempPVI;
+            }
          }
          outReal[outIdx++] = prevPVI;
          prevClose = tempClose;
@@ -89,6 +105,7 @@
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
+      double tempPVI = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -103,7 +120,11 @@
          tempClose = (double)inClose[i];
          tempVolume = (double)inVolume[i];
          if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( (Double.isFinite(tempPVI)) ) {
+               prevPVI = tempPVI;
+            }
          }
          outReal[outIdx++] = prevPVI;
          prevClose = tempClose;
@@ -129,6 +150,10 @@
     * The index carries forward unchanged on bars whose volume did not rise (and on the
     * degenerate case of a zero previous close, which would otherwise divide by zero).
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -179,6 +204,10 @@
     * The index carries forward unchanged on bars whose volume did not rise (and on the
     * degenerate case of a zero previous close, which would otherwise divide by zero).
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -237,6 +266,7 @@
       double prevPVI;
       double prevClose;
       double prevVolume;
+      double tempPVI;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
 
@@ -256,6 +286,7 @@
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
          this.prevVolume = other.prevVolume;
+         this.tempPVI = other.tempPVI;
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
       }
@@ -310,7 +341,22 @@
        * the index forward unchanged instead. Never triggers on real prices.
        */
       if( tempVolume > sp.prevVolume && sp.prevClose != 0.0 ) {
-         sp.prevPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.prevPVI;
+         /* The index is a running product, so it has no upper bound: enough
+          * compounding gains push it past the largest double. Keep the last
+          * representable value instead of writing +/-Inf, which no caller can
+          * chart and which poisons every arithmetic downstream of it. Real
+          * price series never come close.
+          *
+          * Written as a compound assignment on the copy, exactly as the update
+          * was before the guard: spelling it `a + r*a` would match the FMA
+          * fusion detector and silently re-round every bar, not just the
+          * overflowing one.
+          */
+         sp.tempPVI = sp.prevPVI;
+         sp.tempPVI += (tempClose - sp.prevClose) / sp.prevClose * sp.tempPVI;
+         if( (Double.isFinite(sp.tempPVI)) ) {
+            sp.prevPVI = sp.tempPVI;
+         }
       }
       sp.cur_outReal = sp.prevPVI;
       sp.prevClose = tempClose;
@@ -325,6 +371,7 @@
       double prevVolume = 0;
       double tempClose = 0;
       double tempVolume = 0;
+      double tempPVI = 0;
       int historyLen = inClose.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 || inVolume.length != inClose.length ) {
@@ -348,7 +395,22 @@
           * the index forward unchanged instead. Never triggers on real prices.
           */
          if( tempVolume > prevVolume && prevClose != 0.0 ) {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( (Double.isFinite(tempPVI)) ) {
+               prevPVI = tempPVI;
+            }
          }
          outReal[outIdx++ * outStride] = prevPVI;
          prevClose = tempClose;
@@ -360,6 +422,7 @@
       sp.prevPVI = prevPVI;
       sp.prevClose = prevClose;
       sp.prevVolume = prevVolume;
+      sp.tempPVI = tempPVI;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }

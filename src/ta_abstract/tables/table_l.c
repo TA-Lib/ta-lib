@@ -157,7 +157,7 @@ static const TA_OptInputParameterInfo *TA_LN_OptInputs[] =
 DEF_FUNCTION( LN,
               TA_GroupId_MathTransform,
               "Vector Log Natural",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* LN END */
 
@@ -180,7 +180,7 @@ static const TA_OptInputParameterInfo *TA_LOG10_OptInputs[] =
 DEF_FUNCTION( LOG10,
               TA_GroupId_MathTransform,
               "Vector Log10",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* LOG10 END */
 

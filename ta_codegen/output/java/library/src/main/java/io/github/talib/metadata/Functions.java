@@ -285,7 +285,7 @@ public final class Functions {
 
    private static FunctionInfo f_ACOS() {
       return new FunctionInfo(
-         "ACOS", "Math Transform", "Vector Trigonometric ACos", 0x02000000,
+         "ACOS", "Math Transform", "Vector Trigonometric ACos", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -446,7 +446,7 @@ public final class Functions {
 
    private static FunctionInfo f_ASIN() {
       return new FunctionInfo(
-         "ASIN", "Math Transform", "Vector Trigonometric ASin", 0x02000000,
+         "ASIN", "Math Transform", "Vector Trigonometric ASin", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1503,7 +1503,7 @@ public final class Functions {
 
    private static FunctionInfo f_DIV() {
       return new FunctionInfo(
-         "DIV", "Math Operators", "Vector Arithmetic Div", 0x02000000,
+         "DIV", "Math Operators", "Vector Arithmetic Div", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal0", 0x00000000),
             new InputInfo(InputType.REAL, "inReal1", 0x00000000)
@@ -1776,7 +1776,7 @@ public final class Functions {
 
    private static FunctionInfo f_LN() {
       return new FunctionInfo(
-         "LN", "Math Transform", "Vector Log Natural", 0x02000000,
+         "LN", "Math Transform", "Vector Log Natural", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1788,7 +1788,7 @@ public final class Functions {
 
    private static FunctionInfo f_LOG10() {
       return new FunctionInfo(
-         "LOG10", "Math Transform", "Vector Log10", 0x02000000,
+         "LOG10", "Math Transform", "Vector Log10", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2569,7 +2569,7 @@ public final class Functions {
 
    private static FunctionInfo f_SQRT() {
       return new FunctionInfo(
-         "SQRT", "Math Transform", "Vector Square Root", 0x02000000,
+         "SQRT", "Math Transform", "Vector Square Root", 0x42000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2931,7 +2931,7 @@ public final class Functions {
 
    private static FunctionInfo f_VWMA() {
       return new FunctionInfo(
-         "VWMA", "Overlap Studies", "Volume Weighted Moving Average", 0x03000000,
+         "VWMA", "Overlap Studies", "Volume Weighted Moving Average", 0x43000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000),
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)

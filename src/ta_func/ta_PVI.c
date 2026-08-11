@@ -78,6 +78,7 @@ TA_LIB_API TA_RetCode TA_PVI( int    startIdx,
    double prevVolume;
    double tempClose;
    double tempVolume;
+   double tempPVI;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -108,7 +109,23 @@ TA_LIB_API TA_RetCode TA_PVI( int    startIdx,
        */
       if( tempVolume > prevVolume && prevClose != 0.0 )
       {
-         prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+         /* The index is a running product, so it has no upper bound: enough
+          * compounding gains push it past the largest double. Keep the last
+          * representable value instead of writing +/-Inf, which no caller can
+          * chart and which poisons every arithmetic downstream of it. Real
+          * price series never come close.
+          *
+          * Written as a compound assignment on the copy, exactly as the update
+          * was before the guard: spelling it `a + r*a` would match the FMA
+          * fusion detector and silently re-round every bar, not just the
+          * overflowing one.
+          */
+         tempPVI = prevPVI;
+         tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+         if( TA_IS_FINITE(tempPVI) )
+         {
+            prevPVI = tempPVI;
+         }
       }
       outReal[outIdx++] = prevPVI;
       prevClose = tempClose;
@@ -134,6 +151,7 @@ TA_RetCode TA_S_PVI( int    startIdx,
    double prevVolume;
    double tempClose;
    double tempVolume;
+   double tempPVI;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -157,7 +175,12 @@ TA_RetCode TA_S_PVI( int    startIdx,
       tempVolume = (double)inVolume[i];
       if( tempVolume > prevVolume && prevClose != 0.0 )
       {
-         prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+         tempPVI = prevPVI;
+         tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+         if( TA_IS_FINITE(tempPVI) )
+         {
+            prevPVI = tempPVI;
+         }
       }
       outReal[outIdx++] = prevPVI;
       prevClose = tempClose;
@@ -174,6 +197,7 @@ struct TA_PVI_Stream {
    double prevPVI;
    double prevClose;
    double prevVolume;
+   double tempPVI;
 };
 
 /* Private function, not in public API. */
@@ -190,7 +214,23 @@ static void TA_PVI_StepInternal( struct TA_PVI_Stream *sp, double inClose, doubl
     */
    if( tempVolume > sp->prevVolume && sp->prevClose != 0.0 )
    {
-      sp->prevPVI += (tempClose - sp->prevClose) / sp->prevClose * sp->prevPVI;
+      /* The index is a running product, so it has no upper bound: enough
+       * compounding gains push it past the largest double. Keep the last
+       * representable value instead of writing +/-Inf, which no caller can
+       * chart and which poisons every arithmetic downstream of it. Real
+       * price series never come close.
+       *
+       * Written as a compound assignment on the copy, exactly as the update
+       * was before the guard: spelling it `a + r*a` would match the FMA
+       * fusion detector and silently re-round every bar, not just the
+       * overflowing one.
+       */
+      sp->tempPVI = sp->prevPVI;
+      sp->tempPVI += (tempClose - sp->prevClose) / sp->prevClose * sp->tempPVI;
+      if( TA_IS_FINITE(sp->tempPVI) )
+      {
+         sp->prevPVI = sp->tempPVI;
+      }
    }
    *outReal= sp->prevPVI;
    sp->prevClose = tempClose;
@@ -223,6 +263,7 @@ static TA_RetCode TA_PVI_OpenCore( struct TA_PVI_Stream **stream, const double i
       double prevVolume = 0.0;
       double tempClose;
       double tempVolume;
+      double tempPVI = 0.0;
       /* The index is a running cumulative value seeded at 1000, updated only on
        * bars whose volume increased versus the prior bar (Positive Volume).
        */
@@ -240,7 +281,23 @@ static TA_RetCode TA_PVI_OpenCore( struct TA_PVI_Stream **stream, const double i
           */
          if( tempVolume > prevVolume && prevClose != 0.0 )
          {
-            prevPVI += (tempClose - prevClose) / prevClose * prevPVI;
+            /* The index is a running product, so it has no upper bound: enough
+             * compounding gains push it past the largest double. Keep the last
+             * representable value instead of writing +/-Inf, which no caller can
+             * chart and which poisons every arithmetic downstream of it. Real
+             * price series never come close.
+             *
+             * Written as a compound assignment on the copy, exactly as the update
+             * was before the guard: spelling it `a + r*a` would match the FMA
+             * fusion detector and silently re-round every bar, not just the
+             * overflowing one.
+             */
+            tempPVI = prevPVI;
+            tempPVI += (tempClose - prevClose) / prevClose * tempPVI;
+            if( TA_IS_FINITE(tempPVI) )
+            {
+               prevPVI = tempPVI;
+            }
          }
          outReal[outIdx++ * outStride] = prevPVI;
          prevClose = tempClose;
@@ -256,6 +313,7 @@ static TA_RetCode TA_PVI_OpenCore( struct TA_PVI_Stream **stream, const double i
       sp->prevPVI = prevPVI;
       sp->prevClose = prevClose;
       sp->prevVolume = prevVolume;
+      sp->tempPVI = tempPVI;
       *stream = sp;
       return TA_SUCCESS;
    }

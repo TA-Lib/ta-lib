@@ -8,6 +8,10 @@ Vector trigonometric arc cosine: applies acos() to each input value. A Math Tran
 
 outReal[i] = acos(inReal[i])
 
+## Notes
+
+- Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.
+
 ## Inputs
 
 - `inReal` — input values (expected in [-1, 1])

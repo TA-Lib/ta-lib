@@ -23,6 +23,10 @@ For each subsequent bar i:
 The index carries forward unchanged on bars whose volume did not fall (and on the
 degenerate case of a zero previous close, which would otherwise divide by zero).
 
+## Notes
+
+- The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.
+
 ## Inputs
 
 - `inClose` — Close price of each bar
@@ -41,6 +45,7 @@ degenerate case of a zero previous close, which would otherwise divide by zero).
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Overlap Input</span> |
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
 
 ## Implementation
 

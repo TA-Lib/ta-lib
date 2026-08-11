@@ -4006,8 +4006,8 @@ pub(crate) fn render_expr(
     RustExpr { ctx, opt_real_params, registry, helpers }.walk(expr)
 }
 
-/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
-/// IS_ZERO_OR_NEG) in Rust from already-rendered argument strings. Single source
+/// Render one of the boolean value builtins (the near-zero trio IS_ZERO /
+/// IS_ZERO_SCALED / IS_ZERO_OR_NEG, plus the exact IS_FINITE) in Rust from already-rendered argument strings. Single source
 /// of the Rust form for these predicates — used by both the indicator render path
 /// and the `eval_predicate` server handler (see the C backend for the rationale).
 pub(crate) fn rust_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String {
@@ -4025,6 +4025,9 @@ pub(crate) fn rust_predicate_expr(which: SpecialBuiltin, args: &[String]) -> Str
         SpecialBuiltin::IsZeroOrNeg => args
             .first()
             .map_or_else(|| "false".to_string(), |x| format!("({x}) < 1e-14")),
+        SpecialBuiltin::IsFinite => args
+            .first()
+            .map_or_else(|| "false".to_string(), |x| format!("({x}).is_finite()")),
         _ => "false".to_string(),
     }
 }
@@ -4480,8 +4483,9 @@ fn render_func_call(
             SpecialBuiltin::Compatibility => "self.compatibility".to_string(),
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled
-                   | SpecialBuiltin::IsZeroOrNeg) => {
-                // IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG -> the Rust epsilon form.
+                   | SpecialBuiltin::IsZeroOrNeg
+                   | SpecialBuiltin::IsFinite) => {
+                // The near-zero trio -> the Rust epsilon form; IS_FINITE -> is_finite().
                 // rust_predicate_expr is the single source of that form (also used by
                 // the eval_predicate server handler).
                 let rendered: Vec<String> = args
@@ -5890,6 +5894,7 @@ fn is_ta_function(name: &str) -> bool {
             "UNSTABLE_PERIOD"
                 | "IS_ZERO"
                 | "IS_ZERO_OR_NEG"
+                | "IS_FINITE"
                 | "ARRAY_COPY"
                 | "PER_TO_K"
                 | "COMPATIBILITY"

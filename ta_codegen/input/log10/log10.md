@@ -8,6 +8,10 @@ Vector base-10 logarithm. Applies log10 element-wise over each input value.
 
 outReal[i] = log10(inReal[i])
 
+## Notes
+
+- The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.
+
 ## Inputs
 
 - `inReal` — Input values

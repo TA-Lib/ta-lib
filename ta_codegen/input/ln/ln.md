@@ -8,6 +8,10 @@ Vector natural logarithm: applies the natural log (base e) elementwise to the in
 
 outReal[i] = log(inReal[i])
 
+## Notes
+
+- The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.
+
 ## Inputs
 
 - `inReal` — Input value series

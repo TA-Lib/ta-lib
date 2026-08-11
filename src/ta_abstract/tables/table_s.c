@@ -426,7 +426,7 @@ static const TA_OptInputParameterInfo *TA_SQRT_OptInputs[] =
 DEF_FUNCTION( SQRT,
               TA_GroupId_MathTransform,
               "Vector Square Root",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* SQRT END */
 

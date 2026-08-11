@@ -2031,8 +2031,8 @@ fn render_expr(
     CExpr { ctx, registry, helpers }.walk(expr)
 }
 
-/// Render one of the boolean near-zero builtins (IS_ZERO / IS_ZERO_SCALED /
-/// IS_ZERO_OR_NEG) in C from already-rendered argument strings. This is the
+/// Render one of the boolean value builtins (the near-zero trio IS_ZERO /
+/// IS_ZERO_SCALED / IS_ZERO_OR_NEG, plus the exact IS_FINITE) in C from already-rendered argument strings. This is the
 /// single source of the C form for these predicates: both the indicator
 /// `render_func_call` path and the `eval_predicate` server handler call it, so
 /// the cross-language predicate test verifies exactly the form indicators use.
@@ -2048,6 +2048,7 @@ pub(crate) fn c_predicate_expr(which: SpecialBuiltin, args: &[String]) -> String
             }
         }
         SpecialBuiltin::IsZeroOrNeg => format!("TA_IS_ZERO_OR_NEG({a0})"),
+        SpecialBuiltin::IsFinite => format!("TA_IS_FINITE({a0})"),
         _ => "TA_IS_ZERO(0)".to_string(),
     }
 }
@@ -2274,8 +2275,9 @@ fn render_func_call(
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled
-                   | SpecialBuiltin::IsZeroOrNeg) => {
-                // IS_ZERO / IS_ZERO_SCALED / IS_ZERO_OR_NEG -> the C macro form.
+                   | SpecialBuiltin::IsZeroOrNeg
+                   | SpecialBuiltin::IsFinite) => {
+                // The near-zero trio and IS_FINITE -> their ta_utility.h macro form.
                 // c_predicate_expr is the single source of that form (also used by
                 // the eval_predicate server handler), so the cross-language test
                 // exercises exactly what the indicators emit.

@@ -75,6 +75,10 @@ impl Core {
     /// outReal[i] = sqrt(inReal[i])
     /// ```
     ///
+    /// # Notes
+    ///
+    /// * A negative input has no real square root, so those elements come out NaN.
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

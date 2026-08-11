@@ -76,6 +76,11 @@ impl Core {
     /// outReal[i] = inReal0[i] / inReal1[i]
     /// ```
     ///
+    /// # Notes
+    ///
+    /// * Zero divided by zero gives NaN; anything else divided by zero gives positive or negative
+    ///   infinity. Neither is reported as an error — the quotient is written as computed.
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

@@ -126,6 +126,9 @@ public partial class Core
    /// <code>
    /// outReal[i] = log(inReal[i])
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -167,6 +170,9 @@ public partial class Core
    /// <code>
    /// outReal[i] = log(inReal[i])
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

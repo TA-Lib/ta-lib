@@ -70,6 +70,7 @@ pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("unstable_period", "Unstable Period"),
     ("stream", "Streaming"),
     ("path_dependent", "Path Dependent"),
+    ("nan_inf_output", "Can Output NaN or +/-Inf"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {

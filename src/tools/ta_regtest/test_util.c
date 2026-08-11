@@ -323,18 +323,23 @@ ErrorNumber checkForNAN( const TA_Real *buffer,
     */
    for( i=0; i < nbElement; i++,idx++ )
    {
-      /* TODO Add back some nan/inf checking
-      if( trio_isnan(theBuffer[idx]) )
+      /* The callers of this pass an INPUT buffer (checkDataSame asserts the
+       * function did not scribble on its own input), and every input the suite
+       * builds is finite, so this needs no TA_FUNC_FLG_NAN_INF_OUT exemption:
+       * a NaN or Inf here is a function writing where it must not. Kept as two
+       * checks so each keeps its own error number, as before.
+       */
+      if( isnan(theBuffer[idx]) )
       {
          printf( "Fail: Not a number find within the data (%d,%f)\n", i, theBuffer[idx] );
          return TA_TEST_TFRR_OVERLAP_OR_NAN_1;
       }
 
-      if( trio_isinf(theBuffer[idx]) )
+      if( isinf(theBuffer[idx]) )
       {
-         printf( "Fail: Not a number find within the data (%d,%f)\n", i, theBuffer[idx] );
+         printf( "Fail: Infinity find within the data (%d,%f)\n", i, theBuffer[idx] );
          return TA_TEST_TFRR_OVERLAP_OR_NAN_2;
-      }*/
+      }
 
       if( theBuffer[idx] == RESV_PATTERN_PREFIX )
       {
@@ -473,6 +478,8 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
                                 TA_Real oneOfTheExpectedOutReal,
                                 unsigned int oneOfTheExpectedOutRealIndex )
 {
+   unsigned int i;
+
    if( retCode != expectedRetCode )
    {
       printf( "Fail: RetCode %d different than expected %d\n", retCode, expectedRetCode );
@@ -495,16 +502,21 @@ ErrorNumber checkExpectedValue( const TA_Real *data,
    }
 
 
-   /* Make sure the range of output does not contains NAN. */
-   /* TODO Add back nan/inf checking
+   /* Make sure the range of output is finite.
+    *
+    * No TA_FUNC_FLG_NAN_INF_OUT exemption: this path carries no function
+    * identity, and none of the flagged functions has a hand-written
+    * expected-value test. Should one ever get one, either feed it in-domain
+    * data or thread the function's flags in -- do not weaken this for all 168.
+    */
    for( i=0; i < outNbElement; i++ )
    {
-      if( trio_isnan(data[i]) )
+      if( !isfinite(data[i]) )
       {
-         printf( "Fail: Not a number find within the data (%d,%f)\n", i, data[i] );
+         printf( "Fail: Non-finite value find within the data (%d,%f)\n", i, data[i] );
          return TA_TEST_TFRR_OVERLAP_OR_NAN_3;
       }
-   }*/
+   }
 
    /* Verify that the expected output is there. */
 

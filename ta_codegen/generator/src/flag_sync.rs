@@ -74,6 +74,7 @@ mod tests {
             // Landed on dev via #127 while this branch was in flight; the
             // entry is inert until the merged header carries the constant.
             "TA_FUNC_FLG_PATH_DEP" => "path_dependent",
+            "TA_FUNC_FLG_NAN_INF_OUT" => "nan_inf_output",
             "TA_OPTIN_IS_PERCENT" => "percent",
             "TA_OPTIN_IS_DEGREE" => "degree",
             "TA_OPTIN_IS_CURRENCY" => "currency",

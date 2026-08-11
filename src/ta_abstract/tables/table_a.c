@@ -93,7 +93,7 @@ static const TA_OptInputParameterInfo *TA_ACOS_OptInputs[] =
 DEF_FUNCTION( ACOS,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ACos",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* ACOS END */
 
@@ -365,7 +365,7 @@ static const TA_OptInputParameterInfo *TA_ASIN_OptInputs[] =
 DEF_FUNCTION( ASIN,
               TA_GroupId_MathTransform,
               "Vector Trigonometric ASin",
-              TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
              );
 /* ASIN END */
 
