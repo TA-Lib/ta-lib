@@ -151,7 +151,13 @@ static TA_RetCode CallTestFunction( RangeTestFunction testFunction,
                                     unsigned int *isOutputInteger );
 
 /**** Local variables definitions.     ****/
-/* None */
+
+/* The range sweeps skip combinations at random to stay affordable; this divides
+ * every skip, so one run samples that much more of the sweep. At 1 a defect
+ * needing a particular (startIdx, fixSize, unstablePeriod) cell showed up in
+ * about half of the runs, which made a single green run weak evidence. 16 is
+ * ~40s and caught such a defect 6 times out of 6. */
+#define TA_SWEEP_DENSITY 16
 
 /**** Global functions definitions.   ****/
 static int ta_g_val = 0;
@@ -769,7 +775,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
                /* Randomly skips from 0 to 239 tests. Never
                 * make unstablePeriod exceed 240.
                 */
-               temp = (rand() % 240);
+               temp = (rand() % (240/TA_SWEEP_DENSITY));
                unstablePeriod += temp;
                if( unstablePeriod > 240 )
                   unstablePeriod = 240;
@@ -785,7 +791,7 @@ static ErrorNumber doRangeTestForOneOutput( RangeTestFunction testFunction,
             /* Randomly skips from 0 to 239 tests. Never
              * make fixSize exceed 240.
              */
-            temp = (rand() % 239);
+            temp = (rand() % (239/TA_SWEEP_DENSITY));
             fixSize += temp;
             if( fixSize > 240 )
                fixSize = 240;
@@ -985,7 +991,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
                      /* Randomly skips from 0 to 200 verification.
                       * Never make it skip the last 20 values.
                       */
-                     i += (rand() % 200);
+                     i += (rand() % (200/TA_SWEEP_DENSITY));
                      if( i > temp )
                         i = temp;
                   }
@@ -1079,7 +1085,7 @@ static ErrorNumber doRangeTestFixSize( RangeTestFunction testFunction,
          if( (startIdx > 30) && ((startIdx+100) <= (MAX_RANGE_SIZE-fixSize)) )
          {
             /* Randomly skips from 40 to 100 tests. */
-            temp = (rand() % 100)+40;
+            temp = (rand() % (100/TA_SWEEP_DENSITY))+(40/TA_SWEEP_DENSITY);
             startIdx += temp;
          }
       }
