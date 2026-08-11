@@ -428,8 +428,8 @@ about, and qualifying it there would cost more clarity than it buys.
 ## `ta_test_legacy` — the frozen v0.6.4 reference (issue #188)
 
 The tight counterpart to the hand-written groups. `ta_test_legacy_data.h` holds
-938 values that released **v0.6.4** produced over the frozen 252-bar series —
-222 cases, 148 functions — each at the full 17 digits that round-trips to the
+911 values that released **v0.6.4** produced over the frozen 252-bar series —
+216 cases, 142 functions — each at the full 17 digits that round-trips to the
 exact double. `ta_test_legacy.c` replays every case against the current library
 (tag `LEGACY,064,FROZEN`). It is in the default `./ta_regtest` run: no tag, no
 worktree, no second build, no network.
@@ -459,19 +459,35 @@ cannot catch a bug it already had. It is a *pin*. Correctness lives in the
 independent oracles: `test_stddev.c`'s two-pass/NIST variance work, the
 candlestick predicate gate, the metamorphic laws.
 
-**Scope: 148 of 168.** 20 are deliberately absent — 7 post-date v0.6.4 (CMF,
+**Scope: 142 of 168.** 26 are deliberately absent — 7 post-date v0.6.4 (CMF,
 CMOU, HMA, NVI, PVI, PVO, VWMA); STOCHRSI diverges on purpose (#107, pinned by
-`test_stoch.c`); and 12 pure libm passthroughs (ACOS…TANH). That last exclusion
-is the one worth internalising: `atan`/`sin`/`cos`/`exp`/`log` are **not**
-correctly rounded, so a frozen value for them asserts "your libm matches the
-machine that generated this table" and nothing about TA-Lib — it would false-red
-on musl, macOS or a later glibc. `sqrt`/`ceil`/`floor` are correctly rounded and
-stay in scope. This hazard is invisible to `--fuzz-064`, where both sides share
-one libm on one host; hardcoding is what exposes it.
+`test_stoch.c`); and 18 for one reason: **the host libm**.
 
-**Tolerances are measured, not contractual.** Of the 83 in-scope functions with a
-real output, **58 reproduce v0.6.4 bit for bit** and carry no row at all; 25 need
-a bound. Each bound is that function's largest measured deviation on this series
+That reason is the one worth internalising, because it is *created* by freezing.
+`--fuzz-064` compares two binaries on one host with one libm, so it never sees
+it; a frozen table is read on every host. `atan`/`sin`/`cos`/`exp`/`log` are not
+correctly rounded, so a frozen value for the 12 pure passthroughs (ACOS…TANH)
+asserts "your libm matches the machine that generated this table" and nothing
+about TA-Lib. `sqrt`/`ceil`/`floor` are correctly rounded and stay in scope.
+
+The 6 Hilbert functions (HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE,
+HT_TRENDLINE, HT_TRENDMODE) go out for the same reason with a sharper edge: they
+turn an atan into an **integer** — `period = 360/(atan(Im/Re)*rad2Deg)`, then
+`DCPeriodInt = (int)DCPeriod` used as a loop bound. One ULP of libm difference
+near an integer boundary changes the iteration count, so the output moves
+*discontinuously* and no tolerance can bound it; HT_TRENDMODE's output is an
+integer outright. That is not hypothetical here — `scripts/package.py` builds and
+runs `ta_regtest.exe` under **MSVC** on the Windows nightly, against a different
+CRT. Their cross-implementation coverage is `--xlang-hash`, which carries a
+transcendental tolerance lane for exactly this reason.
+
+Two functions still reach `atan` and stay in: MAMA (damped adaptive alpha) and
+LINEARREG_ANGLE (atan is the terminal operation). Both are smooth in it, MAMA
+carries the 8-ULP libm floor, and if either fails on a non-glibc host the header
+says what to do.
+
+**Tolerances are measured, not contractual.** Most in-scope functions with a real
+output reproduce v0.6.4 bit for bit and carry no row at all; 21 need a bound. Each bound is that function's largest measured deviation on this series
 × ~3 — absolute, because there is only one magnitude here, unlike `--fuzz-064`'s
 1e-7…1e9 shapes which need scaled bounds, caps and conditioning gates. The
 result is several orders tighter than the 1e-9 relative FMA contract would be:
@@ -481,11 +497,8 @@ here, because their manifest divergences need extreme magnitudes to appear.
 zero/negative bound, so it cannot accumulate dead or vacuous slack.
 
 The one exception to "3× measured" is a floor of **8 ULP at the output
-magnitude** for functions reaching a non-correctly-rounded libm routine (binds
-for MAMA, HT_DCPHASE, HT_SINE). Two exposures are left unpadded on purpose and
-named in the header: HT_TRENDLINE is bit-exact here but reaches `atan`, and
-HT_TRENDMODE reaches `atan` with an **integer** output, where no tolerance can
-absorb a 1-ULP libm shift near a decision boundary.
+magnitude** for a function reaching a non-correctly-rounded libm routine — only
+MAMA needs it now.
 
 **Coverage this adds.** The 61 candlestick patterns and the price/vector-math
 family had *no* pinned expected value against the standard series before this —
@@ -498,10 +511,11 @@ that *stops*. Both sets are listed in the header rather than left implicit.
 output, plus — for every INTEGER output — the first, middle and last occurrence
 of both its minimum and its maximum. The obvious rule (pin the bars where the
 pattern *fires*, i.e. the non-zero ones) reads backwards any discrete output
-whose rare arm is zero. HT_TRENDMODE is the case that proves it: it sits at 1
-for most of the series, so first/middle/last landed on 1, 1, 1 and pinned
-nothing at all. Sabotaging it to return a constant 1 passed under that rule and
-fails under min/max at index 7.
+whose rare arm is zero. HT_TRENDMODE is how that was found: it sits at 1 for most
+of the series, so first/middle/last landed on 1, 1, 1 and pinned nothing —
+forcing it to a constant 1 passed under that rule and failed under min/max at
+index 7. It has since left the freeze for the libm reason above, but the rule it
+exposed is what keeps the candlestick pins honest.
 
 **Non-vacuity.** The group prints and asserts what it actually compared —
 counters incremented *at* each comparison, never from `nbSample`. It fails if the

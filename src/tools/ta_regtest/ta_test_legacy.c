@@ -99,22 +99,21 @@
  * divergences need the fuzz corpus's extreme magnitudes to appear, so pinning
  * them here at the contract bound would have bought unearned slack.
  *
- * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": the functions that call a libm
- * routine which is NOT correctly rounded (atan/sin/cos/exp/log) get a floor of
- * 8 ULP at their own output magnitude, because their last bit is a property of
- * the host libm rather than of TA-Lib. That floor binds for MAMA, HT_DCPHASE
- * and HT_SINE. It is the same reason the 12 pure libm passthroughs are excluded
- * from the freeze entirely (see ta_test_legacy_data.h) -- there the whole answer
- * is the libm's, so there is nothing left to assert.
+ * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": a function reaching a libm routine
+ * that is NOT correctly rounded (atan/sin/cos/exp/log) gets a floor of 8 ULP at
+ * its own output magnitude, because its last bit is a property of the host libm
+ * rather than of TA-Lib. Only MAMA needs it now.
  *
- * TWO KNOWN PLATFORM EXPOSURES, deliberately left unpadded rather than given
- * speculative slack:
- *   - HT_TRENDLINE reaches atan yet is bit-exact here, so it carries no row. A
- *     host libm differing by 1 ULP could make it need one.
- *   - HT_TRENDMODE reaches atan and its output is an INTEGER, so no tolerance
- *     can absorb a libm difference -- a 1 ULP shift near a decision boundary
- *     flips the value outright. If it ever fails on another host, that is the
- *     cause, and the answer is to exclude it, not to widen anything.
+ * The bounds here were measured with both sides on ONE host's libm, so for the
+ * two functions that still reach atan they bound the fma() drift, NOT a
+ * cross-libm difference. That is survivable for these two because the atan is
+ * smooth in their output: MAMA feeds it into a damped adaptive alpha, and
+ * LINEARREG_ANGLE's atan is the terminal operation. It was NOT survivable for
+ * the Hilbert family, whose atan becomes an integer loop bound -- which is why
+ * those six are excluded outright rather than given a wider bound (see
+ * ta_test_legacy_data.h). If MAMA or LINEARREG_ANGLE ever fails on a non-glibc
+ * host, that is the cause: widen the floor with the measurement from that host,
+ * or follow the Hilbert family out of the freeze.
  *
  * Integer outputs are NEVER given a tolerance -- a candlestick or index flip
  * must fail regardless of what is in this table.
@@ -156,12 +155,8 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "STOCH",               3e-14 },  /* measured 7.11e-15                   */
    { "MACDFIX",             4e-15 },  /* measured 1.33e-15                   */
 
-   /* --- (a) plus the 8-ULP libm floor (atan-derived outputs) ------------- */
-   { "MAMA",                3e-13 },  /* measured 2.84e-14, floor 8 ULP(128) */
-   { "HT_DCPHASE",          6e-14 },  /* measured 7.11e-15, floor 8 ULP(59)  */
-   { "HT_DCPERIOD",         3e-14 },  /* measured 8.88e-15                   */
-   { "HT_PHASOR",           2e-14 },  /* measured 3.55e-15                   */
-   { "HT_SINE",             9e-16 }   /* measured 1.11e-16, floor 8 ULP(.99) */
+   /* --- (a) plus the 8-ULP libm floor (atan-derived output) -------------- */
+   { "MAMA",                3e-13 }   /* measured 2.84e-14, floor 8 ULP(128) */
 };
 
 #define NB_LEGACY_TOL ((int)(sizeof(LEGACY_TOL)/sizeof(LEGACY_TOL[0])))
@@ -378,9 +373,9 @@ static ErrorNumber do_test_legacy_case( const TA_History *history,
  * These are the counts the freeze shipped with; a regeneration that grows the
  * table only ever makes them easier to clear, and one that shrinks it has to
  * say so here. */
-#define LEGACY_FLOOR_CASES  222
-#define LEGACY_FLOOR_FUNCS  148
-#define LEGACY_FLOOR_VALUES 938
+#define LEGACY_FLOOR_CASES  216
+#define LEGACY_FLOOR_FUNCS  142
+#define LEGACY_FLOOR_VALUES 911
 
 /* Every tolerance entry must name a function that is actually in the table, and
  * must carry a positive bound. An entry for a function outside the freeze is

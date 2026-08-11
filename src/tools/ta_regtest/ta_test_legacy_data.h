@@ -34,8 +34,8 @@
 /* Frozen v0.6.4 reference values (issue #188).
  *
  * WHAT THIS IS
- *   938 values from released v0.6.4, over the frozen 252-bar ta_regtest
- *   series, covering 148 functions in 222 cases. Every value is the
+ *   911 values from released v0.6.4, over the frozen 252-bar ta_regtest
+ *   series, covering 142 functions in 216 cases. Every value is the
  *   full 17 significant digits v0.6.4 produced, so it round-trips to the exact
  *   double -- transcription is not an error source here, which is the whole
  *   point (the hand-written tables carry 2-6 digits against an absolute 0.01
@@ -53,7 +53,7 @@
  *   build. This table needs none of that: it runs from a release tarball in a
  *   plain ./ta_regtest, and it survives the tag becoming unfetchable.
  *
- * SCOPE -- 20 of the 168 shipped functions are deliberately absent:
+ * SCOPE -- 26 of the 168 shipped functions are deliberately absent:
  *
  *   7  post-date v0.6.4, so it has no answer to freeze:
  *      CMF CMOU HMA NVI PVI PVO VWMA
@@ -68,6 +68,18 @@
  *      value asserts "your libm matches the machine that generated this table"
  *      and nothing about TA-Lib -- it would false-red on musl, macOS or a later
  *      glibc. (sqrt/ceil/floor ARE correctly rounded and stay in scope.)
+ *
+ *   6  the Hilbert family: HT_DCPERIOD HT_DCPHASE HT_PHASOR HT_SINE
+ *      HT_TRENDLINE HT_TRENDMODE. Same rule as above with a sharper edge --
+ *      they turn an atan into an INTEGER (period = 360/(atan(Im/Re)*rad2Deg),
+ *      then DCPeriodInt = (int)DCPeriod, used as a loop bound). A host libm
+ *      differing by one ULP near an integer boundary changes the iteration
+ *      count, so the output moves DISCONTINUOUSLY and no tolerance can bound
+ *      it; HT_TRENDMODE's output is an integer outright. This matters here and
+ *      not in --fuzz-064 because that gate compares two binaries on ONE host
+ *      with ONE libm, while a frozen table is read on every host. Their
+ *      cross-implementation coverage is --xlang-hash, which carries a
+ *      transcendental tolerance lane for exactly this reason.
  *
  * ONE-SIDED CASES -- 26 candlestick patterns never fire anywhere on this
  *   series, so every sample frozen for them is 0. That is a ONE-SIDED
@@ -1158,63 +1170,6 @@ static const TA_LegacyCase TA_LEGACY_CASE[] = {
      { 0,   0, 91.0                     },
      { 0, 126, 131.0                    },
      { 0, 251, 107.0                    },
-  } },
-
-/* ---- HT_DCPERIOD ------------------------------------------------------- */
-{ "HT_DCPERIOD", 0, { 0 },
-  TA_SUCCESS, 32, 220, 3, {   /* default: no parameters */
-     { 0,   0, 15.505073726445143       },
-     { 0, 110, 30.838746146499933       },
-     { 0, 219, 18.324362450924834       },
-  } },
-
-/* ---- HT_DCPHASE -------------------------------------------------------- */
-{ "HT_DCPHASE", 0, { 0 },
-  TA_SUCCESS, 63, 189, 3, {   /* default: no parameters */
-     { 0,   0, 27.143100180219129       },
-     { 0,  94, 53.850491246476992       },
-     { 0, 188, 58.934158971371872       },
-  } },
-
-/* ---- HT_PHASOR --------------------------------------------------------- */
-{ "HT_PHASOR", 0, { 0 },
-  TA_SUCCESS, 32, 220, 6, {   /* default: no parameters */
-     { 0,   0, 2.8048821032149598       },
-     { 0, 110, -11.641461548277777      },
-     { 0, 219, -1.005212275054334       },
-     { 1,   0, 4.6682556290732879       },
-     { 1, 110, -6.1196756543506527      },
-     { 1, 219, 0.044531255232446124     },
-  } },
-
-/* ---- HT_SINE ----------------------------------------------------------- */
-{ "HT_SINE", 0, { 0 },
-  TA_SUCCESS, 63, 189, 6, {   /* default: no parameters */
-     { 0,   0, 0.45621443200923012      },
-     { 0,  94, 0.80748046319067335      },
-     { 0, 188, 0.85657488261456316      },
-     { 1,   0, 0.95182534057908752      },
-     { 1,  94, 0.98809318073615371      },
-     { 1, 188, 0.97057308835120126      },
-  } },
-
-/* ---- HT_TRENDLINE ------------------------------------------------------ */
-{ "HT_TRENDLINE", 0, { 0 },
-  TA_SUCCESS, 63, 189, 3, {   /* default: no parameters */
-     { 0,   0, 88.125228872576713       },
-     { 0,  94, 125.52041666666666       },
-     { 0, 188, 110.38551549707604       },
-  } },
-
-/* ---- HT_TRENDMODE ------------------------------------------------------ */
-{ "HT_TRENDMODE", 0, { 0 },
-  TA_SUCCESS, 63, 189, 6, {   /* default: no parameters */
-     { 0,   0, 1.0                      },
-     { 0,   7, 0.0                      },
-     { 0,  94, 1.0                      },
-     { 0,  96, 0.0                      },
-     { 0, 187, 0.0                      },
-     { 0, 188, 1.0                      },
   } },
 
 /* ---- IMI --------------------------------------------------------------- */
