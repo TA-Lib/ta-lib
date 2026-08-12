@@ -4728,6 +4728,45 @@ static const TA_VOptSpec TA_VOpt_MAMA[] = {
    { "optInSlowLimit", TA_VOPT_REAL, 1.00000000000000002e-2, 9.89999999999999991e-1, 5.00000000000000028e-2 },
 };
 
+static TA_RetCode TA_MARKETFI_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_MARKETFI(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inVolume */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_MARKETFI_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_S_MARKETFI(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inVolume */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_MARKETFI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_VOLUME };
+
 static TA_RetCode TA_MAVP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7250,6 +7289,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_MACDFIX, 1, TA_VOpt_MACDFIX, 3, 0, 0 },
    { "MAMA", TA_MAMA_VFrameD, TA_MAMA_VFrameS,
      1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, 0, 0 },
+   { "MARKETFI", TA_MARKETFI_VFrameD, TA_MARKETFI_VFrameS,
+     3, TA_VIn_MARKETFI, 0, NULL, 1, 0, 0 },
    { "MAVP", TA_MAVP_VFrameD, TA_MAVP_VFrameS,
      2, TA_VIn_MAVP, 3, TA_VOpt_MAVP, 1, 0, 0 },
    { "MAX", TA_MAX_VFrameD, TA_MAX_VFrameS,
@@ -7366,6 +7407,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 171
+#define TA_VARIANT_TABLE_SIZE 172
 
 #endif /* TA_VARIANT_FRAME_H */

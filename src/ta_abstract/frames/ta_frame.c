@@ -2591,6 +2591,28 @@ unsigned int TA_MAMA_FramePPLB( const TA_ParamHolderPriv *params )
    return TA_MAMA_Lookback(params->optIn[0].data.optInReal, /* optInFastLimit*/
                     params->optIn[1].data.optInReal /* optInSlowLimit*/ );
 }
+TA_RetCode TA_MARKETFI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_MARKETFI(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.high, /* inHigh */
+               params->in[0].data.inPrice.low, /* inLow */
+               params->in[0].data.inPrice.volume, /* inVolume */
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_MARKETFI_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   (void)params;
+   return TA_MARKETFI_Lookback( );
+}
 TA_RetCode TA_MAVP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

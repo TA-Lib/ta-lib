@@ -225,6 +225,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeMacdext(),
             MakeMacdfix(),
             MakeMama(),
+            MakeMarketfi(),
             MakeMavp(),
             MakeMax(),
             MakeMaxindex(),
@@ -3090,6 +3091,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.MAMA(
                 startIdx, endIdx, c.Series(0), c.RealOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeMarketfi() => new(
+        name: "MARKETFI",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Market Facilitation Index",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLV", PriceComponents.High | PriceComponents.Low | PriceComponents.Volume, [PriceComponents.High, PriceComponents.Low, PriceComponents.Volume]),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.MARKETFI_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.MARKETFI(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

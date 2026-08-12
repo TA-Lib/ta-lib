@@ -4783,6 +4783,40 @@
 	</FinancialFunction>
 
 
+	<!-- MARKETFI -->
+	<FinancialFunction>
+		<Abbreviation>MARKETFI</Abbreviation>
+		<ShortDescription>Market Facilitation Index</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Volume</Type>
+				<Name>Volume</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- MAVP -->
 	<FinancialFunction>
 		<Abbreviation>MAVP</Abbreviation>

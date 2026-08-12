@@ -6160,6 +6160,56 @@ TA_LIB_API TA_RetCode TA_MAMA_Close( TA_MAMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_MAMA_OpenAndFill( TA_MAMA_Stream **stream, const double inReal[], int historyLen, double optInFastLimit, double optInSlowLimit, int *outBegIdx, int *outNBElement, double outMAMA[], double outFAMA[] );
 
 /*
+ * TA_MARKETFI - Market Facilitation Index
+ * 
+ * Input  = High, Low, Volume
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_MARKETFI( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              const double inVolume[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_MARKETFI( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                const float  inVolume[],
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outReal[] );
+
+TA_LIB_API int TA_MARKETFI_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_MARKETFI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_MARKETFI_Stream TA_MARKETFI_Stream;
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Open( TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Update( TA_MARKETFI_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_MARKETFI_Close( TA_MARKETFI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_MARKETFI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_MARKETFI_OpenAndFill( TA_MARKETFI_Stream **stream, const double inHigh[], const double inLow[], const double inVolume[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_MAVP - Moving average with variable period
  * 
  * Input  = double, double

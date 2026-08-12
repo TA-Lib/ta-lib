@@ -398,6 +398,9 @@ final class Dispatch {
          case "MAMA":
             return core.MAMA(
                startIdx, endIdx, h.realInput(0), h.realOpt(0), h.realOpt(1), h.realOutput(0), h.realOutput(1));
+         case "MARKETFI":
+            return core.MARKETFI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 4), h.realOutput(0));
          case "MAVP":
             return core.MAVP(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
@@ -808,6 +811,8 @@ final class Dispatch {
             return core.MACDFIX_Lookback(h.intOpt(0));
          case "MAMA":
             return core.MAMA_Lookback(h.realOpt(0), h.realOpt(1));
+         case "MARKETFI":
+            return core.MARKETFI_Lookback();
          case "MAVP":
             return core.MAVP_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "MAX":

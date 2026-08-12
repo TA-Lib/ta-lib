@@ -97010,6 +97010,481 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  KL       Kevin Lin (@kevinlincg)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY   Description
+     *  -------------------------------------------------------------------
+     *  081226 KL   Initial version.
+     */
+
+       /**
+        * Number of leading input bars {@link Core#MARKETFI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int MARKETFI_Lookback( )
+       {
+          /* Each output depends only on its own bar, so nothing is consumed
+           * before the first one can be produced.
+           */
+          return 0 ;
+
+       }
+       RetCode MARKETFI_Internal( int startIdx,
+                                  int endIdx,
+                                  double inHigh[],
+                                  double inLow[],
+                                  double inVolume[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
+       {
+          int outIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          /* Bill Williams' Market Facilitation Index: the price range a bar
+           * travelled per unit of volume traded, i.e. how much movement the
+           * market "facilitated" per tick.
+           *
+           *      MARKETFI = ( High - Low ) / Volume
+           *
+           * Stateless and per-bar: no seeding, no smoothing, no accumulator and
+           * no unstable period, so the output for a bar never depends on where
+           * the caller started the range.
+           *
+           * Retail material often abbreviates this "MFI" or "BW MFI". TA_MFI is
+           * already the Money Flow Index, so this carries the name Tulip and
+           * pandas-ta-classic use.
+           */
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* A zero-volume bar would divide by zero. Neither reference guards
+              * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+              * issue #112 settled that a successful call never emits NaN or Inf,
+              * so an untraded bar facilitated no movement and reports 0.
+              *
+              * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+              * 1e-14 band is an absolute threshold and meaningless against an
+              * unbounded volume scale. Same reasoning as the prevClose guard in
+              * ta_codegen/input/nvi/nvi.c.
+              */
+             if( inVolume[i] != 0.0 ) {
+                outReal[outIdx++] = (inHigh[i] - inLow[i]) / inVolume[i];
+             } else {
+                outReal[outIdx++] = 0.0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode MARKETFI_Internal( int startIdx,
+                                  int endIdx,
+                                  float inHigh[],
+                                  float inLow[],
+                                  float inVolume[],
+                                  MInteger outBegIdx,
+                                  MInteger outNBElement,
+                                  double outReal[] )
+       {
+          int outIdx = 0;
+          int i = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             if( (double)inVolume[i] != 0.0 ) {
+                outReal[outIdx++] = ((double)inHigh[i] - (double)inLow[i]) / (double)inVolume[i];
+             } else {
+                outReal[outIdx++] = 0.0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+        * price range a bar travelled per unit of volume traded — how much movement
+        * the market "facilitated" per tick. A rising index on rising volume is read
+        * as a move the market is absorbing; a rising index on falling volume as one
+        * it is not. Retail material commonly abbreviates this "MFI" or "BW MFI".
+        * TA-Lib already ships {@code TA_MFI} for the Money Flow Index, so this
+        * carries the {@code MARKETFI} name used by Tulip and pandas-ta-classic.
+        * Charting packages often overlay a four-state colour code (green / fade /
+        * fake / squat) derived from the signs of the bar-to-bar change in this
+        * index and in volume. That is an interpretive layer on top of the series,
+        * not part of it; {@code outReal} is the scalar only.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * MARKETFI_t = (high_t - low_t) / volume_t
+        * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
+        * }</pre>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#MARKETFI_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param outReal Range travelled per unit of volume, per bar. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, or two outputs share one array.
+        * @throws NullPointerException if any input or output array is null.
+        *
+        * @see Core#AD
+        * @see Core#ADOSC
+        * @see Core#NVI
+        * @see Core#OBV
+        * @see Core#PVI
+        */
+       public OutRange MARKETFI( int startIdx,
+                                 int endIdx,
+                                 double inHigh[],
+                                 double inLow[],
+                                 double inVolume[],
+                                 double outReal[] )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("MARKETFI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+        * price range a bar travelled per unit of volume traded — how much movement
+        * the market "facilitated" per tick. A rising index on rising volume is read
+        * as a move the market is absorbing; a rising index on falling volume as one
+        * it is not. Retail material commonly abbreviates this "MFI" or "BW MFI".
+        * TA-Lib already ships {@code TA_MFI} for the Money Flow Index, so this
+        * carries the {@code MARKETFI} name used by Tulip and pandas-ta-classic.
+        * Charting packages often overlay a four-state colour code (green / fade /
+        * fake / squat) derived from the signs of the bar-to-bar change in this
+        * index and in volume. That is an interpretive layer on top of the series,
+        * not part of it; {@code outReal} is the scalar only.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * MARKETFI_t = (high_t - low_t) / volume_t
+        * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
+        * }</pre>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#MARKETFI_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param outReal Range travelled per unit of volume, per bar. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, or two outputs share one array.
+        * @throws NullPointerException if any input or output array is null.
+        *
+        * @see Core#AD
+        * @see Core#ADOSC
+        * @see Core#NVI
+        * @see Core#OBV
+        * @see Core#PVI
+        */
+       public OutRange MARKETFI( int startIdx,
+                                 int endIdx,
+                                 float inHigh[],
+                                 float inLow[],
+                                 float inVolume[],
+                                 double outReal[] )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = MARKETFI_Internal(startIdx, endIdx, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("MARKETFI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live MARKETFI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#MARKETFI} over the same series.
+        * Open with {@link Core#MARKETFI_Open}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code copy} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code copy} never write the handle and may be called
+        * concurrently after safe publication. Independent handles (including
+        * {@code copy()} results) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class MARKETFI_Stream {
+          Core core;
+          double cur_outReal;
+          OutRange fillRange = OutRange.EMPTY;
+
+          MARKETFI_Stream( Core core ) { this.core = core; }
+
+          /**
+           * The range filled by {@link Core#MARKETFI_OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
+           */
+          public OutRange fillRange() { return fillRange; }
+
+          MARKETFI_Stream( MARKETFI_Stream other ) {
+             this.core = other.core;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          void copyFrom( MARKETFI_Stream other ) {
+             this.core = other.core;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          /**
+           * Commit one closed bar; always produces the new current value.
+           * Never throws after a successful open; never allocates handle state.
+           */
+          public double update( double inHigh, double inLow, double inVolume ) {
+             core.MARKETFI_StreamStep(this, inHigh, inLow, inVolume);
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return (it is the same
+           * generated code, run on a copy). Never writes this handle, so peeks may
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
+           */
+          public double peek( double inHigh, double inLow, double inVolume ) {
+             MARKETFI_Stream scratch = new MARKETFI_Stream(this);
+             core.MARKETFI_StreamStep(scratch, inHigh, inLow, inVolume);
+             return scratch.cur_outReal;
+          }
+
+          /**
+           * The value at the most recently committed bar — the last history bar
+           * right after open, then whatever the latest {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent deep copy of this stream: both evolve separately from
+           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           */
+          public MARKETFI_Stream copy() {
+             return new MARKETFI_Stream(this);
+          }
+       }
+       void MARKETFI_StreamStep( MARKETFI_Stream sp, double inHigh, double inLow, double inVolume )
+       {
+          /* A zero-volume bar would divide by zero. Neither reference guards
+           * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+           * issue #112 settled that a successful call never emits NaN or Inf,
+           * so an untraded bar facilitated no movement and reports 0.
+           *
+           * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+           * 1e-14 band is an absolute threshold and meaningless against an
+           * unbounded volume scale. Same reasoning as the prevClose guard in
+           * ta_codegen/input/nvi/nvi.c.
+           */
+          if( inVolume != 0.0 ) {
+             sp.cur_outReal = (inHigh - inLow) / inVolume;
+          } else {
+             sp.cur_outReal = 0.0;
+          }
+       }
+       private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int outIdx = 0;
+          int i = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 || inLow.length != inHigh.length || inVolume.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          /* Bill Williams' Market Facilitation Index: the price range a bar
+           * travelled per unit of volume traded, i.e. how much movement the
+           * market "facilitated" per tick.
+           *
+           *      MARKETFI = ( High - Low ) / Volume
+           *
+           * Stateless and per-bar: no seeding, no smoothing, no accumulator and
+           * no unstable period, so the output for a bar never depends on where
+           * the caller started the range.
+           *
+           * Retail material often abbreviates this "MFI" or "BW MFI". TA_MFI is
+           * already the Money Flow Index, so this carries the name Tulip and
+           * pandas-ta-classic use.
+           */
+          outIdx = 0;
+          for( i = startIdx; i <= endIdx; i += 1 ) {
+             /* A zero-volume bar would divide by zero. Neither reference guards
+              * it -- they emit +/-Inf, or NaN when the range is zero too -- but
+              * issue #112 settled that a successful call never emits NaN or Inf,
+              * so an untraded bar facilitated no movement and reports 0.
+              *
+              * The comparison is an exact != 0.0 rather than TA_IS_ZERO, whose
+              * 1e-14 band is an absolute threshold and meaningless against an
+              * unbounded volume scale. Same reasoning as the prevClose guard in
+              * ta_codegen/input/nvi/nvi.c.
+              */
+             if( inVolume[i] != 0.0 ) {
+                outReal[outIdx++ * outStride] = (inHigh[i] - inLow[i]) / inVolume[i];
+             } else {
+                outReal[outIdx++ * outStride] = 0.0;
+             }
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, sink_outReal, 0 );
+       }
+       private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inVolume ) {
+             return RetCode.BadParam;
+          }
+          return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
+       }
+       private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          return MARKETFI_OpenCore(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+       }
+       /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       MARKETFI_Stream MARKETFI_OpenAndFillInternal( double inHigh[], double inLow[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          MARKETFI_Stream sp = new MARKETFI_Stream(this);
+          RetCode retCode = MARKETFI_OpenAndFillInternalBody(sp, inHigh, inLow, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("MARKETFI openAndFill: internal error");
+          }
+          throw new IllegalArgumentException("MARKETFI openAndFill: " + retCode);
+       }
+       /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
+       MARKETFI_Stream MARKETFI_OpenInternal( double inHigh[], double inLow[], double inVolume[], int startIdx )
+       {
+          MARKETFI_Stream sp = new MARKETFI_Stream(this);
+          RetCode retCode = MARKETFI_OpenBody(sp, inHigh, inLow, inVolume, startIdx);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("MARKETFI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("MARKETFI open: internal error");
+          }
+          throw new IllegalArgumentException("MARKETFI open: " + retCode);
+       }
+       /**
+        * Open a live MARKETFI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#MARKETFI} at that bar.
+        * <p>The history must hold at least {@code MARKETFI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API).
+        */
+       public MARKETFI_Stream MARKETFI_Open( double inHigh[], double inLow[], double inVolume[] )
+       {
+          return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
+       }
+       /**
+        * {@link Core#MARKETFI_Open} that also fills the output array(s) bit-identically
+        * to {@link Core#MARKETFI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values.
+        * <p>The range written is on the returned handle:
+        * {@link MARKETFI_Stream#fillRange()}.
+        */
+       public MARKETFI_Stream MARKETFI_OpenAndFill( double inHigh[], double inLow[], double inVolume[], double outReal[] )
+       {
+          MARKETFI_Stream sp = new MARKETFI_Stream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, outBegIdx, outNBElement, outReal);
+          sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("MARKETFI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("MARKETFI openAndFill: internal error");
+          }
+          throw new IllegalArgumentException("MARKETFI openAndFill: " + retCode);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *
      * Change history:
@@ -139729,6 +140204,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(0,"optInFastLimit",0,"Fast Limit","Upper limit use in the adaptive algorithm",0.5, 0.01,0.99,2,0.21,0.8,0.01, 0,0,0,0,0, null), new AbsOpt(0,"optInSlowLimit",0,"Slow Limit","Lower limit use in the adaptive algorithm",0.05, 0.01,0.99,2,0.01,0.6,0.01, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outMAMA",1), new AbsOut(0,"outFAMA",8196) }));
+        ABSTRACT.put("MARKETFI", new AbsFunc("MARKETFI", "Volume Indicators", "Market Facilitation Index", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLV",22) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT") },
@@ -140197,6 +140676,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_MACDEXT\"")) return handle_MACDEXT(json);
         else if (json.contains("\"TA_MACDFIX\"")) return handle_MACDFIX(json);
         else if (json.contains("\"TA_MAMA\"")) return handle_MAMA(json);
+        else if (json.contains("\"TA_MARKETFI\"")) return handle_MARKETFI(json);
         else if (json.contains("\"TA_MAVP\"")) return handle_MAVP(json);
         else if (json.contains("\"TA_MAX\"")) return handle_MAX(json);
         else if (json.contains("\"TA_MAXINDEX\"")) return handle_MAXINDEX(json);
@@ -140483,6 +140963,8 @@ public class TaCodegenServe {
             sb.append("\"TA_MACDFIX\"");
             sb.append(",");
             sb.append("\"TA_MAMA\"");
+            sb.append(",");
+            sb.append("\"TA_MARKETFI\"");
             sb.append(",");
             sb.append("\"TA_MAVP\"");
             sb.append(",");
@@ -150350,6 +150832,90 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_MARKETFI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
+        rc = core.MARKETFI_Internal(
+            startIdx, endIdx,
+            inHigh,
+            inLow,
+            inVolume,
+            outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.MARKETFI_Open(_warm_inHigh, _warm_inLow, _warm_inVolume);
+            } else {
+                core.MARKETFI_OpenAndFill(_warm_inHigh, _warm_inLow, _warm_inVolume, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.MARKETFI_Internal(
+                startIdx, endIdx,
+                f_inHigh,
+                f_inLow,
+                f_inVolume,
+                outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
@@ -166850,6 +167416,106 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_MARKETFI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc = c2.MARKETFI_Internal(0, svN - 1, fz_h, fz_l, fz_v, beg, nb, b0);
+            int lb = c2.MARKETFI_Lookback();
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.MARKETFI_Open(fz_h, fz_l, fz_v); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Core.MARKETFI_Stream _fh = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, f0);
+                OutRange _fr = _fh.fillRange();
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                }
+                try { c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.MARKETFI_Stream st;
+                try { st = c2.MARKETFI_Open(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_v, p)); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        double pk = st.peek(fz_h[t], fz_l[t], fz_v[t]);
+                        double up = st.update(fz_h[t], fz_l[t], fz_v[t]);
+                        if (svBne(pk, up)) peekAll = false;
+                        if (svBne(st.value(), up)) allOk = false;
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    } else {
+                        double up = st.update(fz_h[t], fz_l[t], fz_v[t]);
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.MARKETFI_Stream sA = c2.MARKETFI_Open(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0));
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                        Core.MARKETFI_Stream sB = sA.copy();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_h[t], fz_l[t], fz_v[t]);
+                            double uB = sB.update(fz_h[t], fz_l[t], fz_v[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.MARKETFI_Open(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_v, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_MAVP(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -173085,6 +173751,7 @@ public class TaCodegenServe {
         case "TA_MACDEXT": return sv_MACDEXT(json);
         case "TA_MACDFIX": return sv_MACDFIX(json);
         case "TA_MAMA": return sv_MAMA(json);
+        case "TA_MARKETFI": return sv_MARKETFI(json);
         case "TA_MAVP": return sv_MAVP(json);
         case "TA_MAX": return sv_MAX(json);
         case "TA_MAXINDEX": return sv_MAXINDEX(json);
