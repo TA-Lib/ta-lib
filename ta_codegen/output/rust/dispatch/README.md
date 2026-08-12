@@ -1,5 +1,7 @@
 # ta-lib-dispatch
 
+[![crates.io](https://img.shields.io/crates/v/ta-lib-dispatch.svg)](https://crates.io/crates/ta-lib-dispatch) [![docs.rs](https://docs.rs/ta-lib-dispatch/badge.svg)](https://docs.rs/ta-lib-dispatch)
+
 Runtime CPU-feature dispatch for fused multiply-add (FMA), used internally
 by the [`ta-lib`](https://crates.io/crates/ta-lib) crate — part of the
 [TA-Lib](https://ta-lib.org) project.
