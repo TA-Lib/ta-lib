@@ -148,6 +148,7 @@ pub enum FuncId {
     MACDEXT,
     MACDFIX,
     MAMA,
+    MARKETFI,
     MAVP,
     MAX,
     MAXINDEX,
@@ -209,7 +210,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 171;
+    pub const COUNT: usize = 172;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -392,7 +393,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 171] = [
+pub static FUNCS: [FuncInfo; 172] = [
     FuncInfo {
         id: FuncId::ACCBANDS,
         name: "ACCBANDS",
@@ -1648,6 +1649,17 @@ pub static FUNCS: [FuncInfo; 171] = [
         unst_id: Some(FuncUnstId::MAMA),
     },
     FuncInfo {
+        id: FuncId::MARKETFI,
+        name: "MARKETFI",
+        group: Group::VolumeIndicators,
+        hint: "Market Facilitation Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::MAVP,
         name: "MAVP",
         group: Group::OverlapStudies,
@@ -2396,6 +2408,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "MACDEXT" => FuncId::MACDEXT,
         "MACDFIX" => FuncId::MACDFIX,
         "MAMA" => FuncId::MAMA,
+        "MARKETFI" => FuncId::MARKETFI,
         "MAVP" => FuncId::MAVP,
         "MAX" => FuncId::MAX,
         "MAXINDEX" => FuncId::MAXINDEX,
@@ -2812,6 +2825,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACDEXT => self.core.MACDEXT_Lookback(self.int_opt[0], MAType::try_from(self.int_opt[1])?, self.int_opt[2], MAType::try_from(self.int_opt[3])?, self.int_opt[4], MAType::try_from(self.int_opt[5])?),
             FuncId::MACDFIX => self.core.MACDFIX_Lookback(self.int_opt[0]),
             FuncId::MAMA => self.core.MAMA_Lookback(self.real_opt[0], self.real_opt[1]),
+            FuncId::MARKETFI => self.core.MARKETFI_Lookback(),
             FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::MAX => self.core.MAX_Lookback(self.int_opt[0]),
             FuncId::MAXINDEX => self.core.MAXINDEX_Lookback(self.int_opt[0]),
@@ -4075,6 +4089,16 @@ impl<'a> ParamHolder<'a> {
                 let rc = self.core.MAMA(start_idx, end_idx, i0, self.real_opt[0], self.real_opt[1], &mut beg, &mut nb, &mut *o0, &mut *o1);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
+                rc
+            }
+            FuncId::MARKETFI => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.MARKETFI(start_idx, end_idx, i0_1, i0_2, i0_4, &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
                 rc
             }
             FuncId::MAVP => {

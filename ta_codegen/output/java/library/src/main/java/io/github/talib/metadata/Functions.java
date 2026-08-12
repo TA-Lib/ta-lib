@@ -202,6 +202,7 @@ public final class Functions {
       put(m, f_MACDEXT());
       put(m, f_MACDFIX());
       put(m, f_MAMA());
+      put(m, f_MARKETFI());
       put(m, f_MAVP());
       put(m, f_MAX());
       put(m, f_MAXINDEX());
@@ -1958,6 +1959,18 @@ public final class Functions {
          List.of(
             new OutputInfo(OutputType.REAL, "outMAMA", 0x00000001),
             new OutputInfo(OutputType.REAL, "outFAMA", 0x00002004)
+         ));
+   }
+
+   private static FunctionInfo f_MARKETFI() {
+      return new FunctionInfo(
+         "MARKETFI", "Volume Indicators", "Market Facilitation Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLV", 0x00000016)
+         ),
+         List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 

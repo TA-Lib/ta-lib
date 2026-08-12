@@ -139,6 +139,7 @@
 #include "ta_MACDEXT.c"
 #include "ta_MACDFIX.c"
 #include "ta_MAMA.c"
+#include "ta_MARKETFI.c"
 #include "ta_MAVP.c"
 #include "ta_MAX.c"
 #include "ta_MAXINDEX.c"
@@ -2133,6 +2134,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf1[0];
         }
         printf("MAMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "MARKETFI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_MARKETFI(0, g_nPoints - 1, g_high, g_low, g_volume, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("MARKETFI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "MAVP") ) {
