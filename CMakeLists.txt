@@ -421,6 +421,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PPO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_PVO.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_QSTICK.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROCP.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ROCR.c"

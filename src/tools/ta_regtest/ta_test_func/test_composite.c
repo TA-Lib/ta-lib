@@ -48,6 +48,7 @@
  *  072126 MF,CC  CMF differential leg, at tolerance rather than bitwise (#134).
  *  072226 MF,CC  HMA legs, incl. TA_MAType_HMA dispatch parity (#139).
  *  081226 KL     EFI legs: EMA-of-force differential (#206).
+ *  081226 KL     QSTICK legs: SMA-of-body differential plus two book vectors.
  */
 
 /* Description:
@@ -187,6 +188,11 @@ static ErrorNumber test_efi_differential( const TA_History *history );
 static ErrorNumber test_efi_oracle( const TA_History *history );
 static ErrorNumber test_efi_degenerate( void );
 static ErrorNumber test_efi_inplace( const TA_History *history );
+static ErrorNumber test_qstick_differential( const TA_History *history );
+static ErrorNumber test_qstick_oracle( void );
+static ErrorNumber test_qstick_period_one( const TA_History *history );
+static ErrorNumber test_qstick_flat( void );
+static ErrorNumber test_qstick_inplace( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -286,6 +292,26 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_efi_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_oracle();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_period_one( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_flat();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_inplace( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -2105,6 +2131,405 @@ static ErrorNumber test_efi_inplace( const TA_History *history )
                           period, startIdx, tag, i, work[i], outRef[i] );
                   return TA_TESTUTIL_TFRR_BAD_CALCULATION;
                }
+            }
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* ==========================================================================
+ * QSTICK -- Chande & Kroll's average candle body, SMA( close - open ).
+ *
+ * Its fused loop is sma.c with inReal[x] replaced by (inClose[x] - inOpen[x])
+ * and nothing else changed, which is what makes leg (1) a memcmp rather than a
+ * tolerance: TA_SUB performs the same single subtraction, and TA_SMA then runs
+ * the identical accumulate / capture / subtract-trailing / divide sequence.
+ * ========================================================================== */
+
+/* Periods spanning the branches that exist: 1 (lookback 0, the seeding while
+ * loop is skipped), 2 (the shortest window that seeds), the usual defaults, and
+ * 100 -- well past any bar count the corpus warms up with. */
+static const int qstickGrid[] = { 1, 2, 3, 5, 8, 10, 14, 30, 100 };
+#define NB_QSTICK_GRID (sizeof(qstickGrid)/sizeof(qstickGrid[0]))
+
+/* startIdx values for the same differential. A non-zero startIdx moves the
+ * trailing index off the array head, which is where an off-by-one in the
+ * seeding loop hides -- at startIdx 0 the seed window and the output window
+ * begin at the same place and a swap of the two is invisible. */
+static const int qstickStartGrid[] = { 0, 1, 40, 200 };
+#define NB_QSTICK_START (sizeof(qstickStartGrid)/sizeof(qstickStartGrid[0]))
+
+/* External oracle, arm 1 of 2: Achelis, Technical Analysis from A to Z, page
+ * 280, transcribed in Tulip Indicators 0.9.2 tests/atoz.txt:187 ("qstick 4").
+ *
+ * Pinned EXACTLY, not at a tolerance. Every price on that page is a sixteenth,
+ * so every body, every window sum and every quotient (the divisor 4 is a power
+ * of two) is dyadic and representable -- the whole vector is computed without a
+ * single rounding. The book prints four decimals; the values below are the
+ * exact binary results and round to precisely the digits it prints:
+ * .7969 .4688 -.2031 .0156 .1875. */
+static const double qstickBookOpen[]  =
+   { 62.5625, 64.625, 63.5625, 63.9375, 64.5, 65.1875, 60.5625, 62.25 };
+static const double qstickBookClose[] =
+   { 64.5625, 64.125, 64.3125, 64.875, 65.1875, 62, 62.1875, 63.875 };
+static const double qstickBookExp[]   =
+   { 0.796875, 0.46875, -0.203125, 0.015625, 0.1875 };
+#define NB_QSTICK_BOOK (sizeof(qstickBookExp)/sizeof(qstickBookExp[0]))
+
+/* External oracle, arm 2 of 2: Tulip Indicators 0.9.2 tests/untest.txt:327
+ * ("qstick 5"), 15 bars in, 11 values out. Ordinary two-decimal prices, so
+ * unlike the book vector this one does round; the values below were recomputed
+ * at full precision from those inputs and agree with all three decimals Tulip
+ * prints (0.304 0.304 0.358 0.352 0.404 0.324 0.676 0.868 0.752 0.636 0.552).
+ *
+ * Worth having in addition to the book vector: Tulip's own loop finishes with
+ * sum * (1.0/period) where this one divides, so an implementation that switched
+ * to the reciprocal multiply would still pass here but would stop being
+ * bit-exact in leg (1). The two legs constrain different things. */
+static const double qstickTulipOpen[]  =
+   { 81.85, 81.20, 81.55, 82.91, 83.10, 83.41, 82.71, 82.70,
+     84.20, 84.25, 84.03, 85.45, 86.18, 88.00, 87.60 };
+static const double qstickTulipClose[] =
+   { 81.59, 81.06, 82.87, 83.00, 83.61, 83.15, 82.84, 83.99,
+     84.55, 84.36, 85.53, 86.54, 86.89, 87.77, 87.29 };
+static const double qstickTulipExp[]   =
+   { 0.3040000000000049,  0.3040000000000049,  0.3580000000000069,
+     0.35200000000000387, 0.404000000000002,   0.3240000000000009,
+     0.675999999999999,   0.8679999999999979,  0.7519999999999982,
+     0.6359999999999986,  0.552000000000001 };
+#define NB_QSTICK_TULIP (sizeof(qstickTulipExp)/sizeof(qstickTulipExp[0]))
+
+/* Away from zero the relative band is what matters; QSTICK crosses zero by
+ * design, so an absolute floor is needed for the values that sit near it. */
+#define QSTICK_ORACLE_TOL 1e-12
+#define QSTICK_ORACLE_ABS 1e-14
+
+/* (1) DIFFERENTIAL: QSTICK == SMA( SUB(close, open) ), bit-for-bit. */
+static ErrorNumber test_qstick_differential( const TA_History *history )
+{
+   unsigned int g, s;
+   int i, nbBars;
+   TA_RetCode rcQ, rcS, rcM;
+   TA_Integer begQ, nbQ, begS, nbS, begM, nbM;
+   static TA_Real body[OUT_CAP];
+   static TA_Real outQstick[OUT_CAP];
+   static TA_Real outSma[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   /* The body series, from the shipped TA_SUB rather than an inline loop: the
+    * reference must contain no new numerical logic of its own. */
+   rcS = TA_SUB( 0, nbBars - 1, history->close, history->open,
+                 &begS, &nbS, body );
+   if( rcS != TA_SUCCESS || begS != 0 || nbS != nbBars )
+   {
+      printf( "QSTICK differential Fail: TA_SUB rc=%d beg=%d nb=%d (expected 0/%d)\n",
+              (int)rcS, (int)begS, (int)nbS, nbBars );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( s = 0; s < NB_QSTICK_START; s++ )
+   {
+      int startIdx = qstickStartGrid[s];
+
+      for( g = 0; g < NB_QSTICK_GRID; g++ )
+      {
+         int period = qstickGrid[g];
+
+         rcQ = TA_QSTICK( startIdx, nbBars - 1, history->open, history->close,
+                          period, &begQ, &nbQ, outQstick );
+
+         /* The reference: one call to the shipped TA_SMA over the body series.
+          * Note it is fed the SAME startIdx, so the lookback clamp is compared
+          * too, not just the values. */
+         rcM = TA_SMA( startIdx, nbBars - 1, body, period, &begM, &nbM, outSma );
+
+         if( rcQ != rcM )
+         {
+            printf( "QSTICK differential Fail [start %d period %d]: "
+                    "retCode QSTICK=%d SMA=%d\n",
+                    startIdx, period, (int)rcQ, (int)rcM );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( rcQ != TA_SUCCESS )
+            continue;
+
+         if( begQ != begM || nbQ != nbM )
+         {
+            printf( "QSTICK differential Fail [start %d period %d]: "
+                    "range QSTICK(%d,%d) SMA(%d,%d)\n",
+                    startIdx, period, (int)begQ, (int)nbQ, (int)begM, (int)nbM );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         for( i = 0; i < nbQ; i++ )
+         {
+            if( memcmp( &outQstick[i], &outSma[i], sizeof(double) ) != 0 )
+            {
+               printf( "QSTICK differential Fail [start %d period %d] at out[%d]: "
+                       "fused %.17g != compose %.17g (must be BIT-exact)\n",
+                       startIdx, period, i, outQstick[i], outSma[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (2) EXTERNAL ORACLE. Leg (1) proves the fused loop matches the composition;
+ * it cannot prove the composition is Qstick, since both sides would share a
+ * wrong formula. These two published vectors do -- and between them they also
+ * pin the argument order, because open and close enter asymmetrically: swap
+ * them and every value negates. */
+static ErrorNumber qstick_check_vector( const char *tag,
+                                        const double *open, const double *close,
+                                        int nbIn, int period,
+                                        const double *expected, int nbExpected,
+                                        int exact )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i;
+   static TA_Real out[OUT_CAP];
+
+   rc = TA_QSTICK( 0, nbIn - 1, open, close, period, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "QSTICK %s Fail: retCode %d\n", tag, (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != period - 1 || nb != nbExpected )
+   {
+      printf( "QSTICK %s Fail: got beg=%d nb=%d expected %d/%d\n",
+              tag, (int)beg, (int)nb, period - 1, nbExpected );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( i = 0; i < nbExpected; i++ )
+   {
+      if( exact )
+      {
+         /* Dyadic inputs, dyadic divisor: anything but equality is a defect. */
+         if( memcmp( &out[i], &expected[i], sizeof(double) ) != 0 )
+         {
+            printf( "QSTICK %s Fail at out[%d]: got %.17g expected %.17g "
+                    "(this vector is exact in binary)\n",
+                    tag, i, out[i], expected[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+      else
+      {
+         double err; const char *mode;
+         if( !checkOracleValue( out[i], expected[i],
+                                QSTICK_ORACLE_TOL, QSTICK_ORACLE_ABS,
+                                &err, &mode ) )
+         {
+            printf( "QSTICK %s Fail at out[%d]: got %.17g expected %.17g "
+                    "(%s=%.3e > rel %.3e / abs %.3e)\n",
+                    tag, i, out[i], expected[i], mode, err,
+                    QSTICK_ORACLE_TOL, QSTICK_ORACLE_ABS );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_qstick_oracle( void )
+{
+   ErrorNumber retValue;
+
+   retValue = qstick_check_vector( "book vector (Achelis p.280)",
+                                   qstickBookOpen, qstickBookClose,
+                                   (int)(sizeof(qstickBookOpen)/sizeof(double)),
+                                   4, qstickBookExp, (int)NB_QSTICK_BOOK, 1 );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = qstick_check_vector( "tulip vector (untest.txt qstick 5)",
+                                   qstickTulipOpen, qstickTulipClose,
+                                   (int)(sizeof(qstickTulipOpen)/sizeof(double)),
+                                   5, qstickTulipExp, (int)NB_QSTICK_TULIP, 0 );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS;
+}
+
+/* (3) PERIOD 1: the no-averaging case. Lookback drops to 0, the seeding while
+ * loop is skipped entirely, and the output must be the raw body -- bit-exact,
+ * on real prices where the body is not representable and the subtraction
+ * therefore rounds. The assertion below fails if this corpus ever stops having
+ * such bars, so the leg cannot quietly become vacuous. */
+static ErrorNumber test_qstick_period_one( const TA_History *history )
+{
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i, nbBars, nbInexact = 0;
+   static TA_Real out[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   rc = TA_QSTICK( 0, nbBars - 1, history->open, history->close,
+                   1, &beg, &nb, out );
+   if( rc != TA_SUCCESS || beg != 0 || nb != nbBars )
+   {
+      printf( "QSTICK period-1 Fail: rc=%d beg=%d nb=%d (expected 0/%d)\n",
+              (int)rc, (int)beg, (int)nb, nbBars );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( i = 0; i < nbBars; i++ )
+   {
+      double want = history->close[i] - history->open[i];
+      if( memcmp( &out[i], &want, sizeof(double) ) != 0 )
+      {
+         printf( "QSTICK period-1 Fail at out[%d]: got %.17g expected %.17g\n",
+                 i, out[i], want );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      /* Count the bars where the body is not exactly representable, i.e. where
+       * this comparison is testing something the decimal literals could not. */
+      if( want != 0.0 && (double)(float)want != want )
+         nbInexact++;
+   }
+
+   if( nbInexact == 0 )
+   {
+      printf( "QSTICK period-1 Fail: corpus no longer has inexact bodies, "
+              "the check above proves nothing\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (4) FLAT INPUT: every bar closes where it opened. Issue #112 asks that a
+ * successful call never emit NaN or Inf; here that is structural, since the
+ * only division is by a positive integer parameter. The window sum is exactly
+ * 0.0 and stays exactly 0.0 -- not merely small -- because each body is an
+ * exact zero and the running total never accumulates anything else. */
+static ErrorNumber test_qstick_flat( void )
+{
+#define QSTICK_FLAT_N 60
+   static TA_Real open[QSTICK_FLAT_N], close[QSTICK_FLAT_N], out[OUT_CAP];
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i;
+   const int period = 10;
+
+   for( i = 0; i < QSTICK_FLAT_N; i++ )
+   {
+      open[i]  = 100.0 + (double)i * 0.37;   /* prices move; bodies do not */
+      close[i] = open[i];
+   }
+
+   rc = TA_QSTICK( 0, QSTICK_FLAT_N - 1, open, close, period, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "QSTICK flat Fail: retCode %d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != period - 1 || nb != QSTICK_FLAT_N - period + 1 )
+   {
+      printf( "QSTICK flat Fail: got beg=%d nb=%d expected %d/%d\n",
+              (int)beg, (int)nb, period - 1, QSTICK_FLAT_N - period + 1 );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( i = 0; i < nb; i++ )
+   {
+      if( out[i] != 0.0 )
+      {
+         printf( "QSTICK flat Fail at out[%d]: got %.17g, expected exactly 0\n",
+                 i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+#undef QSTICK_FLAT_N
+}
+
+/* (5) IN-PLACE ALIASING. The C API allows the output buffer to be one of the
+ * inputs. QSTICK reads both trailing terms before it stores, so this holds for
+ * either -- and the two are separate risks, because they are separate reads in
+ * the same statement and a future rewrite could reorder one past the store.
+ *
+ * Run at period 1 as well: there the write index equals the trailing read index
+ * on every iteration, which is the tightest the aliasing gets. */
+static const int qstickInPlaceGrid[] = { 1, 10, 30 };
+#define NB_QSTICK_INPLACE (sizeof(qstickInPlaceGrid)/sizeof(qstickInPlaceGrid[0]))
+
+static ErrorNumber test_qstick_inplace( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rc;
+   TA_Integer begRef, nbRef, begAlias, nbAlias;
+   static TA_Real outRef[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( g = 0; g < NB_QSTICK_INPLACE; g++ )
+   {
+      int period = qstickInPlaceGrid[g];
+      int which;
+
+      rc = TA_QSTICK( 0, nbBars - 1, history->open, history->close,
+                      period, &begRef, &nbRef, outRef );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "QSTICK in-place Fail [period %d]: reference retCode %d\n",
+                 period, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      for( which = 0; which < 2; which++ )
+      {
+         const char *tag = which == 0 ? "outReal==inOpen" : "outReal==inClose";
+
+         /* Copy the aliased input into the scratch buffer, then hand that same
+          * buffer in as both that input and the output. */
+         for( i = 0; i < nbBars; i++ )
+            work[i] = which == 0 ? history->open[i] : history->close[i];
+
+         if( which == 0 )
+            rc = TA_QSTICK( 0, nbBars - 1, work, history->close,
+                            period, &begAlias, &nbAlias, work );
+         else
+            rc = TA_QSTICK( 0, nbBars - 1, history->open, work,
+                            period, &begAlias, &nbAlias, work );
+
+         if( rc != TA_SUCCESS )
+         {
+            printf( "QSTICK in-place Fail [period %d, %s]: retCode %d\n",
+                    period, tag, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( begAlias != begRef || nbAlias != nbRef )
+         {
+            printf( "QSTICK in-place Fail [period %d, %s]: range (%d,%d) vs (%d,%d)\n",
+                    period, tag, (int)begAlias, (int)nbAlias,
+                    (int)begRef, (int)nbRef );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+
+         for( i = 0; i < nbRef; i++ )
+         {
+            if( memcmp( &work[i], &outRef[i], sizeof(double) ) != 0 )
+            {
+               printf( "QSTICK in-place Fail [period %d, %s] at out[%d]: "
+                       "got %.17g expected %.17g\n",
+                       period, tag, i, work[i], outRef[i] );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
             }
          }
       }

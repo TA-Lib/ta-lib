@@ -3083,6 +3083,27 @@ unsigned int TA_PVO_FramePPLB( const TA_ParamHolderPriv *params )
                     params->optIn[1].data.optInInteger, /* optInSlowPeriod*/
                     (TA_MAType)params->optIn[2].data.optInInteger /* optInMAType*/ );
 }
+TA_RetCode TA_QSTICK_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_QSTICK(
+               startIdx,
+               endIdx,
+               params->in[0].data.inPrice.open, /* inOpen */
+               params->in[0].data.inPrice.close, /* inClose */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_QSTICK_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_QSTICK_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

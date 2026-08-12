@@ -7435,6 +7435,62 @@ TA_LIB_API TA_RetCode TA_PVO_Close( TA_PVO_Stream *stream );
 TA_LIB_API TA_RetCode TA_PVO_OpenAndFill( TA_PVO_Stream **stream, const double inVolume[], int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_QSTICK - Qstick
+ * 
+ * Input  = Open, Close
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_QSTICK( int    startIdx,
+                                 int    endIdx,
+                                            const double inOpen[],
+                                            const double inClose[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_QSTICK( int    startIdx,
+                                   int    endIdx,
+                                              const float  inOpen[],
+                                              const float  inClose[],
+                                              int           optInTimePeriod, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API int TA_QSTICK_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_QSTICK — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_QSTICK_Stream TA_QSTICK_Stream;
+
+TA_LIB_API TA_RetCode TA_QSTICK_Open( TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inOpen, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_QSTICK_Close( TA_QSTICK_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_QSTICK( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_QSTICK_OpenAndFill( TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_ROC - Rate of change : ((price/prevPrice)-1)*100
  * 
  * Input  = double

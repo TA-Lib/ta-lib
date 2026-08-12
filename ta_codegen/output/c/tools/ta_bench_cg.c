@@ -162,6 +162,7 @@
 #include "ta_PPO.c"
 #include "ta_PVI.c"
 #include "ta_PVO.c"
+#include "ta_QSTICK.c"
 #include "ta_ROC.c"
 #include "ta_ROCP.c"
 #include "ta_ROCR.c"
@@ -2502,6 +2503,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("PVO %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "QSTICK") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_QSTICK(0, g_nPoints - 1, g_open, g_close, 10, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("QSTICK %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "ROC") ) {

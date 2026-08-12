@@ -247,6 +247,7 @@ public class TaCodegenServe {
             else if (method == "TA_PPO") return Handle_PPO(p, startIdx, endIdx);
             else if (method == "TA_PVI") return Handle_PVI(p, startIdx, endIdx);
             else if (method == "TA_PVO") return Handle_PVO(p, startIdx, endIdx);
+            else if (method == "TA_QSTICK") return Handle_QSTICK(p, startIdx, endIdx);
             else if (method == "TA_ROC") return Handle_ROC(p, startIdx, endIdx);
             else if (method == "TA_ROCP") return Handle_ROCP(p, startIdx, endIdx);
             else if (method == "TA_ROCR") return Handle_ROCR(p, startIdx, endIdx);
@@ -555,6 +556,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_PVI\"");
                 sb.Append(",");
                 sb.Append("\"TA_PVO\"");
+                sb.Append(",");
+                sb.Append("\"TA_QSTICK\"");
                 sb.Append(",");
                 sb.Append("\"TA_ROC\"");
                 sb.Append(",");
@@ -1407,6 +1410,10 @@ public class TaCodegenServe {
             int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
             MAType optInMAType = (MAType)GetInt(p, "optInMAType", 0);
             return core.PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType);
+        }
+        case "QSTICK": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.QSTICK_Lookback(optInTimePeriod);
         }
         case "ROC": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -9435,6 +9442,60 @@ public class TaCodegenServe {
             var f_inVolume = new float[inVolume.Length];
             for (int _fi = 0; _fi < inVolume.Length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
             rc = core.PVO(startIdx, endIdx, f_inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outArr0);
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_QSTICK(JsonElement p, int startIdx, int endIdx) {
+        int n = endIdx - startIdx + 1;
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        if (GetInt(p, "bench_mode", 0) != 0)
+            return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}";
+        double[] inOpen;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inOpen = new double[refN]; Array.Copy(refOpen, inOpen, refN);
+            inClose = new double[refN]; Array.Copy(refClose, inClose, refN);
+        } else {
+            inOpen = GetDoubleArray(p, "inOpen");
+            inClose = GetDoubleArray(p, "inClose");
+        }
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        double[] outArr0 = new double[n];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            rc = core.QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inOpen = new float[inOpen.Length];
+            for (int _fi = 0; _fi < inOpen.Length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            var f_inClose = new float[inClose.Length];
+            for (int _fi = 0; _fi < inClose.Length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.QSTICK(startIdx, endIdx, f_inOpen, f_inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
             usedFloat = 1;
         }
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
