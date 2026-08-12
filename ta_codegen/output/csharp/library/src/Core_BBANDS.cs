@@ -601,9 +601,10 @@ public partial class Core
    /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
    /// \end{aligned}
    /// $$
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-   /// and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
    /// </code>
+   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
+   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+   /// lower deviation multipliers.
    /// <list type="bullet">
    /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
    /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>
@@ -676,9 +677,10 @@ public partial class Core
    /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
    /// \end{aligned}
    /// $$
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-   /// and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
    /// </code>
+   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
+   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+   /// lower deviation multipliers.
    /// <list type="bullet">
    /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
    /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>

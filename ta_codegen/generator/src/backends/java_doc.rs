@@ -47,6 +47,9 @@ pub fn guarded_docs(
             }
         }
         b.raw("}</pre>");
+        if let Some(note) = &doc.formula_note {
+            b.para(&jdoc(note));
+        }
     }
 
     if !doc.notes.is_empty() {

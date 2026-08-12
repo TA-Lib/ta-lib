@@ -415,8 +415,8 @@ public partial class Core
    /// &amp;  \mathrm{RSI}_t &amp;= 100 - \frac{100}{1 + \mathrm{RS}_t}
    /// \end{aligned}
    /// $$
-   /// where $X$ is the input series and $n$ the period.
    /// </code>
+   /// where $X$ is the input series and $n$ the period.
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -475,8 +475,8 @@ public partial class Core
    /// &amp;  \mathrm{RSI}_t &amp;= 100 - \frac{100}{1 + \mathrm{RS}_t}
    /// \end{aligned}
    /// $$
-   /// where $X$ is the input series and $n$ the period.
    /// </code>
+   /// where $X$ is the input series and $n$ the period.
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

@@ -52,6 +52,9 @@ pub fn guarded_docs(
             }
         }
         b.raw("</code>");
+        if let Some(note) = &doc.formula_note {
+            b.text(&csdoc(note));
+        }
     }
     if !doc.notes.is_empty() {
         b.raw("<list type=\"bullet\">");

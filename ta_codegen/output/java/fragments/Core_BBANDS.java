@@ -559,9 +559,10 @@
     * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
     * \end{aligned}
     * $$
-    * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-    * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
     * }</pre>
+    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
+    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+    * lower deviation multipliers.
     * <p><b>Notes</b>
     * <ul>
     * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
@@ -637,9 +638,10 @@
     * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
     * \end{aligned}
     * $$
-    * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-    * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
     * }</pre>
+    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
+    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+    * lower deviation multipliers.
     * <p><b>Notes</b>
     * <ul>
     * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>

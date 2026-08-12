@@ -364,8 +364,8 @@
     * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
     * \end{aligned}
     * $$
-    * where $X$ is the input series and $n$ the period.
     * }</pre>
+    * <p>where $X$ is the input series and $n$ the period.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -426,8 +426,8 @@
     * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
     * \end{aligned}
     * $$
-    * where $X$ is the input series and $n$ the period.
     * }</pre>
+    * <p>where $X$ is the input series and $n$ the period.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -9562,9 +9562,10 @@ class Core {
         * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
         * \end{aligned}
         * $$
-        * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-        * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
         * }</pre>
+        * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
+        * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+        * lower deviation multipliers.
         * <p><b>Notes</b>
         * <ul>
         * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
@@ -9640,9 +9641,10 @@ class Core {
         * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
         * \end{aligned}
         * $$
-        * where $X$ is the input series, $n$ the period, $\text{matype}$ the moving-average type,
-        * and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and lower deviation multipliers.
         * }</pre>
+        * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
+        * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
+        * lower deviation multipliers.
         * <p><b>Notes</b>
         * <ul>
         * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
@@ -106613,8 +106615,8 @@ class Core {
         * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
         * \end{aligned}
         * $$
-        * where $X$ is the input series and $n$ the period.
         * }</pre>
+        * <p>where $X$ is the input series and $n$ the period.
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -106675,8 +106677,8 @@ class Core {
         * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
         * \end{aligned}
         * $$
-        * where $X$ is the input series and $n$ the period.
         * }</pre>
+        * <p>where $X$ is the input series and $n$ the period.
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.

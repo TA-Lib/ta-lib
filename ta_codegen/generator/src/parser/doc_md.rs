@@ -26,7 +26,9 @@ pub fn parse_doc_str(body: &str) -> DocDef {
             "Formula" => {
                 let t = text.trim();
                 if !t.is_empty() {
-                    doc.formula = Some(t.to_string());
+                    let (formula, note) = split_formula_note(t);
+                    doc.formula = Some(formula);
+                    doc.formula_note = note;
                 }
             }
             "Notes" => doc.notes = bullets(&text),
@@ -57,6 +59,45 @@ pub fn parse_doc_str(body: &str) -> DocDef {
     }
 
     doc
+}
+
+/// Split a `## Formula` body at its closing `$$` into the formula proper and the
+/// prose that follows it — typically the sentence naming the symbols.
+///
+/// Every backend renders a formula as preformatted text, so a trailing sentence
+/// left inside it renders as code rather than prose. Splitting here rather than
+/// in each emitter keeps the three doc backends agreeing, and keeps the rule off
+/// the authors: the `.md` stays plain markdown, where the sentence already reads
+/// as a paragraph.
+///
+/// Bodies with no display-math delimiters are returned unchanged — that is most
+/// functions, whose formulas are ASCII pseudo-math with load-bearing alignment.
+fn split_formula_note(body: &str) -> (String, Option<String>) {
+    let lines: Vec<&str> = body.lines().collect();
+    let delims: Vec<usize> = lines
+        .iter()
+        .enumerate()
+        .filter(|(_, l)| l.trim() == "$$")
+        .map(|(i, _)| i)
+        .collect();
+    // Fewer than two is not a closed block; leave it alone rather than guess
+    // which side of a lone delimiter is prose.
+    if delims.len() < 2 {
+        return (body.to_string(), None);
+    }
+    let close = delims[delims.len() - 1];
+    // One logical paragraph, soft-wrapped in the `.md` as markdown allows. It has
+    // to reach the emitters as a single line: each of them prefixes every line it
+    // is handed (`/// `, ` * `), and an embedded newline slips a line past that —
+    // which is malformed C#, not just ugly.
+    let note = lines[close + 1..]
+        .iter()
+        .map(|l| l.trim())
+        .filter(|l| !l.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let formula = lines[..=close].join("\n").trim_end().to_string();
+    (formula, (!note.is_empty()).then_some(note))
 }
 
 /// Split the body into `(section_title, section_text)` pairs on `## ` headings.

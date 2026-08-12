@@ -43,6 +43,10 @@ pub fn guarded_docs(
         d.paragraph("# Formula");
         d.blank();
         d.fenced_text(formula);
+        if let Some(note) = &doc.formula_note {
+            d.blank();
+            d.paragraph(&escape_prose(note));
+        }
     }
 
     if !doc.notes.is_empty() {
