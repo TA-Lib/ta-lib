@@ -303,14 +303,14 @@ static TA_RetCode TA_STDDEV_OpenCore( struct TA_STDDEV_Stream **stream, const do
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_VAR_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, 1.0, &subOpenDummy );
+         subRc = TA_VAR_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, sc_outReal );
          if( subRc != TA_SUCCESS )
          {
             TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
             return subRc;
          }
       }
-      retCode = TA_VAR(startIdx,endIdx,inReal,optInTimePeriod,1.0,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
@@ -394,6 +394,12 @@ TA_LIB_API TA_RetCode TA_STDDEV_OpenAndFill( TA_STDDEV_Stream **stream, const do
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    return TA_STDDEV_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STDDEV_OpenAndFillInternal( struct TA_STDDEV_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_STDDEV_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal, double *outReal )

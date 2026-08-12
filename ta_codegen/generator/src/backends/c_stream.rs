@@ -213,6 +213,37 @@ pub fn open_and_fill_signature(func: &FuncDef) -> String {
     )
 }
 
+/// `OpenAndFillInternal` prototype (no trailing `;`): `OpenAndFill` anchored at
+/// a caller-supplied `startIdx` instead of an implicit 0.
+///
+/// This is what lets a COMPOSED Open warm a sub-handle and fill that sub-call's
+/// destination in ONE pass (issue #192). Before it, the composed tier opened the
+/// sub-stream over the history AND re-ran the transcribed batch sub-call over
+/// the same range — the same numbers computed twice, which measured as
+/// `TA_STDDEV_Open` costing 1.49x its own batch pass while every direct stream
+/// sat at 1.0.
+///
+/// It carries NO aliasing rejection, unlike the public wrapper. That is not an
+/// oversight: the generator emits a call to it only for a sub-call whose
+/// destinations alias neither its sources nor each other
+/// ([`streaming::SubCallStep::is_fusable`]), so the check could never fire, and the
+/// one sub-call that DOES write in place (STOCH's slow-K `TA_MA` over
+/// `tempBuffer`) keeps the unfused two-pass form precisely because this wrapper
+/// would be unsound there.
+pub fn open_and_fill_internal_signature(func: &FuncDef) -> String {
+    let n = uname(func);
+    let mut history = String::new();
+    for a in streaming::input_array_names(func) {
+        let _ = write!(history, "const double {a}[], ");
+    }
+    format!(
+        "TA_RetCode TA_{n}_OpenAndFillInternal( struct TA_{n}_Stream **stream, {}int startIdx, int historyLen, {}int *outBegIdx, int *outNBElement, {} )",
+        history,
+        opt_params_sig(func),
+        out_fill_arrays_sig(func)
+    )
+}
+
 /// The merged `OpenCore` prototype (no trailing `;`): the union of both public
 /// entry points' inputs — history arrays, `startIdx` (a parameter, as
 /// `OpenInternal` needs for sub-stream composition), the batch output triplet,
@@ -415,6 +446,22 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
         o,
         "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
         open_core_call_head(func, "0"),
+        outs.join(", ")
+    );
+    let _ = writeln!(o, "}}\n");
+}
+
+/// `OpenAndFillInternal` for every tier that owns an `OpenCore`: the same single
+/// pass as the public `OpenAndFill`, at the caller's `startIdx`. See
+/// [`open_and_fill_internal_signature`] for why it carries no aliasing guard.
+fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
+    let n = uname(func);
+    let outs: Vec<String> = func.outputs.iter().map(|x| x.name.clone()).collect();
+    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_and_fill_internal_signature(func));
+    let _ = writeln!(
+        o,
+        "   return TA_{n}_OpenCore( {}outBegIdx, outNBElement, {}, 1 );",
+        open_core_call_head(func, "startIdx"),
         outs.join(", ")
     );
     let _ = writeln!(o, "}}\n");
@@ -1000,6 +1047,7 @@ fn emit_composed(
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
 
     // --- Update / Peek / Close ---------------------------------------------------
     emit_update(o, func);
@@ -1077,11 +1125,12 @@ fn emit_composed_sub_open(
     outputs: &[String],
     cleanup: &str,
     open_map: &dyn Fn(Expr) -> Expr,
+    batch_stmt: &Statement,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
-) {
+) -> bool {
     let cpfx = callee_prefix(&sub.callee);
     let opt_str: String = sub.opt_args.iter().fold(String::new(), |mut s, a| {
         let _ = write!(s, "{}, ", render_expression(a, registry, helpers, counter));
@@ -1129,10 +1178,33 @@ fn emit_composed_sub_open(
     );
     let _ = writeln!(o, "       * sub-call's own startIdx (the seeding point). */");
     let _ = writeln!(o, "      {{");
-    let _ = writeln!(
-        o,
-        "         subRc = {cpfx}_OpenInternal( &sub{si}, {src_ptrs}, ({s_arg}), ({e_arg}) + 1, {opt_str}{out_dummies} );"
-    );
+    // Fused form (issue #192): one pass that BOTH warms the handle and fills
+    // this sub-call's destination, so the batch sub-call the caller transcribed
+    // next has nothing left to compute. The out-meta and destination arguments
+    // are taken from that very statement rather than re-derived — they are not
+    // uniformly the dummies (MACDEXT reads `outNbElement1`, APO/PPO/PVO read
+    // `fastNb`, STOCHRSI mixes `outBegIdx2` with `dummyNBElement`), and getting
+    // them from anywhere else would silently feed the wrong lengths downstream.
+    let fused = sub.is_fusable() && batch_call_out_args(batch_stmt, sub).is_some();
+    if fused {
+        let (out_meta, dsts) = batch_call_out_args(batch_stmt, sub).unwrap();
+        let rend = |e: &Expr| render_expression(e, registry, helpers, counter);
+        let out_args: String = out_meta
+            .iter()
+            .chain(dsts.iter())
+            .map(|e| rend(e))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let _ = writeln!(
+            o,
+            "         subRc = {cpfx}_OpenAndFillInternal( &sub{si}, {src_ptrs}, ({s_arg}), ({e_arg}) + 1, {opt_str}{out_args} );"
+        );
+    } else {
+        let _ = writeln!(
+            o,
+            "         subRc = {cpfx}_OpenInternal( &sub{si}, {src_ptrs}, ({s_arg}), ({e_arg}) + 1, {opt_str}{out_dummies} );"
+        );
+    }
     let _ = writeln!(o, "         if( subRc != TA_SUCCESS )");
     let _ = writeln!(o, "         {{");
     for sf in &cp.series_frees {
@@ -1144,6 +1216,32 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "            return subRc;");
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
+    fused
+}
+
+/// The out-meta and destination argument expressions of a composed tail's batch
+/// sub-call, taken from the END of its argument list — `[startIdx, endIdx,
+/// inputs.., opts.., outBegIdx, outNBElement, outputs..]`. Counting backwards
+/// from `sub.dsts.len()` is what makes this independent of how many inputs and
+/// optional params the callee has.
+///
+/// `None` when the statement is not the expected `<var> = <callee>( .. )` shape
+/// or the argument count cannot account for the outputs — the caller then falls
+/// back to today's unfused two-pass emission rather than guessing.
+fn batch_call_out_args<'a>(
+    stmt: &'a Statement,
+    sub: &streaming::SubCallStep,
+) -> Option<(Vec<&'a Expr>, Vec<&'a Expr>)> {
+    let Statement::Assign { value: Expr::FuncCall(_, args), .. } = stmt else {
+        return None;
+    };
+    let n_dst = sub.dsts.len();
+    // startIdx + endIdx + at least one input, then the out triplet.
+    if n_dst == 0 || args.len() < n_dst + 2 + 2 {
+        return None;
+    }
+    let split = args.len() - n_dst;
+    Some((args[split - 2..split].iter().collect(), args[split..].iter().collect()))
 }
 
 /// True for a bare `free(<series>)` of a lag-ring series: it is WITHHELD from
@@ -1250,16 +1348,32 @@ fn emit_composed_open(
     // point; the spike's wrong-order sabotage fails 4,394 legs).
     let open_map = composed_open_expr_fn(outputs);
     for (i, stmt) in tail_stmts.iter().enumerate() {
+        let mut fused = false;
         for (si, sub) in cp.subs.iter().enumerate() {
             if sub.tail_idx == i {
-                emit_composed_sub_open(
-                    o, cp, sub, si, outputs, cleanup, &open_map, enums, registry, helpers, counter,
+                fused |= emit_composed_sub_open(
+                    o, cp, sub, si, outputs, cleanup, &open_map, stmt, enums, registry, helpers,
+                    counter,
                 );
             }
         }
         // Withhold a lag-ring series' bare free: the ring seeds from its buffer
         // tail in the capture epilogue, so the buffer must outlive the tail.
         if is_lag_ring_free(stmt, &cp.sub_lag_rings) {
+            continue;
+        }
+        // A fused sub-open already produced this statement's outputs. Keep only
+        // its assignment, so the error handling the batch transcribed right
+        // after it still reads a retCode — and reads the SAME one, since the
+        // fused call returns what the batch call would have.
+        if fused {
+            if let Statement::Assign { target, .. } = stmt {
+                let _ = writeln!(
+                    o,
+                    "      {} = subRc;",
+                    render_expression(target, registry, helpers, counter)
+                );
+            }
             continue;
         }
         o.push_str(&render_statement(stmt, 6, false, enums, registry, helpers, counter, &nullable_out_names(func)));
@@ -1644,15 +1758,26 @@ fn dispatch_identity_cond_on_handle(
 /// switch. All labels render through the batch's own switch-label mapping so
 /// the arms read exactly like the batch dispatch they mirror.
 #[allow(clippy::too_many_lines)]
-/// The dispatch tier's `OpenAndFill` (MA): dispatch to the selected arm's public
+/// The dispatch tier's `OpenAndFill` (MA): dispatch to the selected arm's
 /// `OpenAndFill`, which fills the caller's array; the identity path fills it
 /// directly; unsupported arms (MAMA) reject exactly as `Open` does. Handle
 /// layout is identical to `Open`'s, so Update/Peek/Close are shared.
+///
+/// `internal` emits the `OpenAndFillInternal` variant instead: anchored at the
+/// caller's `startIdx` rather than 0, dispatching to each arm's own
+/// `OpenAndFillInternal`, and without the aliasing rejection. MA is the callee
+/// of 13 of the 18 shipped composed sub-calls, so without this variant the
+/// issue-#192 fusion would reach almost none of them.
+///
+/// Dispatching to the arm's *public* `OpenAndFill` here would be wrong twice
+/// over: it has no `startIdx`, and it carries the aliasing guard the internal
+/// path deliberately drops.
 #[allow(clippy::too_many_arguments)]
 fn emit_dispatch_open_and_fill(
     o: &mut String,
     func: &FuncDef,
     dp: &DispatchPlan,
+    internal: bool,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
@@ -1664,7 +1789,12 @@ fn emit_dispatch_open_and_fill(
     let bar_args: String = inputs.join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
 
-    let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
+    if internal {
+        let _ = writeln!(o, "/* Private function, not in public API. */");
+        let _ = writeln!(o, "{}\n{{", open_and_fill_internal_signature(func));
+    } else {
+        let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
+    }
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -1700,7 +1830,7 @@ fn emit_dispatch_open_and_fill(
             alias.push(format!("(const void *){a} == (const void *){b}"));
         }
     }
-    if !alias.is_empty() {
+    if !alias.is_empty() && !internal {
         let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
     }
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
@@ -1723,6 +1853,15 @@ fn emit_dispatch_open_and_fill(
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         int fillLb = {lb_call};");
         let _ = writeln!(o, "         int fillIdx;");
+        if internal {
+            // batch( startIdx, .. ) begins at max(startIdx, lookback); the public
+            // entry point's startIdx is 0, so only this variant has to clamp.
+            let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+            let _ = writeln!(
+                o,
+                "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
+            );
+        }
         let _ = writeln!(o, "         *outBegIdx = fillLb;");
         let _ = writeln!(o, "         *outNBElement = historyLen - fillLb;");
         let _ = writeln!(o, "         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
@@ -1751,7 +1890,9 @@ fn emit_dispatch_open_and_fill(
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
         let _ = writeln!(
             o,
-            "         retCode = {cp}_OpenAndFill( &sub, {bar_args}, historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} );",
+            "         retCode = {cp}_OpenAndFill{}( &sub, {bar_args}, {}historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} );",
+            if internal { "Internal" } else { "" },
+            if internal { "startIdx, " } else { "" },
         );
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
@@ -1910,7 +2051,8 @@ fn emit_dispatch(
     let _ = writeln!(o, "   *stream = sp;");
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
     emit_open_wrapper(o, func);
-    emit_dispatch_open_and_fill(o, func, dp, enums, registry, helpers, counter);
+    emit_dispatch_open_and_fill(o, func, dp, false, enums, registry, helpers, counter);
+    emit_dispatch_open_and_fill(o, func, dp, true, enums, registry, helpers, counter);
 
     // --- Update / Peek ---------------------------------------------------------
     let identity_handle_cond =
@@ -2340,6 +2482,7 @@ fn emit_dual_mode(
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
 
     // --- Update / Peek / Close (mode-fixed handle: Peek mirrors the union of
     // both modes' buffers, guarding mode-exclusive groups; Close releases the
@@ -2732,6 +2875,7 @@ fn emit_open_core_body(
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
 }
 
 /// Emit the period-bank stream section (MAVP): a moving average whose period

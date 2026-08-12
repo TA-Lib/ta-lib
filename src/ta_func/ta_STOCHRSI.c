@@ -440,7 +440,7 @@ static TA_RetCode TA_STOCHRSI_OpenCore( struct TA_STOCHRSI_Stream **stream, cons
       /* Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_RSI_OpenInternal( &sub0, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, optInTimePeriod, &subOpenDummy );
+         subRc = TA_RSI_OpenAndFillInternal( &sub0, inReal, (startIdx - lookbackSTOCHF), (endIdx) + 1, optInTimePeriod, &outBegIdx1, &outNbElement1, tempRSIBuffer );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -448,7 +448,7 @@ static TA_RetCode TA_STOCHRSI_OpenCore( struct TA_STOCHRSI_Stream **stream, cons
             return subRc;
          }
       }
-      retCode = TA_RSI(startIdx - lookbackSTOCHF,endIdx,inReal,optInTimePeriod,&outBegIdx1,&outNbElement1,tempRSIBuffer);
+      retCode = subRc;
       if( retCode != TA_SUCCESS || outNbElement1 == 0 )
       {
          free(tempRSIBuffer);
@@ -460,7 +460,7 @@ static TA_RetCode TA_STOCHRSI_OpenCore( struct TA_STOCHRSI_Stream **stream, cons
       /* Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_STOCHF_OpenInternal( &sub1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &subOpenDummy, &subOpenDummy );
+         subRc = TA_STOCHF_OpenAndFillInternal( &sub1, tempRSIBuffer, tempRSIBuffer, tempRSIBuffer, (0), (tempArraySize - 1) + 1, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &outBegIdx2, &dummyNBElement, sc_outFastK, sc_outFastD );
          if( subRc != TA_SUCCESS )
          {
             free(tempRSIBuffer);
@@ -468,7 +468,7 @@ static TA_RetCode TA_STOCHRSI_OpenCore( struct TA_STOCHRSI_Stream **stream, cons
             return subRc;
          }
       }
-      retCode = TA_STOCHF(0,tempArraySize - 1,tempRSIBuffer,tempRSIBuffer,tempRSIBuffer,optInFastK_Period,optInFastD_Period,optInFastD_MAType,&outBegIdx2,&dummyNBElement,sc_outFastK,sc_outFastD);
+      retCode = subRc;
       free(tempRSIBuffer);
       if( retCode != TA_SUCCESS || (int)dummyNBElement == 0 )
       {
@@ -531,6 +531,12 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OpenAndFill( TA_STOCHRSI_Stream **stream, cons
    if( !outBegIdx || !outNBElement || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( (const void *)outFastK == (const void *)inReal || (const void *)outFastD == (const void *)inReal || (const void *)outFastK == (const void *)outFastD ) return TA_BAD_PARAM;
    return TA_STOCHRSI_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCHRSI_OpenAndFillInternal( struct TA_STOCHRSI_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, TA_MAType optInFastD_MAType, int *outBegIdx, int *outNBElement, double outFastK[], double outFastD[] )
+{
+   return TA_STOCHRSI_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )

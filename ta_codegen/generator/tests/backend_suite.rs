@@ -7572,17 +7572,31 @@ fn test_c_stoch_composed_stream_section() {
     assert!(stream.contains("TA_MA_Stream *sub0;"));
     assert!(stream.contains("TA_MA_Stream *sub1;"));
 
-    // Open: sub0 opens on the RAW series strictly BEFORE the in-place
-    // smoothing call; sub1 after it, before the %D call.
-    let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open");
+    // STOCH is the one shipped function that exercises BOTH sides of the
+    // issue-#192 fusion rule, which is why this assertion lives here:
+    //
+    //   sub0's %K smoothing is IN PLACE — `TA_MA( .., tempBuffer, .., tempBuffer )`
+    //   — so it must stay UNFUSED. A fused open would write tempBuffer during
+    //   the warm-up pass while the sub-MA's own capture epilogue still has to
+    //   read its input tail out of it, corrupting the handle.
+    //
+    //   sub1's %D writes a distinct destination, so it fuses: one pass that
+    //   both warms the handle and fills sc_outSlowD, instead of a warm pass
+    //   plus a batch call recomputing the same numbers.
+    let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open (must stay unfused: in-place)");
     let ma1 = stream.find("retCode = TA_MA(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
-    let sub1 = stream.find("subRc = TA_MA_OpenInternal( &sub1, tempBuffer").expect("sub1 open");
-    let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
-    assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
-    // Params trail the handle+history in the new Open order (input, optional, output):
-    // slowK/slowD forwarded just before the initial-output dummy.
+    let sub1 = stream.find("subRc = TA_MA_OpenAndFillInternal( &sub1, tempBuffer").expect("sub1 open (must be fused)");
+    assert!(sub0 < ma1 && ma1 < sub1, "sub-open ordering");
+    // The fused sub1 replaced the %D batch call outright: nothing recomputes it.
+    assert!(
+        !stream.contains("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD"),
+        "%D batch sub-call survived the fusion"
+    );
+    // Params trail the handle+history in the new Open order (input, optional, output).
+    // The unfused sub0 still ends in the initial-output dummy; the fused sub1
+    // carries the batch call's own out-meta and destination instead.
     assert!(stream.contains("optInSlowK_Period, optInSlowK_MAType, &subOpenDummy"), "slowK params forwarded to sub0 open");
-    assert!(stream.contains("optInSlowD_Period, optInSlowD_MAType, &subOpenDummy"), "slowD params forwarded to sub1 open");
+    assert!(stream.contains("optInSlowD_Period, optInSlowD_MAType, &dummyBegIdx, &dummyNBElement, sc_outSlowD"), "slowD params + fill target forwarded to sub1 open");
 
     // Out-meta pointers mapped to the dummies in the transcription (the
     // Open signature has no outBegIdx/outNBElement).

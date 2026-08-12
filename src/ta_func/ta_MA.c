@@ -554,6 +554,138 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
    return TA_SUCCESS;
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   struct TA_MA_Stream *sp;
+   TA_RetCode retCode;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( !inReal || !outReal || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   if( historyLen < 1 ) return TA_BAD_PARAM;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 30;
+   else if( (int)optInTimePeriod < 1 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( (int)optInMAType == TA_INTEGER_DEFAULT || optInMAType == TA_MAType_DEFAULT )
+      optInMAType = 0;
+   else if( (int)optInMAType < TA_MATYPE_MIN || (int)optInMAType > TA_MATYPE_MAX )
+      return TA_BAD_PARAM;
+
+   sp = (struct TA_MA_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   memset( sp, 0, sizeof(*sp) );
+   sp->optInTimePeriod = optInTimePeriod;
+   sp->optInMAType = optInMAType;
+
+   if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
+   {
+      if( historyLen < TA_MA_Lookback( optInTimePeriod, optInMAType ) + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
+      {
+         int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
+         int fillIdx;
+         if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_BAD_PARAM; }
+         *outBegIdx = fillLb;
+         *outNBElement = historyLen - fillLb;
+         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )
+         {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+      }
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+
+   retCode = TA_BAD_PARAM;
+   switch( optInMAType )
+   {
+   case TA_MAType_SMA:
+      {
+         TA_SMA_Stream *sub = NULL;
+         retCode = TA_SMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_EMA:
+      {
+         TA_EMA_Stream *sub = NULL;
+         retCode = TA_EMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_WMA:
+      {
+         TA_WMA_Stream *sub = NULL;
+         retCode = TA_WMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_DEMA:
+      {
+         TA_DEMA_Stream *sub = NULL;
+         retCode = TA_DEMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_TEMA:
+      {
+         TA_TEMA_Stream *sub = NULL;
+         retCode = TA_TEMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_TRIMA:
+      {
+         TA_TRIMA_Stream *sub = NULL;
+         retCode = TA_TRIMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_KAMA:
+      {
+         TA_KAMA_Stream *sub = NULL;
+         retCode = TA_KAMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_MAMA:
+      {
+         TA_MAMA_Stream *sub = NULL;
+         retCode = TA_MAMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outBegIdx, outNBElement, outReal, NULL );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_T3:
+      {
+         TA_T3_Stream *sub = NULL;
+         retCode = TA_T3_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_HMA:
+      {
+         TA_HMA_Stream *sub = NULL;
+         retCode = TA_HMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
+   default:
+      retCode = TA_BAD_PARAM;
+      break;
+   }
+
+   if( retCode != TA_SUCCESS )
+   {
+      TA_Free( sp );
+      return retCode;
+   }
+   *stream = sp;
+   return TA_SUCCESS;
+}
+
 TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
