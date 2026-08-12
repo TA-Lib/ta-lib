@@ -253,9 +253,30 @@ same build. Measured `.text` on x86-64 gcc:
 | autotools `libta-lib` | libtool | separate TUs, no LTO | not built here |
 
 3.9x between the extremes, from identical source. The generator's flags live in
-one place (`COMMON_GCC_FLAGS`, `main.rs`); `-ffp-contract=off` is set by all
-three build systems and is load-bearing for the FMA contract (PR #96), not a
-performance knob.
+one place (`COMMON_GCC_FLAGS`, `main.rs`); two flags are set by all three build
+systems (CMake, autotools, the generator) and must stay in step:
+
+- `-ffp-contract=off` — load-bearing for the FMA contract (PR #96), **not** a
+  performance knob.
+- `-fno-math-errno` — purely a performance knob (issue #192), and the one part
+  of `-ffast-math` that cannot change a value. ISO C requires `sqrt()` to set
+  `errno` on a domain error; that obligation alone is what keeps GCC from
+  emitting the bare instruction and from vectorizing any loop containing it. The
+  library never reads `errno`. Adding it took `TA_SQRT` −52% and `TA_STDDEV`
+  −24% (the sqrt map is over half of STDDEV's batch cost — `TA_VAR`, which is
+  STDDEV without the map, did not move). BBANDS, CORREL and HMA also call
+  `sqrt` and did not move: theirs is not in a vectorizable map.
+
+  Value-safety is checked by hashing every output of all 168 functions in both
+  builds. Do not weaken it to `-ffast-math` on the strength of that: the same
+  harness shows `-ffast-math` changing 70 of the 168.
+
+  It is not effect-free, though, and no output-comparing gate can see what it
+  changes. Vectorizing STDDEV's map if-converts it, so `sqrtpd` runs on lanes the
+  scalar guard skipped and raises `FE_INVALID` on a slightly-negative variance —
+  reachable on a flat stretch, where the subtraction is pure cancellation. Values
+  are unaffected. Details, and why clamping the radicand does not fix it, are in
+  `CMakeLists.txt` next to the flag.
 
 Which tool measures which:
 

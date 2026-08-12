@@ -896,8 +896,22 @@ fn generate_bench(backend_filter: Option<&str>) {
 /// for the FMA contract (PR #96), matching the CMake/autotools library build:
 /// without it the single-TU `target_clones` `.fma` clone auto-contracts the
 /// un-fused `a*b+c` sites, breaking bitwise batch-vs-stream stream_verify.
-const COMMON_GCC_FLAGS: &[&str] =
-    &["-lm", "-O3", "-flto", "-DNDEBUG", "-ffp-contract=off", "-Wno-parentheses-equality"];
+///
+/// `-fno-math-errno` (issue #192) also matches those builds. It frees `sqrt()`
+/// from the ISO C obligation to set `errno`, which is the only reason GCC kept
+/// it scalar and out of vectorized loops; the library never reads `errno`. It
+/// cannot change a computed value, so it does not weaken the bitwise gates these
+/// binaries feed — but it is not free of observable effects: see the FE_INVALID
+/// note in CMakeLists.txt.
+const COMMON_GCC_FLAGS: &[&str] = &[
+    "-lm",
+    "-O3",
+    "-flto",
+    "-DNDEBUG",
+    "-ffp-contract=off",
+    "-fno-math-errno",
+    "-Wno-parentheses-equality",
+];
 
 /// Verify the hand-maintained Rust `FuncUnstId` enum matches enums.yaml.
 ///

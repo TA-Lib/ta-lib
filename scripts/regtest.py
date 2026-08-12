@@ -152,7 +152,7 @@ def _compile_ta_ref_serve(serve_src, lib_a, include_dirs, bin_dir, post_funcs=()
     with open(tmp_ref, "w") as f:
         f.write(src_text)
     cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything",
-           serve_version.FP_CONTRACT_FLAG]
+           serve_version.FP_CONTRACT_FLAG, serve_version.MATH_ERRNO_FLAG]
     cmd += [f"-I{d}" for d in include_dirs]
     cmd += ["-o", os.path.join(bin_dir, "ta_ref_serve"), tmp_ref, lib_a, "-lm"]
     rc = subprocess.run(cmd).returncode
