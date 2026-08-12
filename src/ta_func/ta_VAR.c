@@ -356,6 +356,8 @@ struct TA_VAR_Stream {
    int barsSinceReseed;
    int i;
    int xCap;
+   int xPhys;
+   int xMask;
    double *x_inReal;
    double *xMirror_inReal;
 };
@@ -376,22 +378,22 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
 
    if( sp->i >= 1073741824 )
    {
-      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
       sp->i -= rebaseShift;
       sp->trailingIdx -= rebaseShift;
       sp->j -= rebaseShift;
       sp->windowStart -= rebaseShift;
    }
-   sp->x_inReal[sp->i % sp->xCap] = inReal;
+   sp->x_inReal[sp->i & sp->xMask] = inReal;
    /* Add the incoming value, measured against the shift. */
-   tempReal = sp->x_inReal[sp->i % sp->xCap] - sp->shift;
+   tempReal = sp->x_inReal[sp->i & sp->xMask] - sp->shift;
    sp->periodTotal1 += tempReal;
    tempReal *= tempReal;
    sp->periodTotal2 += tempReal;
    sp->meanValue1 = sp->periodTotal1 * sp->invPeriod;
    sp->variance = sp->periodTotal2 * sp->invPeriod - sp->meanValue1 * sp->meanValue1;
    /* Remove the trailing value (prepares the next window). */
-   tempReal = sp->x_inReal[sp->trailingIdx % sp->xCap] - sp->shift;
+   tempReal = sp->x_inReal[sp->trailingIdx & sp->xMask] - sp->shift;
    sp->periodTotal1 -= tempReal;
    tempReal *= tempReal;
    sp->periodTotal2 -= tempReal;
@@ -417,14 +419,14 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
       tempReal = 0.0;
       for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
       {
-         tempReal += sp->x_inReal[sp->j % sp->xCap];
+         tempReal += sp->x_inReal[sp->j & sp->xMask];
       }
       sp->shift = tempReal * sp->invPeriod;
       sp->periodTotal1 = 0.0;
       sp->periodTotal2 = 0.0;
       for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
       {
-         tempReal = sp->x_inReal[sp->j % sp->xCap] - sp->shift;
+         tempReal = sp->x_inReal[sp->j & sp->xMask] - sp->shift;
          sp->periodTotal1 += tempReal;
          tempReal *= tempReal;
          sp->periodTotal2 += tempReal;
@@ -434,7 +436,7 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
       /* Re-remove the trailing value under the new shift so the carried state
        * matches the non-reseed path.
        */
-      tempReal = sp->x_inReal[sp->windowStart % sp->xCap] - sp->shift;
+      tempReal = sp->x_inReal[sp->windowStart & sp->xMask] - sp->shift;
       sp->periodTotal1 -= tempReal;
       tempReal *= tempReal;
       sp->periodTotal2 -= tempReal;
@@ -609,14 +611,17 @@ static TA_RetCode TA_VAR_OpenCore( struct TA_VAR_Stream **stream, const double i
       sp->i = i;
       sp->xCap = (int)(i - trailingIdx) + 1;
       if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_VAR_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xPhys = 1;
+      while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
+      sp->xMask = sp->xPhys - 1;
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->xMirror_inReal ) { TA_VAR_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
-           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+           sp->x_inReal[fillJ & sp->xMask] = inReal[fillJ];
         }
       }
       *stream = sp;
@@ -667,7 +672,7 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
    if( !stream || !outReal ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
-   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
+   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );
    TA_VAR_StepInternal( &scratch, inReal, outReal );
    return TA_SUCCESS;
 }

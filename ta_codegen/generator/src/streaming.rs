@@ -4605,6 +4605,16 @@ pub trait NameMap {
     fn extrema_buf(&self, array: &str) -> String;
     /// The extrema-automaton ring capacity.
     fn extrema_cap(&self) -> String;
+    /// Map an absolute bar index onto its extrema-ring slot. The default is the
+    /// modulo of the logical capacity; a backend whose Open rounds the ring to a
+    /// power of two overrides this with the equivalent mask.
+    fn extrema_slot(&self, idx: Expr) -> Expr {
+        Expr::BinOp(
+            Box::new(idx),
+            BinOp::Mod,
+            Box::new(Expr::Var(self.extrema_cap())),
+        )
+    }
 }
 
 /// Drop the batch body's own identity branch from an Open transcription: the
@@ -4886,11 +4896,7 @@ fn insert_transition_prologue(
                 Statement::Assign {
                     target: Expr::ArrayAccess(
                         names.extrema_buf(arr),
-                        Box::new(Expr::BinOp(
-                            Box::new(Expr::Var(names.state(&model.cursor))),
-                            BinOp::Mod,
-                            Box::new(Expr::Var(names.extrema_cap())),
-                        )),
+                        Box::new(names.extrema_slot(Expr::Var(names.state(&model.cursor)))),
                     ),
                     value: Expr::Var(names.bar(arr)),
                     compound: false,
@@ -5395,10 +5401,7 @@ fn rewrite_expr_for_transition(
             // Absolute-index automaton: every input read maps to the ring
             // slot of its absolute position (the index expression's vars
             // were already state-mapped bottom-up).
-            Expr::ArrayAccess(
-                names.extrema_buf(&n),
-                Box::new(Expr::BinOp(idx, BinOp::Mod, Box::new(Expr::Var(names.extrema_cap())))),
-            )
+            Expr::ArrayAccess(names.extrema_buf(&n), Box::new(names.extrema_slot(*idx)))
         }
         Expr::ArrayAccess(n, idx)
             if model.out_feedback.contains(&n) && is_prev_output_read(&idx) =>
