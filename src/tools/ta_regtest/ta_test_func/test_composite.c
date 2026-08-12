@@ -37,6 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  CC       Claude Code (AI assistant)
+ *  KL       Kevin
  *
  * Change history:
  *
@@ -46,6 +47,8 @@
  *  072026 MF,CC  Oracle check via checkOracleValue (near-zero absolute floor).
  *  072126 MF,CC  CMF differential leg, at tolerance rather than bitwise (#134).
  *  072226 MF,CC  HMA legs, incl. TA_MAType_HMA dispatch parity (#139).
+ *  081226 KL     EFI legs: EMA-of-force differential; TA_SetCompatibility
+ *                pinned inert (deprecated for new functions).
  */
 
 /* Description:
@@ -181,6 +184,11 @@ static ErrorNumber test_hma_matype( const TA_History *history );
 static ErrorNumber test_hma_single_element( const TA_History *history );
 static ErrorNumber test_hma_param_reject( const TA_History *history );
 static ErrorNumber test_hma_large_period( void );
+static ErrorNumber test_efi_differential( const TA_History *history );
+static ErrorNumber test_efi_compat_inert( const TA_History *history );
+static ErrorNumber test_efi_oracle( const TA_History *history );
+static ErrorNumber test_efi_degenerate( void );
+static ErrorNumber test_efi_inplace( const TA_History *history );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -264,6 +272,26 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_hma_large_period();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_differential( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_compat_inert( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_oracle( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_degenerate();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_efi_inplace( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -1675,6 +1703,474 @@ static ErrorNumber test_hma_large_period( void )
             printf( "HMA large-period in-place Fail [n=%d] at out[%d]\n", period, i );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* ==========================================================================
+ * EFI -- Elder's Force Index, EMA( (close - prevClose) * volume ).
+ *
+ * Composed of three shipped functions: TA_MOM at period 1 for the close
+ * change, TA_MULT against the volume of the same bar, TA_EMA for the
+ * smoothing. The fused loop performs exactly those operations in exactly that
+ * order, so leg (1) is a memcmp.
+ *
+ * Index bookkeeping, since it is the easiest thing to get wrong here: the
+ * force series is one shorter than the bar series and force[k] belongs to bar
+ * k+1, there being no close change on the first bar. Every comparison below
+ * therefore offsets the reference call by one bar, and the ranges are checked
+ * as well as the values -- a reference silently one bar out would otherwise
+ * agree on a shifted series that is nearly as smooth.
+ * ========================================================================== */
+
+/* Periods across the branches: 1 (the raw Force Index, its own copy loop), 2
+ * (Elder's short-term reading and the shortest smoothing that recurses), 13
+ * (his intermediate-term default) and 30. */
+static const int efiGrid[] = { 1, 2, 13, 30 };
+#define NB_EFI_GRID (sizeof(efiGrid)/sizeof(efiGrid[0]))
+
+/* The EMA unstable period shifts the lookback of both sides; sweeping it
+ * proves EFI routes TA_FUNC_UNST_EMA the same way the composition does rather
+ * than ignoring it. */
+static const unsigned int efiUnstGrid[] = { 0, 5 };
+#define NB_EFI_UNST (sizeof(efiUnstGrid)/sizeof(efiUnstGrid[0]))
+
+static const int efiStartGrid[] = { 0, 1, 40, 200 };
+#define NB_EFI_START (sizeof(efiStartGrid)/sizeof(efiStartGrid[0]))
+
+/* External oracle: pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1),
+ * efi(close, volume, length=13), on the standard 252-bar close/volume series,
+ * TA_FUNC_UNST_EMA = 0. outBegIdx 13, nb 239; idx below is the BAR index.
+ *
+ * Single-arm, and the arm is not fully independent: Tulip ships no force index
+ * at all, and pandas-ta-classic's EMA was written to reproduce TA-Lib's
+ * seeding. So agreement on the warm-up anchor is by construction. What this
+ * leg does corroborate independently is the algebra -- close.diff(1) * volume
+ * over a 239-value trajectory -- which is the part leg (1) cannot see, since
+ * both of its sides would share any wrong formula.
+ *
+ * Never bitwise against pandas: its ewm computes alpha*x + (1-alpha)*prev
+ * where TA-Lib computes prev + (x-prev)*alpha, and the seed sums differ in
+ * order. Measured divergence over all 239 values is 1.4e-14 relative. */
+static const struct { int idx; double value; } efiOracle[] =
+{
+   {  13,  -9561925.384615384    },
+   {  14,  -6316864.615384615    },
+   {  50,    728376.35804008122  },
+   { 125,   8077682.3251350578   },
+   { 200, -10621261.764120147    },
+   { 251,   -823984.84225067974  },
+};
+#define NB_EFI_ORACLE (sizeof(efiOracle)/sizeof(efiOracle[0]))
+#define EFI_ORACLE_PERIOD 13
+#define EFI_ORACLE_BEG    13
+#define EFI_ORACLE_NB     239
+#define EFI_ORACLE_TOL    1e-12
+/* Values run to ~1e7; the absolute floor only guards a crossing that lands on
+ * an exact zero, which this corpus does not produce. */
+#define EFI_ORACLE_ABS    1e-9
+
+/* Build the force series with shipped primitives only: TA_MOM for the change,
+ * TA_MULT against the volume of the bar the change lands on. Returns the
+ * number of force values, or -1 on any failure (already reported). */
+static int efi_build_force( const TA_History *history, TA_Real *force )
+{
+   static TA_Real mom[OUT_CAP];
+   TA_RetCode rc;
+   TA_Integer beg, nb, begX, nbX;
+   int nbBars = (int)history->nbBars;
+
+   rc = TA_MOM( 0, nbBars - 1, history->close, 1, &beg, &nb, mom );
+   if( rc != TA_SUCCESS || beg != 1 || nb != nbBars - 1 )
+   {
+      printf( "EFI reference Fail: TA_MOM rc=%d beg=%d nb=%d (expected 1/%d)\n",
+              (int)rc, (int)beg, (int)nb, nbBars - 1 );
+      return -1;
+   }
+
+   /* mom[k] is the change into bar k+1, so it pairs with volume[k+1]. */
+   rc = TA_MULT( 0, nbBars - 2, mom, &history->volume[1], &begX, &nbX, force );
+   if( rc != TA_SUCCESS || begX != 0 || nbX != nbBars - 1 )
+   {
+      printf( "EFI reference Fail: TA_MULT rc=%d beg=%d nb=%d (expected 0/%d)\n",
+              (int)rc, (int)begX, (int)nbX, nbBars - 1 );
+      return -1;
+   }
+
+   return nbBars - 1;
+}
+
+/* (1) DIFFERENTIAL: EFI == EMA( MOM(close,1) * volume ), bit-for-bit, across
+ * the period grid, the unstable-period grid and several startIdx values. */
+static ErrorNumber test_efi_differential( const TA_History *history )
+{
+   unsigned int g, u, s;
+   int i, nbBars, nbForce;
+   TA_RetCode rcF, rcE;
+   TA_Integer begF, nbF, begE, nbE;
+   static TA_Real force[OUT_CAP];
+   static TA_Real outEfi[OUT_CAP];
+   static TA_Real outEma[OUT_CAP];
+
+   nbBars  = (int)history->nbBars;
+   nbForce = efi_build_force( history, force );
+   if( nbForce < 0 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+   for( u = 0; u < NB_EFI_UNST; u++ )
+   {
+      TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, efiUnstGrid[u] );
+
+      for( s = 0; s < NB_EFI_START; s++ )
+      {
+         int startIdx = efiStartGrid[s];
+         /* Bar startIdx is force index startIdx-1; bar 0 has no force value,
+          * so the reference starts at force index 0 either way. */
+         int startForce = startIdx > 0 ? startIdx - 1 : 0;
+
+         for( g = 0; g < NB_EFI_GRID; g++ )
+         {
+            int period = efiGrid[g];
+
+            rcF = TA_EFI( startIdx, nbBars - 1, history->close, history->volume,
+                          period, &begF, &nbF, outEfi );
+            rcE = TA_EMA( startForce, nbForce - 1, force,
+                          period, &begE, &nbE, outEma );
+
+            if( rcF != rcE )
+            {
+               printf( "EFI differential Fail [unst %u start %d period %d]: "
+                       "retCode EFI=%d EMA=%d\n",
+                       efiUnstGrid[u], startIdx, period, (int)rcF, (int)rcE );
+               TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            if( rcF != TA_SUCCESS )
+               continue;
+
+            /* begF is a bar index, begE a force index: they must differ by
+             * exactly the one bar the first close change consumes. */
+            if( begF != begE + 1 || nbF != nbE )
+            {
+               printf( "EFI differential Fail [unst %u start %d period %d]: "
+                       "range EFI(%d,%d) EMA(%d,%d) -- expected beg %d\n",
+                       efiUnstGrid[u], startIdx, period,
+                       (int)begF, (int)nbF, (int)begE, (int)nbE, (int)begE + 1 );
+               TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+
+            for( i = 0; i < nbF; i++ )
+            {
+               if( memcmp( &outEfi[i], &outEma[i], sizeof(double) ) != 0 )
+               {
+                  printf( "EFI differential Fail [unst %u start %d period %d] "
+                          "at out[%d]: fused %.17g != compose %.17g "
+                          "(must be BIT-exact)\n",
+                          efiUnstGrid[u], startIdx, period, i,
+                          outEfi[i], outEma[i] );
+                  TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+      }
+   }
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
+   return TA_TEST_PASS;
+}
+
+/* (1b) TA_SetCompatibility is INERT for EFI, and provably so.
+
+   ema.c still carries a TA_COMPATIBILITY_METASTOCK seeding arm. EFI does not:
+   the capability is being deprecated, it is preserved only for the functions
+   that already shipped with it, and it is unreachable from the Rust, Java and
+   C# APIs, none of which expose TA_SetCompatibility. Honouring it in a new
+   function would make its C output diverge from three backends that cannot
+   read the setting.
+
+   The obvious test -- "EFI under METASTOCK equals EFI under DEFAULT" -- passes
+   for two different reasons, and only one of them is the contract: it also
+   passes if TA_SetCompatibility never reached the library at all. So the leg
+   carries a positive control: the SAME force series through TA_EMA, which does
+   still honour the setting, must CHANGE. If that control ever stops changing,
+   this test has stopped testing anything and says so. */
+static ErrorNumber test_efi_compat_inert( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars, nbForce;
+   TA_RetCode rc;
+   TA_Integer begD, nbD, begM, nbM;
+   static TA_Real force[OUT_CAP];
+   static TA_Real outDefault[OUT_CAP];
+   static TA_Real outMeta[OUT_CAP];
+   static TA_Real emaDefault[OUT_CAP];
+   static TA_Real emaMeta[OUT_CAP];
+   ErrorNumber retValue = TA_TEST_PASS;
+   int emaMoved = 0;
+
+   nbBars  = (int)history->nbBars;
+   nbForce = efi_build_force( history, force );
+   if( nbForce < 0 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+
+   for( g = 0; g < NB_EFI_GRID && retValue == TA_TEST_PASS; g++ )
+   {
+      int period = efiGrid[g];
+
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+      rc = TA_EFI( 0, nbBars - 1, history->close, history->volume,
+                   period, &begD, &nbD, outDefault );
+      if( rc == TA_SUCCESS )
+         rc = TA_EMA( 0, nbForce - 1, force, period, &begM, &nbM, emaDefault );
+
+      TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
+      if( rc == TA_SUCCESS )
+         rc = TA_EFI( 0, nbBars - 1, history->close, history->volume,
+                      period, &begM, &nbM, outMeta );
+      if( rc == TA_SUCCESS )
+         rc = TA_EMA( 0, nbForce - 1, force, period, &begM, &nbM, emaMeta );
+      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+
+      if( rc != TA_SUCCESS )
+      {
+         printf( "EFI compatibility Fail [period %d]: retCode %d\n",
+                 period, (int)rc );
+         retValue = TA_TESTUTIL_TFRR_BAD_RETCODE;
+         break;
+      }
+
+      /* The contract: the setting does not reach EFI. */
+      for( i = 0; i < nbD; i++ )
+      {
+         if( memcmp( &outDefault[i], &outMeta[i], sizeof(double) ) != 0 )
+         {
+            printf( "EFI compatibility Fail [period %d] at out[%d]: "
+                    "METASTOCK %.17g != DEFAULT %.17g -- TA_SetCompatibility "
+                    "must be inert for this function\n",
+                    period, i, outMeta[i], outDefault[i] );
+            retValue = TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            break;
+         }
+      }
+
+      /* The control: it does still reach TA_EMA on the same series. Period 1
+       * is exempt -- EMA's identity copy is seeding-independent by
+       * construction, so it cannot move and its not moving proves nothing. */
+      if( period > 1 )
+      {
+         for( i = 0; i < nbM; i++ )
+         {
+            if( memcmp( &emaDefault[i], &emaMeta[i], sizeof(double) ) != 0 )
+            {
+               emaMoved = 1;
+               break;
+            }
+         }
+      }
+   }
+
+   if( retValue == TA_TEST_PASS && !emaMoved )
+   {
+      printf( "EFI compatibility Fail: the control did not move -- "
+              "TA_SetCompatibility no longer changes TA_EMA either, so this "
+              "test would pass whether or not EFI honoured it\n" );
+      retValue = TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return retValue;
+}
+
+/* (2) EXTERNAL ORACLE. The only leg that constrains the formula. */
+static ErrorNumber test_efi_oracle( const TA_History *history )
+{
+   unsigned int k;
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   static TA_Real out[OUT_CAP];
+
+   rc = TA_EFI( 0, (int)history->nbBars - 1, history->close, history->volume,
+                EFI_ORACLE_PERIOD, &beg, &nb, out );
+   if( rc != TA_SUCCESS )
+   {
+      printf( "EFI oracle Fail: retCode %d\n", (int)rc );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( beg != EFI_ORACLE_BEG || nb != EFI_ORACLE_NB )
+   {
+      printf( "EFI oracle Fail: got beg=%d nb=%d expected %d/%d\n",
+              (int)beg, (int)nb, EFI_ORACLE_BEG, EFI_ORACLE_NB );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+
+   for( k = 0; k < NB_EFI_ORACLE; k++ )
+   {
+      int idx = efiOracle[k].idx - EFI_ORACLE_BEG;   /* bar -> output index */
+      double want = efiOracle[k].value;
+      double got  = out[idx];
+      double err; const char *mode;
+
+      if( !checkOracleValue( got, want, EFI_ORACLE_TOL, EFI_ORACLE_ABS,
+                             &err, &mode ) )
+      {
+         printf( "EFI oracle Fail at bar %d (out[%d]): got %.17g expected %.17g "
+                 "(%s=%.3e > rel %.3e / abs %.3e)\n",
+                 efiOracle[k].idx, idx, got, want, mode, err,
+                 EFI_ORACLE_TOL, EFI_ORACLE_ABS );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+/* (3) DEGENERATE INPUTS, both exactly zero rather than merely small.
+ *
+ * There is no division by anything derived from the data -- the only divisor
+ * is the period, a positive integer parameter -- so issue #112 holds
+ * structurally here and the assertions can be exact equality:
+ *   - a flat close makes every force exactly 0.0, and an EMA of exact zeros
+ *     stays exactly 0.0 (the seed sum is 0.0 and (0-0)*k+0 is 0);
+ *   - zero volume does the same through the multiply, on prices that move. */
+static ErrorNumber test_efi_degenerate( void )
+{
+#define EFI_DEG_N 80
+   static TA_Real close[EFI_DEG_N], volume[EFI_DEG_N], out[OUT_CAP];
+   TA_RetCode rc;
+   TA_Integer beg, nb;
+   int i, c;
+   const int period = 13;
+
+   for( c = 0; c < 2; c++ )
+   {
+      const char *tag = c == 0 ? "flat close" : "zero volume";
+
+      for( i = 0; i < EFI_DEG_N; i++ )
+      {
+         if( c == 0 )
+         {
+            close[i]  = 42.5;                        /* never moves */
+            volume[i] = 1000.0 + (double)i * 13.0;   /* volume does */
+         }
+         else
+         {
+            close[i]  = 42.5 + (double)i * 0.75;     /* price moves */
+            volume[i] = 0.0;                         /* nobody traded */
+         }
+      }
+
+      rc = TA_EFI( 0, EFI_DEG_N - 1, close, volume, period, &beg, &nb, out );
+      if( rc != TA_SUCCESS )
+      {
+         printf( "EFI %s Fail: retCode %d\n", tag, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( beg != period || nb != EFI_DEG_N - period )
+      {
+         printf( "EFI %s Fail: got beg=%d nb=%d expected %d/%d\n",
+                 tag, (int)beg, (int)nb, period, EFI_DEG_N - period );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( i = 0; i < nb; i++ )
+      {
+         if( out[i] != 0.0 )
+         {
+            printf( "EFI %s Fail at out[%d]: got %.17g, expected exactly 0\n",
+                    tag, i, out[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   return TA_TEST_PASS;
+#undef EFI_DEG_N
+}
+
+/* (4) IN-PLACE ALIASING over both inputs.
+ *
+ * The reason this needs its own leg rather than an argument: at bar t the loop
+ * needs close[t-1], and when the output aliases inClose that slot was
+ * overwritten one iteration earlier -- reachable at startIdx 1, which period 1
+ * allows. The implementation carries prevClose in a scalar so the stale array
+ * is never read; this is what proves it, and it would fail loudly if a future
+ * rewrite went back to indexing. */
+static const int efiInPlaceGrid[] = { 1, 2, 13 };
+#define NB_EFI_INPLACE (sizeof(efiInPlaceGrid)/sizeof(efiInPlaceGrid[0]))
+
+static ErrorNumber test_efi_inplace( const TA_History *history )
+{
+   unsigned int g;
+   int i, nbBars;
+   TA_RetCode rc;
+   TA_Integer begRef, nbRef, begAlias, nbAlias;
+   static TA_Real outRef[OUT_CAP];
+   static TA_Real work[OUT_CAP];
+
+   nbBars = (int)history->nbBars;
+
+   for( g = 0; g < NB_EFI_INPLACE; g++ )
+   {
+      int period = efiInPlaceGrid[g];
+      int startIdx, which;
+
+      /* startIdx 1 puts the first write at the slot holding the close the very
+       * next bar needs; startIdx 0 is the ordinary case. */
+      for( startIdx = 0; startIdx <= 1; startIdx++ )
+      {
+         rc = TA_EFI( startIdx, nbBars - 1, history->close, history->volume,
+                      period, &begRef, &nbRef, outRef );
+         if( rc != TA_SUCCESS )
+         {
+            printf( "EFI in-place Fail [period %d start %d]: reference rc %d\n",
+                    period, startIdx, (int)rc );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+
+         for( which = 0; which < 2; which++ )
+         {
+            const char *tag = which == 0 ? "outReal==inClose"
+                                         : "outReal==inVolume";
+
+            for( i = 0; i < nbBars; i++ )
+               work[i] = which == 0 ? history->close[i] : history->volume[i];
+
+            if( which == 0 )
+               rc = TA_EFI( startIdx, nbBars - 1, work, history->volume,
+                            period, &begAlias, &nbAlias, work );
+            else
+               rc = TA_EFI( startIdx, nbBars - 1, history->close, work,
+                            period, &begAlias, &nbAlias, work );
+
+            if( rc != TA_SUCCESS )
+            {
+               printf( "EFI in-place Fail [period %d start %d, %s]: rc %d\n",
+                       period, startIdx, tag, (int)rc );
+               return TA_TESTUTIL_TFRR_BAD_RETCODE;
+            }
+            if( begAlias != begRef || nbAlias != nbRef )
+            {
+               printf( "EFI in-place Fail [period %d start %d, %s]: "
+                       "range (%d,%d) vs (%d,%d)\n",
+                       period, startIdx, tag, (int)begAlias, (int)nbAlias,
+                       (int)begRef, (int)nbRef );
+               return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+            }
+
+            for( i = 0; i < nbRef; i++ )
+            {
+               if( memcmp( &work[i], &outRef[i], sizeof(double) ) != 0 )
+               {
+                  printf( "EFI in-place Fail [period %d start %d, %s] at "
+                          "out[%d]: got %.17g expected %.17g\n",
+                          period, startIdx, tag, i, work[i], outRef[i] );
+                  return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+               }
+            }
+         }
+      }
    }
 
    return TA_TEST_PASS;

@@ -178,6 +178,7 @@ public final class Functions {
       put(m, f_DEMA());
       put(m, f_DIV());
       put(m, f_DX());
+      put(m, f_EFI());
       put(m, f_EMA());
       put(m, f_EXP());
       put(m, f_FLOOR());
@@ -1527,6 +1528,24 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_EFI() {
+      return new FunctionInfo(
+         "EFI", "Volume Indicators", "Elder's Force Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

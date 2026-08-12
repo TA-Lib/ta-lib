@@ -395,6 +395,8 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     /* APO/PPO default to EMA (#120) -> EMA-converging, like MACDEXT. */
     {"APO",          TA_FUNC_UNST_EMA},
     {"PPO",          TA_FUNC_UNST_EMA},
+    /* EFI smooths its force series with the same EMA. */
+    {"EFI",          TA_FUNC_UNST_EMA},
     /* ADXR/STOCHRSI own knobs were inert and retired (#129); they converge
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},

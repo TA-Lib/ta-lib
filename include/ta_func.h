@@ -4870,6 +4870,62 @@ TA_LIB_API TA_RetCode TA_DX_Close( TA_DX_Stream *stream );
 TA_LIB_API TA_RetCode TA_DX_OpenAndFill( TA_DX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_EFI - Elder's Force Index
+ * 
+ * Input  = Close, Volume
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_EFI( int    startIdx,
+                              int    endIdx,
+                                         const double inClose[],
+                                         const double inVolume[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_EFI( int    startIdx,
+                                int    endIdx,
+                                           const float  inClose[],
+                                           const float  inVolume[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_EFI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_EFI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_EFI_Stream TA_EFI_Stream;
+
+TA_LIB_API TA_RetCode TA_EFI_Open( TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal );
+
+TA_LIB_API TA_RetCode TA_EFI_Close( TA_EFI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_EFI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_EFI_OpenAndFill( TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_EMA - Exponential Moving Average
  * 
  * Input  = double

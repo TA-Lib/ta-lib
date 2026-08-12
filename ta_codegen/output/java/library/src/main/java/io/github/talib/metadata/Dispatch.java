@@ -326,6 +326,9 @@ final class Dispatch {
          case "DX":
             return core.DX(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
+         case "EFI":
+            return core.EFI(
+               startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "EMA":
             return core.EMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -754,6 +757,8 @@ final class Dispatch {
             return core.DIV_Lookback();
          case "DX":
             return core.DX_Lookback(h.intOpt(0));
+         case "EFI":
+            return core.EFI_Lookback(h.intOpt(0));
          case "EMA":
             return core.EMA_Lookback(h.intOpt(0));
          case "EXP":

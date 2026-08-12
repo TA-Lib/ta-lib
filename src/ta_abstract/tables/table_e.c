@@ -38,6 +38,45 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* EFI BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_EFI_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   13,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_EFI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_EFI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_EFI_OptInputs[] =
+{ &TA_DEF_UI_D_EFI_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( EFI,
+              TA_GroupId_VolumeIndicators,
+              "Elder's Force Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* EFI END */
+
 /* EMA BEGIN */
 static const TA_InputParameterInfo    *TA_EMA_Inputs[]    =
 {
@@ -92,6 +131,7 @@ DEF_FUNCTION( EXP,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableE[] =
 {
+   ADD_TO_TABLE(EFI),
    ADD_TO_TABLE(EMA),
    ADD_TO_TABLE(EXP),
    NULL
