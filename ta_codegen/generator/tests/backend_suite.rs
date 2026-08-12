@@ -9686,3 +9686,68 @@ fn c_stream_keeps_a_local_read_only_by_a_circbuf_size() {
          must keep the one it reads: {stream_c}"
     );
 }
+
+/// Every composed function's Open must FUSE its sub-calls: one
+/// `OpenAndFillInternal` that both warms the sub-handle and fills the sub-call's
+/// destination, instead of a warm pass plus a batch call recomputing the same
+/// numbers (issue #192).
+///
+/// This needs its own gate because no value gate can see it. The fusion is
+/// output-preserving by construction, so `stream_verify`, `--xlang-hash` and the
+/// frozen-oracle suites all stay green whether or not it happens — a regression
+/// would surface only as a benchmark drifting back towards ~1.7x, which nothing
+/// fails on. What is pinned here is the SHAPE.
+///
+/// One sub-call is deliberately left unfused: STOCH's slow-K `TA_MA` writes its
+/// own source in place, where a fused open would overwrite the buffer the
+/// sub-handle's capture still has to read. `test_c_stoch_composed_stream_section`
+/// pins which one; this test pins that it is the ONLY one.
+#[test]
+fn test_composed_open_fuses_every_sub_call() {
+    const COMPOSED: &[&str] = &[
+        "bbands", "macdext", "ppo", "pvo", "stddev",
+        "stoch", "stochf", "adxr", "stochrsi", "apo",
+    ];
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let mut fused_total = 0usize;
+    let mut unfused_total = 0usize;
+
+    for name in COMPOSED {
+        let (mut func, enums) = load_indicator(name);
+        func.streaming = true;
+        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
+
+        let fused = stream.matches("_OpenAndFillInternal( &sub").count();
+        let unfused = stream.matches("_OpenInternal( &sub").count();
+        assert!(
+            fused + unfused > 0,
+            "{name}: composed Open emitted no sub-stream open at all"
+        );
+        // A fused sub-open replaces the batch sub-call with `<var> = subRc;`, so
+        // every fused sub must have left exactly one of those substitutions.
+        assert_eq!(
+            stream.matches("= subRc;").count(),
+            fused,
+            "{name}: fused sub-opens ({fused}) and retCode substitutions disagree \
+             — either a batch sub-call survived the fusion, or one was dropped \
+             without leaving a retCode behind for the transcribed error handling"
+        );
+        fused_total += fused;
+        unfused_total += unfused;
+    }
+
+    assert_eq!(
+        unfused_total, 1,
+        "expected exactly ONE unfused sub-call across the composed tier (STOCH's \
+         in-place slow-K); found {unfused_total}. A new unfused sub-call means \
+         either an aliasing sub-call was added — legitimate, but record it here — \
+         or the fusion silently stopped applying."
+    );
+    assert_eq!(
+        fused_total, 17,
+        "expected 17 fused sub-calls across the composed tier; found {fused_total}. \
+         Adding a composed indicator moves this number: update it deliberately."
+    );
+}
