@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib_0.8.1_i386.deb",
-    "sources_digest": "c93e8f35b4dccd1c06c804c14ef72496",
+    "sources_digest": "9f249e399712a27ba982b42eb28fc729",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "f0448ba1ec3f8828f2e2f6f05b2d37a6e727f71696ab32ff9173e73e16d52ba0",
+    "package_sha256": "ad031e5a9dc836592b130a08ee3ab142a93148daf13159ac41337aa4ef116a3f",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
