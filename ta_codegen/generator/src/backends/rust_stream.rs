@@ -170,6 +170,13 @@ impl streaming::NameMap for RustStreamNames {
     fn extrema_cap(&self) -> String {
         "sp.xCap".to_string()
     }
+    fn extrema_slot(&self, idx: Expr) -> Expr {
+        Expr::BinOp(
+            Box::new(idx),
+            crate::ir::BinOp::BitwiseAnd,
+            Box::new(Expr::Var("sp.xMask".to_string())),
+        )
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -419,6 +426,7 @@ fn state_fields_from(
     }
     if let Some(ex) = model.extrema() {
         fields.push(("xCap".into(), "i32".into(), "1_i32".into()));
+        fields.push(("xMask".into(), "i32".into(), "0_i32".into()));
         for arr in &ex.arrays {
             fields.push((
                 format!("x_{arr}"),
@@ -715,6 +723,7 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
         }
         if let Some(ex) = model.extrema() {
             ctx.sentinel_vars.insert("xCap".to_string());
+            ctx.sentinel_vars.insert("xMask".to_string());
             for arr in &ex.arrays {
                 ctx.vec_vars.insert(format!("x_{arr}"));
                 ctx.real_array_vars.insert(format!("x_{arr}"));
@@ -897,7 +906,7 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
         let _ = writeln!(o, "{pad}if sp.{} >= 1073741824 {{", model.cursor);
         let _ = writeln!(
             o,
-            "{inner}let rebaseShift: i32 = (sp.{} / sp.xCap) * sp.xCap;",
+            "{inner}let rebaseShift: i32 = sp.{} & !sp.xMask;",
             ex.trailing
         );
         for v in &vars {
@@ -1529,10 +1538,17 @@ fn emit_capture(
             o,
             "        if capX < 1 || capX > historyLen as i64 {{\n            return Err(RetCode::InternalError);\n        }}"
         );
+        // The slot map is a mask, so the ring is allocated at the next power
+        // of two at or above the logical capacity: `idx & xMask` then equals
+        // `idx % physX`, still injective over any capX consecutive bars.
+        let _ = writeln!(o, "        let mut physX: i64 = 1;");
+        let _ = writeln!(o, "        while physX < capX {{");
+        let _ = writeln!(o, "            physX <<= 1;");
+        let _ = writeln!(o, "        }}");
         for arr in &ex.arrays {
             let _ = writeln!(
                 o,
-                "        let mut x_{arr}: Vec<f64> = vec![0.0_f64; capX as usize];"
+                "        let mut x_{arr}: Vec<f64> = vec![0.0_f64; physX as usize];"
             );
         }
         // Absolute slots: bar j lives at j % cap (a plain tail copy would
@@ -1541,7 +1557,7 @@ fn emit_capture(
         let _ = writeln!(o, "            let mut fillJ: usize = historyLen - capX as usize;");
         let _ = writeln!(o, "            while fillJ < historyLen {{");
         for arr in &ex.arrays {
-            let _ = writeln!(o, "                x_{arr}[fillJ % capX as usize] = {arr}[fillJ];");
+            let _ = writeln!(o, "                x_{arr}[fillJ & (physX as usize - 1)] = {arr}[fillJ];");
         }
         let _ = writeln!(o, "                fillJ += 1;");
         let _ = writeln!(o, "            }}");
@@ -1623,6 +1639,7 @@ fn emit_capture(
     }
     if let Some(ex) = model.extrema() {
         let _ = writeln!(o, "            xCap: capX as i32,");
+        let _ = writeln!(o, "            xMask: (physX - 1) as i32,");
         for arr in &ex.arrays {
             let _ = writeln!(o, "            x_{arr},");
         }
@@ -2656,6 +2673,13 @@ impl streaming::NameMap for RustComposedNames {
     }
     fn extrema_cap(&self) -> String {
         "sp.xCap".to_string()
+    }
+    fn extrema_slot(&self, idx: Expr) -> Expr {
+        Expr::BinOp(
+            Box::new(idx),
+            crate::ir::BinOp::BitwiseAnd,
+            Box::new(Expr::Var("sp.xMask".to_string())),
+        )
     }
 }
 

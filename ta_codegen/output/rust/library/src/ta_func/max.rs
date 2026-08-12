@@ -333,6 +333,7 @@ struct MAX_StreamState {
     highestIdx: i32,
     today: i32,
     xCap: i32,
+    xMask: i32,
     x_inReal: Vec<f64>,
 }
 
@@ -346,20 +347,20 @@ impl Core {
     fn MAX_step_internal(&self, sp: &mut MAX_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
-            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
             sp.trailingIdx -= rebaseShift;
             sp.highestIdx -= rebaseShift;
             sp.i -= rebaseShift;
         }
-        sp.x_inReal[(sp.today % sp.xCap) as usize] = inReal;
-        tmp = sp.x_inReal[(sp.today % sp.xCap) as usize];
+        sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
+        tmp = sp.x_inReal[(sp.today & sp.xMask) as usize];
         if sp.highestIdx < sp.trailingIdx {
             sp.highestIdx = sp.trailingIdx;
-            sp.highest = sp.x_inReal[(sp.highestIdx % sp.xCap) as usize];
+            sp.highest = sp.x_inReal[(sp.highestIdx & sp.xMask) as usize];
             sp.i = sp.highestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                tmp = sp.x_inReal[(sp.i % sp.xCap) as usize];
+                tmp = sp.x_inReal[(sp.i & sp.xMask) as usize];
                 if tmp > sp.highest {
                     sp.highestIdx = sp.i;
                     sp.highest = tmp;
@@ -467,11 +468,15 @@ impl Core {
         if capX < 1 || capX > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; physX as usize];
         {
             let mut fillJ: usize = historyLen - capX as usize;
             while fillJ < historyLen {
-                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                x_inReal[fillJ & (physX as usize - 1)] = inReal[fillJ];
                 fillJ += 1;
             }
         }
@@ -483,6 +488,7 @@ impl Core {
             highestIdx: (highestIdx) as i32,
             today: (today) as i32,
             xCap: capX as i32,
+            xMask: (physX - 1) as i32,
             x_inReal,
         };
         Ok(MAX_Stream { core: self.clone(), state })
