@@ -191,11 +191,31 @@ pub struct OBV_Stream {
     state: OBV_StreamState,
 }
 
+#[allow(dead_code)]
+impl OBV_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `OBV_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct OBV_StreamState {
     prevReal: f64,
     prevOBV: f64,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl OBV_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.prevReal = src.prevReal;
+        self.prevOBV = src.prevOBV;
+    }
 }
 
 #[allow(non_snake_case)]
@@ -324,9 +344,10 @@ impl OBV_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_OBV_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64, inVolume: f64) -> f64 {

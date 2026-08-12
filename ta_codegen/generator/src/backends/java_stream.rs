@@ -579,7 +579,7 @@ fn emit_loop_shape(
 ) {
     let step_settings = detect_candle_settings(&model.steady_stmts);
     let fields = state_fields(func, model, &step_settings);
-    emit_handle_class(o, func, &fields, "");
+    emit_handle_class(o, func, &fields, &SubMembers::none());
     emit_step(o, func, model, &step_settings, stream_fma, enums, registry, helpers, counter);
     emit_open_body(
         o, func, model, body, &fields, &step_settings, stream_fma, enums, registry,
@@ -636,21 +636,44 @@ fn render_predicate(
 // Handle class
 // ---------------------------------------------------------------------------
 
-/// Emit the nested handle class. `copy_extra` holds extra deep-copy statements
-/// for tier-owned members (sub-handle copies); loop tier passes "".
-fn emit_handle_class(o: &mut String, func: &FuncDef, fields: &[Field], copy_extra: &str) {
-    emit_handle_class_with_members(o, func, fields, copy_extra, "");
+/// The tier-owned members of a handle beyond `fields`: the statements that
+/// deep-copy them into a fresh handle, and the statements that overwrite them
+/// in an existing one without allocating. Both are raw Java; the loop tier
+/// owns none and passes [`SubMembers::none`].
+struct SubMembers {
+    /// Deep-copy statements for the copy constructor.
+    copy: String,
+    /// In-place overwrite statements for `copyFrom`.
+    restore: String,
+    /// Whether the handle owns sub-streams at all. A sub is always worth
+    /// reusing: reproducing one means a fresh object, its own arrays, and
+    /// recursively its own subs.
+    has_subs: bool,
+}
+
+impl SubMembers {
+    fn none() -> Self {
+        Self { copy: String::new(), restore: String::new(), has_subs: false }
+    }
+}
+
+/// Emit the nested handle class. `subs` holds the tier-owned members
+/// (sub-handle copies); loop tier passes [`SubMembers::none`].
+fn emit_handle_class(o: &mut String, func: &FuncDef, fields: &[Field], subs: &SubMembers) -> bool {
+    emit_handle_class_with_members(o, func, fields, subs, "")
 }
 
 /// [`emit_handle_class`] with additional raw member declarations (dispatch's
-/// `Object sub;`, composed/period-bank sub-handle fields).
+/// `Object sub;`, composed/period-bank sub-handle fields). Returns whether the
+/// handle owns anything on the heap, which is what decides whether `peek`
+/// reuses a scratch.
 fn emit_handle_class_with_members(
     o: &mut String,
     func: &FuncDef,
     fields: &[Field],
-    copy_extra: &str,
+    subs: &SubMembers,
     extra_members: &str,
-) {
+) -> bool {
     let class = stream_class_name(func);
     let base = base_name(func);
     let n = func.name.to_uppercase();
@@ -673,7 +696,9 @@ fn emit_handle_class_with_members(
          \x20   */"
     );
     let _ = writeln!(o, "   public static final class {class} {{");
-    let _ = writeln!(o, "      final Core core;");
+    // Not final: `copyFrom` retargets the peek scratch, which is one instance
+    // per thread per class and so outlives any one handle's Core.
+    let _ = writeln!(o, "      Core core;");
     for (name, jty, _) in fields {
         let _ = writeln!(o, "      {jty} {name};");
     }
@@ -710,16 +735,61 @@ fn emit_handle_class_with_members(
             let _ = writeln!(o, "         this.{name} = other.{name};");
         }
     }
-    o.push_str(copy_extra);
+    o.push_str(&subs.copy);
     // OutRange is immutable, so the copy shares it — a fork describes the same
     // warm-up fill as the handle it was taken from.
     let _ = writeln!(o, "         this.fillRange = other.fillRange;");
     let _ = writeln!(o, "      }}");
 
+    // The copy constructor's in-place twin: same result, but it overwrites
+    // whatever this instance already owns instead of allocating a peer for it.
+    // Only `peek`'s scratch calls it, and only where there is an allocation to
+    // save (#201) — a handle whose fields are all scalars is cheaper to
+    // allocate outright than to look a scratch up.
+    let mut arrays = 0;
+    let _ = writeln!(o, "\n      void copyFrom( {class} other ) {{");
+    let _ = writeln!(o, "         this.core = other.core;");
+    for (name, jty, _) in fields {
+        if jty.ends_with("[]") {
+            arrays += 1;
+            let _ = writeln!(
+                o,
+                "         if( this.{name} != null && this.{name}.length == other.{name}.length ) {{\n\
+                 \x20           System.arraycopy( other.{name}, 0, this.{name}, 0, other.{name}.length );\n\
+                 \x20        }} else {{\n\
+                 \x20           this.{name} = other.{name}.clone();\n\
+                 \x20        }}"
+            );
+        } else {
+            let _ = writeln!(o, "         this.{name} = other.{name};");
+        }
+    }
+    o.push_str(&subs.restore);
+    let _ = writeln!(o, "         this.fillRange = other.fillRange;");
+    let _ = writeln!(o, "      }}");
+
+    // What `peek` trades away by reusing a scratch is a `ThreadLocal.get()`,
+    // and what it buys back is the allocation of a peer handle. For one small
+    // array that is a wash — measured, it is a slight loss — so the reuse is
+    // for the shapes where the copy is several arrays or a sub-stream tree
+    // (#201). Everything else keeps the plain copy constructor.
+    let reuse = subs.has_subs || arrays >= 2;
+    if reuse {
+        let _ = writeln!(
+            o,
+            "\n      /** {{@code peek}}'s reusable scratch — one per thread, see {{@code copyFrom}}. */"
+        );
+        let _ = writeln!(
+            o,
+            "      private static final ThreadLocal<{class}> PEEK_SCRATCH = new ThreadLocal<>();"
+        );
+    }
+
     emit_value_class(o, func);
-    emit_update_peek_value_copy(o, func);
+    emit_update_peek_value_copy(o, func, reuse);
 
     let _ = writeln!(o, "   }}");
+    reuse
 }
 
 /// The immutable multi-output value record (batch output order, components
@@ -784,7 +854,7 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
-fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef) {
+fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let class = stream_class_name(func);
     let base = base_name(func);
     let vt = if has_value_class(func) {
@@ -811,18 +881,39 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef) {
     }
     let _ = writeln!(o, "      }}");
 
+    let alloc_note = if reuse {
+        "It runs on a scratch handle held per thread and\n\
+         \x20      * reused, so the copy allocates nothing after the first peek of this\n\
+         \x20      * indicator on this thread."
+    } else {
+        "It runs on a throwaway copy, which for this\n\
+         \x20      * handle's shape is cheaper than reusing one."
+    };
     let _ = writeln!(
         o,
         "\n      /**\n\
          \x20      * Evaluate a forming bar without committing — bit-identical to what the\n\
          \x20      * next {{@code update}} with the same bar would return (it is the same\n\
-         \x20      * generated code, run on a throwaway copy). Deep-copies the handle state\n\
-         \x20      * on every call: O(period) for windowed indicators — for hot loops,\n\
-         \x20      * prefer {{@code update}} on a {{@code copy()}}.\n\
+         \x20      * generated code, run on a copy). Never writes this handle, so peeks may\n\
+         \x20      * run concurrently with each other. {alloc_note}\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars} ) {{");
-    let _ = writeln!(o, "         {class} scratch = new {class}(this);");
+    if reuse {
+        // Per thread, not per handle: `peek` must not write the handle (two
+        // threads may peek the same one), and a static ThreadLocal keeps the
+        // reuse bounded — one scratch per thread per indicator, whatever the
+        // number of live handles. `copyFrom` retargets it, Core included.
+        let _ = writeln!(o, "         {class} scratch = PEEK_SCRATCH.get();");
+        let _ = writeln!(o, "         if( scratch == null ) {{");
+        let _ = writeln!(o, "            scratch = new {class}(this);");
+        let _ = writeln!(o, "            PEEK_SCRATCH.set(scratch);");
+        let _ = writeln!(o, "         }} else {{");
+        let _ = writeln!(o, "            scratch.copyFrom(this);");
+        let _ = writeln!(o, "         }}");
+    } else {
+        let _ = writeln!(o, "         {class} scratch = new {class}(this);");
+    }
     let _ = writeln!(o, "         core.{base}_StreamStep(scratch, {fwd_bars});");
     let _ = writeln!(o, "         return {};", fresh_value_expr(func, "scratch"));
     let _ = writeln!(o, "      }}");
@@ -1884,7 +1975,7 @@ fn emit_dual_mode(
     let fields_a = state_fields_from(func, ma, &union_scalars, &step_settings);
     let fields_b = state_fields_from(func, mb, &union_scalars, &step_settings);
     let fields = dual_union_fields(func, &fields_a, &fields_b);
-    emit_handle_class(o, func, &fields, "");
+    emit_handle_class(o, func, &fields, &SubMembers::none());
 
     // --- step: one function, the mode re-derived from the stored param ------
     emit_step_sig(o, func);
@@ -2045,7 +2136,42 @@ fn emit_dispatch(
     );
     let _ = writeln!(copy_extra, "            }}");
     let _ = writeln!(copy_extra, "         }}");
-    emit_handle_class_with_members(o, func, &fields, &copy_extra, &extra_members);
+    // The same switch in place: the scratch keeps the sub it already holds when
+    // the arm matches. It is only the same arm when the source handle's param
+    // is the same, which is why the tag is read off `this` after the field
+    // copy, exactly as the copy constructor reads it after its own.
+    let mut restore_extra = String::new();
+    let _ = writeln!(restore_extra, "         if( other.sub == null ) {{");
+    let _ = writeln!(restore_extra, "            this.sub = null;");
+    let _ = writeln!(restore_extra, "         }} else {{");
+    let _ = writeln!(restore_extra, "            switch( this.{} )", dp.param);
+    let _ = writeln!(restore_extra, "            {{");
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let label = super::java::render_java_switch_label(&arm.label, enums);
+        let cls = callee_stream_class(registry, &arm.callee);
+        let _ = writeln!(restore_extra, "            case {label}:");
+        let _ = writeln!(restore_extra, "               if( this.sub instanceof {cls} ) {{");
+        let _ = writeln!(
+            restore_extra,
+            "                  (({cls}) this.sub).copyFrom(({cls}) other.sub);"
+        );
+        let _ = writeln!(restore_extra, "               }} else {{");
+        let _ = writeln!(
+            restore_extra,
+            "                  this.sub = new {cls}(({cls}) other.sub);"
+        );
+        let _ = writeln!(restore_extra, "               }}");
+        let _ = writeln!(restore_extra, "               break;");
+    }
+    let _ = writeln!(restore_extra, "            default:");
+    let _ = writeln!(
+        restore_extra,
+        "               throw new IllegalStateException(\"unreachable: open rejects arms without a sub-stream\");"
+    );
+    let _ = writeln!(restore_extra, "            }}");
+    let _ = writeln!(restore_extra, "         }}");
+    let subs = SubMembers { copy: copy_extra, restore: restore_extra, has_subs: true };
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
     // --- step ---------------------------------------------------------------
     emit_step_sig(o, func);
@@ -2297,7 +2423,22 @@ fn emit_period_bank(
     let _ = writeln!(copy_extra, "         for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
     let _ = writeln!(copy_extra, "            this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
     let _ = writeln!(copy_extra, "         }}");
-    emit_handle_class_with_members(o, func, &fields, &copy_extra, &extra_members);
+    // Same shape, in place: the bank a scratch already holds is the right
+    // length unless a differently-parameterised handle borrowed it, in which
+    // case it is rebuilt exactly as the copy constructor builds one.
+    let mut restore_extra = String::new();
+    let _ = writeln!(restore_extra, "         if( this.bank != null && this.bank.length == other.bank.length ) {{");
+    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
+    let _ = writeln!(restore_extra, "               this.bank[bankIdx].copyFrom(other.bank[bankIdx]);");
+    let _ = writeln!(restore_extra, "            }}");
+    let _ = writeln!(restore_extra, "         }} else {{");
+    let _ = writeln!(restore_extra, "            this.bank = new {subty}[other.bank.length];");
+    let _ = writeln!(restore_extra, "            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {{");
+    let _ = writeln!(restore_extra, "               this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
+    let _ = writeln!(restore_extra, "            }}");
+    let _ = writeln!(restore_extra, "         }}");
+    let subs = SubMembers { copy: copy_extra, restore: restore_extra, has_subs: true };
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
     emit_step_sig(o, func);
@@ -2993,13 +3134,27 @@ fn emit_composed(
     }
     let mut extra_members = String::new();
     let mut copy_extra = String::new();
+    let mut restore_extra = String::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
         let _ = writeln!(extra_members, "      {cls} sub{si};");
         let _ = writeln!(copy_extra, "         this.sub{si} = new {cls}(other.sub{si});");
+        // A sub's class is fixed by the plan, so a scratch always has one to
+        // overwrite; the null arm covers a scratch built by the bare
+        // `(Core)` constructor, which no path takes today.
+        let _ = writeln!(restore_extra, "         if( this.sub{si} == null ) {{");
+        let _ = writeln!(restore_extra, "            this.sub{si} = new {cls}(other.sub{si});");
+        let _ = writeln!(restore_extra, "         }} else {{");
+        let _ = writeln!(restore_extra, "            this.sub{si}.copyFrom(other.sub{si});");
+        let _ = writeln!(restore_extra, "         }}");
     }
-    emit_handle_class_with_members(o, func, &fields, &copy_extra, &extra_members);
+    let subs = SubMembers {
+        copy: copy_extra,
+        restore: restore_extra,
+        has_subs: !cp.subs.is_empty(),
+    };
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
     emit_composed_step(
         o, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums, helpers,

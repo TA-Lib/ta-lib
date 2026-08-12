@@ -291,6 +291,16 @@ pub struct CDLSPINNINGTOP_Stream {
     state: CDLSPINNINGTOP_StreamState,
 }
 
+#[allow(dead_code)]
+impl CDLSPINNINGTOP_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CDLSPINNINGTOP_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLSPINNINGTOP_StreamState {
@@ -301,6 +311,21 @@ struct CDLSPINNINGTOP_StreamState {
     ring_BodyTrailingIdx_inHigh: Vec<f64>,
     ring_BodyTrailingIdx_inLow: Vec<f64>,
     ring_BodyTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CDLSPINNINGTOP_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.BodyPeriodTotal = src.BodyPeriodTotal;
+        self.ringPos_BodyTrailingIdx = src.ringPos_BodyTrailingIdx;
+        self.ringCap_BodyTrailingIdx = src.ringCap_BodyTrailingIdx;
+        self.ring_BodyTrailingIdx_inOpen.clone_from(&src.ring_BodyTrailingIdx_inOpen);
+        self.ring_BodyTrailingIdx_inHigh.clone_from(&src.ring_BodyTrailingIdx_inHigh);
+        self.ring_BodyTrailingIdx_inLow.clone_from(&src.ring_BodyTrailingIdx_inLow);
+        self.ring_BodyTrailingIdx_inClose.clone_from(&src.ring_BodyTrailingIdx_inClose);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -574,6 +599,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `CDLSPINNINGTOP_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static CDLSPINNINGTOP_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLSPINNINGTOP_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLSPINNINGTOP_Stream {
@@ -586,14 +619,20 @@ impl CDLSPINNINGTOP_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_CDLSPINNINGTOP_Peek")]
     #[must_use]
     pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        CDLSPINNINGTOP_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

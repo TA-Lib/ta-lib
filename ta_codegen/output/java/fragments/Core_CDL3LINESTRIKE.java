@@ -313,7 +313,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CDL3LINESTRIKE_Stream {
-      final Core core;
+      Core core;
       double[] NearPeriodTotal;
       int totIdx;
       double lag1_inOpen;
@@ -394,6 +394,81 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CDL3LINESTRIKE_Stream other ) {
+         this.core = other.core;
+         if( this.NearPeriodTotal != null && this.NearPeriodTotal.length == other.NearPeriodTotal.length ) {
+            System.arraycopy( other.NearPeriodTotal, 0, this.NearPeriodTotal, 0, other.NearPeriodTotal.length );
+         } else {
+            this.NearPeriodTotal = other.NearPeriodTotal.clone();
+         }
+         this.totIdx = other.totIdx;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag2_inOpen = other.lag2_inOpen;
+         this.lag3_inOpen = other.lag3_inOpen;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag3_inHigh = other.lag3_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.lag3_inLow = other.lag3_inLow;
+         this.lag1_inClose = other.lag1_inClose;
+         this.lag2_inClose = other.lag2_inClose;
+         this.lag3_inClose = other.lag3_inClose;
+         this.ringPos_NearTrailingIdx = other.ringPos_NearTrailingIdx;
+         this.ringCap_NearTrailingIdx = other.ringCap_NearTrailingIdx;
+         this.ringLag_NearTrailingIdx = other.ringLag_NearTrailingIdx;
+         if( this.ring_NearTrailingIdx_inOpen != null && this.ring_NearTrailingIdx_inOpen.length == other.ring_NearTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_NearTrailingIdx_inOpen, 0, this.ring_NearTrailingIdx_inOpen, 0, other.ring_NearTrailingIdx_inOpen.length );
+         } else {
+            this.ring_NearTrailingIdx_inOpen = other.ring_NearTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_NearTrailingIdx_inHigh != null && this.ring_NearTrailingIdx_inHigh.length == other.ring_NearTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_NearTrailingIdx_inHigh, 0, this.ring_NearTrailingIdx_inHigh, 0, other.ring_NearTrailingIdx_inHigh.length );
+         } else {
+            this.ring_NearTrailingIdx_inHigh = other.ring_NearTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_NearTrailingIdx_inLow != null && this.ring_NearTrailingIdx_inLow.length == other.ring_NearTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_NearTrailingIdx_inLow, 0, this.ring_NearTrailingIdx_inLow, 0, other.ring_NearTrailingIdx_inLow.length );
+         } else {
+            this.ring_NearTrailingIdx_inLow = other.ring_NearTrailingIdx_inLow.clone();
+         }
+         if( this.ring_NearTrailingIdx_inClose != null && this.ring_NearTrailingIdx_inClose.length == other.ring_NearTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_NearTrailingIdx_inClose, 0, this.ring_NearTrailingIdx_inClose, 0, other.ring_NearTrailingIdx_inClose.length );
+         } else {
+            this.ring_NearTrailingIdx_inClose = other.ring_NearTrailingIdx_inClose.clone();
+         }
+         this.winPos_totIdx = other.winPos_totIdx;
+         this.winCap_totIdx = other.winCap_totIdx;
+         if( this.win_totIdx_inOpen != null && this.win_totIdx_inOpen.length == other.win_totIdx_inOpen.length ) {
+            System.arraycopy( other.win_totIdx_inOpen, 0, this.win_totIdx_inOpen, 0, other.win_totIdx_inOpen.length );
+         } else {
+            this.win_totIdx_inOpen = other.win_totIdx_inOpen.clone();
+         }
+         if( this.win_totIdx_inHigh != null && this.win_totIdx_inHigh.length == other.win_totIdx_inHigh.length ) {
+            System.arraycopy( other.win_totIdx_inHigh, 0, this.win_totIdx_inHigh, 0, other.win_totIdx_inHigh.length );
+         } else {
+            this.win_totIdx_inHigh = other.win_totIdx_inHigh.clone();
+         }
+         if( this.win_totIdx_inLow != null && this.win_totIdx_inLow.length == other.win_totIdx_inLow.length ) {
+            System.arraycopy( other.win_totIdx_inLow, 0, this.win_totIdx_inLow, 0, other.win_totIdx_inLow.length );
+         } else {
+            this.win_totIdx_inLow = other.win_totIdx_inLow.clone();
+         }
+         if( this.win_totIdx_inClose != null && this.win_totIdx_inClose.length == other.win_totIdx_inClose.length ) {
+            System.arraycopy( other.win_totIdx_inClose, 0, this.win_totIdx_inClose, 0, other.win_totIdx_inClose.length );
+         } else {
+            this.win_totIdx_inClose = other.win_totIdx_inClose.clone();
+         }
+         this.cs_Near_rangeType = other.cs_Near_rangeType;
+         this.cs_Near_avgPeriod = other.cs_Near_avgPeriod;
+         this.cs_Near_factor = other.cs_Near_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<CDL3LINESTRIKE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -406,12 +481,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CDL3LINESTRIKE_Stream scratch = new CDL3LINESTRIKE_Stream(this);
+         CDL3LINESTRIKE_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new CDL3LINESTRIKE_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.CDL3LINESTRIKE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }

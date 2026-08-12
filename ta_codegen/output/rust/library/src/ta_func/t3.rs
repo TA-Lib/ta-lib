@@ -418,6 +418,16 @@ pub struct T3_Stream {
     state: T3_StreamState,
 }
 
+#[allow(dead_code)]
+impl T3_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `T3_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct T3_StreamState {
@@ -435,6 +445,28 @@ struct T3_StreamState {
     c2: f64,
     c3: f64,
     c4: f64,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl T3_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.optInVFactor = src.optInVFactor;
+        self.k = src.k;
+        self.one_minus_k = src.one_minus_k;
+        self.e1 = src.e1;
+        self.e2 = src.e2;
+        self.e3 = src.e3;
+        self.e4 = src.e4;
+        self.e5 = src.e5;
+        self.e6 = src.e6;
+        self.c1 = src.c1;
+        self.c2 = src.c2;
+        self.c3 = src.c3;
+        self.c4 = src.c4;
+    }
 }
 
 #[allow(non_snake_case)]
@@ -744,9 +776,10 @@ impl T3_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_T3_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

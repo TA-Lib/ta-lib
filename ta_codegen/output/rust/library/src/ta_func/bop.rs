@@ -192,9 +192,27 @@ pub struct BOP_Stream {
     state: BOP_StreamState,
 }
 
+#[allow(dead_code)]
+impl BOP_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `BOP_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct BOP_StreamState {
+}
+
+#[allow(non_snake_case, dead_code)]
+impl BOP_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+    }
 }
 
 #[allow(non_snake_case)]
@@ -318,9 +336,10 @@ impl BOP_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_BOP_Peek")]
     #[must_use]
     pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> f64 {

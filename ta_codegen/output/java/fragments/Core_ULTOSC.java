@@ -647,7 +647,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ULTOSC_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod1;
       int optInTimePeriod2;
       int optInTimePeriod3;
@@ -704,6 +704,41 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( ULTOSC_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod1 = other.optInTimePeriod1;
+         this.optInTimePeriod2 = other.optInTimePeriod2;
+         this.optInTimePeriod3 = other.optInTimePeriod3;
+         this.a1Total = other.a1Total;
+         this.a2Total = other.a2Total;
+         this.a3Total = other.a3Total;
+         this.b1Total = other.b1Total;
+         this.b2Total = other.b2Total;
+         this.b3Total = other.b3Total;
+         this.output = other.output;
+         this.trailingPos1 = other.trailingPos1;
+         this.trailingPos2 = other.trailingPos2;
+         this.term_Idx = other.term_Idx;
+         this.maxIdx_term = other.maxIdx_term;
+         this.lag1_inClose = other.lag1_inClose;
+         this.cbSize_term = other.cbSize_term;
+         if( this.cb_term_closeMinusTrueLow != null && this.cb_term_closeMinusTrueLow.length == other.cb_term_closeMinusTrueLow.length ) {
+            System.arraycopy( other.cb_term_closeMinusTrueLow, 0, this.cb_term_closeMinusTrueLow, 0, other.cb_term_closeMinusTrueLow.length );
+         } else {
+            this.cb_term_closeMinusTrueLow = other.cb_term_closeMinusTrueLow.clone();
+         }
+         if( this.cb_term_trueRange != null && this.cb_term_trueRange.length == other.cb_term_trueRange.length ) {
+            System.arraycopy( other.cb_term_trueRange, 0, this.cb_term_trueRange, 0, other.cb_term_trueRange.length );
+         } else {
+            this.cb_term_trueRange = other.cb_term_trueRange.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<ULTOSC_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -716,12 +751,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         ULTOSC_Stream scratch = new ULTOSC_Stream(this);
+         ULTOSC_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new ULTOSC_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.ULTOSC_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }

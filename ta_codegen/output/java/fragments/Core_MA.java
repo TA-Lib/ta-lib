@@ -392,7 +392,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MA_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       MAType optInMAType;
       double cur_outReal;
@@ -458,6 +458,96 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MA_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         if( other.sub == null ) {
+            this.sub = null;
+         } else {
+            switch( this.optInMAType )
+            {
+            case SMA:
+               if( this.sub instanceof SMA_Stream ) {
+                  ((SMA_Stream) this.sub).copyFrom((SMA_Stream) other.sub);
+               } else {
+                  this.sub = new SMA_Stream((SMA_Stream) other.sub);
+               }
+               break;
+            case EMA:
+               if( this.sub instanceof EMA_Stream ) {
+                  ((EMA_Stream) this.sub).copyFrom((EMA_Stream) other.sub);
+               } else {
+                  this.sub = new EMA_Stream((EMA_Stream) other.sub);
+               }
+               break;
+            case WMA:
+               if( this.sub instanceof WMA_Stream ) {
+                  ((WMA_Stream) this.sub).copyFrom((WMA_Stream) other.sub);
+               } else {
+                  this.sub = new WMA_Stream((WMA_Stream) other.sub);
+               }
+               break;
+            case DEMA:
+               if( this.sub instanceof DEMA_Stream ) {
+                  ((DEMA_Stream) this.sub).copyFrom((DEMA_Stream) other.sub);
+               } else {
+                  this.sub = new DEMA_Stream((DEMA_Stream) other.sub);
+               }
+               break;
+            case TEMA:
+               if( this.sub instanceof TEMA_Stream ) {
+                  ((TEMA_Stream) this.sub).copyFrom((TEMA_Stream) other.sub);
+               } else {
+                  this.sub = new TEMA_Stream((TEMA_Stream) other.sub);
+               }
+               break;
+            case TRIMA:
+               if( this.sub instanceof TRIMA_Stream ) {
+                  ((TRIMA_Stream) this.sub).copyFrom((TRIMA_Stream) other.sub);
+               } else {
+                  this.sub = new TRIMA_Stream((TRIMA_Stream) other.sub);
+               }
+               break;
+            case KAMA:
+               if( this.sub instanceof KAMA_Stream ) {
+                  ((KAMA_Stream) this.sub).copyFrom((KAMA_Stream) other.sub);
+               } else {
+                  this.sub = new KAMA_Stream((KAMA_Stream) other.sub);
+               }
+               break;
+            case MAMA:
+               if( this.sub instanceof MAMA_Stream ) {
+                  ((MAMA_Stream) this.sub).copyFrom((MAMA_Stream) other.sub);
+               } else {
+                  this.sub = new MAMA_Stream((MAMA_Stream) other.sub);
+               }
+               break;
+            case T3:
+               if( this.sub instanceof T3_Stream ) {
+                  ((T3_Stream) this.sub).copyFrom((T3_Stream) other.sub);
+               } else {
+                  this.sub = new T3_Stream((T3_Stream) other.sub);
+               }
+               break;
+            case HMA:
+               if( this.sub instanceof HMA_Stream ) {
+                  ((HMA_Stream) this.sub).copyFrom((HMA_Stream) other.sub);
+               } else {
+                  this.sub = new HMA_Stream((HMA_Stream) other.sub);
+               }
+               break;
+            default:
+               throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
+            }
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<MA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -470,12 +560,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public double peek( double inReal ) {
-         MA_Stream scratch = new MA_Stream(this);
+         MA_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new MA_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.MA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }

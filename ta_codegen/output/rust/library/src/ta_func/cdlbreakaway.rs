@@ -301,6 +301,16 @@ pub struct CDLBREAKAWAY_Stream {
     state: CDLBREAKAWAY_StreamState,
 }
 
+#[allow(dead_code)]
+impl CDLBREAKAWAY_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CDLBREAKAWAY_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLBREAKAWAY_StreamState {
@@ -328,6 +338,38 @@ struct CDLBREAKAWAY_StreamState {
     ring_BodyLongTrailingIdx_inHigh: Vec<f64>,
     ring_BodyLongTrailingIdx_inLow: Vec<f64>,
     ring_BodyLongTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CDLBREAKAWAY_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.BodyLongPeriodTotal = src.BodyLongPeriodTotal;
+        self.lag1_inOpen = src.lag1_inOpen;
+        self.lag2_inOpen = src.lag2_inOpen;
+        self.lag3_inOpen = src.lag3_inOpen;
+        self.lag4_inOpen = src.lag4_inOpen;
+        self.lag1_inHigh = src.lag1_inHigh;
+        self.lag2_inHigh = src.lag2_inHigh;
+        self.lag3_inHigh = src.lag3_inHigh;
+        self.lag4_inHigh = src.lag4_inHigh;
+        self.lag1_inLow = src.lag1_inLow;
+        self.lag2_inLow = src.lag2_inLow;
+        self.lag3_inLow = src.lag3_inLow;
+        self.lag4_inLow = src.lag4_inLow;
+        self.lag1_inClose = src.lag1_inClose;
+        self.lag2_inClose = src.lag2_inClose;
+        self.lag3_inClose = src.lag3_inClose;
+        self.lag4_inClose = src.lag4_inClose;
+        self.ringPos_BodyLongTrailingIdx = src.ringPos_BodyLongTrailingIdx;
+        self.ringCap_BodyLongTrailingIdx = src.ringCap_BodyLongTrailingIdx;
+        self.ringLag_BodyLongTrailingIdx = src.ringLag_BodyLongTrailingIdx;
+        self.ring_BodyLongTrailingIdx_inOpen.clone_from(&src.ring_BodyLongTrailingIdx_inOpen);
+        self.ring_BodyLongTrailingIdx_inHigh.clone_from(&src.ring_BodyLongTrailingIdx_inHigh);
+        self.ring_BodyLongTrailingIdx_inLow.clone_from(&src.ring_BodyLongTrailingIdx_inLow);
+        self.ring_BodyLongTrailingIdx_inClose.clone_from(&src.ring_BodyLongTrailingIdx_inClose);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -668,6 +710,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `CDLBREAKAWAY_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static CDLBREAKAWAY_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLBREAKAWAY_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLBREAKAWAY_Stream {
@@ -680,14 +730,20 @@ impl CDLBREAKAWAY_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_CDLBREAKAWAY_Peek")]
     #[must_use]
     pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        CDLBREAKAWAY_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

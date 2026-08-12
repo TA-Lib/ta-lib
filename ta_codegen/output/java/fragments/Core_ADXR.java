@@ -301,7 +301,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ADXR_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double cur_outReal;
       int lagRingPos_adx;
@@ -332,6 +332,28 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( ADXR_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.cur_outReal = other.cur_outReal;
+         this.lagRingPos_adx = other.lagRingPos_adx;
+         this.lagRingCap_adx = other.lagRingCap_adx;
+         if( this.lagRing_adx != null && this.lagRing_adx.length == other.lagRing_adx.length ) {
+            System.arraycopy( other.lagRing_adx, 0, this.lagRing_adx, 0, other.lagRing_adx.length );
+         } else {
+            this.lagRing_adx = other.lagRing_adx.clone();
+         }
+         if( this.sub0 == null ) {
+            this.sub0 = new ADX_Stream(other.sub0);
+         } else {
+            this.sub0.copyFrom(other.sub0);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<ADXR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -344,12 +366,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
-         ADXR_Stream scratch = new ADXR_Stream(this);
+         ADXR_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new ADXR_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.ADXR_StreamStep(scratch, inHigh, inLow, inClose);
          return scratch.cur_outReal;
       }

@@ -234,6 +234,16 @@ pub struct NVI_Stream {
     state: NVI_StreamState,
 }
 
+#[allow(dead_code)]
+impl NVI_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `NVI_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct NVI_StreamState {
@@ -241,6 +251,18 @@ struct NVI_StreamState {
     prevClose: f64,
     prevVolume: f64,
     tempNVI: f64,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl NVI_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.prevNVI = src.prevNVI;
+        self.prevClose = src.prevClose;
+        self.prevVolume = src.prevVolume;
+        self.tempNVI = src.tempNVI;
+    }
 }
 
 #[allow(non_snake_case)]
@@ -414,9 +436,10 @@ impl NVI_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_NVI_Peek")]
     #[must_use]
     pub fn peek(&self, inClose: f64, inVolume: f64) -> f64 {

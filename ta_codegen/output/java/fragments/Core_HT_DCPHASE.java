@@ -900,7 +900,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HT_DCPHASE_Stream {
-      final Core core;
+      Core core;
       int i;
       double tempReal;
       double tempReal2;
@@ -1055,6 +1055,122 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( HT_DCPHASE_Stream other ) {
+         this.core = other.core;
+         this.i = other.i;
+         this.tempReal = other.tempReal;
+         this.tempReal2 = other.tempReal2;
+         this.period = other.period;
+         this.periodWMASum = other.periodWMASum;
+         this.periodWMASub = other.periodWMASub;
+         this.trailingWMAValue = other.trailingWMAValue;
+         this.smoothedValue = other.smoothedValue;
+         this.a = other.a;
+         this.b = other.b;
+         this.hilbertTempReal = other.hilbertTempReal;
+         this.hilbertIdx = other.hilbertIdx;
+         if( this.detrender_Odd != null && this.detrender_Odd.length == other.detrender_Odd.length ) {
+            System.arraycopy( other.detrender_Odd, 0, this.detrender_Odd, 0, other.detrender_Odd.length );
+         } else {
+            this.detrender_Odd = other.detrender_Odd.clone();
+         }
+         if( this.detrender_Even != null && this.detrender_Even.length == other.detrender_Even.length ) {
+            System.arraycopy( other.detrender_Even, 0, this.detrender_Even, 0, other.detrender_Even.length );
+         } else {
+            this.detrender_Even = other.detrender_Even.clone();
+         }
+         this.detrender = other.detrender;
+         this.prev_detrender_Odd = other.prev_detrender_Odd;
+         this.prev_detrender_Even = other.prev_detrender_Even;
+         this.prev_detrender_input_Odd = other.prev_detrender_input_Odd;
+         this.prev_detrender_input_Even = other.prev_detrender_input_Even;
+         if( this.Q1_Odd != null && this.Q1_Odd.length == other.Q1_Odd.length ) {
+            System.arraycopy( other.Q1_Odd, 0, this.Q1_Odd, 0, other.Q1_Odd.length );
+         } else {
+            this.Q1_Odd = other.Q1_Odd.clone();
+         }
+         if( this.Q1_Even != null && this.Q1_Even.length == other.Q1_Even.length ) {
+            System.arraycopy( other.Q1_Even, 0, this.Q1_Even, 0, other.Q1_Even.length );
+         } else {
+            this.Q1_Even = other.Q1_Even.clone();
+         }
+         this.Q1 = other.Q1;
+         this.prev_Q1_Odd = other.prev_Q1_Odd;
+         this.prev_Q1_Even = other.prev_Q1_Even;
+         this.prev_Q1_input_Odd = other.prev_Q1_input_Odd;
+         this.prev_Q1_input_Even = other.prev_Q1_input_Even;
+         if( this.jI_Odd != null && this.jI_Odd.length == other.jI_Odd.length ) {
+            System.arraycopy( other.jI_Odd, 0, this.jI_Odd, 0, other.jI_Odd.length );
+         } else {
+            this.jI_Odd = other.jI_Odd.clone();
+         }
+         if( this.jI_Even != null && this.jI_Even.length == other.jI_Even.length ) {
+            System.arraycopy( other.jI_Even, 0, this.jI_Even, 0, other.jI_Even.length );
+         } else {
+            this.jI_Even = other.jI_Even.clone();
+         }
+         this.jI = other.jI;
+         this.prev_jI_Odd = other.prev_jI_Odd;
+         this.prev_jI_Even = other.prev_jI_Even;
+         this.prev_jI_input_Odd = other.prev_jI_input_Odd;
+         this.prev_jI_input_Even = other.prev_jI_input_Even;
+         if( this.jQ_Odd != null && this.jQ_Odd.length == other.jQ_Odd.length ) {
+            System.arraycopy( other.jQ_Odd, 0, this.jQ_Odd, 0, other.jQ_Odd.length );
+         } else {
+            this.jQ_Odd = other.jQ_Odd.clone();
+         }
+         if( this.jQ_Even != null && this.jQ_Even.length == other.jQ_Even.length ) {
+            System.arraycopy( other.jQ_Even, 0, this.jQ_Even, 0, other.jQ_Even.length );
+         } else {
+            this.jQ_Even = other.jQ_Even.clone();
+         }
+         this.jQ = other.jQ;
+         this.prev_jQ_Odd = other.prev_jQ_Odd;
+         this.prev_jQ_Even = other.prev_jQ_Even;
+         this.prev_jQ_input_Odd = other.prev_jQ_input_Odd;
+         this.prev_jQ_input_Even = other.prev_jQ_input_Even;
+         this.Q2 = other.Q2;
+         this.I2 = other.I2;
+         this.prevQ2 = other.prevQ2;
+         this.prevI2 = other.prevI2;
+         this.Re = other.Re;
+         this.Im = other.Im;
+         this.I1ForOddPrev2 = other.I1ForOddPrev2;
+         this.I1ForOddPrev3 = other.I1ForOddPrev3;
+         this.I1ForEvenPrev2 = other.I1ForEvenPrev2;
+         this.I1ForEvenPrev3 = other.I1ForEvenPrev3;
+         this.rad2Deg = other.rad2Deg;
+         this.constDeg2RadBy360 = other.constDeg2RadBy360;
+         this.smoothPeriod = other.smoothPeriod;
+         this.idx = other.idx;
+         this.DCPeriodInt = other.DCPeriodInt;
+         this.DCPhase = other.DCPhase;
+         this.DCPeriod = other.DCPeriod;
+         this.imagPart = other.imagPart;
+         this.realPart = other.realPart;
+         this.smoothPrice_Idx = other.smoothPrice_Idx;
+         this.maxIdx_smoothPrice = other.maxIdx_smoothPrice;
+         this.streamParity = other.streamParity;
+         this.ringPos_trailingWMAIdx = other.ringPos_trailingWMAIdx;
+         this.ringCap_trailingWMAIdx = other.ringCap_trailingWMAIdx;
+         if( this.ring_trailingWMAIdx_inReal != null && this.ring_trailingWMAIdx_inReal.length == other.ring_trailingWMAIdx_inReal.length ) {
+            System.arraycopy( other.ring_trailingWMAIdx_inReal, 0, this.ring_trailingWMAIdx_inReal, 0, other.ring_trailingWMAIdx_inReal.length );
+         } else {
+            this.ring_trailingWMAIdx_inReal = other.ring_trailingWMAIdx_inReal.clone();
+         }
+         this.cbSize_smoothPrice = other.cbSize_smoothPrice;
+         if( this.cb_smoothPrice != null && this.cb_smoothPrice.length == other.cb_smoothPrice.length ) {
+            System.arraycopy( other.cb_smoothPrice, 0, this.cb_smoothPrice, 0, other.cb_smoothPrice.length );
+         } else {
+            this.cb_smoothPrice = other.cb_smoothPrice.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<HT_DCPHASE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -1067,12 +1183,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public double peek( double inReal ) {
-         HT_DCPHASE_Stream scratch = new HT_DCPHASE_Stream(this);
+         HT_DCPHASE_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new HT_DCPHASE_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.HT_DCPHASE_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }

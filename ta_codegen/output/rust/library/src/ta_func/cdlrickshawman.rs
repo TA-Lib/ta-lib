@@ -425,6 +425,16 @@ pub struct CDLRICKSHAWMAN_Stream {
     state: CDLRICKSHAWMAN_StreamState,
 }
 
+#[allow(dead_code)]
+impl CDLRICKSHAWMAN_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CDLRICKSHAWMAN_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLRICKSHAWMAN_StreamState {
@@ -449,6 +459,35 @@ struct CDLRICKSHAWMAN_StreamState {
     ring_ShadowLongTrailingIdx_inHigh: Vec<f64>,
     ring_ShadowLongTrailingIdx_inLow: Vec<f64>,
     ring_ShadowLongTrailingIdx_inClose: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CDLRICKSHAWMAN_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.BodyDojiPeriodTotal = src.BodyDojiPeriodTotal;
+        self.ShadowLongPeriodTotal = src.ShadowLongPeriodTotal;
+        self.NearPeriodTotal = src.NearPeriodTotal;
+        self.ringPos_BodyDojiTrailingIdx = src.ringPos_BodyDojiTrailingIdx;
+        self.ringCap_BodyDojiTrailingIdx = src.ringCap_BodyDojiTrailingIdx;
+        self.ring_BodyDojiTrailingIdx_inOpen.clone_from(&src.ring_BodyDojiTrailingIdx_inOpen);
+        self.ring_BodyDojiTrailingIdx_inHigh.clone_from(&src.ring_BodyDojiTrailingIdx_inHigh);
+        self.ring_BodyDojiTrailingIdx_inLow.clone_from(&src.ring_BodyDojiTrailingIdx_inLow);
+        self.ring_BodyDojiTrailingIdx_inClose.clone_from(&src.ring_BodyDojiTrailingIdx_inClose);
+        self.ringPos_NearTrailingIdx = src.ringPos_NearTrailingIdx;
+        self.ringCap_NearTrailingIdx = src.ringCap_NearTrailingIdx;
+        self.ring_NearTrailingIdx_inOpen.clone_from(&src.ring_NearTrailingIdx_inOpen);
+        self.ring_NearTrailingIdx_inHigh.clone_from(&src.ring_NearTrailingIdx_inHigh);
+        self.ring_NearTrailingIdx_inLow.clone_from(&src.ring_NearTrailingIdx_inLow);
+        self.ring_NearTrailingIdx_inClose.clone_from(&src.ring_NearTrailingIdx_inClose);
+        self.ringPos_ShadowLongTrailingIdx = src.ringPos_ShadowLongTrailingIdx;
+        self.ringCap_ShadowLongTrailingIdx = src.ringCap_ShadowLongTrailingIdx;
+        self.ring_ShadowLongTrailingIdx_inOpen.clone_from(&src.ring_ShadowLongTrailingIdx_inOpen);
+        self.ring_ShadowLongTrailingIdx_inHigh.clone_from(&src.ring_ShadowLongTrailingIdx_inHigh);
+        self.ring_ShadowLongTrailingIdx_inLow.clone_from(&src.ring_ShadowLongTrailingIdx_inLow);
+        self.ring_ShadowLongTrailingIdx_inClose.clone_from(&src.ring_ShadowLongTrailingIdx_inClose);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -1005,6 +1044,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `CDLRICKSHAWMAN_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static CDLRICKSHAWMAN_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLRICKSHAWMAN_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CDLRICKSHAWMAN_Stream {
@@ -1017,14 +1064,20 @@ impl CDLRICKSHAWMAN_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_CDLRICKSHAWMAN_Peek")]
     #[must_use]
     pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {
-        let mut scratch = self.clone();
-        scratch.update(inOpen, inHigh, inLow, inClose)
+        CDLRICKSHAWMAN_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inOpen, inHigh, inLow, inClose);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

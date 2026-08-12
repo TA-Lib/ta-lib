@@ -352,7 +352,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CDLTAKURI_Stream {
-      final Core core;
+      Core core;
       double BodyDojiPeriodTotal;
       double ShadowVeryShortPeriodTotal;
       double ShadowVeryLongPeriodTotal;
@@ -433,6 +433,93 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CDLTAKURI_Stream other ) {
+         this.core = other.core;
+         this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
+         this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
+         this.ShadowVeryLongPeriodTotal = other.ShadowVeryLongPeriodTotal;
+         this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
+         this.ringCap_BodyDojiTrailingIdx = other.ringCap_BodyDojiTrailingIdx;
+         if( this.ring_BodyDojiTrailingIdx_inOpen != null && this.ring_BodyDojiTrailingIdx_inOpen.length == other.ring_BodyDojiTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_BodyDojiTrailingIdx_inOpen, 0, this.ring_BodyDojiTrailingIdx_inOpen, 0, other.ring_BodyDojiTrailingIdx_inOpen.length );
+         } else {
+            this.ring_BodyDojiTrailingIdx_inOpen = other.ring_BodyDojiTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_BodyDojiTrailingIdx_inHigh != null && this.ring_BodyDojiTrailingIdx_inHigh.length == other.ring_BodyDojiTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_BodyDojiTrailingIdx_inHigh, 0, this.ring_BodyDojiTrailingIdx_inHigh, 0, other.ring_BodyDojiTrailingIdx_inHigh.length );
+         } else {
+            this.ring_BodyDojiTrailingIdx_inHigh = other.ring_BodyDojiTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_BodyDojiTrailingIdx_inLow != null && this.ring_BodyDojiTrailingIdx_inLow.length == other.ring_BodyDojiTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_BodyDojiTrailingIdx_inLow, 0, this.ring_BodyDojiTrailingIdx_inLow, 0, other.ring_BodyDojiTrailingIdx_inLow.length );
+         } else {
+            this.ring_BodyDojiTrailingIdx_inLow = other.ring_BodyDojiTrailingIdx_inLow.clone();
+         }
+         if( this.ring_BodyDojiTrailingIdx_inClose != null && this.ring_BodyDojiTrailingIdx_inClose.length == other.ring_BodyDojiTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_BodyDojiTrailingIdx_inClose, 0, this.ring_BodyDojiTrailingIdx_inClose, 0, other.ring_BodyDojiTrailingIdx_inClose.length );
+         } else {
+            this.ring_BodyDojiTrailingIdx_inClose = other.ring_BodyDojiTrailingIdx_inClose.clone();
+         }
+         this.ringPos_ShadowVeryLongTrailingIdx = other.ringPos_ShadowVeryLongTrailingIdx;
+         this.ringCap_ShadowVeryLongTrailingIdx = other.ringCap_ShadowVeryLongTrailingIdx;
+         if( this.ring_ShadowVeryLongTrailingIdx_inOpen != null && this.ring_ShadowVeryLongTrailingIdx_inOpen.length == other.ring_ShadowVeryLongTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_ShadowVeryLongTrailingIdx_inOpen, 0, this.ring_ShadowVeryLongTrailingIdx_inOpen, 0, other.ring_ShadowVeryLongTrailingIdx_inOpen.length );
+         } else {
+            this.ring_ShadowVeryLongTrailingIdx_inOpen = other.ring_ShadowVeryLongTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_ShadowVeryLongTrailingIdx_inHigh != null && this.ring_ShadowVeryLongTrailingIdx_inHigh.length == other.ring_ShadowVeryLongTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_ShadowVeryLongTrailingIdx_inHigh, 0, this.ring_ShadowVeryLongTrailingIdx_inHigh, 0, other.ring_ShadowVeryLongTrailingIdx_inHigh.length );
+         } else {
+            this.ring_ShadowVeryLongTrailingIdx_inHigh = other.ring_ShadowVeryLongTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_ShadowVeryLongTrailingIdx_inLow != null && this.ring_ShadowVeryLongTrailingIdx_inLow.length == other.ring_ShadowVeryLongTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_ShadowVeryLongTrailingIdx_inLow, 0, this.ring_ShadowVeryLongTrailingIdx_inLow, 0, other.ring_ShadowVeryLongTrailingIdx_inLow.length );
+         } else {
+            this.ring_ShadowVeryLongTrailingIdx_inLow = other.ring_ShadowVeryLongTrailingIdx_inLow.clone();
+         }
+         if( this.ring_ShadowVeryLongTrailingIdx_inClose != null && this.ring_ShadowVeryLongTrailingIdx_inClose.length == other.ring_ShadowVeryLongTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_ShadowVeryLongTrailingIdx_inClose, 0, this.ring_ShadowVeryLongTrailingIdx_inClose, 0, other.ring_ShadowVeryLongTrailingIdx_inClose.length );
+         } else {
+            this.ring_ShadowVeryLongTrailingIdx_inClose = other.ring_ShadowVeryLongTrailingIdx_inClose.clone();
+         }
+         this.ringPos_ShadowVeryShortTrailingIdx = other.ringPos_ShadowVeryShortTrailingIdx;
+         this.ringCap_ShadowVeryShortTrailingIdx = other.ringCap_ShadowVeryShortTrailingIdx;
+         if( this.ring_ShadowVeryShortTrailingIdx_inOpen != null && this.ring_ShadowVeryShortTrailingIdx_inOpen.length == other.ring_ShadowVeryShortTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inOpen, 0, this.ring_ShadowVeryShortTrailingIdx_inOpen, 0, other.ring_ShadowVeryShortTrailingIdx_inOpen.length );
+         } else {
+            this.ring_ShadowVeryShortTrailingIdx_inOpen = other.ring_ShadowVeryShortTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_ShadowVeryShortTrailingIdx_inHigh != null && this.ring_ShadowVeryShortTrailingIdx_inHigh.length == other.ring_ShadowVeryShortTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inHigh, 0, this.ring_ShadowVeryShortTrailingIdx_inHigh, 0, other.ring_ShadowVeryShortTrailingIdx_inHigh.length );
+         } else {
+            this.ring_ShadowVeryShortTrailingIdx_inHigh = other.ring_ShadowVeryShortTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_ShadowVeryShortTrailingIdx_inLow != null && this.ring_ShadowVeryShortTrailingIdx_inLow.length == other.ring_ShadowVeryShortTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inLow, 0, this.ring_ShadowVeryShortTrailingIdx_inLow, 0, other.ring_ShadowVeryShortTrailingIdx_inLow.length );
+         } else {
+            this.ring_ShadowVeryShortTrailingIdx_inLow = other.ring_ShadowVeryShortTrailingIdx_inLow.clone();
+         }
+         if( this.ring_ShadowVeryShortTrailingIdx_inClose != null && this.ring_ShadowVeryShortTrailingIdx_inClose.length == other.ring_ShadowVeryShortTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_ShadowVeryShortTrailingIdx_inClose, 0, this.ring_ShadowVeryShortTrailingIdx_inClose, 0, other.ring_ShadowVeryShortTrailingIdx_inClose.length );
+         } else {
+            this.ring_ShadowVeryShortTrailingIdx_inClose = other.ring_ShadowVeryShortTrailingIdx_inClose.clone();
+         }
+         this.cs_BodyDoji_rangeType = other.cs_BodyDoji_rangeType;
+         this.cs_BodyDoji_avgPeriod = other.cs_BodyDoji_avgPeriod;
+         this.cs_BodyDoji_factor = other.cs_BodyDoji_factor;
+         this.cs_ShadowVeryLong_rangeType = other.cs_ShadowVeryLong_rangeType;
+         this.cs_ShadowVeryLong_avgPeriod = other.cs_ShadowVeryLong_avgPeriod;
+         this.cs_ShadowVeryLong_factor = other.cs_ShadowVeryLong_factor;
+         this.cs_ShadowVeryShort_rangeType = other.cs_ShadowVeryShort_rangeType;
+         this.cs_ShadowVeryShort_avgPeriod = other.cs_ShadowVeryShort_avgPeriod;
+         this.cs_ShadowVeryShort_factor = other.cs_ShadowVeryShort_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<CDLTAKURI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -445,12 +532,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CDLTAKURI_Stream scratch = new CDLTAKURI_Stream(this);
+         CDLTAKURI_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new CDLTAKURI_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.CDLTAKURI_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }

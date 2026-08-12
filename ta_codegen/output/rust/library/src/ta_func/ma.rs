@@ -312,6 +312,16 @@ pub struct MA_Stream {
     state: MA_StreamState,
 }
 
+#[allow(dead_code)]
+impl MA_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `MA_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MA_StreamState {
@@ -319,6 +329,17 @@ struct MA_StreamState {
     optInMAType: MAType,
     // Sub-stream, tagged by optInMAType; `MA_Sub::Identity` on the identity path.
     sub: MA_Sub,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl MA_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.optInMAType = src.optInMAType;
+        self.sub.restore_from(&src.sub);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -334,6 +355,30 @@ enum MA_Sub {
     MAMA(MAMA_Stream),
     T3(T3_Stream),
     HMA(HMA_Stream),
+}
+
+#[allow(dead_code)]
+impl MA_Sub {
+    /// Overwrite from `src`, reusing the sub-handle's buffers.
+    fn restore_from(&mut self, src: &Self) {
+        if std::mem::discriminant(&*self) != std::mem::discriminant(src) {
+            self.clone_from(src);
+            return;
+        }
+        match (self, src) {
+            (MA_Sub::SMA(dst), MA_Sub::SMA(s)) => dst.restore_from(s),
+            (MA_Sub::EMA(dst), MA_Sub::EMA(s)) => dst.restore_from(s),
+            (MA_Sub::WMA(dst), MA_Sub::WMA(s)) => dst.restore_from(s),
+            (MA_Sub::DEMA(dst), MA_Sub::DEMA(s)) => dst.restore_from(s),
+            (MA_Sub::TEMA(dst), MA_Sub::TEMA(s)) => dst.restore_from(s),
+            (MA_Sub::TRIMA(dst), MA_Sub::TRIMA(s)) => dst.restore_from(s),
+            (MA_Sub::KAMA(dst), MA_Sub::KAMA(s)) => dst.restore_from(s),
+            (MA_Sub::MAMA(dst), MA_Sub::MAMA(s)) => dst.restore_from(s),
+            (MA_Sub::T3(dst), MA_Sub::T3(s)) => dst.restore_from(s),
+            (MA_Sub::HMA(dst), MA_Sub::HMA(s)) => dst.restore_from(s),
+            _ => {}
+        }
+    }
 }
 
 #[allow(non_snake_case)]
@@ -570,9 +615,10 @@ impl MA_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_MA_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

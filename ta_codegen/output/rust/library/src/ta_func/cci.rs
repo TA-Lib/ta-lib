@@ -310,6 +310,16 @@ pub struct CCI_Stream {
     state: CCI_StreamState,
 }
 
+#[allow(dead_code)]
+impl CCI_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CCI_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CCI_StreamState {
@@ -322,6 +332,23 @@ struct CCI_StreamState {
     maxIdx_circBuffer: usize,
     cbSize_circBuffer: usize,
     cb_circBuffer: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CCI_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.tempReal = src.tempReal;
+        self.tempReal2 = src.tempReal2;
+        self.theAverage = src.theAverage;
+        self.j = src.j;
+        self.circBuffer_Idx = src.circBuffer_Idx;
+        self.maxIdx_circBuffer = src.maxIdx_circBuffer;
+        self.cbSize_circBuffer = src.cbSize_circBuffer;
+        self.cb_circBuffer.clone_from(&src.cb_circBuffer);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -557,9 +584,10 @@ impl CCI_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_CCI_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {

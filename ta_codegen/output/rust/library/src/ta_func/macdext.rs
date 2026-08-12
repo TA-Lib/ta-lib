@@ -407,6 +407,16 @@ pub struct MACDEXT_Stream {
     state: MACDEXT_StreamState,
 }
 
+#[allow(dead_code)]
+impl MACDEXT_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `MACDEXT_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MACDEXT_StreamState {
@@ -419,6 +429,23 @@ struct MACDEXT_StreamState {
     sub0: MA_Stream,
     sub1: MA_Stream,
     sub2: MA_Stream,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl MACDEXT_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInFastPeriod = src.optInFastPeriod;
+        self.optInFastMAType = src.optInFastMAType;
+        self.optInSlowPeriod = src.optInSlowPeriod;
+        self.optInSlowMAType = src.optInSlowMAType;
+        self.optInSignalPeriod = src.optInSignalPeriod;
+        self.optInSignalMAType = src.optInSignalMAType;
+        self.sub0.restore_from(&src.sub0);
+        self.sub1.restore_from(&src.sub1);
+        self.sub2.restore_from(&src.sub2);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -700,6 +727,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `MACDEXT_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static MACDEXT_PEEK_SCRATCH: std::cell::Cell<Option<Box<MACDEXT_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MACDEXT_Stream {
@@ -714,14 +749,20 @@ impl MACDEXT_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_MACDEXT_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> (f64, f64, f64) {
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        MACDEXT_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inReal);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

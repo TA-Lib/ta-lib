@@ -329,7 +329,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CDLHIKKAKE_Stream {
-      final Core core;
+      Core core;
       int patternResult;
       int cd;
       double savedHigh;
@@ -366,6 +366,20 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CDLHIKKAKE_Stream other ) {
+         this.core = other.core;
+         this.patternResult = other.patternResult;
+         this.cd = other.cd;
+         this.savedHigh = other.savedHigh;
+         this.savedLow = other.savedLow;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag2_inHigh = other.lag2_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag2_inLow = other.lag2_inLow;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -378,9 +392,9 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHIKKAKE_Stream scratch = new CDLHIKKAKE_Stream(this);

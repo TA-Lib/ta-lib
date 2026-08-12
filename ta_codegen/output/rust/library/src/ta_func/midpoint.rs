@@ -376,6 +376,16 @@ pub struct MIDPOINT_Stream {
     state: MIDPOINT_StreamState,
 }
 
+#[allow(dead_code)]
+impl MIDPOINT_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `MIDPOINT_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MIDPOINT_StreamState {
@@ -391,6 +401,26 @@ struct MIDPOINT_StreamState {
     today: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl MIDPOINT_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.lowest = src.lowest;
+        self.highest = src.highest;
+        self.tmpLow = src.tmpLow;
+        self.tmpHigh = src.tmpHigh;
+        self.trailingIdx = src.trailingIdx;
+        self.lowestIdx = src.lowestIdx;
+        self.highestIdx = src.highestIdx;
+        self.i = src.i;
+        self.today = src.today;
+        self.xMask = src.xMask;
+        self.x_inReal.clone_from(&src.x_inReal);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -661,9 +691,10 @@ impl MIDPOINT_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_MIDPOINT_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

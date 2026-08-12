@@ -366,6 +366,16 @@ pub struct CMF_Stream {
     state: CMF_StreamState,
 }
 
+#[allow(dead_code)]
+impl CMF_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CMF_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CMF_StreamState {
@@ -382,6 +392,27 @@ struct CMF_StreamState {
     cbSize_mfv: usize,
     cb_mfv_flow: Vec<f64>,
     cb_mfv_volume: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CMF_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.sumMFV = src.sumMFV;
+        self.sumVol = src.sumVol;
+        self.high = src.high;
+        self.low = src.low;
+        self.close = src.close;
+        self.tmp = src.tmp;
+        self.mfv = src.mfv;
+        self.mfv_Idx = src.mfv_Idx;
+        self.maxIdx_mfv = src.maxIdx_mfv;
+        self.cbSize_mfv = src.cbSize_mfv;
+        self.cb_mfv_flow.clone_from(&src.cb_mfv_flow);
+        self.cb_mfv_volume.clone_from(&src.cb_mfv_volume);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -623,6 +654,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `CMF_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static CMF_PEEK_SCRATCH: std::cell::Cell<Option<Box<CMF_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl CMF_Stream {
@@ -635,14 +674,20 @@ impl CMF_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_CMF_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose, inVolume)
+        CMF_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inHigh, inLow, inClose, inVolume);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

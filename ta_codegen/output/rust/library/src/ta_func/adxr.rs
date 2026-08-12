@@ -265,6 +265,16 @@ pub struct ADXR_Stream {
     state: ADXR_StreamState,
 }
 
+#[allow(dead_code)]
+impl ADXR_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `ADXR_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ADXR_StreamState {
@@ -273,6 +283,19 @@ struct ADXR_StreamState {
     lagRingPos_adx: usize,
     lagRingCap_adx: usize,
     lagRing_adx: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl ADXR_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.sub0.restore_from(&src.sub0);
+        self.lagRingPos_adx = src.lagRingPos_adx;
+        self.lagRingCap_adx = src.lagRingCap_adx;
+        self.lagRing_adx.clone_from(&src.lagRing_adx);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -459,9 +482,10 @@ impl ADXR_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway, which for this handle's
+    /// shape the optimizer can fold away entirely — cheaper than reusing one.
     #[doc(alias = "TA_ADXR_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {

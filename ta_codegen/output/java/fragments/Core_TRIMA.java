@@ -569,7 +569,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TRIMA_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double numerator;
       double numeratorSub;
@@ -614,6 +614,35 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( TRIMA_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.numerator = other.numerator;
+         this.numeratorSub = other.numeratorSub;
+         this.numeratorAdd = other.numeratorAdd;
+         this.factor = other.factor;
+         this.tempReal = other.tempReal;
+         this.ringPos_middleIdx = other.ringPos_middleIdx;
+         this.ringCap_middleIdx = other.ringCap_middleIdx;
+         if( this.ring_middleIdx_inReal != null && this.ring_middleIdx_inReal.length == other.ring_middleIdx_inReal.length ) {
+            System.arraycopy( other.ring_middleIdx_inReal, 0, this.ring_middleIdx_inReal, 0, other.ring_middleIdx_inReal.length );
+         } else {
+            this.ring_middleIdx_inReal = other.ring_middleIdx_inReal.clone();
+         }
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal != null && this.ring_trailingIdx_inReal.length == other.ring_trailingIdx_inReal.length ) {
+            System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );
+         } else {
+            this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<TRIMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -626,12 +655,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public double peek( double inReal ) {
-         TRIMA_Stream scratch = new TRIMA_Stream(this);
+         TRIMA_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new TRIMA_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.TRIMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }

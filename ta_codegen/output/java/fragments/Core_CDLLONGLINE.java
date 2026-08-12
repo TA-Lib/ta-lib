@@ -310,7 +310,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CDLLONGLINE_Stream {
-      final Core core;
+      Core core;
       double BodyPeriodTotal;
       double ShadowPeriodTotal;
       int ringPos_BodyTrailingIdx;
@@ -371,6 +371,67 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CDLLONGLINE_Stream other ) {
+         this.core = other.core;
+         this.BodyPeriodTotal = other.BodyPeriodTotal;
+         this.ShadowPeriodTotal = other.ShadowPeriodTotal;
+         this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
+         this.ringCap_BodyTrailingIdx = other.ringCap_BodyTrailingIdx;
+         if( this.ring_BodyTrailingIdx_inOpen != null && this.ring_BodyTrailingIdx_inOpen.length == other.ring_BodyTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_BodyTrailingIdx_inOpen, 0, this.ring_BodyTrailingIdx_inOpen, 0, other.ring_BodyTrailingIdx_inOpen.length );
+         } else {
+            this.ring_BodyTrailingIdx_inOpen = other.ring_BodyTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_BodyTrailingIdx_inHigh != null && this.ring_BodyTrailingIdx_inHigh.length == other.ring_BodyTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_BodyTrailingIdx_inHigh, 0, this.ring_BodyTrailingIdx_inHigh, 0, other.ring_BodyTrailingIdx_inHigh.length );
+         } else {
+            this.ring_BodyTrailingIdx_inHigh = other.ring_BodyTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_BodyTrailingIdx_inLow != null && this.ring_BodyTrailingIdx_inLow.length == other.ring_BodyTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_BodyTrailingIdx_inLow, 0, this.ring_BodyTrailingIdx_inLow, 0, other.ring_BodyTrailingIdx_inLow.length );
+         } else {
+            this.ring_BodyTrailingIdx_inLow = other.ring_BodyTrailingIdx_inLow.clone();
+         }
+         if( this.ring_BodyTrailingIdx_inClose != null && this.ring_BodyTrailingIdx_inClose.length == other.ring_BodyTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_BodyTrailingIdx_inClose, 0, this.ring_BodyTrailingIdx_inClose, 0, other.ring_BodyTrailingIdx_inClose.length );
+         } else {
+            this.ring_BodyTrailingIdx_inClose = other.ring_BodyTrailingIdx_inClose.clone();
+         }
+         this.ringPos_ShadowTrailingIdx = other.ringPos_ShadowTrailingIdx;
+         this.ringCap_ShadowTrailingIdx = other.ringCap_ShadowTrailingIdx;
+         if( this.ring_ShadowTrailingIdx_inOpen != null && this.ring_ShadowTrailingIdx_inOpen.length == other.ring_ShadowTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_ShadowTrailingIdx_inOpen, 0, this.ring_ShadowTrailingIdx_inOpen, 0, other.ring_ShadowTrailingIdx_inOpen.length );
+         } else {
+            this.ring_ShadowTrailingIdx_inOpen = other.ring_ShadowTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_ShadowTrailingIdx_inHigh != null && this.ring_ShadowTrailingIdx_inHigh.length == other.ring_ShadowTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_ShadowTrailingIdx_inHigh, 0, this.ring_ShadowTrailingIdx_inHigh, 0, other.ring_ShadowTrailingIdx_inHigh.length );
+         } else {
+            this.ring_ShadowTrailingIdx_inHigh = other.ring_ShadowTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_ShadowTrailingIdx_inLow != null && this.ring_ShadowTrailingIdx_inLow.length == other.ring_ShadowTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_ShadowTrailingIdx_inLow, 0, this.ring_ShadowTrailingIdx_inLow, 0, other.ring_ShadowTrailingIdx_inLow.length );
+         } else {
+            this.ring_ShadowTrailingIdx_inLow = other.ring_ShadowTrailingIdx_inLow.clone();
+         }
+         if( this.ring_ShadowTrailingIdx_inClose != null && this.ring_ShadowTrailingIdx_inClose.length == other.ring_ShadowTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_ShadowTrailingIdx_inClose, 0, this.ring_ShadowTrailingIdx_inClose, 0, other.ring_ShadowTrailingIdx_inClose.length );
+         } else {
+            this.ring_ShadowTrailingIdx_inClose = other.ring_ShadowTrailingIdx_inClose.clone();
+         }
+         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
+         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
+         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
+         this.cs_ShadowShort_rangeType = other.cs_ShadowShort_rangeType;
+         this.cs_ShadowShort_avgPeriod = other.cs_ShadowShort_avgPeriod;
+         this.cs_ShadowShort_factor = other.cs_ShadowShort_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<CDLLONGLINE_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -383,12 +444,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CDLLONGLINE_Stream scratch = new CDLLONGLINE_Stream(this);
+         CDLLONGLINE_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new CDLLONGLINE_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.CDLLONGLINE_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }

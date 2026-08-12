@@ -407,7 +407,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ACCBANDS_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double periodTotalUpper;
       double periodTotalMiddle;
@@ -458,6 +458,42 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( ACCBANDS_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.periodTotalUpper = other.periodTotalUpper;
+         this.periodTotalMiddle = other.periodTotalMiddle;
+         this.periodTotalLower = other.periodTotalLower;
+         this.tempUpper = other.tempUpper;
+         this.tempMiddle = other.tempMiddle;
+         this.tempLower = other.tempLower;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inHigh != null && this.ring_trailingIdx_inHigh.length == other.ring_trailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_trailingIdx_inHigh, 0, this.ring_trailingIdx_inHigh, 0, other.ring_trailingIdx_inHigh.length );
+         } else {
+            this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
+         }
+         if( this.ring_trailingIdx_inLow != null && this.ring_trailingIdx_inLow.length == other.ring_trailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_trailingIdx_inLow, 0, this.ring_trailingIdx_inLow, 0, other.ring_trailingIdx_inLow.length );
+         } else {
+            this.ring_trailingIdx_inLow = other.ring_trailingIdx_inLow.clone();
+         }
+         if( this.ring_trailingIdx_inClose != null && this.ring_trailingIdx_inClose.length == other.ring_trailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_trailingIdx_inClose, 0, this.ring_trailingIdx_inClose, 0, other.ring_trailingIdx_inClose.length );
+         } else {
+            this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+         }
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<ACCBANDS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -485,12 +521,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
-         ACCBANDS_Stream scratch = new ACCBANDS_Stream(this);
+         ACCBANDS_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new ACCBANDS_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.ACCBANDS_StreamStep(scratch, inHigh, inLow, inClose);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }

@@ -336,7 +336,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CDLCOUNTERATTACK_Stream {
-      final Core core;
+      Core core;
       double EqualPeriodTotal;
       double[] BodyLongPeriodTotal;
       int totIdx;
@@ -423,6 +423,100 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CDLCOUNTERATTACK_Stream other ) {
+         this.core = other.core;
+         this.EqualPeriodTotal = other.EqualPeriodTotal;
+         if( this.BodyLongPeriodTotal != null && this.BodyLongPeriodTotal.length == other.BodyLongPeriodTotal.length ) {
+            System.arraycopy( other.BodyLongPeriodTotal, 0, this.BodyLongPeriodTotal, 0, other.BodyLongPeriodTotal.length );
+         } else {
+            this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
+         }
+         this.totIdx = other.totIdx;
+         this.lag1_inOpen = other.lag1_inOpen;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag1_inClose = other.lag1_inClose;
+         this.ringPos_BodyLongTrailingIdx = other.ringPos_BodyLongTrailingIdx;
+         this.ringCap_BodyLongTrailingIdx = other.ringCap_BodyLongTrailingIdx;
+         this.ringLag_BodyLongTrailingIdx = other.ringLag_BodyLongTrailingIdx;
+         if( this.ring_BodyLongTrailingIdx_inOpen != null && this.ring_BodyLongTrailingIdx_inOpen.length == other.ring_BodyLongTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_BodyLongTrailingIdx_inOpen, 0, this.ring_BodyLongTrailingIdx_inOpen, 0, other.ring_BodyLongTrailingIdx_inOpen.length );
+         } else {
+            this.ring_BodyLongTrailingIdx_inOpen = other.ring_BodyLongTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_BodyLongTrailingIdx_inHigh != null && this.ring_BodyLongTrailingIdx_inHigh.length == other.ring_BodyLongTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_BodyLongTrailingIdx_inHigh, 0, this.ring_BodyLongTrailingIdx_inHigh, 0, other.ring_BodyLongTrailingIdx_inHigh.length );
+         } else {
+            this.ring_BodyLongTrailingIdx_inHigh = other.ring_BodyLongTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_BodyLongTrailingIdx_inLow != null && this.ring_BodyLongTrailingIdx_inLow.length == other.ring_BodyLongTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_BodyLongTrailingIdx_inLow, 0, this.ring_BodyLongTrailingIdx_inLow, 0, other.ring_BodyLongTrailingIdx_inLow.length );
+         } else {
+            this.ring_BodyLongTrailingIdx_inLow = other.ring_BodyLongTrailingIdx_inLow.clone();
+         }
+         if( this.ring_BodyLongTrailingIdx_inClose != null && this.ring_BodyLongTrailingIdx_inClose.length == other.ring_BodyLongTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_BodyLongTrailingIdx_inClose, 0, this.ring_BodyLongTrailingIdx_inClose, 0, other.ring_BodyLongTrailingIdx_inClose.length );
+         } else {
+            this.ring_BodyLongTrailingIdx_inClose = other.ring_BodyLongTrailingIdx_inClose.clone();
+         }
+         this.ringPos_EqualTrailingIdx = other.ringPos_EqualTrailingIdx;
+         this.ringCap_EqualTrailingIdx = other.ringCap_EqualTrailingIdx;
+         this.ringLag_EqualTrailingIdx = other.ringLag_EqualTrailingIdx;
+         if( this.ring_EqualTrailingIdx_inOpen != null && this.ring_EqualTrailingIdx_inOpen.length == other.ring_EqualTrailingIdx_inOpen.length ) {
+            System.arraycopy( other.ring_EqualTrailingIdx_inOpen, 0, this.ring_EqualTrailingIdx_inOpen, 0, other.ring_EqualTrailingIdx_inOpen.length );
+         } else {
+            this.ring_EqualTrailingIdx_inOpen = other.ring_EqualTrailingIdx_inOpen.clone();
+         }
+         if( this.ring_EqualTrailingIdx_inHigh != null && this.ring_EqualTrailingIdx_inHigh.length == other.ring_EqualTrailingIdx_inHigh.length ) {
+            System.arraycopy( other.ring_EqualTrailingIdx_inHigh, 0, this.ring_EqualTrailingIdx_inHigh, 0, other.ring_EqualTrailingIdx_inHigh.length );
+         } else {
+            this.ring_EqualTrailingIdx_inHigh = other.ring_EqualTrailingIdx_inHigh.clone();
+         }
+         if( this.ring_EqualTrailingIdx_inLow != null && this.ring_EqualTrailingIdx_inLow.length == other.ring_EqualTrailingIdx_inLow.length ) {
+            System.arraycopy( other.ring_EqualTrailingIdx_inLow, 0, this.ring_EqualTrailingIdx_inLow, 0, other.ring_EqualTrailingIdx_inLow.length );
+         } else {
+            this.ring_EqualTrailingIdx_inLow = other.ring_EqualTrailingIdx_inLow.clone();
+         }
+         if( this.ring_EqualTrailingIdx_inClose != null && this.ring_EqualTrailingIdx_inClose.length == other.ring_EqualTrailingIdx_inClose.length ) {
+            System.arraycopy( other.ring_EqualTrailingIdx_inClose, 0, this.ring_EqualTrailingIdx_inClose, 0, other.ring_EqualTrailingIdx_inClose.length );
+         } else {
+            this.ring_EqualTrailingIdx_inClose = other.ring_EqualTrailingIdx_inClose.clone();
+         }
+         this.winPos_totIdx = other.winPos_totIdx;
+         this.winCap_totIdx = other.winCap_totIdx;
+         if( this.win_totIdx_inOpen != null && this.win_totIdx_inOpen.length == other.win_totIdx_inOpen.length ) {
+            System.arraycopy( other.win_totIdx_inOpen, 0, this.win_totIdx_inOpen, 0, other.win_totIdx_inOpen.length );
+         } else {
+            this.win_totIdx_inOpen = other.win_totIdx_inOpen.clone();
+         }
+         if( this.win_totIdx_inHigh != null && this.win_totIdx_inHigh.length == other.win_totIdx_inHigh.length ) {
+            System.arraycopy( other.win_totIdx_inHigh, 0, this.win_totIdx_inHigh, 0, other.win_totIdx_inHigh.length );
+         } else {
+            this.win_totIdx_inHigh = other.win_totIdx_inHigh.clone();
+         }
+         if( this.win_totIdx_inLow != null && this.win_totIdx_inLow.length == other.win_totIdx_inLow.length ) {
+            System.arraycopy( other.win_totIdx_inLow, 0, this.win_totIdx_inLow, 0, other.win_totIdx_inLow.length );
+         } else {
+            this.win_totIdx_inLow = other.win_totIdx_inLow.clone();
+         }
+         if( this.win_totIdx_inClose != null && this.win_totIdx_inClose.length == other.win_totIdx_inClose.length ) {
+            System.arraycopy( other.win_totIdx_inClose, 0, this.win_totIdx_inClose, 0, other.win_totIdx_inClose.length );
+         } else {
+            this.win_totIdx_inClose = other.win_totIdx_inClose.clone();
+         }
+         this.cs_BodyLong_rangeType = other.cs_BodyLong_rangeType;
+         this.cs_BodyLong_avgPeriod = other.cs_BodyLong_avgPeriod;
+         this.cs_BodyLong_factor = other.cs_BodyLong_factor;
+         this.cs_Equal_rangeType = other.cs_Equal_rangeType;
+         this.cs_Equal_avgPeriod = other.cs_Equal_avgPeriod;
+         this.cs_Equal_factor = other.cs_Equal_factor;
+         this.cur_outInteger = other.cur_outInteger;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<CDLCOUNTERATTACK_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -435,12 +529,19 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
-         CDLCOUNTERATTACK_Stream scratch = new CDLCOUNTERATTACK_Stream(this);
+         CDLCOUNTERATTACK_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new CDLCOUNTERATTACK_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.CDLCOUNTERATTACK_StreamStep(scratch, inOpen, inHigh, inLow, inClose);
          return scratch.cur_outInteger;
       }
