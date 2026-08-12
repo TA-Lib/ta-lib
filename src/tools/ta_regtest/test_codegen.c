@@ -2457,10 +2457,11 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * function cannot reach the cap. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_OPT 16
 /* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
- * params, so its count is 6*M+1 in the MAType-list length M (base 4 + 3 params *
- * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list)). M=12 today
- * (#93 added DISABLED, #182 DEFAULT) => 73; 128 keeps runway for ~9 more MATypes
- * before MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
+ * params, so its count is 8*M-1 in the MAType-list length M (base 4 + 3 params *
+ * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list) + the 2 *
+ * (M-1) multi-enum diagonal, #181). M=12 today (#93 added DISABLED, #182
+ * DEFAULT) => 95; 128 keeps runway for 4 more MATypes before MACDEXT reaches
+ * it again. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_VEC 128
 #define STREAM_N       240
 
@@ -2515,7 +2516,7 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
                                 int *overflow)
 {
     unsigned int i, e;
-    int hasMin = 0, hasMinPlus1 = 0, nvec, v;
+    int hasMin = 0, hasMinPlus1 = 0, nvec, v, baseVecs = 0;
     for( v = 0; v < STREAM_MAX_VEC; v++ ) vecIsMin[v] = 0;
     for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
     {
@@ -2601,7 +2602,7 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
      * (the caller fails the run loudly: silent truncation would quietly
      * stop testing arms). */
     {
-        int baseVecs = nvec;
+        baseVecs = nvec;
         *overflow = 0;
         for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
         {
@@ -2634,6 +2635,83 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
                     for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
                         vec[nvec][j] = vec[0][j];
                     vec[nvec][i] = (double)(maxList + 91); /* out of list */
+                    vecIsEnum[nvec] = 1;
+                    nvec++;
+                }
+            }
+        }
+    }
+
+    /* Multi-enum DIAGONAL: every enum param moved to the SAME non-default list
+     * value at once. The sweep above overwrites exactly ONE enum slot per
+     * vector, so a function carrying more than one — MACDEXT (3 MATypes) and
+     * STOCH (2) — never sees them non-default TOGETHER, and a specialization
+     * guarded on "all of them are X" is unreachable by construction. That is
+     * the hole issue #181 fell through: MACDEXT's batch body delegates an
+     * all-EMA call to TA_MACD's single lockstep pass, the streaming tier
+     * composes the generic three-MA path instead, and no stream leg ever
+     * selected all-EMA to hold the two to each other. The full cross is M^N
+     * (1331 vectors for MACDEXT at M=12) and is what makes this deliberately
+     * uncovered; the diagonal is M-1 and reaches every "all slots equal" guard.
+     *
+     * Crossed with the same base vectors as the sweep above, which puts the
+     * periods on BOTH sides of a guard that also tests them: MACDEXT's fast
+     * path needs every period >= 2, which the defaults vector satisfies and the
+     * boundary vector (signal period 1) does not — so the diagonal covers the
+     * specialization and its fallback rather than only one of them. */
+    {
+        int nEnum = 0, firstEnum = -1;
+        for( i = 0; i < fi->nbOptInput && i < STREAM_MAX_OPT; i++ )
+        {
+            const TA_OptInputParameterInfo *oi;
+            TA_GetOptInputParameterInfo(fi->handle, i, &oi);
+            if( oi->type == TA_OptInput_IntegerList && oi->dataSet )
+            {
+                if( firstEnum < 0 ) firstEnum = (int)i;
+                nEnum++;
+            }
+        }
+        if( nEnum >= 2 )
+        {
+            const TA_OptInputParameterInfo *oi0;
+            const TA_IntegerList *l0;
+            int b;
+            TA_GetOptInputParameterInfo(fi->handle, (unsigned int)firstEnum, &oi0);
+            l0 = (const TA_IntegerList *)oi0->dataSet;
+            for( b = 0; b < baseVecs && b < 2; b++ )
+            {
+                for( e = 0; e < l0->nbElement; e++ )
+                {
+                    /* Take the value only when EVERY enum slot lists it (the
+                     * diagonal has to be a legal vector, not a reject probe —
+                     * out-of-list rejection is the sweep's job above), and only
+                     * when at least one slot actually moves off its default
+                     * (an all-defaults diagonal is the base vector again). */
+                    int value = l0->data[e].value, shared = 1, moves = 0;
+                    unsigned int j;
+                    for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                    {
+                        const TA_OptInputParameterInfo *oj;
+                        const TA_IntegerList *lj;
+                        unsigned int k;
+                        int found = 0;
+                        TA_GetOptInputParameterInfo(fi->handle, j, &oj);
+                        if( oj->type != TA_OptInput_IntegerList || !oj->dataSet ) continue;
+                        lj = (const TA_IntegerList *)oj->dataSet;
+                        for( k = 0; k < lj->nbElement; k++ )
+                            if( lj->data[k].value == value ) found = 1;
+                        if( !found ) { shared = 0; break; }
+                        if( value != (int)oj->defaultValue ) moves = 1;
+                    }
+                    if( !shared || !moves ) continue;
+                    if( nvec >= STREAM_MAX_VEC ) { (*overflow)++; continue; }
+                    for( j = 0; j < fi->nbOptInput && j < STREAM_MAX_OPT; j++ )
+                    {
+                        const TA_OptInputParameterInfo *oj;
+                        TA_GetOptInputParameterInfo(fi->handle, j, &oj);
+                        vec[nvec][j] = ( oj->type == TA_OptInput_IntegerList && oj->dataSet )
+                                     ? (double)value : vec[b][j];
+                    }
                     vecIsEnum[nvec] = 1;
                     nvec++;
                 }

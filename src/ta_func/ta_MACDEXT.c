@@ -167,13 +167,20 @@ TA_LIB_API TA_RetCode TA_MACDEXT( int    startIdx,
    if( outMACD == outMACDSignal || outMACD == outMACDHist || outMACDSignal == outMACDHist )
       return TA_BAD_PARAM;
 
-   /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-    * to its single-pass implementation. Period 1 stays on the generic
-    * path: ma() copies the input for it instead of running an EMA
-    * recursion.
-    */
    if( optInFastMAType == TA_MAType_EMA && optInSlowMAType == TA_MAType_EMA && optInSignalMAType == TA_MAType_EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 )
    {
+      /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+       * to its single-pass implementation. Period 1 stays on the generic
+       * path: ma() copies the input for it instead of running an EMA
+       * recursion.
+       *
+       * This block is a batch-only specialization: the generator strips it
+       * from the streaming tier, which composes the general three-MA path for
+       * every parameter value. The two agreeing bit for bit is not assumed --
+       * stream_verify's multi-enum diagonal selects all-EMA and holds this
+       * block to the composed path (issue #181). Keep the comment INSIDE the
+       * block: above it, the stream inherits it and reads as if it delegated.
+       */
       return TA_MACD(startIdx,endIdx,inReal,optInFastPeriod,optInSlowPeriod,optInSignalPeriod,outBegIdx,outNBElement,outMACD,outMACDSignal,outMACDHist);
    }
    /* Make sure slow is really slower than
@@ -588,11 +595,6 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       int lookbackLargest;
       int i;
       int tempMAType;
-      /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-       * to its single-pass implementation. Period 1 stays on the generic
-       * path: ma() copies the input for it instead of running an EMA
-       * recursion.
-       */
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */

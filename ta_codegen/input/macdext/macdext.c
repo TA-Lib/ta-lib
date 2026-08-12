@@ -56,11 +56,6 @@ TA_RetCode macdext(int startIdx, int endIdx,
    int i;
    int tempMAType;
 
-   /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-    * to its single-pass implementation. Period 1 stays on the generic
-    * path: ma() copies the input for it instead of running an EMA
-    * recursion.
-    */
    if( ( optInFastMAType   == TA_MAType_EMA ) &&
       ( optInSlowMAType   == TA_MAType_EMA ) &&
       ( optInSignalMAType == TA_MAType_EMA ) &&
@@ -68,6 +63,18 @@ TA_RetCode macdext(int startIdx, int endIdx,
       ( optInSlowPeriod   >= 2 ) &&
       ( optInSignalPeriod >= 2 ) )
    {
+      /* An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+       * to its single-pass implementation. Period 1 stays on the generic
+       * path: ma() copies the input for it instead of running an EMA
+       * recursion.
+       *
+       * This block is a batch-only specialization: the generator strips it
+       * from the streaming tier, which composes the general three-MA path for
+       * every parameter value. The two agreeing bit for bit is not assumed --
+       * stream_verify's multi-enum diagonal selects all-EMA and holds this
+       * block to the composed path (issue #181). Keep the comment INSIDE the
+       * block: above it, the stream inherits it and reads as if it delegated.
+       */
       return macd( startIdx, endIdx, inReal,
          optInFastPeriod, optInSlowPeriod, optInSignalPeriod,
          outBegIdx, outNBElement,

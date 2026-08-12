@@ -282,11 +282,18 @@ impl Core {
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempMAType: MAType;
-        // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-        // to its single-pass implementation. Period 1 stays on the generic
-        // path: ma() copies the input for it instead of running an EMA
-        // recursion.
         if optInFastMAType == MAType::EMA && optInSlowMAType == MAType::EMA && optInSignalMAType == MAType::EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 {
+            // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
+            // to its single-pass implementation. Period 1 stays on the generic
+            // path: ma() copies the input for it instead of running an EMA
+            // recursion.
+            //
+            // This block is a batch-only specialization: the generator strips it
+            // from the streaming tier, which composes the general three-MA path for
+            // every parameter value. The two agreeing bit for bit is not assumed --
+            // stream_verify's multi-enum diagonal selects all-EMA and holds this
+            // block to the composed path (issue #181). Keep the comment INSIDE the
+            // block: above it, the stream inherits it and reads as if it delegated.
             return self.MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
         }
         // Make sure slow is really slower than
@@ -496,10 +503,6 @@ impl Core {
         let mut lookbackLargest: usize = 0_usize;
         let mut i: usize = 0_usize;
         let mut tempMAType: MAType;
-        // An all-EMA MACDEXT computes exactly what MACD computes. Delegate
-        // to its single-pass implementation. Period 1 stays on the generic
-        // path: ma() copies the input for it instead of running an EMA
-        // recursion.
         // Make sure slow is really slower than
         // the fast period! if not, swap...
         if optInSlowPeriod < optInFastPeriod {
