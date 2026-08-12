@@ -450,7 +450,7 @@ struct STOCHF_StreamState {
     trailingIdx: i32,
     i: i32,
     today: i32,
-    xCap: i32,
+    xMask: i32,
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
@@ -469,24 +469,24 @@ impl Core {
         let mut cur_tempBuffer: f64 = 0.0_f64;
         let mut cur_outFastD: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
-            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
             sp.trailingIdx -= rebaseShift;
             sp.highestIdx -= rebaseShift;
             sp.i -= rebaseShift;
             sp.lowestIdx -= rebaseShift;
         }
-        sp.x_inHigh[(sp.today % sp.xCap) as usize] = inHigh;
-        sp.x_inLow[(sp.today % sp.xCap) as usize] = inLow;
-        sp.x_inClose[(sp.today % sp.xCap) as usize] = inClose;
+        sp.x_inHigh[(sp.today & sp.xMask) as usize] = inHigh;
+        sp.x_inLow[(sp.today & sp.xMask) as usize] = inLow;
+        sp.x_inClose[(sp.today & sp.xMask) as usize] = inClose;
         // Set the lowest low
-        tmp = sp.x_inLow[(sp.today % sp.xCap) as usize];
+        tmp = sp.x_inLow[(sp.today & sp.xMask) as usize];
         if sp.lowestIdx < sp.trailingIdx {
             sp.lowestIdx = sp.trailingIdx;
-            sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
+            sp.lowest = sp.x_inLow[(sp.lowestIdx & sp.xMask) as usize];
             sp.i = sp.lowestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
+                tmp = sp.x_inLow[(sp.i & sp.xMask) as usize];
                 if tmp < sp.lowest {
                     sp.lowestIdx = sp.i;
                     sp.lowest = tmp;
@@ -499,13 +499,13 @@ impl Core {
             sp.diff = (sp.highest - sp.lowest) / 100.0;
         }
         // Set the highest high
-        tmp = sp.x_inHigh[(sp.today % sp.xCap) as usize];
+        tmp = sp.x_inHigh[(sp.today & sp.xMask) as usize];
         if sp.highestIdx < sp.trailingIdx {
             sp.highestIdx = sp.trailingIdx;
-            sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
+            sp.highest = sp.x_inHigh[(sp.highestIdx & sp.xMask) as usize];
             sp.i = sp.highestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
+                tmp = sp.x_inHigh[(sp.i & sp.xMask) as usize];
                 if tmp > sp.highest {
                     sp.highestIdx = sp.i;
                     sp.highest = tmp;
@@ -521,7 +521,7 @@ impl Core {
         // a machine-flat window leaves a sub-epsilon residue that an exact check
         // would divide into [0,100] noise (issue #107 / STOCHRSI).
         if !((sp.diff).abs() < 1e-14) {
-            cur_tempBuffer = (sp.x_inClose[(sp.today % sp.xCap) as usize] - sp.lowest) / sp.diff;
+            cur_tempBuffer = (sp.x_inClose[(sp.today & sp.xMask) as usize] - sp.lowest) / sp.diff;
         } else {
             cur_tempBuffer = 0.0;
         }
@@ -763,15 +763,19 @@ impl Core {
         if capX < 1 || capX > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let mut x_inHigh: Vec<f64> = vec![0.0_f64; capX as usize];
-        let mut x_inLow: Vec<f64> = vec![0.0_f64; capX as usize];
-        let mut x_inClose: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inHigh: Vec<f64> = vec![0.0_f64; physX as usize];
+        let mut x_inLow: Vec<f64> = vec![0.0_f64; physX as usize];
+        let mut x_inClose: Vec<f64> = vec![0.0_f64; physX as usize];
         {
             let mut fillJ: usize = historyLen - capX as usize;
             while fillJ < historyLen {
-                x_inHigh[fillJ % capX as usize] = inHigh[fillJ];
-                x_inLow[fillJ % capX as usize] = inLow[fillJ];
-                x_inClose[fillJ % capX as usize] = inClose[fillJ];
+                x_inHigh[fillJ & (physX as usize - 1)] = inHigh[fillJ];
+                x_inLow[fillJ & (physX as usize - 1)] = inLow[fillJ];
+                x_inClose[fillJ & (physX as usize - 1)] = inClose[fillJ];
                 fillJ += 1;
             }
         }
@@ -787,7 +791,7 @@ impl Core {
             trailingIdx: (trailingIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
-            xCap: capX as i32,
+            xMask: (physX - 1) as i32,
             x_inHigh,
             x_inLow,
             x_inClose,

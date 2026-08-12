@@ -337,7 +337,7 @@ struct VAR_StreamState {
     nbInitialElementNeeded: usize,
     barsSinceReseed: usize,
     i: i32,
-    xCap: i32,
+    xMask: i32,
     x_inReal: Vec<f64>,
 }
 
@@ -351,22 +351,22 @@ impl Core {
     fn VAR_step_internal(&self, sp: &mut VAR_StreamState, inReal: f64, outReal: &mut f64) {
         let mut tempReal: f64 = 0.0_f64;
         if sp.i >= 1073741824 {
-            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.i -= rebaseShift;
             sp.trailingIdx -= rebaseShift;
             sp.j -= rebaseShift;
             sp.windowStart -= rebaseShift;
         }
-        sp.x_inReal[(sp.i % sp.xCap) as usize] = inReal;
+        sp.x_inReal[(sp.i & sp.xMask) as usize] = inReal;
         // Add the incoming value, measured against the shift.
-        tempReal = sp.x_inReal[(sp.i % sp.xCap) as usize] - sp.shift;
+        tempReal = sp.x_inReal[(sp.i & sp.xMask) as usize] - sp.shift;
         sp.periodTotal1 += tempReal;
         tempReal *= tempReal;
         sp.periodTotal2 += tempReal;
         sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
         sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
         // Remove the trailing value (prepares the next window).
-        tempReal = sp.x_inReal[(sp.trailingIdx % sp.xCap) as usize] - sp.shift;
+        tempReal = sp.x_inReal[(sp.trailingIdx & sp.xMask) as usize] - sp.shift;
         sp.periodTotal1 -= tempReal;
         tempReal *= tempReal;
         sp.periodTotal2 -= tempReal;
@@ -391,7 +391,7 @@ impl Core {
             // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
             sp.j = sp.windowStart;
             while sp.j <= sp.i {
-                tempReal += sp.x_inReal[(sp.j % sp.xCap) as usize];
+                tempReal += sp.x_inReal[(sp.j & sp.xMask) as usize];
                 sp.j += 1;
             }
             sp.shift = tempReal * sp.invPeriod;
@@ -400,7 +400,7 @@ impl Core {
             // for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 )
             sp.j = sp.windowStart;
             while sp.j <= sp.i {
-                tempReal = sp.x_inReal[(sp.j % sp.xCap) as usize] - sp.shift;
+                tempReal = sp.x_inReal[(sp.j & sp.xMask) as usize] - sp.shift;
                 sp.periodTotal1 += tempReal;
                 tempReal *= tempReal;
                 sp.periodTotal2 += tempReal;
@@ -410,7 +410,7 @@ impl Core {
             sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
             // Re-remove the trailing value under the new shift so the carried state
             // matches the non-reseed path.
-            tempReal = sp.x_inReal[(sp.windowStart % sp.xCap) as usize] - sp.shift;
+            tempReal = sp.x_inReal[(sp.windowStart & sp.xMask) as usize] - sp.shift;
             sp.periodTotal1 -= tempReal;
             tempReal *= tempReal;
             sp.periodTotal2 -= tempReal;
@@ -563,11 +563,15 @@ impl Core {
         if capX < 1 || capX > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let mut x_inReal: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inReal: Vec<f64> = vec![0.0_f64; physX as usize];
         {
             let mut fillJ: usize = historyLen - capX as usize;
             while fillJ < historyLen {
-                x_inReal[fillJ % capX as usize] = inReal[fillJ];
+                x_inReal[fillJ & (physX as usize - 1)] = inReal[fillJ];
                 fillJ += 1;
             }
         }
@@ -586,7 +590,7 @@ impl Core {
             nbInitialElementNeeded,
             barsSinceReseed,
             i: (i) as i32,
-            xCap: capX as i32,
+            xMask: (physX - 1) as i32,
             x_inReal,
         };
         Ok(VAR_Stream { core: self.clone(), state })

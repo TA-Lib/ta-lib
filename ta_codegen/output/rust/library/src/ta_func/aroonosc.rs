@@ -312,7 +312,7 @@ struct AROONOSC_StreamState {
     highestIdx: i32,
     i: i32,
     today: i32,
-    xCap: i32,
+    xMask: i32,
     x_inHigh: Vec<f64>,
     x_inLow: Vec<f64>,
 }
@@ -327,23 +327,23 @@ impl Core {
     fn AROONOSC_step_internal(&self, sp: &mut AROONOSC_StreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
-            let rebaseShift: i32 = (sp.trailingIdx / sp.xCap) * sp.xCap;
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
             sp.trailingIdx -= rebaseShift;
             sp.highestIdx -= rebaseShift;
             sp.i -= rebaseShift;
             sp.lowestIdx -= rebaseShift;
         }
-        sp.x_inHigh[(sp.today % sp.xCap) as usize] = inHigh;
-        sp.x_inLow[(sp.today % sp.xCap) as usize] = inLow;
+        sp.x_inHigh[(sp.today & sp.xMask) as usize] = inHigh;
+        sp.x_inLow[(sp.today & sp.xMask) as usize] = inLow;
         // Keep track of the lowestIdx
-        tmp = sp.x_inLow[(sp.today % sp.xCap) as usize];
+        tmp = sp.x_inLow[(sp.today & sp.xMask) as usize];
         if sp.lowestIdx < sp.trailingIdx {
             sp.lowestIdx = sp.trailingIdx;
-            sp.lowest = sp.x_inLow[(sp.lowestIdx % sp.xCap) as usize];
+            sp.lowest = sp.x_inLow[(sp.lowestIdx & sp.xMask) as usize];
             sp.i = sp.lowestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                tmp = sp.x_inLow[(sp.i % sp.xCap) as usize];
+                tmp = sp.x_inLow[(sp.i & sp.xMask) as usize];
                 if tmp <= sp.lowest {
                     sp.lowestIdx = sp.i;
                     sp.lowest = tmp;
@@ -354,13 +354,13 @@ impl Core {
             sp.lowest = tmp;
         }
         // Keep track of the highestIdx
-        tmp = sp.x_inHigh[(sp.today % sp.xCap) as usize];
+        tmp = sp.x_inHigh[(sp.today & sp.xMask) as usize];
         if sp.highestIdx < sp.trailingIdx {
             sp.highestIdx = sp.trailingIdx;
-            sp.highest = sp.x_inHigh[(sp.highestIdx % sp.xCap) as usize];
+            sp.highest = sp.x_inHigh[(sp.highestIdx & sp.xMask) as usize];
             sp.i = sp.highestIdx;
             while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
-                tmp = sp.x_inHigh[(sp.i % sp.xCap) as usize];
+                tmp = sp.x_inHigh[(sp.i & sp.xMask) as usize];
                 if tmp >= sp.highest {
                     sp.highestIdx = sp.i;
                     sp.highest = tmp;
@@ -509,13 +509,17 @@ impl Core {
         if capX < 1 || capX > historyLen as i64 {
             return Err(RetCode::InternalError);
         }
-        let mut x_inHigh: Vec<f64> = vec![0.0_f64; capX as usize];
-        let mut x_inLow: Vec<f64> = vec![0.0_f64; capX as usize];
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inHigh: Vec<f64> = vec![0.0_f64; physX as usize];
+        let mut x_inLow: Vec<f64> = vec![0.0_f64; physX as usize];
         {
             let mut fillJ: usize = historyLen - capX as usize;
             while fillJ < historyLen {
-                x_inHigh[fillJ % capX as usize] = inHigh[fillJ];
-                x_inLow[fillJ % capX as usize] = inLow[fillJ];
+                x_inHigh[fillJ & (physX as usize - 1)] = inHigh[fillJ];
+                x_inLow[fillJ & (physX as usize - 1)] = inLow[fillJ];
                 fillJ += 1;
             }
         }
@@ -530,7 +534,7 @@ impl Core {
             highestIdx: (highestIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
-            xCap: capX as i32,
+            xMask: (physX - 1) as i32,
             x_inHigh,
             x_inLow,
         };

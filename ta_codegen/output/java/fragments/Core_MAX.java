@@ -413,7 +413,7 @@
       int i;
       int highestIdx;
       int today;
-      int xCap;
+      int xMask;
       double[] x_inReal;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
@@ -437,7 +437,7 @@
          this.i = other.i;
          this.highestIdx = other.highestIdx;
          this.today = other.today;
-         this.xCap = other.xCap;
+         this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -486,20 +486,20 @@
    {
       double tmp = 0.0;
       if( sp.today >= 1073741824 ) {
-         int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
          sp.trailingIdx -= rebaseShift;
          sp.highestIdx -= rebaseShift;
          sp.i -= rebaseShift;
       }
-      sp.x_inReal[sp.today % sp.xCap] = inReal;
-      tmp = sp.x_inReal[sp.today % sp.xCap];
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      tmp = sp.x_inReal[sp.today & sp.xMask];
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
-         sp.highest = sp.x_inReal[sp.highestIdx % sp.xCap];
+         sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            tmp = sp.x_inReal[sp.i % sp.xCap];
+            tmp = sp.x_inReal[sp.i & sp.xMask];
             if( tmp > sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = tmp;
@@ -603,9 +603,13 @@
       if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      double[] capX_inReal = new double[capX];
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
       for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inReal[fillJ % capX] = inReal[fillJ];
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
@@ -613,7 +617,7 @@
       sp.i = i;
       sp.highestIdx = highestIdx;
       sp.today = today;
-      sp.xCap = capX;
+      sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

@@ -374,7 +374,7 @@
       int highestIdx;
       int lowestIdx;
       int today;
-      int xCap;
+      int xMask;
       double[] x_inReal;
       int cur_outMinIdx;
       int cur_outMaxIdx;
@@ -404,7 +404,7 @@
          this.highestIdx = other.highestIdx;
          this.lowestIdx = other.lowestIdx;
          this.today = other.today;
-         this.xCap = other.xCap;
+         this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
          this.cur_outMinIdx = other.cur_outMinIdx;
          this.cur_outMaxIdx = other.cur_outMaxIdx;
@@ -468,22 +468,22 @@
    void MINMAXINDEX_StreamStep( MINMAXINDEX_Stream sp, double inReal )
    {
       if( sp.today >= 1073741824 ) {
-         int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
          sp.trailingIdx -= rebaseShift;
          sp.highestIdx -= rebaseShift;
          sp.i -= rebaseShift;
          sp.lowestIdx -= rebaseShift;
       }
-      sp.x_inReal[sp.today % sp.xCap] = inReal;
-      sp.tmpHigh = sp.x_inReal[sp.today % sp.xCap];
+      sp.x_inReal[sp.today & sp.xMask] = inReal;
+      sp.tmpHigh = sp.x_inReal[sp.today & sp.xMask];
       sp.tmpLow = sp.tmpHigh;
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
-         sp.highest = sp.x_inReal[sp.highestIdx % sp.xCap];
+         sp.highest = sp.x_inReal[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpHigh = sp.x_inReal[sp.i % sp.xCap];
+            sp.tmpHigh = sp.x_inReal[sp.i & sp.xMask];
             if( sp.tmpHigh > sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = sp.tmpHigh;
@@ -495,10 +495,10 @@
       }
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
-         sp.lowest = sp.x_inReal[sp.lowestIdx % sp.xCap];
+         sp.lowest = sp.x_inReal[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            sp.tmpLow = sp.x_inReal[sp.i % sp.xCap];
+            sp.tmpLow = sp.x_inReal[sp.i & sp.xMask];
             if( sp.tmpLow < sp.lowest ) {
                sp.lowestIdx = sp.i;
                sp.lowest = sp.tmpLow;
@@ -616,9 +616,13 @@
       if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      double[] capX_inReal = new double[capX];
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
       for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inReal[fillJ % capX] = inReal[fillJ];
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.highest = highest;
@@ -630,7 +634,7 @@
       sp.highestIdx = highestIdx;
       sp.lowestIdx = lowestIdx;
       sp.today = today;
-      sp.xCap = capX;
+      sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outMinIdx = outMinIdx[(outNBElement.value - 1) * outStride];
       sp.cur_outMaxIdx = outMaxIdx[(outNBElement.value - 1) * outStride];

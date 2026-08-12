@@ -580,6 +580,8 @@ struct TA_STOCH_Stream {
    int i;
    int today;
    int xCap;
+   int xPhys;
+   int xMask;
    double *x_inHigh;
    double *xMirror_inHigh;
    double *x_inLow;
@@ -616,26 +618,26 @@ static void TA_STOCH_StepInternal( struct TA_STOCH_Stream *sp, double inHigh, do
 
    if( sp->today >= 1073741824 )
    {
-      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
       sp->today -= rebaseShift;
       sp->trailingIdx -= rebaseShift;
       sp->highestIdx -= rebaseShift;
       sp->i -= rebaseShift;
       sp->lowestIdx -= rebaseShift;
    }
-   sp->x_inHigh[sp->today % sp->xCap] = inHigh;
-   sp->x_inLow[sp->today % sp->xCap] = inLow;
-   sp->x_inClose[sp->today % sp->xCap] = inClose;
+   sp->x_inHigh[sp->today & sp->xMask] = inHigh;
+   sp->x_inLow[sp->today & sp->xMask] = inLow;
+   sp->x_inClose[sp->today & sp->xMask] = inClose;
    /* Set the lowest low */
-   tmp = sp->x_inLow[sp->today % sp->xCap];
+   tmp = sp->x_inLow[sp->today & sp->xMask];
    if( sp->lowestIdx < sp->trailingIdx )
    {
       sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = sp->x_inLow[sp->lowestIdx % sp->xCap];
+      sp->lowest = sp->x_inLow[sp->lowestIdx & sp->xMask];
       sp->i = sp->lowestIdx;
       while( ++sp->i <= sp->today )
       {
-         tmp = sp->x_inLow[sp->i % sp->xCap];
+         tmp = sp->x_inLow[sp->i & sp->xMask];
          if( tmp < sp->lowest )
          {
             sp->lowestIdx = sp->i;
@@ -650,15 +652,15 @@ static void TA_STOCH_StepInternal( struct TA_STOCH_Stream *sp, double inHigh, do
       sp->diff = (sp->highest - sp->lowest) / 100.0;
    }
    /* Set the highest high */
-   tmp = sp->x_inHigh[sp->today % sp->xCap];
+   tmp = sp->x_inHigh[sp->today & sp->xMask];
    if( sp->highestIdx < sp->trailingIdx )
    {
       sp->highestIdx = sp->trailingIdx;
-      sp->highest = sp->x_inHigh[sp->highestIdx % sp->xCap];
+      sp->highest = sp->x_inHigh[sp->highestIdx & sp->xMask];
       sp->i = sp->highestIdx;
       while( ++sp->i <= sp->today )
       {
-         tmp = sp->x_inHigh[sp->i % sp->xCap];
+         tmp = sp->x_inHigh[sp->i & sp->xMask];
          if( tmp > sp->highest )
          {
             sp->highestIdx = sp->i;
@@ -678,7 +680,7 @@ static void TA_STOCH_StepInternal( struct TA_STOCH_Stream *sp, double inHigh, do
     */
    if( !TA_IS_ZERO(sp->diff) )
    {
-      cur_tempBuffer = (sp->x_inClose[sp->today % sp->xCap] - sp->lowest) / sp->diff;
+      cur_tempBuffer = (sp->x_inClose[sp->today & sp->xMask] - sp->lowest) / sp->diff;
    } else 
    {
       cur_tempBuffer = 0.0;
@@ -1028,24 +1030,27 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
       if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xPhys = 1;
+      while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
+      sp->xMask = sp->xPhys - 1;
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
-           sp->x_inHigh[fillJ % sp->xCap] = inHigh[fillJ];
-           sp->x_inLow[fillJ % sp->xCap] = inLow[fillJ];
-           sp->x_inClose[fillJ % sp->xCap] = inClose[fillJ];
+           sp->x_inHigh[fillJ & sp->xMask] = inHigh[fillJ];
+           sp->x_inLow[fillJ & sp->xMask] = inLow[fillJ];
+           sp->x_inClose[fillJ & sp->xMask] = inClose[fillJ];
         }
       }
       sp->sub0 = sub0;
@@ -1108,11 +1113,11 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.x_inHigh = stream->xMirror_inHigh;
-   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xCap );
+   memcpy( scratch.x_inHigh, stream->x_inHigh, sizeof(double) * (size_t)stream->xPhys );
    scratch.x_inLow = stream->xMirror_inLow;
-   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xCap );
+   memcpy( scratch.x_inLow, stream->x_inLow, sizeof(double) * (size_t)stream->xPhys );
    scratch.x_inClose = stream->xMirror_inClose;
-   memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xCap );
+   memcpy( scratch.x_inClose, stream->x_inClose, sizeof(double) * (size_t)stream->xPhys );
    scratch.peekMode = 1;
    TA_STOCH_StepInternal( &scratch, inHigh, inLow, inClose, outSlowK, outSlowD );
    return TA_SUCCESS;

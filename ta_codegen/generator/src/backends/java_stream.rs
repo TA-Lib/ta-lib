@@ -209,8 +209,8 @@ impl streaming::NameMap for JavaStreamNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 
@@ -352,7 +352,7 @@ fn state_fields_from(
         }
     }
     if let Some(ex) = model.extrema() {
-        fields.push(("xCap".into(), "int".into(), "1".into()));
+        fields.push(("xMask".into(), "int".into(), "0".into()));
         for arr in &ex.arrays {
             fields.push((
                 format!("x_{arr}"),
@@ -965,8 +965,8 @@ fn emit_identity_step_branch(
 }
 
 /// Extrema automatons carry batch-absolute int indices; rebase them by a
-/// multiple of the ring capacity long before Integer.MAX_VALUE (mirrors C
-/// verbatim — index differences and `% cap` residues are invariant).
+/// multiple of the physical ring size long before Integer.MAX_VALUE (mirrors C
+/// verbatim — index differences and `& xMask` slots are invariant).
 fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
     if let Some(ex) = model.extrema() {
         let pad = " ".repeat(indent);
@@ -976,7 +976,7 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
         let _ = writeln!(o, "{pad}if( sp.{} >= 1073741824 ) {{", model.cursor);
         let _ = writeln!(
             o,
-            "{inner}int rebaseShift = (sp.{} / sp.xCap) * sp.xCap;",
+            "{inner}int rebaseShift = sp.{} & ~sp.xMask;",
             ex.trailing
         );
         for v in &vars {
@@ -1519,14 +1519,21 @@ fn emit_capture(
         let _ = writeln!(o, "      if( capX < 1 || capX > historyLen ) {{");
         let _ = writeln!(o, "         return RetCode.InternalError;");
         let _ = writeln!(o, "      }}");
+        // The slot map is a mask, so the ring is allocated at the next power of
+        // two at or above the logical capacity: `idx & xMask` then equals
+        // `idx % physX`, still injective over any capX consecutive bars.
+        let _ = writeln!(o, "      int physX = 1;");
+        let _ = writeln!(o, "      while( physX < capX ) {{");
+        let _ = writeln!(o, "         physX <<= 1;");
+        let _ = writeln!(o, "      }}");
         for arr in &ex.arrays {
-            let _ = writeln!(o, "      double[] capX_{arr} = new double[capX];");
+            let _ = writeln!(o, "      double[] capX_{arr} = new double[physX];");
         }
-        // Absolute slots: bar j lives at j % cap (a plain tail copy would
+        // Absolute slots: bar j lives at j & (physX-1) (a plain tail copy would
         // break the automaton's phase).
         let _ = writeln!(o, "      for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {{");
         for arr in &ex.arrays {
-            let _ = writeln!(o, "         capX_{arr}[fillJ % capX] = {arr}[fillJ];");
+            let _ = writeln!(o, "         capX_{arr}[fillJ & (physX - 1)] = {arr}[fillJ];");
         }
         let _ = writeln!(o, "      }}");
     }
@@ -1602,7 +1609,7 @@ fn emit_capture(
         }
     }
     if let Some(ex) = model.extrema() {
-        let _ = writeln!(o, "      sp.xCap = capX;");
+        let _ = writeln!(o, "      sp.xMask = physX - 1;");
         for arr in &ex.arrays {
             let _ = writeln!(o, "      sp.x_{arr} = capX_{arr};");
         }
@@ -2472,8 +2479,8 @@ impl streaming::NameMap for JavaComposedNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 

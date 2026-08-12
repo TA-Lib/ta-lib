@@ -599,7 +599,7 @@
       int trailingIdx;
       int i;
       int today;
-      int xCap;
+      int xMask;
       double[] x_inHigh;
       double[] x_inLow;
       double[] x_inClose;
@@ -633,7 +633,7 @@
          this.trailingIdx = other.trailingIdx;
          this.i = other.i;
          this.today = other.today;
-         this.xCap = other.xCap;
+         this.xMask = other.xMask;
          this.x_inHigh = other.x_inHigh.clone();
          this.x_inLow = other.x_inLow.clone();
          this.x_inClose = other.x_inClose.clone();
@@ -703,24 +703,24 @@
       double cur_tempBuffer = 0.0;
       double cur_outFastD = 0.0;
       if( sp.today >= 1073741824 ) {
-         int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
          sp.trailingIdx -= rebaseShift;
          sp.highestIdx -= rebaseShift;
          sp.i -= rebaseShift;
          sp.lowestIdx -= rebaseShift;
       }
-      sp.x_inHigh[sp.today % sp.xCap] = inHigh;
-      sp.x_inLow[sp.today % sp.xCap] = inLow;
-      sp.x_inClose[sp.today % sp.xCap] = inClose;
+      sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+      sp.x_inLow[sp.today & sp.xMask] = inLow;
+      sp.x_inClose[sp.today & sp.xMask] = inClose;
       /* Set the lowest low */
-      tmp = sp.x_inLow[sp.today % sp.xCap];
+      tmp = sp.x_inLow[sp.today & sp.xMask];
       if( sp.lowestIdx < sp.trailingIdx ) {
          sp.lowestIdx = sp.trailingIdx;
-         sp.lowest = sp.x_inLow[sp.lowestIdx % sp.xCap];
+         sp.lowest = sp.x_inLow[sp.lowestIdx & sp.xMask];
          sp.i = sp.lowestIdx;
          while( ++sp.i <= sp.today ) {
-            tmp = sp.x_inLow[sp.i % sp.xCap];
+            tmp = sp.x_inLow[sp.i & sp.xMask];
             if( tmp < sp.lowest ) {
                sp.lowestIdx = sp.i;
                sp.lowest = tmp;
@@ -733,13 +733,13 @@
          sp.diff = (sp.highest - sp.lowest) / 100.0;
       }
       /* Set the highest high */
-      tmp = sp.x_inHigh[sp.today % sp.xCap];
+      tmp = sp.x_inHigh[sp.today & sp.xMask];
       if( sp.highestIdx < sp.trailingIdx ) {
          sp.highestIdx = sp.trailingIdx;
-         sp.highest = sp.x_inHigh[sp.highestIdx % sp.xCap];
+         sp.highest = sp.x_inHigh[sp.highestIdx & sp.xMask];
          sp.i = sp.highestIdx;
          while( ++sp.i <= sp.today ) {
-            tmp = sp.x_inHigh[sp.i % sp.xCap];
+            tmp = sp.x_inHigh[sp.i & sp.xMask];
             if( tmp > sp.highest ) {
                sp.highestIdx = sp.i;
                sp.highest = tmp;
@@ -756,7 +756,7 @@
        * would divide into [0,100] noise (issue #107 / STOCHRSI).
        */
       if( !((-0.00000000000001 < sp.diff) && (sp.diff < 0.00000000000001)) ) {
-         cur_tempBuffer = (sp.x_inClose[sp.today % sp.xCap] - sp.lowest) / sp.diff;
+         cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
       } else {
          cur_tempBuffer = 0.0;
       }
@@ -997,13 +997,17 @@
       if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      double[] capX_inHigh = new double[capX];
-      double[] capX_inLow = new double[capX];
-      double[] capX_inClose = new double[capX];
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inHigh = new double[physX];
+      double[] capX_inLow = new double[physX];
+      double[] capX_inClose = new double[physX];
       for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inHigh[fillJ % capX] = inHigh[fillJ];
-         capX_inLow[fillJ % capX] = inLow[fillJ];
-         capX_inClose[fillJ % capX] = inClose[fillJ];
+         capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+         capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+         capX_inClose[fillJ & (physX - 1)] = inClose[fillJ];
       }
       sp.optInFastK_Period = optInFastK_Period;
       sp.optInFastD_Period = optInFastD_Period;
@@ -1016,7 +1020,7 @@
       sp.trailingIdx = trailingIdx;
       sp.i = i;
       sp.today = today;
-      sp.xCap = capX;
+      sp.xMask = physX - 1;
       sp.x_inHigh = capX_inHigh;
       sp.x_inLow = capX_inLow;
       sp.x_inClose = capX_inClose;

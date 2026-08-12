@@ -3251,8 +3251,8 @@ pub fn validate_streamable<'a>(
         fn extrema_buf(&self, array: &str) -> String {
             format!("sp->x_{array}")
         }
-        fn extrema_cap(&self) -> String {
-            "sp->xCap".to_string()
+        fn extrema_mask(&self) -> String {
+            "sp->xMask".to_string()
         }
     }
     // Loop tier first (the established 131), dispatch second: a body with a
@@ -4603,8 +4603,18 @@ pub trait NameMap {
     fn circ_buf(&self, storage: &str) -> String;
     /// The extrema-automaton ring buffer for `array`.
     fn extrema_buf(&self, array: &str) -> String;
-    /// The extrema-automaton ring capacity.
-    fn extrema_cap(&self) -> String;
+    /// The extrema-automaton ring mask: every backend's Open rounds the ring up
+    /// to a power of two at or above the logical capacity and stores that size
+    /// minus one here.
+    fn extrema_mask(&self) -> String;
+    /// Map an absolute bar index onto its extrema-ring slot.
+    fn extrema_slot(&self, idx: Expr) -> Expr {
+        Expr::BinOp(
+            Box::new(idx),
+            BinOp::BitwiseAnd,
+            Box::new(Expr::Var(self.extrema_mask())),
+        )
+    }
 }
 
 /// Drop the batch body's own identity branch from an Open transcription: the
@@ -4886,11 +4896,7 @@ fn insert_transition_prologue(
                 Statement::Assign {
                     target: Expr::ArrayAccess(
                         names.extrema_buf(arr),
-                        Box::new(Expr::BinOp(
-                            Box::new(Expr::Var(names.state(&model.cursor))),
-                            BinOp::Mod,
-                            Box::new(Expr::Var(names.extrema_cap())),
-                        )),
+                        Box::new(names.extrema_slot(Expr::Var(names.state(&model.cursor)))),
                     ),
                     value: Expr::Var(names.bar(arr)),
                     compound: false,
@@ -5395,10 +5401,7 @@ fn rewrite_expr_for_transition(
             // Absolute-index automaton: every input read maps to the ring
             // slot of its absolute position (the index expression's vars
             // were already state-mapped bottom-up).
-            Expr::ArrayAccess(
-                names.extrema_buf(&n),
-                Box::new(Expr::BinOp(idx, BinOp::Mod, Box::new(Expr::Var(names.extrema_cap())))),
-            )
+            Expr::ArrayAccess(names.extrema_buf(&n), Box::new(names.extrema_slot(*idx)))
         }
         Expr::ArrayAccess(n, idx)
             if model.out_feedback.contains(&n) && is_prev_output_read(&idx) =>
@@ -6210,8 +6213,8 @@ mod tests {
         fn extrema_buf(&self, array: &str) -> String {
             format!("sp->x_{array}")
         }
-        fn extrema_cap(&self) -> String {
-            "sp->xCap".to_string()
+        fn extrema_mask(&self) -> String {
+            "sp->xMask".to_string()
         }
     }
 

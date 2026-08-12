@@ -167,8 +167,8 @@ impl streaming::NameMap for RustStreamNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 
@@ -176,7 +176,7 @@ impl streaming::NameMap for RustStreamNames {
 // Typing oracle: the batch type-inference verdicts for every local, reused for
 // state-struct field types AND the render contexts (so cast insertion matches
 // batch decisions exactly). Extrema/AIA override: cursor/trailing/index fields
-// (and xCap) are forced `i32` — C's `int` — because the 2^30 rebase arithmetic
+// (and xMask) are forced `i32` — C's `int` — because the 2^30 rebase arithmetic
 // does not exist in batch bodies for the inference to type (usize subtraction
 // there could underflow in debug builds; index-only, zero FP impact).
 // ---------------------------------------------------------------------------
@@ -418,7 +418,7 @@ fn state_fields_from(
         }
     }
     if let Some(ex) = model.extrema() {
-        fields.push(("xCap".into(), "i32".into(), "1_i32".into()));
+        fields.push(("xMask".into(), "i32".into(), "0_i32".into()));
         for arr in &ex.arrays {
             fields.push((
                 format!("x_{arr}"),
@@ -714,7 +714,7 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
             }
         }
         if let Some(ex) = model.extrema() {
-            ctx.sentinel_vars.insert("xCap".to_string());
+            ctx.sentinel_vars.insert("xMask".to_string());
             for arr in &ex.arrays {
                 ctx.vec_vars.insert(format!("x_{arr}"));
                 ctx.real_array_vars.insert(format!("x_{arr}"));
@@ -886,8 +886,8 @@ fn emit_identity_step_branch(
 }
 
 /// Extrema automatons carry batch-absolute i32 indices; rebase them by a
-/// multiple of the ring capacity long before i32::MAX (mirrors C verbatim —
-/// index differences and `% cap` residues are invariant).
+/// multiple of the physical ring size long before i32::MAX (mirrors C verbatim —
+/// index differences and `& xMask` slots are invariant).
 fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
     if let Some(ex) = model.extrema() {
         let pad = " ".repeat(indent);
@@ -897,7 +897,7 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
         let _ = writeln!(o, "{pad}if sp.{} >= 1073741824 {{", model.cursor);
         let _ = writeln!(
             o,
-            "{inner}let rebaseShift: i32 = (sp.{} / sp.xCap) * sp.xCap;",
+            "{inner}let rebaseShift: i32 = sp.{} & !sp.xMask;",
             ex.trailing
         );
         for v in &vars {
@@ -1529,10 +1529,17 @@ fn emit_capture(
             o,
             "        if capX < 1 || capX > historyLen as i64 {{\n            return Err(RetCode::InternalError);\n        }}"
         );
+        // The slot map is a mask, so the ring is allocated at the next power
+        // of two at or above the logical capacity: `idx & xMask` then equals
+        // `idx % physX`, still injective over any capX consecutive bars.
+        let _ = writeln!(o, "        let mut physX: i64 = 1;");
+        let _ = writeln!(o, "        while physX < capX {{");
+        let _ = writeln!(o, "            physX <<= 1;");
+        let _ = writeln!(o, "        }}");
         for arr in &ex.arrays {
             let _ = writeln!(
                 o,
-                "        let mut x_{arr}: Vec<f64> = vec![0.0_f64; capX as usize];"
+                "        let mut x_{arr}: Vec<f64> = vec![0.0_f64; physX as usize];"
             );
         }
         // Absolute slots: bar j lives at j % cap (a plain tail copy would
@@ -1541,7 +1548,7 @@ fn emit_capture(
         let _ = writeln!(o, "            let mut fillJ: usize = historyLen - capX as usize;");
         let _ = writeln!(o, "            while fillJ < historyLen {{");
         for arr in &ex.arrays {
-            let _ = writeln!(o, "                x_{arr}[fillJ % capX as usize] = {arr}[fillJ];");
+            let _ = writeln!(o, "                x_{arr}[fillJ & (physX as usize - 1)] = {arr}[fillJ];");
         }
         let _ = writeln!(o, "                fillJ += 1;");
         let _ = writeln!(o, "            }}");
@@ -1622,7 +1629,7 @@ fn emit_capture(
         }
     }
     if let Some(ex) = model.extrema() {
-        let _ = writeln!(o, "            xCap: capX as i32,");
+        let _ = writeln!(o, "            xMask: (physX - 1) as i32,");
         for arr in &ex.arrays {
             let _ = writeln!(o, "            x_{arr},");
         }
@@ -2654,8 +2661,8 @@ impl streaming::NameMap for RustComposedNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 

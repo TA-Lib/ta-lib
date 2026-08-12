@@ -547,6 +547,8 @@ struct TA_MINMAX_Stream {
    int lowestIdx;
    int today;
    int xCap;
+   int xPhys;
+   int xMask;
    double *x_inReal;
    double *xMirror_inReal;
 };
@@ -565,25 +567,25 @@ static void TA_MINMAX_StepInternal( struct TA_MINMAX_Stream *sp, double inReal, 
 {
    if( sp->today >= 1073741824 )
    {
-      int rebaseShift = ( sp->trailingIdx / sp->xCap ) * sp->xCap;
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
       sp->today -= rebaseShift;
       sp->trailingIdx -= rebaseShift;
       sp->highestIdx -= rebaseShift;
       sp->i -= rebaseShift;
       sp->lowestIdx -= rebaseShift;
    }
-   sp->x_inReal[sp->today % sp->xCap] = inReal;
-   sp->tmpHigh = sp->x_inReal[sp->today % sp->xCap];
+   sp->x_inReal[sp->today & sp->xMask] = inReal;
+   sp->tmpHigh = sp->x_inReal[sp->today & sp->xMask];
    sp->tmpLow = sp->tmpHigh;
    if( sp->highestIdx < sp->trailingIdx )
    {
       sp->highestIdx = sp->trailingIdx;
-      sp->highest = sp->x_inReal[sp->highestIdx % sp->xCap];
+      sp->highest = sp->x_inReal[sp->highestIdx & sp->xMask];
       sp->i = sp->highestIdx;
       TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
-         sp->tmpHigh = sp->x_inReal[sp->i % sp->xCap];
+         sp->tmpHigh = sp->x_inReal[sp->i & sp->xMask];
          if( sp->tmpHigh > sp->highest )
          {
             sp->highestIdx = sp->i;
@@ -598,12 +600,12 @@ static void TA_MINMAX_StepInternal( struct TA_MINMAX_Stream *sp, double inReal, 
    if( sp->lowestIdx < sp->trailingIdx )
    {
       sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = sp->x_inReal[sp->lowestIdx % sp->xCap];
+      sp->lowest = sp->x_inReal[sp->lowestIdx & sp->xMask];
       sp->i = sp->lowestIdx;
       TA_UNROLL(4)
       while( ++sp->i <= sp->today )
       {
-         sp->tmpLow = sp->x_inReal[sp->i % sp->xCap];
+         sp->tmpLow = sp->x_inReal[sp->i & sp->xMask];
          if( sp->tmpLow < sp->lowest )
          {
             sp->lowestIdx = sp->i;
@@ -774,14 +776,17 @@ static TA_RetCode TA_MINMAX_OpenCore( struct TA_MINMAX_Stream **stream, const do
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
       if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MINMAX_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
-      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xPhys = 1;
+      while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
+      sp->xMask = sp->xPhys - 1;
+      sp->x_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->x_inReal ) { TA_MINMAX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
-      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );
+      sp->xMirror_inReal = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
       if( !sp->xMirror_inReal ) { TA_MINMAX_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
-           sp->x_inReal[fillJ % sp->xCap] = inReal[fillJ];
+           sp->x_inReal[fillJ & sp->xMask] = inReal[fillJ];
         }
       }
       *stream = sp;
@@ -834,7 +839,7 @@ TA_LIB_API TA_RetCode TA_MINMAX_Peek( const TA_MINMAX_Stream *stream, double inR
    if( !stream || !outMin || !outMax ) return TA_BAD_PARAM;
    scratch = *stream;
    scratch.x_inReal = stream->xMirror_inReal;
-   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xCap );
+   memcpy( scratch.x_inReal, stream->x_inReal, sizeof(double) * (size_t)stream->xPhys );
    TA_MINMAX_StepInternal( &scratch, inReal, outMin, outMax );
    return TA_SUCCESS;
 }

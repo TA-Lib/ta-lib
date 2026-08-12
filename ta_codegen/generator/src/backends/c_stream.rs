@@ -76,8 +76,8 @@ impl streaming::NameMap for CNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp->x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp->xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp->xMask".to_string()
     }
 }
 
@@ -658,8 +658,8 @@ impl streaming::NameMap for ComposedNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp->x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp->xCap".to_string()
+    fn extrema_mask(&self) -> String {
+        "sp->xMask".to_string()
     }
 }
 
@@ -2402,6 +2402,8 @@ fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamMo
     }
     if let Some(ex) = model.extrema() {
         let _ = writeln!(o, "   int xCap;");
+        let _ = writeln!(o, "   int xPhys;");
+        let _ = writeln!(o, "   int xMask;");
         for arr in &ex.arrays {
             let _ = writeln!(o, "   double *x_{arr};");
             let _ = writeln!(o, "   double *xMirror_{arr};");
@@ -2602,8 +2604,8 @@ fn emit_identity_step_branch(
 }
 
 /// Extrema automatons carry batch-absolute int indices that grow by one
-/// per bar. Rebase them by a multiple of the ring capacity long before
-/// INT_MAX: index differences and `% cap` residues are invariant, so the
+/// per bar. Rebase them by a multiple of the physical ring size long before
+/// INT_MAX: index differences and `& xMask` slots are invariant, so the
 /// automaton (and bit-exactness vs any batch-comparable range, which is
 /// itself bounded by int) is untouched. Index-observable outputs
 /// (MININDEX...) report the rebased position beyond ~2^30 bars — the
@@ -2616,7 +2618,7 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel) {
         let _ = writeln!(o, "   {{");
         let _ = writeln!(
             o,
-            "      int rebaseShift = ( sp->{} / sp->xCap ) * sp->xCap;",
+            "      int rebaseShift = sp->{} & ~sp->xMask;",
             ex.trailing
         );
         for v in &vars {
@@ -3345,15 +3347,21 @@ fn alloc_and_capture(
             s,
             "{pad}if( sp->xCap < 1 || sp->xCap > historyLen ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }}"
         );
+        // The slot map is a mask, so the ring is allocated at the next power of
+        // two at or above the logical capacity: `idx & xMask` then equals
+        // `idx % xPhys`, still injective over any xCap consecutive bars.
+        let _ = writeln!(s, "{pad}sp->xPhys = 1;");
+        let _ = writeln!(s, "{pad}while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;");
+        let _ = writeln!(s, "{pad}sp->xMask = sp->xPhys - 1;");
         for arr in &ex.arrays {
             let _ = writeln!(
                 s,
-                "{pad}sp->x_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
+                "{pad}sp->x_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );"
             );
             let _ = writeln!(s, "{pad}if( !sp->x_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
             let _ = writeln!(
                 s,
-                "{pad}sp->xMirror_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xCap );"
+                "{pad}sp->xMirror_{arr} = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );"
             );
             let _ = writeln!(s, "{pad}if( !sp->xMirror_{arr} ) {{ {pre}TA_{n}_ReleaseInternal( sp ); return TA_ALLOC_ERR; }}");
         }
@@ -3367,7 +3375,7 @@ fn alloc_and_capture(
             );
             let _ = writeln!(s, "{pad}  {{");
             for arr in &ex.arrays {
-                let _ = writeln!(s, "{pad}     sp->x_{arr}[fillJ % sp->xCap] = {arr}[fillJ];");
+                let _ = writeln!(s, "{pad}     sp->x_{arr}[fillJ & sp->xMask] = {arr}[fillJ];");
             }
             let _ = writeln!(s, "{pad}  }}");
             let _ = writeln!(s, "{pad}}}");
@@ -3790,7 +3798,7 @@ fn peek_fixup_groups(model: &StreamModel) -> Vec<(String, String)> {
             let _ = writeln!(t, "   scratch.x_{arr} = stream->xMirror_{arr};");
             let _ = writeln!(
                 t,
-                "   memcpy( scratch.x_{arr}, stream->x_{arr}, sizeof(double) * (size_t)stream->xCap );"
+                "   memcpy( scratch.x_{arr}, stream->x_{arr}, sizeof(double) * (size_t)stream->xPhys );"
             );
             groups.push((format!("stream->x_{arr}"), t));
         }
