@@ -336,6 +336,7 @@ impl OptValue for f64 {
 /// let range = call.call(0, close.len() - 1)?;
 /// # Ok::<(), ta_lib::RetCode>(())
 /// ```
+#[derive(Debug)]
 pub struct ParamHolder<'a> {
     func: FuncId,
     core: &'a Core,

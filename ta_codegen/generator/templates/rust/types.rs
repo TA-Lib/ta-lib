@@ -1,5 +1,11 @@
 /// Return codes for TA-Lib function calls.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+///
+/// `#[must_use]` because every indicator method reports failure only through
+/// this value: a rejected parameter writes no output and leaves whatever was
+/// already in the caller's slices, so a discarded `RetCode` reads as a
+/// successful call over stale data (#179 C10).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[must_use = "a failed call writes no output, so the output slices still hold whatever was in them before"]
 #[non_exhaustive]
 pub enum RetCode {
     /// Function completed successfully.
@@ -48,7 +54,7 @@ pub(crate) enum Compatibility {
 }
 
 /// Identifies functions that have an unstable period.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum FuncUnstId {
     ADX,
@@ -122,7 +128,9 @@ pub const INTEGER_MAX: i32 = i32::MAX;
 pub const MAX_INDEX: usize = 100_000_000;
 
 /// A single candlestick setting entry.
-#[derive(Debug, Clone, Copy)]
+///
+/// `PartialEq` but not `Eq`: `factor` is an `f64`.
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CandleSetting {
     /// Range type: 0 = RealBody, 1 = HighLow, 2 = Shadows.
     pub range_type: i32,
@@ -133,7 +141,7 @@ pub struct CandleSetting {
 }
 
 /// All candlestick settings used by CDL* pattern indicators.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_snake_case)]
 pub struct CandleSettings {
     pub body_long: CandleSetting,
@@ -170,7 +178,7 @@ impl CandleSettings {
 
 /// Identifies which candlestick setting to configure via
 /// [`CoreBuilder::candle_setting`]. Mirrors the C `TA_CandleSettingType`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum CandleSettingType {
     BodyLong,
@@ -213,7 +221,7 @@ pub enum CandleSettingType {
 /// To change a setting, build a new `Core` — cloning is cheap (it is a small
 /// `[i32; N]` array plus two small fields). [`Core::to_builder`] seeds a builder
 /// from an existing `Core` for clone-and-modify.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Core {
     /// Unstable period for each function identified by [`FuncUnstId`].
     pub(crate) unstable_period: [i32; FUNC_UNST_COUNT],
@@ -280,32 +288,6 @@ impl Core {
         // `0..=MAX_INDEX` guard, so the conversion cannot fail.
         Ok(self.unstable_period[id as usize] as u32)
     }
-
-    /// Compute candlestick range for the given range type and OHLC values.
-    #[inline(always)]
-    #[allow(non_snake_case)]
-    pub fn ta_candlerange(&self, rangeType: i32, open: f64, high: f64, low: f64, close: f64) -> f64 {
-        match rangeType {
-            0 => (close - open).abs(),
-            1 => high - low,
-            2 => high - low - (close - open).abs(),
-            _ => 0.0,
-        }
-    }
-
-    /// Compute candlestick average for the given settings and OHLC values.
-    #[inline(always)]
-    #[allow(non_snake_case)]
-    pub fn ta_candleaverage(&self, rangeType: i32, avgPeriod: i32, factor: f64, sum: f64,
-                             open: f64, high: f64, low: f64, close: f64) -> f64 {
-        let avg = if avgPeriod != 0 {
-            sum / (avgPeriod as f64)
-        } else {
-            self.ta_candlerange(rangeType, open, high, low, close)
-        };
-        let divisor = if rangeType == 2 { 2.0 } else { 1.0 };
-        factor * avg / divisor
-    }
 }
 
 impl Default for Core {
@@ -332,7 +314,7 @@ impl Default for Core {
 ///
 /// The setters are infallible so that they chain; a rejected argument is
 /// reported once, by [`build`](CoreBuilder::build).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CoreBuilder {
     unstable_period: [i32; FUNC_UNST_COUNT],
     compatibility: Compatibility,
@@ -742,8 +724,8 @@ mod tests {
     #[test]
     fn candle_setting_rejects_an_out_of_domain_range_type() {
         // A choice list's domain is its member list. Anything else falls through
-        // every arm of `ta_candlerange` to 0.0 — every range zero, every
-        // threshold zero, and a silently meaningless answer.
+        // every arm of the generated candle-range match to 0.0 — every range
+        // zero, every threshold zero, and a silently meaningless answer.
         let custom = CandleSetting { range_type: 3, avg_period: 10, factor: 0.1 };
         let err = Core::builder()
             .candle_setting(CandleSettingType::BodyDoji, custom)
