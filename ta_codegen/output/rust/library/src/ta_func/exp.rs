@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::LN`] · [`Core::SQRT`]
     ///
-    /// Further reading: [ta-lib.org/functions/EXP](https://ta-lib.org/functions/EXP/)
+    /// Further reading: [ta-lib.org/functions/exp](https://ta-lib.org/functions/exp)
     #[doc(alias = "exponential")]
     #[doc(alias = "ex")]
     pub fn EXP(

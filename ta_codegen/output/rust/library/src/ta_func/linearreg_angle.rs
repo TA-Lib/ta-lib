@@ -151,7 +151,7 @@ impl Core {
     /// [`Core::TSF`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/LINEARREG_ANGLE](https://ta-lib.org/functions/LINEARREG_ANGLE/)
+    /// [ta-lib.org/functions/linearreg_angle](https://ta-lib.org/functions/linearreg_angle)
     #[doc(alias = "LinearRegressionAngle")]
     #[doc(alias = "LeastSquaresAngle")]
     pub fn LINEARREG_ANGLE(

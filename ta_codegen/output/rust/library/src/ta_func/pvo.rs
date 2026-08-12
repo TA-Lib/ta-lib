@@ -173,7 +173,7 @@ impl Core {
     ///   StockCharts ChartSchool; also documented by
     ///   [TradingView](https://www.tradingview.com/support/solutions/43000591350-percentage-volume-oscillator-pvo/).
     ///
-    /// Further reading: [ta-lib.org/functions/PVO](https://ta-lib.org/functions/PVO/)
+    /// Further reading: [ta-lib.org/functions/pvo](https://ta-lib.org/functions/pvo)
     #[doc(alias = "PercentageVolumeOscillator")]
     pub fn PVO(
         &self,

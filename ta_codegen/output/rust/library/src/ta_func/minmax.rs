@@ -136,7 +136,7 @@ impl Core {
     /// [`Core::MIN`] · [`Core::MAX`] · [`Core::MINMAXINDEX`] · [`Core::MININDEX`] ·
     /// [`Core::MAXINDEX`]
     ///
-    /// Further reading: [ta-lib.org/functions/MINMAX](https://ta-lib.org/functions/MINMAX/)
+    /// Further reading: [ta-lib.org/functions/minmax](https://ta-lib.org/functions/minmax)
     #[doc(alias = "HighestLowest")]
     pub fn MINMAX(
         &self,

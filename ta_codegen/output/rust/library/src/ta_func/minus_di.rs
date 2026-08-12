@@ -170,7 +170,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/MINUS_DI](https://ta-lib.org/functions/MINUS_DI/)
+    /// Further reading: [ta-lib.org/functions/minus_di](https://ta-lib.org/functions/minus_di)
     #[doc(alias = "-DI")]
     #[doc(alias = "NegativeDirectionalIndicator")]
     pub fn MINUS_DI(

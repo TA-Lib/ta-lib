@@ -146,7 +146,7 @@ impl Core {
     /// [`Core::CDL2CROWS`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLUPSIDEGAP2CROWS](https://ta-lib.org/functions/CDLUPSIDEGAP2CROWS/)
+    /// [ta-lib.org/functions/cdlupsidegap2crows](https://ta-lib.org/functions/cdlupsidegap2crows)
     #[doc(alias = "UpsideGapTwoCrows")]
     pub fn CDLUPSIDEGAP2CROWS(
         &self,

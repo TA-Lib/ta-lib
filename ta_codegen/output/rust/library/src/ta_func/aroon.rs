@@ -153,7 +153,7 @@ impl Core {
     ///
     /// * Tushar S. Chande
     ///
-    /// Further reading: [ta-lib.org/functions/AROON](https://ta-lib.org/functions/AROON/)
+    /// Further reading: [ta-lib.org/functions/aroon](https://ta-lib.org/functions/aroon)
     pub fn AROON(
         &self,
         startIdx: usize,

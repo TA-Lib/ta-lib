@@ -152,7 +152,7 @@ impl Core {
     /// [`Core::CDLRICKSHAWMAN`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLLONGLEGGEDDOJI](https://ta-lib.org/functions/CDLLONGLEGGEDDOJI/)
+    /// [ta-lib.org/functions/cdllongleggeddoji](https://ta-lib.org/functions/cdllongleggeddoji)
     #[doc(alias = "LongLeggedDoji")]
     pub fn CDLLONGLEGGEDDOJI(
         &self,

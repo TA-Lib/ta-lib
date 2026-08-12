@@ -148,7 +148,7 @@ impl Core {
     /// [`Core::SMA`] · [`Core::DEMA`] · [`Core::TEMA`] · [`Core::MA`] · [`Core::MACD`] ·
     /// [`Core::T3`]
     ///
-    /// Further reading: [ta-lib.org/functions/EMA](https://ta-lib.org/functions/EMA/)
+    /// Further reading: [ta-lib.org/functions/ema](https://ta-lib.org/functions/ema)
     #[doc(alias = "ExponentialMovingAverage")]
     #[doc(alias = "ExponentiallyWeightedMovingAverage")]
     #[doc(alias = "EWMA")]

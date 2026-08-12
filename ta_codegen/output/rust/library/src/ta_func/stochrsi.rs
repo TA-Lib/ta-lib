@@ -186,7 +186,7 @@ impl Core {
     /// * Tushar S. Chande, Stanley Kroll, *The New Technical Trader*, John Wiley & Sons (ISBN
     ///   0471597805)
     ///
-    /// Further reading: [ta-lib.org/functions/STOCHRSI](https://ta-lib.org/functions/STOCHRSI/)
+    /// Further reading: [ta-lib.org/functions/stochrsi](https://ta-lib.org/functions/stochrsi)
     #[doc(alias = "StochasticRSI")]
     pub fn STOCHRSI(
         &self,

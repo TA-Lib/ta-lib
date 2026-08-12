@@ -117,7 +117,7 @@ impl Core {
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
-    /// Further reading: [ta-lib.org/functions/SQRT](https://ta-lib.org/functions/SQRT/)
+    /// Further reading: [ta-lib.org/functions/sqrt](https://ta-lib.org/functions/sqrt)
     #[doc(alias = "SquareRoot")]
     pub fn SQRT(
         &self,

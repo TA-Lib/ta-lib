@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "ta-lib-dispatch"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "ta-lib-tools"

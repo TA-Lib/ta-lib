@@ -157,7 +157,7 @@ impl Core {
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLADVANCEBLOCK`] · [`Core::CDLIDENTICAL3CROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDL3WHITESOLDIERS](https://ta-lib.org/functions/CDL3WHITESOLDIERS/)
+    /// [ta-lib.org/functions/cdl3whitesoldiers](https://ta-lib.org/functions/cdl3whitesoldiers)
     #[doc(alias = "ThreeAdvancingWhiteSoldiers")]
     #[doc(alias = "ThreeWhiteSoldiers")]
     pub fn CDL3WHITESOLDIERS(

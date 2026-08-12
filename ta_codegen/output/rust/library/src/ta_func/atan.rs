@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::TAN`] · [`Core::ACOS`] · [`Core::ASIN`]
     ///
-    /// Further reading: [ta-lib.org/functions/ATAN](https://ta-lib.org/functions/ATAN/)
+    /// Further reading: [ta-lib.org/functions/atan](https://ta-lib.org/functions/atan)
     #[doc(alias = "arctangent")]
     #[doc(alias = "arctan")]
     #[doc(alias = "inversetangent")]

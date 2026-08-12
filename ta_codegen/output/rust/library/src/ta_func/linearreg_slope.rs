@@ -150,7 +150,7 @@ impl Core {
     /// [`Core::TSF`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/LINEARREG_SLOPE](https://ta-lib.org/functions/LINEARREG_SLOPE/)
+    /// [ta-lib.org/functions/linearreg_slope](https://ta-lib.org/functions/linearreg_slope)
     #[doc(alias = "LinearRegressionSlope")]
     #[doc(alias = "LSMAslope")]
     #[doc(alias = "leastsquaresslope")]

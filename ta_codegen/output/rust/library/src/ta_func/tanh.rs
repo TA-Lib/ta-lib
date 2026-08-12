@@ -117,7 +117,7 @@ impl Core {
     ///
     /// [`Core::SINH`] · [`Core::COSH`] · [`Core::TAN`]
     ///
-    /// Further reading: [ta-lib.org/functions/TANH](https://ta-lib.org/functions/TANH/)
+    /// Further reading: [ta-lib.org/functions/tanh](https://ta-lib.org/functions/tanh)
     #[doc(alias = "HyperbolicTangent")]
     pub fn TANH(
         &self,

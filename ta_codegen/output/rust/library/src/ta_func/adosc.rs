@@ -173,7 +173,7 @@ impl Core {
     ///
     /// * Marc Chaikin
     ///
-    /// Further reading: [ta-lib.org/functions/ADOSC](https://ta-lib.org/functions/ADOSC/)
+    /// Further reading: [ta-lib.org/functions/adosc](https://ta-lib.org/functions/adosc)
     #[doc(alias = "ChaikinADOscillator")]
     #[doc(alias = "ChaikinOscillator")]
     pub fn ADOSC(

@@ -138,7 +138,7 @@ impl Core {
     ///
     /// [`Core::MOM`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
     ///
-    /// Further reading: [ta-lib.org/functions/ROC](https://ta-lib.org/functions/ROC/)
+    /// Further reading: [ta-lib.org/functions/roc](https://ta-lib.org/functions/roc)
     #[doc(alias = "RateofChange")]
     #[doc(alias = "PriceRateofChange")]
     pub fn ROC(

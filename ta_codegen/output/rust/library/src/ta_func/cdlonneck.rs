@@ -149,7 +149,7 @@ impl Core {
     ///
     /// [`Core::CDLINNECK`] · [`Core::CDLTHRUSTING`] · CDLMEETINGLINES
     ///
-    /// Further reading: [ta-lib.org/functions/CDLONNECK](https://ta-lib.org/functions/CDLONNECK/)
+    /// Further reading: [ta-lib.org/functions/cdlonneck](https://ta-lib.org/functions/cdlonneck)
     #[doc(alias = "On-NeckPattern")]
     #[doc(alias = "On-NeckLine")]
     pub fn CDLONNECK(

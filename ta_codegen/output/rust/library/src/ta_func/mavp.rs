@@ -176,7 +176,7 @@ impl Core {
     ///
     /// [`Core::MA`] · [`Core::SMA`] · [`Core::MAMA`] · [`Core::T3`]
     ///
-    /// Further reading: [ta-lib.org/functions/MAVP](https://ta-lib.org/functions/MAVP/)
+    /// Further reading: [ta-lib.org/functions/mavp](https://ta-lib.org/functions/mavp)
     #[doc(alias = "MovingAverageVariablePeriod")]
     #[doc(alias = "VariablePeriodMovingAverage")]
     pub fn MAVP(

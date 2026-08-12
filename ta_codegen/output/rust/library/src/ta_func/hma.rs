@@ -174,7 +174,7 @@ impl Core {
     ///   the `Integer()` truncation of both derived periods:
     ///   [alanhull.com/hull-moving-average](https://alanhull.com/hull-moving-average)
     ///
-    /// Further reading: [ta-lib.org/functions/HMA](https://ta-lib.org/functions/HMA/)
+    /// Further reading: [ta-lib.org/functions/hma](https://ta-lib.org/functions/hma)
     #[doc(alias = "HullMovingAverage")]
     pub fn HMA(
         &self,

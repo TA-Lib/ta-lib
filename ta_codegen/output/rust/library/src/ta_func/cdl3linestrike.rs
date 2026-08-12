@@ -142,7 +142,7 @@ impl Core {
     /// [`Core::CDL3WHITESOLDIERS`] · [`Core::CDL3BLACKCROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDL3LINESTRIKE](https://ta-lib.org/functions/CDL3LINESTRIKE/)
+    /// [ta-lib.org/functions/cdl3linestrike](https://ta-lib.org/functions/cdl3linestrike)
     #[doc(alias = "Three-LineStrike")]
     #[doc(alias = "3-LineStrike")]
     pub fn CDL3LINESTRIKE(

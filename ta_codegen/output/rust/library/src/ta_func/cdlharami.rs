@@ -148,7 +148,7 @@ impl Core {
     ///
     /// [`Core::CDLHARAMICROSS`] · [`Core::CDLENGULFING`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLHARAMI](https://ta-lib.org/functions/CDLHARAMI/)
+    /// Further reading: [ta-lib.org/functions/cdlharami](https://ta-lib.org/functions/cdlharami)
     #[doc(alias = "Harami")]
     #[doc(alias = "HaramiPattern")]
     pub fn CDLHARAMI(

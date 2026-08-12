@@ -117,7 +117,7 @@ impl Core {
     ///
     /// [`Core::ATAN`] · [`Core::SIN`] · [`Core::COS`] · [`Core::TANH`]
     ///
-    /// Further reading: [ta-lib.org/functions/TAN](https://ta-lib.org/functions/TAN/)
+    /// Further reading: [ta-lib.org/functions/tan](https://ta-lib.org/functions/tan)
     #[doc(alias = "tangent")]
     pub fn TAN(
         &self,

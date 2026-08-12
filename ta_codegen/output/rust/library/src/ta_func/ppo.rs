@@ -173,7 +173,7 @@ impl Core {
     ///   average. Appel's original definition uses **exponential** moving averages (periods 12,
     ///   26).
     ///
-    /// Further reading: [ta-lib.org/functions/PPO](https://ta-lib.org/functions/PPO/)
+    /// Further reading: [ta-lib.org/functions/ppo](https://ta-lib.org/functions/ppo)
     #[doc(alias = "PercentagePriceOscillator")]
     pub fn PPO(
         &self,

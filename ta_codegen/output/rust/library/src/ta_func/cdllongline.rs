@@ -142,7 +142,7 @@ impl Core {
     /// [`Core::CDLLONGLEGGEDDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLLONGLINE](https://ta-lib.org/functions/CDLLONGLINE/)
+    /// [ta-lib.org/functions/cdllongline](https://ta-lib.org/functions/cdllongline)
     #[doc(alias = "LongLineCandle")]
     #[doc(alias = "LongLine")]
     pub fn CDLLONGLINE(

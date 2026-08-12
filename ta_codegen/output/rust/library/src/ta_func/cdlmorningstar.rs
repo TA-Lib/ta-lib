@@ -167,7 +167,7 @@ impl Core {
     /// [`Core::CDLDOJISTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLMORNINGSTAR](https://ta-lib.org/functions/CDLMORNINGSTAR/)
+    /// [ta-lib.org/functions/cdlmorningstar](https://ta-lib.org/functions/cdlmorningstar)
     #[doc(alias = "MorningStar")]
     pub fn CDLMORNINGSTAR(
         &self,

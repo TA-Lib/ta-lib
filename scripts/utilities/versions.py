@@ -284,6 +284,13 @@ def get_version_string_cargo(root_dir: str) -> str:
     Parse the Rust library crate manifest
     ta_codegen/output/rust/library/Cargo.toml to get the version string. Example:
       version = "0.6.4"
+
+    Only `library` and `tools` track VERSION. The third workspace member,
+    ta-lib-dispatch, is versioned independently — it changes when its one macro
+    does, not when TA-Lib releases — so it is deliberately absent here. Its
+    number lives in the generator (`DISPATCH_VERSION`, ta_codegen/generator/src/main.rs),
+    which writes both the manifest and the `=` pin ta-lib depends on; bump it
+    there.
     """
     cargo_file_path = path_join(root_dir, "ta_codegen/output", "rust", "library", "Cargo.toml")
 

@@ -137,7 +137,7 @@ impl Core {
     /// [`Core::CDLHARAMI`] · [`Core::CDLCOUNTERATTACK`] · [`Core::CDLHARAMICROSS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLENGULFING](https://ta-lib.org/functions/CDLENGULFING/)
+    /// [ta-lib.org/functions/cdlengulfing](https://ta-lib.org/functions/cdlengulfing)
     #[doc(alias = "EngulfingPattern")]
     #[doc(alias = "Engulfing")]
     #[doc(alias = "BullishBearishEngulfing")]

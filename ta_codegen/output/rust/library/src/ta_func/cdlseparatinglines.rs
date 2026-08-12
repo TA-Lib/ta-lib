@@ -157,7 +157,7 @@ impl Core {
     /// [`Core::CDLBELTHOLD`] · CDLMEETINGLINES
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSEPARATINGLINES](https://ta-lib.org/functions/CDLSEPARATINGLINES/)
+    /// [ta-lib.org/functions/cdlseparatinglines](https://ta-lib.org/functions/cdlseparatinglines)
     #[doc(alias = "SeparatingLines")]
     pub fn CDLSEPARATINGLINES(
         &self,

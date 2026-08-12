@@ -3,7 +3,7 @@
 # TA-Lib for Rust
 
 [TA-Lib](https://ta-lib.org) — the widely used technical-analysis library — as a
-pure-Rust crate: 161 indicators covering moving averages, momentum oscillators
+pure-Rust crate: 168 indicators covering moving averages, momentum oscillators
 (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR), volume, Hilbert
 Transform cycle analysis, statistics, price transforms, and 61 candlestick
 patterns.
@@ -15,7 +15,7 @@ and verified against the C reference implementation.
 
 ```toml
 [dependencies]
-ta-lib = "0.6"
+ta-lib = "0.8"
 ```
 
 ## Quick start

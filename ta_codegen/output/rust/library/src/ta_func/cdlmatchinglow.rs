@@ -144,7 +144,7 @@ impl Core {
     /// CDLMATCHINGHIGH · [`Core::CDLHOMINGPIGEON`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLMATCHINGLOW](https://ta-lib.org/functions/CDLMATCHINGLOW/)
+    /// [ta-lib.org/functions/cdlmatchinglow](https://ta-lib.org/functions/cdlmatchinglow)
     #[doc(alias = "MatchingLow")]
     pub fn CDLMATCHINGLOW(
         &self,

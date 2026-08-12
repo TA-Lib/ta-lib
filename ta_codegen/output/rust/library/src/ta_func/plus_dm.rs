@@ -156,7 +156,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/PLUS_DM](https://ta-lib.org/functions/PLUS_DM/)
+    /// Further reading: [ta-lib.org/functions/plus_dm](https://ta-lib.org/functions/plus_dm)
     #[doc(alias = "DM")]
     #[doc(alias = "PlusDirectionalMovement")]
     pub fn PLUS_DM(

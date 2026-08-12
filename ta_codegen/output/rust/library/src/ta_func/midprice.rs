@@ -150,7 +150,7 @@ impl Core {
     ///
     /// [`Core::MIDPOINT`] · [`Core::MEDPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/MIDPRICE](https://ta-lib.org/functions/MIDPRICE/)
+    /// Further reading: [ta-lib.org/functions/midprice](https://ta-lib.org/functions/midprice)
     #[doc(alias = "MidpointPrice")]
     pub fn MIDPRICE(
         &self,

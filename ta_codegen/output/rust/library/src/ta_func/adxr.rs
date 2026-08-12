@@ -168,7 +168,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/ADXR](https://ta-lib.org/functions/ADXR/)
+    /// Further reading: [ta-lib.org/functions/adxr](https://ta-lib.org/functions/adxr)
     #[doc(alias = "AverageDirectionalMovementIndexRating")]
     pub fn ADXR(
         &self,

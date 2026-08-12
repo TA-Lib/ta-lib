@@ -224,7 +224,7 @@ impl Core {
     ///
     /// * John A. Bollinger, *Bollinger on Bollinger Bands*, McGraw-Hill Trade (ISBN 0071373683)
     ///
-    /// Further reading: [ta-lib.org/functions/BBANDS](https://ta-lib.org/functions/BBANDS/)
+    /// Further reading: [ta-lib.org/functions/bbands](https://ta-lib.org/functions/bbands)
     #[doc(alias = "BollingerBands")]
     pub fn BBANDS(
         &self,

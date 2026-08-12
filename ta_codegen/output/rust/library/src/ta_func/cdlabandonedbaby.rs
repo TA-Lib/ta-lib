@@ -172,7 +172,7 @@ impl Core {
     /// [`Core::CDLMORNINGSTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLABANDONEDBABY](https://ta-lib.org/functions/CDLABANDONEDBABY/)
+    /// [ta-lib.org/functions/cdlabandonedbaby](https://ta-lib.org/functions/cdlabandonedbaby)
     #[doc(alias = "AbandonedBaby")]
     pub fn CDLABANDONEDBABY(
         &self,

@@ -185,7 +185,7 @@ impl Core {
     ///
     /// [`Core::STOCH`] · [`Core::STOCHRSI`] · [`Core::MA`]
     ///
-    /// Further reading: [ta-lib.org/functions/STOCHF](https://ta-lib.org/functions/STOCHF/)
+    /// Further reading: [ta-lib.org/functions/stochf](https://ta-lib.org/functions/stochf)
     #[doc(alias = "StochasticFast")]
     #[doc(alias = "FastStochasticOscillator")]
     pub fn STOCHF(

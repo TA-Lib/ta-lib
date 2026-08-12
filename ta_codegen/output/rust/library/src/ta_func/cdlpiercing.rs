@@ -138,7 +138,7 @@ impl Core {
     /// [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLENGULFING`] · [`Core::CDLMORNINGSTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLPIERCING](https://ta-lib.org/functions/CDLPIERCING/)
+    /// [ta-lib.org/functions/cdlpiercing](https://ta-lib.org/functions/cdlpiercing)
     #[doc(alias = "PiercingPattern")]
     #[doc(alias = "PiercingLine")]
     pub fn CDLPIERCING(

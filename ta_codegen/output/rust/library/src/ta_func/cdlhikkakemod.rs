@@ -146,7 +146,7 @@ impl Core {
     /// [`Core::CDLHIKKAKE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLHIKKAKEMOD](https://ta-lib.org/functions/CDLHIKKAKEMOD/)
+    /// [ta-lib.org/functions/cdlhikkakemod](https://ta-lib.org/functions/cdlhikkakemod)
     #[doc(alias = "ModifiedHikkake")]
     #[doc(alias = "ModifiedHikkakePattern")]
     pub fn CDLHIKKAKEMOD(

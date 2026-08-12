@@ -141,7 +141,7 @@ impl Core {
     /// [`Core::CDLHARAMI`] · [`Core::CDLHOMINGPIGEON`] · [`Core::CDL3INSIDE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLUNIQUE3RIVER](https://ta-lib.org/functions/CDLUNIQUE3RIVER/)
+    /// [ta-lib.org/functions/cdlunique3river](https://ta-lib.org/functions/cdlunique3river)
     #[doc(alias = "Unique3River")]
     #[doc(alias = "UniqueThreeRiverBottom")]
     pub fn CDLUNIQUE3RIVER(

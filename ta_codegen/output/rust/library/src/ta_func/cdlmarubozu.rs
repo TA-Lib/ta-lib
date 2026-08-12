@@ -147,7 +147,7 @@ impl Core {
     /// [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLLONGLINE`] · [`Core::CDLBELTHOLD`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLMARUBOZU](https://ta-lib.org/functions/CDLMARUBOZU/)
+    /// [ta-lib.org/functions/cdlmarubozu](https://ta-lib.org/functions/cdlmarubozu)
     #[doc(alias = "Marubozu")]
     #[doc(alias = "ShavenHeadBottom")]
     pub fn CDLMARUBOZU(

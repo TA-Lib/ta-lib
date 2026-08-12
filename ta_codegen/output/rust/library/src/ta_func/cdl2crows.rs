@@ -138,7 +138,7 @@ impl Core {
     ///
     /// [`Core::CDLUPSIDEGAP2CROWS`] · [`Core::CDLIDENTICAL3CROWS`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDL2CROWS](https://ta-lib.org/functions/CDL2CROWS/)
+    /// Further reading: [ta-lib.org/functions/cdl2crows](https://ta-lib.org/functions/cdl2crows)
     #[doc(alias = "TwoCrows")]
     pub fn CDL2CROWS(
         &self,

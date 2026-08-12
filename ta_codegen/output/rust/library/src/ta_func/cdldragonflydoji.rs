@@ -153,7 +153,7 @@ impl Core {
     /// [`Core::CDLTAKURI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLDRAGONFLYDOJI](https://ta-lib.org/functions/CDLDRAGONFLYDOJI/)
+    /// [ta-lib.org/functions/cdldragonflydoji](https://ta-lib.org/functions/cdldragonflydoji)
     #[doc(alias = "DragonflyDoji")]
     pub fn CDLDRAGONFLYDOJI(
         &self,

@@ -147,7 +147,7 @@ impl Core {
     /// [`Core::TSF`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/LINEARREG_INTERCEPT](https://ta-lib.org/functions/LINEARREG_INTERCEPT/)
+    /// [ta-lib.org/functions/linearreg_intercept](https://ta-lib.org/functions/linearreg_intercept)
     #[doc(alias = "LinearRegressionIntercept")]
     pub fn LINEARREG_INTERCEPT(
         &self,

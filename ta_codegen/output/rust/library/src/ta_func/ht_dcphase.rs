@@ -129,7 +129,7 @@ impl Core {
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/HT_DCPHASE](https://ta-lib.org/functions/HT_DCPHASE/)
+    /// Further reading: [ta-lib.org/functions/ht_dcphase](https://ta-lib.org/functions/ht_dcphase)
     #[doc(alias = "HilbertTransformDominantCyclePhase")]
     pub fn HT_DCPHASE(
         &self,

@@ -141,7 +141,7 @@ impl Core {
     ///
     /// [`Core::MIN`] · [`Core::MAXINDEX`] · [`Core::MINMAXINDEX`] · [`Core::MINMAX`]
     ///
-    /// Further reading: [ta-lib.org/functions/MININDEX](https://ta-lib.org/functions/MININDEX/)
+    /// Further reading: [ta-lib.org/functions/minindex](https://ta-lib.org/functions/minindex)
     #[doc(alias = "IndexofLowestValue")]
     #[doc(alias = "LowestValueIndex")]
     #[doc(alias = "RollingArgmin")]

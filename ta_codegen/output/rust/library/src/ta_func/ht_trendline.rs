@@ -139,7 +139,7 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/HT_TRENDLINE](https://ta-lib.org/functions/HT_TRENDLINE/)
+    /// [ta-lib.org/functions/ht_trendline](https://ta-lib.org/functions/ht_trendline)
     #[doc(alias = "HilbertTransformInstantaneousTrendline")]
     #[doc(alias = "InstantaneousTrendline")]
     pub fn HT_TRENDLINE(

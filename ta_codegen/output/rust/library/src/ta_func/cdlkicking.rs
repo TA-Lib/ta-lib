@@ -140,7 +140,7 @@ impl Core {
     ///
     /// [`Core::CDLKICKINGBYLENGTH`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLKICKING](https://ta-lib.org/functions/CDLKICKING/)
+    /// Further reading: [ta-lib.org/functions/cdlkicking](https://ta-lib.org/functions/cdlkicking)
     #[doc(alias = "Kicking")]
     pub fn CDLKICKING(
         &self,

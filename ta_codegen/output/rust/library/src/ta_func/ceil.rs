@@ -117,7 +117,7 @@ impl Core {
     ///
     /// [`Core::FLOOR`]
     ///
-    /// Further reading: [ta-lib.org/functions/CEIL](https://ta-lib.org/functions/CEIL/)
+    /// Further reading: [ta-lib.org/functions/ceil](https://ta-lib.org/functions/ceil)
     #[doc(alias = "VectorCeil")]
     #[doc(alias = "Ceiling")]
     pub fn CEIL(

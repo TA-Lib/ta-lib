@@ -149,7 +149,7 @@ impl Core {
     /// [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHAMMER`] ·
     /// [`Core::CDLGRAVESTONEDOJI`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLTAKURI](https://ta-lib.org/functions/CDLTAKURI/)
+    /// Further reading: [ta-lib.org/functions/cdltakuri](https://ta-lib.org/functions/cdltakuri)
     #[doc(alias = "Takuri")]
     #[doc(alias = "Takuriline")]
     pub fn CDLTAKURI(

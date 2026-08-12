@@ -133,7 +133,7 @@ impl Core {
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/HT_PHASOR](https://ta-lib.org/functions/HT_PHASOR/)
+    /// Further reading: [ta-lib.org/functions/ht_phasor](https://ta-lib.org/functions/ht_phasor)
     #[doc(alias = "HilbertTransformPhasor")]
     #[doc(alias = "InPhaseQuadrature")]
     pub fn HT_PHASOR(

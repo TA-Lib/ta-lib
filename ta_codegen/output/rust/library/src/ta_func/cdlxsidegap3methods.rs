@@ -135,7 +135,7 @@ impl Core {
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLTASUKIGAP`] · [`Core::CDLRISEFALL3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLXSIDEGAP3METHODS](https://ta-lib.org/functions/CDLXSIDEGAP3METHODS/)
+    /// [ta-lib.org/functions/cdlxsidegap3methods](https://ta-lib.org/functions/cdlxsidegap3methods)
     #[doc(alias = "UpsideDownsideGapThreeMethods")]
     #[doc(alias = "UpsideGapThreeMethods")]
     #[doc(alias = "DownsideGapThreeMethods")]

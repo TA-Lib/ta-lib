@@ -138,7 +138,7 @@ impl Core {
     ///
     /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MINMAX`]
     ///
-    /// Further reading: [ta-lib.org/functions/MIN](https://ta-lib.org/functions/MIN/)
+    /// Further reading: [ta-lib.org/functions/min](https://ta-lib.org/functions/min)
     #[doc(alias = "Lowest")]
     #[doc(alias = "RollingMin")]
     #[doc(alias = "MinValue")]

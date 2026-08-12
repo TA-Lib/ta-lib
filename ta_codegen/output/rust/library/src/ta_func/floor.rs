@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::CEIL`]
     ///
-    /// Further reading: [ta-lib.org/functions/FLOOR](https://ta-lib.org/functions/FLOOR/)
+    /// Further reading: [ta-lib.org/functions/floor](https://ta-lib.org/functions/floor)
     pub fn FLOOR(
         &self,
         startIdx: usize,

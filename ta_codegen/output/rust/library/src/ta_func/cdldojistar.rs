@@ -154,7 +154,7 @@ impl Core {
     /// [`Core::CDLMORNINGSTAR`] · [`Core::CDLEVENINGSTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLDOJISTAR](https://ta-lib.org/functions/CDLDOJISTAR/)
+    /// [ta-lib.org/functions/cdldojistar](https://ta-lib.org/functions/cdldojistar)
     #[doc(alias = "DojiStar")]
     pub fn CDLDOJISTAR(
         &self,

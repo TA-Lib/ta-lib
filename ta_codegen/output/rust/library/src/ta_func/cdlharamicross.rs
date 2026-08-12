@@ -149,7 +149,7 @@ impl Core {
     /// [`Core::CDLHARAMI`] · [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLHARAMICROSS](https://ta-lib.org/functions/CDLHARAMICROSS/)
+    /// [ta-lib.org/functions/cdlharamicross](https://ta-lib.org/functions/cdlharamicross)
     #[doc(alias = "HaramiCross")]
     pub fn CDLHARAMICROSS(
         &self,

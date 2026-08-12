@@ -150,7 +150,7 @@ impl Core {
     ///
     /// [`Core::CDLONNECK`] · [`Core::CDLTHRUSTING`] · [`Core::CDLMATCHINGLOW`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLINNECK](https://ta-lib.org/functions/CDLINNECK/)
+    /// Further reading: [ta-lib.org/functions/cdlinneck](https://ta-lib.org/functions/cdlinneck)
     #[doc(alias = "In-NeckPattern")]
     #[doc(alias = "In-NeckLine")]
     pub fn CDLINNECK(

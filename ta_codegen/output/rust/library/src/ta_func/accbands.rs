@@ -161,7 +161,7 @@ impl Core {
     ///
     /// [`Core::SMA`] · [`Core::BBANDS`]
     ///
-    /// Further reading: [ta-lib.org/functions/ACCBANDS](https://ta-lib.org/functions/ACCBANDS/)
+    /// Further reading: [ta-lib.org/functions/accbands](https://ta-lib.org/functions/accbands)
     #[doc(alias = "AccelerationBands")]
     pub fn ACCBANDS(
         &self,

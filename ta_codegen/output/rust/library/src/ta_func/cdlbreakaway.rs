@@ -141,7 +141,7 @@ impl Core {
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLRISEFALL3METHODS`] · [`Core::CDL3LINESTRIKE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLBREAKAWAY](https://ta-lib.org/functions/CDLBREAKAWAY/)
+    /// [ta-lib.org/functions/cdlbreakaway](https://ta-lib.org/functions/cdlbreakaway)
     #[doc(alias = "Breakaway")]
     pub fn CDLBREAKAWAY(
         &self,

@@ -1,6 +1,6 @@
 [package]
 name = "ta-lib-dispatch"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.86"
 description = "Runtime CPU-feature dispatch macro for the ta-lib crate (internal support crate)."
@@ -9,6 +9,8 @@ homepage = "https://ta-lib.org"
 repository = "https://github.com/TA-Lib/ta-lib"
 documentation = "https://docs.rs/ta-lib-dispatch"
 readme = "README.md"
+keywords = ["fma", "target-feature", "cpu-features", "dispatch", "ta-lib"]
+categories = ["hardware-support", "mathematics"]
 
 [lib]
 name = "ta_lib_dispatch"

@@ -144,7 +144,7 @@ impl Core {
     ///
     /// [`Core::EMA`] · [`Core::WMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/SMA](https://ta-lib.org/functions/SMA/)
+    /// Further reading: [ta-lib.org/functions/sma](https://ta-lib.org/functions/sma)
     #[doc(alias = "simplemovingaverage")]
     pub fn SMA(
         &self,

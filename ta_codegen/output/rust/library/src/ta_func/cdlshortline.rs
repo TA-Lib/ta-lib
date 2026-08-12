@@ -151,7 +151,7 @@ impl Core {
     /// [`Core::CDLLONGLINE`] · [`Core::CDLSPINNINGTOP`] · [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSHORTLINE](https://ta-lib.org/functions/CDLSHORTLINE/)
+    /// [ta-lib.org/functions/cdlshortline](https://ta-lib.org/functions/cdlshortline)
     #[doc(alias = "ShortLineCandle")]
     #[doc(alias = "ShortLine")]
     pub fn CDLSHORTLINE(

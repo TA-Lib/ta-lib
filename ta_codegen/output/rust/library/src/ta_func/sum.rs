@@ -136,7 +136,7 @@ impl Core {
     ///
     /// [`Core::SMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/SUM](https://ta-lib.org/functions/SUM/)
+    /// Further reading: [ta-lib.org/functions/sum](https://ta-lib.org/functions/sum)
     #[doc(alias = "Summation")]
     #[doc(alias = "RollingSum")]
     #[doc(alias = "MovingSum")]

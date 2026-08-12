@@ -126,7 +126,7 @@ impl Core {
     ///
     /// [`Core::MIDPRICE`] · [`Core::AVGPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/MEDPRICE](https://ta-lib.org/functions/MEDPRICE/)
+    /// Further reading: [ta-lib.org/functions/medprice](https://ta-lib.org/functions/medprice)
     #[doc(alias = "MedianPrice")]
     pub fn MEDPRICE(
         &self,

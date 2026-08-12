@@ -170,7 +170,7 @@ impl Core {
     /// [`Core::CDLABANDONEDBABY`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLEVENINGDOJISTAR](https://ta-lib.org/functions/CDLEVENINGDOJISTAR/)
+    /// [ta-lib.org/functions/cdleveningdojistar](https://ta-lib.org/functions/cdleveningdojistar)
     #[doc(alias = "EveningDojiStar")]
     pub fn CDLEVENINGDOJISTAR(
         &self,

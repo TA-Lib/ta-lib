@@ -171,7 +171,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/PLUS_DI](https://ta-lib.org/functions/PLUS_DI/)
+    /// Further reading: [ta-lib.org/functions/plus_di](https://ta-lib.org/functions/plus_di)
     #[doc(alias = "DI")]
     #[doc(alias = "PlusDirectionalIndicator")]
     #[doc(alias = "PDI")]

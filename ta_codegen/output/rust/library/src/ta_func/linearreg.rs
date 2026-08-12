@@ -137,7 +137,7 @@ impl Core {
     /// [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_ANGLE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::TSF`]
     ///
-    /// Further reading: [ta-lib.org/functions/LINEARREG](https://ta-lib.org/functions/LINEARREG/)
+    /// Further reading: [ta-lib.org/functions/linearreg](https://ta-lib.org/functions/linearreg)
     #[doc(alias = "LinearRegression")]
     #[doc(alias = "LeastSquares")]
     #[doc(alias = "BestFitLine")]

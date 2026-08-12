@@ -136,7 +136,7 @@ impl Core {
     ///
     /// [`Core::STDDEV`] · [`Core::VAR`] · [`Core::SMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/AVGDEV](https://ta-lib.org/functions/AVGDEV/)
+    /// Further reading: [ta-lib.org/functions/avgdev](https://ta-lib.org/functions/avgdev)
     #[doc(alias = "AverageDeviation")]
     #[doc(alias = "MeanAbsoluteDeviation")]
     #[doc(alias = "MAD")]

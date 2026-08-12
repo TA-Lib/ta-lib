@@ -122,7 +122,7 @@ impl Core {
     ///
     /// [`Core::LOG10`] · [`Core::EXP`] · [`Core::SQRT`]
     ///
-    /// Further reading: [ta-lib.org/functions/LN](https://ta-lib.org/functions/LN/)
+    /// Further reading: [ta-lib.org/functions/ln](https://ta-lib.org/functions/ln)
     #[doc(alias = "NaturalLog")]
     #[doc(alias = "VectorLogNatural")]
     #[doc(alias = "Log")]

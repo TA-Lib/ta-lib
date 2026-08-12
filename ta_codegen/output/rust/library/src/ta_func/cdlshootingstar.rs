@@ -151,7 +151,7 @@ impl Core {
     /// [`Core::CDLGRAVESTONEDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSHOOTINGSTAR](https://ta-lib.org/functions/CDLSHOOTINGSTAR/)
+    /// [ta-lib.org/functions/cdlshootingstar](https://ta-lib.org/functions/cdlshootingstar)
     #[doc(alias = "ShootingStar")]
     pub fn CDLSHOOTINGSTAR(
         &self,

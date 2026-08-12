@@ -135,7 +135,7 @@ impl Core {
     ///
     /// [`Core::MEDPRICE`] · [`Core::TYPPRICE`] · [`Core::WCLPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/AVGPRICE](https://ta-lib.org/functions/AVGPRICE/)
+    /// Further reading: [ta-lib.org/functions/avgprice](https://ta-lib.org/functions/avgprice)
     #[doc(alias = "AveragePrice")]
     pub fn AVGPRICE(
         &self,

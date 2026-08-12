@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::SINH`] · [`Core::TANH`] · [`Core::COS`]
     ///
-    /// Further reading: [ta-lib.org/functions/COSH](https://ta-lib.org/functions/COSH/)
+    /// Further reading: [ta-lib.org/functions/cosh](https://ta-lib.org/functions/cosh)
     #[doc(alias = "HyperbolicCosine")]
     pub fn COSH(
         &self,

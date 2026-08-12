@@ -152,7 +152,7 @@ impl Core {
     /// [`Core::CDLCLOSINGMARUBOZU`] · [`Core::CDLMARUBOZU`] · [`Core::CDLLONGLINE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLBELTHOLD](https://ta-lib.org/functions/CDLBELTHOLD/)
+    /// [ta-lib.org/functions/cdlbelthold](https://ta-lib.org/functions/cdlbelthold)
     #[doc(alias = "Belt-hold")]
     #[doc(alias = "BeltHoldLine")]
     pub fn CDLBELTHOLD(

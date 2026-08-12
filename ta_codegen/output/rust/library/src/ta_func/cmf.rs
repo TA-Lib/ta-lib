@@ -193,7 +193,7 @@ impl Core {
     /// * Kirkpatrick and Dahlquist, *Technical Analysis: The Complete Resource for Financial Market
     ///   Technicians*, 2nd edition, pages 419 and 421.
     ///
-    /// Further reading: [ta-lib.org/functions/CMF](https://ta-lib.org/functions/CMF/)
+    /// Further reading: [ta-lib.org/functions/cmf](https://ta-lib.org/functions/cmf)
     #[doc(alias = "ChaikinMoneyFlow")]
     pub fn CMF(
         &self,

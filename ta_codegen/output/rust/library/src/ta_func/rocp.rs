@@ -140,7 +140,7 @@ impl Core {
     ///
     /// [`Core::ROC`] · [`Core::ROCR`] · [`Core::ROCR100`] · [`Core::MOM`]
     ///
-    /// Further reading: [ta-lib.org/functions/ROCP](https://ta-lib.org/functions/ROCP/)
+    /// Further reading: [ta-lib.org/functions/rocp](https://ta-lib.org/functions/rocp)
     #[doc(alias = "RateofChangePercentage")]
     #[doc(alias = "PercentChange")]
     pub fn ROCP(

@@ -158,7 +158,7 @@ impl Core {
     /// [`Core::CDLADVANCEBLOCK`] · [`Core::CDL3WHITESOLDIERS`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSTALLEDPATTERN](https://ta-lib.org/functions/CDLSTALLEDPATTERN/)
+    /// [ta-lib.org/functions/cdlstalledpattern](https://ta-lib.org/functions/cdlstalledpattern)
     #[doc(alias = "StalledPattern")]
     #[doc(alias = "DeliberationPattern")]
     pub fn CDLSTALLEDPATTERN(

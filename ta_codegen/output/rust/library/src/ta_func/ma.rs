@@ -205,7 +205,7 @@ impl Core {
     /// [`Core::SMA`] · [`Core::EMA`] · [`Core::WMA`] · [`Core::DEMA`] · [`Core::TEMA`] ·
     /// [`Core::TRIMA`] · [`Core::KAMA`] · [`Core::MAMA`] · [`Core::T3`] · [`Core::HMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/MA](https://ta-lib.org/functions/MA/)
+    /// Further reading: [ta-lib.org/functions/ma](https://ta-lib.org/functions/ma)
     #[doc(alias = "MovingAverage")]
     pub fn MA(
         &self,

@@ -158,7 +158,7 @@ impl Core {
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLIDENTICAL3CROWS`] · [`Core::CDL3WHITESOLDIERS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDL3STARSINSOUTH](https://ta-lib.org/functions/CDL3STARSINSOUTH/)
+    /// [ta-lib.org/functions/cdl3starsinsouth](https://ta-lib.org/functions/cdl3starsinsouth)
     #[doc(alias = "ThreeStarsInTheSouth")]
     pub fn CDL3STARSINSOUTH(
         &self,

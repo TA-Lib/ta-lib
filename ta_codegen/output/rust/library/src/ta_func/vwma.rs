@@ -176,7 +176,7 @@ impl Core {
     /// * TradingView, *Volume Weighted Moving Average (VWMA)* — documents the equivalence with
     ///   SMA(price * volume) / SMA(volume).
     ///
-    /// Further reading: [ta-lib.org/functions/VWMA](https://ta-lib.org/functions/VWMA/)
+    /// Further reading: [ta-lib.org/functions/vwma](https://ta-lib.org/functions/vwma)
     #[doc(alias = "VolumeWeightedMovingAverage")]
     pub fn VWMA(
         &self,

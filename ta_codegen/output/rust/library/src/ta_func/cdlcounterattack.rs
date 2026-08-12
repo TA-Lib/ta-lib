@@ -146,7 +146,7 @@ impl Core {
     /// [`Core::CDLPIERCING`] · [`Core::CDLDARKCLOUDCOVER`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLCOUNTERATTACK](https://ta-lib.org/functions/CDLCOUNTERATTACK/)
+    /// [ta-lib.org/functions/cdlcounterattack](https://ta-lib.org/functions/cdlcounterattack)
     #[doc(alias = "Counterattack")]
     #[doc(alias = "CounterattackLines")]
     #[doc(alias = "MeetingLines")]

@@ -170,7 +170,7 @@ impl Core {
     /// * Tim Tillson, *Smoothing Techniques for More Accurate Signals*, Technical Analysis of
     ///   Stocks & Commodities, V.16:1 (January 1998)
     ///
-    /// Further reading: [ta-lib.org/functions/T3](https://ta-lib.org/functions/T3/)
+    /// Further reading: [ta-lib.org/functions/t3](https://ta-lib.org/functions/t3)
     #[doc(alias = "TillsonT3")]
     #[doc(alias = "TripleExponentialMovingAverage")]
     pub fn T3(

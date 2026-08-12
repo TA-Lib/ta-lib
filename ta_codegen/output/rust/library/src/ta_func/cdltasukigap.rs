@@ -141,7 +141,7 @@ impl Core {
     /// [`Core::CDLGAPSIDESIDEWHITE`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLTASUKIGAP](https://ta-lib.org/functions/CDLTASUKIGAP/)
+    /// [ta-lib.org/functions/cdltasukigap](https://ta-lib.org/functions/cdltasukigap)
     #[doc(alias = "TasukiGap")]
     #[doc(alias = "UpsideDownsideTasukiGap")]
     pub fn CDLTASUKIGAP(

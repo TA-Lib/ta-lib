@@ -160,7 +160,7 @@ impl Core {
     ///
     /// [`Core::MACD`] · [`Core::MACDEXT`] · [`Core::EMA`] · [`Core::APO`]
     ///
-    /// Further reading: [ta-lib.org/functions/MACDFIX](https://ta-lib.org/functions/MACDFIX/)
+    /// Further reading: [ta-lib.org/functions/macdfix](https://ta-lib.org/functions/macdfix)
     #[doc(alias = "MovingAverageConvergenceDivergenceFix")]
     pub fn MACDFIX(
         &self,

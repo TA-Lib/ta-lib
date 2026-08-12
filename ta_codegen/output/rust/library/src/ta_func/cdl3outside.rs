@@ -134,7 +134,7 @@ impl Core {
     /// [`Core::CDL3INSIDE`] · [`Core::CDLENGULFING`] · [`Core::CDL3LINESTRIKE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDL3OUTSIDE](https://ta-lib.org/functions/CDL3OUTSIDE/)
+    /// [ta-lib.org/functions/cdl3outside](https://ta-lib.org/functions/cdl3outside)
     #[doc(alias = "ThreeOutsideUpDown")]
     #[doc(alias = "ThreeOutside")]
     pub fn CDL3OUTSIDE(

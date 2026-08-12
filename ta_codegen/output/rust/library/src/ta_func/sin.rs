@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::COS`] · [`Core::TAN`] · [`Core::ASIN`]
     ///
-    /// Further reading: [ta-lib.org/functions/SIN](https://ta-lib.org/functions/SIN/)
+    /// Further reading: [ta-lib.org/functions/sin](https://ta-lib.org/functions/sin)
     #[doc(alias = "sine")]
     pub fn SIN(
         &self,

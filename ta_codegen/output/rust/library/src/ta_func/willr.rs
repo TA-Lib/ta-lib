@@ -147,7 +147,7 @@ impl Core {
     ///
     /// [`Core::STOCH`] · [`Core::STOCHF`] · [`Core::MINMAX`]
     ///
-    /// Further reading: [ta-lib.org/functions/WILLR](https://ta-lib.org/functions/WILLR/)
+    /// Further reading: [ta-lib.org/functions/willr](https://ta-lib.org/functions/willr)
     #[doc(alias = "WilliamsR")]
     #[doc(alias = "WilliamsPercentR")]
     #[doc(alias = "R")]

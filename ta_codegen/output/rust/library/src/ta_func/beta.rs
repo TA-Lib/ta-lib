@@ -151,7 +151,7 @@ impl Core {
     ///
     /// [`Core::CORREL`] · [`Core::LINEARREG_SLOPE`] · [`Core::VAR`] · [`Core::STDDEV`]
     ///
-    /// Further reading: [ta-lib.org/functions/BETA](https://ta-lib.org/functions/BETA/)
+    /// Further reading: [ta-lib.org/functions/beta](https://ta-lib.org/functions/beta)
     #[doc(alias = "Betacoefficient")]
     pub fn BETA(
         &self,

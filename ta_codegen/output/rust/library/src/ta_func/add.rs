@@ -121,7 +121,7 @@ impl Core {
     ///
     /// [`Core::SUB`] · [`Core::MULT`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/ADD](https://ta-lib.org/functions/ADD/)
+    /// Further reading: [ta-lib.org/functions/add](https://ta-lib.org/functions/add)
     #[doc(alias = "VectorAdd")]
     #[doc(alias = "VectorArithmeticAdd")]
     pub fn ADD(

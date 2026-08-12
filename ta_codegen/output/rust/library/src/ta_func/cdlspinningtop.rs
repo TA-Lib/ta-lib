@@ -141,7 +141,7 @@ impl Core {
     /// [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`] · [`Core::CDLLONGLEGGEDDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSPINNINGTOP](https://ta-lib.org/functions/CDLSPINNINGTOP/)
+    /// [ta-lib.org/functions/cdlspinningtop](https://ta-lib.org/functions/cdlspinningtop)
     #[doc(alias = "SpinningTop")]
     pub fn CDLSPINNINGTOP(
         &self,

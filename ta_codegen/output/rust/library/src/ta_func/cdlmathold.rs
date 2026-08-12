@@ -165,7 +165,7 @@ impl Core {
     ///
     /// [`Core::CDLRISEFALL3METHODS`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLMATHOLD](https://ta-lib.org/functions/CDLMATHOLD/)
+    /// Further reading: [ta-lib.org/functions/cdlmathold](https://ta-lib.org/functions/cdlmathold)
     #[doc(alias = "MatHold")]
     pub fn CDLMATHOLD(
         &self,

@@ -181,7 +181,7 @@ impl Core {
     /// * Larry Williams, *The Ultimate Oscillator*, Technical Analysis of Stocks & Commodities,
     ///   V.3:4 (1985)
     ///
-    /// Further reading: [ta-lib.org/functions/ULTOSC](https://ta-lib.org/functions/ULTOSC/)
+    /// Further reading: [ta-lib.org/functions/ultosc](https://ta-lib.org/functions/ultosc)
     #[doc(alias = "UltimateOscillator")]
     #[doc(alias = "UO")]
     pub fn ULTOSC(

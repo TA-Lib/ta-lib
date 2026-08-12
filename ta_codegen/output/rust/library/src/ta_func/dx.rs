@@ -169,7 +169,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/DX](https://ta-lib.org/functions/DX/)
+    /// Further reading: [ta-lib.org/functions/dx](https://ta-lib.org/functions/dx)
     #[doc(alias = "DirectionalMovementIndex")]
     #[doc(alias = "DMI")]
     pub fn DX(

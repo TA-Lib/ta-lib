@@ -144,7 +144,7 @@ impl Core {
     /// [`Core::LINEARREG`] · [`Core::LINEARREG_SLOPE`] · [`Core::LINEARREG_INTERCEPT`] ·
     /// [`Core::LINEARREG_ANGLE`]
     ///
-    /// Further reading: [ta-lib.org/functions/TSF](https://ta-lib.org/functions/TSF/)
+    /// Further reading: [ta-lib.org/functions/tsf](https://ta-lib.org/functions/tsf)
     #[doc(alias = "TimeSeriesForecast")]
     pub fn TSF(
         &self,

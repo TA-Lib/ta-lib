@@ -133,7 +133,7 @@ impl Core {
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/HT_SINE](https://ta-lib.org/functions/HT_SINE/)
+    /// Further reading: [ta-lib.org/functions/ht_sine](https://ta-lib.org/functions/ht_sine)
     #[doc(alias = "HilbertTransformSineWave")]
     #[doc(alias = "EhlersSineWave")]
     #[doc(alias = "SineWaveIndicator")]

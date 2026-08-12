@@ -157,7 +157,7 @@ impl Core {
     ///
     /// [`Core::RSI`]
     ///
-    /// Further reading: [ta-lib.org/functions/IMI](https://ta-lib.org/functions/IMI/)
+    /// Further reading: [ta-lib.org/functions/imi](https://ta-lib.org/functions/imi)
     #[doc(alias = "IntradayMomentumIndex")]
     pub fn IMI(
         &self,

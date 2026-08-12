@@ -122,7 +122,7 @@ impl Core {
     ///
     /// [`Core::ADD`] · [`Core::MULT`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/SUB](https://ta-lib.org/functions/SUB/)
+    /// Further reading: [ta-lib.org/functions/sub](https://ta-lib.org/functions/sub)
     #[doc(alias = "Subtract")]
     #[doc(alias = "VectorSubtraction")]
     pub fn SUB(

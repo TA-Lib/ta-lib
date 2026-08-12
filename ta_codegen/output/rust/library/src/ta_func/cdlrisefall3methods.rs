@@ -151,7 +151,7 @@ impl Core {
     /// [`Core::CDLXSIDEGAP3METHODS`] · [`Core::CDL3INSIDE`] · [`Core::CDL3OUTSIDE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLRISEFALL3METHODS](https://ta-lib.org/functions/CDLRISEFALL3METHODS/)
+    /// [ta-lib.org/functions/cdlrisefall3methods](https://ta-lib.org/functions/cdlrisefall3methods)
     #[doc(alias = "RisingFallingThreeMethods")]
     #[doc(alias = "RisingThreeMethods")]
     #[doc(alias = "FallingThreeMethods")]

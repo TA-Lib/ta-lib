@@ -155,7 +155,7 @@ impl Core {
     ///
     /// * Karl Pearson
     ///
-    /// Further reading: [ta-lib.org/functions/CORREL](https://ta-lib.org/functions/CORREL/)
+    /// Further reading: [ta-lib.org/functions/correl](https://ta-lib.org/functions/correl)
     #[doc(alias = "PearsonCorrelation")]
     #[doc(alias = "CorrelationCoefficient")]
     #[doc(alias = "r")]

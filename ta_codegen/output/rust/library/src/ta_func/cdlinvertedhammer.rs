@@ -151,7 +151,7 @@ impl Core {
     /// [`Core::CDLHAMMER`] · [`Core::CDLSHOOTINGSTAR`] · [`Core::CDLHANGINGMAN`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLINVERTEDHAMMER](https://ta-lib.org/functions/CDLINVERTEDHAMMER/)
+    /// [ta-lib.org/functions/cdlinvertedhammer](https://ta-lib.org/functions/cdlinvertedhammer)
     #[doc(alias = "InvertedHammer")]
     pub fn CDLINVERTEDHAMMER(
         &self,

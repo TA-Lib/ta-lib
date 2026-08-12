@@ -150,7 +150,7 @@ impl Core {
     /// [`Core::CDLHARAMI`] · [`Core::CDLMATCHINGLOW`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLHOMINGPIGEON](https://ta-lib.org/functions/CDLHOMINGPIGEON/)
+    /// [ta-lib.org/functions/cdlhomingpigeon](https://ta-lib.org/functions/cdlhomingpigeon)
     #[doc(alias = "HomingPigeon")]
     pub fn CDLHOMINGPIGEON(
         &self,

@@ -148,7 +148,7 @@ impl Core {
     /// [`Core::CDLDOJI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLHIGHWAVE](https://ta-lib.org/functions/CDLHIGHWAVE/)
+    /// [ta-lib.org/functions/cdlhighwave](https://ta-lib.org/functions/cdlhighwave)
     #[doc(alias = "High-WaveCandle")]
     #[doc(alias = "HighWave")]
     pub fn CDLHIGHWAVE(

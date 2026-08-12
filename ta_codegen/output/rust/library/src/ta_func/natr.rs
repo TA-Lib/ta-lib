@@ -163,7 +163,7 @@ impl Core {
     ///
     /// * John Forman
     ///
-    /// Further reading: [ta-lib.org/functions/NATR](https://ta-lib.org/functions/NATR/)
+    /// Further reading: [ta-lib.org/functions/natr](https://ta-lib.org/functions/natr)
     #[doc(alias = "NormalizedAverageTrueRange")]
     pub fn NATR(
         &self,

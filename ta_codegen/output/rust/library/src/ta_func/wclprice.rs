@@ -131,7 +131,7 @@ impl Core {
     ///
     /// [`Core::TYPPRICE`] · [`Core::MEDPRICE`] · [`Core::AVGPRICE`]
     ///
-    /// Further reading: [ta-lib.org/functions/WCLPRICE](https://ta-lib.org/functions/WCLPRICE/)
+    /// Further reading: [ta-lib.org/functions/wclprice](https://ta-lib.org/functions/wclprice)
     #[doc(alias = "WeightedClosePrice")]
     #[doc(alias = "WeightedClose")]
     pub fn WCLPRICE(

@@ -138,7 +138,7 @@ impl Core {
     /// [`Core::CDLMARUBOZU`] · [`Core::CDLENGULFING`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLCONCEALBABYSWALL](https://ta-lib.org/functions/CDLCONCEALBABYSWALL/)
+    /// [ta-lib.org/functions/cdlconcealbabyswall](https://ta-lib.org/functions/cdlconcealbabyswall)
     #[doc(alias = "ConcealingBabySwallow")]
     pub fn CDLCONCEALBABYSWALL(
         &self,

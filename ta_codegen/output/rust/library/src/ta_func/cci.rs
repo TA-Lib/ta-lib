@@ -165,7 +165,7 @@ impl Core {
     ///
     /// * Donald Lambert
     ///
-    /// Further reading: [ta-lib.org/functions/CCI](https://ta-lib.org/functions/CCI/)
+    /// Further reading: [ta-lib.org/functions/cci](https://ta-lib.org/functions/cci)
     #[doc(alias = "CommodityChannelIndex")]
     pub fn CCI(
         &self,

@@ -166,7 +166,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/RSI](https://ta-lib.org/functions/RSI/)
+    /// Further reading: [ta-lib.org/functions/rsi](https://ta-lib.org/functions/rsi)
     #[doc(alias = "relativestrengthindex")]
     pub fn RSI(
         &self,

@@ -155,7 +155,7 @@ impl Core {
     ///
     /// * Tushar S. Chande
     ///
-    /// Further reading: [ta-lib.org/functions/AROONOSC](https://ta-lib.org/functions/AROONOSC/)
+    /// Further reading: [ta-lib.org/functions/aroonosc](https://ta-lib.org/functions/aroonosc)
     #[doc(alias = "AroonOscillator")]
     pub fn AROONOSC(
         &self,

@@ -125,7 +125,7 @@ impl Core {
     ///
     /// [`Core::ADD`] · [`Core::SUB`] · [`Core::DIV`]
     ///
-    /// Further reading: [ta-lib.org/functions/MULT](https://ta-lib.org/functions/MULT/)
+    /// Further reading: [ta-lib.org/functions/mult](https://ta-lib.org/functions/mult)
     #[doc(alias = "VectorMultiply")]
     #[doc(alias = "VectorArithmeticMult")]
     #[doc(alias = "Element-wiseProduct")]

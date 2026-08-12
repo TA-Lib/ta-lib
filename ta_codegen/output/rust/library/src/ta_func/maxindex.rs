@@ -141,7 +141,7 @@ impl Core {
     ///
     /// [`Core::MAX`] · [`Core::MININDEX`] · [`Core::MIN`] · [`Core::MINMAXINDEX`]
     ///
-    /// Further reading: [ta-lib.org/functions/MAXINDEX](https://ta-lib.org/functions/MAXINDEX/)
+    /// Further reading: [ta-lib.org/functions/maxindex](https://ta-lib.org/functions/maxindex)
     #[doc(alias = "IndexofHighestValue")]
     #[doc(alias = "HighestValueIndex")]
     #[doc(alias = "argmax")]

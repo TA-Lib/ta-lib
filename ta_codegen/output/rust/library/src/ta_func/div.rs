@@ -127,7 +127,7 @@ impl Core {
     ///
     /// [`Core::MULT`] · [`Core::ADD`] · [`Core::SUB`]
     ///
-    /// Further reading: [ta-lib.org/functions/DIV](https://ta-lib.org/functions/DIV/)
+    /// Further reading: [ta-lib.org/functions/div](https://ta-lib.org/functions/div)
     #[doc(alias = "VectorArithmeticDivide")]
     #[doc(alias = "Divide")]
     pub fn DIV(

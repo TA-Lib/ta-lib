@@ -144,7 +144,7 @@ impl Core {
     ///
     /// [`Core::SMA`] · [`Core::EMA`] · [`Core::MA`] · [`Core::DEMA`] · [`Core::TEMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/WMA](https://ta-lib.org/functions/WMA/)
+    /// Further reading: [ta-lib.org/functions/wma](https://ta-lib.org/functions/wma)
     #[doc(alias = "WeightedMovingAverage")]
     #[doc(alias = "LinearlyWeightedMovingAverage")]
     #[doc(alias = "LWMA")]

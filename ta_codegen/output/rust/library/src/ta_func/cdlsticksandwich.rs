@@ -135,7 +135,7 @@ impl Core {
     /// [`Core::CDLMATCHINGLOW`] · [`Core::CDLHOMINGPIGEON`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLSTICKSANDWICH](https://ta-lib.org/functions/CDLSTICKSANDWICH/)
+    /// [ta-lib.org/functions/cdlsticksandwich](https://ta-lib.org/functions/cdlsticksandwich)
     #[doc(alias = "StickSandwich")]
     pub fn CDLSTICKSANDWICH(
         &self,

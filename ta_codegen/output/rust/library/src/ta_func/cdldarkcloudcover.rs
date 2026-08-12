@@ -160,7 +160,7 @@ impl Core {
     /// [`Core::CDLPIERCING`] · [`Core::CDLENGULFING`] · [`Core::CDLONNECK`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLDARKCLOUDCOVER](https://ta-lib.org/functions/CDLDARKCLOUDCOVER/)
+    /// [ta-lib.org/functions/cdldarkcloudcover](https://ta-lib.org/functions/cdldarkcloudcover)
     #[doc(alias = "DarkCloudCover")]
     pub fn CDLDARKCLOUDCOVER(
         &self,

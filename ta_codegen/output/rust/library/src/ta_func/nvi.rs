@@ -148,7 +148,7 @@ impl Core {
     /// * Norman G. Fosback, *Stock Market Logic*, The Institute for Econometric Research (ISBN
     ///   0917604482)
     ///
-    /// Further reading: [ta-lib.org/functions/NVI](https://ta-lib.org/functions/NVI/)
+    /// Further reading: [ta-lib.org/functions/nvi](https://ta-lib.org/functions/nvi)
     #[doc(alias = "NegativeVolumeIndex")]
     pub fn NVI(
         &self,

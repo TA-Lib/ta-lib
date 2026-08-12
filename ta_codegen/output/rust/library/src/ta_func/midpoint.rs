@@ -141,7 +141,7 @@ impl Core {
     ///
     /// [`Core::MIDPRICE`] · [`Core::MAX`] · [`Core::MIN`]
     ///
-    /// Further reading: [ta-lib.org/functions/MIDPOINT](https://ta-lib.org/functions/MIDPOINT/)
+    /// Further reading: [ta-lib.org/functions/midpoint](https://ta-lib.org/functions/midpoint)
     pub fn MIDPOINT(
         &self,
         startIdx: usize,

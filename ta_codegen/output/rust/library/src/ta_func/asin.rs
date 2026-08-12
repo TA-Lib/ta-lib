@@ -123,7 +123,7 @@ impl Core {
     ///
     /// [`Core::ACOS`] · [`Core::ATAN`] · [`Core::SIN`] · [`Core::COS`]
     ///
-    /// Further reading: [ta-lib.org/functions/ASIN](https://ta-lib.org/functions/ASIN/)
+    /// Further reading: [ta-lib.org/functions/asin](https://ta-lib.org/functions/asin)
     #[doc(alias = "arcsine")]
     #[doc(alias = "inversesine")]
     pub fn ASIN(

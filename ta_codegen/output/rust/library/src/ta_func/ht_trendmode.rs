@@ -136,7 +136,7 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/HT_TRENDMODE](https://ta-lib.org/functions/HT_TRENDMODE/)
+    /// [ta-lib.org/functions/ht_trendmode](https://ta-lib.org/functions/ht_trendmode)
     #[doc(alias = "HilbertTransformTrendvsCycleMode")]
     #[doc(alias = "TrendMode")]
     pub fn HT_TRENDMODE(

@@ -165,7 +165,7 @@ impl Core {
     /// CDLSTARSINSOUTH
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLEVENINGSTAR](https://ta-lib.org/functions/CDLEVENINGSTAR/)
+    /// [ta-lib.org/functions/cdleveningstar](https://ta-lib.org/functions/cdleveningstar)
     #[doc(alias = "EveningStar")]
     pub fn CDLEVENINGSTAR(
         &self,

@@ -153,7 +153,7 @@ impl Core {
     /// [`Core::CDLDOJISTAR`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLGRAVESTONEDOJI](https://ta-lib.org/functions/CDLGRAVESTONEDOJI/)
+    /// [ta-lib.org/functions/cdlgravestonedoji](https://ta-lib.org/functions/cdlgravestonedoji)
     #[doc(alias = "GravestoneDoji")]
     pub fn CDLGRAVESTONEDOJI(
         &self,

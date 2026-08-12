@@ -140,7 +140,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/TRANGE](https://ta-lib.org/functions/TRANGE/)
+    /// Further reading: [ta-lib.org/functions/trange](https://ta-lib.org/functions/trange)
     #[doc(alias = "TrueRange")]
     #[doc(alias = "TR")]
     pub fn TRANGE(

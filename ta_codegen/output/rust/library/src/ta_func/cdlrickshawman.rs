@@ -146,7 +146,7 @@ impl Core {
     /// [`Core::CDLLONGLEGGEDDOJI`] · [`Core::CDLDOJI`] · [`Core::CDLHIGHWAVE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLRICKSHAWMAN](https://ta-lib.org/functions/CDLRICKSHAWMAN/)
+    /// [ta-lib.org/functions/cdlrickshawman](https://ta-lib.org/functions/cdlrickshawman)
     #[doc(alias = "RickshawMan")]
     pub fn CDLRICKSHAWMAN(
         &self,

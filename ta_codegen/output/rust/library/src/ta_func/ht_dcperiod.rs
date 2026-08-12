@@ -123,7 +123,7 @@ impl Core {
     ///   Wiley & Sons (ISBN 0471405671)
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/HT_DCPERIOD](https://ta-lib.org/functions/HT_DCPERIOD/)
+    /// [ta-lib.org/functions/ht_dcperiod](https://ta-lib.org/functions/ht_dcperiod)
     #[doc(alias = "HilbertTransformDominantCyclePeriod")]
     #[doc(alias = "DominantCyclePeriod")]
     pub fn HT_DCPERIOD(

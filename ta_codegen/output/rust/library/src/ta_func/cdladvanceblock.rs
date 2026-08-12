@@ -163,7 +163,7 @@ impl Core {
     /// [`Core::CDL3WHITESOLDIERS`] · CDLDELIBERATION · [`Core::CDLSTALLEDPATTERN`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLADVANCEBLOCK](https://ta-lib.org/functions/CDLADVANCEBLOCK/)
+    /// [ta-lib.org/functions/cdladvanceblock](https://ta-lib.org/functions/cdladvanceblock)
     #[doc(alias = "AdvanceBlock")]
     pub fn CDLADVANCEBLOCK(
         &self,

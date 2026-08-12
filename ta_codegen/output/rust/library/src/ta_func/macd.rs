@@ -190,7 +190,7 @@ impl Core {
     ///
     /// * Gerald Appel, *Stock Market Trading Systems*, Traders Pr (ISBN 0934380163)
     ///
-    /// Further reading: [ta-lib.org/functions/MACD](https://ta-lib.org/functions/MACD/)
+    /// Further reading: [ta-lib.org/functions/macd](https://ta-lib.org/functions/macd)
     #[doc(alias = "movingaverageconvergencedivergence")]
     pub fn MACD(
         &self,

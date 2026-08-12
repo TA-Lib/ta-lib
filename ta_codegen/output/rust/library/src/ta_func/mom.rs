@@ -138,7 +138,7 @@ impl Core {
     ///
     /// [`Core::ROC`] · [`Core::ROCP`] · [`Core::ROCR`] · [`Core::ROCR100`]
     ///
-    /// Further reading: [ta-lib.org/functions/MOM](https://ta-lib.org/functions/MOM/)
+    /// Further reading: [ta-lib.org/functions/mom](https://ta-lib.org/functions/mom)
     #[doc(alias = "Momentum")]
     pub fn MOM(
         &self,

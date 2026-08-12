@@ -173,7 +173,7 @@ impl Core {
     ///   with exponential moving averages and periods 12/26 it is the oscillator underlying the
     ///   MACD line. Appel's original definition uses **exponential** moving averages.
     ///
-    /// Further reading: [ta-lib.org/functions/APO](https://ta-lib.org/functions/APO/)
+    /// Further reading: [ta-lib.org/functions/apo](https://ta-lib.org/functions/apo)
     #[doc(alias = "AbsolutePriceOscillator")]
     pub fn APO(
         &self,

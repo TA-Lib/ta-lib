@@ -156,7 +156,7 @@ impl Core {
     ///
     /// [`Core::STDDEV`]
     ///
-    /// Further reading: [ta-lib.org/functions/VAR](https://ta-lib.org/functions/VAR/)
+    /// Further reading: [ta-lib.org/functions/var](https://ta-lib.org/functions/var)
     #[doc(alias = "Variance")]
     pub fn VAR(
         &self,

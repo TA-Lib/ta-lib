@@ -161,7 +161,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/ATR](https://ta-lib.org/functions/ATR/)
+    /// Further reading: [ta-lib.org/functions/atr](https://ta-lib.org/functions/atr)
     #[doc(alias = "AverageTrueRange")]
     pub fn ATR(
         &self,

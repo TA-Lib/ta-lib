@@ -211,7 +211,7 @@ impl Core {
     ///
     /// [`Core::SAR`] · [`Core::MINUS_DM`]
     ///
-    /// Further reading: [ta-lib.org/functions/SAREXT](https://ta-lib.org/functions/SAREXT/)
+    /// Further reading: [ta-lib.org/functions/sarext](https://ta-lib.org/functions/sarext)
     #[doc(alias = "ParabolicSARExtended")]
     #[doc(alias = "ExtendedParabolicStopandReverse")]
     pub fn SAREXT(

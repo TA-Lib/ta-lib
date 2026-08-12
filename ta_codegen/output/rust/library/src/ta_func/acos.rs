@@ -123,7 +123,7 @@ impl Core {
     ///
     /// [`Core::COS`] · [`Core::ASIN`] · [`Core::ATAN`]
     ///
-    /// Further reading: [ta-lib.org/functions/ACOS](https://ta-lib.org/functions/ACOS/)
+    /// Further reading: [ta-lib.org/functions/acos](https://ta-lib.org/functions/acos)
     #[doc(alias = "ArcCosine")]
     #[doc(alias = "InverseCosine")]
     #[doc(alias = "arccos")]

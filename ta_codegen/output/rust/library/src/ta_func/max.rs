@@ -139,7 +139,7 @@ impl Core {
     ///
     /// [`Core::MIN`] · [`Core::MAXINDEX`] · [`Core::MINMAX`]
     ///
-    /// Further reading: [ta-lib.org/functions/MAX](https://ta-lib.org/functions/MAX/)
+    /// Further reading: [ta-lib.org/functions/max](https://ta-lib.org/functions/max)
     #[doc(alias = "Highest")]
     #[doc(alias = "HighestHigh")]
     #[doc(alias = "RollingMaximum")]

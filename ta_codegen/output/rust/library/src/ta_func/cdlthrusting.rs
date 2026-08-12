@@ -148,7 +148,7 @@ impl Core {
     /// [`Core::CDLINNECK`] · [`Core::CDLONNECK`] · [`Core::CDLPIERCING`] · CDLMEETINGLINES
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLTHRUSTING](https://ta-lib.org/functions/CDLTHRUSTING/)
+    /// [ta-lib.org/functions/cdlthrusting](https://ta-lib.org/functions/cdlthrusting)
     #[doc(alias = "ThrustingPattern")]
     #[doc(alias = "ThrustingLine")]
     pub fn CDLTHRUSTING(

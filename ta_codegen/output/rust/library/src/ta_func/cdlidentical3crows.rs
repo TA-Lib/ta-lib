@@ -146,7 +146,7 @@ impl Core {
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDL2CROWS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLIDENTICAL3CROWS](https://ta-lib.org/functions/CDLIDENTICAL3CROWS/)
+    /// [ta-lib.org/functions/cdlidentical3crows](https://ta-lib.org/functions/cdlidentical3crows)
     #[doc(alias = "IdenticalThreeCrows")]
     pub fn CDLIDENTICAL3CROWS(
         &self,

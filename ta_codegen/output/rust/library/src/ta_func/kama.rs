@@ -166,7 +166,7 @@ impl Core {
     /// * Perry J. Kaufman, *Smarter Trading: Improving Performance in Changing Markets*,
     ///   McGraw-Hill (1995)
     ///
-    /// Further reading: [ta-lib.org/functions/KAMA](https://ta-lib.org/functions/KAMA/)
+    /// Further reading: [ta-lib.org/functions/kama](https://ta-lib.org/functions/kama)
     #[doc(alias = "KaufmanAdaptiveMovingAverage")]
     #[doc(alias = "KaufmansAdaptiveMovingAverage")]
     pub fn KAMA(

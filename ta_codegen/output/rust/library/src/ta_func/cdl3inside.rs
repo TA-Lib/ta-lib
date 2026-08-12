@@ -147,7 +147,7 @@ impl Core {
     ///
     /// [`Core::CDLHARAMI`] · [`Core::CDL3OUTSIDE`] · [`Core::CDLENGULFING`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDL3INSIDE](https://ta-lib.org/functions/CDL3INSIDE/)
+    /// Further reading: [ta-lib.org/functions/cdl3inside](https://ta-lib.org/functions/cdl3inside)
     #[doc(alias = "ThreeInsideUpDown")]
     #[doc(alias = "ThreeInside")]
     #[doc(alias = "ThreeInsideUp")]

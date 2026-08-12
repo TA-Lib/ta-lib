@@ -129,7 +129,7 @@ impl Core {
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
     ///
-    /// Further reading: [ta-lib.org/functions/BOP](https://ta-lib.org/functions/BOP/)
+    /// Further reading: [ta-lib.org/functions/bop](https://ta-lib.org/functions/bop)
     #[doc(alias = "BalanceOfPower")]
     pub fn BOP(
         &self,

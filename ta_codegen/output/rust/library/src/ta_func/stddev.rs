@@ -156,7 +156,7 @@ impl Core {
     ///
     /// [`Core::VAR`] · [`Core::BBANDS`] · [`Core::SMA`]
     ///
-    /// Further reading: [ta-lib.org/functions/STDDEV](https://ta-lib.org/functions/STDDEV/)
+    /// Further reading: [ta-lib.org/functions/stddev](https://ta-lib.org/functions/stddev)
     #[doc(alias = "StandardDeviation")]
     #[doc(alias = "SD")]
     #[doc(alias = "sigma")]

@@ -156,7 +156,7 @@ impl Core {
     ///
     /// * Jack K. Hutson, Technical Analysis of Stocks & Commodities (1980s)
     ///
-    /// Further reading: [ta-lib.org/functions/TRIX](https://ta-lib.org/functions/TRIX/)
+    /// Further reading: [ta-lib.org/functions/trix](https://ta-lib.org/functions/trix)
     #[doc(alias = "TripleExponentialAverage")]
     pub fn TRIX(
         &self,

@@ -142,7 +142,7 @@ impl Core {
     /// [`Core::CDLKICKING`] · [`Core::CDLMARUBOZU`] · [`Core::CDLGAPSIDESIDEWHITE`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLKICKINGBYLENGTH](https://ta-lib.org/functions/CDLKICKINGBYLENGTH/)
+    /// [ta-lib.org/functions/cdlkickingbylength](https://ta-lib.org/functions/cdlkickingbylength)
     #[doc(alias = "KickingbyLength")]
     #[doc(alias = "Kicking-bullbeardecidedbythelongermarubozu")]
     pub fn CDLKICKINGBYLENGTH(

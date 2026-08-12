@@ -152,7 +152,7 @@ impl Core {
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
     ///
-    /// Further reading: [ta-lib.org/functions/CMOU](https://ta-lib.org/functions/CMOU/)
+    /// Further reading: [ta-lib.org/functions/cmou](https://ta-lib.org/functions/cmou)
     #[doc(alias = "ChandeMomentumOscillatorUnsmoothed")]
     pub fn CMOU(
         &self,

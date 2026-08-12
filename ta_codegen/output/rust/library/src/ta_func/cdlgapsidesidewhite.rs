@@ -147,7 +147,7 @@ impl Core {
     /// [`Core::CDLTASUKIGAP`] · [`Core::CDLXSIDEGAP3METHODS`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLGAPSIDESIDEWHITE](https://ta-lib.org/functions/CDLGAPSIDESIDEWHITE/)
+    /// [ta-lib.org/functions/cdlgapsidesidewhite](https://ta-lib.org/functions/cdlgapsidesidewhite)
     #[doc(alias = "UpDown-gapside-by-sidewhitelines")]
     #[doc(alias = "Gappingside-by-sidewhitelines")]
     pub fn CDLGAPSIDESIDEWHITE(

@@ -163,7 +163,7 @@ impl Core {
     /// * J. Welles Wilder, *New Concepts in Technical Trading Systems*, Trend Research (ISBN
     ///   0894590278)
     ///
-    /// Further reading: [ta-lib.org/functions/SAR](https://ta-lib.org/functions/SAR/)
+    /// Further reading: [ta-lib.org/functions/sar](https://ta-lib.org/functions/sar)
     #[doc(alias = "ParabolicSAR")]
     #[doc(alias = "PSAR")]
     #[doc(alias = "StopandReverse")]

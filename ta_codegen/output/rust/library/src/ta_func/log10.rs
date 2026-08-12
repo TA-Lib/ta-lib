@@ -122,7 +122,7 @@ impl Core {
     ///
     /// [`Core::LN`] · [`Core::EXP`]
     ///
-    /// Further reading: [ta-lib.org/functions/LOG10](https://ta-lib.org/functions/LOG10/)
+    /// Further reading: [ta-lib.org/functions/log10](https://ta-lib.org/functions/log10)
     #[doc(alias = "LogBase10")]
     #[doc(alias = "CommonLogarithm")]
     pub fn LOG10(

@@ -128,7 +128,7 @@ impl Core {
     /// * Joseph Ensign Granville, B. Granville, *Granville's New Strategy of Daily Stock Market
     ///   Timing for Maximum Profit*, Simon & Schuster (ISBN 0133634329)
     ///
-    /// Further reading: [ta-lib.org/functions/OBV](https://ta-lib.org/functions/OBV/)
+    /// Further reading: [ta-lib.org/functions/obv](https://ta-lib.org/functions/obv)
     #[doc(alias = "OnBalanceVolume")]
     pub fn OBV(
         &self,

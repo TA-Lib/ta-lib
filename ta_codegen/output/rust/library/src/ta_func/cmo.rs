@@ -154,7 +154,7 @@ impl Core {
     ///
     /// * Tushar S. Chande, *The New Technical Trader*, John Wiley & Sons (ISBN 0471597805)
     ///
-    /// Further reading: [ta-lib.org/functions/CMO](https://ta-lib.org/functions/CMO/)
+    /// Further reading: [ta-lib.org/functions/cmo](https://ta-lib.org/functions/cmo)
     #[doc(alias = "ChandeMomentumOscillator")]
     pub fn CMO(
         &self,

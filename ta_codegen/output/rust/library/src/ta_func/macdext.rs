@@ -208,7 +208,7 @@ impl Core {
     /// [`Core::MACD`] · [`Core::MACDFIX`] · [`Core::MA`] · [`Core::EMA`] · [`Core::APO`] ·
     /// [`Core::PPO`]
     ///
-    /// Further reading: [ta-lib.org/functions/MACDEXT](https://ta-lib.org/functions/MACDEXT/)
+    /// Further reading: [ta-lib.org/functions/macdext](https://ta-lib.org/functions/macdext)
     #[doc(alias = "MACDExtended")]
     #[doc(alias = "MACDwithcontrollableMAtype")]
     pub fn MACDEXT(

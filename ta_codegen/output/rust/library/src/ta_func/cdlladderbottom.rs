@@ -140,7 +140,7 @@ impl Core {
     /// [`Core::CDL3BLACKCROWS`] · [`Core::CDLMATCHINGLOW`] · [`Core::CDLBREAKAWAY`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLLADDERBOTTOM](https://ta-lib.org/functions/CDLLADDERBOTTOM/)
+    /// [ta-lib.org/functions/cdlladderbottom](https://ta-lib.org/functions/cdlladderbottom)
     #[doc(alias = "LadderBottom")]
     pub fn CDLLADDERBOTTOM(
         &self,

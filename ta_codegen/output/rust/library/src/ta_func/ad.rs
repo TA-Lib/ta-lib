@@ -136,7 +136,7 @@ impl Core {
     ///
     /// [`Core::ADOSC`] · [`Core::OBV`]
     ///
-    /// Further reading: [ta-lib.org/functions/AD](https://ta-lib.org/functions/AD/)
+    /// Further reading: [ta-lib.org/functions/ad](https://ta-lib.org/functions/ad)
     #[doc(alias = "ChaikinADLine")]
     #[doc(alias = "AccumulationDistributionLine")]
     #[doc(alias = "AccumulationDistribution")]

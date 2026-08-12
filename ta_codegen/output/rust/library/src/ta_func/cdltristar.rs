@@ -139,7 +139,7 @@ impl Core {
     /// [`Core::CDLDOJI`] · [`Core::CDLDOJISTAR`] · [`Core::CDLMORNINGDOJISTAR`] ·
     /// [`Core::CDLEVENINGDOJISTAR`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLTRISTAR](https://ta-lib.org/functions/CDLTRISTAR/)
+    /// Further reading: [ta-lib.org/functions/cdltristar](https://ta-lib.org/functions/cdltristar)
     #[doc(alias = "TristarPattern")]
     #[doc(alias = "Tri-Star")]
     pub fn CDLTRISTAR(

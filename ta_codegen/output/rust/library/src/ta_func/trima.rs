@@ -154,7 +154,7 @@ impl Core {
     ///
     /// [`Core::SMA`] · [`Core::WMA`] · [`Core::MA`]
     ///
-    /// Further reading: [ta-lib.org/functions/TRIMA](https://ta-lib.org/functions/TRIMA/)
+    /// Further reading: [ta-lib.org/functions/trima](https://ta-lib.org/functions/trima)
     #[doc(alias = "TriangularMovingAverage")]
     pub fn TRIMA(
         &self,

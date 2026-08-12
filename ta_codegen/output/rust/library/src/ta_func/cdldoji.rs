@@ -139,7 +139,7 @@ impl Core {
     /// [`Core::CDLDOJISTAR`] · [`Core::CDLDRAGONFLYDOJI`] · [`Core::CDLGRAVESTONEDOJI`] ·
     /// [`Core::CDLLONGLEGGEDDOJI`]
     ///
-    /// Further reading: [ta-lib.org/functions/CDLDOJI](https://ta-lib.org/functions/CDLDOJI/)
+    /// Further reading: [ta-lib.org/functions/cdldoji](https://ta-lib.org/functions/cdldoji)
     #[doc(alias = "Doji")]
     pub fn CDLDOJI(
         &self,

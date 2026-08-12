@@ -181,7 +181,7 @@ impl Core {
     /// * John F. Ehlers, *Rocket Science for Traders: Digital Signal Processing Applications*, John
     ///   Wiley & Sons (ISBN 0471405671)
     ///
-    /// Further reading: [ta-lib.org/functions/MAMA](https://ta-lib.org/functions/MAMA/)
+    /// Further reading: [ta-lib.org/functions/mama](https://ta-lib.org/functions/mama)
     #[doc(alias = "MESAAdaptiveMovingAverage")]
     #[doc(alias = "EhlersMAMA")]
     pub fn MAMA(

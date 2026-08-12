@@ -157,7 +157,7 @@ impl Core {
     /// [`Core::CDLTAKURI`]
     ///
     /// Further reading:
-    /// [ta-lib.org/functions/CDLHANGINGMAN](https://ta-lib.org/functions/CDLHANGINGMAN/)
+    /// [ta-lib.org/functions/cdlhangingman](https://ta-lib.org/functions/cdlhangingman)
     #[doc(alias = "HangingMan")]
     pub fn CDLHANGINGMAN(
         &self,

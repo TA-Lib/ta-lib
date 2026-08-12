@@ -118,7 +118,7 @@ impl Core {
     ///
     /// [`Core::ACOS`] · [`Core::SIN`] · [`Core::TAN`] · [`Core::COSH`]
     ///
-    /// Further reading: [ta-lib.org/functions/COS](https://ta-lib.org/functions/COS/)
+    /// Further reading: [ta-lib.org/functions/cos](https://ta-lib.org/functions/cos)
     #[doc(alias = "Cosine")]
     #[doc(alias = "VectorTrigonometricCos")]
     pub fn COS(
