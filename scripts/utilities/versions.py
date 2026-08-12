@@ -73,6 +73,19 @@ def get_version_string(root_dir: str) -> str:
 
     The file contains a single line with the version string "major.minor.patch"
 
+    One number, every backend. C, the Rust crate and the Java artifact all carry
+    this version, because a release in practice changes something all of them
+    share — they are one generated library, not four that happen to ship
+    together. So a release publishes them together too: crates.io and Maven
+    Central are part of cutting a release, not a separate occasional errand.
+
+    The obligation that buys: **bump MINOR whenever any backend breaks its API**,
+    even if the change that motivated the release was a C patch. Cargo reads 0.x
+    minor as the breaking position, so `ta-lib = "0.8"` silently accepts every
+    0.8.x — a break shipped in a patch upgrades itself into consumers' builds
+    with no signal. `cargo-semver-checks` in the dev nightly is the mechanical
+    guard, once a published version exists to compare against.
+
     Exit on any error.
     """
     version_file_path = path_join(root_dir, "VERSION")
