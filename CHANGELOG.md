@@ -19,6 +19,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - VWMA: Volume Weighted Moving Average (#131)
   - CMF: Chaikin Money Flow (#134)
   - HMA: Hull Moving Average (#139).
+  - WAD: Williams' Accumulation/Distribution, the no-volume Achelis form (#200)
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)

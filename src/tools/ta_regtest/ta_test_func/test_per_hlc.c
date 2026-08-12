@@ -59,7 +59,7 @@
  *
  *     Test functions which have the following characteristic:
  *      - the input arrays are high, low and close.
- *      - the only parameter is a period.
+ *      - the only parameter is a period, if any (WAD takes none).
  *
  */
 
@@ -88,7 +88,8 @@ TA_CCI_TEST,
 TA_WILLR_TEST,
 TA_ULTOSC_TEST,
 TA_NATR_TEST,
-TA_ACCBANDS_TEST
+TA_ACCBANDS_TEST,
+TA_WAD_TEST
 } TA_TestId;
 
 typedef struct
@@ -204,6 +205,43 @@ static TA_Test tableTest[] =
    { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 23,  92.89237535, 10,  252-10 },
    { 0, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 24,  113.4778681, 10,  252-10 },
    { 1, TA_CCI_TEST, 0, 251, 11, 0, 0, TA_SUCCESS, 252-11,  -169.65514, 10,  252-10 }, /* Last Value */
+
+   /************/
+   /* WAD TEST */
+   /************/
+   /* No parameter; lookback 0, so the whole requested range comes back and
+    * out[k] is the line at bar startIdx+k. Values recomputed independently
+    * from the corpus arrays in test_data.c, not read back out of the
+    * implementation.
+    *
+    * CHECK_EXPECTED_VALUE is adequate here, unlike for MARKETFI: its band is
+    * an ABSOLUTE 0.01 and WAD spans [-20.73, 45.77] on this corpus. The
+    * discriminating question is WHERE to pin, not how tightly.
+    *
+    * The flat arm of the three-way branch -- close exactly equal to the
+    * previous close -- has two occurrences worth pinning, and random fuzz
+    * doubles produce neither:
+    *   - the seed bar, at every startIdx, since it is measured against
+    *     itself. Turning `>` into `>=` makes it accumulate 0.75 instead of
+    *     nothing, so out[0] stops being exactly 0.0 -- that golden is the
+    *     cheapest guard in the table and is not decoration;
+    *   - bar 101, the corpus's only pair of equal consecutive closes
+    *     (close[101] == close[100] == 116.0). The same mutation shifts
+    *     everything from there onward again, which is why goldens sit on
+    *     both sides of it. */
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,       0,    0.0,    0,  252 }, /* seed bar accumulates nothing */
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,       1,    3.410,  0,  252 },
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,      51,   -7.050,  0,  252 },
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,     100,   23.675,  0,  252 }, /* just before the equal-close bar */
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,     101,   23.675,  0,  252 }, /* the flat arm: unchanged */
+   { 0, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,     125,   36.535,  0,  252 }, /* past it */
+   { 1, TA_WAD_TEST, 0, 251, 0, 0, 0, TA_SUCCESS,     251,   -3.375,  0,  252 }, /* Last Value */
+
+   /* Start-dependent: the accumulator restarts at startIdx, so a later start
+    * is the same shape offset by a constant, never the same values. */
+   { 0, TA_WAD_TEST, 100, 251, 0, 0, 0, TA_SUCCESS,      0,    0.0,  100, 152 },
+   { 0, TA_WAD_TEST, 100, 251, 0, 0, 0, TA_SUCCESS,      1,    0.0,  100, 152 }, /* bar 101 again, now at the range head */
+   { 0, TA_WAD_TEST, 251, 251, 0, 0, 0, TA_SUCCESS,      0,    0.0,  251, 1   }
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -262,6 +300,117 @@ static ErrorNumber test_cci_uniform_zero( void )
    return TA_TEST_PASS;
 }
 
+
+/* WAD external vectors. The pinned corpus values above were recomputed from
+ * test_data.c, so they anchor the implementation to arithmetic but not to any
+ * published source. These two do.
+ *
+ * Both were transcribed by Tulip Indicators 0.9.2 and both reproduce here
+ * exactly. Tulip's ti_wad_start() returns 1 where this implementation returns
+ * 0, so its series is this one WITHOUT the leading zero -- the offset below is
+ * deliberate and is the whole reason the vectors are checked by hand rather
+ * than fed through a generic harness, where a silent misalignment would be
+ * indistinguishable from agreement.
+ *
+ * Tolerance is absolute: the published values carry three or four decimals,
+ * and WAD is a running sum of price differences, so an absolute band is the
+ * meaningful one. 5e-4 is half the last printed digit of the coarser vector. */
+#define WAD_VECTOR_TOL 5e-4
+
+/* Achelis, Technical Analysis from A to Z, 2nd ed., p.368
+ * (Tulip tests/atoz.txt:270). 12 bars in, 11 published values. */
+static const TA_Real wadBookHigh[]  =
+   { 21.5, 21.625, 21.125, 22.438, 23.5, 23.25, 25, 25.625, 27.125, 28.75, 28, 30.375 };
+static const TA_Real wadBookLow[]   =
+   { 20.75, 21, 20.5, 20.875, 22.438, 22.438, 22.875, 23.75, 24.938, 26.875, 26.25, 27.625 };
+static const TA_Real wadBookClose[] =
+   { 21.25, 21.031, 20.875, 22, 22.5, 23, 24.563, 25.375, 26.875, 27.375, 27.75, 29.5 };
+static const TA_Real wadBookExp[]   =
+   { -0.594, -0.844, 0.281, 0.781, 1.343, 3.031, 4.656, 6.593, 7.093, 8.593, 10.468 };
+
+/* Tulip tests/untest.txt:471. 15 bars in, 14 published values. */
+static const TA_Real wadTulipHigh[]  =
+   { 82.15, 81.89, 83.03, 83.30, 83.85, 83.90, 83.33, 84.30,
+     84.84, 85.00, 85.90, 86.58, 86.98, 88.00, 87.87 };
+static const TA_Real wadTulipLow[]   =
+   { 81.29, 80.64, 81.31, 82.65, 83.07, 83.11, 82.49, 82.30,
+     84.15, 84.11, 84.03, 85.39, 85.76, 87.17, 87.01 };
+static const TA_Real wadTulipClose[] =
+   { 81.59, 81.06, 82.87, 83.00, 83.61, 83.15, 82.84, 83.99,
+     84.55, 84.36, 85.53, 86.54, 86.89, 87.77, 87.29 };
+static const TA_Real wadTulipExp[]   =
+   { -0.830, 0.980, 1.330, 1.940, 1.190, 0.700, 2.390, 2.950,
+     2.310, 3.810, 4.960, 6.090, 6.970, 6.390 };
+
+static ErrorNumber wad_check_vector( const char *tag,
+                                     const TA_Real *high, const TA_Real *low,
+                                     const TA_Real *close, int nbIn,
+                                     const TA_Real *expected, int nbExpected )
+{
+   TA_Real out[32];
+   TA_Integer beg, nb;
+   TA_RetCode retCode;
+   int i;
+
+   retCode = TA_WAD( 0, nbIn - 1, high, low, close, &beg, &nb, out );
+   if( retCode != TA_SUCCESS )
+   {
+      printf( "Fail: WAD %s returned retCode=%d\n", tag, (int)retCode );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   /* Lookback 0: one MORE value than the published vector, the leading zero. */
+   if( beg != 0 || nb != nbExpected + 1 )
+   {
+      printf( "Fail: WAD %s beg=%d nb=%d, expected 0/%d\n",
+              tag, (int)beg, (int)nb, nbExpected + 1 );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   if( out[0] != 0.0 )
+   {
+      printf( "Fail: WAD %s out[0]=%.17g, the seed bar must contribute exactly 0\n",
+              tag, out[0] );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   for( i = 0; i < nbExpected; i++ )
+   {
+      double diff = out[i+1] - expected[i];
+      if( diff < 0.0 ) diff = -diff;
+      if( diff > WAD_VECTOR_TOL )
+      {
+         printf( "Fail: WAD %s at published value %d: got %.17g expected %.17g "
+                 "(|diff|=%.3e > %.3e)\n",
+                 tag, i, out[i+1], expected[i], diff, WAD_VECTOR_TOL );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+static ErrorNumber test_wad_published_vectors( void )
+{
+   ErrorNumber retValue;
+
+   retValue = wad_check_vector( "book vector (Achelis p.368)",
+                                wadBookHigh, wadBookLow, wadBookClose,
+                                (int)(sizeof(wadBookHigh)/sizeof(TA_Real)),
+                                wadBookExp,
+                                (int)(sizeof(wadBookExp)/sizeof(TA_Real)) );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = wad_check_vector( "tulip vector (untest.txt wad)",
+                                wadTulipHigh, wadTulipLow, wadTulipClose,
+                                (int)(sizeof(wadTulipHigh)/sizeof(TA_Real)),
+                                wadTulipExp,
+                                (int)(sizeof(wadTulipExp)/sizeof(TA_Real)) );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS;
+}
+
 /**** Global functions definitions.   ****/
 ErrorNumber test_func_per_hlc( TA_History *history )
 {
@@ -276,6 +425,14 @@ ErrorNumber test_func_per_hlc( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed CCI uniform-input test (Code=%d)\n", retValue );
+      return retValue;
+   }
+
+   /* WAD against the two published vectors (Achelis p.368 and Tulip). */
+   retValue = test_wad_published_vectors();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed WAD published-vector test (Code=%d)\n", retValue );
       return retValue;
    }
 
@@ -438,6 +595,18 @@ static TA_RetCode rangeTestFunction( TA_Integer    startIdx,
       *lookback = TA_ACCBANDS_Lookback( testParam->test->optInTimePeriod1 );
 	  break;
 
+   case TA_WAD_TEST:
+      retCode = TA_WAD( startIdx,
+                        endIdx,
+                        testParam->high,
+                        testParam->low,
+                        testParam->close,
+                        outBegIdx,
+                        outNbElement,
+                        outputBuffer );
+      *lookback = TA_WAD_Lookback();
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(132);
    }
@@ -532,6 +701,15 @@ static TA_RetCode do_call( const TA_Test *test,
                           dummyBuffer1, output, dummyBuffer2 );
       break;
 
+   case TA_WAD_TEST:
+      retCode = TA_WAD( test->startIdx,
+                        test->endIdx,
+                        high, low, close,
+                        outBegIdx,
+                        outNbElement,
+                        output );
+      break;
+
    default:
       retCode = TA_INTERNAL_ERROR(133);
    }
@@ -613,6 +791,15 @@ static ErrorNumber do_test( const TA_History *history,
                                (double[]){ (double)test->optInTimePeriod1,
                                            (double)test->optInTimePeriod2,
                                            (double)test->optInTimePeriod3 }, 3,
+                               (const TA_Real*[]){ gBuffer[0].out0, NULL }, NULL);
+         break;
+      case TA_WAD_TEST:
+         funcName = "WAD";
+         errNb = server_verify(funcName, test->startIdx, test->endIdx, history->nbBars,
+                               retCode, outBegIdx, outNbElement,
+                               (const TA_Real*[]){ gBuffer[0].in, gBuffer[1].in,
+                                                   gBuffer[2].in, NULL },
+                               NULL, 0,
                                (const TA_Real*[]){ gBuffer[0].out0, NULL }, NULL);
          break;
       case TA_NATR_TEST:
@@ -761,6 +948,17 @@ static ErrorNumber do_test( const TA_History *history,
          errNb = doRangeTest( rangeTestFunction,
                               TA_TEST_UNST_NONE,
                               (void *)&testParam, 3, 0 );
+         break;
+
+      case TA_WAD_TEST:
+         /* Special case: start-dependent (#127). The accumulator restarts at
+          * startIdx, so a sub-range is a constant offset from the full-range
+          * line and the sweep must check the shape, not the values -- the
+          * same treatment AD and OBV get in test_per_hlcv.c. */
+         errNb = doRangeTest( rangeTestFunction,
+                              TA_TEST_UNST_NONE,
+                              (void *)&testParam, 1,
+                              TA_DO_NOT_COMPARE );
          break;
 
       default:

@@ -1,0 +1,13 @@
+name: WAD
+camel_case: Wad
+group: Volume Indicators
+hint: Williams' Accumulation/Distribution (no volume)
+flags: [stream, path_dependent]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
