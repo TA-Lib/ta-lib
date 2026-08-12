@@ -287,6 +287,19 @@ cd bin && ./ta_bench_stream --points=20000 --iters=50
 ./ta_bench_stream --points=20000 --iters=50 --min-ratio=0.35   # exits 1 if any func is below
 ```
 
+`ta_bench_stream` is **C only**. For the Rust and Java streaming tiers,
+`scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar between the working tree
+and a git revision — same generated harness compiled against two copies of the
+library, interleaved rounds with alternating arm order, every streaming function
+so the untouched ones are the control. It reads only the generated Rust crate and
+Java fragments (no ta_abstract, no servers, no C build) and derives every call
+from the emitted signatures, so adding an indicator needs no edit there.
+
+```bash
+scripts/stream_ab.py --base=origin/dev                                  # both languages
+scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
+```
+
 Current shape (168 functions): median ~1.6x, but **~25 stream slower than
 batch** and another ~50 sit under 1.5x. Recursive/multi-stage state wins big
 (`HT_TRENDLINE` ~24x, `TRIX`/`TEMA` ~16x); window-recomputers and stateless
