@@ -117,7 +117,7 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
 fn test_rust_minmaxindex_extrema_i32_and_rebase() {
     let s = rust_stream_section("minmaxindex");
     // AIA cursor machinery forced i32 (C's int) in the STATE...
-    assert!(s.contains("xCap: i32,"));
+    assert!(s.contains("xMask: i32,"));
     // ...with the batch-absolute rebase guard mirrored verbatim.
     assert!(s.contains("if sp.today >= 1073741824 {"));
     assert!(s.contains("let rebaseShift: i32 ="));

@@ -167,15 +167,8 @@ impl streaming::NameMap for RustStreamNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
-    }
-    fn extrema_slot(&self, idx: Expr) -> Expr {
-        Expr::BinOp(
-            Box::new(idx),
-            crate::ir::BinOp::BitwiseAnd,
-            Box::new(Expr::Var("sp.xMask".to_string())),
-        )
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 
@@ -183,7 +176,7 @@ impl streaming::NameMap for RustStreamNames {
 // Typing oracle: the batch type-inference verdicts for every local, reused for
 // state-struct field types AND the render contexts (so cast insertion matches
 // batch decisions exactly). Extrema/AIA override: cursor/trailing/index fields
-// (and xCap) are forced `i32` — C's `int` — because the 2^30 rebase arithmetic
+// (and xMask) are forced `i32` — C's `int` — because the 2^30 rebase arithmetic
 // does not exist in batch bodies for the inference to type (usize subtraction
 // there could underflow in debug builds; index-only, zero FP impact).
 // ---------------------------------------------------------------------------
@@ -425,7 +418,6 @@ fn state_fields_from(
         }
     }
     if let Some(ex) = model.extrema() {
-        fields.push(("xCap".into(), "i32".into(), "1_i32".into()));
         fields.push(("xMask".into(), "i32".into(), "0_i32".into()));
         for arr in &ex.arrays {
             fields.push((
@@ -722,7 +714,6 @@ fn build_step_ctx(func: &FuncDef, models: &[&StreamModel], typing: &Typing) -> R
             }
         }
         if let Some(ex) = model.extrema() {
-            ctx.sentinel_vars.insert("xCap".to_string());
             ctx.sentinel_vars.insert("xMask".to_string());
             for arr in &ex.arrays {
                 ctx.vec_vars.insert(format!("x_{arr}"));
@@ -895,8 +886,8 @@ fn emit_identity_step_branch(
 }
 
 /// Extrema automatons carry batch-absolute i32 indices; rebase them by a
-/// multiple of the ring capacity long before i32::MAX (mirrors C verbatim —
-/// index differences and `% cap` residues are invariant).
+/// multiple of the physical ring size long before i32::MAX (mirrors C verbatim —
+/// index differences and `& xMask` slots are invariant).
 fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
     if let Some(ex) = model.extrema() {
         let pad = " ".repeat(indent);
@@ -1638,7 +1629,6 @@ fn emit_capture(
         }
     }
     if let Some(ex) = model.extrema() {
-        let _ = writeln!(o, "            xCap: capX as i32,");
         let _ = writeln!(o, "            xMask: (physX - 1) as i32,");
         for arr in &ex.arrays {
             let _ = writeln!(o, "            x_{arr},");
@@ -2671,15 +2661,8 @@ impl streaming::NameMap for RustComposedNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp.x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp.xCap".to_string()
-    }
-    fn extrema_slot(&self, idx: Expr) -> Expr {
-        Expr::BinOp(
-            Box::new(idx),
-            crate::ir::BinOp::BitwiseAnd,
-            Box::new(Expr::Var("sp.xMask".to_string())),
-        )
+    fn extrema_mask(&self) -> String {
+        "sp.xMask".to_string()
     }
 }
 

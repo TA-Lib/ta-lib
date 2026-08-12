@@ -76,15 +76,8 @@ impl streaming::NameMap for CNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp->x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp->xCap".to_string()
-    }
-    fn extrema_slot(&self, idx: Expr) -> Expr {
-        Expr::BinOp(
-            Box::new(idx),
-            crate::ir::BinOp::BitwiseAnd,
-            Box::new(Expr::Var("sp->xMask".to_string())),
-        )
+    fn extrema_mask(&self) -> String {
+        "sp->xMask".to_string()
     }
 }
 
@@ -665,15 +658,8 @@ impl streaming::NameMap for ComposedNames {
     fn extrema_buf(&self, array: &str) -> String {
         format!("sp->x_{array}")
     }
-    fn extrema_cap(&self) -> String {
-        "sp->xCap".to_string()
-    }
-    fn extrema_slot(&self, idx: Expr) -> Expr {
-        Expr::BinOp(
-            Box::new(idx),
-            crate::ir::BinOp::BitwiseAnd,
-            Box::new(Expr::Var("sp->xMask".to_string())),
-        )
+    fn extrema_mask(&self) -> String {
+        "sp->xMask".to_string()
     }
 }
 
@@ -2618,8 +2604,8 @@ fn emit_identity_step_branch(
 }
 
 /// Extrema automatons carry batch-absolute int indices that grow by one
-/// per bar. Rebase them by a multiple of the ring capacity long before
-/// INT_MAX: index differences and `% cap` residues are invariant, so the
+/// per bar. Rebase them by a multiple of the physical ring size long before
+/// INT_MAX: index differences and `& xMask` slots are invariant, so the
 /// automaton (and bit-exactness vs any batch-comparable range, which is
 /// itself bounded by int) is untouched. Index-observable outputs
 /// (MININDEX...) report the rebased position beyond ~2^30 bars — the

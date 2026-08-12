@@ -287,7 +287,6 @@ struct MINMAXINDEX_StreamState {
     highestIdx: i32,
     lowestIdx: i32,
     today: i32,
-    xCap: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
 }
@@ -476,7 +475,6 @@ impl Core {
             highestIdx: (highestIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
             today: (today) as i32,
-            xCap: capX as i32,
             xMask: (physX - 1) as i32,
             x_inReal,
         };

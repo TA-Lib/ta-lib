@@ -428,7 +428,7 @@
       int nbInitialElementNeeded;
       int barsSinceReseed;
       int i;
-      int xCap;
+      int xMask;
       double[] x_inReal;
       double cur_outReal;
       OutRange fillRange = OutRange.EMPTY;
@@ -460,7 +460,7 @@
          this.nbInitialElementNeeded = other.nbInitialElementNeeded;
          this.barsSinceReseed = other.barsSinceReseed;
          this.i = other.i;
-         this.xCap = other.xCap;
+         this.xMask = other.xMask;
          this.x_inReal = other.x_inReal.clone();
          this.cur_outReal = other.cur_outReal;
          this.fillRange = other.fillRange;
@@ -509,22 +509,22 @@
    {
       double tempReal = 0.0;
       if( sp.i >= 1073741824 ) {
-         int rebaseShift = (sp.trailingIdx / sp.xCap) * sp.xCap;
+         int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.i -= rebaseShift;
          sp.trailingIdx -= rebaseShift;
          sp.j -= rebaseShift;
          sp.windowStart -= rebaseShift;
       }
-      sp.x_inReal[sp.i % sp.xCap] = inReal;
+      sp.x_inReal[sp.i & sp.xMask] = inReal;
       /* Add the incoming value, measured against the shift. */
-      tempReal = sp.x_inReal[sp.i % sp.xCap] - sp.shift;
+      tempReal = sp.x_inReal[sp.i & sp.xMask] - sp.shift;
       sp.periodTotal1 += tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 += tempReal;
       sp.meanValue1 = sp.periodTotal1 * sp.invPeriod;
       sp.variance = sp.periodTotal2 * sp.invPeriod - sp.meanValue1 * sp.meanValue1;
       /* Remove the trailing value (prepares the next window). */
-      tempReal = sp.x_inReal[sp.trailingIdx % sp.xCap] - sp.shift;
+      tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
       sp.periodTotal1 -= tempReal;
       tempReal *= tempReal;
       sp.periodTotal2 -= tempReal;
@@ -548,13 +548,13 @@
          sp.windowStart = sp.i - sp.nbInitialElementNeeded;
          tempReal = 0.0;
          for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
-            tempReal += sp.x_inReal[sp.j % sp.xCap];
+            tempReal += sp.x_inReal[sp.j & sp.xMask];
          }
          sp.shift = tempReal * sp.invPeriod;
          sp.periodTotal1 = 0.0;
          sp.periodTotal2 = 0.0;
          for( sp.j = sp.windowStart; sp.j <= sp.i; sp.j += 1 ) {
-            tempReal = sp.x_inReal[sp.j % sp.xCap] - sp.shift;
+            tempReal = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
             sp.periodTotal1 += tempReal;
             tempReal *= tempReal;
             sp.periodTotal2 += tempReal;
@@ -564,7 +564,7 @@
          /* Re-remove the trailing value under the new shift so the carried state
           * matches the non-reseed path.
           */
-         tempReal = sp.x_inReal[sp.windowStart % sp.xCap] - sp.shift;
+         tempReal = sp.x_inReal[sp.windowStart & sp.xMask] - sp.shift;
          sp.periodTotal1 -= tempReal;
          tempReal *= tempReal;
          sp.periodTotal2 -= tempReal;
@@ -708,9 +708,13 @@
       if( capX < 1 || capX > historyLen ) {
          return RetCode.InternalError;
       }
-      double[] capX_inReal = new double[capX];
+      int physX = 1;
+      while( physX < capX ) {
+         physX <<= 1;
+      }
+      double[] capX_inReal = new double[physX];
       for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
-         capX_inReal[fillJ % capX] = inReal[fillJ];
+         capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
       }
       sp.optInTimePeriod = optInTimePeriod;
       sp.optInNbDev = optInNbDev;
@@ -726,7 +730,7 @@
       sp.nbInitialElementNeeded = nbInitialElementNeeded;
       sp.barsSinceReseed = barsSinceReseed;
       sp.i = i;
-      sp.xCap = capX;
+      sp.xMask = physX - 1;
       sp.x_inReal = capX_inReal;
       sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
       return RetCode.Success;

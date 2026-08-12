@@ -253,7 +253,6 @@ struct MININDEX_StreamState {
     lowestIdx: i32,
     i: i32,
     today: i32,
-    xCap: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
 }
@@ -398,7 +397,6 @@ impl Core {
             lowestIdx: (lowestIdx) as i32,
             i: (i) as i32,
             today: (today) as i32,
-            xCap: capX as i32,
             xMask: (physX - 1) as i32,
             x_inReal,
         };

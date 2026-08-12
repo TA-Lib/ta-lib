@@ -336,7 +336,6 @@ struct VAR_StreamState {
     nbInitialElementNeeded: usize,
     barsSinceReseed: usize,
     i: i32,
-    xCap: i32,
     xMask: i32,
     x_inReal: Vec<f64>,
 }
@@ -590,7 +589,6 @@ impl Core {
             nbInitialElementNeeded,
             barsSinceReseed,
             i: (i) as i32,
-            xCap: capX as i32,
             xMask: (physX - 1) as i32,
             x_inReal,
         };

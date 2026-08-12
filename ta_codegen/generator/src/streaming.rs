@@ -3251,8 +3251,8 @@ pub fn validate_streamable<'a>(
         fn extrema_buf(&self, array: &str) -> String {
             format!("sp->x_{array}")
         }
-        fn extrema_cap(&self) -> String {
-            "sp->xCap".to_string()
+        fn extrema_mask(&self) -> String {
+            "sp->xMask".to_string()
         }
     }
     // Loop tier first (the established 131), dispatch second: a body with a
@@ -4603,16 +4603,16 @@ pub trait NameMap {
     fn circ_buf(&self, storage: &str) -> String;
     /// The extrema-automaton ring buffer for `array`.
     fn extrema_buf(&self, array: &str) -> String;
-    /// The extrema-automaton ring capacity.
-    fn extrema_cap(&self) -> String;
-    /// Map an absolute bar index onto its extrema-ring slot. The default is the
-    /// modulo of the logical capacity; a backend whose Open rounds the ring to a
-    /// power of two overrides this with the equivalent mask.
+    /// The extrema-automaton ring mask: every backend's Open rounds the ring up
+    /// to a power of two at or above the logical capacity and stores that size
+    /// minus one here.
+    fn extrema_mask(&self) -> String;
+    /// Map an absolute bar index onto its extrema-ring slot.
     fn extrema_slot(&self, idx: Expr) -> Expr {
         Expr::BinOp(
             Box::new(idx),
-            BinOp::Mod,
-            Box::new(Expr::Var(self.extrema_cap())),
+            BinOp::BitwiseAnd,
+            Box::new(Expr::Var(self.extrema_mask())),
         )
     }
 }
@@ -6213,8 +6213,8 @@ mod tests {
         fn extrema_buf(&self, array: &str) -> String {
             format!("sp->x_{array}")
         }
-        fn extrema_cap(&self) -> String {
-            "sp->xCap".to_string()
+        fn extrema_mask(&self) -> String {
+            "sp->xMask".to_string()
         }
     }
 
