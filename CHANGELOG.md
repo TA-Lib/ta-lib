@@ -22,89 +22,37 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - New MAType (for MA, BBANDS, STOCK etc...):
   - TA_MAType_HMA (#139)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
-- (#186) C#: a configuration builder — `Core.Builder()`, `Core.ToBuilder()`,
-  `CoreBuilder.UnstablePeriod(...)`, `CoreBuilder.CandleSetting(...)`,
-  `CoreBuilder.RestoreCandleDefault(...)` — plus the readers `Core.UnstablePeriod(id)` and
-  `Core.CandleSettings(settingType)`, and read accessors on `CandleSetting`. C# previously
-  had no way to change either global setting: both fields existed but were internal, so all
-  61 `CDL*` functions were pinned to the default thresholds.
-- TA_MATYPE_MIN / TA_MATYPE_MAX in ta_defs.h (MATypes.Min / MATypes.Max in C#): the
-  inclusive value limits of the MA type list, so a caller can range-check an
-  optInMAType without hard-coding how many members there are.
 
 ### Faster
 - ~3x to 7x: DEMA, TEMA and TRIX
 - ~8x: MACD and MACDFIX
 - ~8x: MACDEXT when MA types are EMA.
 - ~2.4x: ACCBANDS
+- ~1.6x to 15x: MIN, MAX, MINMAX, MIDPOINT, MIDPRICE and WILLR (#147). Thanks @kevinlincg !
 - ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
-- 2x to 15x on trending or flat data, 1.6x to 4x on random walks: MIN, MAX, MINMAX,
-  MIDPOINT, MIDPRICE and WILLR (#147). The rolling window no longer rescans when its
-  extremum leaves; cost per bar is now a fixed number of comparisons at any period.
-  Measured on Apple clang (arm64 and x86-64), gcc and MSVC. Single-extremum MIN and MAX
-  are slightly slower on strictly monotone input in their own direction (under 1 ns per
-  bar), and recomputing one bar through the batch call rather than the streaming API is
-  slower on clang and faster on MSVC.
 - ~20%: VAR, STDDEV, BBANDS
 - ~10%: ATR and NATR
 
 ### Changed
-- (#179) API: every function is now spelled the same way in every language. The name in
-  the definition is the identity, used verbatim; C alone prefixes `TA_`, and suffixed
-  variants are separated by an underscore. So `TA_SMA` / `TA_SMA_Lookback` in C are `SMA` /
-  `SMA_Lookback` in Rust, Java and C#, where they were `sma` / `sma_lookback`, `sma` /
-  `smaLookback` and `Sma` / `SmaLookback`. Enum members follow the same rule: `MAType.SMA`
-  and `FuncUnstId.EMA`, not `MAType.Sma` and `FuncUnstId.Ema`. The unstable-period wildcard
-  is `ALL` in all three (`TA_FUNC_UNST_ALL` in C), where each had spelled it differently.
-  The C library is unaffected. Rust, Java and C# are unpublished, so no released package
-  changes — this is the last version in which the spelling can settle without a migration.
-- (#179) C API: `TA_FuncInfo` no longer carries `camelCaseName`, and `ta_func_api.xml` no
-  longer emits `<CamelCaseName>`. It held a second, hand-authored spelling of a name the
-  struct already carries in `name`, and it had frozen two typos (`CdlHignWave`,
-  `CdlSeperatingLines`) into the field. Read `name`. This changes the layout of a public
-  struct: recompile against the new `ta_abstract.h` rather than relinking.
-- (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);
-  above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX` instead
-  of computing. 100 million bars is ~190 years of 24/7 one-minute data; series longer than
-  that are tick data, better served by the streaming API. The same limit now applies in Rust
-  (`ta_lib::MAX_INDEX`) and in Java and C# (`Core.MAX_INDEX` — the managed bindings carry no
-  `TA_` prefix), so a call is accepted or rejected identically in all four.
-  The streaming `OpenAndFill` entry points reject an over-long `historyLen` the same way.
-  The cap bounds the valid index range only — it is not an accuracy guarantee.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
 - (#183) EMA now uses a fused multiply-add in its recursion, as the EMA cascades inside
-  DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most a few units in
-  the last place (measured worst 2.8e-16 relative on the reference series), and the same
-  shift reaches MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MA
-  type is EMA. TA_EMA and those cascades now agree bit-for-bit at equal periods.
+  DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most 2.8e-16 relative
+  from the reference series, and the same shift reaches MA, BBANDS, APO, PPO, PVO, MAVP,
+  STOCH, STOCHF and STOCHRSI when the MAtype is EMA.
 - (#4,#14) API: `TA_FUNC_UNST_MFI` and `TA_FUNC_UNST_IMI` enum constants removed
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
-- (#144) API: `TA_FUNC_UNST_ALL` is now `65535` instead of tracking the number of
-  functions. It previously moved every time an indicator gained an unstable period,
-  silently breaking callers that had recorded the old value; it is now fixed forever.
-  Use the new `TA_FUNC_UNST_COUNT` macro to size a table of unstable periods.
+- (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);
+  above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX`.
 - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
-- (#186) API: the unstable period is now held to `0..=TA_MAX_INDEX` in every language,
-  where only C enforced it. The period is added to a lookback that is then used as an
-  index, so an unbounded one overflowed that lookback negative and the function indexed
-  past its input. Java and C# throw on an out-of-range value; Rust takes a `u32` (C's
-  parameter is an `unsigned int`, so a negative is now unrepresentable rather than
-  rejected) and reports the rejection from `CoreBuilder::build()`, which returns
-  `Result<Core, RetCode>` instead of `Core`. `Core::get_unstable_period` likewise returns
-  `Result<u32, RetCode>`. **No Rust configuration setter panics any more** — the
-  `AllCandleSettings` wildcard, an out-of-domain `range_type`, an `avg_period` past
-  `MAX_INDEX` and a NaN `factor` are all reported through `build()` instead. A rejected
-  setting is never written in any language. Rust and C# are unpublished, so no released
-  package changes.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
 
 ### Deprecated
-- `TA_SetCompatibility()` and `TA_GetCompatibility()`. The notion of variant (e.g. MetaStock compatibility) is not actively maintained and will be removed in a future release. Default behavior is unaffected.
+- `TA_SetCompatibility()` and `TA_GetCompatibility()`. The notion of variant (e.g. MetaStock compatibility) is not actively maintained and will be removed in a future release. Default behavior is unaffected. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
 
 ### Fixed
 - (#130) In-place calls (same buffer as input and output) returned wrong values for STOCH, STOCHF and MAVP. Regular (separate-buffer) calls were always correct.
