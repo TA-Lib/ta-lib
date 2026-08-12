@@ -1,9 +1,9 @@
 {
     "asset_file_name": "ta-lib-0.8.1-windows-x86_32.zip",
-    "sources_digest": "c93e8f35b4dccd1c06c804c14ef72496",
+    "sources_digest": "9f249e399712a27ba982b42eb28fc729",
     "builder_id": "github-actions[bot]",
     "built_success": "True",
-    "package_sha256": "2ef878192b9a2c90fb4ba9f47c02c36f13cd8785a045dcc80ac55852aa97d199",
+    "package_sha256": "f05b998657b795823903b3b80fd212a15ee47e3b7d14538f7adbef8502f7f9e9",
     "ta_regtest_pass": "Disabled",
     "dist_test_pass": "True"
 }
