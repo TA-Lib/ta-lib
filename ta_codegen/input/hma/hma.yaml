@@ -1,7 +1,7 @@
 name: HMA
 group: Overlap Studies
 hint: Hull Moving Average
-flags: [overlap, stream]
+flags: [overlap, stream, period1_identity]
 inputs:
   - name: inReal
     type: real

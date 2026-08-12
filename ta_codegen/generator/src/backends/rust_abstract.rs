@@ -1104,6 +1104,7 @@ flag_newtype!(FuncFlags {
     CANDLESTICK = 0x1000_0000,
     PATH_DEPENDENT = 0x2000_0000,
     NAN_INF_OUTPUT = 0x4000_0000,
+    PERIOD1_IDENTITY = 0x0000_0001,
 });
 flag_newtype!(InputFlags {
     PRICE_OPEN = 0x0000_0001,

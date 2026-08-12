@@ -1,7 +1,7 @@
 name: T3
 group: Overlap Studies
 hint: Triple Exponential Moving Average (T3)
-flags: [overlap, unstable_period, stream]
+flags: [overlap, unstable_period, stream, period1_identity]
 inputs:
   - name: inReal
     type: real

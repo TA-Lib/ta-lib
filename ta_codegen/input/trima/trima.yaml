@@ -1,7 +1,7 @@
 name: TRIMA
 group: Overlap Studies
 hint: Triangular Moving Average
-flags: [overlap, stream]
+flags: [overlap, stream, period1_identity]
 inputs:
   - name: inReal
     type: real

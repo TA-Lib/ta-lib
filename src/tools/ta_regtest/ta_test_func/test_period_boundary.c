@@ -36,20 +36,23 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  KL       Kevin Lin
  *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
- *  MMDDYY BY     Description
+ *  MMDDYY BY        Description
  *  -------------------------------------------------------------------
- *  070226 MF,CC  First version. Period=1 / minimum-period boundary
- *                cases for GitHub issues #48 and #59 (SourceForge
- *                bug 84).
- *  070726 MF,CC  Widen the abstract sweep to the full parameter grid
- *                (all parameter types, min..max+1) with a coherence /
- *                clean-BAD_PARAM / finite-output contract (#94).
- *  072426 MF,CC  Route the sweep's empty-output (period>input) cases through
- *                server_verify, extending that contract cross-language (#142).
+ *  070226 MF,CC     First version. Period=1 / minimum-period boundary
+ *                   cases for GitHub issues #48 and #59 (SourceForge
+ *                   bug 84).
+ *  070726 MF,CC     Widen the abstract sweep to the full parameter grid
+ *                   (all parameter types, min..max+1) with a coherence /
+ *                   clean-BAD_PARAM / finite-output contract (#94).
+ *  072426 MF,CC     Route the sweep's empty-output (period>input) cases through
+ *                   server_verify, extending that contract cross-language (#142).
+ *  081226 KL,MF,CC  Drive the identity sweep off TA_FUNC_FLG_PERIOD1_IDENTITY
+ *                   instead of a hand-list of non-MAType averages (#184).
  */
 
 /* Description:
@@ -63,8 +66,8 @@
  *  - Identity: SMA/EMA/WMA/DEMA/TEMA/TRIMA/KAMA/T3/HMA/MAVP and
  *    MA(period=1, every MAType) must return the input unchanged.
  *  - The same rule, enumerated instead of hand-listed: every function
- *    named by the TA_MAType metadata, plus the moving averages
- *    outside that enum (VWMA), must be a bit-exact copy at period 1.
+ *    named by the TA_MAType metadata, plus every function declaring
+ *    TA_FUNC_FLG_PERIOD1_IDENTITY, must be a bit-exact copy at period 1.
  *  - MACD family with signalPeriod=1: the signal line equals the
  *    MACD line, the histogram is zero, and the output is aligned
  *    and complete (the #59 "repaint" regression pins).
@@ -676,15 +679,62 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
  * gate silently, and the accounting below still balances because every entry
  * increments exactly one counter either way.
  *
- * PB_EXTRA_MA carries the moving averages that are NOT MAType-selectable and
- * would otherwise escape the rule entirely; a name there that resolves to no
- * function is likewise a failure. MAVP is deliberately absent: its period is a
- * per-bar input array, pinned by its own case above.
+ * The moving averages that are NOT MAType-selectable used to be a hand-list here
+ * (it held one name, VWMA). They now DECLARE themselves: `period1_identity` in a
+ * function's YAML surfaces as TA_FUNC_FLG_PERIOD1_IDENTITY, and the second walk
+ * below sweeps every function in the library carrying it. That is issue #184's
+ * point — VWMA's (P*V)/V shipped precisely because the promise lived in prose and
+ * the sweep's membership lived in a list nobody edited. MAVP is still absent, and
+ * now for a reason the metadata states: it carries no such flag, its period being
+ * a per-bar input array (pinned by its own case above).
+ *
+ * A flag word is a weaker membership test than a list in one specific way: a
+ * function that LOSES the bit leaves the sweep instead of failing it. Three
+ * different gates close that, and it is worth knowing which covers what before
+ * trusting the count below:
+ *
+ *  - a bit lost in the C table only (a backend bug) fails test_abstract.c, which
+ *    compares C's flags against the Rust/Java/C# registries -- an independent
+ *    derivation, which is why that comparison is worth anything;
+ *  - a bit lost on an ENUM member fails right here: every member reaching the
+ *    check is required to carry it. A bit lost on one of the others fails the
+ *    PB_MIN_FLAGGED floor, which is why that floor is a literal;
+ *  - a `period1_identity` deleted from a function's YAML fails at generate time
+ *    (ta_codegen/generator/tests/period1_suite.rs), which is also where the rule
+ *    for who must DECLARE it lives. That gate covers the enum members and every
+ *    function carrying a recognisable identity arm, which today is all of them.
  *
  * Every count is printed and asserted, so the sweep cannot pass by checking
  * nothing.
  */
-static const char * const PB_EXTRA_MA[] = { "VWMA" };
+
+/* Names collected from a TA_ForEachFunc walk. 168 functions today; the bound is
+ * checked, and an overflow is a failure rather than a silent truncation. */
+#define PB_MAX_FLAGGED 64
+/* The flagged set at #184: the 9 MAType members that have a period, plus MA and
+ * VWMA. A floor, so the set can grow freely and only shrinks deliberately. */
+#define PB_MIN_FLAGGED 11
+
+typedef struct
+{
+   const char *names[PB_MAX_FLAGGED];
+   int nb;
+   int overflow;
+} PBFlaggedList;
+
+static void pbCollectPeriod1Flagged( const TA_FuncInfo *funcInfo, void *opaqueData )
+{
+   PBFlaggedList *list = (PBFlaggedList *)opaqueData;
+
+   if( !(funcInfo->flags & TA_FUNC_FLG_PERIOD1_IDENTITY) )
+      return;
+   if( list->nb >= PB_MAX_FLAGGED )
+   {
+      list->overflow++;
+      return;
+   }
+   list->names[list->nb++] = funcInfo->name;
+}
 
 static const struct { const char *name; const char *why; } PB_MA_EXEMPT[] =
 {
@@ -777,6 +827,21 @@ static ErrorNumber pbCheckMaIdentityByName( const char *name,
       return TA_TEST_PASS;
    }
    optParams[periodParam] = 1.0;
+
+   /* Anything reaching the check must say so in its own metadata. For a name off
+    * the MAType list that is the enum-implies-flag rule (a moving average that
+    * does not copy its input at a period of 1 is not a moving average); for a
+    * name off the flag walk it is true by construction, and asserting it anyway
+    * is what makes a vanished flag word fail loudly instead of shrinking the
+    * sweep. */
+   if( !(funcInfo->flags & TA_FUNC_FLG_PERIOD1_IDENTITY) )
+   {
+      printf( "\nFail: period-1 MA identity: %s does not carry "
+              "TA_FUNC_FLG_PERIOD1_IDENTITY, so nothing holds it to the copy\n"
+              "      (add `period1_identity` to its ta_codegen/input YAML flags)\n",
+              name );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
 
    /* One real output: a moving average produces one series. Anything else is
     * a new shape someone must classify, not something to compare blindly. */
@@ -1002,9 +1067,13 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
    const TA_FuncInfo *maInfo;
    const TA_OptInputParameterInfo *optInfo;
    const TA_IntegerList *maTypeList = NULL;
+   PBFlaggedList flagged;
    ErrorNumber errNb;
    unsigned int i;
    int checked = 0, exempt = 0, extra = 0;
+
+   flagged.nb = 0;
+   flagged.overflow = 0;
 
    /* The enumeration, straight from the metadata TA_MA publishes. */
    PB_CHECK_RC( "TA_GetFuncHandle(MA)", TA_GetFuncHandle( "MA", &maHandle ), TA_SUCCESS );
@@ -1032,18 +1101,41 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
          return errNb;
    }
 
-   /* The moving averages outside the enumeration. */
-   for( i = 0; i < sizeof(PB_EXTRA_MA)/sizeof(PB_EXTRA_MA[0]); i++ )
+   /* Everything that DECLARES the contract, enumerated from the library rather
+    * than listed here. The ones already covered above are skipped by name: the
+    * enum publishes labels, the walk publishes functions, and the flagged
+    * moving averages are in both. */
+   PB_CHECK_RC( "TA_ForEachFunc", TA_ForEachFunc( pbCollectPeriod1Flagged, &flagged ),
+                TA_SUCCESS );
+   if( flagged.overflow )
+   {
+      printf( "\nFail: period-1 MA identity: %d function(s) carry the flag, buffer holds %d\n",
+              flagged.nb + flagged.overflow, PB_MAX_FLAGGED );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
+   for( i = 0; i < (unsigned int)flagged.nb; i++ )
    {
       int before = checked;
-      errNb = pbCheckMaIdentityByName( PB_EXTRA_MA[i], history,
+      unsigned int j;
+      int inEnum = 0;
+
+      for( j = 0; j < maTypeList->nbElement && !inEnum; j++ )
+         if( strcmp( maTypeList->data[j].string, flagged.names[i] ) == 0 )
+            inEnum = 1;
+      if( inEnum )
+         continue;
+
+      errNb = pbCheckMaIdentityByName( flagged.names[i], history,
                                        1 /*mustExist*/, &checked, &exempt );
       if( errNb != TA_TEST_PASS )
          return errNb;
       if( checked == before )
       {
-         printf( "\nFail: period-1 MA identity: '%s' has no period to set to 1\n",
-                 PB_EXTRA_MA[i] );
+         /* The flag promises the copy at a period of 1, so a function carrying
+          * it and having no period to set is a mis-declaration, not a skip. */
+         printf( "\nFail: period-1 MA identity: '%s' carries "
+                 "TA_FUNC_FLG_PERIOD1_IDENTITY but has no period to set to 1\n",
+                 flagged.names[i] );
          return TA_REGTEST_OPTIMIZATION_REF_ERROR;
       }
       extra++;
@@ -1058,8 +1150,22 @@ static ErrorNumber pbSweepMaIdentity( const TA_History *history, const char *wha
               checked, extra, exempt, maTypeList->nbElement );
       return TA_REGTEST_OPTIMIZATION_REF_ERROR;
    }
+   /* ...and the flag walk must still find what it found when it was written. A
+    * LITERAL floor, not one derived from `checked`: a derived floor moves with
+    * the set it is meant to protect, so the two functions the walk contributes
+    * beyond the enum could both lose the bit and the accounting above would still
+    * balance. Removing a member is legitimate (RSI and CMO were, their range
+    * forbidding a period of 1) -- it just has to be a deliberate edit here. */
+   if( flagged.nb < PB_MIN_FLAGGED )
+   {
+      printf( "\nFail: period-1 MA identity: %d function(s) carry "
+              "TA_FUNC_FLG_PERIOD1_IDENTITY, expected at least %d — the flagged "
+              "set has shrunk, so this sweep now covers less than it did\n",
+              flagged.nb, PB_MIN_FLAGGED );
+      return TA_REGTEST_OPTIMIZATION_REF_ERROR;
+   }
    printf( "\n  Period-1 identity (%s): %d moving average(s) copy their input "
-           "bit-exactly (%u MAType value(s), %d exempt, %d outside the enum)",
+           "bit-exactly (%u MAType value(s), %d exempt, %d flagged outside the enum)",
            what, checked, maTypeList->nbElement, exempt, extra );
 
    return TA_TEST_PASS;

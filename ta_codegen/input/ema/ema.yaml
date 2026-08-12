@@ -1,7 +1,7 @@
 name: EMA
 group: Overlap Studies
 hint: Exponential Moving Average
-flags: [overlap, unstable_period, stream]
+flags: [overlap, unstable_period, stream, period1_identity]
 inputs:
   - name: inReal
     type: real

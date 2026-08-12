@@ -517,6 +517,8 @@ pub fn func_flag_bits(flags: &[String]) -> u32 {
             "candlestick" => b |= 0x1000_0000,
             "path_dependent" => b |= 0x2000_0000, // TA_FUNC_FLG_PATH_DEP
             "nan_inf_output" => b |= 0x4000_0000, // TA_FUNC_FLG_NAN_INF_OUT
+            // The top byte is full bar the sign bit; new flags start from bit 0.
+            "period1_identity" => b |= 0x0000_0001, // TA_FUNC_FLG_PERIOD1_IDENTITY
             _ => {}
         }
     }

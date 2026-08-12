@@ -1485,7 +1485,7 @@ public final class Functions {
 
    private static FunctionInfo f_DEMA() {
       return new FunctionInfo(
-         "DEMA", "Overlap Studies", "Double Exponential Moving Average", 0x03000000,
+         "DEMA", "Overlap Studies", "Double Exponential Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1534,7 +1534,7 @@ public final class Functions {
 
    private static FunctionInfo f_EMA() {
       return new FunctionInfo(
-         "EMA", "Overlap Studies", "Exponential Moving Average", 0x0B000000,
+         "EMA", "Overlap Studies", "Exponential Moving Average", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1576,7 +1576,7 @@ public final class Functions {
 
    private static FunctionInfo f_HMA() {
       return new FunctionInfo(
-         "HMA", "Overlap Studies", "Hull Moving Average", 0x03000000,
+         "HMA", "Overlap Studies", "Hull Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1686,7 +1686,7 @@ public final class Functions {
 
    private static FunctionInfo f_KAMA() {
       return new FunctionInfo(
-         "KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", 0x0B000000,
+         "KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -1800,7 +1800,7 @@ public final class Functions {
 
    private static FunctionInfo f_MA() {
       return new FunctionInfo(
-         "MA", "Overlap Studies", "Moving average", 0x03000000,
+         "MA", "Overlap Studies", "Moving average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2551,7 +2551,7 @@ public final class Functions {
 
    private static FunctionInfo f_SMA() {
       return new FunctionInfo(
-         "SMA", "Overlap Studies", "Simple Moving Average", 0x03000000,
+         "SMA", "Overlap Studies", "Simple Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2737,7 +2737,7 @@ public final class Functions {
 
    private static FunctionInfo f_T3() {
       return new FunctionInfo(
-         "T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 0x0B000000,
+         "T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 0x0B000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2784,7 +2784,7 @@ public final class Functions {
 
    private static FunctionInfo f_TEMA() {
       return new FunctionInfo(
-         "TEMA", "Overlap Studies", "Triple Exponential Moving Average", 0x03000000,
+         "TEMA", "Overlap Studies", "Triple Exponential Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2814,7 +2814,7 @@ public final class Functions {
 
    private static FunctionInfo f_TRIMA() {
       return new FunctionInfo(
-         "TRIMA", "Overlap Studies", "Triangular Moving Average", 0x03000000,
+         "TRIMA", "Overlap Studies", "Triangular Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
@@ -2931,7 +2931,7 @@ public final class Functions {
 
    private static FunctionInfo f_VWMA() {
       return new FunctionInfo(
-         "VWMA", "Overlap Studies", "Volume Weighted Moving Average", 0x43000000,
+         "VWMA", "Overlap Studies", "Volume Weighted Moving Average", 0x43000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000),
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
@@ -2980,7 +2980,7 @@ public final class Functions {
 
    private static FunctionInfo f_WMA() {
       return new FunctionInfo(
-         "WMA", "Overlap Studies", "Weighted Moving Average", 0x03000000,
+         "WMA", "Overlap Studies", "Weighted Moving Average", 0x03000001,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),

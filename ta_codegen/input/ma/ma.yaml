@@ -1,7 +1,7 @@
 name: MA
 group: Overlap Studies
 hint: Moving average
-flags: [overlap, stream]
+flags: [overlap, stream, period1_identity]
 inputs:
   - name: inReal
     type: real

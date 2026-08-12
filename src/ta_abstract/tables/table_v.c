@@ -86,7 +86,7 @@ static const TA_OptInputParameterInfo *TA_VWMA_OptInputs[] =
 DEF_FUNCTION( VWMA,
               TA_GroupId_OverlapStudies,
               "Volume Weighted Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* VWMA END */
 

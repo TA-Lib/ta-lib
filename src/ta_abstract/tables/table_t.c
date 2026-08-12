@@ -84,7 +84,7 @@ static const TA_OptInputParameterInfo *TA_T3_OptInputs[] =
 DEF_FUNCTION( T3,
               TA_GroupId_OverlapStudies,
               "Triple Exponential Moving Average (T3)",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* T3 END */
 
@@ -155,7 +155,7 @@ static const TA_OptInputParameterInfo *TA_TEMA_OptInputs[] =
 DEF_FUNCTION( TEMA,
               TA_GroupId_OverlapStudies,
               "Triple Exponential Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* TEMA END */
 
@@ -203,7 +203,7 @@ static const TA_OptInputParameterInfo *TA_TRIMA_OptInputs[] =
 DEF_FUNCTION( TRIMA,
               TA_GroupId_OverlapStudies,
               "Triangular Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* TRIMA END */
 

@@ -1323,6 +1323,31 @@ fn is_stateful_call(name: &str) -> bool {
         || name == "TA_Free"
 }
 
+/// The whole-function period-1 identity arm, if the batch body carries one.
+///
+/// [`detect_identity_path`]'s three internal callers each ask this about the body
+/// slice they are building a stream surface out of; this asks it about the
+/// function, which is the question the `period1_identity` YAML flag answers. It
+/// is the same detector rather than a second one on purpose: the flag gate
+/// (`tests/period1_suite.rs`) and the stream surfaces must not be able to
+/// disagree about what an identity arm is.
+///
+/// A `None` here is not a claim that the function fails the identity — `SMA` and
+/// `TRIMA` honour it with no arm at all, their window math being exact at a
+/// period of 1. It means only that no arm was *found*, which is why the gate
+/// reads it in one direction: an arm obliges the flag, the flag does not oblige
+/// an arm.
+#[must_use]
+pub fn identity_path(func: &FuncDef) -> Option<IdentityPath> {
+    let params: Vec<String> = func
+        .optional_inputs
+        .iter()
+        .map(|p| p.name.clone())
+        .collect();
+    let outputs: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
+    detect_identity_path(&func.body, &input_array_names(func), &outputs, &params).0
+}
+
 /// Analyze one function's batch IR into a [`StreamModel`].
 ///
 /// Errors classify *why* the function is outside stage 1 (ring needed,

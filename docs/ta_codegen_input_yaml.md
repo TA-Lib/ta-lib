@@ -143,6 +143,7 @@ Each backend renders enums appropriately:
 | `stream` | Generate the streaming API (Open/Update/Peek/…) | `TA_FUNC_FLG_STREAM` |
 | `path_dependent` | Absolute output depends on `startIdx` and never converges across ranges (a running accumulation seeded at the first bar, or a path-dependent state machine); the same bar computed from a different `startIdx` can differ | `TA_FUNC_FLG_PATH_DEP` |
 | `nan_inf_output` | Some inputs of ordinary magnitude have no finite result, so a successful call can write NaN or ±Inf | `TA_FUNC_FLG_NAN_INF_OUT` |
+| `period1_identity` | A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value | `TA_FUNC_FLG_PERIOD1_IDENTITY` |
 
 ```yaml
 flags: [overlap, unstable_period]
@@ -178,6 +179,41 @@ function *without* it to finite output across all five of its datasets
 (negative, zero, two epsilon sets, random), so adding a function that emits NaN
 or Inf on ordinary input fails the suite until the flag — and the `## Notes`
 sentence explaining when — are written.
+
+`period1_identity` (issue #184) is the same shape of contract, for the promise
+that a period of 1 returns the input untouched. It has to be *declared* because
+the two ways of honouring it are indistinguishable in the source: `SMA`'s window
+math is already exact at a period of 1, while `EMA`'s recurrence reduces to
+`(x - prev) + prev` and needs an explicit arm — so a generator cannot tell "needs
+no arm" from "forgot one". What the declaration buys is that the promise is
+checked: `test_period_boundary.c` sweeps every flagged function at a period of 1
+and requires lookback 0 plus a bit-exact copy, on the reference series and on two
+series built to break the naive forms, through the batch, `TA_S_`, streaming and
+cross-language surfaces.
+
+Membership is gated from both ends in `ta_codegen/generator/tests/period1_suite.rs`:
+
+- Every `MAType` member that resolves to a function with a period must carry it.
+  A moving average that does not copy its input at a period of 1 is not a moving
+  average. (`MAMA` is exempt — its parameters are the real fast/slow limits, so it
+  has no period to set to 1.)
+- Every function whose `.c` carries a recognisable identity arm must carry it,
+  which is the half that catches the real omissions: `VWMA` hand-copied the arm
+  and stayed outside the sweep for a release, because it is not a `MAType` and
+  nothing tied the two together.
+
+The reverse implication does not hold and is not asserted — a flagged function
+need not have an arm (`SMA`, `TRIMA`), and `MACD`/`MACDFIX` have an arm shape
+that is deliberately *not* this flag: only their signal stage degenerates at
+`signalPeriod == 1`, the MACD line is still computed, so their output is not a
+copy of anything.
+
+The flag states what the **public domain** offers, not what the body contains, and
+the two can differ: `RSI` and `CMO` carry the arm but declare `range: [2, …]`, so a
+period of 1 is rejected before any of it runs. They are therefore unflagged and
+outside the sweep, and the arm gate pins that (`UNREACHABLE_ARM`) rather than
+leaving it to be rediscovered — flagging them would have the metadata promise a
+call that returns `TA_BAD_PARAM`.
 
 ### Optional Input Flags
 

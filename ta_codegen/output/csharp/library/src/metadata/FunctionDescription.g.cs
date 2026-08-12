@@ -3702,6 +3702,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3826,6 +3827,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3920,6 +3922,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4185,6 +4188,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4447,6 +4451,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6288,6 +6293,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6733,6 +6739,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6841,6 +6848,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6917,6 +6925,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7208,6 +7217,7 @@ public static class FunctionDescription
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7338,6 +7348,7 @@ public static class FunctionDescription
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

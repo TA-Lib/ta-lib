@@ -107,7 +107,7 @@ static const TA_OptInputParameterInfo *TA_WMA_OptInputs[] =
 DEF_FUNCTION( WMA,
               TA_GroupId_OverlapStudies,
               "Weighted Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* WMA END */
 

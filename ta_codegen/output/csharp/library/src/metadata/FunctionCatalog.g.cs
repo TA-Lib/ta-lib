@@ -2406,7 +2406,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Double Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -2482,7 +2482,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "EMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
         unstableId: FuncUnstId.EMA,
         inputs:
         [
@@ -2554,7 +2554,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "HMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Hull Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -2746,7 +2746,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "KAMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Kaufman Adaptive Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
         unstableId: FuncUnstId.KAMA,
         inputs:
         [
@@ -2922,7 +2922,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "MA",
         group: FunctionGroup.OverlapStudies,
         hint: "Moving average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -3898,7 +3898,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "SMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Simple Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4114,7 +4114,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "T3",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average (T3)",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
         unstableId: FuncUnstId.T3,
         inputs:
         [
@@ -4187,7 +4187,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TEMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triple Exponential Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4236,7 +4236,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "TRIMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Triangular Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4392,7 +4392,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "VWMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Volume Weighted Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.NanInfOutput | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [
@@ -4468,7 +4468,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "WMA",
         group: FunctionGroup.OverlapStudies,
         hint: "Weighted Moving Average",
-        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
         unstableId: null,
         inputs:
         [

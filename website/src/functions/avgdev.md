@@ -35,6 +35,7 @@ $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 
 ## Implementation
 

@@ -298,7 +298,10 @@ fn flag_cell(label: &str, on: bool, tip: &str) -> String {
 ///   one of the two is always checked — plus `Candlestick` (integer pattern signal)
 ///   and `Can Output NaN or ±Inf` (`nan_inf_output`; a value the chart has no
 ///   point to plot, so the caller has to decide what to draw there — the page's
-///   `## Notes` say which inputs cause it).
+///   `## Notes` say which inputs cause it). `Identity at Period 1`
+///   (`period1_identity`) rides in this column too: it is not a display hint,
+///   but it is a per-function property of the same shape — a checkbox a caller
+///   reads off the page — and it has no other column to sit in.
 ///
 /// `stream` (internal codegen concern) and `volume` (in the ABI but set by no
 /// function) are not surfaced.
@@ -337,6 +340,12 @@ fn inject_flags(
             has("nan_inf_output"),
             "Some inputs have no finite result, so a successful call can return NaN or ±Inf — \
              a gap with nothing to plot. See Notes for when.",
+        ),
+        (
+            "Identity at Period 1",
+            has("period1_identity"),
+            "A period of 1 performs no smoothing: the lookback is 0 and every output value is \
+             a bit-exact copy of its input value.",
         ),
     ];
 

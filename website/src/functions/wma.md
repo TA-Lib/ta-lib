@@ -39,6 +39,7 @@ WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">✅</span> **Identity at Period 1** <span class="flag-tip" tabindex="0" role="note" aria-label="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value." data-tip="A period of 1 performs no smoothing: the lookback is 0 and every output value is a bit-exact copy of its input value.">i</span> |
 
 ## Implementation
 

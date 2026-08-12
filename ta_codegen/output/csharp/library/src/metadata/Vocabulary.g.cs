@@ -127,6 +127,9 @@ public enum FunctionFlags : uint
 
     /// <summary>Some inputs have no finite result, so a successful call can return NaN or +/-Infinity.</summary>
     NanInfOutput = 0x40000000,
+
+    /// <summary>A period of 1 performs no smoothing: the lookback is 0 and the output is a bit-exact copy of the input.</summary>
+    Period1Identity = 0x00000001,
 }
 
 /// <summary>Which OHLCV components a price input consumes. Values match C's <c>TA_IN_PRICE_*</c>.</summary>

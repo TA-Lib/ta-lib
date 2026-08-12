@@ -75,6 +75,7 @@ mod tests {
             // entry is inert until the merged header carries the constant.
             "TA_FUNC_FLG_PATH_DEP" => "path_dependent",
             "TA_FUNC_FLG_NAN_INF_OUT" => "nan_inf_output",
+            "TA_FUNC_FLG_PERIOD1_IDENTITY" => "period1_identity",
             "TA_OPTIN_IS_PERCENT" => "percent",
             "TA_OPTIN_IS_DEGREE" => "degree",
             "TA_OPTIN_IS_CURRENCY" => "currency",

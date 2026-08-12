@@ -214,6 +214,31 @@ typedef int TA_FuncFlags;
                                           * ACOS, ASIN, DIV, LN, LOG10, SQRT,
                                           * VWMA -- and no others.
                                           */
+/* The 0x01000000-and-up run above is the historical allocation and now has one
+ * slot left, 0x80000000 -- the sign bit of the signed TA_FuncFlags, which is
+ * deliberately left unused. Further flags continue from the low end, where all
+ * 24 remaining bits are free (the TA_IN_/TA_OPTIN_/TA_OUT_ flags below live in
+ * their own fields and do not compete for these).
+ */
+#define TA_FUNC_FLG_PERIOD1_IDENTITY 0x00000001
+                                         /* A period of 1 performs no smoothing:
+                                          * the lookback is 0 and every output
+                                          * value is a bit-exact copy of its
+                                          * input value.
+                                          * Declared by the function rather than
+                                          * inferred, because the two cases are
+                                          * indistinguishable in the source:
+                                          * SMA's window math is already exact at
+                                          * a period of 1, while EMA's recurrence
+                                          * needs an explicit arm to be. e.g.
+                                          * SMA, EMA, RSI, VWMA.
+                                          * NOT set on MACD/MACDFIX: only their
+                                          * signal stage degenerates, the MACD
+                                          * line is still computed.
+                                          * ta_regtest sweeps every function
+                                          * carrying this flag and holds it to the
+                                          * copy on every API tier.
+                                          */
 
 typedef struct TA_FuncInfo
 {

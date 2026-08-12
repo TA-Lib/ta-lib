@@ -403,7 +403,7 @@ static const TA_OptInputParameterInfo *TA_SMA_OptInputs[] =
 DEF_FUNCTION( SMA,
               TA_GroupId_OverlapStudies,
               "Simple Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* SMA END */
 

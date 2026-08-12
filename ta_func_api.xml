@@ -3647,6 +3647,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3771,6 +3772,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3865,6 +3867,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4130,6 +4133,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -4392,6 +4396,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6233,6 +6238,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6678,6 +6684,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Unstable Period</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6786,6 +6793,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -6862,6 +6870,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7153,6 +7162,7 @@
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
 			<Flag>Can Output NaN or +/-Inf</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -7283,6 +7293,7 @@
 		<Flags>
 			<Flag>Overlap</Flag>
 			<Flag>Streaming</Flag>
+			<Flag>Period 1 Identity</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

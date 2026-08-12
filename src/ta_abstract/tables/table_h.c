@@ -73,7 +73,7 @@ static const TA_OptInputParameterInfo *TA_HMA_OptInputs[] =
 DEF_FUNCTION( HMA,
               TA_GroupId_OverlapStudies,
               "Hull Moving Average",
-              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
              );
 /* HMA END */
 

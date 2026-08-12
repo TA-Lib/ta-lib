@@ -71,6 +71,7 @@ pub(crate) const FUNC_FLAGS: &[(&str, &str)] = &[
     ("stream", "Streaming"),
     ("path_dependent", "Path Dependent"),
     ("nan_inf_output", "Can Output NaN or +/-Inf"),
+    ("period1_identity", "Period 1 Identity"),
 ];
 
 fn write_func_flags(out: &mut String, flags: &[String]) {

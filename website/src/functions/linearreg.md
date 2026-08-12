@@ -31,6 +31,7 @@ Least-squares straight-line fit over the last optInTimePeriod bars, reported as 
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 
 ## Implementation
 

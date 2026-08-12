@@ -25,6 +25,7 @@ Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag overlay w
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Independent Y-Axis</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 
 ## Implementation
 

@@ -126418,7 +126418,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("DEMA", new AbsFunc("DEMA", "Overlap Studies", "Double Exponential Moving Average", 50331648,
+        ABSTRACT.put("DEMA", new AbsFunc("DEMA", "Overlap Studies", "Double Exponential Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126430,7 +126430,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", 184549376,
+        ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126442,7 +126442,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", 50331648,
+        ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126474,7 +126474,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceOC",9) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("KAMA", new AbsFunc("KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", 184549376,
+        ABSTRACT.put("KAMA", new AbsFunc("KAMA", "Overlap Studies", "Kaufman Adaptive Moving Average", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126502,7 +126502,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", 50331648,
+        ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126650,7 +126650,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("SMA", new AbsFunc("SMA", "Overlap Studies", "Simple Moving Average", 50331648,
+        ABSTRACT.put("SMA", new AbsFunc("SMA", "Overlap Studies", "Simple Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126682,7 +126682,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 184549376,
+        ABSTRACT.put("T3", new AbsFunc("T3", "Overlap Studies", "Triple Exponential Moving Average (T3)", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInVFactor",0,"Volume Factor","Volume Factor",0.7, 0.0,1.0,2,0.01,1.0,0.05, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126694,7 +126694,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("TEMA", new AbsFunc("TEMA", "Overlap Studies", "Triple Exponential Moving Average", 50331648,
+        ABSTRACT.put("TEMA", new AbsFunc("TEMA", "Overlap Studies", "Triple Exponential Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126702,7 +126702,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("TRIMA", new AbsFunc("TRIMA", "Overlap Studies", "Triangular Moving Average", 50331648,
+        ABSTRACT.put("TRIMA", new AbsFunc("TRIMA", "Overlap Studies", "Triangular Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126726,7 +126726,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Nb of deviations",1.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("VWMA", new AbsFunc("VWMA", "Overlap Studies", "Volume Weighted Moving Average", 1124073472,
+        ABSTRACT.put("VWMA", new AbsFunc("VWMA", "Overlap Studies", "Volume Weighted Moving Average", 1124073473,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(0,"inPriceV",16) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
@@ -126738,7 +126738,7 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("WMA", new AbsFunc("WMA", "Overlap Studies", "Weighted Moving Average", 50331648,
+        ABSTRACT.put("WMA", new AbsFunc("WMA", "Overlap Studies", "Weighted Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));

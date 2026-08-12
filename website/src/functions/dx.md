@@ -42,6 +42,7 @@ Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then 
 | <span class="flag-box">✅</span> **Independent Y-Axis** <span class="flag-tip" tabindex="0" role="note" aria-label="Output is on its own scale, drawn in a separate pane below the price chart." data-tip="Output is on its own scale, drawn in a separate pane below the price chart.">i</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Candlestick</span> |
 | <span class="flag-box">☐</span> <span style="opacity:0.5">Can Output NaN or ±Inf</span> |
+| <span class="flag-box">☐</span> <span style="opacity:0.5">Identity at Period 1</span> |
 
 ## Implementation
 
