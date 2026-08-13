@@ -4,14 +4,6 @@ use serde::Deserialize;
 
 use crate::ir::{FuncDef, Input, OptInput, Output, ParamType, PriceComponent, PriceRef};
 
-// Every struct parsed out of `input/` denies unknown fields. serde's default is
-// to ignore them, which means a key retired from the schema keeps sitting in an
-// input file being silently discarded — the source of truth says one thing and
-// the generator reads another, and a full regeneration is byte-identical either
-// way, so nothing downstream can notice. `camel_case` survived #179's removal in
-// `input/wad/wad.yaml` exactly that way (#200). A typo'd key was invisible for
-// the same reason. Now both stop the run and name the file, the key and the
-// fields that were expected.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct YamlFunc {
