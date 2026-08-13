@@ -252,21 +252,35 @@ fn write_integer_opt(
     if let Some((min, max)) = opt.range {
         let min_i = min as i32;
         let max_i = max as i32;
+        // The suggested sweep triple is what the YAML declares, matching the C
+        // abstract table's own derivation (`abstract_rows.rs`,
+        // `ParamType::Integer`) and what `write_real_opt` above already does for
+        // reals. Restated here rather than shared, on the same reasoning as the
+        // C tables: the two derivations stay independently checkable (#164).
+        //
+        // This used to emit the range MAXIMUM for all three, for gen_code
+        // bug-compatibility. That made two shipped surfaces disagree — QSTICK
+        // reads 4/200/1 through `TA_GetOptInputParameterInfo` and 100000 three
+        // times here — across 71 of 171 functions, and it degenerated the
+        // parameter-optimisation hint these fields exist for (issue #207).
+        let (start_i, end_i, inc_i) = match opt.suggested {
+            Some((a, b, c)) => (a as i32, b as i32, c as i32),
+            None => (min_i, max_i.min(200), 1),
+        };
         out.push_str("\t\t\t\t<Range>\n");
         let _ = writeln!(out, "\t\t\t\t\t<Minimum>{min_i}</Minimum>");
         let _ = writeln!(out, "\t\t\t\t\t<Maximum>{max_i}</Maximum>");
-        // gen_code uses max for all integer suggested values.
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedStart>{max_i}</SuggestedStart>"
+            "\t\t\t\t\t<SuggestedStart>{start_i}</SuggestedStart>"
         );
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedEnd>{max_i}</SuggestedEnd>"
+            "\t\t\t\t\t<SuggestedEnd>{end_i}</SuggestedEnd>"
         );
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedIncrement>{max_i}</SuggestedIncrement>"
+            "\t\t\t\t\t<SuggestedIncrement>{inc_i}</SuggestedIncrement>"
         );
         out.push_str("\t\t\t\t</Range>\n");
     }
