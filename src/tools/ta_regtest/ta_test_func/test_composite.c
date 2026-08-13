@@ -47,8 +47,7 @@
  *  072026 MF,CC  Oracle check via checkOracleValue (near-zero absolute floor).
  *  072126 MF,CC  CMF differential leg, at tolerance rather than bitwise (#134).
  *  072226 MF,CC  HMA legs, incl. TA_MAType_HMA dispatch parity (#139).
- *  081226 KL     EFI legs: EMA-of-force differential; TA_SetCompatibility
- *                pinned inert (deprecated for new functions).
+ *  081226 KL     EFI legs: EMA-of-force differential (#206).
  */
 
 /* Description:
@@ -185,7 +184,6 @@ static ErrorNumber test_hma_single_element( const TA_History *history );
 static ErrorNumber test_hma_param_reject( const TA_History *history );
 static ErrorNumber test_hma_large_period( void );
 static ErrorNumber test_efi_differential( const TA_History *history );
-static ErrorNumber test_efi_compat_inert( const TA_History *history );
 static ErrorNumber test_efi_oracle( const TA_History *history );
 static ErrorNumber test_efi_degenerate( void );
 static ErrorNumber test_efi_inplace( const TA_History *history );
@@ -276,10 +274,6 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_efi_differential( history );
-   if( retValue != TA_TEST_PASS )
-      return retValue;
-
-   retValue = test_efi_compat_inert( history );
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -1740,32 +1734,53 @@ static const int efiStartGrid[] = { 0, 1, 40, 200 };
 #define NB_EFI_START (sizeof(efiStartGrid)/sizeof(efiStartGrid[0]))
 
 /* External oracle: pandas-ta-classic 0.6.52 (pandas 3.0.3, numpy 2.5.1),
- * efi(close, volume, length=13), on the standard 252-bar close/volume series,
- * TA_FUNC_UNST_EMA = 0. outBegIdx 13, nb 239; idx below is the BAR index.
+ * efi(close, volume, length=N, mamode="ema") -- the identical call the
+ * ta_pandas_serve arm makes -- on the standard 252-bar close/volume series,
+ * TA_FUNC_UNST_EMA = 0. idx below is the BAR index.
+ *
+ * These are the oracle's OWN doubles, transcribed at the 17 digits that
+ * round-trip. They are NOT what TA_EFI returns: pandas' ewm computes
+ * alpha*x + (1-alpha)*prev where TA-Lib computes fma(x-prev, alpha, prev), and
+ * the seed sums differ in order (pandas .mean() sums pairwise), so the two
+ * trajectories separate in the last bits. Measured divergence at these bars is
+ * 1.4e-16 .. 7.0e-16 relative, and 1.4e-14 over all 239 values at period 13.
+ * Never make this leg bitwise -- pinning TA-Lib's own arithmetic here would
+ * turn the only formula-constraining leg into a restatement of leg (1).
  *
  * Single-arm, and the arm is not fully independent: Tulip ships no force index
- * at all, and pandas-ta-classic's EMA was written to reproduce TA-Lib's
- * seeding. So agreement on the warm-up anchor is by construction. What this
- * leg does corroborate independently is the algebra -- close.diff(1) * volume
- * over a 239-value trajectory -- which is the part leg (1) cannot see, since
- * both of its sides would share any wrong formula.
+ * at all, and pandas-ta-classic's EMA carries an explicit SMA-seed patch to
+ * reproduce TA-Lib's warm-up anchor (overlap/ema.py). So agreement on WHERE the
+ * output starts is by construction. What this leg does corroborate
+ * independently is the algebra -- close.diff(1) * volume smoothed over the
+ * whole trajectory -- which is the part leg (1) cannot see, since both of its
+ * sides would share any wrong formula.
  *
- * Never bitwise against pandas: its ewm computes alpha*x + (1-alpha)*prev
- * where TA-Lib computes prev + (x-prev)*alpha, and the seed sums differ in
- * order. Measured divergence over all 239 values is 1.4e-14 relative. */
-static const struct { int idx; double value; } efiOracle[] =
+ * Two periods: 13 (Elder's intermediate-term default) and 2 (his short-term
+ * reading, and the shortest period that still recurses). */
+static const struct { int period; int beg; int nb; } efiOracleCase[] =
 {
-   {  13,  -9561925.384615384    },
-   {  14,  -6316864.615384615    },
-   {  50,    728376.35804008122  },
-   { 125,   8077682.3251350578   },
-   { 200, -10621261.764120147    },
-   { 251,   -823984.84225067974  },
+   { 13, 13, 239 },
+   {  2,  2, 250 },
+};
+#define NB_EFI_ORACLE_CASE (sizeof(efiOracleCase)/sizeof(efiOracleCase[0]))
+
+static const struct { int period; int idx; double value; } efiOracle[] =
+{
+   { 13,  13,  -9561925.384615384    },
+   { 13,  14,  -6316864.615384616    },
+   { 13,  50,    728376.35804008192  },
+   { 13, 125,   8077682.3251350606   },
+   { 13, 200, -10621261.764120152    },
+   { 13, 251,   -823984.84225067939  },
+
+   {  2,   2,   7163838.25           },
+   {  2,   3,   4382490.0833333302   },
+   {  2,  50,  -3434299.4893575865   },
+   {  2, 125,   8329032.2864905726   },
+   {  2, 200,   -282589.81305174041  },
+   {  2, 251,  -1994114.3091605683   },
 };
 #define NB_EFI_ORACLE (sizeof(efiOracle)/sizeof(efiOracle[0]))
-#define EFI_ORACLE_PERIOD 13
-#define EFI_ORACLE_BEG    13
-#define EFI_ORACLE_NB     239
 #define EFI_ORACLE_TOL    1e-12
 /* Values run to ~1e7; the absolute floor only guards a crossing that lands on
  * an exact zero, which this corpus does not produce. */
@@ -1882,145 +1897,67 @@ static ErrorNumber test_efi_differential( const TA_History *history )
    return TA_TEST_PASS;
 }
 
-/* (1b) TA_SetCompatibility is INERT for EFI, and provably so.
-
-   ema.c still carries a TA_COMPATIBILITY_METASTOCK seeding arm. EFI does not:
-   the capability is being deprecated, it is preserved only for the functions
-   that already shipped with it, and it is unreachable from the Rust, Java and
-   C# APIs, none of which expose TA_SetCompatibility. Honouring it in a new
-   function would make its C output diverge from three backends that cannot
-   read the setting.
-
-   The obvious test -- "EFI under METASTOCK equals EFI under DEFAULT" -- passes
-   for two different reasons, and only one of them is the contract: it also
-   passes if TA_SetCompatibility never reached the library at all. So the leg
-   carries a positive control: the SAME force series through TA_EMA, which does
-   still honour the setting, must CHANGE. If that control ever stops changing,
-   this test has stopped testing anything and says so. */
-static ErrorNumber test_efi_compat_inert( const TA_History *history )
-{
-   unsigned int g;
-   int i, nbBars, nbForce;
-   TA_RetCode rc;
-   TA_Integer begD, nbD, begM, nbM;
-   static TA_Real force[OUT_CAP];
-   static TA_Real outDefault[OUT_CAP];
-   static TA_Real outMeta[OUT_CAP];
-   static TA_Real emaDefault[OUT_CAP];
-   static TA_Real emaMeta[OUT_CAP];
-   ErrorNumber retValue = TA_TEST_PASS;
-   int emaMoved = 0;
-
-   nbBars  = (int)history->nbBars;
-   nbForce = efi_build_force( history, force );
-   if( nbForce < 0 )
-      return TA_TESTUTIL_TFRR_BAD_RETCODE;
-
-   for( g = 0; g < NB_EFI_GRID && retValue == TA_TEST_PASS; g++ )
-   {
-      int period = efiGrid[g];
-
-      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
-      rc = TA_EFI( 0, nbBars - 1, history->close, history->volume,
-                   period, &begD, &nbD, outDefault );
-      if( rc == TA_SUCCESS )
-         rc = TA_EMA( 0, nbForce - 1, force, period, &begM, &nbM, emaDefault );
-
-      TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
-      if( rc == TA_SUCCESS )
-         rc = TA_EFI( 0, nbBars - 1, history->close, history->volume,
-                      period, &begM, &nbM, outMeta );
-      if( rc == TA_SUCCESS )
-         rc = TA_EMA( 0, nbForce - 1, force, period, &begM, &nbM, emaMeta );
-      TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
-
-      if( rc != TA_SUCCESS )
-      {
-         printf( "EFI compatibility Fail [period %d]: retCode %d\n",
-                 period, (int)rc );
-         retValue = TA_TESTUTIL_TFRR_BAD_RETCODE;
-         break;
-      }
-
-      /* The contract: the setting does not reach EFI. */
-      for( i = 0; i < nbD; i++ )
-      {
-         if( memcmp( &outDefault[i], &outMeta[i], sizeof(double) ) != 0 )
-         {
-            printf( "EFI compatibility Fail [period %d] at out[%d]: "
-                    "METASTOCK %.17g != DEFAULT %.17g -- TA_SetCompatibility "
-                    "must be inert for this function\n",
-                    period, i, outMeta[i], outDefault[i] );
-            retValue = TA_TESTUTIL_TFRR_BAD_CALCULATION;
-            break;
-         }
-      }
-
-      /* The control: it does still reach TA_EMA on the same series. Period 1
-       * is exempt -- EMA's identity copy is seeding-independent by
-       * construction, so it cannot move and its not moving proves nothing. */
-      if( period > 1 )
-      {
-         for( i = 0; i < nbM; i++ )
-         {
-            if( memcmp( &emaDefault[i], &emaMeta[i], sizeof(double) ) != 0 )
-            {
-               emaMoved = 1;
-               break;
-            }
-         }
-      }
-   }
-
-   if( retValue == TA_TEST_PASS && !emaMoved )
-   {
-      printf( "EFI compatibility Fail: the control did not move -- "
-              "TA_SetCompatibility no longer changes TA_EMA either, so this "
-              "test would pass whether or not EFI honoured it\n" );
-      retValue = TA_TESTUTIL_TFRR_BAD_CALCULATION;
-   }
-
-   return retValue;
-}
-
 /* (2) EXTERNAL ORACLE. The only leg that constrains the formula. */
 static ErrorNumber test_efi_oracle( const TA_History *history )
 {
-   unsigned int k;
+   unsigned int c, k;
+   int nbCompared = 0;
    TA_RetCode rc;
    TA_Integer beg, nb;
    static TA_Real out[OUT_CAP];
 
-   rc = TA_EFI( 0, (int)history->nbBars - 1, history->close, history->volume,
-                EFI_ORACLE_PERIOD, &beg, &nb, out );
-   if( rc != TA_SUCCESS )
+   for( c = 0; c < NB_EFI_ORACLE_CASE; c++ )
    {
-      printf( "EFI oracle Fail: retCode %d\n", (int)rc );
-      return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   }
-   if( beg != EFI_ORACLE_BEG || nb != EFI_ORACLE_NB )
-   {
-      printf( "EFI oracle Fail: got beg=%d nb=%d expected %d/%d\n",
-              (int)beg, (int)nb, EFI_ORACLE_BEG, EFI_ORACLE_NB );
-      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
-   }
+      int period = efiOracleCase[c].period;
 
-   for( k = 0; k < NB_EFI_ORACLE; k++ )
-   {
-      int idx = efiOracle[k].idx - EFI_ORACLE_BEG;   /* bar -> output index */
-      double want = efiOracle[k].value;
-      double got  = out[idx];
-      double err; const char *mode;
-
-      if( !checkOracleValue( got, want, EFI_ORACLE_TOL, EFI_ORACLE_ABS,
-                             &err, &mode ) )
+      rc = TA_EFI( 0, (int)history->nbBars - 1, history->close, history->volume,
+                   period, &beg, &nb, out );
+      if( rc != TA_SUCCESS )
       {
-         printf( "EFI oracle Fail at bar %d (out[%d]): got %.17g expected %.17g "
-                 "(%s=%.3e > rel %.3e / abs %.3e)\n",
-                 efiOracle[k].idx, idx, got, want, mode, err,
-                 EFI_ORACLE_TOL, EFI_ORACLE_ABS );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         printf( "EFI oracle Fail [period %d]: retCode %d\n", period, (int)rc );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
       }
+      if( beg != efiOracleCase[c].beg || nb != efiOracleCase[c].nb )
+      {
+         printf( "EFI oracle Fail [period %d]: got beg=%d nb=%d expected %d/%d\n",
+                 period, (int)beg, (int)nb,
+                 efiOracleCase[c].beg, efiOracleCase[c].nb );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      for( k = 0; k < NB_EFI_ORACLE; k++ )
+      {
+         int idx;
+         double want, got, err;
+         const char *mode;
+
+         if( efiOracle[k].period != period )
+            continue;
+
+         idx  = efiOracle[k].idx - beg;   /* bar -> output index */
+         want = efiOracle[k].value;
+         got  = out[idx];
+
+         if( !checkOracleValue( got, want, EFI_ORACLE_TOL, EFI_ORACLE_ABS,
+                                &err, &mode ) )
+         {
+            printf( "EFI oracle Fail [period %d] at bar %d (out[%d]): got %.17g "
+                    "expected %.17g (%s=%.3e > rel %.3e / abs %.3e)\n",
+                    period, efiOracle[k].idx, idx, got, want, mode, err,
+                    EFI_ORACLE_TOL, EFI_ORACLE_ABS );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         nbCompared++;
+      }
+   }
+
+   /* Every pinned row must have been reached: a period typo in the table would
+    * otherwise silently drop its rows and leave the leg passing on fewer. */
+   if( nbCompared != (int)NB_EFI_ORACLE )
+   {
+      printf( "EFI oracle Fail: compared %d value(s) but the table carries %d\n",
+              nbCompared, (int)NB_EFI_ORACLE );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
    return TA_TEST_PASS;

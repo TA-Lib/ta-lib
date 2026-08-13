@@ -117,9 +117,6 @@ TA_RetCode efi(int startIdx, int endIdx,
     * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
     * here would make EFI's C output diverge from the other three backends for
     * a setting they cannot even read.
-    *
-    * So TA_SetCompatibility is inert for this function, in every backend, and
-    * test_composite.c pins that rather than leaving it to be inferred.
     */
    today = startIdx - lookbackTotal + 1;
    prevClose = inClose[today-1];

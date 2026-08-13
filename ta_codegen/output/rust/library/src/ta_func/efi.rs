@@ -68,9 +68,8 @@ impl Core {
     ///
     /// # Arguments
     ///
-    /// * `optInTimePeriod` — EMA smoothing length. Default 13, Elder's intermediate-term setting;
-    ///   his short-term reading uses 2. Obeys `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)`.
-    ///   (default 13, range 1..=100000)
+    /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
+    ///   1..=100000)
     ///
     /// Returns `usize::MAX` when a parameter is out of range. Integer parameters accept `i32::MIN`
     /// to select their default value.
@@ -88,10 +87,15 @@ impl Core {
         return (optInTimePeriod + self.unstable_period[FuncUnstId::EMA as usize]) as usize;
     }
     /// Alexander Elder's Force Index (*Trading for a Living*, 1993): volume-weighted momentum. Each
-    /// bar's close-to-close move is multiplied by that bar's volume — direction from the price
-    /// change, conviction from the volume behind it — and the result is smoothed with an
-    /// exponential moving average. Elder reads a 2-period smoothing as the short-term force and 13
-    /// as the intermediate-term one.
+    /// bar's close-to-close move is weighted by that bar's volume, and the result is smoothed with
+    /// an exponential moving average. The sign is the direction of the move; the size combines how
+    /// far price travelled with how much volume stood behind it. Elder reads two settings — 2 for
+    /// the short term, which he pairs with a 22-period EMA of price to mark corrections against an
+    /// established trend, and 13 for the intermediate term, the default here. A divergence against
+    /// price can be confirmed by a zero-line cross. Beyond Elder, much longer settings are also in
+    /// use, 100 or so, for the longer-term balance between buyers and sellers. Nothing normalises
+    /// the result, so it scales with the instrument's own volume: read its sign and its shape over
+    /// time, not its level against another instrument.
     ///
     /// # Formula
     ///
@@ -107,9 +111,8 @@ impl Core {
     /// * `endIdx` — End index of the requested calculation range (inclusive).
     /// * `inClose` — Close price of each bar.
     /// * `inVolume` — Volume of each bar.
-    /// * `optInTimePeriod` — EMA smoothing length. Default 13, Elder's intermediate-term setting;
-    ///   his short-term reading uses 2. Obeys `TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)`.
-    ///   (default 13, range 1..=100000)
+    /// * `optInTimePeriod` — EMA period applied to the force series (default 13, range
+    ///   1..=100000)
     /// * `outBegIdx` — Set to the input index of the first output value.
     /// * `outNBElement` — Set to the number of output values written.
     /// * `outReal` — Smoothed force.
@@ -164,11 +167,8 @@ impl Core {
     ///   2-period and 13-period smoothing he reads as short- and intermediate-term.
     /// * StockCharts ChartSchool, *Force Index*: `Force Index(1) = {Close - Close prior} x Volume`,
     ///   `Force Index(13) = 13-period EMA of Force Index(1)`.
-    /// * TradingView's built-in `ta.fi(length)` is `ta.ema(ta.change(close) * volume, length)`;
-    ///   MotiveWave and Investopedia agree. No competing formula was found.
-    /// * pandas-ta-classic `efi` computes the same form; its EMA was written to reproduce TA-Lib's
-    ///   seeding, so the two agree on the warm-up by construction rather than independently. Tulip
-    ///   Indicators ships no force index.
+    /// * MotiveWave, *Elder's Force Index*: `rawForce = vol * (price - prevP)`, smoothed by a
+    ///   moving average whose default method is EMA, at 2 and 13. No competing formula was found.
     ///
     /// Further reading: [ta-lib.org/functions/efi](https://ta-lib.org/functions/efi)
     pub fn EFI(
@@ -313,9 +313,6 @@ impl Core {
         // Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
         // here would make EFI's C output diverge from the other three backends for
         // a setting they cannot even read.
-        //
-        // So TA_SetCompatibility is inert for this function, in every backend, and
-        // test_composite.c pins that rather than leaving it to be inferred.
         today = startIdx - lookbackTotal + 1;
         prevClose = inClose[today - 1];
         i = (optInTimePeriod) as usize;
@@ -579,9 +576,6 @@ impl Core {
             // Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
             // here would make EFI's C output diverge from the other three backends for
             // a setting they cannot even read.
-            //
-            // So TA_SetCompatibility is inert for this function, in every backend, and
-            // test_composite.c pins that rather than leaving it to be inferred.
             today = startIdx - lookbackTotal + 1;
             prevClose = inClose[today - 1];
             i = (optInTimePeriod) as usize;

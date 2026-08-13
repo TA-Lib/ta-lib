@@ -71310,10 +71310,8 @@ public final class Core {
     * series is requested. Feed at least {@code lookback + 1} bars to get any
     * output.
     *
-    * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
-    *        intermediate-term setting; his short-term reading uses 2. Obeys
-    *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod EMA period applied to the force series (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int EFI_Lookback( int optInTimePeriod )
@@ -71437,9 +71435,6 @@ public final class Core {
        * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
        * here would make EFI's C output diverge from the other three backends for
        * a setting they cannot even read.
-       *
-       * So TA_SetCompatibility is inert for this function, in every backend, and
-       * test_composite.c pins that rather than leaving it to be inferred.
        */
       today = startIdx - lookbackTotal + 1;
       prevClose = inClose[today - 1];
@@ -71558,11 +71553,18 @@ public final class Core {
    }
    /**
     * Alexander Elder's Force Index (*Trading for a Living*, 1993):
-    * volume-weighted momentum. Each bar's close-to-close move is multiplied by
-    * that bar's volume — direction from the price change, conviction from the
-    * volume behind it — and the result is smoothed with an exponential moving
-    * average. Elder reads a 2-period smoothing as the short-term force and 13
-    * as the intermediate-term one.
+    * volume-weighted momentum. Each bar's close-to-close move is weighted by
+    * that bar's volume, and the result is smoothed with an exponential moving
+    * average. The sign is the direction of the move; the size combines how far
+    * price travelled with how much volume stood behind it. Elder reads two
+    * settings — 2 for the short term, which he pairs with a 22-period EMA of
+    * price to mark corrections against an established trend, and 13 for the
+    * intermediate term, the default here. A divergence against price can be
+    * confirmed by a zero-line cross. Beyond Elder, much longer settings are
+    * also in use, 100 or so, for the longer-term balance between buyers and
+    * sellers. Nothing normalises the result, so it scales with the instrument's
+    * own volume: read its sign and its shape over time, not its level against
+    * another instrument.
     * <p><b>Formula</b>
     * <pre>{@code
     * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
@@ -71578,10 +71580,8 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inClose Close price of each bar.
     * @param inVolume Volume of each bar.
-    * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
-    *        intermediate-term setting; his short-term reading uses 2. Obeys
-    *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod EMA period applied to the force series (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Smoothed force. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -71615,11 +71615,18 @@ public final class Core {
    }
    /**
     * Alexander Elder's Force Index (*Trading for a Living*, 1993):
-    * volume-weighted momentum. Each bar's close-to-close move is multiplied by
-    * that bar's volume — direction from the price change, conviction from the
-    * volume behind it — and the result is smoothed with an exponential moving
-    * average. Elder reads a 2-period smoothing as the short-term force and 13
-    * as the intermediate-term one.
+    * volume-weighted momentum. Each bar's close-to-close move is weighted by
+    * that bar's volume, and the result is smoothed with an exponential moving
+    * average. The sign is the direction of the move; the size combines how far
+    * price travelled with how much volume stood behind it. Elder reads two
+    * settings — 2 for the short term, which he pairs with a 22-period EMA of
+    * price to mark corrections against an established trend, and 13 for the
+    * intermediate term, the default here. A divergence against price can be
+    * confirmed by a zero-line cross. Beyond Elder, much longer settings are
+    * also in use, 100 or so, for the longer-term balance between buyers and
+    * sellers. Nothing normalises the result, so it scales with the instrument's
+    * own volume: read its sign and its shape over time, not its level against
+    * another instrument.
     * <p><b>Formula</b>
     * <pre>{@code
     * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
@@ -71638,10 +71645,8 @@ public final class Core {
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inClose Close price of each bar.
     * @param inVolume Volume of each bar.
-    * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
-    *        intermediate-term setting; his short-term reading uses 2. Obeys
-    *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
-    *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param optInTimePeriod EMA period applied to the force series (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param outReal Smoothed force. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -71949,9 +71954,6 @@ public final class Core {
           * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
           * here would make EFI's C output diverge from the other three backends for
           * a setting they cannot even read.
-          *
-          * So TA_SetCompatibility is inert for this function, in every backend, and
-          * test_composite.c pins that rather than leaving it to be inferred.
           */
          today = startIdx - lookbackTotal + 1;
          prevClose = inClose[today - 1];
