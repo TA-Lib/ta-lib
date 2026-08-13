@@ -1729,30 +1729,53 @@ fn dispatch_identity_cond_on_handle(
     Some(render_expression(&cond, registry, helpers, counter))
 }
 
-/// Per-arm dispatch bodies for Update/Peek/Close, plus the shared open
-/// switch. All labels render through the batch's own switch-label mapping so
-/// the arms read exactly like the batch dispatch they mirror.
-#[allow(clippy::too_many_lines)]
-/// The dispatch tier's `OpenAndFill` (MA): dispatch to the selected arm's
-/// `OpenAndFill`, which fills the caller's array; the identity path fills it
-/// directly; unsupported arms (MAMA) reject exactly as `Open` does. Handle
-/// layout is identical to `Open`'s, so Update/Peek/Close are shared.
+/// Which of the dispatch tier's three open entry points a body is being
+/// emitted for.
 ///
-/// `internal` emits the `OpenAndFillInternal` variant instead: anchored at the
-/// caller's `startIdx` rather than 0, dispatching to each arm's own
-/// `OpenAndFillInternal`, and without the aliasing rejection. MA is the callee
-/// of 13 of the 18 shipped composed sub-calls, so without this variant the
-/// issue-#192 fusion would reach almost none of them.
-///
-/// Dispatching to the arm's *public* `OpenAndFill` here would be wrong twice
-/// over: it has no `startIdx`, and it carries the aliasing guard the internal
-/// path deliberately drops.
-#[allow(clippy::too_many_arguments)]
-fn emit_dispatch_open_and_fill(
+/// The three differ in exactly four places — the signature, which pointers are
+/// checked, what the identity path hands back, and which callee entry point
+/// each arm delegates to. Everything else (the `TA_MAX_INDEX` bound, the
+/// optional-param validation, the handle allocation, the arm switch and the
+/// cleanup tail) is one text emitted once, so a fourth mode costs a variant
+/// and four arms rather than a fourth copy of the body.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum DispatchOpen {
+    /// `OpenInternal` (plus the public `Open` wrapper over it): warm the
+    /// handle and hand back the last bar only.
+    Scalar,
+    /// `OpenAndFill`: public, anchored at bar 0, fills the caller's arrays.
+    Fill,
+    /// `OpenAndFillInternal`: the same fill anchored at the caller's `startIdx`
+    /// and without the aliasing rejection — what a composed `Open` fuses into
+    /// (issue #192). MA is the callee of 13 of the 18 shipped composed
+    /// sub-calls, so without this variant the fusion would reach almost none
+    /// of them.
+    ///
+    /// Dispatching to the arm's *public* `OpenAndFill` here would be wrong
+    /// twice over: it has no `startIdx`, and it carries the aliasing guard the
+    /// internal path deliberately drops.
+    FillInternal,
+}
+
+impl DispatchOpen {
+    /// Whether this mode writes the caller's output arrays over the whole
+    /// history (and so carries the batch API's `outBegIdx`/`outNBElement`
+    /// pair) rather than handing back one value per output.
+    fn fills(self) -> bool {
+        self != Self::Scalar
+    }
+}
+
+/// One of the dispatch tier's open bodies (MA): dispatch to the selected arm's
+/// matching entry point, with the identity path served in place; unsupported
+/// arms (a callee with no stream) reject. Handle layout is the same in every
+/// mode, so Update/Peek/Close are shared.
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
+fn emit_dispatch_open(
     o: &mut String,
     func: &FuncDef,
     dp: &DispatchPlan,
-    internal: bool,
+    mode: DispatchOpen,
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
@@ -1764,12 +1787,18 @@ fn emit_dispatch_open_and_fill(
     let bar_args: String = inputs.join(", ");
     let case_of = |label: &str| render_c_switch_label(label, enums);
 
-    if internal {
+    if mode != DispatchOpen::Fill {
         let _ = writeln!(o, "/* Private function, not in public API. */");
-        let _ = writeln!(o, "{}\n{{", open_and_fill_internal_signature(func));
-    } else {
-        let _ = writeln!(o, "{}\n{{", open_and_fill_signature(func));
     }
+    let _ = writeln!(
+        o,
+        "{}\n{{",
+        match mode {
+            DispatchOpen::Scalar => open_internal_signature(func),
+            DispatchOpen::Fill => open_and_fill_signature(func),
+            DispatchOpen::FillInternal => open_and_fill_internal_signature(func),
+        }
+    );
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   TA_RetCode retCode;");
     let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
@@ -1779,34 +1808,44 @@ fn emit_dispatch_open_and_fill(
         .chain(outputs.iter())
         .map(|x| format!("!{x}"))
         .collect();
-    null_checks.push("!outBegIdx".into());
-    null_checks.push("!outNBElement".into());
+    if mode.fills() {
+        null_checks.push("!outBegIdx".into());
+        null_checks.push("!outNBElement".into());
+    }
     let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
     let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
-    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
-    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
-    // entry points would compute over exactly the ranges the batch call refuses,
-    // and the two are required to agree bit for bit.
+    // The warm-up covers bars 0..historyLen-1, so its last bar is an index like
+    // any other and TA_MAX_INDEX bounds it too (#180). Without this the
+    // streaming entry points would compute over exactly the ranges the batch
+    // call refuses, and the two are required to agree bit for bit.
     let _ = writeln!(
         o,
         "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
     );
-    // Aliasing: fill writes the caller's arrays, so they must be distinct from
-    // every input and from each other (the callee OpenAndFill also guards, but
-    // the identity path below fills directly).
-    let mut alias: Vec<String> = Vec::new();
-    for outp in &outputs {
-        for inp in &inputs {
-            alias.push(format!("(const void *){outp} == (const void *){inp}"));
-        }
+    if mode == DispatchOpen::Scalar {
+        // The arms forward it, but an identity-only or all-rejecting dispatch
+        // would leave it unread.
+        let _ = writeln!(o, "   (void)startIdx;");
     }
-    for (i, a) in outputs.iter().enumerate() {
-        for b in &outputs[i + 1..] {
-            alias.push(format!("(const void *){a} == (const void *){b}"));
+    if mode == DispatchOpen::Fill {
+        // Aliasing: fill writes the caller's arrays, so they must be distinct
+        // from every input and from each other (the callee OpenAndFill also
+        // guards, but the identity path below fills directly). The internal
+        // variant deliberately carries no such guard — see [`DispatchOpen`].
+        let mut alias: Vec<String> = Vec::new();
+        for outp in &outputs {
+            for inp in &inputs {
+                alias.push(format!("(const void *){outp} == (const void *){inp}"));
+            }
         }
-    }
-    if !alias.is_empty() && !internal {
-        let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
+        for (i, a) in outputs.iter().enumerate() {
+            for b in &outputs[i + 1..] {
+                alias.push(format!("(const void *){a} == (const void *){b}"));
+            }
+        }
+        if !alias.is_empty() {
+            let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", alias.join(" || "));
+        }
     }
     o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
@@ -1816,6 +1855,9 @@ fn emit_dispatch_open_and_fill(
         let _ = writeln!(o, "   sp->{0} = {0};", p.name);
     }
     if let Some(idp) = &dp.identity {
+        // The batch checks the identity path BEFORE the dispatch, for every
+        // arm value — mirror the order (min_history holds: the lookback is 0
+        // on this path for every arm).
         let cond = render_expression(&idp.condition, registry, helpers, counter);
         let lookback_args: Vec<String> =
             func.optional_inputs.iter().map(|p| p.name.clone()).collect();
@@ -1825,27 +1867,34 @@ fn emit_dispatch_open_and_fill(
             o,
             "      if( historyLen < {lb_call} + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
         );
-        let _ = writeln!(o, "      {{");
-        let _ = writeln!(o, "         int fillLb = {lb_call};");
-        let _ = writeln!(o, "         int fillIdx;");
-        if internal {
-            // batch( startIdx, .. ) begins at max(startIdx, lookback); the public
-            // entry point's startIdx is 0, so only this variant has to clamp.
-            let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
-            let _ = writeln!(
-                o,
-                "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
-            );
+        if mode.fills() {
+            let _ = writeln!(o, "      {{");
+            let _ = writeln!(o, "         int fillLb = {lb_call};");
+            let _ = writeln!(o, "         int fillIdx;");
+            if mode == DispatchOpen::FillInternal {
+                // batch( startIdx, .. ) begins at max(startIdx, lookback); the
+                // public entry point's startIdx is 0, so only this variant has
+                // to clamp.
+                let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+                let _ = writeln!(
+                    o,
+                    "         if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}"
+                );
+            }
+            let _ = writeln!(o, "         *outBegIdx = fillLb;");
+            let _ = writeln!(o, "         *outNBElement = historyLen - fillLb;");
+            let _ = writeln!(o, "         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
+            let _ = writeln!(o, "         {{");
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "            {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+            }
+            let _ = writeln!(o, "         }}");
+            let _ = writeln!(o, "      }}");
+        } else {
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "      *{out} = {inp}[historyLen - 1];");
+            }
         }
-        let _ = writeln!(o, "         *outBegIdx = fillLb;");
-        let _ = writeln!(o, "         *outNBElement = historyLen - fillLb;");
-        let _ = writeln!(o, "         for( fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ )");
-        let _ = writeln!(o, "         {{");
-        for (out, inp) in &idp.pairs {
-            let _ = writeln!(o, "            {out}[fillIdx] = {inp}[fillLb + fillIdx];");
-        }
-        let _ = writeln!(o, "         }}");
-        let _ = writeln!(o, "      }}");
         let _ = writeln!(o, "      *stream = sp;");
         let _ = writeln!(o, "      return TA_SUCCESS;");
         let _ = writeln!(o, "   }}");
@@ -1860,19 +1909,31 @@ fn emit_dispatch_open_and_fill(
             s
         });
         let arm_out_args = dispatch_arm_out_args(arm, &outputs);
+        // Each mode delegates to the callee's matching entry point: the fills
+        // hand the caller's arrays and out-meta straight down, and only the
+        // startIdx-anchored modes forward a startIdx.
+        let call = match mode {
+            DispatchOpen::Scalar => format!(
+                "{cp}_OpenInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}{arm_out_args} )"
+            ),
+            DispatchOpen::Fill => format!(
+                "{cp}_OpenAndFill( &sub, {bar_args}, historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} )"
+            ),
+            DispatchOpen::FillInternal => format!(
+                "{cp}_OpenAndFillInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} )"
+            ),
+        };
         let _ = writeln!(o, "   case {}:", case_of(&arm.label));
         let _ = writeln!(o, "      {{");
         let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
-        let _ = writeln!(
-            o,
-            "         retCode = {cp}_OpenAndFill{}( &sub, {bar_args}, {}historyLen, {opt_str}outBegIdx, outNBElement, {arm_out_args} );",
-            if internal { "Internal" } else { "" },
-            if internal { "startIdx, " } else { "" },
-        );
+        let _ = writeln!(o, "         retCode = {call};");
         let _ = writeln!(o, "         sp->sub = sub;");
         let _ = writeln!(o, "      }}");
         let _ = writeln!(o, "      break;");
     }
+    // Unsupported arms reject at open — a documented capability limitation
+    // (the callee has no stream yet). They regenerate as supported arms the
+    // moment the callee's YAML gains the stream flag.
     for arm in dp.arms.iter().filter(|a| !a.supported) {
         let _ = writeln!(
             o,
@@ -1894,6 +1955,9 @@ fn emit_dispatch_open_and_fill(
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
+/// Per-arm dispatch bodies for Update/Peek/Close, plus the shared open
+/// switch. All labels render through the batch's own switch-label mapping so
+/// the arms read exactly like the batch dispatch they mirror.
 #[allow(clippy::too_many_lines)]
 fn emit_dispatch(
     o: &mut String,
@@ -1924,110 +1988,15 @@ fn emit_dispatch(
     let _ = writeln!(o, "}};\n");
 
     // --- Open ----------------------------------------------------------------
-    let _ = writeln!(o, "/* Private function, not in public API. */\n{}\n{{", open_internal_signature(func));
-    let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
-    let _ = writeln!(o, "   TA_RetCode retCode;");
-    let _ = writeln!(o, "\n   if( !stream ) return TA_BAD_PARAM;");
-    let _ = writeln!(o, "   *stream = NULL;");
-    let null_checks: Vec<String> = inputs
-        .iter()
-        .chain(outputs.iter())
-        .map(|x| format!("!{x}"))
-        .collect();
-    let _ = writeln!(o, "   if( {} ) return TA_BAD_PARAM;", null_checks.join(" || "));
-    let _ = writeln!(o, "   if( historyLen < 1 ) return TA_BAD_PARAM;");
-    // The fill covers bars 0..historyLen-1, so its last bar is an index like any
-    // other and TA_MAX_INDEX bounds it too (#180). Without this the streaming
-    // entry points would compute over exactly the ranges the batch call refuses,
-    // and the two are required to agree bit for bit.
-    let _ = writeln!(
-        o,
-        "   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"
-    );
-    let _ = writeln!(o, "   (void)startIdx;");
-    o.push_str(&emit_opt_param_validation(func, "TA_BAD_PARAM", enums));
-    let _ = writeln!(
-        o,
-        "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );"
-    );
-    let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
-    let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "   sp->{0} = {0};", p.name);
-    }
-    if let Some(idp) = &dp.identity {
-        // The batch checks the identity path BEFORE the dispatch, for every
-        // arm value — mirror the order (min_history holds: the lookback is 0
-        // on this path for every arm).
-        let cond = render_expression(&idp.condition, registry, helpers, counter);
-        let lookback_args: Vec<String> =
-            func.optional_inputs.iter().map(|p| p.name.clone()).collect();
-        let _ = writeln!(o, "\n   if( {cond} )\n   {{");
-        let _ = writeln!(
-            o,
-            "      if( historyLen < TA_{n}_Lookback( {} ) + 1 ) {{ TA_Free( sp ); return TA_BAD_PARAM; }}",
-            lookback_args.join(", ")
-        );
-        for (out, inp) in &idp.pairs {
-            let _ = writeln!(o, "      *{out} = {inp}[historyLen - 1];");
+    // One body emitter, three modes. `Open` itself is the public one-liner over
+    // `OpenInternal` and is emitted next to the body it wraps; the two fill
+    // modes are their own public surface.
+    for mode in [DispatchOpen::Scalar, DispatchOpen::Fill, DispatchOpen::FillInternal] {
+        emit_dispatch_open(o, func, dp, mode, enums, registry, helpers, counter);
+        if mode == DispatchOpen::Scalar {
+            emit_open_wrapper(o, func);
         }
-        let _ = writeln!(o, "      *stream = sp;");
-        let _ = writeln!(o, "      return TA_SUCCESS;");
-        let _ = writeln!(o, "   }}");
     }
-    let _ = writeln!(o, "\n   retCode = TA_BAD_PARAM;");
-    let _ = writeln!(o, "   switch( {} )", dp.param);
-    let _ = writeln!(o, "   {{");
-    for arm in dp.arms.iter().filter(|a| a.supported) {
-        let cp = callee_prefix(&arm.callee);
-        let opt_args: Vec<String> = arm
-            .opt_args
-            .iter()
-            .map(|e| render_expression(e, registry, helpers, counter))
-            .collect();
-        let opt_str = opt_args
-            .iter()
-            .fold(String::new(), |mut s, a| {
-                let _ = write!(s, "{a}, ");
-                s
-            });
-        let arm_out_args = dispatch_arm_out_args(arm, &outputs);
-        let _ = writeln!(o, "   case {}:", case_of(&arm.label));
-        let _ = writeln!(o, "      {{");
-        let _ = writeln!(o, "         {cp}_Stream *sub = NULL;");
-        let _ = writeln!(
-            o,
-            "         retCode = {cp}_OpenInternal( &sub, {bar_args}, startIdx, historyLen, {opt_str}{arm_out_args} );",
-        );
-        let _ = writeln!(o, "         sp->sub = sub;");
-        let _ = writeln!(o, "      }}");
-        let _ = writeln!(o, "      break;");
-    }
-    // Unsupported arms reject at Open — a documented capability limitation
-    // (the callee has no stream yet). They regenerate as supported arms the
-    // moment the callee's YAML gains the stream flag.
-    for arm in dp.arms.iter().filter(|a| !a.supported) {
-        let _ = writeln!(
-            o,
-            "   case {}: /* no {} stream */",
-            case_of(&arm.label),
-            if arm.callee.is_empty() { "delegation" } else { &arm.callee }
-        );
-    }
-    let _ = writeln!(o, "   default:");
-    let _ = writeln!(o, "      retCode = TA_BAD_PARAM;");
-    let _ = writeln!(o, "      break;");
-    let _ = writeln!(o, "   }}");
-    let _ = writeln!(o, "\n   if( retCode != TA_SUCCESS )");
-    let _ = writeln!(o, "   {{");
-    let _ = writeln!(o, "      TA_Free( sp );");
-    let _ = writeln!(o, "      return retCode;");
-    let _ = writeln!(o, "   }}");
-    let _ = writeln!(o, "   *stream = sp;");
-    let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
-    emit_open_wrapper(o, func);
-    emit_dispatch_open_and_fill(o, func, dp, false, enums, registry, helpers, counter);
-    emit_dispatch_open_and_fill(o, func, dp, true, enums, registry, helpers, counter);
 
     // --- Update / Peek ---------------------------------------------------------
     let identity_handle_cond =

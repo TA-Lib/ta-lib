@@ -39,6 +39,29 @@ fn rust_stream_section(name: &str) -> String {
     full[start..].to_string()
 }
 
+/// The body of the first item whose signature line matches `needle`,
+/// brace-balanced. Panics if absent — every caller asserts presence first.
+fn body_of(src: &str, needle: &str) -> String {
+    let i = src.find(needle).unwrap_or_else(|| panic!("no definition matching {needle:?}"));
+    let j = src[i..].find('{').expect("definition has a body") + i;
+    let bytes = src.as_bytes();
+    let (mut depth, mut k) = (0usize, j);
+    loop {
+        match bytes[k] {
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        k += 1;
+    }
+    src[j..=k].to_string()
+}
+
 // ---------------------------------------------------------------------------
 // Loop tier
 // ---------------------------------------------------------------------------
@@ -326,16 +349,54 @@ fn rust_multi_output_scalar_wrapper_rebuilds_the_value_tuple() {
 }
 
 #[test]
-fn rust_exempt_tiers_keep_two_bodies() {
+fn rust_exempt_tiers_keep_their_own_bodies() {
     for (name, upper) in [("ma", "MA"), ("mavp", "MAVP")] {
         let s = rust_stream_section(name);
         assert!(
             !s.contains(&format!("fn {upper}_OpenCore(")),
-            "{upper} is an exempt tier and must keep two bodies"
+            "{upper} is an exempt tier and must keep its own bodies"
         );
         assert!(s.contains(&format!("fn {upper}_OpenInternal(")));
         assert!(s.contains(&format!("fn {upper}_OpenAndFill(")));
     }
+}
+
+/// The Rust twin of `dispatch_open_modes_differ_only_where_intended`: since
+/// issue #204 all three open entry points come out of one emitter over a mode
+/// list, so this is what pins which mode owns which difference. Rust needs no
+/// aliasing rejection — `&mut [f64]` parameters cannot overlap — so the
+/// differences are the out-meta pair, the startIdx anchor, and the callee entry
+/// point each arm delegates to.
+#[test]
+fn rust_dispatch_open_modes_differ_only_where_intended() {
+    let s = rust_stream_section("ma");
+    let scalar = body_of(&s, "fn MA_OpenInternal(");
+    let fill = body_of(&s, "fn MA_OpenAndFill(");
+    let internal = body_of(&s, "fn MA_OpenAndFillInternal(");
+
+    assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
+    for (what, body) in [("OpenAndFill", &fill), ("OpenAndFillInternal", &internal)] {
+        assert!(body.contains("outBegIdx"), "{what} carries the out-meta pair:\n{body}");
+    }
+
+    assert!(
+        internal.contains("let fillLb = if startIdx > fillLb"),
+        "OpenAndFillInternal must clamp the fill anchor up to startIdx:\n{internal}"
+    );
+    assert!(!fill.contains("startIdx"), "the public fill is anchored at bar 0:\n{fill}");
+
+    assert!(
+        scalar.contains("SMA_OpenInternal(") && !scalar.contains("_OpenAndFill"),
+        "the scalar arms open the sub's OpenInternal:\n{scalar}"
+    );
+    assert!(
+        fill.contains("SMA_OpenAndFill(") && !fill.contains("_OpenAndFillInternal("),
+        "the public fill arms call the sub's public OpenAndFill:\n{fill}"
+    );
+    assert!(
+        internal.contains("SMA_OpenAndFillInternal("),
+        "the internal fill arms call the sub's OpenAndFillInternal:\n{internal}"
+    );
 }
 
 #[test]

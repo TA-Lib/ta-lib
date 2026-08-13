@@ -2573,143 +2573,85 @@ fn emit_dispatch(
     let _ = writeln!(o, "        }}");
     let _ = writeln!(o, "    }}\n");
 
-    // --- open_internal ------------------------------------------------------
-    emit_open_sig(o, func, OutMode::Scalar);
-    emit_open_validation_head(o, func, OutMode::Scalar, enums);
-    let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
-    if let Some(idp) = &dp.identity {
-        // The identity path FIRST (batch order — it applies to every arm).
-        let cond = render_expr(&idp.condition, &ctx, &[], registry, helpers);
-        let _ = writeln!(o, "        if {cond} {{");
-        let _ = writeln!(
-            o,
-            "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
-        );
-        let _ = writeln!(
-            o,
-            "            let state = {state} {{ {params_join}, sub: {sub_enum}::Identity }};"
-        );
-        let vals: Vec<String> = idp
-            .pairs
-            .iter()
-            .map(|(_, inp)| format!("{inp}[historyLen - 1]"))
-            .collect();
-        let value = if vals.len() == 1 {
-            vals[0].clone()
-        } else {
-            format!("({})", vals.join(", "))
-        };
-        let _ = writeln!(
-            o,
-            "            return Ok(({handle} {{ core: self.clone(), state }}, {value}));"
-        );
-        let _ = writeln!(o, "        }}");
-    }
-    let _ = writeln!(o, "        let (sub, value) = match {} {{", dp.param);
-    for arm in &dp.arms {
-        let case = dispatch_case_label(&arm.label, enums);
-        if arm.supported {
-            let opts: Vec<String> = arm
-                .opt_args
-                .iter()
-                .map(|e| render_expr(e, &ctx, &[], registry, helpers))
-                .collect();
-            let opts = if opts.is_empty() {
-                String::new()
-            } else {
-                format!(", {}", opts.join(", "))
-            };
-            let _ = writeln!(o, "            {case} => {{");
-            let _ = writeln!(
-                o,
-                "                let (sub, subValue) = self.{}_OpenInternal({bar_args}, startIdx{opts})?;",
-                arm.callee.to_uppercase()
-            );
-            // Select the forwarded callee slot(s) in dispatch output order
-            // (a multi-output callee's open value is a tuple; Discard slots
-            // — MAMA's FAMA — are dropped, #125).
-            let value_expr = if arm.out_map.len() == 1 {
-                "subValue".to_string()
-            } else {
-                let mut parts: Vec<String> = Vec::new();
-                for k in 0..outputs.len() {
-                    let i = arm
-                        .out_map
-                        .iter()
-                        .position(|slot| matches!(slot, streaming::OutSlot::Forward(f) if *f == k))
-                        .expect("every dispatch output has a forwarded callee slot");
-                    parts.push(format!("subValue.{i}"));
-                }
-                if parts.len() == 1 {
-                    parts.remove(0)
-                } else {
-                    format!("({})", parts.join(", "))
-                }
-            };
-            let _ = writeln!(
-                o,
-                "                ({sub_enum}::{}(sub), {value_expr})",
-                callee_variant(&arm.callee)
-            );
-            let _ = writeln!(o, "            }}");
-        } else {
-            let what = if arm.callee.is_empty() { "delegation" } else { arm.callee.as_str() };
-            let _ = writeln!(o, "            /* no {what} stream */");
-            let _ = writeln!(o, "            {case} => return Err(RetCode::BadParam),");
-        }
-    }
-    let _ = writeln!(o, "            _ => return Err(RetCode::BadParam),");
-    let _ = writeln!(o, "        }};");
-    let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub }};");
-    let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state }}, value))");
-    let _ = writeln!(o, "    }}\n");
-
-    emit_open_wrapper(o, func, enums);
-
-    // Emitted twice: the public fill, and the startIdx-anchored internal one a
-    // composed caller fuses into (issue #192). MA is the Dispatch tier and has no
-    // OpenCore of its own, yet is the callee of most composed sub-calls, so without
-    // the second variant the fusion would reach almost none of them.
-    for internal in [false, true] {
-        // --- open_and_fill: delegate per arm; identity fills the shifted copy ---
-        let mode = if internal { OutMode::FillInternal } else { OutMode::Fill };
+    // --- open bodies --------------------------------------------------------
+    // One body emitter, three modes. The scalar open warms the handle and hands
+    // back the last history bar's value; the two fills write the caller's arrays
+    // over the whole history, the second of them anchored at the caller's startIdx —
+    // the seam a composed caller fuses into (issue #192). MA is the Dispatch
+    // tier and has no OpenCore of its own, yet is the callee of most composed
+    // sub-calls, so without that variant the fusion would reach almost none of
+    // them. `open` itself is the public one-liner over `open_internal`, emitted
+    // next to the body it wraps; the two fills are their own public surface.
+    for mode in [OutMode::Scalar, OutMode::Fill, OutMode::FillInternal] {
         emit_open_sig(o, func, mode);
         emit_open_validation_head(o, func, mode, enums);
         let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
         if let Some(idp) = &dp.identity {
+            // The identity path FIRST (batch order — it applies to every arm).
             let cond = render_expr(&idp.condition, &ctx, &[], registry, helpers);
             let _ = writeln!(o, "        if {cond} {{");
             let _ = writeln!(
                 o,
                 "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
             );
-            let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
-            if internal {
-                // batch( startIdx, .. ) begins at max(startIdx, lookback); the
-                // public entry point's startIdx is 0, so only this variant clamps.
-                let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
-                let _ = writeln!(
-                    o,
-                    "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
-                );
+            if mode != OutMode::Scalar {
+                let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
+                if mode == OutMode::FillInternal {
+                    // batch( startIdx, .. ) begins at max(startIdx, lookback); the
+                    // public entry point's startIdx is 0, so only this variant clamps.
+                    let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
+                    let _ = writeln!(
+                        o,
+                        "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
+                    );
+                }
+                let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
+                let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
+                let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
+                let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
+                for (out, inp) in &idp.pairs {
+                    let _ = writeln!(o, "                {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+                }
+                let _ = writeln!(o, "                fillIdx += 1;");
+                let _ = writeln!(o, "            }}");
             }
-            let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
-            let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
-            let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
-            let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
-            for (out, inp) in &idp.pairs {
-                let _ = writeln!(o, "                {out}[fillIdx] = {inp}[fillLb + fillIdx];");
-            }
-            let _ = writeln!(o, "                fillIdx += 1;");
-            let _ = writeln!(o, "            }}");
             let _ = writeln!(
                 o,
                 "            let state = {state} {{ {params_join}, sub: {sub_enum}::Identity }};"
             );
-            let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state }});");
+            match mode {
+                OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+                OutMode::Scalar => {
+                    let vals: Vec<String> = idp
+                        .pairs
+                        .iter()
+                        .map(|(_, inp)| format!("{inp}[historyLen - 1]"))
+                        .collect();
+                    let value = if vals.len() == 1 {
+                        vals[0].clone()
+                    } else {
+                        format!("({})", vals.join(", "))
+                    };
+                    let _ = writeln!(
+                        o,
+                        "            return Ok(({handle} {{ core: self.clone(), state }}, {value}));"
+                    );
+                }
+                OutMode::Fill | OutMode::FillInternal => {
+                    let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state }});");
+                }
+            }
             let _ = writeln!(o, "        }}");
         }
-        let _ = writeln!(o, "        let sub = match {} {{", dp.param);
+        // The scalar open carries the last history bar's value out of the match
+        // alongside the sub-handle; the fills have already written theirs into
+        // the caller's arrays.
+        let binding = match mode {
+            OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+            OutMode::Scalar => "let (sub, value)",
+            OutMode::Fill | OutMode::FillInternal => "let sub",
+        };
+        let _ = writeln!(o, "        {binding} = match {} {{", dp.param);
         for arm in &dp.arms {
             let case = dispatch_case_label(&arm.label, enums);
             if arm.supported {
@@ -2718,36 +2660,81 @@ fn emit_dispatch(
                     .iter()
                     .map(|e| render_expr(e, &ctx, &[], registry, helpers))
                     .collect();
-                let opts = if opts.is_empty() {
-                    String::new()
-                } else {
-                    format!("{}, ", opts.join(", "))
-                };
-                let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
-                // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
-                // own array, Discard materializes a throwaway buffer (the Rust
-                // rendering of C's NULL for a nullable output — same inline-Vec
-                // idiom the batch dispatch uses, #125).
-                let fill_outs: String = arm
-                    .out_map
-                    .iter()
-                    .map(|slot| match slot {
-                        streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                        streaming::OutSlot::Discard => format!(
-                            "&mut vec![0.0_f64; {}.len()][..]",
-                            inputs[0]
-                        ),
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                let _ = writeln!(
-                    o,
-                    "                self.{}_OpenAndFill{}({bar_args}, {}{opts}outBegIdx, outNBElement, {fill_outs})?,",
-                    arm.callee.to_uppercase(),
-                    if internal { "Internal" } else { "" },
-                    if internal { "startIdx, " } else { "" }
-                );
-                let _ = writeln!(o, "            ),");
+                match mode {
+                    OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+                    OutMode::Scalar => {
+                        let opts = if opts.is_empty() {
+                            String::new()
+                        } else {
+                            format!(", {}", opts.join(", "))
+                        };
+                        let _ = writeln!(o, "            {case} => {{");
+                        let _ = writeln!(
+                            o,
+                            "                let (sub, subValue) = self.{}_OpenInternal({bar_args}, startIdx{opts})?;",
+                            arm.callee.to_uppercase()
+                        );
+                        // Select the forwarded callee slot(s) in dispatch output order
+                        // (a multi-output callee's open value is a tuple; Discard slots
+                        // — MAMA's FAMA — are dropped, #125).
+                        let value_expr = if arm.out_map.len() == 1 {
+                            "subValue".to_string()
+                        } else {
+                            let mut parts: Vec<String> = Vec::new();
+                            for k in 0..outputs.len() {
+                                let i = arm
+                                    .out_map
+                                    .iter()
+                                    .position(|slot| matches!(slot, streaming::OutSlot::Forward(f) if *f == k))
+                                    .expect("every dispatch output has a forwarded callee slot");
+                                parts.push(format!("subValue.{i}"));
+                            }
+                            if parts.len() == 1 {
+                                parts.remove(0)
+                            } else {
+                                format!("({})", parts.join(", "))
+                            }
+                        };
+                        let _ = writeln!(
+                            o,
+                            "                ({sub_enum}::{}(sub), {value_expr})",
+                            callee_variant(&arm.callee)
+                        );
+                        let _ = writeln!(o, "            }}");
+                    }
+                    OutMode::Fill | OutMode::FillInternal => {
+                        let opts = if opts.is_empty() {
+                            String::new()
+                        } else {
+                            format!("{}, ", opts.join(", "))
+                        };
+                        let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
+                        // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
+                        // own array, Discard materializes a throwaway buffer (the Rust
+                        // rendering of C's NULL for a nullable output — same inline-Vec
+                        // idiom the batch dispatch uses, #125).
+                        let fill_outs: String = arm
+                            .out_map
+                            .iter()
+                            .map(|slot| match slot {
+                                streaming::OutSlot::Forward(k) => outputs[*k].clone(),
+                                streaming::OutSlot::Discard => format!(
+                                    "&mut vec![0.0_f64; {}.len()][..]",
+                                    inputs[0]
+                                ),
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        let _ = writeln!(
+                            o,
+                            "                self.{}_OpenAndFill{}({bar_args}, {}{opts}outBegIdx, outNBElement, {fill_outs})?,",
+                            arm.callee.to_uppercase(),
+                            if mode == OutMode::FillInternal { "Internal" } else { "" },
+                            if mode == OutMode::FillInternal { "startIdx, " } else { "" }
+                        );
+                        let _ = writeln!(o, "            ),");
+                    }
+                }
             } else {
                 let what = if arm.callee.is_empty() { "delegation" } else { arm.callee.as_str() };
                 let _ = writeln!(o, "            /* no {what} stream */");
@@ -2757,8 +2744,19 @@ fn emit_dispatch(
         let _ = writeln!(o, "            _ => return Err(RetCode::BadParam),");
         let _ = writeln!(o, "        }};");
         let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub }};");
-        let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+        match mode {
+            OutMode::Core => unreachable!("dispatch tier is exempt from the merge"),
+            OutMode::Scalar => {
+                let _ = writeln!(o, "        Ok(({handle} {{ core: self.clone(), state }}, value))");
+            }
+            OutMode::Fill | OutMode::FillInternal => {
+                let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+            }
+        }
         let _ = writeln!(o, "    }}\n");
+        if mode == OutMode::Scalar {
+            emit_open_wrapper(o, func, enums);
+        }
     }
     let _ = writeln!(o, "}}\n");
 

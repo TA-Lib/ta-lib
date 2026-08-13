@@ -7,7 +7,7 @@
 //! makes the previous-output feedback reads resolve), `OpenAndFill` passes stride
 //! 1 and the caller's array.
 //!
-//! Two tiers are exempt and keep two bodies, for reasons that are NOT stylistic:
+//! Two tiers are exempt and keep their own bodies, for reasons that are NOT stylistic:
 //! `Dispatch` (MA) delegates the fill to a sub's public `OpenAndFill`, and
 //! `PeriodBank` (MAVP) genuinely runs a DIFFERENT warm-up algorithm in each mode
 //! (scalar warms the bank with one whole-history sub-open; fill opens at
@@ -257,7 +257,7 @@ fn period_bank_keeps_two_bodies() {
 }
 
 #[test]
-fn dispatch_keeps_two_bodies() {
+fn dispatch_keeps_its_own_bodies() {
     // MA's arms delegate the fill to each sub's PUBLIC OpenAndFill, which writes
     // the caller's array directly; there is no stride to thread through.
     let src = stream_c("ma");
@@ -269,6 +269,80 @@ fn dispatch_keeps_two_bodies() {
     assert!(
         fill.contains("_OpenAndFill("),
         "MA's fill arms call the sub's OpenAndFill:\n{fill}"
+    );
+}
+
+/// The dispatch tier's three open entry points come out of ONE emitter over a
+/// mode list (issue #204), so nothing but this pins what each mode is supposed
+/// to differ in. It has to be pinned here because a guard that migrates to the
+/// wrong mode changes only which calls are REJECTED, and every value gate in
+/// the tree compares outputs over the ranges a call accepts — an acceptance-set
+/// change is invisible to all of them.
+#[test]
+fn dispatch_open_modes_differ_only_where_intended() {
+    let src = stream_c("ma");
+    let scalar = body_of(&src, "TA_RetCode TA_MA_OpenInternal(");
+    let fill = body_of(&src, "TA_RetCode TA_MA_OpenAndFill(");
+    let internal = body_of(&src, "TA_RetCode TA_MA_OpenAndFillInternal(");
+    let modes = [
+        ("OpenInternal", &scalar),
+        ("OpenAndFill", &fill),
+        ("OpenAndFillInternal", &internal),
+    ];
+
+    // The spine every mode shares. The #180 bound is the one that must agree
+    // with the batch call bit for bit.
+    for (what, body) in modes {
+        assert!(
+            body.contains("if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;"),
+            "{what} lost the TA_MAX_INDEX bound:\n{body}"
+        );
+        assert!(
+            body.contains("TA_Malloc( sizeof(*sp) )") && body.contains("if( !sp ) return TA_ALLOC_ERR;"),
+            "{what} lost the handle allocation:\n{body}"
+        );
+        assert!(body.contains("TA_Free( sp );"), "{what} lost the free-on-error tail:\n{body}");
+    }
+
+    // The batch API's out-meta pair belongs to the two fills alone.
+    assert!(!scalar.contains("outBegIdx"), "the scalar open has no out-meta:\n{scalar}");
+    for (what, body) in [("OpenAndFill", &fill), ("OpenAndFillInternal", &internal)] {
+        assert!(
+            body.contains("!outBegIdx || !outNBElement"),
+            "{what} must null-check the out-meta pair:\n{body}"
+        );
+    }
+
+    // The aliasing rejection belongs to the PUBLIC fill alone: the internal one
+    // is only ever called for a sub-call already proven non-aliasing (#192), and
+    // the scalar sink cannot alias an input.
+    assert!(fill.contains("(const void *)"), "the public fill must reject aliasing:\n{fill}");
+    assert!(
+        !internal.contains("(const void *)"),
+        "OpenAndFillInternal must NOT carry the aliasing guard:\n{internal}"
+    );
+    assert!(!scalar.contains("(const void *)"), "the scalar open has no aliasing hazard:\n{scalar}");
+
+    // Only the startIdx-anchored fill clamps its anchor; the public one has no
+    // startIdx at all.
+    assert!(
+        internal.contains("if( startIdx > fillLb ) fillLb = startIdx;"),
+        "OpenAndFillInternal must clamp the fill anchor up to startIdx:\n{internal}"
+    );
+    assert!(!fill.contains("startIdx"), "the public fill is anchored at bar 0:\n{fill}");
+
+    // Each mode delegates to the callee entry point that matches it.
+    assert!(
+        scalar.contains("TA_SMA_OpenInternal(") && !scalar.contains("_OpenAndFill"),
+        "the scalar arms open the sub's OpenInternal:\n{scalar}"
+    );
+    assert!(
+        fill.contains("TA_SMA_OpenAndFill(") && !fill.contains("_OpenAndFillInternal("),
+        "the public fill arms call the sub's public OpenAndFill:\n{fill}"
+    );
+    assert!(
+        internal.contains("TA_SMA_OpenAndFillInternal("),
+        "the internal fill arms call the sub's OpenAndFillInternal:\n{internal}"
     );
 }
 
