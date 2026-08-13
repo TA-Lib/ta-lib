@@ -392,7 +392,8 @@
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inVolume ) {
          PVO_Stream scratch = PEEK_SCRATCH.get();

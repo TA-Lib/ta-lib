@@ -804,7 +804,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          ACCBANDS_Stream scratch = PEEK_SCRATCH.get();
@@ -4763,7 +4764,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          ADXR_Stream scratch = PEEK_SCRATCH.get();
@@ -5353,7 +5355,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          APO_Stream scratch = PEEK_SCRATCH.get();
@@ -6037,7 +6040,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inHigh, double inLow ) {
          AROON_Stream scratch = PEEK_SCRATCH.get();
@@ -6806,7 +6810,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow ) {
          AROONOSC_Stream scratch = PEEK_SCRATCH.get();
@@ -10286,7 +10291,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          BBANDS_Stream scratch = PEEK_SCRATCH.get();
@@ -11102,7 +11108,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal0, double inReal1 ) {
          BETA_Stream scratch = PEEK_SCRATCH.get();
@@ -12940,7 +12947,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL2CROWS_Stream scratch = PEEK_SCRATCH.get();
@@ -13689,7 +13697,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL3BLACKCROWS_Stream scratch = PEEK_SCRATCH.get();
@@ -14506,7 +14515,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL3INSIDE_Stream scratch = PEEK_SCRATCH.get();
@@ -15302,7 +15312,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL3LINESTRIKE_Stream scratch = PEEK_SCRATCH.get();
@@ -16824,7 +16835,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL3STARSINSOUTH_Stream scratch = PEEK_SCRATCH.get();
@@ -18069,7 +18081,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDL3WHITESOLDIERS_Stream scratch = PEEK_SCRATCH.get();
@@ -19187,7 +19200,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLABANDONEDBABY_Stream scratch = PEEK_SCRATCH.get();
@@ -20394,7 +20408,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLADVANCEBLOCK_Stream scratch = PEEK_SCRATCH.get();
@@ -21442,7 +21457,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLBELTHOLD_Stream scratch = PEEK_SCRATCH.get();
@@ -22169,7 +22185,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLBREAKAWAY_Stream scratch = PEEK_SCRATCH.get();
@@ -22907,7 +22924,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLCLOSINGMARUBOZU_Stream scratch = PEEK_SCRATCH.get();
@@ -23678,7 +23696,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLCONCEALBABYSWALL_Stream scratch = PEEK_SCRATCH.get();
@@ -24536,7 +24555,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLCOUNTERATTACK_Stream scratch = PEEK_SCRATCH.get();
@@ -25320,7 +25340,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLDARKCLOUDCOVER_Stream scratch = PEEK_SCRATCH.get();
@@ -25959,7 +25980,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLDOJI_Stream scratch = PEEK_SCRATCH.get();
@@ -26675,7 +26697,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLDOJISTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -27443,7 +27466,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLDRAGONFLYDOJI_Stream scratch = PEEK_SCRATCH.get();
@@ -28829,7 +28853,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLEVENINGDOJISTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -29744,7 +29769,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLEVENINGSTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -30578,7 +30604,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLGAPSIDESIDEWHITE_Stream scratch = PEEK_SCRATCH.get();
@@ -31376,7 +31403,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLGRAVESTONEDOJI_Stream scratch = PEEK_SCRATCH.get();
@@ -32287,7 +32315,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHAMMER_Stream scratch = PEEK_SCRATCH.get();
@@ -33325,7 +33354,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHANGINGMAN_Stream scratch = PEEK_SCRATCH.get();
@@ -34238,7 +34268,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHARAMI_Stream scratch = PEEK_SCRATCH.get();
@@ -35066,7 +35097,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHARAMICROSS_Stream scratch = PEEK_SCRATCH.get();
@@ -35851,7 +35883,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHIGHWAVE_Stream scratch = PEEK_SCRATCH.get();
@@ -37285,7 +37318,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHIKKAKEMOD_Stream scratch = PEEK_SCRATCH.get();
@@ -38101,7 +38135,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLHOMINGPIGEON_Stream scratch = PEEK_SCRATCH.get();
@@ -38982,7 +39017,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLIDENTICAL3CROWS_Stream scratch = PEEK_SCRATCH.get();
@@ -39855,7 +39891,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLINNECK_Stream scratch = PEEK_SCRATCH.get();
@@ -40716,7 +40753,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLINVERTEDHAMMER_Stream scratch = PEEK_SCRATCH.get();
@@ -41601,7 +41639,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLKICKING_Stream scratch = PEEK_SCRATCH.get();
@@ -42497,7 +42536,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLKICKINGBYLENGTH_Stream scratch = PEEK_SCRATCH.get();
@@ -43285,7 +43325,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLLADDERBOTTOM_Stream scratch = PEEK_SCRATCH.get();
@@ -44028,7 +44069,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLLONGLEGGEDDOJI_Stream scratch = PEEK_SCRATCH.get();
@@ -44758,7 +44800,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLLONGLINE_Stream scratch = PEEK_SCRATCH.get();
@@ -45493,7 +45536,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLMARUBOZU_Stream scratch = PEEK_SCRATCH.get();
@@ -46174,7 +46218,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLMATCHINGLOW_Stream scratch = PEEK_SCRATCH.get();
@@ -47040,7 +47085,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLMATHOLD_Stream scratch = PEEK_SCRATCH.get();
@@ -48059,7 +48105,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLMORNINGDOJISTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -48980,7 +49027,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLMORNINGSTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -49804,7 +49852,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLONNECK_Stream scratch = PEEK_SCRATCH.get();
@@ -50577,7 +50626,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLPIERCING_Stream scratch = PEEK_SCRATCH.get();
@@ -51398,7 +51448,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLRICKSHAWMAN_Stream scratch = PEEK_SCRATCH.get();
@@ -52341,7 +52392,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLRISEFALL3METHODS_Stream scratch = PEEK_SCRATCH.get();
@@ -53310,7 +53362,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSEPARATINGLINES_Stream scratch = PEEK_SCRATCH.get();
@@ -54220,7 +54273,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSHOOTINGSTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -55038,7 +55092,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSHORTLINE_Stream scratch = PEEK_SCRATCH.get();
@@ -55696,7 +55751,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSPINNINGTOP_Stream scratch = PEEK_SCRATCH.get();
@@ -56645,7 +56701,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSTALLEDPATTERN_Stream scratch = PEEK_SCRATCH.get();
@@ -57550,7 +57607,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLSTICKSANDWICH_Stream scratch = PEEK_SCRATCH.get();
@@ -58352,7 +58410,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLTAKURI_Stream scratch = PEEK_SCRATCH.get();
@@ -59110,7 +59169,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLTASUKIGAP_Stream scratch = PEEK_SCRATCH.get();
@@ -59876,7 +59936,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLTHRUSTING_Stream scratch = PEEK_SCRATCH.get();
@@ -60624,7 +60685,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLTRISTAR_Stream scratch = PEEK_SCRATCH.get();
@@ -61380,7 +61442,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLUNIQUE3RIVER_Stream scratch = PEEK_SCRATCH.get();
@@ -62191,7 +62254,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLUPSIDEGAP2CROWS_Stream scratch = PEEK_SCRATCH.get();
@@ -63904,7 +63968,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          CMF_Stream scratch = PEEK_SCRATCH.get();
@@ -66189,7 +66254,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal0, double inReal1 ) {
          CORREL_Stream scratch = PEEK_SCRATCH.get();
@@ -71441,7 +71507,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          HMA_Stream scratch = PEEK_SCRATCH.get();
@@ -73063,7 +73130,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          HT_DCPERIOD_Stream scratch = PEEK_SCRATCH.get();
@@ -74902,7 +74970,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          HT_DCPHASE_Stream scratch = PEEK_SCRATCH.get();
@@ -76741,7 +76810,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          HT_PHASOR_Stream scratch = PEEK_SCRATCH.get();
@@ -78624,7 +78694,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          HT_SINE_Stream scratch = PEEK_SCRATCH.get();
@@ -80536,7 +80607,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          HT_TRENDLINE_Stream scratch = PEEK_SCRATCH.get();
@@ -82657,7 +82729,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inReal ) {
          HT_TRENDMODE_Stream scratch = PEEK_SCRATCH.get();
@@ -83938,7 +84011,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inOpen, double inClose ) {
          IMI_Stream scratch = PEEK_SCRATCH.get();
@@ -88831,7 +88905,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          MA_Stream scratch = PEEK_SCRATCH.get();
@@ -90855,7 +90930,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          MACDEXT_Stream scratch = PEEK_SCRATCH.get();
@@ -93227,7 +93303,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          MAMA_Stream scratch = PEEK_SCRATCH.get();
@@ -94686,7 +94763,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal, double inPeriods ) {
          MAVP_Stream scratch = PEEK_SCRATCH.get();
@@ -97122,7 +97200,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
          MFI_Stream scratch = PEEK_SCRATCH.get();
@@ -98846,7 +98925,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow ) {
          MIDPRICE_Stream scratch = PEEK_SCRATCH.get();
@@ -110048,7 +110128,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          PPO_Stream scratch = PEEK_SCRATCH.get();
@@ -111159,7 +111240,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inVolume ) {
          PVO_Stream scratch = PEEK_SCRATCH.get();
@@ -118942,7 +119024,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          STDDEV_Stream scratch = PEEK_SCRATCH.get();
@@ -119938,7 +120021,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          STOCH_Stream scratch = PEEK_SCRATCH.get();
@@ -121117,7 +121201,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inHigh, double inLow, double inClose ) {
          STOCHF_Stream scratch = PEEK_SCRATCH.get();
@@ -122049,7 +122134,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
          STOCHRSI_Stream scratch = PEEK_SCRATCH.get();
@@ -126683,7 +126769,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
          TRIMA_Stream scratch = PEEK_SCRATCH.get();
@@ -129747,7 +129834,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          ULTOSC_Stream scratch = PEEK_SCRATCH.get();
@@ -131462,7 +131550,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal, double inVolume ) {
          VWMA_Stream scratch = PEEK_SCRATCH.get();
@@ -133264,7 +133353,8 @@ public final class Core {
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose ) {
          WILLR_Stream scratch = PEEK_SCRATCH.get();

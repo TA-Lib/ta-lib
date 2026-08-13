@@ -884,7 +884,8 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
     let alloc_note = if reuse {
         "It runs on a scratch handle held per thread and\n\
          \x20      * reused, so the copy allocates nothing after the first peek of this\n\
-         \x20      * indicator on this thread."
+         \x20      * indicator on this thread. That scratch is retained for the life of\n\
+         \x20      * the thread."
     } else {
         "It runs on a throwaway copy, which for this\n\
          \x20      * handle's shape is cheaper than reusing one."
@@ -904,6 +905,13 @@ fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, reuse: bool) {
         // threads may peek the same one), and a static ThreadLocal keeps the
         // reuse bounded — one scratch per thread per indicator, whatever the
         // number of live handles. `copyFrom` retargets it, Core included.
+        //
+        // What it retains: one handle copy per (thread, indicator peeked),
+        // living as long as the thread and keeping that handle's Core and
+        // arrays reachable — releasing every stream handle does not free it.
+        // In a container this is the usual static-ThreadLocal shape, where a
+        // pooled thread outliving a deployment pins the value and its
+        // classloader; the streaming page says so.
         let _ = writeln!(o, "         {class} scratch = PEEK_SCRATCH.get();");
         let _ = writeln!(o, "         if( scratch == null ) {{");
         let _ = writeln!(o, "            scratch = new {class}(this);");

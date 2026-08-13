@@ -617,8 +617,10 @@ impl MA_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway, which for this handle's
-    /// shape the optimizer can fold away entirely — cheaper than reusing one.
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     #[doc(alias = "TA_MA_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

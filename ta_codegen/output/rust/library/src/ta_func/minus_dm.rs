@@ -863,8 +863,8 @@ impl MINUS_DM_Stream {
     /// Evaluate a forming bar without committing — bit-identical to what the
     /// next `update` with the same bar would return (it is the same code, run
     /// on a scratch copy of the state). Never writes the handle, so peeks may
-    /// run concurrently with each other. The copy is a throwaway, which for this handle's
-    /// shape the optimizer can fold away entirely — cheaper than reusing one.
+    /// run concurrently with each other. This handle holds only scalars, so the copy is a
+    /// few machine words and `peek` never allocates.
     #[doc(alias = "TA_MINUS_DM_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64) -> f64 {

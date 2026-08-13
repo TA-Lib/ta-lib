@@ -468,7 +468,8 @@
        * generated code, run on a copy). Never writes this handle, so peeks may
        * run concurrently with each other. It runs on a scratch handle held per thread and
        * reused, so the copy allocates nothing after the first peek of this
-       * indicator on this thread.
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
          CDLDRAGONFLYDOJI_Stream scratch = PEEK_SCRATCH.get();
