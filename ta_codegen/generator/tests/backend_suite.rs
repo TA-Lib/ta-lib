@@ -9722,22 +9722,30 @@ fn test_composed_open_fuses_every_sub_call() {
         let fused = stream.matches("_OpenAndFillInternal( &sub").count();
         let unfused = stream.matches("_OpenInternal( &sub").count();
         // The other two backends must reach the SAME split. They render the call
-        // differently (Rust slices, Java copyOfRange) but the decision is shared
+        // differently (Rust slices; Java passes the array itself wherever the
+        // sub-range is already the whole array, #203) but the decision is shared
         // — `SubCallStep::is_fusable` — so a per-backend divergence here means one
         // emitter silently stopped fusing, which no value gate can see.
         // Anchored on the first ARGUMENT so these count call sites, not the
-        // wrapper definitions (Rust sub-opens pass `&series[..n]`, Java sub-opens
-        // pass `java.util.Arrays.copyOfRange(..)`; both definitions break the
-        // line right after the paren).
+        // wrapper definitions (Rust sub-opens pass `&series[..n]`; both
+        // definitions break the line right after the paren).
         let r = backends::rust_stream::generate(&func, &enums, &registry, &helpers);
         assert_eq!(
             (r.matches("_OpenAndFillInternal(&").count(), r.matches("_OpenInternal(&").count()),
             (fused, unfused),
             "{name}: Rust fused/unfused split differs from C"
         );
+        // Java's first argument is no longer a reliable anchor — since #203 a
+        // sub-open passes a bare `inReal` where the copy carried nothing — so
+        // count the lines that ASSIGN a `sub<n>` handle instead. That is what
+        // separates a sub-open both from the wrapper definitions and from the
+        // public `_Open`'s own delegation to `_OpenInternal`.
         let j = backends::java_stream::generate(&func, &enums, &registry, &helpers);
+        let sub_opens = |needle: &str| {
+            j.lines().filter(|l| l.contains("sub") && l.contains(needle)).count()
+        };
         assert_eq!(
-            (j.matches("_OpenAndFillInternal(java").count(), j.matches("_OpenInternal(java").count()),
+            (sub_opens("_OpenAndFillInternal("), sub_opens("_OpenInternal(")),
             (fused, unfused),
             "{name}: Java fused/unfused split differs from C"
         );

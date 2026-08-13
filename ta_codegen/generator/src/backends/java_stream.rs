@@ -3036,6 +3036,11 @@ fn emit_composed_open(
         matype_map: HashMap::new(),
     };
     let region_len = region_stmts.len();
+    // Own inputs are exactly `historyLen` long — `emit_open_validation` above
+    // rejects any input whose length differs from the first one's, and
+    // `endIdx` is `historyLen - 1` — so a copy of `[0, endIdx]` out of one of
+    // them reproduces the array it was taken from. See the elision below.
+    let own_inputs: HashSet<String> = streaming::input_array_names(func).into_iter().collect();
     let mut inserts: Vec<(usize, String)> = Vec::new();
     // Combined-body indices whose statement a fused sub-open replaced.
     let mut replaced: HashSet<usize> = HashSet::new();
@@ -3061,7 +3066,21 @@ fn emit_composed_open(
                 } else {
                     src.clone()
                 };
-                format!("java.util.Arrays.copyOfRange({name}, 0, ({e_arg}) + 1)")
+                // Java has no slice type, so the range the callee may read is
+                // conveyed by materializing it. Where the range is the whole
+                // array the copy conveys nothing the array does not already
+                // say, and it is a `historyLen`-element allocate-copy-discard
+                // per sub-open (issue #203). Both halves of the condition are
+                // decidable here: the source is one of our own inputs (so its
+                // length is `historyLen`, checked above) and the range ends at
+                // `endIdx` (`historyLen - 1`). Nothing mutates the argument —
+                // the same parameter is `const double[]` in the C prototype
+                // and `&[f64]` in Rust — so the copy was never a defence.
+                if own_inputs.contains(&name) && e_arg == "endIdx" {
+                    name
+                } else {
+                    format!("java.util.Arrays.copyOfRange({name}, 0, ({e_arg}) + 1)")
+                }
             })
             .collect();
         let opts: Vec<String> = sub
