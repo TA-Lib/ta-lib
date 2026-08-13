@@ -88,6 +88,7 @@ COSH                Vector Trigonometric Cosh
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div
 DX                  Directional Movement Index
+EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
 EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor

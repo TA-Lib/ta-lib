@@ -198,6 +198,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [AD](/functions/ad.md) — Chaikin A/D Line
 - [ADOSC](/functions/adosc.md) — Chaikin A/D Oscillator
 - [CMF](/functions/cmf.md) — Chaikin Money Flow
+- [EFI](/functions/efi.md) — Elder's Force Index
 - [NVI](/functions/nvi.md) — Negative Volume Index
 - [OBV](/functions/obv.md) — On Balance Volume
 - [PVI](/functions/pvi.md) — Positive Volume Index

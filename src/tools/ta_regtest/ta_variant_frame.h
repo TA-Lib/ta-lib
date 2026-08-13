@@ -3797,6 +3797,46 @@ static const TA_VOptSpec TA_VOpt_DX[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
+static TA_RetCode TA_EFI_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_EFI(
+               startIdx,
+               endIdx,
+               in[0] /* inClose */,
+               in[1] /* inVolume */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_EFI_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_EFI(
+               startIdx,
+               endIdx,
+               in[0] /* inClose */,
+               in[1] /* inVolume */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_EFI[] = { TA_VIN_CLOSE, TA_VIN_VOLUME };
+static const TA_VOptSpec TA_VOpt_EFI[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 13.0 },
+};
+
 static TA_RetCode TA_EMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7122,6 +7162,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      2, TA_VIn_DIV, 0, NULL, 1, 0, 0 },
    { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, 0, 0 },
+   { "EFI", TA_EFI_VFrameD, TA_EFI_VFrameS,
+     2, TA_VIn_EFI, 1, TA_VOpt_EFI, 1, 0, 0 },
    { "EMA", TA_EMA_VFrameD, TA_EMA_VFrameS,
      1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, 0, 0 },
    { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
@@ -7282,6 +7324,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, 0, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 169
+#define TA_VARIANT_TABLE_SIZE 170
 
 #endif /* TA_VARIANT_FRAME_H */

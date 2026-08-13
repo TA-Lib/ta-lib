@@ -71108,6 +71108,797 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  KL       Kevin Lin (@kevinlincg)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY   Description
+     *  -------------------------------------------------------------------
+     *  081226 KL   Initial version (#206).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#EFI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
+        *        intermediate-term setting; his short-term reading uses 2. Obeys
+        *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int EFI_Lookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          /* One bar is consumed forming the first close-to-close change, then the
+           * EMA's own warm-up on top:
+           *    1 + ema_lookback(optInTimePeriod)
+           *  = 1 + (optInTimePeriod - 1) + TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)
+           */
+          return optInTimePeriod + this.unstablePeriod[FuncUnstId.EMA.ordinal()] ;
+
+       }
+       RetCode EFI_Internal( int startIdx,
+                             int endIdx,
+                             double inClose[],
+                             double inVolume[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+       {
+          double optInK_1 = 0;
+          double tempReal = 0;
+          double prevMA = 0;
+          double prevClose = 0;
+          double force = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+          /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
+           * close-to-close move weighted by that bar's volume, then smoothed with an
+           * EMA. Elder's 2-period reading is the short-term form and 13 the
+           * intermediate-term one -- that is the parameter, not a second formula.
+           *
+           *    force[t] = ( close[t] - close[t-1] ) * volume[t]
+           *    EFI      = EMA( force, optInTimePeriod )
+           *
+           * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
+           * in exactly that shape on purpose: the seed accumulates from 0.0 in the
+           * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
+           * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
+           * contract against the composed reference in test_composite.c -- MOM, then
+           * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+           *
+           * Nothing on the data path divides by an input, so issue #112 is satisfied
+           * structurally: a flat close gives force exactly 0.0 and output exactly
+           * 0.0, and zero volume likewise. The only division is by the period, a
+           * positive integer parameter.
+           *
+           * prevClose is carried in a scalar rather than re-read from inClose[t-1]
+           * because the C API allows outReal to alias an input: at bar t the slot
+           * holding close[t-1] may already have been overwritten by the output
+           * written a bar earlier. cmou.c carries its trailing value for the same
+           * reason.
+           */
+          /* Identify the minimum number of price bar needed
+           * to calculate at least one output.
+           */
+          lookbackTotal = EFI_Lookback(optInTimePeriod);
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          /* No smoothing at a period of 1: the output is the raw Force Index.
+           * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
+           * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
+           * only while consecutive values stay within a factor of two of each other.
+           * Force values swing by orders of magnitude, far more than the prices EMA
+           * warns about.
+           */
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             prevClose = inClose[today - 1];
+             while( today <= endIdx ) {
+                force = (inClose[today] - prevClose) * inVolume[today];
+                prevClose = inClose[today];
+                outReal[outIdx] = force;
+                outIdx = outIdx + 1;
+                today = today + 1;
+             }
+             outNBElement.value = outIdx;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          /* The first EMA value is a simple average of the first 'period' force
+           * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
+           * applied to the force series rather than to the input array.
+           *
+           * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
+           * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
+           * deprecated: it is preserved for the functions that already shipped with
+           * it and dropped from new ones, and it is not reachable at all from the
+           * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
+           * here would make EFI's C output diverge from the other three backends for
+           * a setting they cannot even read.
+           *
+           * So TA_SetCompatibility is inert for this function, in every backend, and
+           * test_composite.c pins that rather than leaving it to be inferred.
+           */
+          today = startIdx - lookbackTotal + 1;
+          prevClose = inClose[today - 1];
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             force = (inClose[today] - prevClose) * inVolume[today];
+             prevClose = inClose[today];
+             tempReal += force;
+             today = today + 1;
+          }
+          prevMA = tempReal / optInTimePeriod;
+          while( today <= startIdx ) {
+             force = (inClose[today] - prevClose) * inVolume[today];
+             prevClose = inClose[today];
+             prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+             today = today + 1;
+          }
+          outReal[0] = prevMA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             force = (inClose[today] - prevClose) * inVolume[today];
+             prevClose = inClose[today];
+             prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+             outReal[outIdx] = prevMA;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode EFI_Internal( int startIdx,
+                             int endIdx,
+                             float inClose[],
+                             float inVolume[],
+                             int optInTimePeriod,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             double outReal[] )
+       {
+          double optInK_1 = 0;
+          double tempReal = 0;
+          double prevMA = 0;
+          double prevClose = 0;
+          double force = 0;
+          int i = 0;
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+          lookbackTotal = EFI_Lookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          if( optInTimePeriod == 1 ) {
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             prevClose = (double)inClose[today - 1];
+             while( today <= endIdx ) {
+                force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+                prevClose = (double)inClose[today];
+                outReal[outIdx] = force;
+                outIdx = outIdx + 1;
+                today = today + 1;
+             }
+             outNBElement.value = outIdx;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          today = startIdx - lookbackTotal + 1;
+          prevClose = (double)inClose[today - 1];
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+             prevClose = (double)inClose[today];
+             tempReal += force;
+             today = today + 1;
+          }
+          prevMA = tempReal / optInTimePeriod;
+          while( today <= startIdx ) {
+             force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+             prevClose = (double)inClose[today];
+             prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+             today = today + 1;
+          }
+          outReal[0] = prevMA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             force = ((double)inClose[today] - prevClose) * (double)inVolume[today];
+             prevClose = (double)inClose[today];
+             prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+             outReal[outIdx] = prevMA;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+        * volume-weighted momentum. Each bar's close-to-close move is multiplied by
+        * that bar's volume — direction from the price change, conviction from the
+        * volume behind it — and the result is smoothed with an exponential moving
+        * average. Elder reads a 2-period smoothing as the short-term force and 13
+        * as the intermediate-term one.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
+        * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
+        * }</pre>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#EFI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inClose Close price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
+        *        intermediate-term setting; his short-term reading uses 2. Obeys
+        *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Smoothed force. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, or two outputs share one array.
+        * @throws NullPointerException if any input or output array is null.
+        *
+        * @see Core#AD
+        * @see Core#EMA
+        * @see Core#MFI
+        * @see Core#OBV
+        * @see Core#PVO
+        */
+       public OutRange EFI( int startIdx,
+                            int endIdx,
+                            double inClose[],
+                            double inVolume[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("EFI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+        * volume-weighted momentum. Each bar's close-to-close move is multiplied by
+        * that bar's volume — direction from the price change, conviction from the
+        * volume behind it — and the result is smoothed with an exponential moving
+        * average. Elder reads a 2-period smoothing as the short-term force and 13
+        * as the intermediate-term one.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
+        * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
+        * }</pre>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#EFI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inClose Close price of each bar.
+        * @param inVolume Volume of each bar.
+        * @param optInTimePeriod EMA smoothing length. Default 13, Elder's
+        *        intermediate-term setting; his short-term reading uses 2. Obeys
+        *        {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} (default 13; range
+        *        1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outReal Smoothed force. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, or two outputs share one array.
+        * @throws NullPointerException if any input or output array is null.
+        *
+        * @see Core#AD
+        * @see Core#EMA
+        * @see Core#MFI
+        * @see Core#OBV
+        * @see Core#PVO
+        */
+       public OutRange EFI( int startIdx,
+                            int endIdx,
+                            float inClose[],
+                            float inVolume[],
+                            int optInTimePeriod,
+                            double outReal[] )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = EFI_Internal(startIdx, endIdx, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("EFI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live EFI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#EFI} over the same series.
+        * Open with {@link Core#EFI_Open}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code copy} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code copy} never write the handle and may be called
+        * concurrently after safe publication. Independent handles (including
+        * {@code copy()} results) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class EFI_Stream {
+          Core core;
+          int optInTimePeriod;
+          double prevClose;
+          double optInK_1;
+          double prevMA;
+          double cur_outReal;
+          OutRange fillRange = OutRange.EMPTY;
+
+          EFI_Stream( Core core ) { this.core = core; }
+
+          /**
+           * The range filled by {@link Core#EFI_OpenAndFill}, or
+           * {@link OutRange#EMPTY} when this handle came from a plain
+           * {@code open} (which fills nothing). Never {@code null}; a
+           * successful {@code openAndFill} always writes at least one value,
+           * so {@link OutRange#isEmpty()} tells the two apart.
+           */
+          public OutRange fillRange() { return fillRange; }
+
+          EFI_Stream( EFI_Stream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.prevClose = other.prevClose;
+             this.optInK_1 = other.optInK_1;
+             this.prevMA = other.prevMA;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          void copyFrom( EFI_Stream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.prevClose = other.prevClose;
+             this.optInK_1 = other.optInK_1;
+             this.prevMA = other.prevMA;
+             this.cur_outReal = other.cur_outReal;
+             this.fillRange = other.fillRange;
+          }
+
+          /**
+           * Commit one closed bar; always produces the new current value.
+           * Never throws after a successful open; never allocates handle state.
+           */
+          public double update( double inClose, double inVolume ) {
+             core.EFI_StreamStep(this, inClose, inVolume);
+             return this.cur_outReal;
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return (it is the same
+           * generated code, run on a copy). Never writes this handle, so peeks may
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
+           */
+          public double peek( double inClose, double inVolume ) {
+             EFI_Stream scratch = new EFI_Stream(this);
+             core.EFI_StreamStep(scratch, inClose, inVolume);
+             return scratch.cur_outReal;
+          }
+
+          /**
+           * The value at the most recently committed bar — the last history bar
+           * right after open, then whatever the latest {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent deep copy of this stream: both evolve separately from
+           * here on (the Java rendering of the Rust handle's {@code Clone}).
+           */
+          public EFI_Stream copy() {
+             return new EFI_Stream(this);
+          }
+       }
+       void EFI_StreamStep( EFI_Stream sp, double inClose, double inVolume )
+       {
+          if( sp.optInTimePeriod == 1 ) {
+             double force = 0.0;
+             force = (inClose - sp.prevClose) * inVolume;
+             sp.prevClose = inClose;
+             sp.cur_outReal = force;
+          } else {
+             double force = 0.0;
+             force = (inClose - sp.prevClose) * inVolume;
+             sp.prevClose = inClose;
+             sp.prevMA = Math.fma(force - sp.prevMA, sp.optInK_1, sp.prevMA);
+             sp.cur_outReal = sp.prevMA;
+          }
+       }
+       private RetCode EFI_OpenCore( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          int historyLen = inClose.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 || inVolume.length != inClose.length ) {
+             return RetCode.BadParam;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == 1 ) {
+             double optInK_1 = 0;
+             double tempReal = 0;
+             double prevMA = 0;
+             double prevClose = 0;
+             double force = 0;
+             int i = 0;
+             int today = 0;
+             int outIdx = 0;
+             int lookbackTotal = 0;
+             optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+             /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
+              * close-to-close move weighted by that bar's volume, then smoothed with an
+              * EMA. Elder's 2-period reading is the short-term form and 13 the
+              * intermediate-term one -- that is the parameter, not a second formula.
+              *
+              *    force[t] = ( close[t] - close[t-1] ) * volume[t]
+              *    EFI      = EMA( force, optInTimePeriod )
+              *
+              * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
+              * in exactly that shape on purpose: the seed accumulates from 0.0 in the
+              * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
+              * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
+              * contract against the composed reference in test_composite.c -- MOM, then
+              * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+              *
+              * Nothing on the data path divides by an input, so issue #112 is satisfied
+              * structurally: a flat close gives force exactly 0.0 and output exactly
+              * 0.0, and zero volume likewise. The only division is by the period, a
+              * positive integer parameter.
+              *
+              * prevClose is carried in a scalar rather than re-read from inClose[t-1]
+              * because the C API allows outReal to alias an input: at bar t the slot
+              * holding close[t-1] may already have been overwritten by the output
+              * written a bar earlier. cmou.c carries its trailing value for the same
+              * reason.
+              */
+             /* Identify the minimum number of price bar needed
+              * to calculate at least one output.
+              */
+             lookbackTotal = EFI_Lookback(optInTimePeriod);
+             /* Move up the start index if there is not
+              * enough initial data.
+              */
+             if( startIdx < lookbackTotal ) {
+                startIdx = lookbackTotal;
+             }
+             /* Make sure there is still something to evaluate. */
+             if( startIdx > endIdx ) {
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+                return RetCode.OutOfRangeEndIndex ;
+             }
+             /* No smoothing at a period of 1: the output is the raw Force Index.
+              * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
+              * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
+              * only while consecutive values stay within a factor of two of each other.
+              * Force values swing by orders of magnitude, far more than the prices EMA
+              * warns about.
+              */
+             outBegIdx.value = startIdx;
+             outIdx = 0;
+             today = startIdx;
+             prevClose = inClose[today - 1];
+             while( today <= endIdx ) {
+                force = (inClose[today] - prevClose) * inVolume[today];
+                prevClose = inClose[today];
+                outReal[outIdx * outStride] = force;
+                outIdx = outIdx + 1;
+                today = today + 1;
+             }
+             outNBElement.value = outIdx;
+             /* Capture the live batch state into the handle. */
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.prevClose = prevClose;
+             sp.optInK_1 = optInK_1;
+             sp.prevMA = prevMA;
+             sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+             return RetCode.Success;
+          } else {
+             double optInK_1 = 0;
+             double tempReal = 0;
+             double prevMA = 0;
+             double prevClose = 0;
+             double force = 0;
+             int i = 0;
+             int today = 0;
+             int outIdx = 0;
+             int lookbackTotal = 0;
+             optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
+             /* Alexander Elder's Force Index (Trading for a Living, 1993): the one-bar
+              * close-to-close move weighted by that bar's volume, then smoothed with an
+              * EMA. Elder's 2-period reading is the short-term form and 13 the
+              * intermediate-term one -- that is the parameter, not a second formula.
+              *
+              *    force[t] = ( close[t] - close[t-1] ) * volume[t]
+              *    EFI      = EMA( force, optInTimePeriod )
+              *
+              * The arithmetic below is ema.c's with inReal[t] replaced by force[t], kept
+              * in exactly that shape on purpose: the seed accumulates from 0.0 in the
+              * same order, and the recurrence is (x - prevMA)*k + prevMA rather than the
+              * algebraically equal k*x + (1-k)*prevMA. That order IS the bit-exactness
+              * contract against the composed reference in test_composite.c -- MOM, then
+              * MULT, then EMA -- so do not tidy it. TRIX carries the same warning.
+              *
+              * Nothing on the data path divides by an input, so issue #112 is satisfied
+              * structurally: a flat close gives force exactly 0.0 and output exactly
+              * 0.0, and zero volume likewise. The only division is by the period, a
+              * positive integer parameter.
+              *
+              * prevClose is carried in a scalar rather than re-read from inClose[t-1]
+              * because the C API allows outReal to alias an input: at bar t the slot
+              * holding close[t-1] may already have been overwritten by the output
+              * written a bar earlier. cmou.c carries its trailing value for the same
+              * reason.
+              */
+             /* Identify the minimum number of price bar needed
+              * to calculate at least one output.
+              */
+             lookbackTotal = EFI_Lookback(optInTimePeriod);
+             /* Move up the start index if there is not
+              * enough initial data.
+              */
+             if( startIdx < lookbackTotal ) {
+                startIdx = lookbackTotal;
+             }
+             /* Make sure there is still something to evaluate. */
+             if( startIdx > endIdx ) {
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+                return RetCode.OutOfRangeEndIndex ;
+             }
+             /* No smoothing at a period of 1: the output is the raw Force Index.
+              * Explicit for the reason spelled out in ema.c -- at period 1 optInK_1 is
+              * exactly 1.0, so the recursion reduces to (x-prev)+prev, which returns x
+              * only while consecutive values stay within a factor of two of each other.
+              * Force values swing by orders of magnitude, far more than the prices EMA
+              * warns about.
+              */
+             outBegIdx.value = startIdx;
+             /* The first EMA value is a simple average of the first 'period' force
+              * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
+              * applied to the force series rather than to the input array.
+              *
+              * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
+              * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
+              * deprecated: it is preserved for the functions that already shipped with
+              * it and dropped from new ones, and it is not reachable at all from the
+              * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
+              * here would make EFI's C output diverge from the other three backends for
+              * a setting they cannot even read.
+              *
+              * So TA_SetCompatibility is inert for this function, in every backend, and
+              * test_composite.c pins that rather than leaving it to be inferred.
+              */
+             today = startIdx - lookbackTotal + 1;
+             prevClose = inClose[today - 1];
+             i = optInTimePeriod;
+             tempReal = 0.0;
+             while( i-- > 0 ) {
+                force = (inClose[today] - prevClose) * inVolume[today];
+                prevClose = inClose[today];
+                tempReal += force;
+                today = today + 1;
+             }
+             prevMA = tempReal / optInTimePeriod;
+             while( today <= startIdx ) {
+                force = (inClose[today] - prevClose) * inVolume[today];
+                prevClose = inClose[today];
+                prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+                today = today + 1;
+             }
+             outReal[0 * outStride] = prevMA;
+             outIdx = 1;
+             while( today <= endIdx ) {
+                force = (inClose[today] - prevClose) * inVolume[today];
+                prevClose = inClose[today];
+                prevMA = Math.fma(force - prevMA, optInK_1, prevMA);
+                outReal[outIdx * outStride] = prevMA;
+                outIdx = outIdx + 1;
+                today = today + 1;
+             }
+             outNBElement.value = outIdx;
+             /* Capture the live batch state into the handle. */
+             sp.optInTimePeriod = optInTimePeriod;
+             sp.prevClose = prevClose;
+             sp.optInK_1 = optInK_1;
+             sp.prevMA = prevMA;
+             sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+             return RetCode.Success;
+          }
+       }
+       private RetCode EFI_OpenBody( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+       {
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          return EFI_OpenCore( sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0 );
+       }
+       private RetCode EFI_OpenAndFillBody( EFI_Stream sp, double inClose[], double inVolume[], int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          if( (Object)outReal == (Object)inClose || (Object)outReal == (Object)inVolume ) {
+             return RetCode.BadParam;
+          }
+          return EFI_OpenCore( sp, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+       }
+       private RetCode EFI_OpenAndFillInternalBody( EFI_Stream sp, double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          return EFI_OpenCore(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+       }
+       /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       EFI_Stream EFI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          EFI_Stream sp = new EFI_Stream(this);
+          RetCode retCode = EFI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("EFI openAndFill: internal error");
+          }
+          throw new IllegalArgumentException("EFI openAndFill: " + retCode);
+       }
+       /* Internal startIdx-anchored open behind EFI_Open (composition seam). */
+       EFI_Stream EFI_OpenInternal( double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
+       {
+          EFI_Stream sp = new EFI_Stream(this);
+          RetCode retCode = EFI_OpenBody(sp, inClose, inVolume, startIdx, optInTimePeriod);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("EFI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("EFI open: internal error");
+          }
+          throw new IllegalArgumentException("EFI open: " + retCode);
+       }
+       /**
+        * Open a live EFI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#EFI} at that bar.
+        * <p>The history must hold at least {@code EFI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API).
+        */
+       public EFI_Stream EFI_Open( double inClose[], double inVolume[], int optInTimePeriod )
+       {
+          return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#EFI_Open} that also fills the output array(s) bit-identically
+        * to {@link Core#EFI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values.
+        * <p>The range written is on the returned handle:
+        * {@link EFI_Stream#fillRange()}.
+        */
+       public EFI_Stream EFI_OpenAndFill( double inClose[], double inVolume[], int optInTimePeriod, double outReal[] )
+       {
+          EFI_Stream sp = new EFI_Stream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = EFI_OpenAndFillBody(sp, inClose, inVolume, optInTimePeriod, outBegIdx, outNBElement, outReal);
+          sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.OutOfRangeEndIndex ) {
+             throw new InsufficientHistoryException("EFI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new IllegalStateException("EFI openAndFill: internal error");
+          }
+          throw new IllegalArgumentException("EFI openAndFill: " + retCode);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *
      *
@@ -138231,6 +139022,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("EFI", new AbsFunc("EFI", "Volume Indicators", "Elder's Force Index", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",13.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("EMA", new AbsFunc("EMA", "Overlap Studies", "Exponential Moving Average", 184549377,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -138763,6 +139558,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_DEMA\"")) return handle_DEMA(json);
         else if (json.contains("\"TA_DIV\"")) return handle_DIV(json);
         else if (json.contains("\"TA_DX\"")) return handle_DX(json);
+        else if (json.contains("\"TA_EFI\"")) return handle_EFI(json);
         else if (json.contains("\"TA_EMA\"")) return handle_EMA(json);
         else if (json.contains("\"TA_EXP\"")) return handle_EXP(json);
         else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
@@ -139023,6 +139819,8 @@ public class TaCodegenServe {
             sb.append("\"TA_DIV\"");
             sb.append(",");
             sb.append("\"TA_DX\"");
+            sb.append(",");
+            sb.append("\"TA_EFI\"");
             sb.append(",");
             sb.append("\"TA_EMA\"");
             sb.append(",");
@@ -147210,6 +148008,84 @@ public class TaCodegenServe {
                 f_inHigh,
                 f_inLow,
                 f_inClose,
+                optInTimePeriod,
+                outBegIdx, outNBElement, outArr0);
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_EFI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        double[] inVolume = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+            System.arraycopy(refVolume, 0, inVolume, 0, refN);
+        } else {
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+            double[] _tmp_inVolume = jsonDoubleArray(json, "inVolume");
+            inVolume = _tmp_inVolume;
+        }
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        double[] outArr0 = new double[endIdx - startIdx + 1];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        double[] _warm_inVolume = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inVolume, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0)
+        rc = core.EFI_Internal(
+            startIdx, endIdx,
+            inClose,
+            inVolume,
+            optInTimePeriod,
+            outBegIdx, outNBElement, outArr0);
+        else { try {
+            if (bench_mode == 1) {
+                core.EFI_Open(_warm_inClose, _warm_inVolume, optInTimePeriod);
+            } else {
+                core.EFI_OpenAndFill(_warm_inClose, _warm_inVolume, optInTimePeriod, outArr0);
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            float[] f_inVolume = new float[inVolume.length];
+            for (int _fi = 0; _fi < inVolume.length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.EFI_Internal(
+                startIdx, endIdx,
+                f_inClose,
+                f_inVolume,
                 optInTimePeriod,
                 outBegIdx, outNBElement, outArr0);
             usedFloat = 1;
@@ -162658,6 +163534,112 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_EFI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc = c2.EFI_Internal(0, svN - 1, fz_c, fz_v, optInTimePeriod, beg, nb, b0);
+            int lb = c2.EFI_Lookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.EFI_Open(fz_c, fz_v, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Core.EFI_Stream _fh = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
+                OutRange _fr = _fh.fillRange();
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                }
+                try { c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.EFI_Stream st;
+                try { st = c2.EFI_Open(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    if (t % 7 == 0) {
+                        double pk = st.peek(fz_c[t], fz_v[t]);
+                        double up = st.update(fz_c[t], fz_v[t]);
+                        if (svBne(pk, up)) peekAll = false;
+                        if (svBne(st.value(), up)) allOk = false;
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    } else {
+                        double up = st.update(fz_c[t], fz_v[t]);
+                        if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                    }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.EFI_Stream sA = c2.EFI_Open(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t], fz_v[t]);
+                        Core.EFI_Stream sB = sA.copy();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t], fz_v[t]);
+                            double uB = sB.update(fz_c[t], fz_v[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.EFI_Open(java.util.Arrays.copyOf(fz_c, lb), java.util.Arrays.copyOf(fz_v, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.EFI_Stream sD = c2.EFI_Open(fz_c, fz_v, Integer.MIN_VALUE);
+                Core.EFI_Stream sE = c2.EFI_Open(fz_c, fz_v, 13);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_EMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -171277,6 +172259,7 @@ public class TaCodegenServe {
         case "TA_DEMA": return sv_DEMA(json);
         case "TA_DIV": return sv_DIV(json);
         case "TA_DX": return sv_DX(json);
+        case "TA_EFI": return sv_EFI(json);
         case "TA_EMA": return sv_EMA(json);
         case "TA_EXP": return sv_EXP(json);
         case "TA_FLOOR": return sv_FLOOR(json);

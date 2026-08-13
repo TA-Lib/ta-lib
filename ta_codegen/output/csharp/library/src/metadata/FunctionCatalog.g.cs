@@ -201,6 +201,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeDema(),
             MakeDiv(),
             MakeDx(),
+            MakeEfi(),
             MakeEma(),
             MakeExp(),
             MakeFloor(),
@@ -2476,6 +2477,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.DX(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeEfi() => new(
+        name: "EFI",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Elder's Force Index",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceCV", PriceComponents.Close | PriceComponents.Volume, [PriceComponents.Close, PriceComponents.Volume]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 13, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.EFI_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.EFI(
+                startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

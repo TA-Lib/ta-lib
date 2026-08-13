@@ -200,6 +200,7 @@ public class TaCodegenServe {
             else if (method == "TA_DEMA") return Handle_DEMA(p, startIdx, endIdx);
             else if (method == "TA_DIV") return Handle_DIV(p, startIdx, endIdx);
             else if (method == "TA_DX") return Handle_DX(p, startIdx, endIdx);
+            else if (method == "TA_EFI") return Handle_EFI(p, startIdx, endIdx);
             else if (method == "TA_EMA") return Handle_EMA(p, startIdx, endIdx);
             else if (method == "TA_EXP") return Handle_EXP(p, startIdx, endIdx);
             else if (method == "TA_FLOOR") return Handle_FLOOR(p, startIdx, endIdx);
@@ -460,6 +461,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_DIV\"");
                 sb.Append(",");
                 sb.Append("\"TA_DX\"");
+                sb.Append(",");
+                sb.Append("\"TA_EFI\"");
                 sb.Append(",");
                 sb.Append("\"TA_EMA\"");
                 sb.Append(",");
@@ -1216,6 +1219,10 @@ public class TaCodegenServe {
         case "DX": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.DX_Lookback(optInTimePeriod);
+        }
+        case "EFI": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.EFI_Lookback(optInTimePeriod);
         }
         case "EMA": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -6978,6 +6985,60 @@ public class TaCodegenServe {
             var f_inClose = new float[inClose.Length];
             for (int _fi = 0; _fi < inClose.Length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
             rc = core.DX(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_EFI(JsonElement p, int startIdx, int endIdx) {
+        int n = endIdx - startIdx + 1;
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        if (GetInt(p, "bench_mode", 0) != 0)
+            return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}";
+        double[] inClose;
+        double[] inVolume;
+        if (use_preloaded != 0 && refN > 0) {
+            inClose = new double[refN]; Array.Copy(refClose, inClose, refN);
+            inVolume = new double[refN]; Array.Copy(refVolume, inVolume, refN);
+        } else {
+            inClose = GetDoubleArray(p, "inClose");
+            inVolume = GetDoubleArray(p, "inVolume");
+        }
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        double[] outArr0 = new double[n];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            rc = core.EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inClose = new float[inClose.Length];
+            for (int _fi = 0; _fi < inClose.Length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            var f_inVolume = new float[inVolume.Length];
+            for (int _fi = 0; _fi < inVolume.Length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
+            rc = core.EFI(startIdx, endIdx, f_inClose, f_inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
             usedFloat = 1;
         }
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {

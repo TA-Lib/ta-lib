@@ -857,6 +857,15 @@ TA_RetCode TA_DX_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_DX_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_EFI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_EFI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

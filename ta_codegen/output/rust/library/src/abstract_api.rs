@@ -124,6 +124,7 @@ pub enum FuncId {
     DEMA,
     DIV,
     DX,
+    EFI,
     EMA,
     EXP,
     FLOOR,
@@ -207,7 +208,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 169;
+    pub const COUNT: usize = 170;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNCS[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -390,7 +391,7 @@ impl FuncInfo {
 }
 
 /// All function metadata, indexed by [`FuncId`]. Link-time const, in `.rodata`.
-pub static FUNCS: [FuncInfo; 169] = [
+pub static FUNCS: [FuncInfo; 170] = [
     FuncInfo {
         id: FuncId::ACCBANDS,
         name: "ACCBANDS",
@@ -1382,6 +1383,17 @@ pub static FUNCS: [FuncInfo; 169] = [
         unst_id: Some(FuncUnstId::DX),
     },
     FuncInfo {
+        id: FuncId::EFI,
+        name: "EFI",
+        group: Group::VolumeIndicators,
+        hint: "Elder's Force Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 13, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::EMA,
         name: "EMA",
         group: Group::OverlapStudies,
@@ -2348,6 +2360,7 @@ pub fn get_func_handle(name: &str) -> Option<FuncId> {
         "DEMA" => FuncId::DEMA,
         "DIV" => FuncId::DIV,
         "DX" => FuncId::DX,
+        "EFI" => FuncId::EFI,
         "EMA" => FuncId::EMA,
         "EXP" => FuncId::EXP,
         "FLOOR" => FuncId::FLOOR,
@@ -2762,6 +2775,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
             FuncId::DIV => self.core.DIV_Lookback(),
             FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
+            FuncId::EFI => self.core.EFI_Lookback(self.int_opt[0]),
             FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
             FuncId::EXP => self.core.EXP_Lookback(),
             FuncId::FLOOR => self.core.FLOOR_Lookback(),
@@ -3821,6 +3835,15 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
                 let rc = self.core.DX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
+                self.real_out[0] = Some(o0);
+                rc
+            }
+            FuncId::EFI => {
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                if o0.len() < need { self.real_out[0] = Some(o0); return Err(RetCode::BadParam); } // f64
+                let rc = self.core.EFI(start_idx, end_idx, i0_3, i0_4, self.int_opt[0], &mut beg, &mut nb, &mut *o0);
                 self.real_out[0] = Some(o0);
                 rc
             }

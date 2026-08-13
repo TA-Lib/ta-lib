@@ -130,6 +130,7 @@ extern const TA_FuncDef TA_DEF_COSH;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
 extern const TA_FuncDef TA_DEF_DX;
+extern const TA_FuncDef TA_DEF_EFI;
 extern const TA_FuncDef TA_DEF_EMA;
 extern const TA_FuncDef TA_DEF_EXP;
 extern const TA_FuncDef TA_DEF_FLOOR;
@@ -324,6 +325,7 @@ const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_AD,
 &TA_DEF_ADOSC,
 &TA_DEF_CMF,
+&TA_DEF_EFI,
 &TA_DEF_NVI,
 &TA_DEF_OBV,
 &TA_DEF_PVI,
