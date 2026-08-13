@@ -154,6 +154,7 @@ extern const TA_FuncDef TA_DEF_MACD;
 extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
 extern const TA_FuncDef TA_DEF_MAMA;
+extern const TA_FuncDef TA_DEF_MARKETFI;
 extern const TA_FuncDef TA_DEF_MAVP;
 extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MAXINDEX;
@@ -328,6 +329,7 @@ const TA_FuncDef *TA_PerGroupFunc_6[] = {
 &TA_DEF_ADOSC,
 &TA_DEF_CMF,
 &TA_DEF_EFI,
+&TA_DEF_MARKETFI,
 &TA_DEF_NVI,
 &TA_DEF_OBV,
 &TA_DEF_PVI,

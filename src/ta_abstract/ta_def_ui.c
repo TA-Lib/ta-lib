@@ -88,6 +88,12 @@ const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLC =
                                     TA_IN_PRICE_LOW |
                                     TA_IN_PRICE_CLOSE };
 
+const TA_InputParameterInfo TA_DEF_UI_Input_Price_HLV =
+                                  { TA_Input_Price, "inPriceHLV",
+                                    TA_IN_PRICE_HIGH |
+                                    TA_IN_PRICE_LOW |
+                                    TA_IN_PRICE_VOLUME };
+
 const TA_InputParameterInfo TA_DEF_UI_Input_Price_HL =
                                   { TA_Input_Price, "inPriceHL",
                                     TA_IN_PRICE_HIGH |

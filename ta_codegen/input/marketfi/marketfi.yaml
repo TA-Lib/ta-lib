@@ -1,0 +1,12 @@
+name: MARKETFI
+group: Volume Indicators
+hint: Market Facilitation Index
+flags: [stream]
+inputs:
+  - name: inPriceHLV
+    type: price
+    price_components: [high, low, volume]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

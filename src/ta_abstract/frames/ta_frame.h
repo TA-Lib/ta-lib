@@ -1073,6 +1073,15 @@ TA_RetCode TA_MAMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_MAMA_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_MARKETFI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_MARKETFI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_MAVP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

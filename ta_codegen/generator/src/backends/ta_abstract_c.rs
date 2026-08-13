@@ -186,28 +186,24 @@ fn gen_def_ui_h() -> String {
     o.push('\n');
     o.push_str("extern const char *TA_GroupString[TA_NB_GROUP_ID];\n\n");
 
-    // Input externs
+    // Input externs. The price bundles are derived from PRICE_INPUT_CONSTANTS rather
+    // than listed again: ta_def_ui.c emits its definitions from that same table, and a
+    // hand-kept copy here would let the two fall out of step. Adding HLV for MARKETFI
+    // did exactly that -- the definition appeared, the declaration did not, and the
+    // build failed in table_m.c with an undeclared identifier pointing nowhere near
+    // the cause.
     o.push_str("/* Inputs */\n");
-    for name in &[
-        "Input_Real",
-        "Input_Real0",
-        "Input_Real1",
-        "Input_Integer",
-        "Input_Price_OHLCV",
-        "Input_Price_HLCV",
-        "Input_Price_OHLC",
-        "Input_Price_HLC",
-        "Input_Price_HL",
-        "Input_Price_OC",
-        "Input_Price_CV",
-        "Input_Price_V",
-        "Input_Periods",
-    ] {
+    for name in &["Input_Real", "Input_Real0", "Input_Real1", "Input_Integer"] {
+        let _ = writeln!(o, "extern const TA_InputParameterInfo TA_DEF_UI_{name};");
+    }
+    for components in PRICE_INPUT_CONSTANTS {
+        let suffix = price_bundle::suffix(components);
         let _ = writeln!(
             o,
-            "extern const TA_InputParameterInfo TA_DEF_UI_{name};"
+            "extern const TA_InputParameterInfo TA_DEF_UI_Input_Price_{suffix};"
         );
     }
+    o.push_str("extern const TA_InputParameterInfo TA_DEF_UI_Input_Periods;\n");
     o.push('\n');
 
     // Output externs
@@ -480,9 +476,10 @@ fn emit_predef_opt_input(o: &mut String, p: &PredefOptInput) {
     o.push_str("   NULL\n};\n\n");
 }
 
-/// The eight `TA_DEF_UI_Input_Price_*` constants `ta_def_ui.c` has declared since the
-/// 2002 initial revision. `OHLCV` is unused by any current function but stays declared:
-/// it is part of the shipped `ta_def_ui.h` surface.
+/// The `TA_DEF_UI_Input_Price_*` constants declared in `ta_def_ui.c`. Eight date from the
+/// 2002 initial revision; `HLV` was added for MARKETFI, the first function to want a range
+/// against volume without a close. `OHLCV` is unused by any current function but stays
+/// declared: it is part of the shipped `ta_def_ui.h` surface.
 const PRICE_INPUT_CONSTANTS: &[&[PriceComponent]] = &[
     &[
         PriceComponent::Open,
@@ -507,6 +504,11 @@ const PRICE_INPUT_CONSTANTS: &[&[PriceComponent]] = &[
         PriceComponent::High,
         PriceComponent::Low,
         PriceComponent::Close,
+    ],
+    &[
+        PriceComponent::High,
+        PriceComponent::Low,
+        PriceComponent::Volume,
     ],
     &[PriceComponent::High, PriceComponent::Low],
     &[PriceComponent::Open, PriceComponent::Close],
