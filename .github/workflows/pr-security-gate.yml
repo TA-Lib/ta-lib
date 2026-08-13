@@ -1,0 +1,68 @@
+# Free, always-on PR gate:
+#  - binary-check flags binary files added or modified in a PR — this is a
+#    source-only C/Rust/Java/C# library, so a binary blob in a diff is
+#    inherently unexpected.
+#  - secret-scan runs Betterleaks (github.com/betterleaks/betterleaks, MIT,
+#    by the original gitleaks author) over just the commits this PR
+#    introduces, via the official ghcr.io image — no GitHub Action
+#    dependency, no license key. GitHub's own native secret scanning
+#    (Settings > Code security) already covers the repo continuously at no
+#    cost; this is a second, PR-scoped pass with a different detection
+#    engine, not a replacement for it.
+#
+# Deliberately minimal otherwise: no paid secrets. Deeper/semantic review
+# (injected logic, etc.) is handled on demand via a Claude Code skill instead
+# of here, to avoid per-PR API cost — see .claude/skills/.
+name: PR Security Gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  binary-check:
+    name: Flag binary files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Flag binary files changed in this PR
+        run: |
+          set -euo pipefail
+          binaries=$(git diff --numstat "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" | awk '$1 == "-" && $2 == "-" {print $3}')
+          if [ -n "$binaries" ]; then
+            echo "::error::Binary file(s) changed in this PR — needs human review before merging:"
+            echo "$binaries"
+            exit 1
+          fi
+          echo "No binary files changed in this PR."
+
+  secret-scan:
+    name: Scan for secrets (Betterleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Image pinned to v1.7.4 by digest, not `:latest` — bump both together
+      # (`docker buildx imagetools inspect ghcr.io/betterleaks/betterleaks:<new tag>`
+      # to resolve a new digest).
+      # --redact: `-v` alone prints matched secret text verbatim; on a public
+      # repo that would leak the finding into a permanent public log, worse
+      # than the original exposure.
+      # GIT_CONFIG_*: the image's baked-in `safe.directory '*'` doesn't
+      # reliably take effect against a bind-mounted checkout owned by a
+      # different UID (reproduced locally; likely on GH-hosted runners too).
+      # Setting it via env avoids depending on HOME resolving to wherever the
+      # image's global gitconfig lives.
+      - name: Scan this PR's commits for secrets
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
+            ghcr.io/betterleaks/betterleaks@sha256:16f903f0100ce7358ef1f870858777e55bec94cf04c6b65c45d013274ea3311c \
+            git . -v --redact --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
