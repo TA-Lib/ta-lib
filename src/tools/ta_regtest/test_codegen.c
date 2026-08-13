@@ -168,6 +168,20 @@ static long g_floatSentinelEligible[NUM_LANGUAGES];
 static long g_floatSentinelWithOutput[NUM_LANGUAGES];
 static long g_floatSentinelEnumWithheld = 0;
 
+/* Functions that reached a real value comparison, per language. The closing
+ * banner used to read "All N language(s) passed codegen verification" off
+ * `langsTested` alone — a count of servers that STARTED, not of anything
+ * compared. A run filtered to post-cutover functions skips every one of them
+ * for want of a frozen ta_ref_serve baseline and still printed that line over a
+ * "0 passed, 0 failed" table, which is the most confident-sounding output in
+ * the tool attached to the least evidence. The skip itself is legitimate (those
+ * functions are covered by server_verify, --xlang-hash and their hard-coded
+ * tests), so this is not a failure on a filtered run — it is a banner that must
+ * stop claiming a pass it did not earn. Unfiltered it IS a failure: 171 shipped
+ * functions cannot all legitimately skip, so zero there means the sweep went
+ * dark. Mirrors the sentinel floor below. */
+static long g_codegenCompared[NUM_LANGUAGES];
+
 /* One line per language per kind of skipped leg, so the coverage a language
  * cannot take is stated in the log instead of quietly vanishing. */
 #define MAX_COMPAT_NOTES (NUM_LANGUAGES * 4)
@@ -3728,6 +3742,9 @@ static ErrorNumber test_codegen_for_language(
     printf("\n  %s: %d passed, %d failed, %d skipped\n",
            lang->display, ctx.passed, ctx.failed, ctx.skipped);
 
+    if( langIndex >= 0 && (unsigned int)langIndex < NUM_LANGUAGES )
+        g_codegenCompared[langIndex] = ctx.passed;
+
     /* Name the skips — an unnamed "6 skipped" reads as noise. The set is the
      * same for every language, so print it once (issue #137). All four variants
      * of every function are gated bitwise anyway by the VARIANT group. */
@@ -6890,6 +6907,41 @@ ErrorNumber test_codegen(const TA_History *history,
                    "function appeared to have no optional parameter, so the leg "
                    "asserted nothing anywhere\n");
             return TA_CODEGEN_OUTPUT_MISMATCH;
+        }
+
+        /* What the banner is allowed to claim. See g_codegenCompared. */
+        {
+            long comparedTotal = 0;
+            unsigned int li;
+
+            for( li = 0; li < NUM_LANGUAGES; li++ )
+                comparedTotal += g_codegenCompared[li];
+
+            if( comparedTotal == 0 )
+            {
+                printf("\n=============================================\n");
+                if( functionFilter == NULL )
+                {
+                    printf("CODEGEN FAILED: the sweep value-compared NOTHING in an "
+                           "unfiltered run — %d language server(s) started and every "
+                           "shipped function was skipped, so this run asserted no "
+                           "output value anywhere\n", langsTested);
+                    printf("=============================================\n");
+                    return TA_CODEGEN_OUTPUT_MISMATCH;
+                }
+                printf("NO VALUE COMPARISON: %d language server(s) started and ran "
+                       "the structural legs, but --function=%s selected no function "
+                       "this sweep can value-compare — every match was skipped (see "
+                       "the skip lines above).\n", langsTested, functionFilter);
+                printf("  This is NOT a pass. Post-cutover functions have no frozen "
+                       "ta_ref_serve baseline here; their cross-language values are "
+                       "gated by:  ta_regtest --xlang-hash --function=%s\n",
+                       functionFilter);
+                printf("=============================================\n");
+                write_timing_report("ta_regtest_timing.jsonl");
+                write_markdown_report("ta_regtest_report.md", languageFilter);
+                return TA_TEST_PASS;
+            }
         }
 
         printf("\n=============================================\n");
