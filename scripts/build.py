@@ -12,7 +12,8 @@
 #   scripts/build.py ta_regtest     Build the regression test runner (CMake)
 #   scripts/build.py ta_codegen     Build the Rust codegen tool (cargo)
 #   scripts/build.py generate       Generate per-function source for all backends (cargo)
-#   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo)
+#   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
+#                                   plus bin/ta_regtest so bin/ is runnable by hand
 #   scripts/build.py test           C reference regression tests
 #   scripts/build.py regtest        Full cross-language regression tests
 #   scripts/build.py clean          Remove build directory
@@ -100,7 +101,9 @@ def show_help():
   Building (Rust ta_codegen, via cargo — CMake never invokes cargo):
     ta_codegen          Build the Rust codegen tool
     generate            Generate per-function source for all backends
-    servers             Generate all source + compile JSON-RPC language servers
+    servers             Generate all source + compile JSON-RPC language servers,
+                        and bring bin/ta_regtest — the only thing that drives
+                        them — up to date, so bin/ can be run by hand
     format              Re-indent the ta_codegen/input/ C source of truth
     format-check        Verify inputs are formatted (fails if not); writes nothing
     clippy              Lint both Rust crates as the dev nightly does
@@ -315,11 +318,20 @@ def check_regtest_source_lists(root_dir: str) -> bool:
     return True
 
 # Rust targets run cargo directly (no CMake).
-CARGO_TARGETS = {'ta_codegen', 'generate', 'servers', 'format', 'format-check', 'clippy'}
+CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy'}
 
 # C targets map to a cmake target.
+#
+# `servers` is here rather than in CARGO_TARGETS because it stages bin/: it
+# compiles the language servers with cargo AND brings bin/ta_regtest — the only
+# thing that ever drives them — up to date, so bin/ is never left holding fresh
+# servers next to a runner built before the function list changed. `xlang-hash`
+# and `fuzz-064` already pair the two the same way. CMake decides whether there
+# is anything to rebuild, so the added step is a no-op on an unchanged tree, and
+# cmake was already a prerequisite of `servers` for every --language filter.
 SIMPLE_TARGETS = {
     'ta_regtest':  'ensure_ta_regtest_in_bin',
+    'servers':     'ensure_ta_regtest_in_bin',
     'test':        'test',
     'regtest':     'regtest',
 }
@@ -434,8 +446,6 @@ def main():
             run_codegen(root_dir, 'run', '--release', '--', 'format', '--check')
         elif args.target == 'clippy':
             run_clippy(root_dir)
-        else:  # servers
-            build_servers(root_dir, args.language)
         return
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)
@@ -452,8 +462,9 @@ def main():
 
     # The cross-language tests run the C ta_regtest binary against the language
     # servers, so build the servers (cargo) first — the CMake regtest target no
-    # longer does it.
-    if args.target == 'regtest':
+    # longer does it. `servers` runs the same cargo step and then falls through
+    # to ensure_ta_regtest_in_bin, so what it leaves in bin/ can be run by hand.
+    if args.target in ('servers', 'regtest'):
         build_servers(root_dir, args.language)
 
     if args.target == 'all':

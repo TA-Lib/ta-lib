@@ -77,7 +77,8 @@ scripts/build.py                # C library + all C tools (CMake)
 scripts/build.py ta_regtest     # Just the C test runner (CMake)
 scripts/build.py ta_codegen     # Rust codegen tool (cargo)
 scripts/build.py generate       # Regenerate per-function source for all backends (cargo)
-scripts/build.py servers        # Generate + compile JSON-RPC language servers (cargo)
+scripts/build.py servers        # Generate + compile the JSON-RPC language servers (cargo),
+                                # and refresh bin/ta_regtest so bin/ can be driven by hand
 
 # Test
 scripts/build.py test           # C reference tests only (quick)
