@@ -81,10 +81,9 @@ impl Core {
     /// Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published
     /// the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed.,
     /// p.368), the industry kept Williams' name on it, and that no-volume form is what Tulip
-    /// Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and MultiCharts all ship — so
-    /// it is what TA-Lib ships under this name. The volume-weighted original is a different series.
-    /// WAD is grouped with the volume indicators for discoverability next to AD, ADOSC and OBV, not
-    /// because it reads volume.
+    /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under this name. The
+    /// volume-weighted original is a different series. WAD is grouped with the volume indicators
+    /// for discoverability next to AD, ADOSC and OBV, not because it reads volume.
     ///
     /// # Formula
     ///
@@ -140,6 +139,23 @@ impl Core {
     /// assert!(out_nb > 0);
     /// assert!(out[..out_nb].iter().all(|v| v.is_finite()));
     /// ```
+    ///
+    /// # See also
+    ///
+    /// [`Core::AD`] · [`Core::ADOSC`] · [`Core::NVI`] · [`Core::OBV`] · [`Core::PVI`]
+    ///
+    /// # References
+    ///
+    /// * Larry Williams is the originator; Steven Achelis, *Technical Analysis from A to Z*, 2nd
+    ///   edition, page 368 publishes the no-volume form this ships, with the worked 12-bar example
+    ///   pinned in the test suite.
+    /// * IncredibleCharts, *Williams Accumulation Distribution* — Williams' volume-weighted
+    ///   original, `AD = Price Move × Volume` over the same true-range price move.
+    /// * IncredibleCharts, *Williams Accumulate Distribute* — the Achelis form under its
+    ///   disambiguating name, "not a volume indicator despite the name".
+    /// * Tulip Indicators `ti_wad` and pandas-ta-classic `wad` both compute this form; the two are
+    ///   external oracles for it, at a one-element alignment offset and index-for-index
+    ///   respectively.
     ///
     /// Further reading: [ta-lib.org/functions/wad](https://ta-lib.org/functions/wad)
     pub fn WAD(
@@ -205,7 +221,7 @@ impl Core {
         outIdx = 0;
         // The first bar of the requested range is measured against itself, i.e. it
         // contributes exactly 0.0. The accumulator therefore restarts wherever the
-        // caller starts, which is why this function is flagged start_dependent.
+        // caller starts, which is why this function is flagged path_dependent.
         prevClose = inClose[startIdx];
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
             close = inClose[i];
@@ -335,7 +351,7 @@ impl Core {
         outIdx = 0;
         // The first bar of the requested range is measured against itself, i.e. it
         // contributes exactly 0.0. The accumulator therefore restarts wherever the
-        // caller starts, which is why this function is flagged start_dependent.
+        // caller starts, which is why this function is flagged path_dependent.
         prevClose = inClose[startIdx];
         for i in (startIdx as usize)..(endIdx as usize) + 1 {
             close = inClose[i];

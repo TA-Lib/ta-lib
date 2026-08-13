@@ -124247,7 +124247,7 @@ public final class Core {
       outIdx = 0;
       /* The first bar of the requested range is measured against itself, i.e. it
        * contributes exactly 0.0. The accumulator therefore restarts wherever the
-       * caller starts, which is why this function is flagged start_dependent.
+       * caller starts, which is why this function is flagged path_dependent.
        */
       prevClose = inClose[startIdx];
       for( i = startIdx; i <= endIdx; i += 1 ) {
@@ -124331,11 +124331,10 @@ public final class Core {
     * volume; Steven Achelis published the modification that drops the
     * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
     * industry kept Williams' name on it, and that no-volume form is what Tulip
-    * Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and
-    * MultiCharts all ship — so it is what TA-Lib ships under this name. The
-    * volume-weighted original is a different series. WAD is grouped with the
-    * volume indicators for discoverability next to AD, ADOSC and OBV, not
-    * because it reads volume.
+    * Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
+    * this name. The volume-weighted original is a different series. WAD is
+    * grouped with the volume indicators for discoverability next to AD, ADOSC
+    * and OBV, not because it reads volume.
     * <p><b>Formula</b>
     * <pre>{@code
     * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
@@ -124361,6 +124360,12 @@ public final class Core {
     * @throws IllegalArgumentException if an optional parameter is outside its
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#AD
+    * @see Core#ADOSC
+    * @see Core#NVI
+    * @see Core#OBV
+    * @see Core#PVI
     */
    public OutRange WAD( int startIdx,
                         int endIdx,
@@ -124388,11 +124393,10 @@ public final class Core {
     * volume; Steven Achelis published the modification that drops the
     * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
     * industry kept Williams' name on it, and that no-volume form is what Tulip
-    * Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and
-    * MultiCharts all ship — so it is what TA-Lib ships under this name. The
-    * volume-weighted original is a different series. WAD is grouped with the
-    * volume indicators for discoverability next to AD, ADOSC and OBV, not
-    * because it reads volume.
+    * Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
+    * this name. The volume-weighted original is a different series. WAD is
+    * grouped with the volume indicators for discoverability next to AD, ADOSC
+    * and OBV, not because it reads volume.
     * <p><b>Formula</b>
     * <pre>{@code
     * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
@@ -124421,6 +124425,12 @@ public final class Core {
     * @throws IllegalArgumentException if an optional parameter is outside its
     *        documented range, or two outputs share one array.
     * @throws NullPointerException if any input or output array is null.
+    *
+    * @see Core#AD
+    * @see Core#ADOSC
+    * @see Core#NVI
+    * @see Core#OBV
+    * @see Core#PVI
     */
    public OutRange WAD( int startIdx,
                         int endIdx,
@@ -124590,7 +124600,7 @@ public final class Core {
       outIdx = 0;
       /* The first bar of the requested range is measured against itself, i.e. it
        * contributes exactly 0.0. The accumulator therefore restarts wherever the
-       * caller starts, which is why this function is flagged start_dependent.
+       * caller starts, which is why this function is flagged path_dependent.
        */
       prevClose = inClose[startIdx];
       for( i = startIdx; i <= endIdx; i += 1 ) {

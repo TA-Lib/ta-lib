@@ -4,7 +4,7 @@
 
 Williams' Accumulation/Distribution: a cumulative line that measures each bar's close against the *true range* extreme — the previous close, whenever it lies outside the current bar — rather than against the bar's own high and low. A close above the previous one accumulates the distance up from the true low; a close below it distributes the distance down from the true high; an unchanged close contributes nothing.
 
-**It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the industry kept Williams' name on it, and that no-volume form is what Tulip Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and MultiCharts all ship — so it is what TA-Lib ships under this name. The volume-weighted original is a different series. WAD is grouped with the volume indicators for discoverability next to AD, ADOSC and OBV, not because it reads volume.
+**It consumes no volume.** Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the industry kept Williams' name on it, and that no-volume form is what Tulip Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under this name. The volume-weighted original is a different series. WAD is grouped with the volume indicators for discoverability next to AD, ADOSC and OBV, not because it reads volume.
 
 ## Formula
 
@@ -33,4 +33,15 @@ TA-Lib Definition: [`wad.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codeg
 | Java | [`Core_WAD.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_WAD.java) |
 | C# | [`Core_WAD.cs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/csharp/library/src/Core_WAD.cs) |
 
-TA-Lib is also available for Python, R and more using a [wrapper](https://ta-lib.org/wrappers/).
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## See Also
+
+AD · ADOSC · NVI · OBV · PVI
+
+## References
+
+- Larry Williams is the originator; Steven Achelis, *Technical Analysis from A to Z*, 2nd edition, page 368 publishes the no-volume form this ships, with the worked 12-bar example pinned in the test suite.
+- IncredibleCharts, *Williams Accumulation Distribution* — Williams' volume-weighted original, `AD = Price Move × Volume` over the same true-range price move.
+- IncredibleCharts, *Williams Accumulate Distribute* — the Achelis form under its disambiguating name, "not a volume indicator despite the name".
+- Tulip Indicators `ti_wad` and pandas-ta-classic `wad` both compute this form; the two are external oracles for it, at a one-element alignment offset and index-for-index respectively.

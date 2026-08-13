@@ -132,7 +132,7 @@ public partial class Core
       outIdx = 0;
       /* The first bar of the requested range is measured against itself, i.e. it
        * contributes exactly 0.0. The accumulator therefore restarts wherever the
-       * caller starts, which is why this function is flagged start_dependent.
+       * caller starts, which is why this function is flagged path_dependent.
        */
       prevClose = inClose[startIdx];
       for( i = startIdx; i <= endIdx; i += 1 ) {
@@ -218,11 +218,10 @@ public partial class Core
    /// volume; Steven Achelis published the modification that drops the
    /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
    /// industry kept Williams' name on it, and that no-volume form is what Tulip
-   /// Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and
-   /// MultiCharts all ship — so it is what TA-Lib ships under this name. The
-   /// volume-weighted original is a different series. WAD is grouped with the
-   /// volume indicators for discoverability next to AD, ADOSC and OBV, not
-   /// because it reads volume.
+   /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
+   /// this name. The volume-weighted original is a different series. WAD is
+   /// grouped with the volume indicators for discoverability next to AD, ADOSC
+   /// and OBV, not because it reads volume.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -277,11 +276,10 @@ public partial class Core
    /// volume; Steven Achelis published the modification that drops the
    /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
    /// industry kept Williams' name on it, and that no-volume form is what Tulip
-   /// Indicators, pandas-ta-classic, cTrader, TC2000, WealthCharts and
-   /// MultiCharts all ship — so it is what TA-Lib ships under this name. The
-   /// volume-weighted original is a different series. WAD is grouped with the
-   /// volume indicators for discoverability next to AD, ADOSC and OBV, not
-   /// because it reads volume.
+   /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
+   /// this name. The volume-weighted original is a different series. WAD is
+   /// grouped with the volume indicators for discoverability next to AD, ADOSC
+   /// and OBV, not because it reads volume.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

@@ -69,7 +69,7 @@ TA_RetCode wad(int startIdx, int endIdx,
 
    /* The first bar of the requested range is measured against itself, i.e. it
     * contributes exactly 0.0. The accumulator therefore restarts wherever the
-    * caller starts, which is why this function is flagged start_dependent.
+    * caller starts, which is why this function is flagged path_dependent.
     */
    prevClose = inClose[startIdx];
 
