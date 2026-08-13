@@ -53,7 +53,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  071626 MF,CC  Template creation.
+ *  071626 MF,CC  Initial version (#119).
  */
 
 TA_LIB_API int TA_PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType )

@@ -44,13 +44,13 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  KL       Kevin
+ *  KL       Kevin Lin (@kevinlincg)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  081226 KL   Template creation.
+ *  081226 KL   Initial version (#200).
  */
 
 // Import types from parent module
@@ -80,10 +80,8 @@ impl Core {
     /// down from the true high; an unchanged close contributes nothing. **It consumes no volume.**
     /// Larry Williams' original multiplies each move by that bar's volume; Steven Achelis published
     /// the modification that drops the multiplier (*Technical Analysis from A to Z*, 2nd ed.,
-    /// p.368), the industry kept Williams' name on it, and that no-volume form is what Tulip
-    /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under this name. The
-    /// volume-weighted original is a different series. WAD is grouped with the volume indicators
-    /// for discoverability next to AD, ADOSC and OBV, not because it reads volume.
+    /// p.368), and the industry kept Williams' name on that no-volume form. That industry-wide
+    /// decision is enough for TA-Lib to ship the same form under the same name.
     ///
     /// # Formula
     ///
@@ -153,9 +151,6 @@ impl Core {
     ///   original, `AD = Price Move × Volume` over the same true-range price move.
     /// * IncredibleCharts, *Williams Accumulate Distribute* — the Achelis form under its
     ///   disambiguating name, "not a volume indicator despite the name".
-    /// * Tulip Indicators `ti_wad` and pandas-ta-classic `wad` both compute this form; the two are
-    ///   external oracles for it, at a one-element alignment offset and index-for-index
-    ///   respectively.
     ///
     /// Further reading: [ta-lib.org/functions/wad](https://ta-lib.org/functions/wad)
     pub fn WAD(

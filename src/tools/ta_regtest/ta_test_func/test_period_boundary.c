@@ -36,7 +36,7 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
- *  KL       Kevin Lin
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code (AI assistant)
  *
  * Change history:

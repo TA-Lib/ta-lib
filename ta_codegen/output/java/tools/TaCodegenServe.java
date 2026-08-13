@@ -66534,7 +66534,7 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  071626 MF,CC  Initial version.
+     *  071626 MF,CC  Initial version (#124).
      */
 
        /**
@@ -113456,7 +113456,7 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  071626 MF,CC  Template creation.
+     *  071626 MF,CC  Initial version (#119).
      */
 
        /**
@@ -134351,7 +134351,7 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  072026 MF,CC  First version.
+     *  072026 MF,CC  First version (#131).
      *  080926 MF,CC  Allow period of 1. Just copy input into output.
      */
 
@@ -135086,13 +135086,13 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
-     *  KL       Kevin
+     *  KL       Kevin Lin (@kevinlincg)
      *
      * Change history:
      *
      *  MMDDYY BY   Description
      *  -------------------------------------------------------------------
-     *  081226 KL   Template creation.
+     *  081226 KL   Initial version (#200).
      */
 
        /**
@@ -135252,12 +135252,9 @@ class Core {
         * the true high; an unchanged close contributes nothing. **It consumes no
         * volume.** Larry Williams' original multiplies each move by that bar's
         * volume; Steven Achelis published the modification that drops the
-        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
-        * industry kept Williams' name on it, and that no-volume form is what Tulip
-        * Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
-        * this name. The volume-weighted original is a different series. WAD is
-        * grouped with the volume indicators for discoverability next to AD, ADOSC
-        * and OBV, not because it reads volume.
+        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
+        * industry kept Williams' name on that no-volume form. That industry-wide
+        * decision is enough for TA-Lib to ship the same form under the same name.
         * <p><b>Formula</b>
         * <pre>{@code
         * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t
@@ -135314,12 +135311,9 @@ class Core {
         * the true high; an unchanged close contributes nothing. **It consumes no
         * volume.** Larry Williams' original multiplies each move by that bar's
         * volume; Steven Achelis published the modification that drops the
-        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
-        * industry kept Williams' name on it, and that no-volume form is what Tulip
-        * Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
-        * this name. The volume-weighted original is a different series. WAD is
-        * grouped with the volume indicators for discoverability next to AD, ADOSC
-        * and OBV, not because it reads volume.
+        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
+        * industry kept Williams' name on that no-volume form. That industry-wide
+        * decision is enough for TA-Lib to ship the same form under the same name.
         * <p><b>Formula</b>
         * <pre>{@code
         * TRH_t = max(close_{t-1}, high_t); TRL_t = min(close_{t-1}, low_t); AD_t = close_t - TRL_t if close_t > close_{t-1}, close_t - TRH_t if close_t < close_{t-1}, otherwise 0; WAD_t = WAD_{t-1} + AD_t

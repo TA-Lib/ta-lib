@@ -51,7 +51,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  071626 MF,CC  Initial version.
+ *  071626 MF,CC  Initial version (#124).
  */
 
 // Import types from parent module

@@ -53,7 +53,7 @@ public partial class Core
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  071626 MF,CC  Template creation.
+    *  071626 MF,CC  Initial version (#119).
     */
    /// <summary>
    /// Number of leading input bars <c>PVO</c> consumes before it can produce its

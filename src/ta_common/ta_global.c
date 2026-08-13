@@ -37,7 +37,7 @@
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *  AC       Angelo Ciceri
- *  KL       Kevin Lin
+ *  KL       Kevin Lin (@kevinlincg)
  *  CC       Claude Code
  *
  *

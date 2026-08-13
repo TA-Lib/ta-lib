@@ -10,7 +10,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  072026 MF,CC  First version.
+ *  072026 MF,CC  First version (#131).
  *  080926 MF,CC  Allow period of 1. Just copy input into output.
  */
 

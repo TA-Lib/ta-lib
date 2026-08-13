@@ -53,7 +53,7 @@ public partial class Core
     *
     *  MMDDYY BY     Description
     *  -------------------------------------------------------------------
-    *  071626 MF,CC  Initial version.
+    *  071626 MF,CC  Initial version (#124).
     */
    /// <summary>
    /// Number of leading input bars <c>CMOU</c> consumes before it can produce

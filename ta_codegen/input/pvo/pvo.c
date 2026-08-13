@@ -9,7 +9,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  071626 MF,CC  Template creation.
+ *  071626 MF,CC  Initial version (#119).
  */
 
 int pvo_lookback(int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType)

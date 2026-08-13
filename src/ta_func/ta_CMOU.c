@@ -53,7 +53,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  071626 MF,CC  Initial version.
+ *  071626 MF,CC  Initial version (#124).
  */
 
 TA_LIB_API int TA_CMOU_Lookback( int optInTimePeriod )

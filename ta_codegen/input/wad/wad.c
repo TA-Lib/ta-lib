@@ -2,13 +2,13 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  KL       Kevin
+ *  KL       Kevin Lin (@kevinlincg)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
- *  081226 KL   Template creation.
+ *  081226 KL   Initial version (#200).
  *
  */
 

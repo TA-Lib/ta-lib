@@ -46,13 +46,13 @@ public partial class Core
     *
     *  Initial  Name/description
     *  -------------------------------------------------------------------
-    *  KL       Kevin
+    *  KL       Kevin Lin (@kevinlincg)
     *
     * Change history:
     *
     *  MMDDYY BY   Description
     *  -------------------------------------------------------------------
-    *  081226 KL   Template creation.
+    *  081226 KL   Initial version (#200).
     */
    /// <summary>
    /// Number of leading input bars <c>WAD</c> consumes before it can produce its
@@ -216,12 +216,9 @@ public partial class Core
    /// the true high; an unchanged close contributes nothing. **It consumes no
    /// volume.** Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
-   /// industry kept Williams' name on it, and that no-volume form is what Tulip
-   /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
-   /// this name. The volume-weighted original is a different series. WAD is
-   /// grouped with the volume indicators for discoverability next to AD, ADOSC
-   /// and OBV, not because it reads volume.
+   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
+   /// industry kept Williams' name on that no-volume form. That industry-wide
+   /// decision is enough for TA-Lib to ship the same form under the same name.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -274,12 +271,9 @@ public partial class Core
    /// the true high; an unchanged close contributes nothing. **It consumes no
    /// volume.** Larry Williams' original multiplies each move by that bar's
    /// volume; Steven Achelis published the modification that drops the
-   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), the
-   /// industry kept Williams' name on it, and that no-volume form is what Tulip
-   /// Indicators and pandas-ta-classic ship — so it is what TA-Lib ships under
-   /// this name. The volume-weighted original is a different series. WAD is
-   /// grouped with the volume indicators for discoverability next to AD, ADOSC
-   /// and OBV, not because it reads volume.
+   /// multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
+   /// industry kept Williams' name on that no-volume form. That industry-wide
+   /// decision is enough for TA-Lib to ship the same form under the same name.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
