@@ -57,6 +57,25 @@ body .vp-toc-placeholder {
   }
 }
 
+// The `## Properties` checkbox table (wrapped in `.flag-table` by
+// `backends/docs_site.rs`) has no column header: no one label covers the set
+// (`Identity at Period 1` is not a display hint). Markdown cannot express a table
+// without a header row, so the generator emits an empty header cell and the row it
+// renders as is dropped here.
+.flag-table thead {
+  display: none;
+}
+
+// The theme gives every markdown table `display: block; overflow-x: auto`, which makes
+// overflow-y compute to `auto` as well — so a table clips anything drawn outside it.
+// The first row's `.flag-tip` bubble opens *above* its badge, i.e. outside the table
+// box, and with no header row above it there is nothing left to clip into: the tooltip
+// disappears entirely. This table is one narrow column and never needs to scroll.
+.flag-table table {
+  overflow: visible;
+  max-width: 100%;
+}
+
 // Fixed-width wrapper for the checkbox glyph in the `## Properties` table. The
 // checked "✅" (emoji) and empty "☐" (text glyph) come from different families and
 // differ in width; boxing both to the same width keeps the labels down each column
