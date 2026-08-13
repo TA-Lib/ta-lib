@@ -39,6 +39,21 @@ import sys
 # measure a compiler difference rather than a code difference.
 FP_CONTRACT_FLAG = "-ffp-contract=off"
 
+# -fno-math-errno (issue #192). Same reasoning as above, for the same reason the
+# frozen worktrees cannot inherit it: an oracle must differ from the tree in its
+# CODE, never in how its compiler was told to behave. This flag cannot change a
+# value -- it only frees sqrt() from the obligation to set errno -- so unlike
+# FP_CONTRACT_FLAG it is inert for the differential CORRECTNESS gates. (It is not
+# inert for FP exception state; see the FE_INVALID note in CMakeLists.txt.) It matters
+# to `ta_bench --language=cref,c`, whose cref arm would otherwise carry a scalar
+# sqrt the tree no longer has, reading as an algorithm difference on SQRT and
+# STDDEV when it is purely a build one.
+MATH_ERRNO_FLAG = "-fno-math-errno"
+
+# What every frozen worktree is configured with, and what a cached build tree is
+# checked against before it is trusted.
+FROZEN_CFLAGS = f"{FP_CONTRACT_FLAG} {MATH_ERRNO_FLAG}"
+
 
 def build_frozen_lib(ref_root, ref_build, label):
     """Configure + build a frozen worktree's libta-lib.a. Returns its path.
@@ -62,24 +77,24 @@ def build_frozen_lib(ref_root, ref_build, label):
     entirely — an upgrade always starts from a clean tree."""
     if _stale_cache(ref_build):
         print(f"  {label}: discarding a build tree configured without "
-              f"{FP_CONTRACT_FLAG}")
+              f"{FROZEN_CFLAGS}")
         shutil.rmtree(ref_build)
     os.makedirs(ref_build, exist_ok=True)
     _run_quiet(["cmake", ref_root, "-DCMAKE_BUILD_TYPE=Release",
-                f"-DCMAKE_C_FLAGS={FP_CONTRACT_FLAG}"],
+                f"-DCMAKE_C_FLAGS={FROZEN_CFLAGS}"],
                ref_build, f"{label}: cmake configure")
     out = _run_quiet(["cmake", "--build", ".", "--target", "ta-lib-static",
                       "-j", str(os.cpu_count() or 4)],
                      ref_build, f"{label}: cmake build")
     if "Building C object" in out:
-        print(f"  {label}: rebuilt frozen libta-lib.a ({FP_CONTRACT_FLAG})")
+        print(f"  {label}: rebuilt frozen libta-lib.a ({FROZEN_CFLAGS})")
     return os.path.join(ref_build, "libta-lib.a")
 
 
 def _stale_cache(ref_build):
     """True iff ref_build holds a cmake cache that was NOT configured with
-    FP_CONTRACT_FLAG. A directory with no cache at all is not stale — there is
-    nothing to discard, and the configure below is already correct."""
+    every flag in FROZEN_CFLAGS. A directory with no cache at all is not stale —
+    there is nothing to discard, and the configure below is already correct."""
     cache = os.path.join(ref_build, "CMakeCache.txt")
     if not os.path.exists(cache):
         return False
@@ -88,7 +103,7 @@ def _stale_cache(ref_build):
             # CMAKE_C_FLAGS_RELEASE et al. are distinct entries; the colon pins
             # this to the one cmake actually applies to every C TU.
             if line.startswith("CMAKE_C_FLAGS:"):
-                return FP_CONTRACT_FLAG not in line
+                return any(f not in line for f in FROZEN_CFLAGS.split())
     return True
 
 

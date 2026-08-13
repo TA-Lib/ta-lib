@@ -35,8 +35,14 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
 - ~10%: ATR and NATR
+- ~2x: SQRT, and ~25% more off STDDEV (#192). The library is now built with
+  `-fno-math-errno`, so `sqrt` no longer sets `errno` on a negative input.
+  Outputs are unchanged.
 
 ### Changed
+- (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the
+  calculation cancels to either side of zero; it returns 0. `sqrt(VAR(...))` was NaN
+  there. STDDEV is unaffected — it already reported 0 for those bars.
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.

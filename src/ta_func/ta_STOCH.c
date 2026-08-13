@@ -971,7 +971,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
       /* Sub-stream 1: ma over `tempBuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub1, tempBuffer, (0), ((int)dummyNBElement - 1) + 1, optInSlowD_Period, optInSlowD_MAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub1, tempBuffer, (0), ((int)dummyNBElement - 1) + 1, optInSlowD_Period, optInSlowD_MAType, &dummyBegIdx, &dummyNBElement, sc_outSlowD );
          if( subRc != TA_SUCCESS )
          {
             if( bufferIsAllocated )
@@ -982,7 +982,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
             return subRc;
          }
       }
-      retCode = TA_MA(0,(int)dummyNBElement - 1,tempBuffer,optInSlowD_Period,optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD);
+      retCode = subRc;
       /* Copy tempBuffer into the caller buffer.
        * (Calculation could not be done directly in the
        *  caller buffer because more input data then the
@@ -1097,6 +1097,12 @@ TA_LIB_API TA_RetCode TA_STOCH_OpenAndFill( TA_STOCH_Stream **stream, const doub
    if( !outBegIdx || !outNBElement || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    if( (const void *)outSlowK == (const void *)inHigh || (const void *)outSlowK == (const void *)inLow || (const void *)outSlowK == (const void *)inClose || (const void *)outSlowD == (const void *)inHigh || (const void *)outSlowD == (const void *)inLow || (const void *)outSlowD == (const void *)inClose || (const void *)outSlowK == (const void *)outSlowD ) return TA_BAD_PARAM;
    return TA_STOCH_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_STOCH_OpenAndFillInternal( struct TA_STOCH_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType, int *outBegIdx, int *outNBElement, double outSlowK[], double outSlowD[] )
+{
+   return TA_STOCH_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outSlowK, outSlowD, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, double inLow, double inClose, double *outSlowK, double *outSlowD )

@@ -212,6 +212,25 @@ public partial class Core
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* A variance is non-negative by definition, but this one is extracted
+             * as a difference of two nearly equal quantities, so its SIGN is not
+             * guaranteed: on a window sitting entirely inside a flat stretch every
+             * deviation is the same rounding residual and the subtraction is pure
+             * cancellation, landing either side of zero. Enforce the invariant.
+             *
+             * Clamping HERE and not at the output write is what keeps this off the
+             * per-bar path, and it is sufficient because a negative variance always
+             * reseeds on the same bar - the guard above covers all three cases:
+             * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+             * periodTotal2 < 0 makes the second disjunct's right side negative,
+             * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+             * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+             * THIS - the alternative is an unconditional clamp at the output write,
+             * which needs no such argument but does cost ~3%.
+             */
+            if( variance < 0.0 ) {
+               variance = 0.0;
+            }
             /* Re-remove the trailing value under the new shift so the carried state
              * matches the non-reseed path.
              */
@@ -323,6 +342,9 @@ public partial class Core
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            if( variance < 0.0 ) {
+               variance = 0.0;
+            }
             tempReal = (double)inReal[windowStart] - shift;
             periodTotal1 -= tempReal;
             tempReal *= tempReal;

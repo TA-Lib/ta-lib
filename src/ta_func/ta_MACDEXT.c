@@ -659,7 +659,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub0, inReal, (tempInteger), (endIdx) + 1, optInSlowPeriod, optInSlowMAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (tempInteger), (endIdx) + 1, optInSlowPeriod, optInSlowMAType, &outBegIdx1, &outNbElement1, slowMABuffer );
          if( subRc != TA_SUCCESS )
          {
             free(fastMABuffer);
@@ -668,7 +668,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
             return subRc;
          }
       }
-      retCode = TA_MA(tempInteger,endIdx,inReal,optInSlowPeriod,optInSlowMAType,&outBegIdx1,&outNbElement1,slowMABuffer);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          dummyBegIdx = 0;
@@ -682,7 +682,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub1, inReal, (tempInteger), (endIdx) + 1, optInFastPeriod, optInFastMAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub1, inReal, (tempInteger), (endIdx) + 1, optInFastPeriod, optInFastMAType, &outBegIdx2, &outNbElement2, fastMABuffer );
          if( subRc != TA_SUCCESS )
          {
             free(fastMABuffer);
@@ -691,7 +691,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
             return subRc;
          }
       }
-      retCode = TA_MA(tempInteger,endIdx,inReal,optInFastPeriod,optInFastMAType,&outBegIdx2,&outNbElement2,fastMABuffer);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          dummyBegIdx = 0;
@@ -725,7 +725,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub2, fastMABuffer, (0), (outNbElement1 - 1) + 1, optInSignalPeriod, optInSignalMAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub2, fastMABuffer, (0), (outNbElement1 - 1) + 1, optInSignalPeriod, optInSignalMAType, &outBegIdx2, &outNbElement2, sc_outMACDSignal );
          if( subRc != TA_SUCCESS )
          {
             free(fastMABuffer);
@@ -734,7 +734,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
             return subRc;
          }
       }
-      retCode = TA_MA(0,outNbElement1 - 1,fastMABuffer,optInSignalPeriod,optInSignalMAType,&outBegIdx2,&outNbElement2,sc_outMACDSignal);
+      retCode = subRc;
       free(fastMABuffer);
       free(slowMABuffer);
       if( retCode != TA_SUCCESS )
@@ -814,6 +814,12 @@ TA_LIB_API TA_RetCode TA_MACDEXT_OpenAndFill( TA_MACDEXT_Stream **stream, const 
    if( !outBegIdx || !outNBElement || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( (const void *)outMACD == (const void *)inReal || (const void *)outMACDSignal == (const void *)inReal || (const void *)outMACDHist == (const void *)inReal || (const void *)outMACD == (const void *)outMACDSignal || (const void *)outMACD == (const void *)outMACDHist || (const void *)outMACDSignal == (const void *)outMACDHist ) return TA_BAD_PARAM;
    return TA_MACDEXT_OpenCore( stream, inReal, 0, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_MACDEXT_OpenAndFillInternal( struct TA_MACDEXT_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, TA_MAType optInFastMAType, int optInSlowPeriod, TA_MAType optInSlowMAType, int optInSignalPeriod, TA_MAType optInSignalMAType, int *outBegIdx, int *outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+{
+   return TA_MACDEXT_OpenCore( stream, inReal, startIdx, historyLen, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )

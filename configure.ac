@@ -24,6 +24,18 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
 
+# -fno-math-errno (issue #192) — mirrors CMakeLists.txt: lets sqrt() compile to
+# the bare instruction and vectorize, instead of being pinned scalar by the ISO C
+# requirement to set errno on a domain error. The library never reads errno. It
+# cannot change a computed VALUE, but it does change FP exception state — see the
+# FE_INVALID note in CMakeLists.txt before assuming it is inert.
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fno-math-errno"
+AC_MSG_CHECKING([whether $CC accepts -fno-math-errno])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
+
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
 AC_CHECK_INCLUDES_DEFAULT

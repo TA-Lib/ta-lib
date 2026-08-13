@@ -348,7 +348,7 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
       /* Sub-stream 0: adx over `inHigh, inLow, inClose`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_ADX_OpenInternal( &sub0, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, optInTimePeriod, &subOpenDummy );
+         subRc = TA_ADX_OpenAndFillInternal( &sub0, inHigh, inLow, inClose, (startIdx - (optInTimePeriod - 1)), (endIdx) + 1, optInTimePeriod, &dummyBegIdx, &dummyNBElement, adx );
          if( subRc != TA_SUCCESS )
          {
             free(adx);
@@ -356,7 +356,7 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
             return subRc;
          }
       }
-      retCode = TA_ADX(startIdx - (optInTimePeriod - 1),endIdx,inHigh,inLow,inClose,optInTimePeriod,&dummyBegIdx,&dummyNBElement,adx);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          free(adx);
@@ -431,6 +431,12 @@ TA_LIB_API TA_RetCode TA_ADXR_OpenAndFill( TA_ADXR_Stream **stream, const double
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose ) return TA_BAD_PARAM;
    return TA_ADXR_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_ADXR_OpenAndFillInternal( struct TA_ADXR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_ADXR_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )

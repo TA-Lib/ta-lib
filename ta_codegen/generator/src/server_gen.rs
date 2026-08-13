@@ -269,6 +269,21 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     }
     s.push('\n');
 
+    // TA_<N>_OpenAndFillInternal is the same worker at stride 1: it warms the
+    // handle AND fills the caller's arrays in the one pass, which is how a
+    // composed Open avoids re-running the batch sub-call it just duplicated
+    // (issue #192). Same cross-TU story as OpenInternal above.
+    s.push_str("/* Internal stream open+fill declarations (startIdx-aware; one pass, fills arrays) */\n");
+    let lookup = crate::streaming::FuncsLookup(funcs);
+    for func in funcs
+        .iter()
+        .filter(|f| crate::streaming::emits_open_and_fill_internal(f, &lookup))
+    {
+        s.push_str(&crate::backends::c_stream::open_and_fill_internal_signature(func));
+        s.push_str(";\n");
+    }
+    s.push('\n');
+
     s.push_str("#endif /* TA_FUNC_STREAM_PRIVATE_H */\n");
     s
 }

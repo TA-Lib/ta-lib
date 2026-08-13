@@ -197,6 +197,12 @@ TA_LIB_API TA_RetCode TA_ASIN_OpenAndFill( TA_ASIN_Stream **stream, const double
    return TA_ASIN_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_ASIN_OpenAndFillInternal( struct TA_ASIN_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_ASIN_OpenCore( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+}
+
 TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;

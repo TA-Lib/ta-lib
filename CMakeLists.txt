@@ -48,6 +48,48 @@ if(NOT MSVC)
     add_compile_options(-ffp-contract=off)
 endif()
 
+# -fno-math-errno (issue #192): sqrt() is one machine instruction, but ISO C
+# requires it to set errno on a domain error, so without this GCC keeps it
+# scalar and out of every vectorized loop. The library never reads errno and
+# never documents setting it. This is the ONE part of -ffast-math that cannot
+# change a value: no reassociation, no finite-math assumptions — sqrt returns
+# the same correctly-rounded double either way, and sqrtpd is sqrtsd per lane.
+# Verified bit-identical across all 168 functions; -ffp-contract=off is
+# unaffected and still applies.
+#
+# Probed rather than added outright, unlike -ffp-contract=off above, and the
+# asymmetry is deliberate: that flag is load-bearing for the FMA contract, so a
+# toolchain that cannot take it must not build quietly without it. This one is
+# purely a speed knob, so a cross-toolchain that rejects it should just lose the
+# speed (scripts/package.py builds the .deb through CMAKE_TOOLCHAIN_FILE).
+#
+# It does change one thing that is NOT a value, and that no output-comparing gate
+# can see: FP exception state. Vectorizing STDDEV's map if-converts it — sqrtpd
+# runs on EVERY lane and the TA_IS_ZERO_OR_NEG guard is applied afterwards as a
+# mask — so a lane whose variance is slightly negative now executes a sqrt the
+# scalar form skipped, raising FE_INVALID. The value is masked away, so no output
+# changes; a caller that had enabled trapping on FE_INVALID would see it.
+#
+# This is reachable, not theoretical: once a window sits entirely inside a flat
+# stretch (a halted, padded or illiquid series) every deviation is the same
+# rounding residual and TA_VAR's subtraction is pure cancellation. A noisy prefix
+# then a flat tail at period 49 puts 1503 of 2020 TA_VAR outputs below zero, and
+# TA_STDDEV over that series raises FE_INVALID with this flag and not without.
+#
+# It cannot be fixed in the source. Clamping the radicand before the sqrt does
+# not help: the flag is precisely what makes sqrt speculatable, so GCC hoists it
+# back above the clamp using sqrt(select(c,0,t)) == select(c,0,sqrt(t)).
+# Accepted because the library has no FE_INVALID-clean contract to begin with —
+# TA_SQRT is a bare sqrt() of caller data and raises on negative input in either
+# build — and because no computed value moves.
+if(NOT MSVC)
+    include(CheckCCompilerFlag)
+    check_c_compiler_flag(-fno-math-errno TA_HAS_NO_MATH_ERRNO)
+    if(TA_HAS_NO_MATH_ERRNO)
+        add_compile_options(-fno-math-errno)
+    endif()
+endif()
+
 # Default to Release config
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)

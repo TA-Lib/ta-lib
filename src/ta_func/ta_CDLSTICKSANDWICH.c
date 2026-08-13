@@ -497,6 +497,12 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_OpenAndFill( TA_CDLSTICKSANDWICH_Strea
    return TA_CDLSTICKSANDWICH_OpenCore( stream, inOpen, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_CDLSTICKSANDWICH_OpenAndFillInternal( struct TA_CDLSTICKSANDWICH_Stream **stream, const double inOpen[], const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   return TA_CDLSTICKSANDWICH_OpenCore( stream, inOpen, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+}
+
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Update( TA_CDLSTICKSANDWICH_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;

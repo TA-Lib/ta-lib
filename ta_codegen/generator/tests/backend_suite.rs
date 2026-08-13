@@ -7572,17 +7572,31 @@ fn test_c_stoch_composed_stream_section() {
     assert!(stream.contains("TA_MA_Stream *sub0;"));
     assert!(stream.contains("TA_MA_Stream *sub1;"));
 
-    // Open: sub0 opens on the RAW series strictly BEFORE the in-place
-    // smoothing call; sub1 after it, before the %D call.
-    let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open");
+    // STOCH is the one shipped function that exercises BOTH sides of the
+    // issue-#192 fusion rule, which is why this assertion lives here:
+    //
+    //   sub0's %K smoothing is IN PLACE — `TA_MA( .., tempBuffer, .., tempBuffer )`
+    //   — so it must stay UNFUSED. A fused open would write tempBuffer during
+    //   the warm-up pass while the sub-MA's own capture epilogue still has to
+    //   read its input tail out of it, corrupting the handle.
+    //
+    //   sub1's %D writes a distinct destination, so it fuses: one pass that
+    //   both warms the handle and fills sc_outSlowD, instead of a warm pass
+    //   plus a batch call recomputing the same numbers.
+    let sub0 = stream.find("subRc = TA_MA_OpenInternal( &sub0, tempBuffer").expect("sub0 open (must stay unfused: in-place)");
     let ma1 = stream.find("retCode = TA_MA(0,outIdx - 1,tempBuffer").expect("in-place smoothing");
-    let sub1 = stream.find("subRc = TA_MA_OpenInternal( &sub1, tempBuffer").expect("sub1 open");
-    let ma2 = stream.find("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD").expect("%D call");
-    assert!(sub0 < ma1 && ma1 < sub1 && sub1 < ma2, "sub-open ordering");
-    // Params trail the handle+history in the new Open order (input, optional, output):
-    // slowK/slowD forwarded just before the initial-output dummy.
+    let sub1 = stream.find("subRc = TA_MA_OpenAndFillInternal( &sub1, tempBuffer").expect("sub1 open (must be fused)");
+    assert!(sub0 < ma1 && ma1 < sub1, "sub-open ordering");
+    // The fused sub1 replaced the %D batch call outright: nothing recomputes it.
+    assert!(
+        !stream.contains("optInSlowD_MAType,&dummyBegIdx,&dummyNBElement,sc_outSlowD"),
+        "%D batch sub-call survived the fusion"
+    );
+    // Params trail the handle+history in the new Open order (input, optional, output).
+    // The unfused sub0 still ends in the initial-output dummy; the fused sub1
+    // carries the batch call's own out-meta and destination instead.
     assert!(stream.contains("optInSlowK_Period, optInSlowK_MAType, &subOpenDummy"), "slowK params forwarded to sub0 open");
-    assert!(stream.contains("optInSlowD_Period, optInSlowD_MAType, &subOpenDummy"), "slowD params forwarded to sub1 open");
+    assert!(stream.contains("optInSlowD_Period, optInSlowD_MAType, &dummyBegIdx, &dummyNBElement, sc_outSlowD"), "slowD params + fill target forwarded to sub1 open");
 
     // Out-meta pointers mapped to the dummies in the transcription (the
     // Open signature has no outBegIdx/outNBElement).
@@ -9670,5 +9684,70 @@ fn c_stream_keeps_a_local_read_only_by_a_circbuf_size() {
         "the degenerate arm must not carry a write-only `halfPeriod` (that is a \
          -Wunused-but-set-variable in the consumer's build), and the general arm \
          must keep the one it reads: {stream_c}"
+    );
+}
+
+/// Every composed function's Open must FUSE its sub-calls: one
+/// `OpenAndFillInternal` that both warms the sub-handle and fills the sub-call's
+/// destination, instead of a warm pass plus a batch call recomputing the same
+/// numbers (issue #192).
+///
+/// This needs its own gate because no value gate can see it. The fusion is
+/// output-preserving by construction, so `stream_verify`, `--xlang-hash` and the
+/// frozen-oracle suites all stay green whether or not it happens — a regression
+/// would surface only as a benchmark drifting back towards ~1.7x, which nothing
+/// fails on. What is pinned here is the SHAPE.
+///
+/// One sub-call is deliberately left unfused: STOCH's slow-K `TA_MA` writes its
+/// own source in place, where a fused open would overwrite the buffer the
+/// sub-handle's capture still has to read. `test_c_stoch_composed_stream_section`
+/// pins which one; this test pins that it is the ONLY one.
+#[test]
+fn test_composed_open_fuses_every_sub_call() {
+    const COMPOSED: &[&str] = &[
+        "bbands", "macdext", "ppo", "pvo", "stddev",
+        "stoch", "stochf", "adxr", "stochrsi", "apo",
+    ];
+    let registry = make_registry();
+    let helpers = HelperRegistry::empty();
+    let mut fused_total = 0usize;
+    let mut unfused_total = 0usize;
+
+    for name in COMPOSED {
+        let (mut func, enums) = load_indicator(name);
+        func.streaming = true;
+        let c = backends::c::generate(&func, &enums, &registry, &helpers);
+        let stream = &c[c.find("/**** Streaming API *****/").expect("stream section")..];
+
+        let fused = stream.matches("_OpenAndFillInternal( &sub").count();
+        let unfused = stream.matches("_OpenInternal( &sub").count();
+        assert!(
+            fused + unfused > 0,
+            "{name}: composed Open emitted no sub-stream open at all"
+        );
+        // A fused sub-open replaces the batch sub-call with `<var> = subRc;`, so
+        // every fused sub must have left exactly one of those substitutions.
+        assert_eq!(
+            stream.matches("= subRc;").count(),
+            fused,
+            "{name}: fused sub-opens ({fused}) and retCode substitutions disagree \
+             — either a batch sub-call survived the fusion, or one was dropped \
+             without leaving a retCode behind for the transcribed error handling"
+        );
+        fused_total += fused;
+        unfused_total += unfused;
+    }
+
+    assert_eq!(
+        unfused_total, 1,
+        "expected exactly ONE unfused sub-call across the composed tier (STOCH's \
+         in-place slow-K); found {unfused_total}. A new unfused sub-call means \
+         either an aliasing sub-call was added — legitimate, but record it here — \
+         or the fusion silently stopped applying."
+    );
+    assert_eq!(
+        fused_total, 17,
+        "expected 17 fused sub-calls across the composed tier; found {fused_total}. \
+         Adding a composed indicator moves this number: update it deliberately."
     );
 }

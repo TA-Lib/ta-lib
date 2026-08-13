@@ -206,7 +206,7 @@ def build(root, bin_dir, lib_a):
     #    flag, an FMA-baseline GCC target generates different inputs on this side
     #    than in ta_regtest, and --fuzz-064 would read that as a library change.
     cmd = ["cc", "-O3", "-flto", "-DNDEBUG", "-DTA_REF_SERVE", "-Wno-everything",
-           serve_version.FP_CONTRACT_FLAG]
+           serve_version.FP_CONTRACT_FLAG, serve_version.MATH_ERRNO_FLAG]
     cmd += [f"-I{d}" for d in include_dirs(root, bin_dir)]
     cmd += ["-o", os.path.join(bin_dir, "ta_064_serve"),
             os.path.join(bin_dir, "_ta_064_serve.c"), lib_a, "-lm"]

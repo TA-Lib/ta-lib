@@ -366,7 +366,7 @@ static TA_RetCode TA_PPO_OpenCore( struct TA_PPO_Stream **stream, const double i
       /* Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInFastPeriod, optInMAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInFastPeriod, optInMAType, &fastBeg, &fastNb, tempBuffer );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -374,7 +374,7 @@ static TA_RetCode TA_PPO_OpenCore( struct TA_PPO_Stream **stream, const double i
             return subRc;
          }
       }
-      retCode = TA_MA(startIdx,endIdx,inReal,optInFastPeriod,optInMAType,&fastBeg,&fastNb,tempBuffer);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
@@ -385,7 +385,7 @@ static TA_RetCode TA_PPO_OpenCore( struct TA_PPO_Stream **stream, const double i
       /* Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       {
-         subRc = TA_MA_OpenInternal( &sub1, inReal, (startIdx), (endIdx) + 1, optInSlowPeriod, optInMAType, &subOpenDummy );
+         subRc = TA_MA_OpenAndFillInternal( &sub1, inReal, (startIdx), (endIdx) + 1, optInSlowPeriod, optInMAType, &dummyBegIdx, &dummyNBElement, sc_outReal );
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
@@ -393,7 +393,7 @@ static TA_RetCode TA_PPO_OpenCore( struct TA_PPO_Stream **stream, const double i
             return subRc;
          }
       }
-      retCode = TA_MA(startIdx,endIdx,inReal,optInSlowPeriod,optInMAType,&dummyBegIdx,&dummyNBElement,sc_outReal);
+      retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
@@ -466,6 +466,12 @@ TA_LIB_API TA_RetCode TA_PPO_OpenAndFill( TA_PPO_Stream **stream, const double i
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    return TA_PPO_OpenCore( stream, inReal, 0, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_PPO_OpenAndFillInternal( struct TA_PPO_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_PPO_OpenCore( stream, inReal, startIdx, historyLen, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, double *outReal )

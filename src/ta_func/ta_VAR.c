@@ -205,6 +205,26 @@ TA_LIB_API TA_RetCode TA_VAR( int    startIdx,
          }
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         /* A variance is non-negative by definition, but this one is extracted
+          * as a difference of two nearly equal quantities, so its SIGN is not
+          * guaranteed: on a window sitting entirely inside a flat stretch every
+          * deviation is the same rounding residual and the subtraction is pure
+          * cancellation, landing either side of zero. Enforce the invariant.
+          *
+          * Clamping HERE and not at the output write is what keeps this off the
+          * per-bar path, and it is sufficient because a negative variance always
+          * reseeds on the same bar - the guard above covers all three cases:
+          * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+          * periodTotal2 < 0 makes the second disjunct's right side negative,
+          * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+          * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+          * THIS - the alternative is an unconditional clamp at the output write,
+          * which needs no such argument but does cost ~3%.
+          */
+         if( variance < 0.0 )
+         {
+            variance = 0.0;
+         }
          /* Re-remove the trailing value under the new shift so the carried state
           * matches the non-reseed path.
           */
@@ -325,6 +345,10 @@ TA_RetCode TA_S_VAR( int    startIdx,
          }
          meanValue1 = periodTotal1 * invPeriod;
          variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+         if( variance < 0.0 )
+         {
+            variance = 0.0;
+         }
          tempReal = (double)inReal[windowStart] - shift;
          periodTotal1 -= tempReal;
          tempReal *= tempReal;
@@ -433,6 +457,26 @@ static void TA_VAR_StepInternal( struct TA_VAR_Stream *sp, double inReal, double
       }
       sp->meanValue1 = sp->periodTotal1 * sp->invPeriod;
       sp->variance = sp->periodTotal2 * sp->invPeriod - sp->meanValue1 * sp->meanValue1;
+      /* A variance is non-negative by definition, but this one is extracted
+       * as a difference of two nearly equal quantities, so its SIGN is not
+       * guaranteed: on a window sitting entirely inside a flat stretch every
+       * deviation is the same rounding residual and the subtraction is pure
+       * cancellation, landing either side of zero. Enforce the invariant.
+       *
+       * Clamping HERE and not at the output write is what keeps this off the
+       * per-bar path, and it is sufficient because a negative variance always
+       * reseeds on the same bar - the guard above covers all three cases:
+       * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+       * periodTotal2 < 0 makes the second disjunct's right side negative,
+       * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+       * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+       * THIS - the alternative is an unconditional clamp at the output write,
+       * which needs no such argument but does cost ~3%.
+       */
+      if( sp->variance < 0.0 )
+      {
+         sp->variance = 0.0;
+      }
       /* Re-remove the trailing value under the new shift so the carried state
        * matches the non-reseed path.
        */
@@ -576,6 +620,26 @@ static TA_RetCode TA_VAR_OpenCore( struct TA_VAR_Stream **stream, const double i
             }
             meanValue1 = periodTotal1 * invPeriod;
             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+            /* A variance is non-negative by definition, but this one is extracted
+             * as a difference of two nearly equal quantities, so its SIGN is not
+             * guaranteed: on a window sitting entirely inside a flat stretch every
+             * deviation is the same rounding residual and the subtraction is pure
+             * cancellation, landing either side of zero. Enforce the invariant.
+             *
+             * Clamping HERE and not at the output write is what keeps this off the
+             * per-bar path, and it is sufficient because a negative variance always
+             * reseeds on the same bar - the guard above covers all three cases:
+             * periodTotal2 > 0 makes its first disjunct `negative < positive`;
+             * periodTotal2 < 0 makes the second disjunct's right side negative,
+             * which the squared tempReal always exceeds; periodTotal2 == 0 reduces
+             * the first to `variance < 0`. CHANGING THAT GUARD MEANS RE-CHECKING
+             * THIS - the alternative is an unconditional clamp at the output write,
+             * which needs no such argument but does cost ~3%.
+             */
+            if( variance < 0.0 )
+            {
+               variance = 0.0;
+            }
             /* Re-remove the trailing value under the new shift so the carried state
              * matches the non-reseed path.
              */
@@ -656,6 +720,12 @@ TA_LIB_API TA_RetCode TA_VAR_OpenAndFill( TA_VAR_Stream **stream, const double i
    if( !outBegIdx || !outNBElement || !outReal ) return TA_BAD_PARAM;
    if( (const void *)outReal == (const void *)inReal ) return TA_BAD_PARAM;
    return TA_VAR_OpenCore( stream, inReal, 0, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_VAR_OpenAndFillInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_VAR_OpenCore( stream, inReal, startIdx, historyLen, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
 }
 
 TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, double *outReal )

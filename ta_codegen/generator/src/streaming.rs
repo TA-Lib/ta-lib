@@ -336,6 +336,45 @@ pub struct SubCallStep {
     pub dsts: Vec<String>,
 }
 
+impl SubCallStep {
+    /// Whether the sub-open and the batch sub-call that follows it can be
+    /// emitted as ONE `OpenAndFillInternal` pass instead of two (issue #192).
+    ///
+    /// They compute the same numbers over the same range by construction — the
+    /// open is anchored to this very call's `s_arg`/`e_arg` — so the only thing
+    /// that can make the fusion unsound is ALIASING. The fused call writes the
+    /// destination DURING the warm-up pass, and a stream's capture epilogue
+    /// reads its input tail AFTER the outputs are written (the same hazard the
+    /// public `OpenAndFill` rejects, #108/#130): if a destination is also a
+    /// source, the handle would capture from a buffer the pass has already
+    /// overwritten. Today the two passes are what keeps that safe — the open
+    /// runs on the pristine buffer at stride 0, writing only its own scalar
+    /// sink, and the in-place overwrite happens afterwards in the batch call.
+    ///
+    /// One shipped sub-call is in place and so stays unfused: STOCH's slow-K
+    /// `TA_MA( 0, outIdx-1, tempBuffer, ..., tempBuffer )`. Two destinations
+    /// aliasing each other is rejected for the same reason.
+    ///
+    /// NOT checked here: whether the callee's tier actually emits the fused
+    /// entry point. Every tier does except PeriodBank
+    /// ([`emits_open_and_fill_internal`]), and the emission site has only a
+    /// [`CalleeLookup`] — signature facts from the YAML — which cannot decide a
+    /// tier. Composing over MAVP is the one thing that would emit a call to an
+    /// undefined symbol, no shipped function does it, and the failure would be
+    /// a link error naming the exact symbol: loud, immediate, and impossible to
+    /// mistake for a numerical difference. The private header is filtered by
+    /// that same predicate, so it never declares what it does not define.
+    pub fn is_fusable(&self) -> bool {
+        let distinct_dsts = self
+            .dsts
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            == self.dsts.len();
+        distinct_dsts && !self.dsts.iter().any(|d| self.srcs.contains(d))
+    }
+}
+
 /// One per-bar step of a composed Update pipeline, in tail order.
 #[derive(Debug, Clone)]
 pub enum UpdateStep {
@@ -3227,6 +3266,30 @@ pub fn analyze_period_bank<'a>(
         matype_param: matype.name.clone(),
         output: func.outputs[0].name.clone(),
     })
+}
+
+/// Whether this function's tier emits an `OpenAndFillInternal` — the
+/// startIdx-anchored one-pass open+fill a composed caller fuses its sub-call
+/// into (issue #192).
+///
+/// True for every tier that owns an `OpenCore` (Loop, Composed, DualMode) and
+/// for Dispatch, which hand-rolls one over its arms'. False for PeriodBank
+/// (MAVP alone): its fill is a genuinely different warm-up — seed the bank at
+/// `lookbackTotal`, then replay `Update` over the rest — with no `startIdx` to
+/// anchor and, today, no composed caller that would pass one.
+///
+/// The private header is filtered by this, so it never declares a prototype
+/// the library does not define. [`SubCallStep::is_fusable`] does NOT read it —
+/// see the note there for why, and for what happens if a future function
+/// composes over MAVP. Deriving the answer from the tier rather than from a
+/// name list is what keeps a new dispatch- or bank-tier indicator from being
+/// mis-declared silently.
+pub fn emits_open_and_fill_internal(func: &FuncDef, lookup: &dyn CalleeLookup) -> bool {
+    func.streaming
+        && !matches!(
+            validate_streamable(func, lookup),
+            Ok(StreamPlan::PeriodBank(_))
+        )
 }
 
 /// Validate that a `streaming: true` function is still analyzable. Any

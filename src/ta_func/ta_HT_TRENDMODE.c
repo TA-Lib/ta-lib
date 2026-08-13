@@ -2098,6 +2098,12 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OpenAndFill( TA_HT_TRENDMODE_Stream **stre
    return TA_HT_TRENDMODE_OpenCore( stream, inReal, 0, historyLen, outBegIdx, outNBElement, outInteger, 1 );
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_HT_TRENDMODE_OpenAndFillInternal( struct TA_HT_TRENDMODE_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, int outInteger[] )
+{
+   return TA_HT_TRENDMODE_OpenCore( stream, inReal, startIdx, historyLen, outBegIdx, outNBElement, outInteger, 1 );
+}
+
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
