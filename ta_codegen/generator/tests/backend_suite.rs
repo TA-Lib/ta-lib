@@ -8373,7 +8373,7 @@ fn csharp_resolve_call_agrees_with_the_emitted_method_names() {
 fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
     const FUSING: &[&str] = &[
         "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-        "cdlpiercing", "cdlthrusting", "dema", "ema", "ht_dcperiod", "ht_dcphase",
+        "cdlpiercing", "cdlthrusting", "dema", "efi", "ema", "ht_dcperiod", "ht_dcphase",
         "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
         "macd", "macdfix", "mama", "sar", "sarext", "t3", "tema", "trix", "tsf",
         "wclprice",
