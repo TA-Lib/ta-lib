@@ -38,6 +38,29 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* WAD BEGIN */
+static const TA_InputParameterInfo    *TA_WAD_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_WAD_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_WAD_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( WAD,
+              TA_GroupId_VolumeIndicators,
+              "Williams' Accumulation/Distribution (no volume)",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* WAD END */
+
 /* WCLPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_WCLPRICE_Inputs[]    =
 {
@@ -117,6 +140,7 @@ DEF_FUNCTION( WMA,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableW[] =
 {
+   ADD_TO_TABLE(WAD),
    ADD_TO_TABLE(WCLPRICE),
    ADD_TO_TABLE(WILLR),
    ADD_TO_TABLE(WMA),

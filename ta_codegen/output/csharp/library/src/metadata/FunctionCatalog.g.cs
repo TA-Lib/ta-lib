@@ -276,6 +276,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeUltosc(),
             MakeVar(),
             MakeVwma(),
+            MakeWad(),
             MakeWclprice(),
             MakeWillr(),
             MakeWma(),
@@ -4412,6 +4413,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.VWMA(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeWad() => new(
+        name: "WAD",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Williams' Accumulation/Distribution (no volume)",
+        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.WAD_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.WAD(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

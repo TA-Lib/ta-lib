@@ -253,6 +253,7 @@ public final class Functions {
       put(m, f_ULTOSC());
       put(m, f_VAR());
       put(m, f_VWMA());
+      put(m, f_WAD());
       put(m, f_WCLPRICE());
       put(m, f_WILLR());
       put(m, f_WMA());
@@ -2943,6 +2944,18 @@ public final class Functions {
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 1, 200, 1, null)
          ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_WAD() {
+      return new FunctionInfo(
+         "WAD", "Volume Indicators", "Williams' Accumulation/Distribution (no volume)", 0x22000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

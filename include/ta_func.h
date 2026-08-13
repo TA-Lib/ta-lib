@@ -9044,6 +9044,56 @@ TA_LIB_API TA_RetCode TA_VWMA_Close( TA_VWMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_VWMA_OpenAndFill( TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 
 /*
+ * TA_WAD - Williams' Accumulation/Distribution (no volume)
+ * 
+ * Input  = High, Low, Close
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_WAD( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_WAD( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outReal[] );
+
+TA_LIB_API int TA_WAD_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_WAD — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_WAD_Stream TA_WAD_Stream;
+
+TA_LIB_API TA_RetCode TA_WAD_Open( TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WAD_Update( TA_WAD_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WAD_Peek( const TA_WAD_Stream *stream, double inHigh, double inLow, double inClose, double *outReal );
+
+TA_LIB_API TA_RetCode TA_WAD_Close( TA_WAD_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_WAD( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_WAD_OpenAndFill( TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
  * TA_WCLPRICE - Weighted Close Price
  * 
  * Input  = High, Low, Close
