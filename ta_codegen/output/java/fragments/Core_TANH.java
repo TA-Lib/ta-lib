@@ -278,6 +278,26 @@
       }
       return TANH_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TANH_OpenAndFillInternalBody( TANH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TANH_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TANH_Stream TANH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TANH_Stream sp = new TANH_Stream(this);
+      RetCode retCode = TANH_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TANH openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TANH openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TANH openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TANH_Open (composition seam). */
    TANH_Stream TANH_OpenInternal( double inReal[], int startIdx )
    {

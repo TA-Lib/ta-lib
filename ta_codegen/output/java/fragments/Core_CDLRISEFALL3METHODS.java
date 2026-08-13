@@ -949,6 +949,26 @@
       }
       return CDLRISEFALL3METHODS_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLRISEFALL3METHODS_OpenAndFillInternalBody( CDLRISEFALL3METHODS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLRISEFALL3METHODS_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLRISEFALL3METHODS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLRISEFALL3METHODS_Stream sp = new CDLRISEFALL3METHODS_Stream(this);
+      RetCode retCode = CDLRISEFALL3METHODS_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLRISEFALL3METHODS openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLRISEFALL3METHODS openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLRISEFALL3METHODS openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLRISEFALL3METHODS_Open (composition seam). */
    CDLRISEFALL3METHODS_Stream CDLRISEFALL3METHODS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

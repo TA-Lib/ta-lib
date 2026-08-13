@@ -601,6 +601,82 @@ impl Core {
         Ok(MA_Stream { core: self.clone(), state })
     }
 
+    /// [`Core::MA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MA_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MA_Stream, RetCode> {
+        if inReal.is_empty() {
+            return Err(RetCode::BadParam);
+        }
+        if inReal.len() > MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 30;
+        } else if (((optInTimePeriod) as i32) < 1) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if optInMAType == MAType::DEFAULT {
+            optInMAType = MAType::SMA;
+        }
+        let historyLen: usize = inReal.len();
+        if optInTimePeriod == 1 || optInMAType == MAType::DISABLED {
+            if historyLen < self.MA_Lookback(optInTimePeriod, optInMAType) + 1 {
+                return Err(RetCode::BadParam);
+            }
+            let fillLb: usize = self.MA_Lookback(optInTimePeriod, optInMAType);
+            let fillLb = if startIdx > fillLb { startIdx } else { fillLb };
+            if historyLen < fillLb + 1 {
+                return Err(RetCode::BadParam);
+            }
+            (*outBegIdx) = fillLb;
+            (*outNBElement) = historyLen - fillLb;
+            let mut fillIdx: usize = 0;
+            while fillIdx < historyLen - fillLb {
+                outReal[fillIdx] = inReal[fillLb + fillIdx];
+                fillIdx += 1;
+            }
+            let state = MA_StreamState { optInTimePeriod, optInMAType, sub: MA_Sub::Identity };
+            return Ok(MA_Stream { core: self.clone(), state });
+        }
+        let sub = match optInMAType {
+            MAType::SMA => MA_Sub::SMA(
+                self.SMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::EMA => MA_Sub::EMA(
+                self.EMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::WMA => MA_Sub::WMA(
+                self.WMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::DEMA => MA_Sub::DEMA(
+                self.DEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::TEMA => MA_Sub::TEMA(
+                self.TEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::TRIMA => MA_Sub::TRIMA(
+                self.TRIMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::KAMA => MA_Sub::KAMA(
+                self.KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::MAMA => MA_Sub::MAMA(
+                self.MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, &mut vec![0.0_f64; inReal.len()][..])?,
+            ),
+            MAType::T3 => MA_Sub::T3(
+                self.T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal)?,
+            ),
+            MAType::HMA => MA_Sub::HMA(
+                self.HMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal)?,
+            ),
+            _ => return Err(RetCode::BadParam),
+        };
+        let state = MA_StreamState { optInTimePeriod, optInMAType, sub };
+        Ok(MA_Stream { core: self.clone(), state })
+    }
+
 }
 
 #[allow(non_snake_case)]

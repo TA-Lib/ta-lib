@@ -681,6 +681,26 @@
       }
       return CMOU_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode CMOU_OpenAndFillInternalBody( CMOU_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return CMOU_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* CMOU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CMOU_Stream CMOU_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      CMOU_Stream sp = new CMOU_Stream(this);
+      RetCode retCode = CMOU_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CMOU openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CMOU openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CMOU openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CMOU_Open (composition seam). */
    CMOU_Stream CMOU_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

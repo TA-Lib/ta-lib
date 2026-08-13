@@ -575,8 +575,8 @@ impl Core {
         tempInteger = startIdx - lookbackSignal;
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInSlowPeriod, optInSlowMAType)?;
-        retCode = self.MA(tempInteger, endIdx, inReal, optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..]);
+        let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInSlowPeriod, optInSlowMAType, &mut outBegIdx1, &mut outNbElement1, &mut slowMABuffer[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -585,8 +585,8 @@ impl Core {
         // Calculate the fast MA.
         // Sub-stream 1: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInFastPeriod, optInFastMAType)?;
-        retCode = self.MA(tempInteger, endIdx, inReal, optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..]);
+        let sub1 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((tempInteger) as usize), optInFastPeriod, optInFastMAType, &mut outBegIdx2, &mut outNbElement2, &mut fastMABuffer[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -617,8 +617,8 @@ impl Core {
         // Calculate the signal/trigger line.
         // Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub2, _) = self.MA_OpenInternal(&fastMABuffer[..((outNbElement1 - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType)?;
-        retCode = self.MA(0, outNbElement1 - 1, &fastMABuffer, optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, &mut sc_outMACDSignal[..]);
+        let sub2 = self.MA_OpenAndFillInternal(&fastMABuffer[..((outNbElement1 - 1) as usize) + 1], ((0) as usize), optInSignalPeriod, optInSignalMAType, &mut outBegIdx2, &mut outNbElement2, &mut sc_outMACDSignal[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -723,6 +723,14 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         self.MACDEXT_OpenCore(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+    }
+
+    /// [`Core::MACDEXT_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MACDEXT_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInFastMAType: MAType, mut optInSlowPeriod: i32, mut optInSlowMAType: MAType, mut optInSignalPeriod: i32, mut optInSignalMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+    ) -> Result<MACDEXT_Stream, RetCode> {
+        self.MACDEXT_OpenCore(inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
 }

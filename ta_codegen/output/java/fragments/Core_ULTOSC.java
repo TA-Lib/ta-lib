@@ -1129,6 +1129,26 @@
       }
       return ULTOSC_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ULTOSC_OpenAndFillInternalBody( ULTOSC_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ULTOSC_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ULTOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ULTOSC_Stream ULTOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ULTOSC_Stream sp = new ULTOSC_Stream(this);
+      RetCode retCode = ULTOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ULTOSC openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ULTOSC openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ULTOSC openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
    ULTOSC_Stream ULTOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {

@@ -9721,6 +9721,26 @@ fn test_composed_open_fuses_every_sub_call() {
 
         let fused = stream.matches("_OpenAndFillInternal( &sub").count();
         let unfused = stream.matches("_OpenInternal( &sub").count();
+        // The other two backends must reach the SAME split. They render the call
+        // differently (Rust slices, Java copyOfRange) but the decision is shared
+        // — `SubCallStep::is_fusable` — so a per-backend divergence here means one
+        // emitter silently stopped fusing, which no value gate can see.
+        // Anchored on the first ARGUMENT so these count call sites, not the
+        // wrapper definitions (Rust sub-opens pass `&series[..n]`, Java sub-opens
+        // pass `java.util.Arrays.copyOfRange(..)`; both definitions break the
+        // line right after the paren).
+        let r = backends::rust_stream::generate(&func, &enums, &registry, &helpers);
+        assert_eq!(
+            (r.matches("_OpenAndFillInternal(&").count(), r.matches("_OpenInternal(&").count()),
+            (fused, unfused),
+            "{name}: Rust fused/unfused split differs from C"
+        );
+        let j = backends::java_stream::generate(&func, &enums, &registry, &helpers);
+        assert_eq!(
+            (j.matches("_OpenAndFillInternal(java").count(), j.matches("_OpenInternal(java").count()),
+            (fused, unfused),
+            "{name}: Java fused/unfused split differs from C"
+        );
         assert!(
             fused + unfused > 0,
             "{name}: composed Open emitted no sub-stream open at all"

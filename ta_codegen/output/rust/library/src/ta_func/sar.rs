@@ -934,6 +934,14 @@ impl Core {
         self.SAR_OpenCore(inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::SAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn SAR_OpenAndFillInternal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInAcceleration: f64, mut optInMaximum: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<SAR_Stream, RetCode> {
+        self.SAR_OpenCore(inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

@@ -725,6 +725,14 @@ impl Core {
         self.MACDFIX_OpenCore(inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
     }
 
+    /// [`Core::MACDFIX_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MACDFIX_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInSignalPeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMACD: &mut [f64], outMACDSignal: &mut [f64], outMACDHist: &mut [f64],
+    ) -> Result<MACDFIX_Stream, RetCode> {
+        self.MACDFIX_OpenCore(inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

@@ -1270,6 +1270,14 @@ impl Core {
         self.HT_PHASOR_OpenCore(inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
     }
 
+    /// [`Core::HT_PHASOR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn HT_PHASOR_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInPhase: &mut [f64], outQuadrature: &mut [f64],
+    ) -> Result<HT_PHASOR_Stream, RetCode> {
+        self.HT_PHASOR_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

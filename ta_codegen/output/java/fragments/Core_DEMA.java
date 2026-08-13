@@ -657,6 +657,26 @@
       }
       return DEMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode DEMA_OpenAndFillInternalBody( DEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return DEMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* DEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   DEMA_Stream DEMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      DEMA_Stream sp = new DEMA_Stream(this);
+      RetCode retCode = DEMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("DEMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("DEMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("DEMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind DEMA_Open (composition seam). */
    DEMA_Stream DEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

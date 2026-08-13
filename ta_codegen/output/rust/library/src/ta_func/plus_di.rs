@@ -1162,6 +1162,14 @@ impl Core {
         self.PLUS_DI_OpenCore(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::PLUS_DI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn PLUS_DI_OpenAndFillInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<PLUS_DI_Stream, RetCode> {
+        self.PLUS_DI_OpenCore(inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

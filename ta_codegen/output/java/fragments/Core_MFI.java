@@ -752,6 +752,26 @@
       }
       return MFI_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MFI_OpenAndFillInternalBody( MFI_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MFI_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MFI_Stream MFI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MFI_Stream sp = new MFI_Stream(this);
+      RetCode retCode = MFI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MFI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MFI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MFI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MFI_Open (composition seam). */
    MFI_Stream MFI_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {

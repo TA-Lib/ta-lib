@@ -837,6 +837,26 @@
       }
       return T3_OpenCore( sp, inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode T3_OpenAndFillInternalBody( T3_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return T3_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* T3_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   T3_Stream T3_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      T3_Stream sp = new T3_Stream(this);
+      RetCode retCode = T3_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("T3 openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("T3 openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("T3 openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind T3_Open (composition seam). */
    T3_Stream T3_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInVFactor )
    {

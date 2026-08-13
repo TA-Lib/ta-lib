@@ -322,6 +322,14 @@ impl Core {
         self.BOP_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::BOP_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn BOP_OpenAndFillInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<BOP_Stream, RetCode> {
+        self.BOP_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

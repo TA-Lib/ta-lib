@@ -1957,6 +1957,26 @@
       }
       return HT_SINE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1 );
    }
+   private RetCode HT_SINE_OpenAndFillInternalBody( HT_SINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
+   {
+      return HT_SINE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1);
+   }
+   /* HT_SINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HT_SINE_Stream HT_SINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outSine[], double outLeadSine[] )
+   {
+      HT_SINE_Stream sp = new HT_SINE_Stream(this);
+      RetCode retCode = HT_SINE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HT_SINE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HT_SINE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HT_SINE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HT_SINE_Open (composition seam). */
    HT_SINE_Stream HT_SINE_OpenInternal( double inReal[], int startIdx )
    {

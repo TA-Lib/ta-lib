@@ -301,6 +301,26 @@
       }
       return TYPPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TYPPRICE_OpenAndFillInternalBody( TYPPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TYPPRICE_OpenCore(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TYPPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TYPPRICE_Stream TYPPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TYPPRICE_Stream sp = new TYPPRICE_Stream(this);
+      RetCode retCode = TYPPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TYPPRICE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TYPPRICE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TYPPRICE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TYPPRICE_Open (composition seam). */
    TYPPRICE_Stream TYPPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {

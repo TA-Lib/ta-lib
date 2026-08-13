@@ -826,6 +826,26 @@
       }
       return CDLCOUNTERATTACK_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLCOUNTERATTACK_OpenAndFillInternalBody( CDLCOUNTERATTACK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLCOUNTERATTACK_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLCOUNTERATTACK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLCOUNTERATTACK_Stream sp = new CDLCOUNTERATTACK_Stream(this);
+      RetCode retCode = CDLCOUNTERATTACK_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLCOUNTERATTACK openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLCOUNTERATTACK openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLCOUNTERATTACK openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLCOUNTERATTACK_Open (composition seam). */
    CDLCOUNTERATTACK_Stream CDLCOUNTERATTACK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

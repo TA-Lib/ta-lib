@@ -753,6 +753,26 @@
       }
       return CDLCONCEALBABYSWALL_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLCONCEALBABYSWALL_OpenAndFillInternalBody( CDLCONCEALBABYSWALL_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLCONCEALBABYSWALL_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLCONCEALBABYSWALL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLCONCEALBABYSWALL_Stream sp = new CDLCONCEALBABYSWALL_Stream(this);
+      RetCode retCode = CDLCONCEALBABYSWALL_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLCONCEALBABYSWALL openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLCONCEALBABYSWALL openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLCONCEALBABYSWALL openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLCONCEALBABYSWALL_Open (composition seam). */
    CDLCONCEALBABYSWALL_Stream CDLCONCEALBABYSWALL_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

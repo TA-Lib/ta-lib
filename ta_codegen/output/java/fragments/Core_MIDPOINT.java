@@ -796,6 +796,26 @@
       }
       return MIDPOINT_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MIDPOINT_OpenAndFillInternalBody( MIDPOINT_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MIDPOINT_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MIDPOINT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
+      RetCode retCode = MIDPOINT_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MIDPOINT openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MIDPOINT openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MIDPOINT openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MIDPOINT_Open (composition seam). */
    MIDPOINT_Stream MIDPOINT_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

@@ -588,6 +588,14 @@ impl Core {
         self.AROON_OpenCore(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
     }
 
+    /// [`Core::AROON_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn AROON_OpenAndFillInternal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outAroonDown: &mut [f64], outAroonUp: &mut [f64],
+    ) -> Result<AROON_Stream, RetCode> {
+        self.AROON_OpenCore(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1)
+    }
+
 }
 
 thread_local! {

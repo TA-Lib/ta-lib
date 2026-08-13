@@ -728,6 +728,26 @@
       }
       return TEMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TEMA_OpenAndFillInternalBody( TEMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TEMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TEMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TEMA_Stream TEMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TEMA_Stream sp = new TEMA_Stream(this);
+      RetCode retCode = TEMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TEMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TEMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TEMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TEMA_Open (composition seam). */
    TEMA_Stream TEMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

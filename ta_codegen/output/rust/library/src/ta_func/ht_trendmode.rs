@@ -1761,6 +1761,14 @@ impl Core {
         self.HT_TRENDMODE_OpenCore(inReal, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
+    /// [`Core::HT_TRENDMODE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn HT_TRENDMODE_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<HT_TRENDMODE_Stream, RetCode> {
+        self.HT_TRENDMODE_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    }
+
 }
 
 thread_local! {

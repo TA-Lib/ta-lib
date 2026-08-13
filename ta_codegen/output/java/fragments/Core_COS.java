@@ -282,6 +282,26 @@
       }
       return COS_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode COS_OpenAndFillInternalBody( COS_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return COS_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* COS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   COS_Stream COS_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      COS_Stream sp = new COS_Stream(this);
+      RetCode retCode = COS_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("COS openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("COS openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("COS openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind COS_Open (composition seam). */
    COS_Stream COS_OpenInternal( double inReal[], int startIdx )
    {

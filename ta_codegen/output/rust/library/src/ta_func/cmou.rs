@@ -592,6 +592,14 @@ impl Core {
         self.CMOU_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::CMOU_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn CMOU_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<CMOU_Stream, RetCode> {
+        self.CMOU_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

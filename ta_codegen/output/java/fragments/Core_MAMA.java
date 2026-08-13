@@ -1891,6 +1891,26 @@
       }
       return MAMA_OpenCore( sp, inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1 );
    }
+   private RetCode MAMA_OpenAndFillInternalBody( MAMA_Stream sp, double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
+   {
+      return MAMA_OpenCore(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1);
+   }
+   /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MAMA_Stream MAMA_OpenAndFillInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit, MInteger outBegIdx, MInteger outNBElement, double outMAMA[], double outFAMA[] )
+   {
+      MAMA_Stream sp = new MAMA_Stream(this);
+      RetCode retCode = MAMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MAMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MAMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MAMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
    MAMA_Stream MAMA_OpenInternal( double inReal[], int startIdx, double optInFastLimit, double optInSlowLimit )
    {

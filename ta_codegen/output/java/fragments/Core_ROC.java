@@ -490,6 +490,26 @@
       }
       return ROC_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ROC_OpenAndFillInternalBody( ROC_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ROC_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ROC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ROC_Stream ROC_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ROC_Stream sp = new ROC_Stream(this);
+      RetCode retCode = ROC_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ROC openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ROC openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ROC openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ROC_Open (composition seam). */
    ROC_Stream ROC_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

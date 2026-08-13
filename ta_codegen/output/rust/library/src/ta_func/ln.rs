@@ -288,6 +288,14 @@ impl Core {
         self.LN_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::LN_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn LN_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<LN_Stream, RetCode> {
+        self.LN_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

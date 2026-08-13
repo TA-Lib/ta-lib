@@ -456,8 +456,8 @@ impl Core {
         tempRSIBuffer = vec![0.0_f64; (tempArraySize * 1) as usize];
         // Sub-stream 0: rsi over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.RSI_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod)?;
-        retCode = self.RSI(startIdx - lookbackSTOCHF, endIdx, inReal, optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..]);
+        let sub0 = self.RSI_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize).saturating_sub((lookbackSTOCHF) as usize), optInTimePeriod, &mut outBegIdx1, &mut outNbElement1, &mut tempRSIBuffer[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || outNbElement1 == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -465,8 +465,8 @@ impl Core {
         }
         // Sub-stream 1: stochf over `tempRSIBuffer, tempRSIBuffer, tempRSIBuffer`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.STOCHF_OpenInternal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType)?;
-        retCode = self.STOCHF(0, tempArraySize - 1, &tempRSIBuffer, &tempRSIBuffer, &tempRSIBuffer, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..]);
+        let sub1 = self.STOCHF_OpenAndFillInternal(&tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], &tempRSIBuffer[..((tempArraySize - 1) as usize) + 1], ((0) as usize), optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut outBegIdx2, outNBElement, &mut sc_outFastK[..], &mut sc_outFastD[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outBegIdx) = 0;
             (*outNBElement) = 0;
@@ -545,6 +545,14 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         self.STOCHRSI_OpenCore(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
+    }
+
+    /// [`Core::STOCHRSI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn STOCHRSI_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInFastK_Period: i32, mut optInFastD_Period: i32, mut optInFastD_MAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outFastK: &mut [f64], outFastD: &mut [f64],
+    ) -> Result<STOCHRSI_Stream, RetCode> {
+        self.STOCHRSI_OpenCore(inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, outBegIdx, outNBElement, outFastK, outFastD, 1)
     }
 
 }

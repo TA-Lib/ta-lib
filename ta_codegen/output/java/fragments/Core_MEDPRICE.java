@@ -307,6 +307,26 @@
       }
       return MEDPRICE_OpenCore( sp, inHigh, inLow, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MEDPRICE_OpenAndFillInternalBody( MEDPRICE_Stream sp, double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MEDPRICE_OpenCore(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
+      RetCode retCode = MEDPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MEDPRICE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MEDPRICE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MEDPRICE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MEDPRICE_Open (composition seam). */
    MEDPRICE_Stream MEDPRICE_OpenInternal( double inHigh[], double inLow[], int startIdx )
    {

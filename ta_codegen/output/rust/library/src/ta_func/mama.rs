@@ -1459,6 +1459,14 @@ impl Core {
         self.MAMA_OpenCore(inReal, 0, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
     }
 
+    /// [`Core::MAMA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MAMA_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInFastLimit: f64, mut optInSlowLimit: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outMAMA: &mut [f64], outFAMA: &mut [f64],
+    ) -> Result<MAMA_Stream, RetCode> {
+        self.MAMA_OpenCore(inReal, startIdx, optInFastLimit, optInSlowLimit, outBegIdx, outNBElement, outMAMA, outFAMA, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

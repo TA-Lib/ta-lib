@@ -536,6 +536,10 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
 enum OutMode {
     Scalar,
     Fill,
+    /// `Fill` anchored at a caller-supplied `startIdx` — the composed-open
+    /// fusion seam (issue #192). Only the Dispatch tier renders a body for it;
+    /// every tier that owns an `OpenCore` gets a thin wrapper instead.
+    FillInternal,
     Core,
 }
 
@@ -587,6 +591,8 @@ fn emit_loop_shape(
     );
     emit_open_body_scalar_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_body(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
     emit_open_wrappers(o, func);
 }
 
@@ -1176,7 +1182,7 @@ fn emit_open_body(
     let open_body = build_open_body_java(model, body);
     emit_open_prologue(o, func, &open_body, model, enums, registry, helpers, counter, stream_fma);
     emit_identity_fast_path(o, func, model, fields, registry, helpers, stream_fma, counter);
-    emit_open_region(o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[]);
+    emit_open_region(o, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
     let cur_source = CurSource::StridedArray;
     emit_capture(
         o, func, model, &model.state, step_settings, registry, helpers, stream_fma, counter, Some(cur_source), "",
@@ -1221,6 +1227,15 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
                 params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
             }
             format!("{base}_OpenAndFillBody")
+        }
+        OutMode::FillInternal => {
+            params.insert(1 + streaming::input_array_names(func).len(), "int startIdx".to_string());
+            params.push("MInteger outBegIdx".to_string());
+            params.push("MInteger outNBElement".to_string());
+            for out in &func.outputs {
+                params.push(format!("{} {}[]", out_java_type(func, &out.name), out.name));
+            }
+            format!("{base}_OpenAndFillInternalBody")
         }
     };
     let _ = writeln!(o, "   private RetCode {name}( {} )\n   {{", params.join(", "));
@@ -1396,6 +1411,7 @@ fn emit_open_region(
     counter: &Cell<usize>,
     stream_fma: &FmaVarSets,
     inserts: &[(usize, String)],
+    replaced: &HashSet<usize>,
 ) {
     let mut address_of_vars = collect_address_of_vars(open_body);
     let matype_params: HashSet<String> = func
@@ -1448,7 +1464,8 @@ fn emit_open_region(
                 o.push_str(text);
             }
         }
-        if matches!(stmt, Statement::VarDecl { .. }) {
+        // A fused sub-open produced this statement's outputs already.
+        if matches!(stmt, Statement::VarDecl { .. }) || replaced.contains(&i) {
             continue;
         }
         o.push_str(&render_statement_ctx(stmt, 6, &ctx, enums, registry, helpers));
@@ -2033,7 +2050,7 @@ fn emit_dual_mode(
             let mut s = String::new();
             emit_body_decls(&mut s, func, &open_body);
             emit_extras_and_candle(&mut s, func, &open_body, registry, helpers, counter, stream_fma);
-            emit_open_region(&mut s, func, &open_body, enums, registry, helpers, counter, stream_fma, &[]);
+            emit_open_region(&mut s, func, &open_body, enums, registry, helpers, counter, stream_fma, &[], &HashSet::new());
             let cur_source = CurSource::StridedArray;
             let (own, other) = if k == 0 { (&fields_a, &fields_b) } else { (&fields_b, &fields_a) };
             let complement = dual_complement_capture(own, other);
@@ -2049,6 +2066,8 @@ fn emit_dual_mode(
     }
     emit_open_body_scalar_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_body(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
 
     emit_open_wrappers(o, func);
 }
@@ -2236,7 +2255,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "   }}");
 
     // --- open bodies (Scalar delegates to openInternal; Fill to openAndFill) -
-    for mode in [OutMode::Scalar, OutMode::Fill] {
+    for mode in [OutMode::Scalar, OutMode::Fill, OutMode::FillInternal] {
         emit_open_body_sig(o, func, mode);
         let first = &inputs[0];
         let _ = writeln!(o, "      int historyLen = {first}.length;");
@@ -2269,8 +2288,15 @@ fn emit_dispatch(
                         let _ = writeln!(o, "         sp.cur_{out} = {inp}[historyLen - 1];");
                     }
                 }
-                OutMode::Fill => {
+                OutMode::Fill | OutMode::FillInternal => {
                     let _ = writeln!(o, "         int fillLb = {lb_call};");
+                    if mode == OutMode::FillInternal {
+                        // batch( startIdx, .. ) begins at max(startIdx, lookback).
+                        let _ = writeln!(o, "         if( startIdx > fillLb ) fillLb = startIdx;");
+                        let _ = writeln!(o, "         if( historyLen < fillLb + 1 ) {{");
+                        let _ = writeln!(o, "            return RetCode.OutOfRangeEndIndex;");
+                        let _ = writeln!(o, "         }}");
+                    }
                     let _ = writeln!(o, "         outBegIdx.value = fillLb;");
                     let _ = writeln!(o, "         outNBElement.value = historyLen - fillLb;");
                     let _ = writeln!(
@@ -2318,7 +2344,7 @@ fn emit_dispatch(
                             "         {cls} sub = {callee_base}_OpenInternal({bar_args}, startIdx{opts});"
                         );
                     }
-                    OutMode::Fill => {
+                    OutMode::Fill | OutMode::FillInternal => {
                         // OutSlot-mapped fill tail: Forward(k) passes the
                         // dispatch func's own array, Discard materializes a
                         // throwaway buffer (Java's rendering of C's NULL for a
@@ -2342,6 +2368,18 @@ fn emit_dispatch(
                         // The callee's public openAndFill reports its filled
                         // range on the handle; this body still owes its caller
                         // the MInteger pair, so copy it back out.
+                        if mode == OutMode::FillInternal {
+                            // The internal variant takes the out-meta directly,
+                            // so there is no fillRange to copy back.
+                            let _ = writeln!(
+                                o,
+                                "         {cls} sub = {callee_base}_OpenAndFillInternal({bar_args}, startIdx, {opts}outBegIdx, outNBElement, {fill_outs});"
+                            );
+                            dispatch_store_sub(o, registry, arm, &outputs, "         ");
+                            let _ = writeln!(o, "         break;");
+                            let _ = writeln!(o, "      }}");
+                            continue;
+                        }
                         let _ = writeln!(
                             o,
                             "         {cls} sub = {callee_base}_OpenAndFill({bar_args}, {opts}{fill_outs});"
@@ -2376,6 +2414,7 @@ fn emit_dispatch(
     }
 
     emit_open_wrappers(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
 }
 
 // ---------------------------------------------------------------------------
@@ -2998,6 +3037,8 @@ fn emit_composed_open(
     };
     let region_len = region_stmts.len();
     let mut inserts: Vec<(usize, String)> = Vec::new();
+    // Combined-body indices whose statement a fused sub-open replaced.
+    let mut replaced: HashSet<usize> = HashSet::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let mut t = String::new();
         let callee_key = sub.callee.to_lowercase();
@@ -3040,15 +3081,43 @@ fn emit_composed_open(
             sub.callee,
             sub.srcs.join(", ")
         );
-        let _ = writeln!(
-            t,
-            "      {cls} sub{si} = {callee_base}_OpenInternal({}, {anchor}{opt_tail});",
-            srcs.join(", ")
-        );
+        // Fused (issue #192): one pass that BOTH warms the handle and fills this
+        // sub-call's destination, so the batch sub-call transcribed next has
+        // nothing left to compute and is dropped.
+        let fused = sub.is_fusable()
+            .then(|| streaming::batch_call_out_args(&tail_stmts[sub.tail_idx], sub))
+            .flatten();
+        if let Some((out_meta, dsts)) = fused {
+            let rend = |e: &Expr| render_expr(&sc_rewrite(e), &ins_ctx, registry, helpers);
+            let metas: Vec<String> = out_meta.iter().map(|e| rend(e)).collect();
+            let dst_args: Vec<String> = dsts.iter().map(|e| rend(e)).collect();
+            let _ = writeln!(
+                t,
+                "      {cls} sub{si} = {callee_base}_OpenAndFillInternal({}, {anchor}{opt_tail}, {}, {});",
+                srcs.join(", "),
+                metas.join(", "),
+                dst_args.join(", ")
+            );
+            // Keep the assignment the transcribed error handling reads.
+            if let Statement::Assign { target, .. } = &tail_stmts[sub.tail_idx] {
+                let _ = writeln!(
+                    t,
+                    "      {} = RetCode.Success;",
+                    render_expr(&sc_rewrite(target), &ins_ctx, registry, helpers)
+                );
+            }
+            replaced.insert(region_len + sub.tail_idx);
+        } else {
+            let _ = writeln!(
+                t,
+                "      {cls} sub{si} = {callee_base}_OpenInternal({}, {anchor}{opt_tail});",
+                srcs.join(", ")
+            );
+        }
         inserts.push((region_len + sub.tail_idx, t));
     }
 
-    emit_open_region(o, func, &combined, enums, registry, helpers, counter, stream_fma, &inserts);
+    emit_open_region(o, func, &combined, enums, registry, helpers, counter, stream_fma, &inserts, &replaced);
 
     // --- capture ------------------------------------------------------------
     let _ = writeln!(o, "      /* Capture the live producer state + sub handles. */");
@@ -3173,5 +3242,86 @@ fn emit_composed(
     );
     emit_open_body_scalar_wrapper(o, func);
     emit_open_and_fill_wrapper(o, func);
+    emit_open_and_fill_internal_body(o, func);
+    emit_open_and_fill_internal_wrapper(o, func);
     emit_open_wrappers(o, func);
+}
+
+/// `<base>_OpenAndFillInternalBody` for a tier that owns an `OpenCore`: the same
+/// single pass as `OpenAndFillBody`, at the caller's `startIdx`. The Dispatch
+/// tier renders its own body instead (it has no `OpenCore`), and PeriodBank
+/// renders none at all.
+fn emit_open_and_fill_internal_body(o: &mut String, func: &FuncDef) {
+    let base = base_name(func);
+    emit_open_body_sig(o, func, OutMode::FillInternal);
+    let mut args: Vec<String> = vec!["sp".to_string()];
+    args.extend(streaming::input_array_names(func));
+    args.push("startIdx".to_string());
+    for p in &func.optional_inputs {
+        args.push(p.name.clone());
+    }
+    args.push("outBegIdx".to_string());
+    args.push("outNBElement".to_string());
+    for out in &func.outputs {
+        args.push(out.name.clone());
+    }
+    args.push("1".to_string());
+    let _ = writeln!(o, "      return {base}_OpenCore({});", args.join(", "));
+    let _ = writeln!(o, "   }}");
+}
+
+/// `<base>_OpenAndFillInternal`: `OpenAndFill` anchored at the caller's
+/// `startIdx` — the composed-open fusion seam (issue #192), so one pass both
+/// warms the sub-handle and fills that sub-call's destination.
+///
+/// Goes straight to `OpenCore` rather than through `OpenAndFillBody`, which
+/// hardcodes startIdx 0 and owns the aliasing guard. Dropping that guard is
+/// deliberate: the generator emits a call here only for a sub-call whose
+/// destinations alias neither its sources nor each other
+/// ([`streaming::SubCallStep::is_fusable`]), so it could never fire.
+fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
+    let base = base_name(func);
+    let class = stream_class_name(func);
+    let in_sig: Vec<String> = streaming::input_array_names(func)
+        .iter()
+        .map(|a| format!("double {a}[]"))
+        .collect();
+    let in_fwd: Vec<String> = streaming::input_array_names(func);
+    let outs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
+    let mut fi_sig: Vec<String> = in_sig.clone();
+    fi_sig.push("int startIdx".to_string());
+    for p in &func.optional_inputs {
+        fi_sig.push(format!("{} {}", opt_param_java_type(&p.param_type), p.name));
+    }
+    fi_sig.push("MInteger outBegIdx".to_string());
+    fi_sig.push("MInteger outNBElement".to_string());
+    for out in &outs {
+        fi_sig.push(format!("{} {}[]", out_java_type(func, out), out));
+    }
+    let _ = writeln!(
+        o,
+        "   /* {base}_OpenAndFill anchored at startIdx — the composed-open fusion seam. */"
+    );
+    let _ = writeln!(
+        o,
+        "   {class} {base}_OpenAndFillInternal( {} )\n   {{",
+        fi_sig.join(", ")
+    );
+    let _ = writeln!(o, "      {class} sp = new {class}(this);");
+    let mut fi_args: Vec<String> = vec!["sp".to_string()];
+    fi_args.extend(in_fwd.iter().cloned());
+    fi_args.push("startIdx".to_string());
+    for p in &func.optional_inputs {
+        fi_args.push(p.name.clone());
+    }
+    fi_args.push("outBegIdx".to_string());
+    fi_args.push("outNBElement".to_string());
+    fi_args.extend(outs.iter().cloned());
+    let _ = writeln!(
+        o,
+        "      RetCode retCode = {base}_OpenAndFillInternalBody({});",
+        fi_args.join(", ")
+    );
+    emit_reject_conversion(o, func, "openAndFill");
+    let _ = writeln!(o, "   }}");
 }

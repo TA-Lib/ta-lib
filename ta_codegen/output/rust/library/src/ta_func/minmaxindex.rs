@@ -561,6 +561,14 @@ impl Core {
         self.MINMAXINDEX_OpenCore(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
     }
 
+    /// [`Core::MINMAXINDEX_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MINMAXINDEX_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outMinIdx: &mut [i32], outMaxIdx: &mut [i32],
+    ) -> Result<MINMAXINDEX_Stream, RetCode> {
+        self.MINMAXINDEX_OpenCore(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMinIdx, outMaxIdx, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

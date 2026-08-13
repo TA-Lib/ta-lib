@@ -409,6 +409,14 @@ impl Core {
         self.CDLENGULFING_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
+    /// [`Core::CDLENGULFING_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn CDLENGULFING_OpenAndFillInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLENGULFING_Stream, RetCode> {
+        self.CDLENGULFING_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

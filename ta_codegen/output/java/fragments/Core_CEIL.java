@@ -276,6 +276,26 @@
       }
       return CEIL_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return CEIL_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CEIL_Stream CEIL_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      CEIL_Stream sp = new CEIL_Stream(this);
+      RetCode retCode = CEIL_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CEIL openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CEIL openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CEIL openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CEIL_Open (composition seam). */
    CEIL_Stream CEIL_OpenInternal( double inReal[], int startIdx )
    {

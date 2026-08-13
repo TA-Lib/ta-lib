@@ -728,6 +728,14 @@ impl Core {
         self.VAR_OpenCore(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::VAR_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn VAR_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<VAR_Stream, RetCode> {
+        self.VAR_OpenCore(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

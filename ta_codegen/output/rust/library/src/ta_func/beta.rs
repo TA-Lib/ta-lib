@@ -712,6 +712,14 @@ impl Core {
         self.BETA_OpenCore(inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::BETA_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn BETA_OpenAndFillInternal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<BETA_Stream, RetCode> {
+        self.BETA_OpenCore(inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 thread_local! {

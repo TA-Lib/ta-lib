@@ -821,6 +821,26 @@
       }
       return MINMAX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1 );
    }
+   private RetCode MINMAX_OpenAndFillInternalBody( MINMAX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
+   {
+      return MINMAX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax, 1);
+   }
+   /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MINMAX_Stream MINMAX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outMin[], double outMax[] )
+   {
+      MINMAX_Stream sp = new MINMAX_Stream(this);
+      RetCode retCode = MINMAX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outMin, outMax);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MINMAX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MINMAX openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MINMAX openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MINMAX_Open (composition seam). */
    MINMAX_Stream MINMAX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

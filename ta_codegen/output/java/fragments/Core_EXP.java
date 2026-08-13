@@ -278,6 +278,26 @@
       }
       return EXP_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode EXP_OpenAndFillInternalBody( EXP_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return EXP_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* EXP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   EXP_Stream EXP_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      EXP_Stream sp = new EXP_Stream(this);
+      RetCode retCode = EXP_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("EXP openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("EXP openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("EXP openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind EXP_Open (composition seam). */
    EXP_Stream EXP_OpenInternal( double inReal[], int startIdx )
    {

@@ -294,6 +294,14 @@ impl Core {
         self.MULT_OpenCore(inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::MULT_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MULT_OpenAndFillInternal(
+        &self, inReal0: &[f64], inReal1: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MULT_Stream, RetCode> {
+        self.MULT_OpenCore(inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

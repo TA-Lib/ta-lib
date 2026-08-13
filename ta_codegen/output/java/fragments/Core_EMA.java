@@ -543,6 +543,26 @@
       }
       return EMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode EMA_OpenAndFillInternalBody( EMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return EMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* EMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   EMA_Stream EMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      EMA_Stream sp = new EMA_Stream(this);
+      RetCode retCode = EMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("EMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("EMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("EMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind EMA_Open (composition seam). */
    EMA_Stream EMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

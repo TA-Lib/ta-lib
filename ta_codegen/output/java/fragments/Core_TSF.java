@@ -582,6 +582,26 @@
       }
       return TSF_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TSF_OpenAndFillInternalBody( TSF_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TSF_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TSF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TSF_Stream TSF_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TSF_Stream sp = new TSF_Stream(this);
+      RetCode retCode = TSF_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TSF openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TSF openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TSF openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TSF_Open (composition seam). */
    TSF_Stream TSF_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

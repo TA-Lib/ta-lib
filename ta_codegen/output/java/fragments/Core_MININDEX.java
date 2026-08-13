@@ -544,6 +544,26 @@
       }
       return MININDEX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode MININDEX_OpenAndFillInternalBody( MININDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return MININDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* MININDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MININDEX_Stream MININDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      MININDEX_Stream sp = new MININDEX_Stream(this);
+      RetCode retCode = MININDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MININDEX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MININDEX openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MININDEX openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MININDEX_Open (composition seam). */
    MININDEX_Stream MININDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

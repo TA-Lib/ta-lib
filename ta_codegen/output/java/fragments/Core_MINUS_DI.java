@@ -1351,6 +1351,26 @@
       }
       return MINUS_DI_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MINUS_DI_OpenAndFillInternalBody( MINUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MINUS_DI_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MINUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MINUS_DI_Stream MINUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MINUS_DI_Stream sp = new MINUS_DI_Stream(this);
+      RetCode retCode = MINUS_DI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MINUS_DI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MINUS_DI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MINUS_DI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MINUS_DI_Open (composition seam). */
    MINUS_DI_Stream MINUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {

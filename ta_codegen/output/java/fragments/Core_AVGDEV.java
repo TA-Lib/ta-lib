@@ -435,6 +435,26 @@
       }
       return AVGDEV_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return AVGDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AVGDEV_Stream AVGDEV_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      AVGDEV_Stream sp = new AVGDEV_Stream(this);
+      RetCode retCode = AVGDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AVGDEV openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AVGDEV openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AVGDEV openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind AVGDEV_Open (composition seam). */
    AVGDEV_Stream AVGDEV_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

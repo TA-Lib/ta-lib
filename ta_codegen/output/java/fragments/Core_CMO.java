@@ -747,6 +747,26 @@
       }
       return CMO_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode CMO_OpenAndFillInternalBody( CMO_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return CMO_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CMO_Stream CMO_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      CMO_Stream sp = new CMO_Stream(this);
+      RetCode retCode = CMO_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CMO openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CMO openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CMO openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
    CMO_Stream CMO_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

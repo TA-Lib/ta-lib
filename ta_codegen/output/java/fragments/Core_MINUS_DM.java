@@ -964,6 +964,26 @@
       }
       return MINUS_DM_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MINUS_DM_OpenAndFillInternalBody( MINUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MINUS_DM_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
+      RetCode retCode = MINUS_DM_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MINUS_DM openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MINUS_DM openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MINUS_DM openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
    MINUS_DM_Stream MINUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {

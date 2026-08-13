@@ -330,6 +330,14 @@ impl Core {
         self.OBV_OpenCore(inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::OBV_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn OBV_OpenAndFillInternal(
+        &self, inReal: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<OBV_Stream, RetCode> {
+        self.OBV_OpenCore(inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

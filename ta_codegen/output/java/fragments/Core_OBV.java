@@ -340,6 +340,26 @@
       }
       return OBV_OpenCore( sp, inReal, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return OBV_OpenCore(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   OBV_Stream OBV_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      OBV_Stream sp = new OBV_Stream(this);
+      RetCode retCode = OBV_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("OBV openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("OBV openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("OBV openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
    OBV_Stream OBV_OpenInternal( double inReal[], double inVolume[], int startIdx )
    {

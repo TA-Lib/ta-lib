@@ -450,6 +450,26 @@
       }
       return PVI_OpenCore( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode PVI_OpenAndFillInternalBody( PVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return PVI_OpenCore(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PVI_Stream PVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      PVI_Stream sp = new PVI_Stream(this);
+      RetCode retCode = PVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("PVI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("PVI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("PVI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
    PVI_Stream PVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {

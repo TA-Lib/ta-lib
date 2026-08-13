@@ -816,6 +816,26 @@
       }
       return CDLEVENINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLEVENINGSTAR_OpenAndFillInternalBody( CDLEVENINGSTAR_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLEVENINGSTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLEVENINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLEVENINGSTAR_Stream sp = new CDLEVENINGSTAR_Stream(this);
+      RetCode retCode = CDLEVENINGSTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLEVENINGSTAR openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLEVENINGSTAR openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLEVENINGSTAR openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLEVENINGSTAR_Open (composition seam). */
    CDLEVENINGSTAR_Stream CDLEVENINGSTAR_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {

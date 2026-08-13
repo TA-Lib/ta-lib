@@ -572,6 +572,26 @@
       }
       return CDLHIKKAKE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLHIKKAKE_OpenAndFillInternalBody( CDLHIKKAKE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLHIKKAKE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLHIKKAKE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLHIKKAKE_Stream CDLHIKKAKE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLHIKKAKE_Stream sp = new CDLHIKKAKE_Stream(this);
+      RetCode retCode = CDLHIKKAKE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLHIKKAKE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLHIKKAKE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLHIKKAKE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLHIKKAKE_Open (composition seam). */
    CDLHIKKAKE_Stream CDLHIKKAKE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

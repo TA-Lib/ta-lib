@@ -835,6 +835,26 @@
       }
       return VAR_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode VAR_OpenAndFillInternalBody( VAR_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return VAR_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* VAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VAR_Stream VAR_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      VAR_Stream sp = new VAR_Stream(this);
+      RetCode retCode = VAR_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("VAR openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("VAR openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("VAR openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind VAR_Open (composition seam). */
    VAR_Stream VAR_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
    {

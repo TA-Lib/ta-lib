@@ -683,6 +683,26 @@
       }
       return CDLCLOSINGMARUBOZU_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLCLOSINGMARUBOZU_OpenAndFillInternalBody( CDLCLOSINGMARUBOZU_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLCLOSINGMARUBOZU_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLCLOSINGMARUBOZU_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLCLOSINGMARUBOZU_Stream sp = new CDLCLOSINGMARUBOZU_Stream(this);
+      RetCode retCode = CDLCLOSINGMARUBOZU_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLCLOSINGMARUBOZU openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLCLOSINGMARUBOZU openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLCLOSINGMARUBOZU openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLCLOSINGMARUBOZU_Open (composition seam). */
    CDLCLOSINGMARUBOZU_Stream CDLCLOSINGMARUBOZU_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

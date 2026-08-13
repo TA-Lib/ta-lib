@@ -678,6 +678,26 @@
       }
       return CORREL_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode CORREL_OpenAndFillInternalBody( CORREL_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return CORREL_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* CORREL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CORREL_Stream CORREL_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      CORREL_Stream sp = new CORREL_Stream(this);
+      RetCode retCode = CORREL_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CORREL openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CORREL openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CORREL openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CORREL_Open (composition seam). */
    CORREL_Stream CORREL_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {

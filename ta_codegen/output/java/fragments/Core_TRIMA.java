@@ -1221,6 +1221,26 @@
       }
       return TRIMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TRIMA_OpenAndFillInternalBody( TRIMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TRIMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TRIMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TRIMA_Stream TRIMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TRIMA_Stream sp = new TRIMA_Stream(this);
+      RetCode retCode = TRIMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TRIMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TRIMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TRIMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TRIMA_Open (composition seam). */
    TRIMA_Stream TRIMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

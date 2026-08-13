@@ -1657,6 +1657,26 @@
       }
       return HT_PHASOR_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outInPhase, outQuadrature, 1 );
    }
+   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   {
+      return HT_PHASOR_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature, 1);
+   }
+   /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outInPhase[], double outQuadrature[] )
+   {
+      HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
+      RetCode retCode = HT_PHASOR_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outInPhase, outQuadrature);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HT_PHASOR openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HT_PHASOR openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HT_PHASOR openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
    HT_PHASOR_Stream HT_PHASOR_OpenInternal( double inReal[], int startIdx )
    {

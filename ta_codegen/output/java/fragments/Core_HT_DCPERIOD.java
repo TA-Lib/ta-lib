@@ -1606,6 +1606,26 @@
       }
       return HT_DCPERIOD_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode HT_DCPERIOD_OpenAndFillInternalBody( HT_DCPERIOD_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return HT_DCPERIOD_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
+      RetCode retCode = HT_DCPERIOD_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HT_DCPERIOD openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HT_DCPERIOD openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HT_DCPERIOD openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HT_DCPERIOD_Open (composition seam). */
    HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( double inReal[], int startIdx )
    {

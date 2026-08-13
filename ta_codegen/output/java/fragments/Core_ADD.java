@@ -286,6 +286,26 @@
       }
       return ADD_OpenCore( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ADD_OpenAndFillInternalBody( ADD_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ADD_OpenCore(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ADD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ADD_Stream ADD_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ADD_Stream sp = new ADD_Stream(this);
+      RetCode retCode = ADD_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ADD openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ADD openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ADD openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ADD_Open (composition seam). */
    ADD_Stream ADD_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {

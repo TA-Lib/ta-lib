@@ -655,6 +655,26 @@
       }
       return WMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode WMA_OpenAndFillInternalBody( WMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return WMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* WMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WMA_Stream WMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      WMA_Stream sp = new WMA_Stream(this);
+      RetCode retCode = WMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("WMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("WMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("WMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind WMA_Open (composition seam). */
    WMA_Stream WMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

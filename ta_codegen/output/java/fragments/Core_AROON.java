@@ -724,6 +724,26 @@
       }
       return AROON_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1 );
    }
+   private RetCode AROON_OpenAndFillInternalBody( AROON_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
+   {
+      return AROON_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp, 1);
+   }
+   /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AROON_Stream AROON_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outAroonDown[], double outAroonUp[] )
+   {
+      AROON_Stream sp = new AROON_Stream(this);
+      RetCode retCode = AROON_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outAroonDown, outAroonUp);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AROON openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AROON openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AROON openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind AROON_Open (composition seam). */
    AROON_Stream AROON_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {

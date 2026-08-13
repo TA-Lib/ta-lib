@@ -2265,6 +2265,26 @@
       }
       return HT_TRENDMODE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode HT_TRENDMODE_OpenAndFillInternalBody( HT_TRENDMODE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return HT_TRENDMODE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
+      RetCode retCode = HT_TRENDMODE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HT_TRENDMODE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HT_TRENDMODE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HT_TRENDMODE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HT_TRENDMODE_Open (composition seam). */
    HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double inReal[], int startIdx )
    {

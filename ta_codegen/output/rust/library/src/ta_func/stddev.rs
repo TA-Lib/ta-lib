@@ -340,8 +340,8 @@ impl Core {
         // Calculate the variance.
         // Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.VAR_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.VAR(startIdx, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let sub0 = self.VAR_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -434,6 +434,14 @@ impl Core {
         &self, inReal: &[f64], mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<STDDEV_Stream, RetCode> {
         self.STDDEV_OpenCore(inReal, 0, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
+    }
+
+    /// [`Core::STDDEV_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn STDDEV_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDev: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<STDDEV_Stream, RetCode> {
+        self.STDDEV_OpenCore(inReal, startIdx, optInTimePeriod, optInNbDev, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

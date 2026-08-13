@@ -963,6 +963,26 @@
       }
       return PLUS_DM_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode PLUS_DM_OpenAndFillInternalBody( PLUS_DM_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return PLUS_DM_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* PLUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PLUS_DM_Stream PLUS_DM_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      PLUS_DM_Stream sp = new PLUS_DM_Stream(this);
+      RetCode retCode = PLUS_DM_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("PLUS_DM openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("PLUS_DM openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("PLUS_DM openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind PLUS_DM_Open (composition seam). */
    PLUS_DM_Stream PLUS_DM_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {

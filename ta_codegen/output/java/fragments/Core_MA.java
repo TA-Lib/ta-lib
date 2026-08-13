@@ -875,6 +875,115 @@
       sp.optInMAType = optInMAType;
       return RetCode.Success;
    }
+   private RetCode MA_OpenAndFillInternalBody( MA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      int historyLen = inReal.length;
+      if( historyLen < 1 ) {
+         return RetCode.BadParam;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 30;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInMAType == MAType.DEFAULT ) {
+         optInMAType = MAType.SMA;
+      }
+      if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == 1 || optInMAType == MAType.DISABLED ) {
+         if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.optInMAType = optInMAType;
+         sp.sub = null;
+         int fillLb = MA_Lookback(optInTimePeriod, optInMAType);
+         if( startIdx > fillLb ) fillLb = startIdx;
+         if( historyLen < fillLb + 1 ) {
+            return RetCode.OutOfRangeEndIndex;
+         }
+         outBegIdx.value = fillLb;
+         outNBElement.value = historyLen - fillLb;
+         for( int fillIdx = 0; fillIdx < historyLen - fillLb; fillIdx++ ) {
+            outReal[fillIdx] = inReal[fillLb + fillIdx];
+         }
+         sp.cur_outReal = outReal[outNBElement.value - 1];
+         return RetCode.Success;
+      }
+      switch( optInMAType )
+      {
+      case SMA: {
+         SMA_Stream sub = SMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case EMA: {
+         EMA_Stream sub = EMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case WMA: {
+         WMA_Stream sub = WMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case DEMA: {
+         DEMA_Stream sub = DEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case TEMA: {
+         TEMA_Stream sub = TEMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case TRIMA: {
+         TRIMA_Stream sub = TRIMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case KAMA: {
+         KAMA_Stream sub = KAMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAMA: {
+         MAMA_Stream sub = MAMA_OpenAndFillInternal(inReal, startIdx, 0.5, 0.05, outBegIdx, outNBElement, outReal, new double[historyLen]);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outMAMA;
+         break;
+      }
+      case T3: {
+         T3_Stream sub = T3_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, 0.7, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case HMA: {
+         HMA_Stream sub = HMA_OpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      default:
+         return RetCode.BadParam;
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.optInMAType = optInMAType;
+      return RetCode.Success;
+   }
    /* Internal startIdx-anchored open behind MA_Open (composition seam). */
    MA_Stream MA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
    {
@@ -921,6 +1030,22 @@
       MInteger outNBElement = new MInteger();
       RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx.value, outNBElement.value);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MA openAndFill: " + retCode);
+   }
+   /* MA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MA_Stream MA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MA_Stream sp = new MA_Stream(this);
+      RetCode retCode = MA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInMAType, outBegIdx, outNBElement, outReal);
       if( retCode == RetCode.Success ) {
          return sp;
       }

@@ -485,6 +485,26 @@
       }
       return SMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode SMA_OpenAndFillInternalBody( SMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return SMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* SMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SMA_Stream SMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      SMA_Stream sp = new SMA_Stream(this);
+      RetCode retCode = SMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("SMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("SMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("SMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind SMA_Open (composition seam). */
    SMA_Stream SMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

@@ -980,6 +980,26 @@
       }
       return CDLHAMMER_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLHAMMER_OpenAndFillInternalBody( CDLHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLHAMMER_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLHAMMER_Stream CDLHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLHAMMER_Stream sp = new CDLHAMMER_Stream(this);
+      RetCode retCode = CDLHAMMER_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLHAMMER openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLHAMMER openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLHAMMER openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLHAMMER_Open (composition seam). */
    CDLHAMMER_Stream CDLHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

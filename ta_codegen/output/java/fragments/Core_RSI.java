@@ -790,6 +790,26 @@
       }
       return RSI_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode RSI_OpenAndFillInternalBody( RSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return RSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* RSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   RSI_Stream RSI_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      RSI_Stream sp = new RSI_Stream(this);
+      RetCode retCode = RSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("RSI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("RSI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("RSI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind RSI_Open (composition seam). */
    RSI_Stream RSI_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

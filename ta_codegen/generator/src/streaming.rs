@@ -375,6 +375,36 @@ impl SubCallStep {
     }
 }
 
+/// The out-meta and destination argument expressions of a composed tail's batch
+/// sub-call, taken from the END of its argument list — `[startIdx, endIdx,
+/// inputs.., opts.., outBegIdx, outNBElement, outputs..]`. Counting backwards
+/// from `sub.dsts.len()` is what makes this independent of how many inputs and
+/// optional params the callee has.
+///
+/// Every backend fusing a sub-call needs exactly these expressions, and they are
+/// NOT uniformly the dummies — MACDEXT reads `outNbElement1`, APO/PPO/PVO read
+/// `fastNb`, STOCHRSI mixes `outBegIdx2` with `dummyNBElement` — so re-deriving
+/// them per backend would be three chances to feed the wrong lengths downstream.
+///
+/// `None` when the statement is not the expected `<var> = <callee>( .. )` shape
+/// or the argument count cannot account for the outputs; the caller then falls
+/// back to the unfused two-pass emission rather than guessing.
+pub fn batch_call_out_args<'a>(
+    stmt: &'a Statement,
+    sub: &SubCallStep,
+) -> Option<(Vec<&'a Expr>, Vec<&'a Expr>)> {
+    let Statement::Assign { value: Expr::FuncCall(_, args), .. } = stmt else {
+        return None;
+    };
+    let n_dst = sub.dsts.len();
+    // startIdx + endIdx + at least one input, then the out triplet.
+    if n_dst == 0 || args.len() < n_dst + 2 + 2 {
+        return None;
+    }
+    let split = args.len() - n_dst;
+    Some((args[split - 2..split].iter().collect(), args[split..].iter().collect()))
+}
+
 /// One per-bar step of a composed Update pipeline, in tail order.
 #[derive(Debug, Clone)]
 pub enum UpdateStep {

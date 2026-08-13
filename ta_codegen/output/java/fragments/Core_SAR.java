@@ -1074,6 +1074,26 @@
       }
       return SAR_OpenCore( sp, inHigh, inLow, 0, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode SAR_OpenAndFillInternalBody( SAR_Stream sp, double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return SAR_OpenCore(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* SAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SAR_Stream SAR_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      SAR_Stream sp = new SAR_Stream(this);
+      RetCode retCode = SAR_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("SAR openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("SAR openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("SAR openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind SAR_Open (composition seam). */
    SAR_Stream SAR_OpenInternal( double inHigh[], double inLow[], int startIdx, double optInAcceleration, double optInMaximum )
    {

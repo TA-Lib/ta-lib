@@ -705,6 +705,26 @@
       }
       return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ADOSC_OpenAndFillInternalBody( ADOSC_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ADOSC_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ADOSC_Stream ADOSC_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ADOSC_Stream sp = new ADOSC_Stream(this);
+      RetCode retCode = ADOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ADOSC openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ADOSC openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ADOSC openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
    ADOSC_Stream ADOSC_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {

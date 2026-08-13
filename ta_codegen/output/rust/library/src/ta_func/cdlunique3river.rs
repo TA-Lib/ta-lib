@@ -876,6 +876,14 @@ impl Core {
         self.CDLUNIQUE3RIVER_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1)
     }
 
+    /// [`Core::CDLUNIQUE3RIVER_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn CDLUNIQUE3RIVER_OpenAndFillInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outInteger: &mut [i32],
+    ) -> Result<CDLUNIQUE3RIVER_Stream, RetCode> {
+        self.CDLUNIQUE3RIVER_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1)
+    }
+
 }
 
 thread_local! {

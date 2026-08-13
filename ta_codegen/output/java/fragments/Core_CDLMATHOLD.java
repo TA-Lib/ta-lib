@@ -968,6 +968,26 @@
       }
       return CDLMATHOLD_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLMATHOLD_OpenAndFillInternalBody( CDLMATHOLD_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLMATHOLD_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLMATHOLD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLMATHOLD_Stream CDLMATHOLD_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLMATHOLD_Stream sp = new CDLMATHOLD_Stream(this);
+      RetCode retCode = CDLMATHOLD_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLMATHOLD openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLMATHOLD openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLMATHOLD openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLMATHOLD_Open (composition seam). */
    CDLMATHOLD_Stream CDLMATHOLD_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, double optInPenetration )
    {

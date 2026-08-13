@@ -761,6 +761,26 @@
       }
       return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode CMF_OpenAndFillInternalBody( CMF_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return CMF_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CMF_Stream CMF_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      CMF_Stream sp = new CMF_Stream(this);
+      RetCode retCode = CMF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CMF openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CMF openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CMF openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
    CMF_Stream CMF_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, int optInTimePeriod )
    {

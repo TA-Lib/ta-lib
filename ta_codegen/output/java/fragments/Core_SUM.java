@@ -456,6 +456,26 @@
       }
       return SUM_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode SUM_OpenAndFillInternalBody( SUM_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return SUM_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* SUM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SUM_Stream SUM_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      SUM_Stream sp = new SUM_Stream(this);
+      RetCode retCode = SUM_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("SUM openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("SUM openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("SUM openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind SUM_Open (composition seam). */
    SUM_Stream SUM_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

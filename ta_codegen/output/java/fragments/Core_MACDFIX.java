@@ -811,6 +811,26 @@
       }
       return MACDFIX_OpenCore( sp, inReal, 0, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
    }
+   private RetCode MACDFIX_OpenAndFillInternalBody( MACDFIX_Stream sp, double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   {
+      return MACDFIX_OpenCore(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
+   }
+   /* MACDFIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MACDFIX_Stream MACDFIX_OpenAndFillInternal( double inReal[], int startIdx, int optInSignalPeriod, MInteger outBegIdx, MInteger outNBElement, double outMACD[], double outMACDSignal[], double outMACDHist[] )
+   {
+      MACDFIX_Stream sp = new MACDFIX_Stream(this);
+      RetCode retCode = MACDFIX_OpenAndFillInternalBody(sp, inReal, startIdx, optInSignalPeriod, outBegIdx, outNBElement, outMACD, outMACDSignal, outMACDHist);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MACDFIX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MACDFIX openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MACDFIX openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MACDFIX_Open (composition seam). */
    MACDFIX_Stream MACDFIX_OpenInternal( double inReal[], int startIdx, int optInSignalPeriod )
    {

@@ -281,6 +281,14 @@ impl Core {
         self.TANH_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::TANH_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn TANH_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<TANH_Stream, RetCode> {
+        self.TANH_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

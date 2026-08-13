@@ -543,6 +543,26 @@
       }
       return CDLDOJI_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLDOJI_OpenAndFillInternalBody( CDLDOJI_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLDOJI_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLDOJI_Stream CDLDOJI_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLDOJI_Stream sp = new CDLDOJI_Stream(this);
+      RetCode retCode = CDLDOJI_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLDOJI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLDOJI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLDOJI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLDOJI_Open (composition seam). */
    CDLDOJI_Stream CDLDOJI_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

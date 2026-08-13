@@ -493,6 +493,26 @@
       }
       return WAD_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode WAD_OpenAndFillInternalBody( WAD_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return WAD_OpenCore(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* WAD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WAD_Stream WAD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      WAD_Stream sp = new WAD_Stream(this);
+      RetCode retCode = WAD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("WAD openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("WAD openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("WAD openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind WAD_Open (composition seam). */
    WAD_Stream WAD_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {

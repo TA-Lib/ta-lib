@@ -4823,7 +4823,7 @@ fn wrap_cross_indicator_call(call: String, aliased_vars: &[String]) -> String {
 /// - First two args (idx 0,1 = startIdx, endIdx) cast i32 to usize
 /// - Scalar T vars in output position get `std::slice::from_mut()` wrapping
 /// - Literal values and optIn Real params are rendered as f64 (not T-wrapped)
-fn render_cross_indicator_arg(
+pub(crate) fn render_cross_indicator_arg(
     arg: &Expr,
     position: usize,
     is_output_position: bool,

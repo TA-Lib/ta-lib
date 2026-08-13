@@ -1359,6 +1359,26 @@
       }
       return PLUS_DI_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode PLUS_DI_OpenAndFillInternalBody( PLUS_DI_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return PLUS_DI_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* PLUS_DI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   PLUS_DI_Stream PLUS_DI_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      PLUS_DI_Stream sp = new PLUS_DI_Stream(this);
+      RetCode retCode = PLUS_DI_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("PLUS_DI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("PLUS_DI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("PLUS_DI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind PLUS_DI_Open (composition seam). */
    PLUS_DI_Stream PLUS_DI_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
    {

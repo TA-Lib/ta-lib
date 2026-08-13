@@ -750,6 +750,26 @@
       }
       return CDLINNECK_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLINNECK_OpenAndFillInternalBody( CDLINNECK_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLINNECK_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLINNECK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLINNECK_Stream CDLINNECK_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLINNECK_Stream sp = new CDLINNECK_Stream(this);
+      RetCode retCode = CDLINNECK_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLINNECK openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLINNECK openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLINNECK openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLINNECK_Open (composition seam). */
    CDLINNECK_Stream CDLINNECK_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

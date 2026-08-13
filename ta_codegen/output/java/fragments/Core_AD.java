@@ -406,6 +406,26 @@
       }
       return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode AD_OpenAndFillInternalBody( AD_Stream sp, double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return AD_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AD_Stream AD_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      AD_Stream sp = new AD_Stream(this);
+      RetCode retCode = AD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AD openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AD openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AD openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind AD_Open (composition seam). */
    AD_Stream AD_OpenInternal( double inHigh[], double inLow[], double inClose[], double inVolume[], int startIdx )
    {

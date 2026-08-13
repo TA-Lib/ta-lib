@@ -298,6 +298,26 @@
       }
       return MULT_OpenCore( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode MULT_OpenAndFillInternalBody( MULT_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return MULT_OpenCore(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MULT_Stream MULT_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      MULT_Stream sp = new MULT_Stream(this);
+      RetCode retCode = MULT_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MULT openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MULT openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MULT openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
    MULT_Stream MULT_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {

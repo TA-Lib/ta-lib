@@ -324,6 +324,26 @@
       }
       return BOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode BOP_OpenAndFillInternalBody( BOP_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return BOP_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* BOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   BOP_Stream BOP_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      BOP_Stream sp = new BOP_Stream(this);
+      RetCode retCode = BOP_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("BOP openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("BOP openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("BOP openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind BOP_Open (composition seam). */
    BOP_Stream BOP_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

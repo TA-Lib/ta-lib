@@ -288,6 +288,26 @@
       }
       return SUB_OpenCore( sp, inReal0, inReal1, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode SUB_OpenAndFillInternalBody( SUB_Stream sp, double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return SUB_OpenCore(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* SUB_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SUB_Stream SUB_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      SUB_Stream sp = new SUB_Stream(this);
+      RetCode retCode = SUB_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("SUB openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("SUB openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("SUB openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind SUB_Open (composition seam). */
    SUB_Stream SUB_OpenInternal( double inReal0[], double inReal1[], int startIdx )
    {

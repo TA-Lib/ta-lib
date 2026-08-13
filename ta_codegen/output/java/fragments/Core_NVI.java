@@ -450,6 +450,26 @@
       }
       return NVI_OpenCore( sp, inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode NVI_OpenAndFillInternalBody( NVI_Stream sp, double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return NVI_OpenCore(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* NVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   NVI_Stream NVI_OpenAndFillInternal( double inClose[], double inVolume[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      NVI_Stream sp = new NVI_Stream(this);
+      RetCode retCode = NVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("NVI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("NVI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("NVI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind NVI_Open (composition seam). */
    NVI_Stream NVI_OpenInternal( double inClose[], double inVolume[], int startIdx )
    {

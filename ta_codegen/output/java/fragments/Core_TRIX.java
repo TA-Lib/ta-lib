@@ -629,6 +629,26 @@
       }
       return TRIX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TRIX_OpenAndFillInternalBody( TRIX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TRIX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TRIX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TRIX_Stream TRIX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TRIX_Stream sp = new TRIX_Stream(this);
+      RetCode retCode = TRIX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TRIX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TRIX openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TRIX openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TRIX_Open (composition seam). */
    TRIX_Stream TRIX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

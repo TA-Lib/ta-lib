@@ -1508,6 +1508,14 @@ impl Core {
         self.HT_SINE_OpenCore(inReal, 0, outBegIdx, outNBElement, outSine, outLeadSine, 1)
     }
 
+    /// [`Core::HT_SINE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn HT_SINE_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outSine: &mut [f64], outLeadSine: &mut [f64],
+    ) -> Result<HT_SINE_Stream, RetCode> {
+        self.HT_SINE_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outSine, outLeadSine, 1)
+    }
+
 }
 
 thread_local! {

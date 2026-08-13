@@ -282,6 +282,26 @@
       }
       return ATAN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ATAN_OpenAndFillInternalBody( ATAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ATAN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ATAN_Stream ATAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ATAN_Stream sp = new ATAN_Stream(this);
+      RetCode retCode = ATAN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ATAN openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ATAN openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ATAN openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ATAN_Open (composition seam). */
    ATAN_Stream ATAN_OpenInternal( double inReal[], int startIdx )
    {

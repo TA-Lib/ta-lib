@@ -301,6 +301,26 @@
       }
       return WCLPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode WCLPRICE_OpenAndFillInternalBody( WCLPRICE_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return WCLPRICE_OpenCore(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
+      RetCode retCode = WCLPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("WCLPRICE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("WCLPRICE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("WCLPRICE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind WCLPRICE_Open (composition seam). */
    WCLPRICE_Stream WCLPRICE_OpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx )
    {

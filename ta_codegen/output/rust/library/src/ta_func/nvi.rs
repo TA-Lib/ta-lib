@@ -422,6 +422,14 @@ impl Core {
         self.NVI_OpenCore(inClose, inVolume, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::NVI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn NVI_OpenAndFillInternal(
+        &self, inClose: &[f64], inVolume: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<NVI_Stream, RetCode> {
+        self.NVI_OpenCore(inClose, inVolume, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

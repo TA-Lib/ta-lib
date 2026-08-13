@@ -664,6 +664,26 @@
       }
       return VWMA_OpenCore( sp, inReal, inVolume, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode VWMA_OpenAndFillInternalBody( VWMA_Stream sp, double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return VWMA_OpenCore(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VWMA_Stream VWMA_OpenAndFillInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      VWMA_Stream sp = new VWMA_Stream(this);
+      RetCode retCode = VWMA_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("VWMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("VWMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("VWMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
    VWMA_Stream VWMA_OpenInternal( double inReal[], double inVolume[], int startIdx, int optInTimePeriod )
    {

@@ -290,6 +290,26 @@
       }
       return ASIN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode ASIN_OpenAndFillInternalBody( ASIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return ASIN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ASIN_Stream ASIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ASIN_Stream sp = new ASIN_Stream(this);
+      RetCode retCode = ASIN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("ASIN openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("ASIN openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("ASIN openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind ASIN_Open (composition seam). */
    ASIN_Stream ASIN_OpenInternal( double inReal[], int startIdx )
    {

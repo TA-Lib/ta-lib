@@ -566,6 +566,26 @@
       }
       return LINEARREG_SLOPE_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode LINEARREG_SLOPE_OpenAndFillInternalBody( LINEARREG_SLOPE_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return LINEARREG_SLOPE_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* LINEARREG_SLOPE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      LINEARREG_SLOPE_Stream sp = new LINEARREG_SLOPE_Stream(this);
+      RetCode retCode = LINEARREG_SLOPE_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("LINEARREG_SLOPE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("LINEARREG_SLOPE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("LINEARREG_SLOPE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind LINEARREG_SLOPE_Open (composition seam). */
    LINEARREG_SLOPE_Stream LINEARREG_SLOPE_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

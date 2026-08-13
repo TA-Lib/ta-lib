@@ -1185,9 +1185,9 @@ fn emit_composed_sub_open(
     // uniformly the dummies (MACDEXT reads `outNbElement1`, APO/PPO/PVO read
     // `fastNb`, STOCHRSI mixes `outBegIdx2` with `dummyNBElement`), and getting
     // them from anywhere else would silently feed the wrong lengths downstream.
-    let fused = sub.is_fusable() && batch_call_out_args(batch_stmt, sub).is_some();
+    let fused = sub.is_fusable() && streaming::batch_call_out_args(batch_stmt, sub).is_some();
     if fused {
-        let (out_meta, dsts) = batch_call_out_args(batch_stmt, sub).unwrap();
+        let (out_meta, dsts) = streaming::batch_call_out_args(batch_stmt, sub).unwrap();
         let rend = |e: &Expr| render_expression(e, registry, helpers, counter);
         let out_args: String = out_meta
             .iter()
@@ -1217,31 +1217,6 @@ fn emit_composed_sub_open(
     let _ = writeln!(o, "         }}");
     let _ = writeln!(o, "      }}");
     fused
-}
-
-/// The out-meta and destination argument expressions of a composed tail's batch
-/// sub-call, taken from the END of its argument list — `[startIdx, endIdx,
-/// inputs.., opts.., outBegIdx, outNBElement, outputs..]`. Counting backwards
-/// from `sub.dsts.len()` is what makes this independent of how many inputs and
-/// optional params the callee has.
-///
-/// `None` when the statement is not the expected `<var> = <callee>( .. )` shape
-/// or the argument count cannot account for the outputs — the caller then falls
-/// back to today's unfused two-pass emission rather than guessing.
-fn batch_call_out_args<'a>(
-    stmt: &'a Statement,
-    sub: &streaming::SubCallStep,
-) -> Option<(Vec<&'a Expr>, Vec<&'a Expr>)> {
-    let Statement::Assign { value: Expr::FuncCall(_, args), .. } = stmt else {
-        return None;
-    };
-    let n_dst = sub.dsts.len();
-    // startIdx + endIdx + at least one input, then the out triplet.
-    if n_dst == 0 || args.len() < n_dst + 2 + 2 {
-        return None;
-    }
-    let split = args.len() - n_dst;
-    Some((args[split - 2..split].iter().collect(), args[split..].iter().collect()))
 }
 
 /// True for a bare `free(<series>)` of a lag-ring series: it is WITHHELD from

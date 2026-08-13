@@ -1803,6 +1803,26 @@
       }
       return HT_TRENDLINE_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode HT_TRENDLINE_OpenAndFillInternalBody( HT_TRENDLINE_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return HT_TRENDLINE_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* HT_TRENDLINE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HT_TRENDLINE_Stream HT_TRENDLINE_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      HT_TRENDLINE_Stream sp = new HT_TRENDLINE_Stream(this);
+      RetCode retCode = HT_TRENDLINE_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HT_TRENDLINE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HT_TRENDLINE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HT_TRENDLINE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HT_TRENDLINE_Open (composition seam). */
    HT_TRENDLINE_Stream HT_TRENDLINE_OpenInternal( double inReal[], int startIdx )
    {

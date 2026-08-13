@@ -454,6 +454,14 @@ impl Core {
         self.WAD_OpenCore(inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::WAD_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn WAD_OpenAndFillInternal(
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<WAD_Stream, RetCode> {
+        self.WAD_OpenCore(inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

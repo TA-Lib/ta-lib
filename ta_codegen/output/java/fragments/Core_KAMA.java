@@ -850,6 +850,26 @@
       }
       return KAMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode KAMA_OpenAndFillInternalBody( KAMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return KAMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* KAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   KAMA_Stream KAMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      KAMA_Stream sp = new KAMA_Stream(this);
+      RetCode retCode = KAMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("KAMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("KAMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("KAMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind KAMA_Open (composition seam). */
    KAMA_Stream KAMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

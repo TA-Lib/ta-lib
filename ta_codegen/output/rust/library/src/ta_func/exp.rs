@@ -283,6 +283,14 @@ impl Core {
         self.EXP_OpenCore(inReal, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::EXP_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn EXP_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<EXP_Stream, RetCode> {
+        self.EXP_OpenCore(inReal, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

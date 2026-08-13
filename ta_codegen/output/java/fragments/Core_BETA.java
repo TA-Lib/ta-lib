@@ -865,6 +865,26 @@
       }
       return BETA_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode BETA_OpenAndFillInternalBody( BETA_Stream sp, double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return BETA_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   BETA_Stream BETA_OpenAndFillInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      BETA_Stream sp = new BETA_Stream(this);
+      RetCode retCode = BETA_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("BETA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("BETA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("BETA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind BETA_Open (composition seam). */
    BETA_Stream BETA_OpenInternal( double inReal0[], double inReal1[], int startIdx, int optInTimePeriod )
    {

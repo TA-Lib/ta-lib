@@ -276,6 +276,26 @@
       }
       return FLOOR_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode FLOOR_OpenAndFillInternalBody( FLOOR_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return FLOOR_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* FLOOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   FLOOR_Stream FLOOR_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      FLOOR_Stream sp = new FLOOR_Stream(this);
+      RetCode retCode = FLOOR_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("FLOOR openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("FLOOR openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("FLOOR openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind FLOOR_Open (composition seam). */
    FLOOR_Stream FLOOR_OpenInternal( double inReal[], int startIdx )
    {

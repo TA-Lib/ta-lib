@@ -691,6 +691,14 @@ impl Core {
         self.MIDPRICE_OpenCore(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::MIDPRICE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn MIDPRICE_OpenAndFillInternal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<MIDPRICE_Stream, RetCode> {
+        self.MIDPRICE_OpenCore(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 thread_local! {

@@ -683,6 +683,26 @@
       }
       return CDLHIGHWAVE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLHIGHWAVE_OpenAndFillInternalBody( CDLHIGHWAVE_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLHIGHWAVE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLHIGHWAVE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLHIGHWAVE_Stream sp = new CDLHIGHWAVE_Stream(this);
+      RetCode retCode = CDLHIGHWAVE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLHIGHWAVE openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLHIGHWAVE openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLHIGHWAVE openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLHIGHWAVE_Open (composition seam). */
    CDLHIGHWAVE_Stream CDLHIGHWAVE_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

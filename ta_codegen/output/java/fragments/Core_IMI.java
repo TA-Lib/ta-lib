@@ -482,6 +482,26 @@
       }
       return IMI_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode IMI_OpenAndFillInternalBody( IMI_Stream sp, double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return IMI_OpenCore(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   IMI_Stream IMI_OpenAndFillInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      IMI_Stream sp = new IMI_Stream(this);
+      RetCode retCode = IMI_OpenAndFillInternalBody(sp, inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("IMI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("IMI openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("IMI openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind IMI_Open (composition seam). */
    IMI_Stream IMI_OpenInternal( double inOpen[], double inClose[], int startIdx, int optInTimePeriod )
    {

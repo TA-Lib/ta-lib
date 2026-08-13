@@ -663,8 +663,8 @@ impl Core {
         // Calculate the middle band moving average.
         // Sub-stream 0: ma over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType)?;
-        retCode = self.MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..]);
+        let sub0 = self.MA_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], ((startIdx) as usize), optInTimePeriod, optInMAType, outBegIdx, outNBElement, &mut tempBuffer1[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success || ((*outNBElement) as usize) == 0 {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -674,8 +674,8 @@ impl Core {
         // Calculate the Standard Deviation into tempBuffer2.
         // Sub-stream 1: stddev over `inReal`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.STDDEV_OpenInternal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0)?;
-        retCode = self.STDDEV(((*outBegIdx) as usize) as usize, endIdx, inReal, optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..]);
+        let sub1 = self.STDDEV_OpenAndFillInternal(&inReal[..((endIdx) as usize) + 1], (((*outBegIdx) as usize) as usize), optInTimePeriod, 1.0, outBegIdx, outNBElement, &mut tempBuffer2[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             (*outNBElement) = 0;
             return Err(retCode);
@@ -806,6 +806,14 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         self.BBANDS_OpenCore(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+    }
+
+    /// [`Core::BBANDS_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn BBANDS_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInNbDevUp: f64, mut optInNbDevDn: f64, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+    ) -> Result<BBANDS_Stream, RetCode> {
+        self.BBANDS_OpenCore(inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
     }
 
 }

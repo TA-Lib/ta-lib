@@ -751,6 +751,26 @@
       }
       return CDL3BLACKCROWS_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDL3BLACKCROWS_OpenAndFillInternalBody( CDL3BLACKCROWS_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDL3BLACKCROWS_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDL3BLACKCROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDL3BLACKCROWS_Stream sp = new CDL3BLACKCROWS_Stream(this);
+      RetCode retCode = CDL3BLACKCROWS_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDL3BLACKCROWS openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDL3BLACKCROWS openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDL3BLACKCROWS openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDL3BLACKCROWS_Open (composition seam). */
    CDL3BLACKCROWS_Stream CDL3BLACKCROWS_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

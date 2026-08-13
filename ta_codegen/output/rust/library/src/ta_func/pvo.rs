@@ -381,16 +381,16 @@ impl Core {
         // Calculate the fast MA into the tempBuffer.
         // Sub-stream 0: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub0, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType)?;
-        retCode = self.MA(startIdx, endIdx, inVolume, optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..]);
+        let sub0 = self.MA_OpenAndFillInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInFastPeriod, optInMAType, &mut fastBeg, &mut fastNb, &mut tempBuffer[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return Err(retCode);
         }
         // Calculate the slow MA into the output.
         // Sub-stream 1: ma over `inVolume`, warmed from bar 0 up to the
         // sub-call's own startIdx (the seeding point).
-        let (sub1, _) = self.MA_OpenInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType)?;
-        retCode = self.MA(startIdx, endIdx, inVolume, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..]);
+        let sub1 = self.MA_OpenAndFillInternal(&inVolume[..((endIdx) as usize) + 1], ((startIdx) as usize), optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_outReal[..])?;
+        retCode = RetCode::Success;
         if retCode != RetCode::Success {
             return Err(retCode);
         }
@@ -474,6 +474,14 @@ impl Core {
         &self, inVolume: &[f64], mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
     ) -> Result<PVO_Stream, RetCode> {
         self.PVO_OpenCore(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
+    }
+
+    /// [`Core::PVO_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn PVO_OpenAndFillInternal(
+        &self, inVolume: &[f64], startIdx: usize, mut optInFastPeriod: i32, mut optInSlowPeriod: i32, mut optInMAType: MAType, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<PVO_Stream, RetCode> {
+        self.PVO_OpenCore(inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, outBegIdx, outNBElement, outReal, 1)
     }
 
 }

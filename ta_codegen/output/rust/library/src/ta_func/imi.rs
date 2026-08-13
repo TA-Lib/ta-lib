@@ -439,6 +439,14 @@ impl Core {
         self.IMI_OpenCore(inOpen, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::IMI_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn IMI_OpenAndFillInternal(
+        &self, inOpen: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<IMI_Stream, RetCode> {
+        self.IMI_OpenCore(inOpen, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 thread_local! {

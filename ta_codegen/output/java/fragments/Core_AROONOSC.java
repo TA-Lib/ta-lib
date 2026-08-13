@@ -732,6 +732,26 @@
       }
       return AROONOSC_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode AROONOSC_OpenAndFillInternalBody( AROONOSC_Stream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return AROONOSC_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   AROONOSC_Stream AROONOSC_OpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      AROONOSC_Stream sp = new AROONOSC_Stream(this);
+      RetCode retCode = AROONOSC_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("AROONOSC openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("AROONOSC openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("AROONOSC openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
    AROONOSC_Stream AROONOSC_OpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
    {

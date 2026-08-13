@@ -509,6 +509,7 @@ fn emit_loop(
     emit_open_internal_wrapper(o, func, model);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
+    emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape);
@@ -591,6 +592,28 @@ fn emit_open_and_fill_wrapper(
     let _ = writeln!(o, "    }}\n");
 }
 
+/// `OpenAndFillInternal` for every tier that owns an `OpenCore`: the same single
+/// pass as `OpenAndFill`, at the caller's `startIdx`. See [`OutMode::FillInternal`]
+/// for why it carries no distinctness guard.
+fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
+    let sn = snake(func);
+    emit_open_sig(o, func, OutMode::FillInternal);
+    let ins: Vec<String> = streaming::input_array_names(func);
+    let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
+    let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
+    let mut args = ins.join(", ");
+    let _ = write!(args, ", startIdx");
+    for opt in &opt_names {
+        let _ = write!(args, ", {opt}");
+    }
+    let _ = writeln!(
+        o,
+        "        self.{sn}_OpenCore({args}, outBegIdx, outNBElement, {}, 1)",
+        outs.join(", ")
+    );
+    let _ = writeln!(o, "    }}\n");
+}
+
 /// Output mode for the open family (mirrors `c_stream`). `Core` is the ONE
 /// transcription both public entry points share: its output writes are
 /// subscripted `out[<idx> * outStride]`, so `OpenAndFill` passes stride 1 and
@@ -602,6 +625,10 @@ fn emit_open_and_fill_wrapper(
 enum OutMode {
     Scalar,
     Fill,
+    /// `Fill` anchored at a caller-supplied `startIdx` instead of 0 — the seam a
+    /// COMPOSED open fuses its sub-call into, so one pass both warms the
+    /// sub-handle and fills that sub-call's destination (issue #192).
+    FillInternal,
     Core,
 }
 
@@ -1289,6 +1316,24 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
             let _ = writeln!(
                 o,
                 "    pub fn {sn}_OpenAndFill(\n        &self, {sig_inputs}{opts_head}outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
+            );
+        }
+        // `OpenAndFill` at the caller's startIdx. Carries no output-distinctness
+        // guard: the generator emits a call to it only for a sub-call whose
+        // destinations alias neither its sources nor each other, so the check
+        // could never fire. See `SubCallStep::is_fusable`.
+        OutMode::FillInternal => {
+            let mut outs = String::new();
+            for out in &func.outputs {
+                let _ = write!(outs, ", {}: &mut [{}]", out.name, out_rust_type(func, &out.name));
+            }
+            let _ = writeln!(
+                o,
+                "    /// [`Core::{sn}_OpenAndFill`] anchored at `startIdx` — the composed-open\n    /// fusion seam (issue #192), not a public entry point."
+            );
+            let _ = writeln!(
+                o,
+                "    pub(crate) fn {sn}_OpenAndFillInternal(\n        &self, {sig_inputs}startIdx: usize{sig_opts}, outBegIdx: &mut usize, outNBElement: &mut usize{outs},\n    ) -> Result<{handle}, RetCode> {{"
             );
         }
     }
@@ -2255,6 +2300,7 @@ fn emit_dual_mode(
     emit_open_internal_wrapper(o, func, ma);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
+    emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape);
@@ -2396,7 +2442,7 @@ fn dispatch_case_label(label: &str, enums: &HashMap<String, EnumDef>) -> String 
 /// (forwarding `startIdx`) / `open_and_fill`; an arm with `supported == false`
 /// returns `Err(RetCode::BadParam)` at open (a documented capability
 /// limitation that regenerates as a live arm the moment the callee streams).
-#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments, clippy::cognitive_complexity)]
 fn emit_dispatch(
     o: &mut String,
     func: &FuncDef,
@@ -2620,82 +2666,100 @@ fn emit_dispatch(
 
     emit_open_wrapper(o, func, enums);
 
-    // --- open_and_fill: delegate per arm; identity fills the shifted copy ---
-    emit_open_sig(o, func, OutMode::Fill);
-    emit_open_validation_head(o, func, OutMode::Fill, enums);
-    let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
-    if let Some(idp) = &dp.identity {
-        let cond = render_expr(&idp.condition, &ctx, &[], registry, helpers);
-        let _ = writeln!(o, "        if {cond} {{");
-        let _ = writeln!(
-            o,
-            "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
-        );
-        let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
-        let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
-        let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
-        let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
-        let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
-        for (out, inp) in &idp.pairs {
-            let _ = writeln!(o, "                {out}[fillIdx] = {inp}[fillLb + fillIdx];");
-        }
-        let _ = writeln!(o, "                fillIdx += 1;");
-        let _ = writeln!(o, "            }}");
-        let _ = writeln!(
-            o,
-            "            let state = {state} {{ {params_join}, sub: {sub_enum}::Identity }};"
-        );
-        let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state }});");
-        let _ = writeln!(o, "        }}");
-    }
-    let _ = writeln!(o, "        let sub = match {} {{", dp.param);
-    for arm in &dp.arms {
-        let case = dispatch_case_label(&arm.label, enums);
-        if arm.supported {
-            let opts: Vec<String> = arm
-                .opt_args
-                .iter()
-                .map(|e| render_expr(e, &ctx, &[], registry, helpers))
-                .collect();
-            let opts = if opts.is_empty() {
-                String::new()
-            } else {
-                format!("{}, ", opts.join(", "))
-            };
-            let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
-            // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
-            // own array, Discard materializes a throwaway buffer (the Rust
-            // rendering of C's NULL for a nullable output — same inline-Vec
-            // idiom the batch dispatch uses, #125).
-            let fill_outs: String = arm
-                .out_map
-                .iter()
-                .map(|slot| match slot {
-                    streaming::OutSlot::Forward(k) => outputs[*k].clone(),
-                    streaming::OutSlot::Discard => format!(
-                        "&mut vec![0.0_f64; {}.len()][..]",
-                        inputs[0]
-                    ),
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
+    // Emitted twice: the public fill, and the startIdx-anchored internal one a
+    // composed caller fuses into (issue #192). MA is the Dispatch tier and has no
+    // OpenCore of its own, yet is the callee of most composed sub-calls, so without
+    // the second variant the fusion would reach almost none of them.
+    for internal in [false, true] {
+        // --- open_and_fill: delegate per arm; identity fills the shifted copy ---
+        let mode = if internal { OutMode::FillInternal } else { OutMode::Fill };
+        emit_open_sig(o, func, mode);
+        emit_open_validation_head(o, func, mode, enums);
+        let _ = writeln!(o, "        let historyLen: usize = {}.len();", inputs[0]);
+        if let Some(idp) = &dp.identity {
+            let cond = render_expr(&idp.condition, &ctx, &[], registry, helpers);
+            let _ = writeln!(o, "        if {cond} {{");
             let _ = writeln!(
                 o,
-                "                self.{}_OpenAndFill({bar_args}, {opts}outBegIdx, outNBElement, {fill_outs})?,",
-                arm.callee.to_uppercase()
+                "            if historyLen < {lb_call} + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
             );
-            let _ = writeln!(o, "            ),");
-        } else {
-            let what = if arm.callee.is_empty() { "delegation" } else { arm.callee.as_str() };
-            let _ = writeln!(o, "            /* no {what} stream */");
-            let _ = writeln!(o, "            {case} => return Err(RetCode::BadParam),");
+            let _ = writeln!(o, "            let fillLb: usize = {lb_call};");
+            if internal {
+                // batch( startIdx, .. ) begins at max(startIdx, lookback); the
+                // public entry point's startIdx is 0, so only this variant clamps.
+                let _ = writeln!(o, "            let fillLb = if startIdx > fillLb {{ startIdx }} else {{ fillLb }};");
+                let _ = writeln!(
+                    o,
+                    "            if historyLen < fillLb + 1 {{\n                return Err(RetCode::BadParam);\n            }}"
+                );
+            }
+            let _ = writeln!(o, "            (*outBegIdx) = fillLb;");
+            let _ = writeln!(o, "            (*outNBElement) = historyLen - fillLb;");
+            let _ = writeln!(o, "            let mut fillIdx: usize = 0;");
+            let _ = writeln!(o, "            while fillIdx < historyLen - fillLb {{");
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(o, "                {out}[fillIdx] = {inp}[fillLb + fillIdx];");
+            }
+            let _ = writeln!(o, "                fillIdx += 1;");
+            let _ = writeln!(o, "            }}");
+            let _ = writeln!(
+                o,
+                "            let state = {state} {{ {params_join}, sub: {sub_enum}::Identity }};"
+            );
+            let _ = writeln!(o, "            return Ok({handle} {{ core: self.clone(), state }});");
+            let _ = writeln!(o, "        }}");
         }
+        let _ = writeln!(o, "        let sub = match {} {{", dp.param);
+        for arm in &dp.arms {
+            let case = dispatch_case_label(&arm.label, enums);
+            if arm.supported {
+                let opts: Vec<String> = arm
+                    .opt_args
+                    .iter()
+                    .map(|e| render_expr(e, &ctx, &[], registry, helpers))
+                    .collect();
+                let opts = if opts.is_empty() {
+                    String::new()
+                } else {
+                    format!("{}, ", opts.join(", "))
+                };
+                let _ = writeln!(o, "            {case} => {sub_enum}::{}(", callee_variant(&arm.callee));
+                // OutSlot-mapped fill tail: Forward(k) passes the dispatch func's
+                // own array, Discard materializes a throwaway buffer (the Rust
+                // rendering of C's NULL for a nullable output — same inline-Vec
+                // idiom the batch dispatch uses, #125).
+                let fill_outs: String = arm
+                    .out_map
+                    .iter()
+                    .map(|slot| match slot {
+                        streaming::OutSlot::Forward(k) => outputs[*k].clone(),
+                        streaming::OutSlot::Discard => format!(
+                            "&mut vec![0.0_f64; {}.len()][..]",
+                            inputs[0]
+                        ),
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let _ = writeln!(
+                    o,
+                    "                self.{}_OpenAndFill{}({bar_args}, {}{opts}outBegIdx, outNBElement, {fill_outs})?,",
+                    arm.callee.to_uppercase(),
+                    if internal { "Internal" } else { "" },
+                    if internal { "startIdx, " } else { "" }
+                );
+                let _ = writeln!(o, "            ),");
+            } else {
+                let what = if arm.callee.is_empty() { "delegation" } else { arm.callee.as_str() };
+                let _ = writeln!(o, "            /* no {what} stream */");
+                let _ = writeln!(o, "            {case} => return Err(RetCode::BadParam),");
+            }
+        }
+        let _ = writeln!(o, "            _ => return Err(RetCode::BadParam),");
+        let _ = writeln!(o, "        }};");
+        let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub }};");
+        let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
+        let _ = writeln!(o, "    }}\n");
     }
-    let _ = writeln!(o, "            _ => return Err(RetCode::BadParam),");
-    let _ = writeln!(o, "        }};");
-    let _ = writeln!(o, "        let state = {state} {{ {params_join}, sub }};");
-    let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
-    let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape);
@@ -3357,6 +3421,8 @@ fn emit_composed_open(
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs);
     let region_len = region_stmts.len();
     let mut inserts: Vec<(usize, String)> = Vec::new();
+    // Combined-body indices whose statement a fused sub-open replaced.
+    let mut replaced: HashSet<usize> = HashSet::new();
     for (si, sub) in cp.subs.iter().enumerate() {
         let mut t = String::new();
         let callee = sub.callee.to_uppercase();
@@ -3400,11 +3466,50 @@ fn emit_composed_open(
             sub.srcs.join(", ")
         );
         let _ = writeln!(t, "        // sub-call's own startIdx (the seeding point).");
-        let _ = writeln!(
-            t,
-            "        let (sub{si}, _) = self.{callee}_OpenInternal({}, {anchor}{opt_tail})?;",
-            srcs.join(", ")
-        );
+        // Fused (issue #192): one pass that BOTH warms the handle and fills this
+        // sub-call's destination, so the batch sub-call transcribed next has
+        // nothing left to compute and is dropped. The out-meta and destination
+        // arguments come from that very statement — they are not uniformly the
+        // dummies, so re-deriving them would feed the wrong lengths downstream.
+        let fused = sub.is_fusable()
+            .then(|| streaming::batch_call_out_args(&tail_stmts[sub.tail_idx], sub))
+            .flatten();
+        if let Some((out_meta, dsts)) = fused {
+            // Render through the SAME path the batch sub-call used, so a Vec
+            // local still becomes `&mut v[..]` and an out-meta local still
+            // becomes `&mut n`. Rendering the bare expressions instead compiles
+            // to `expected &mut [f64], found Vec<f64>`.
+            let arg = |e: &Expr, out_pos: bool| {
+                super::rust_lang::render_cross_indicator_arg(
+                    e, 2, out_pos, &typing.ctx, &opt_real_params, registry, helpers,
+                )
+            };
+            let metas: Vec<String> = out_meta.iter().map(|e| arg(e, true)).collect();
+            let dst_args: Vec<String> = dsts.iter().map(|e| arg(e, true)).collect();
+            let _ = writeln!(
+                t,
+                "        let sub{si} = self.{callee}_OpenAndFillInternal({}, {anchor}{opt_tail}, {}, {})?;",
+                srcs.join(", "),
+                metas.join(", "),
+                dst_args.join(", ")
+            );
+            // Keep the assignment the transcribed error handling reads, and keep
+            // `retCode` assigned so its `mut` binding stays justified.
+            if let Statement::Assign { target, .. } = &tail_stmts[sub.tail_idx] {
+                let _ = writeln!(
+                    t,
+                    "        {} = RetCode::Success;",
+                    render_expr(target, &typing.ctx, &opt_real_params, registry, helpers)
+                );
+            }
+            replaced.insert(region_len + sub.tail_idx);
+        } else {
+            let _ = writeln!(
+                t,
+                "        let (sub{si}, _) = self.{callee}_OpenInternal({}, {anchor}{opt_tail})?;",
+                srcs.join(", ")
+            );
+        }
         inserts.push((region_len + sub.tail_idx, t));
     }
 
@@ -3413,7 +3518,7 @@ fn emit_composed_open(
         .chain(tail_stmts)
         .collect();
     emit_composed_region(
-        o, func, typing, &combined, enums, registry, helpers, counter, &inserts,
+        o, func, typing, &combined, enums, registry, helpers, counter, &inserts, &replaced,
     );
 
     // --- capture ------------------------------------------------------------
@@ -3502,6 +3607,7 @@ fn emit_composed_region(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     inserts: &[(usize, String)],
+    replaced: &HashSet<usize>,
 ) {
     let ctx = &typing.ctx;
     let for_loop_vars = collect_for_loop_vars(body);
@@ -3583,7 +3689,7 @@ fn emit_composed_region(
                 o.push_str(text);
             }
         }
-        if matches!(stmt, Statement::VarDecl { .. }) {
+        if matches!(stmt, Statement::VarDecl { .. }) || replaced.contains(&i) {
             continue;
         }
         o.push_str(&render_statement(
@@ -3671,6 +3777,7 @@ fn emit_composed(
     emit_open_internal_wrapper_named(o, func, &outputs);
     emit_open_wrapper(o, func, enums);
     emit_open_and_fill_wrapper(o, func, enums);
+    emit_open_and_fill_internal_wrapper(o, func);
     let _ = writeln!(o, "}}\n");
 
     emit_update_and_peek(o, func, shape);

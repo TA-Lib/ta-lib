@@ -1294,6 +1294,26 @@
       }
       return HMA_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode HMA_OpenAndFillInternalBody( HMA_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return HMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   HMA_Stream HMA_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      HMA_Stream sp = new HMA_Stream(this);
+      RetCode retCode = HMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("HMA openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("HMA openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("HMA openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind HMA_Open (composition seam). */
    HMA_Stream HMA_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

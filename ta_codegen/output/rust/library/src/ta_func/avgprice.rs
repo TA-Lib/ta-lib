@@ -309,6 +309,14 @@ impl Core {
         self.AVGPRICE_OpenCore(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::AVGPRICE_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn AVGPRICE_OpenAndFillInternal(
+        &self, inOpen: &[f64], inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<AVGPRICE_Stream, RetCode> {
+        self.AVGPRICE_OpenCore(inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

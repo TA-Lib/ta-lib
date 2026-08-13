@@ -762,6 +762,14 @@ impl Core {
         self.T3_OpenCore(inReal, 0, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
     }
 
+    /// [`Core::T3_OpenAndFill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn T3_OpenAndFillInternal(
+        &self, inReal: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInVFactor: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64],
+    ) -> Result<T3_Stream, RetCode> {
+        self.T3_OpenCore(inReal, startIdx, optInTimePeriod, optInVFactor, outBegIdx, outNBElement, outReal, 1)
+    }
+
 }
 
 #[allow(non_snake_case)]

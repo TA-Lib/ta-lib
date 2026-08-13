@@ -280,6 +280,26 @@
       }
       return COSH_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode COSH_OpenAndFillInternalBody( COSH_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return COSH_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* COSH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   COSH_Stream COSH_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      COSH_Stream sp = new COSH_Stream(this);
+      RetCode retCode = COSH_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("COSH openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("COSH openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("COSH openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind COSH_Open (composition seam). */
    COSH_Stream COSH_OpenInternal( double inReal[], int startIdx )
    {

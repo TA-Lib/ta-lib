@@ -836,6 +836,26 @@
       }
       return CDLINVERTEDHAMMER_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode CDLINVERTEDHAMMER_OpenAndFillInternalBody( CDLINVERTEDHAMMER_Stream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return CDLINVERTEDHAMMER_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* CDLINVERTEDHAMMER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      CDLINVERTEDHAMMER_Stream sp = new CDLINVERTEDHAMMER_Stream(this);
+      RetCode retCode = CDLINVERTEDHAMMER_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("CDLINVERTEDHAMMER openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("CDLINVERTEDHAMMER openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("CDLINVERTEDHAMMER openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind CDLINVERTEDHAMMER_Open (composition seam). */
    CDLINVERTEDHAMMER_Stream CDLINVERTEDHAMMER_OpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
    {

@@ -282,6 +282,26 @@
       }
       return TAN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode TAN_OpenAndFillInternalBody( TAN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return TAN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* TAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   TAN_Stream TAN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      TAN_Stream sp = new TAN_Stream(this);
+      RetCode retCode = TAN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("TAN openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("TAN openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("TAN openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind TAN_Open (composition seam). */
    TAN_Stream TAN_OpenInternal( double inReal[], int startIdx )
    {

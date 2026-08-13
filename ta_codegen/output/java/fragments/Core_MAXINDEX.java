@@ -544,6 +544,26 @@
       }
       return MAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1 );
    }
+   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      return MAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger, 1);
+   }
+   /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, int outInteger[] )
+   {
+      MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
+      RetCode retCode = MAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outInteger);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("MAXINDEX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("MAXINDEX openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("MAXINDEX openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
    MAXINDEX_Stream MAXINDEX_OpenInternal( double inReal[], int startIdx, int optInTimePeriod )
    {

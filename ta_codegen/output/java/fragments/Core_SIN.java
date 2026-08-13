@@ -280,6 +280,26 @@
       }
       return SIN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode SIN_OpenAndFillInternalBody( SIN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return SIN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   SIN_Stream SIN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      SIN_Stream sp = new SIN_Stream(this);
+      RetCode retCode = SIN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("SIN openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("SIN openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("SIN openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind SIN_Open (composition seam). */
    SIN_Stream SIN_OpenInternal( double inReal[], int startIdx )
    {

@@ -288,6 +288,26 @@
       }
       return LN_OpenCore( sp, inReal, 0, outBegIdx, outNBElement, outReal, 1 );
    }
+   private RetCode LN_OpenAndFillInternalBody( LN_Stream sp, double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      return LN_OpenCore(sp, inReal, startIdx, outBegIdx, outNBElement, outReal, 1);
+   }
+   /* LN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   LN_Stream LN_OpenAndFillInternal( double inReal[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      LN_Stream sp = new LN_Stream(this);
+      RetCode retCode = LN_OpenAndFillInternalBody(sp, inReal, startIdx, outBegIdx, outNBElement, outReal);
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.OutOfRangeEndIndex ) {
+         throw new InsufficientHistoryException("LN openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new IllegalStateException("LN openAndFill: internal error");
+      }
+      throw new IllegalArgumentException("LN openAndFill: " + retCode);
+   }
    /* Internal startIdx-anchored open behind LN_Open (composition seam). */
    LN_Stream LN_OpenInternal( double inReal[], int startIdx )
    {
