@@ -389,6 +389,12 @@ TA_LIB_API TA_RetCode TA_WAD_OpenAndFill( TA_WAD_Stream **stream, const double i
    return TA_WAD_OpenCore( stream, inHigh, inLow, inClose, 0, historyLen, outBegIdx, outNBElement, outReal, 1 );
 }
 
+/* Private function, not in public API. */
+TA_RetCode TA_WAD_OpenAndFillInternal( struct TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+   return TA_WAD_OpenCore( stream, inHigh, inLow, inClose, startIdx, historyLen, outBegIdx, outNBElement, outReal, 1 );
+}
+
 TA_LIB_API TA_RetCode TA_WAD_Update( TA_WAD_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
