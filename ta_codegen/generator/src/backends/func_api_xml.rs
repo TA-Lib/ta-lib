@@ -255,18 +255,25 @@ fn write_integer_opt(
         out.push_str("\t\t\t\t<Range>\n");
         let _ = writeln!(out, "\t\t\t\t\t<Minimum>{min_i}</Minimum>");
         let _ = writeln!(out, "\t\t\t\t\t<Maximum>{max_i}</Maximum>");
-        // gen_code uses max for all integer suggested values.
+        // The sweep triple the YAML declares, the same one the C table carries
+        // and TA_GetOptInputParameterInfo() reports. This used to emit `max_i`
+        // three times for bug-compatibility with gen_code, which the v0.7.1
+        // cutover removed; the result was a degenerate one-point sweep at the
+        // top of the domain -- for TA_DEF_HorizontalShiftPeriod, "sweep 200 to
+        // 200 by 200" over a [-200, 200] parameter.
+        let (start, end, inc) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
+        let (start_i, end_i, inc_i) = (start as i32, end as i32, inc as i32);
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedStart>{max_i}</SuggestedStart>"
+            "\t\t\t\t\t<SuggestedStart>{start_i}</SuggestedStart>"
         );
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedEnd>{max_i}</SuggestedEnd>"
+            "\t\t\t\t\t<SuggestedEnd>{end_i}</SuggestedEnd>"
         );
         let _ = writeln!(
             out,
-            "\t\t\t\t\t<SuggestedIncrement>{max_i}</SuggestedIncrement>"
+            "\t\t\t\t\t<SuggestedIncrement>{inc_i}</SuggestedIncrement>"
         );
         out.push_str("\t\t\t\t</Range>\n");
     }
