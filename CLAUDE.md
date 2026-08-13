@@ -309,7 +309,8 @@ cd bin && ./ta_bench_stream --points=20000 --iters=50
 ```
 
 `ta_bench_stream` is **C only**. For the Rust and Java streaming tiers,
-`scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar between the working tree
+`scripts/stream_ab.py` A/Bs `update` (or `peek`) per bar — or `open`, which times
+the whole warm-up instead of one bar — between the working tree
 and a git revision — same generated harness compiled against two copies of the
 library, interleaved rounds with alternating arm order, every streaming function
 so the untouched ones are the control. It reads only the generated Rust crate and
@@ -319,6 +320,7 @@ from the emitted signatures, so adding an indicator needs no edit there.
 ```bash
 scripts/stream_ab.py --base=origin/dev                                  # both languages
 scripts/stream_ab.py --base=HEAD~1 --lang=rust --call=peek --mark=MIN,MAX
+scripts/stream_ab.py --base=origin/dev --call=open --mark=BBANDS,STDDEV   # the Open tier
 ```
 
 Current shape (168 functions): median ~1.6x, but **~25 stream slower than

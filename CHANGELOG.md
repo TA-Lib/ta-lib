@@ -35,6 +35,9 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
 - ~10%: ATR and NATR
+- ~1.5x to 2.3x: opening a stream (`_Open` / `_OpenAndFill`) for BBANDS, MACDEXT,
+  PPO, PVO, STDDEV, STOCH, STOCHF, ADXR, STOCHRSI and APO (#192). These recomputed
+  each of their sub-indicators twice while opening. C, Rust and Java.
 - ~2x: SQRT, and ~25% more off STDDEV (#192). The library is now built with
   `-fno-math-errno`, so `sqrt` no longer sets `errno` on a negative input.
   Outputs are unchanged.

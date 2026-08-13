@@ -2,7 +2,8 @@
 """A/B the Rust and Java streaming tier between two revisions of this tree.
 
 `ta_bench_stream` measures the C streaming tier only. This measures the other
-two: it times `update` (or `peek`) per bar for every streaming function, in two
+two: it times `update` (or `peek`) per bar for every streaming function -- or
+`open`, which times a whole warm-up pass rather than one bar -- in two
 arms — the working tree and a git revision — and reports the per-function
 change with the untouched functions as the control.
 
