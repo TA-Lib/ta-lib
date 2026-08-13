@@ -4680,9 +4680,6 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-          private static final ThreadLocal<ADXR_Stream> PEEK_SCRATCH = new ThreadLocal<>();
-
           /**
            * Commit one closed bar; always produces the new current value.
            * Never throws after a successful open; never allocates handle state.
@@ -4696,19 +4693,11 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return (it is the same
            * generated code, run on a copy). Never writes this handle, so peeks may
-           * run concurrently with each other. It runs on a scratch handle held per thread and
-           * reused, so the copy allocates nothing after the first peek of this
-           * indicator on this thread. That scratch is retained for the life of
-           * the thread.
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
-             ADXR_Stream scratch = PEEK_SCRATCH.get();
-             if( scratch == null ) {
-                scratch = new ADXR_Stream(this);
-                PEEK_SCRATCH.set(scratch);
-             } else {
-                scratch.copyFrom(this);
-             }
+             ADXR_Stream scratch = new ADXR_Stream(this);
              core.ADXR_StreamStep(scratch, inHigh, inLow, inClose);
              return scratch.cur_outReal;
           }
@@ -122638,9 +122627,6 @@ class Core {
              this.fillRange = other.fillRange;
           }
 
-          /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
-          private static final ThreadLocal<STDDEV_Stream> PEEK_SCRATCH = new ThreadLocal<>();
-
           /**
            * Commit one closed bar; always produces the new current value.
            * Never throws after a successful open; never allocates handle state.
@@ -122654,19 +122640,11 @@ class Core {
            * Evaluate a forming bar without committing — bit-identical to what the
            * next {@code update} with the same bar would return (it is the same
            * generated code, run on a copy). Never writes this handle, so peeks may
-           * run concurrently with each other. It runs on a scratch handle held per thread and
-           * reused, so the copy allocates nothing after the first peek of this
-           * indicator on this thread. That scratch is retained for the life of
-           * the thread.
+           * run concurrently with each other. It runs on a throwaway copy, which for this
+           * handle's shape is cheaper than reusing one.
            */
           public double peek( double inReal ) {
-             STDDEV_Stream scratch = PEEK_SCRATCH.get();
-             if( scratch == null ) {
-                scratch = new STDDEV_Stream(this);
-                PEEK_SCRATCH.set(scratch);
-             } else {
-                scratch.copyFrom(this);
-             }
+             STDDEV_Stream scratch = new STDDEV_Stream(this);
              core.STDDEV_StreamStep(scratch, inReal);
              return scratch.cur_outReal;
           }

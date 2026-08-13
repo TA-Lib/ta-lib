@@ -651,15 +651,18 @@ struct SubMembers {
     copy: String,
     /// In-place overwrite statements for `copyFrom`.
     restore: String,
-    /// Whether the handle owns sub-streams at all. A sub is always worth
-    /// reusing: reproducing one means a fresh object, its own arrays, and
-    /// recursively its own subs.
-    has_subs: bool,
+    /// How many sub-streams the handle owns. Each is a fresh object with its
+    /// own arrays and recursively its own subs.
+    subs: usize,
+    /// Whether what the subs own is unknown at generation time: the dispatch
+    /// arm is picked by an `MAType` at run time, and a period bank's width by
+    /// an argument. Neither can be counted here, and both are deep.
+    unbounded: bool,
 }
 
 impl SubMembers {
     fn none() -> Self {
-        Self { copy: String::new(), restore: String::new(), has_subs: false }
+        Self { copy: String::new(), restore: String::new(), subs: 0, unbounded: false }
     }
 }
 
@@ -779,7 +782,25 @@ fn emit_handle_class_with_members(
     // array that is a wash — measured, it is a slight loss — so the reuse is
     // for the shapes where the copy is several arrays or a sub-stream tree
     // (#201). Everything else keeps the plain copy constructor.
-    let reuse = subs.has_subs || arrays >= 2;
+    //
+    // Two shapes look like oversights and are not. A single sub-handle
+    // (`STDDEV` over `VAR`), and one array plus a single sub-handle (`ADXR`
+    // over `ADX`), are both declined although each copy is two or three
+    // allocations deep. Measured on both, reusing the scratch is the slower
+    // arm: de-selecting them ran −7.6% / −6.2% (`STDDEV`) and −4.1% / −13.8%
+    // (`ADXR`) over two A/Bs against 167 unchanged controls, and `ADXR` cost
+    // +7.6% / +9.3% selected on a second box and JDK. Taking any sub-handle
+    // as sufficient — which is what this tested before — reinstates both.
+    // The predicate is now Rust's [`StateShape::scratch_pays`], reached there
+    // by the same measurement on the same shape.
+    //
+    // Java has no counterpart to Rust's elision signal (`peek` under its own
+    // `update` names the copies the optimizer already deletes). The ratio is
+    // not readable here: `peek` is timed as independent calls the CPU
+    // overlaps, `update` as a serial dependency chain, so on this tier
+    // `IMI`, `AROON` and the `HT_*` trio read under their own `update` while
+    // owning arrays nobody claims are free. Settle a Java row with an A/B.
+    let reuse = subs.unbounded || subs.subs >= 2 || arrays >= 2;
     if reuse {
         let _ = writeln!(
             o,
@@ -2197,7 +2218,9 @@ fn emit_dispatch(
     );
     let _ = writeln!(restore_extra, "            }}");
     let _ = writeln!(restore_extra, "         }}");
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, has_subs: true };
+    // The dispatch arm is an `MAType` chosen at run time, so what the sub owns
+    // is not knowable here.
+    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
     // --- step ---------------------------------------------------------------
@@ -2484,7 +2507,8 @@ fn emit_period_bank(
     let _ = writeln!(restore_extra, "               this.bank[bankIdx] = new {subty}(other.bank[bankIdx]);");
     let _ = writeln!(restore_extra, "            }}");
     let _ = writeln!(restore_extra, "         }}");
-    let subs = SubMembers { copy: copy_extra, restore: restore_extra, has_subs: true };
+    // A bank is one handle per period in the span: unbounded by construction.
+    let subs = SubMembers { copy: copy_extra, restore: restore_extra, subs: 1, unbounded: true };
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
@@ -3248,7 +3272,8 @@ fn emit_composed(
     let subs = SubMembers {
         copy: copy_extra,
         restore: restore_extra,
-        has_subs: !cp.subs.is_empty(),
+        subs: cp.subs.len(),
+        unbounded: false,
     };
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members);
 
