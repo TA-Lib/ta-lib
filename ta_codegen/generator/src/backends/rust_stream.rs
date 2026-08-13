@@ -706,6 +706,14 @@ impl StateShape {
     /// the compiler, so it moves with toolchain and target. Everything this
     /// declines emits `peek` byte-identical to before, and cannot regress on
     /// any of them (#201).
+    ///
+    /// To re-check the line on a new toolchain, no A/B is needed: a handle that
+    /// owns a buffer cannot be *cloned* faster than its own `update`, so any
+    /// function whose `peek` beats its `update` is one whose clone is already
+    /// being folded away. `stream_ab.py --call=peek` and `--call=update` over a
+    /// single revision names that set; it must stay inside what this declines.
+    /// Sufficient, not necessary — a partly folded clone can still sit above
+    /// `update` — so it bounds the risk rather than proving its absence.
     fn scratch_pays(self) -> bool {
         self.buffers >= 2 || self.subs >= 2 || self.banks >= 1
     }
