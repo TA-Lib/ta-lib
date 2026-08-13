@@ -36,13 +36,21 @@
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
- *  KL       Kevin
+ *  KL       Kevin Lin (@kevinlincg)
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY   Description
  *  -------------------------------------------------------------------
  *  081226 KL   First version (proposal MARKETFI).
+ *  081326 CC   Leg (1) recaptured from live tulip_serve + pandas_serve
+ *              oracles (issue #194) instead of a hand recompute of our own
+ *              formula; now a genuine EXTERNAL-ORACLE leg. Leg (2) extended
+ *              to server_verify (cross-language) and the streaming API
+ *              (Open/Update/Peek/OpenAndFill), neither of which previously
+ *              saw an exact-zero volume anywhere in the automated suite.
+ *              Leg (4) swept via doRangeTestEx instead of one fixed split.
  */
 
 /* Description:
@@ -54,23 +62,36 @@
  *   this file plus server_verify / --xlang-hash.
  *
  *   Legs:
- *     1. PINNED VALUES, relative tolerance. Six samples over the reference
- *        corpus, recomputed from test_data.c at full precision.
- *
- *        NOT an external oracle, and deliberately not called one. These
- *        constrain the implementation against the formula as written here;
- *        they cannot catch the formula itself being wrong, because both sides
- *        are this definition. No usable external vector exists: Tulip ships
- *        one (tests/untest.txt:248) but its expected column is
- *        {0.000, 0.000, ...} for all 15 bars -- MARKETFI's values are ~1e-7
- *        and that file prints three decimals, so the published vector passes
- *        for any implementation returning approximately nothing. What does
- *        constrain the formula here is the mutation set below, which a wrong
- *        formula cannot survive.
- *     2. ZERO VOLUME. The one deliberate divergence from both references.
+ *     1. EXTERNAL-ORACLE, relative tolerance. Six samples over the reference
+ *        corpus, captured from two independent live oracles: Tulip Indicators
+ *        0.9.2 (`ti_marketfi`, pinned SHA be18abb13e075ba866898dcc7cb52399603302a6)
+ *        and pandas-ta-classic 0.6.52 (`ta.marketfi`), both driven via the
+ *        private ../ta-lib-oracles servers (tulip_serve / pandas_serve) over
+ *        this exact 252-bar corpus. Both oracles agree with the shipped
+ *        implementation BITWISE across the full 252 bars, not just the six
+ *        pinned below -- the pins are a cheap regression spot-check of that
+ *        full-corpus agreement, which is not itself embedded in the tree.
+ *        Tulip's own checked-in vector (tests/untest.txt:248) is NOT the
+ *        source here: it prints three decimals and MARKETFI's values are
+ *        ~1e-7, so that vector reads {0.000, 0.000, ...} and would pass any
+ *        implementation returning approximately nothing -- the values below
+ *        come from running the oracle live, not from that file. What
+ *        constrains the formula, beyond the oracle agreement itself, is the
+ *        mutation set below, which a wrong formula cannot survive.
+ *     2. ZERO VOLUME. The one deliberate divergence from both references:
+ *        Tulip and pandas both divide unconditionally (+/-Inf, or NaN on a
+ *        zero range too); issue #112 requires a successful call to never
+ *        emit either, so TA-Lib reports 0 instead. Neither oracle can verify
+ *        this leg -- there is no zero-volume bar in the reference corpus.
+ *        Also drives the SAME vectors through server_verify (every active
+ *        language server, bitwise) and the streaming API (Open/Update/Peek/
+ *        OpenAndFill) -- both otherwise never see an exact-zero volume,
+ *        since fuzz_data.h's generators floor volume at 1000.0 in every
+ *        shape and the 252-bar corpus has none either.
  *     3. ALIASING. outReal over each input in turn.
  *     4. RANGE INDEPENDENCE. A sub-range must equal the same slice of a full
- *        run, bitwise -- the function claims no start dependency.
+ *        run, bitwise -- the function claims no start dependency. Swept via
+ *        doRangeTestEx (TA_STABLE_EXACT), not one fixed split.
  *
  *   WHY NOT CHECK_EXPECTED_VALUE: checkExpectedValue() compares against an
  *   absolute 0.01 band (test_util.c -> TA_REAL_EQ) and takes no tolerance
@@ -99,10 +120,18 @@
 
 /**** Local declarations.              ****/
 
-/* Pinned samples, recomputed directly from the 252-bar reference corpus in
- * test_data.c at full %.17g precision -- this definition evaluated by hand,
- * not any third party's output. Measured agreement with the shipped
- * implementation is exact (0 ulp) at all six.
+/* Six samples over the 252-bar reference corpus in test_data.c, captured from
+ * two independent LIVE oracle runs (not a hand recompute of our own formula):
+ *   - tulip_serve: Tulip Indicators 0.9.2, `ti_marketfi`, pinned SHA
+ *     be18abb13e075ba866898dcc7cb52399603302a6.
+ *   - pandas_serve: pandas-ta-classic 0.6.52, `ta.marketfi` (pandas 3.0.3,
+ *     numpy 2.5.1). Its `non_zero_range` epsilon nudge only fires on a flat
+ *     (high==low) bar, none of which occur in this corpus.
+ * Both oracles produced BITWISE-IDENTICAL output to TA_MARKETFI across all
+ * 252 bars (not just these six) -- verified 2026-08-13, harness not checked
+ * into this tree (see ../ta-lib-oracles). These six are a fixed regression
+ * spot-check of that full-corpus agreement; all three sources (TA-Lib, Tulip,
+ * pandas) agree exactly (0 ulp) at every one.
  */
 typedef struct { int idx; double value; } MarketfiPin;
 
@@ -264,6 +293,83 @@ static ErrorNumber test_marketfi_zero_volume( void )
       return TA_TESTUTIL_TFRR_BAD_PARAM;
    }
 
+   /* Cross-language: the zero-volume guard must fire identically on every
+    * language server. Nothing else sends an exact-zero volume anywhere:
+    * fuzz_data.h's generators keep volume >= 1000.0 in every shape, and the
+    * 252-bar reference corpus has none either (min 2,658,400), so without
+    * this call the guard translation in Rust/Java/C# would be unverified.
+    */
+   if( server_verify_active() )
+   {
+      ErrorNumber e = server_verify( "MARKETFI", 0, 3, 4,
+                         retCode, begIdx, nbElement,
+                         (const TA_Real*[]){ h, l, v, NULL },
+                         NULL, 0,
+                         (const TA_Real*[]){ out, NULL }, NULL );
+      if( e != TA_TEST_PASS )
+         return e;
+   }
+
+   /* Streaming: OpenAndFill shares the batch loop (TA_MARKETFI_OpenCore) and
+    * is already covered transitively, but Update/Peek run a SEPARATE code
+    * path (TA_MARKETFI_StepInternal) that carries its own copy of the guard.
+    * Open warms up on bar 0 alone so bars 1-3 are driven through Update/Peek,
+    * not the batch loop.
+    */
+   {
+      TA_MARKETFI_Stream *stream = NULL;
+      TA_Real streamOut, peekOut;
+      TA_Integer sBeg, sNb;
+      TA_Real fillOut[4];
+      int i;
+
+      retCode = TA_MARKETFI_OpenAndFill( &stream, h, l, v, 4, &sBeg, &sNb, fillOut );
+      if( retCode != TA_SUCCESS || sBeg != begIdx || sNb != nbElement )
+      {
+         printf( "Fail: TA_MARKETFI_OpenAndFill zero-volume retCode %d beg %d nb %d\n",
+                 retCode, (int)sBeg, (int)sNb );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+      for( i = 0; i < 4; i++ )
+      {
+         if( fillOut[i] != out[i] )
+         {
+            printf( "Fail: TA_MARKETFI_OpenAndFill zero-volume at %d: %.17g vs batch %.17g\n",
+                    i, fillOut[i], out[i] );
+            return TA_TESTUTIL_TFRR_BAD_PARAM;
+         }
+      }
+      TA_MARKETFI_Close( stream );
+
+      stream = NULL;
+      retCode = TA_MARKETFI_Open( &stream, h, l, v, 1, &streamOut );
+      if( retCode != TA_SUCCESS || streamOut != out[0] )
+      {
+         printf( "Fail: TA_MARKETFI_Open zero-volume: %.17g vs batch %.17g (retCode %d)\n",
+                 streamOut, out[0], retCode );
+         if( stream ) TA_MARKETFI_Close( stream );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
+      for( i = 1; i < 4; i++ )
+      {
+         retCode = TA_MARKETFI_Peek( stream, h[i], l[i], v[i], &peekOut );
+         if( retCode != TA_SUCCESS )
+         {
+            TA_MARKETFI_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_PARAM;
+         }
+         retCode = TA_MARKETFI_Update( stream, h[i], l[i], v[i], &streamOut );
+         if( retCode != TA_SUCCESS || peekOut != streamOut || streamOut != out[i] )
+         {
+            printf( "Fail: TA_MARKETFI stream zero-volume at %d: peek=%.17g update=%.17g "
+                    "batch=%.17g (retCode %d)\n", i, peekOut, streamOut, out[i], retCode );
+            TA_MARKETFI_Close( stream );
+            return TA_TESTUTIL_TFRR_BAD_PARAM;
+         }
+      }
+      TA_MARKETFI_Close( stream );
+   }
+
    return TA_TEST_PASS;
 }
 
@@ -327,45 +433,47 @@ static ErrorNumber test_marketfi_aliasing( const TA_History *history )
 /* (4) RANGE INDEPENDENCE: the yaml carries no start_dependent flag, which is a
  * claim that a sub-range returns the same numbers as the matching slice of a
  * full run. Bitwise, since there is no accumulation that could legitimately
- * reassociate.
+ * reassociate. Swept via the shared doRangeTestEx primitive (the same one
+ * test_cmf.c's test_cmf_range and test_cmou.c's test_cmou_range use) instead
+ * of one hand-picked split, so this leg is not blind to an off-by-one that
+ * only shows up at a different startIdx/endIdx combination. MARKETFI is a
+ * fresh-recomputed, lookback-0 finite window with no unstable period, so it
+ * takes TA_STABLE_EXACT / TA_TEST_UNST_NONE, same class as CMF's own
+ * TA_STABLE_EPSILON sibling minus the accumulator slack MARKETFI has none of.
  */
+typedef struct
+{
+   const TA_Real *high;
+   const TA_Real *low;
+   const TA_Real *volume;
+} MarketfiRangeParam;
+
+static TA_RetCode marketfiRangeTestFunction( TA_Integer startIdx, TA_Integer endIdx,
+                                             TA_Real *outputBuffer, TA_Integer *outputBufferInt,
+                                             TA_Integer *outBegIdx, TA_Integer *outNbElement,
+                                             TA_Integer *lookback, void *opaqueData,
+                                             unsigned int outputNb, unsigned int *isOutputInteger )
+{
+   MarketfiRangeParam *p = (MarketfiRangeParam *)opaqueData;
+
+   (void)outputNb;
+   (void)outputBufferInt;
+   *isOutputInteger = 0;
+
+   *lookback = TA_MARKETFI_Lookback();
+   return TA_MARKETFI( startIdx, endIdx, p->high, p->low, p->volume,
+                       outBegIdx, outNbElement, outputBuffer );
+}
+
 static ErrorNumber test_marketfi_subrange( const TA_History *history )
 {
-   TA_RetCode retCode;
-   TA_Integer fullBeg, fullNb, subBeg, subNb;
-   static TA_Real full[2000];
-   static TA_Real sub[2000];
-   int n = (int)history->nbBars;
-   int start = n / 3;
-   int end   = ( 2 * n ) / 3;
-   int i;
+   MarketfiRangeParam param;
 
-   retCode = TA_MARKETFI( 0, n - 1, history->high, history->low, history->volume,
-                          &fullBeg, &fullNb, full );
-   if( retCode != TA_SUCCESS )
-      return TA_TESTUTIL_TFRR_BAD_PARAM;
+   param.high   = history->high;
+   param.low    = history->low;
+   param.volume = history->volume;
 
-   retCode = TA_MARKETFI( start, end, history->high, history->low, history->volume,
-                          &subBeg, &subNb, sub );
-   if( retCode != TA_SUCCESS )
-      return TA_TESTUTIL_TFRR_BAD_PARAM;
-
-   if( subBeg != start || subNb != ( end - start + 1 ) )
-   {
-      printf( "Fail: TA_MARKETFI subrange: begIdx=%d nbElement=%d (want %d/%d)\n",
-              (int)subBeg, (int)subNb, start, end - start + 1 );
-      return TA_TESTUTIL_TFRR_BAD_PARAM;
-   }
-
-   for( i = 0; i < subNb; i++ )
-   {
-      if( sub[i] != full[start + i] )
-      {
-         printf( "Fail: TA_MARKETFI subrange at %d: %.17g vs %.17g\n",
-                 i, sub[i], full[start + i] );
-         return TA_TESTUTIL_TFRR_BAD_PARAM;
-      }
-   }
-
-   return TA_TEST_PASS;
+   return doRangeTestEx( marketfiRangeTestFunction,
+                         TA_STABLE_EXACT, TA_TEST_UNST_NONE,
+                         (void *)&param, 1, 0 );
 }
