@@ -215,13 +215,22 @@ RUST_BLOCK = """
 # pass over HIST bars per iteration, so it costs microseconds where update costs
 # nanoseconds. `--iters` is scaled down accordingly in main(). This is the only
 # mode that measures work proportional to the history rather than to one bar.
+#
+# The handle is bound and black_boxed rather than reduced to `.is_ok()`. The
+# harness builds with `lto = "thin"`, and observing only the Result discriminant
+# lets LLVM delete the whole open wherever the handle does not escape: 25 of 169
+# functions then time at ~0.3 ns — a 4096-bar warm-up reported as a quarter of a
+# nanosecond, silently reading as "unaffected" rather than "unmeasured".
+# Accumulator and stateless opens (AD, OBV, NVI, PVI, WAD, BOP, ROCR) are the
+# ones that vanish. update/peek never had this exposure: they keep the handle
+# live across the loop and black_box each returned value.
 RUST_OPEN_BLOCK = """
     {
         let mut all: Vec<f64> = Vec::new();
         for _p in 0..passes {
-            for _ in 0..8 { black_box(core.%(name)s_Open(%(oargs)s).is_ok()); }
+            for _ in 0..8 { if let Ok(h) = core.%(name)s_Open(%(oargs)s) { black_box(&h); } }
             let t0 = Instant::now();
-            for _ in 0..iters { black_box(core.%(name)s_Open(%(oargs)s).is_ok()); }
+            for _ in 0..iters { if let Ok(h) = core.%(name)s_Open(%(oargs)s) { black_box(&h); } }
             all.push(t0.elapsed().as_nanos() as f64 / iters as f64);
         }
         if core.%(name)s_Open(%(oargs)s).is_err() {
