@@ -193,6 +193,7 @@ static ErrorNumber test_qstick_oracle( void );
 static ErrorNumber test_qstick_period_one( const TA_History *history );
 static ErrorNumber test_qstick_flat( void );
 static ErrorNumber test_qstick_inplace( const TA_History *history );
+static ErrorNumber test_qstick_rounding_corpus( void );
 
 /**** Global functions definitions. ****/
 ErrorNumber test_func_composite( TA_History *history )
@@ -312,6 +313,10 @@ ErrorNumber test_func_composite( TA_History *history )
       return retValue;
 
    retValue = test_qstick_inplace( history );
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   retValue = test_qstick_rounding_corpus();
    if( retValue != TA_TEST_PASS )
       return retValue;
 
@@ -2362,16 +2367,41 @@ static ErrorNumber test_qstick_oracle( void )
    return TA_TEST_PASS;
 }
 
+/* Exact error term of ( a - b ), via Knuth's TwoSum on ( a, -b ). The result is
+ * non-zero if and only if the subtraction rounded. Exact for any finite
+ * operands -- no ordering precondition, unlike Fast2Sum.
+ *
+ * Load-bearing: the library builds with -ffp-contract=off. An FMA contraction
+ * across these expressions would fold the error term away and make this report
+ * zero unconditionally, i.e. silently vacuous. */
+static double qstick_sub_error( double a, double b )
+{
+   double nb = -b;
+   double s  = a  + nb;
+   double ap = s  - nb;
+   double bp = s  - ap;
+   return (a - ap) + (nb - bp);
+}
+
 /* (3) PERIOD 1: the no-averaging case. Lookback drops to 0, the seeding while
- * loop is skipped entirely, and the output must be the raw body -- bit-exact,
- * on real prices where the body is not representable and the subtraction
- * therefore rounds. The assertion below fails if this corpus ever stops having
- * such bars, so the leg cannot quietly become vacuous. */
+ * loop is skipped entirely, and the output must be the raw body, bit-exact.
+ *
+ * Note what this corpus can and cannot exercise. By Sterbenz's lemma a - b is
+ * EXACT whenever b/2 <= a <= 2b, and every OHLC bar satisfies that by a wide
+ * margin, so close - open never rounds here -- measured over all 10000 bars of
+ * ta_gDataOpen/Close, zero of them round. The guard below therefore asserts the
+ * two properties this series really does carry: bodies that need the full
+ * double (so the comparison is not merely re-checking short decimal literals),
+ * and the Sterbenz-exactness itself, so that swapping in a corpus which
+ * violates it is a loud failure rather than a silent change of meaning.
+ *
+ * The rounding case is not skipped -- it is covered by leg (6), which has to
+ * build its own series to reach it. */
 static ErrorNumber test_qstick_period_one( const TA_History *history )
 {
    TA_RetCode rc;
    TA_Integer beg, nb;
-   int i, nbBars, nbInexact = 0;
+   int i, nbBars, nbWideBody = 0, nbRounded = 0;
    static TA_Real out[OUT_CAP];
 
    nbBars = (int)history->nbBars;
@@ -2394,16 +2424,26 @@ static ErrorNumber test_qstick_period_one( const TA_History *history )
                  i, out[i], want );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
-      /* Count the bars where the body is not exactly representable, i.e. where
-       * this comparison is testing something the decimal literals could not. */
+      /* Bodies that a float could not hold: the comparison above is then
+       * testing the full double, not a short decimal literal. */
       if( want != 0.0 && (double)(float)want != want )
-         nbInexact++;
+         nbWideBody++;
+      /* Sterbenz: this must stay zero for any real OHLC series. */
+      if( qstick_sub_error( history->close[i], history->open[i] ) != 0.0 )
+         nbRounded++;
    }
 
-   if( nbInexact == 0 )
+   if( nbWideBody == 0 )
    {
-      printf( "QSTICK period-1 Fail: corpus no longer has inexact bodies, "
-              "the check above proves nothing\n" );
+      printf( "QSTICK period-1 Fail: corpus no longer has bodies needing more "
+              "than float precision, the check above proves little\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   if( nbRounded != 0 )
+   {
+      printf( "QSTICK period-1 Fail: %d of %d bodies round, so this corpus is "
+              "no longer Sterbenz-exact -- leg (6) owns the rounding case and "
+              "this leg's premise needs revisiting\n", nbRounded, nbBars );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
@@ -2443,13 +2483,23 @@ static ErrorNumber test_qstick_flat( void )
       return TA_TESTUTIL_TFRR_BAD_BEGIDX;
    }
 
-   for( i = 0; i < nb; i++ )
+   /* Bitwise against +0.0, not `!= 0.0`, which accepts -0.0 too. The sign is
+    * reachable in principle -- x - x is +0.0 under round-to-nearest and a sum
+    * of +0.0 terms stays +0.0, so -0.0 here would mean the accumulation or the
+    * final divide had started producing one. That is exactly the class #147
+    * records as invisible to a `== 0` comparison. */
    {
-      if( out[i] != 0.0 )
+      const double posZero = 0.0;
+
+      for( i = 0; i < nb; i++ )
       {
-         printf( "QSTICK flat Fail at out[%d]: got %.17g, expected exactly 0\n",
-                 i, out[i] );
-         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         if( memcmp( &out[i], &posZero, sizeof(double) ) != 0 )
+         {
+            printf( "QSTICK flat Fail at out[%d]: got %.17g (%s), expected "
+                    "exactly +0.0\n", i, out[i],
+                    out[i] == 0.0 ? "negative zero" : "non-zero" );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
       }
    }
 
@@ -2536,4 +2586,185 @@ static ErrorNumber test_qstick_inplace( const TA_History *history )
    }
 
    return TA_TEST_PASS;
+}
+
+/* (6) A SERIES WHOSE BODIES ACTUALLY ROUND, PLUS EXACT ZEROS AND THE
+ * CANCELLATION CASE.
+ *
+ * Leg (3) cannot reach the rounding case at all: Sterbenz's lemma makes
+ * close - open exact whenever the two are within a factor of two, which every
+ * real OHLC bar is, so not one of the 10000 corpus bars rounds. Three regimes
+ * are built here instead, interleaved so that a single window can span more
+ * than one:
+ *
+ *   A. ROUNDING   -- opens near 1e-9 against closes near 1e8. The exact
+ *                    difference needs far more than 53 bits, so the subtraction
+ *                    rounds and the body carries an error term.
+ *   B. EXACT ZERO -- close == open, body +0.0. Enough consecutive bars that at
+ *                    period 10 at least one whole window is nothing but zeros.
+ *   C. STERBENZ   -- ordinary prices, body exact, matching leg (3)'s regime.
+ *   D. CANCELLING -- equal and opposite bodies, so a window sums to exactly
+ *                    zero out of non-zero terms. Distinct from B: there the
+ *                    accumulator never leaves zero, here it returns to it.
+ *
+ * Every regime is counted and every count is asserted non-zero, so editing the
+ * series cannot quietly empty one out. Which windows are all-zero is derived
+ * from the data rather than hardcoded, so the +0.0 assertion follows an edit. */
+static ErrorNumber test_qstick_rounding_corpus( void )
+{
+#define QSTICK_RC_N 64
+   static TA_Real open[QSTICK_RC_N], close[QSTICK_RC_N];
+   static TA_Real body[QSTICK_RC_N];
+   static TA_Real out[OUT_CAP], outSma[OUT_CAP];
+   static const int periods[] = { 1, 2, 3, 5, 10 };
+   const double posZero = 0.0;
+   TA_RetCode rc, rcS, rcM;
+   TA_Integer beg, nb, begS, nbS, begM, nbM;
+   int i, g;
+   int nbRounded = 0, nbZero = 0, nbSterbenz = 0, nbZeroWindowResidue = 0;
+
+   for( i = 0; i < QSTICK_RC_N; i++ )
+   {
+      if( i < 40 )                       /* A: rounding */
+      {
+         open[i]  = 1e-9 * (double)(i + 1);
+         close[i] = 1e8 + (double)i * 0.5;
+      }
+      else if( i < 52 )                  /* B: exact zero bodies */
+      {
+         open[i]  = 100.0 + (double)i * 0.37;
+         close[i] = open[i];
+      }
+      else if( i < 58 )                  /* C: Sterbenz-exact bodies */
+      {
+         open[i]  = 50.0 + (double)i * 0.125;
+         close[i] = open[i] + 0.25;
+      }
+      else                               /* D: equal and opposite */
+      {
+         open[i]  = 200.0;
+         close[i] = ( i & 1 ) ? 200.5 : 199.5;
+      }
+   }
+
+   for( i = 0; i < QSTICK_RC_N; i++ )
+   {
+      body[i] = close[i] - open[i];
+      if( qstick_sub_error( close[i], open[i] ) != 0.0 )
+         nbRounded++;
+      else if( body[i] == 0.0 )
+         nbZero++;
+      else
+         nbSterbenz++;
+   }
+
+   if( nbRounded == 0 || nbZero == 0 || nbSterbenz == 0 )
+   {
+      printf( "QSTICK rounding-corpus Fail: regimes are %d rounding / %d zero / "
+              "%d exact, each must be non-zero or the leg tests less than it "
+              "claims\n", nbRounded, nbZero, nbSterbenz );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   for( g = 0; g < (int)( sizeof(periods)/sizeof(periods[0]) ); g++ )
+   {
+      int period = periods[g];
+
+      rc = TA_QSTICK( 0, QSTICK_RC_N - 1, open, close, period, &beg, &nb, out );
+      if( rc != TA_SUCCESS || beg != period - 1 ||
+          nb != QSTICK_RC_N - period + 1 )
+      {
+         printf( "QSTICK rounding-corpus Fail [period %d]: rc=%d beg=%d nb=%d "
+                 "(expected 0/%d/%d)\n", period, (int)rc, (int)beg, (int)nb,
+                 period - 1, QSTICK_RC_N - period + 1 );
+         return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+      }
+
+      /* Same differential as leg (1), on inputs that round. */
+      rcS = TA_SUB( 0, QSTICK_RC_N - 1, close, open, &begS, &nbS, body );
+      rcM = TA_SMA( 0, QSTICK_RC_N - 1, body, period, &begM, &nbM, outSma );
+      if( rcS != TA_SUCCESS || rcM != TA_SUCCESS || begM != beg || nbM != nb )
+      {
+         printf( "QSTICK rounding-corpus Fail [period %d]: reference rc=%d/%d "
+                 "range (%d,%d) vs (%d,%d)\n", period, (int)rcS, (int)rcM,
+                 (int)begM, (int)nbM, (int)beg, (int)nb );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+
+      for( i = 0; i < nb; i++ )
+      {
+         int j, allZero = 1;
+
+         if( memcmp( &out[i], &outSma[i], sizeof(double) ) != 0 )
+         {
+            printf( "QSTICK rounding-corpus Fail [period %d] at out[%d]: "
+                    "fused %.17g != compose %.17g (must be BIT-exact even when "
+                    "the body rounds)\n", period, i, out[i], outSma[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         if( !( out[i] == out[i] ) ||
+             out[i] > 1e300 || out[i] < -1e300 )
+         {
+            printf( "QSTICK rounding-corpus Fail [period %d] at out[%d]: "
+                    "non-finite %.17g\n", period, i, out[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+
+         /* An all-zero window does NOT have to give zero here, and that is the
+          * point of measuring it. After bodies near 1e8 the running total does
+          * not return exactly to zero once the window fills with zeros: at
+          * period 2, out[40] covers two zero-body bars and reads 4.47e-08, one
+          * ulp-scale at 2e8. TA_SMA over the same body series gives the
+          * identical bits, so this is the running-sum accumulator's residue,
+          * shared by both, not a QSTICK defect -- the differential above is
+          * what pins it. Leg (4) owns the exactly-+0.0 contract, where it does
+          * hold because the accumulator never sees anything but zeros.
+          *
+          * What must never appear is a NEGATIVE zero: x - x is +0.0 under
+          * round-to-nearest and a sum of +0.0 terms stays +0.0, so a -0.0 would
+          * mean the accumulation or the divide started producing one. That is
+          * the class #147 records as invisible to a `== 0` comparison. */
+         for( j = i; j < i + period; j++ )
+         {
+            if( close[j] != open[j] ) { allZero = 0; break; }
+         }
+         if( allZero && out[i] != 0.0 )
+            nbZeroWindowResidue++;
+         if( out[i] == 0.0 &&
+             memcmp( &out[i], &posZero, sizeof(double) ) != 0 )
+         {
+            printf( "QSTICK rounding-corpus Fail [period %d] at out[%d]: "
+                    "negative zero in the output\n", period, i );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+
+      /* Period 1 leaves the raw body, rounding included. */
+      if( period == 1 )
+      {
+         for( i = 0; i < nb; i++ )
+         {
+            double want = close[i] - open[i];
+            if( memcmp( &out[i], &want, sizeof(double) ) != 0 )
+            {
+               printf( "QSTICK rounding-corpus Fail [period 1] at out[%d]: "
+                       "got %.17g expected %.17g\n", i, out[i], want );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
+         }
+      }
+   }
+
+   /* The residue case above is the one this series exists to reach; if an edit
+    * ever stops producing it, the comment describes behaviour nothing tests. */
+   if( nbZeroWindowResidue == 0 )
+   {
+      printf( "QSTICK rounding-corpus Fail: no all-zero window carries "
+              "accumulator residue, so the documented running-sum behaviour is "
+              "no longer exercised\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   return TA_TEST_PASS;
+#undef QSTICK_RC_N
 }
