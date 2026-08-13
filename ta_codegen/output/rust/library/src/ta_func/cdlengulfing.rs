@@ -234,11 +234,31 @@ pub struct CDLENGULFING_Stream {
     state: CDLENGULFING_StreamState,
 }
 
+#[allow(dead_code)]
+impl CDLENGULFING_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `CDLENGULFING_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct CDLENGULFING_StreamState {
     lag1_inOpen: f64,
     lag1_inClose: f64,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl CDLENGULFING_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.lag1_inOpen = src.lag1_inOpen;
+        self.lag1_inClose = src.lag1_inClose;
+    }
 }
 
 #[allow(non_snake_case)]
@@ -403,9 +423,10 @@ impl CDLENGULFING_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. This handle holds only scalars, so the copy is a
+    /// few machine words and `peek` never allocates.
     #[doc(alias = "TA_CDLENGULFING_Peek")]
     #[must_use]
     pub fn peek(&self, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64) -> i32 {

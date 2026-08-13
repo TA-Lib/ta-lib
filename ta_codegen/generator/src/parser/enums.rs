@@ -6,12 +6,14 @@ use serde::Deserialize;
 use crate::ir::{EnumDef, EnumVariant};
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct YamlVariant {
     name: String,
     value: i32,
 }
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct YamlEnum {
     c_prefix: String,
     variants: Vec<YamlVariant>,

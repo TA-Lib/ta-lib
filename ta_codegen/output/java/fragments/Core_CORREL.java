@@ -365,7 +365,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CORREL_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double sumXY;
       double sumX;
@@ -416,6 +416,38 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( CORREL_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.sumXY = other.sumXY;
+         this.sumX = other.sumX;
+         this.sumY = other.sumY;
+         this.sumX2 = other.sumX2;
+         this.sumY2 = other.sumY2;
+         this.x = other.x;
+         this.y = other.y;
+         this.trailingX = other.trailingX;
+         this.trailingY = other.trailingY;
+         this.tempReal = other.tempReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         if( this.ring_trailingIdx_inReal0 != null && this.ring_trailingIdx_inReal0.length == other.ring_trailingIdx_inReal0.length ) {
+            System.arraycopy( other.ring_trailingIdx_inReal0, 0, this.ring_trailingIdx_inReal0, 0, other.ring_trailingIdx_inReal0.length );
+         } else {
+            this.ring_trailingIdx_inReal0 = other.ring_trailingIdx_inReal0.clone();
+         }
+         if( this.ring_trailingIdx_inReal1 != null && this.ring_trailingIdx_inReal1.length == other.ring_trailingIdx_inReal1.length ) {
+            System.arraycopy( other.ring_trailingIdx_inReal1, 0, this.ring_trailingIdx_inReal1, 0, other.ring_trailingIdx_inReal1.length );
+         } else {
+            this.ring_trailingIdx_inReal1 = other.ring_trailingIdx_inReal1.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<CORREL_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -428,12 +460,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal0, double inReal1 ) {
-         CORREL_Stream scratch = new CORREL_Stream(this);
+         CORREL_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new CORREL_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.CORREL_StreamStep(scratch, inReal0, inReal1);
          return scratch.cur_outReal;
       }

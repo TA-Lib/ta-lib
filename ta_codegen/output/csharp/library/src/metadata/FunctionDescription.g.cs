@@ -7256,6 +7256,41 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- WAD -->
+	<FinancialFunction>
+		<Abbreviation>WAD</Abbreviation>
+		<ShortDescription>Williams&apos; Accumulation/Distribution (no volume)</ShortDescription>
+		<GroupId>Volume Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Path Dependent</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- WCLPRICE -->
 	<FinancialFunction>
 		<Abbreviation>WCLPRICE</Abbreviation>

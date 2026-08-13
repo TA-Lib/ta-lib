@@ -275,6 +275,7 @@ public class TaCodegenServe {
             else if (method == "TA_ULTOSC") return Handle_ULTOSC(p, startIdx, endIdx);
             else if (method == "TA_VAR") return Handle_VAR(p, startIdx, endIdx);
             else if (method == "TA_VWMA") return Handle_VWMA(p, startIdx, endIdx);
+            else if (method == "TA_WAD") return Handle_WAD(p, startIdx, endIdx);
             else if (method == "TA_WCLPRICE") return Handle_WCLPRICE(p, startIdx, endIdx);
             else if (method == "TA_WILLR") return Handle_WILLR(p, startIdx, endIdx);
             else if (method == "TA_WMA") return Handle_WMA(p, startIdx, endIdx);
@@ -609,6 +610,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_VAR\"");
                 sb.Append(",");
                 sb.Append("\"TA_VWMA\"");
+                sb.Append(",");
+                sb.Append("\"TA_WAD\"");
                 sb.Append(",");
                 sb.Append("\"TA_WCLPRICE\"");
                 sb.Append(",");
@@ -1527,6 +1530,9 @@ public class TaCodegenServe {
         case "VWMA": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.VWMA_Lookback(optInTimePeriod);
+        }
+        case "WAD": {
+            return core.WAD_Lookback();
         }
         case "WCLPRICE": {
             return core.WCLPRICE_Lookback();
@@ -10884,6 +10890,64 @@ public class TaCodegenServe {
             var f_inVolume = new float[inVolume.Length];
             for (int _fi = 0; _fi < inVolume.Length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
             rc = core.VWMA(startIdx, endIdx, f_inReal, f_inVolume, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_WAD(JsonElement p, int startIdx, int endIdx) {
+        int n = endIdx - startIdx + 1;
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        if (GetInt(p, "bench_mode", 0) != 0)
+            return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}";
+        double[] inHigh;
+        double[] inLow;
+        double[] inClose;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
+            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
+            inClose = new double[refN]; Array.Copy(refClose, inClose, refN);
+        } else {
+            inHigh = GetDoubleArray(p, "inHigh");
+            inLow = GetDoubleArray(p, "inLow");
+            inClose = GetDoubleArray(p, "inClose");
+        }
+        double[] outArr0 = new double[n];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            rc = core.WAD(startIdx, endIdx, inHigh, inLow, inClose, out outBegIdx, out outNBElement, outArr0);
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inHigh = new float[inHigh.Length];
+            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            var f_inLow = new float[inLow.Length];
+            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            var f_inClose = new float[inClose.Length];
+            for (int _fi = 0; _fi < inClose.Length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            rc = core.WAD(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, out outBegIdx, out outNBElement, outArr0);
             usedFloat = 1;
         }
         if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {

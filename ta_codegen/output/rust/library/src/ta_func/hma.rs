@@ -437,6 +437,16 @@ pub struct HMA_Stream {
     state: HMA_StreamState,
 }
 
+#[allow(dead_code)]
+impl HMA_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `HMA_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct HMA_StreamState {
@@ -468,6 +478,42 @@ struct HMA_StreamState {
     ring_trailingIdxHalf_inReal: Vec<f64>,
     cbSize_dRing: usize,
     cb_dRing: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl HMA_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.dividerFull = src.dividerFull;
+        self.periodSubFull = src.periodSubFull;
+        self.periodSumFull = src.periodSumFull;
+        self.trailingFull = src.trailingFull;
+        self.fullOut = src.fullOut;
+        self.halfPeriod = src.halfPeriod;
+        self.sqrtPeriod = src.sqrtPeriod;
+        self.dividerHalf = src.dividerHalf;
+        self.dividerSqrt = src.dividerSqrt;
+        self.periodSubHalf = src.periodSubHalf;
+        self.periodSumHalf = src.periodSumHalf;
+        self.trailingHalf = src.trailingHalf;
+        self.periodSubSqrt = src.periodSubSqrt;
+        self.periodSumSqrt = src.periodSumSqrt;
+        self.trailingSqrt = src.trailingSqrt;
+        self.halfOut = src.halfOut;
+        self.diffReal = src.diffReal;
+        self.dRing_Idx = src.dRing_Idx;
+        self.maxIdx_dRing = src.maxIdx_dRing;
+        self.ringPos_trailingIdxFull = src.ringPos_trailingIdxFull;
+        self.ringCap_trailingIdxFull = src.ringCap_trailingIdxFull;
+        self.ring_trailingIdxFull_inReal.clone_from(&src.ring_trailingIdxFull_inReal);
+        self.ringPos_trailingIdxHalf = src.ringPos_trailingIdxHalf;
+        self.ringCap_trailingIdxHalf = src.ringCap_trailingIdxHalf;
+        self.ring_trailingIdxHalf_inReal.clone_from(&src.ring_trailingIdxHalf_inReal);
+        self.cbSize_dRing = src.cbSize_dRing;
+        self.cb_dRing.clone_from(&src.cb_dRing);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -1038,6 +1084,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `HMA_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static HMA_PEEK_SCRATCH: std::cell::Cell<Option<Box<HMA_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl HMA_Stream {
@@ -1050,14 +1104,20 @@ impl HMA_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_HMA_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {
-        let mut scratch = self.clone();
-        scratch.update(inReal)
+        HMA_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inReal);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

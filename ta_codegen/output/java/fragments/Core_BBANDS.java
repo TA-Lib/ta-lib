@@ -723,7 +723,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class BBANDS_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double optInNbDevUp;
       double optInNbDevDn;
@@ -762,6 +762,32 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( BBANDS_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDevUp = other.optInNbDevUp;
+         this.optInNbDevDn = other.optInNbDevDn;
+         this.optInMAType = other.optInMAType;
+         this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+         this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+         this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+         this.cachedValue = other.cachedValue;
+         if( this.sub0 == null ) {
+            this.sub0 = new MA_Stream(other.sub0);
+         } else {
+            this.sub0.copyFrom(other.sub0);
+         }
+         if( this.sub1 == null ) {
+            this.sub1 = new STDDEV_Stream(other.sub1);
+         } else {
+            this.sub1.copyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<BBANDS_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -789,12 +815,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
-         BBANDS_Stream scratch = new BBANDS_Stream(this);
+         BBANDS_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new BBANDS_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.BBANDS_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outRealUpperBand, scratch.cur_outRealMiddleBand, scratch.cur_outRealLowerBand);
       }

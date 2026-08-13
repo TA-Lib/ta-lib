@@ -82,9 +82,22 @@ the surface includes:
 bit-identical, guaranteed by construction: it is the same generated code as
 `update`, run without committing.
 
-Its overhead is a throw away deep-copy of the handle (on every peek). In Rust
-this is literally `self.clone()` — for windowed/composed indicators the clone
-allocates; `update` never allocates (that is the hard constraint, not peek's).
+Its overhead is a copy of the handle per peek, and that copy is the whole of
+the difference in cost between `peek` and `update`. Where the copy is several
+allocations deep — two or more buffers, two or more sub-handles, or a period
+bank — it is made into a scratch held **per thread** and refreshed in place,
+so only the first peek of that indicator on that thread allocates. Everywhere
+else the copy stays a throwaway, because a throwaway that dies inside `peek`
+is one the optimizer can delete outright, and where it does, reusing anything
+costs more than it saves.
+
+Neither form writes the handle, which is what keeps Rust's `peek` a `&self`
+method and both languages' handles concurrently peekable — a per-thread
+scratch cannot be shared by two threads peeking the same handle. `update`
+never allocates (that is the hard constraint, not peek's), and it is reached
+the same way from both forms: the scratch holds a *handle* and `peek` calls
+`update` on it, so the per-bar transition keeps a single call site and
+`update`'s own code generation is untouched.
 
 ### Full-history output at open (`OpenAndFill`)
 
@@ -228,8 +241,8 @@ let (mut s, _last) = core.SMA_Open(&history, 14)?; // &self method on Core; the
                                                   // (a cheap by-value clone)
 for &x in new_bars { let v = s.update(x); }        // &mut self, always a value
 let provisional = s.peek(forming_bar_close);       // &self: runs the same
-                                                  // transition on a throwaway
-                                                  // copy, never commits
+                                                  // transition on a reused
+                                                  // scratch, never commits
 ```
 
 Java/.NET: small handle objects with the same `open(history, params)` +
@@ -242,7 +255,7 @@ Java (shipped shape — design-panel reviewed):
 Core core = new Core();
 Core.SMA_Stream s = core.SMA_Open(history, 14);  // throws on reject; value() = last-bar value
 double v = s.update(bar);                        // one value per closed bar; never throws
-double p = s.peek(formingBarClose);              // forming bar, non-committing (deep copy)
+double p = s.peek(formingBarClose);              // forming bar, non-committing (scratch copy)
 Core.SMA_Stream t = s.copy();                    // independent stream fork
 Core.MACD_Stream m = core.MACD_Open(history, 12, 26, 9);
 Core.MACD_Stream.Value mv = m.update(bar);       // mv.macd / mv.macdSignal / mv.macdHist
@@ -263,10 +276,11 @@ OutRange fr = s2.fillRange();                    // range written, on the handle
 - `value()` re-reads the last committed value(s) without recomputing (seeded by
   open, refreshed by `update`, untouched by `peek`); multi-output `update`
   caches the immutable `Value` it returns, so `value()` is allocation-free.
-- `peek`/`copy()` are the universal deep copy (arrays cloned, sub-handles
-  copied recursively, the `Core` reference shared) — the Java rendering of
-  Rust's clone-peek; `copy()` is named to avoid `ForkJoinTask.fork()`'s
-  async connotation and Java's broken `clone()`.
+- `copy()` is the universal deep copy (arrays cloned, sub-handles copied
+  recursively, the `Core` reference shared) — the Java rendering of Rust's
+  `Clone`; it is named to avoid `ForkJoinTask.fork()`'s async connotation and
+  Java's broken `clone()`. `peek` produces the same copy through `copyFrom`,
+  which overwrites a scratch held per thread instead of allocating a peer.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality (complete in Java: arrays are identical or disjoint) — Java is the
   one managed backend where `SMA_OpenAndFill(history, …, history)` compiles, so

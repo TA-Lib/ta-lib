@@ -46,7 +46,7 @@ let provisional = s.peek(forming_close);             // state left unchanged
 ## Rules
 
 - **Warm-up.** `Open` succeeds only if `history.len() >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history can be dropped — the stream keeps everything it needs.
-- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same transition on a throwaway clone (which allocates for windowed indicators — `update` is the allocation-free path).
+- **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing; it runs the same transition on a copy. It takes `&self` and never writes the handle, so peeks may run concurrently. Where copying the handle means several allocations, the copy is held per thread and reused — only the first peek of that indicator on that thread allocates. That scratch lives as long as the thread: one handle copy per indicator a thread has peeked, holding its `Core` and buffers, which dropping your own handles does not release.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and candle settings are captured from the immutable `Core` at `Open` and cannot change during the stream's life.
 - **Threads.** `update(&mut self)` makes the single-writer rule a **compile-time** guarantee — one exclusive writer per stream. Streams are `Send + Sync + Clone`; **cloning forks an independent stream**.
 - **Don't persist** a stream across library versions.

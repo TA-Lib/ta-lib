@@ -246,12 +246,33 @@ pub struct STDDEV_Stream {
     state: STDDEV_StreamState,
 }
 
+#[allow(dead_code)]
+impl STDDEV_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `STDDEV_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct STDDEV_StreamState {
     optInTimePeriod: i32,
     optInNbDev: f64,
     sub0: VAR_Stream,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl STDDEV_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.optInNbDev = src.optInNbDev;
+        self.sub0.restore_from(&src.sub0);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -429,9 +450,12 @@ impl STDDEV_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     #[doc(alias = "TA_STDDEV_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

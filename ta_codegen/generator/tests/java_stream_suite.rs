@@ -50,12 +50,20 @@ fn test_java_sma_ring_stream_section() {
     let s = java_stream_section("sma");
     // Nested handle class shape: package-private fields, no public ctor.
     assert!(s.contains("public static final class SMA_Stream {"));
-    assert!(s.contains("final Core core;"));
+    assert!(s.contains("Core core;"));
     assert!(s.contains("double[] ring_trailingIdx_inReal;"));
     assert!(s.contains("int ringPos_trailingIdx;"));
     assert!(!s.contains("public SMA_Stream("), "handle ctors stay non-public");
     // Deep-copy constructor clones the ring array.
     assert!(s.contains("this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();"));
+    // ...and every class gets its in-place twin (#201), because any of them can
+    // be some other handle's sub-stream.
+    assert!(s.contains("void copyFrom( SMA_Stream other ) {"));
+    assert!(s.contains("System.arraycopy( other.ring_trailingIdx_inReal, 0, this.ring_trailingIdx_inReal, 0, other.ring_trailingIdx_inReal.length );"));
+    // One array and no sub-stream: peek keeps the plain copy, because the
+    // scratch lookup would cost more than the allocation it saves.
+    assert!(!s.contains("PEEK_SCRATCH"));
+    assert!(s.contains("SMA_Stream scratch = new SMA_Stream(this);"));
     // The C mirror/peekMode machinery is deleted by design (copy-peek).
     assert!(!s.contains("Mirror"), "no peek mirrors in the Java tier");
     assert!(!s.contains("peekMode"), "no peekMode in the Java tier");
@@ -125,6 +133,11 @@ fn test_java_mama_value_class_protocol() {
 #[test]
 fn test_java_cdl_candle_snapshot() {
     let s = java_stream_section("cdl3blackcrows");
+    // A candle handle owns a ring per price per averaged setting, so peek runs
+    // on the reused per-thread scratch rather than allocating a peer (#201).
+    assert!(s.contains("private static final ThreadLocal<CDL3BLACKCROWS_Stream> PEEK_SCRATCH = new ThreadLocal<>();"));
+    assert!(s.contains("CDL3BLACKCROWS_Stream scratch = PEEK_SCRATCH.get();"));
+    assert!(s.contains("scratch.copyFrom(this);"));
     // Candle settings snapshot: primitive fields captured at open...
     assert!(s.contains("int cs_ShadowVeryShort_rangeType;"));
     assert!(s.contains("sp.cs_ShadowVeryShort_avgPeriod = ShadowVeryShort_avgPeriod;"));

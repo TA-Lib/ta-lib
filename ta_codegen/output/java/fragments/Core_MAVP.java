@@ -646,7 +646,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MAVP_Stream {
-      final Core core;
+      Core core;
       int optInMinPeriod;
       int optInMaxPeriod;
       MAType optInMAType;
@@ -679,6 +679,28 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MAVP_Stream other ) {
+         this.core = other.core;
+         this.optInMinPeriod = other.optInMinPeriod;
+         this.optInMaxPeriod = other.optInMaxPeriod;
+         this.optInMAType = other.optInMAType;
+         this.cur_outReal = other.cur_outReal;
+         if( this.bank != null && this.bank.length == other.bank.length ) {
+            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
+               this.bank[bankIdx].copyFrom(other.bank[bankIdx]);
+            }
+         } else {
+            this.bank = new MA_Stream[other.bank.length];
+            for( int bankIdx = 0; bankIdx < other.bank.length; bankIdx++ ) {
+               this.bank[bankIdx] = new MA_Stream(other.bank[bankIdx]);
+            }
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<MAVP_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -691,12 +713,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal, double inPeriods ) {
-         MAVP_Stream scratch = new MAVP_Stream(this);
+         MAVP_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new MAVP_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.MAVP_StreamStep(scratch, inReal, inPeriods);
          return scratch.cur_outReal;
       }

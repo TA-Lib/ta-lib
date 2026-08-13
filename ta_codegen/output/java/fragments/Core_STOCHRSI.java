@@ -401,7 +401,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class STOCHRSI_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       int optInFastK_Period;
       int optInFastD_Period;
@@ -438,6 +438,31 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( STOCHRSI_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInFastK_Period = other.optInFastK_Period;
+         this.optInFastD_Period = other.optInFastD_Period;
+         this.optInFastD_MAType = other.optInFastD_MAType;
+         this.cur_outFastK = other.cur_outFastK;
+         this.cur_outFastD = other.cur_outFastD;
+         this.cachedValue = other.cachedValue;
+         if( this.sub0 == null ) {
+            this.sub0 = new RSI_Stream(other.sub0);
+         } else {
+            this.sub0.copyFrom(other.sub0);
+         }
+         if( this.sub1 == null ) {
+            this.sub1 = new STOCHF_Stream(other.sub1);
+         } else {
+            this.sub1.copyFrom(other.sub1);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<STOCHRSI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -464,12 +489,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
-         STOCHRSI_Stream scratch = new STOCHRSI_Stream(this);
+         STOCHRSI_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new STOCHRSI_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.STOCHRSI_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outFastK, scratch.cur_outFastD);
       }

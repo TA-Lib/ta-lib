@@ -218,29 +218,7 @@ fn gen_def_ui_h() -> String {
 
     // OptInput externs
     o.push_str("/* Optional Inputs. */\n");
-    for name in &[
-        "TimePeriod_30",
-        "TimePeriod_14",
-        "TimePeriod_10",
-        "TimePeriod_5",
-        "TimePeriod_30_MINIMUM2",
-        "TimePeriod_20_MINIMUM2",
-        "TimePeriod_21_MINIMUM2",
-        "TimePeriod_14_MINIMUM2",
-        "TimePeriod_14_MINIMUM5",
-        "TimePeriod_10_MINIMUM2",
-        "TimePeriod_5_MINIMUM2",
-        "VerticalShift",
-        "HorizontalShift",
-        "MA_Method",
-        "Fast_Period",
-        "Slow_Period",
-        "NbDeviation",
-        "Penetration_30",
-        "Penetration_50",
-        "MinPeriod",
-        "MaxPeriod",
-    ] {
+    for name in DEF_UI_OPT_INPUT_EXTERNS {
         let _ = writeln!(
             o,
             "extern const TA_OptInputParameterInfo TA_DEF_UI_{name};"
@@ -440,107 +418,40 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     o.push_str("const TA_OutputParameterInfo TA_DEF_UI_Output_Integer =\n");
     o.push_str("                                  { TA_Output_Integer, \"outInteger\", TA_OUT_LINE };\n\n");
 
-    // Integer ranges
-    emit_int_range(&mut o, "TA_DEF_TimePeriod_Positive", 1, 100_000, 1, 200, 1);
-    emit_int_range(&mut o, "TA_DEF_TimePeriod_Positive_Minimum5", 5, 100_000, 5, 200, 1);
-    emit_int_range(&mut o, "TA_DEF_TimePeriod_Positive_Minimum2", 2, 100_000, 4, 200, 1);
-    emit_int_range(&mut o, "TA_DEF_HorizontalShiftPeriod", -200, 200, 0, 8, 1);
-
-    // Real ranges
-    emit_real_range(&mut o, "TA_DEF_VerticalShiftPercent", "-99.0", "99.0", 1, "-10.0", "10.0", "0.5");
-    emit_real_range(&mut o, "TA_DEF_NbDeviation", "TA_REAL_MIN", "TA_REAL_MAX", 2, "-2.0", "2.0", "0.2");
-    emit_real_range(&mut o, "TA_DEF_ZeroToOne", "0.00", "1.00", 2, "0.01", "1.00", "0.05");
-    emit_real_range(&mut o, "TA_DEF_RealPositive", "0.00", "TA_REAL_MAX", 0, "0.0", "0.0", "0.0");
-
-    // Pre-defined OptInput constants
-    emit_opt_input_int_const(&mut o, "TA_DEF_UI_MinPeriod", "optInMinPeriod",
-        "Minimum Period", "TA_DEF_TimePeriod_Positive_Minimum2", 2,
-        "Value less than minimum will be changed to Minimum period");
-    emit_opt_input_int_const(&mut o, "TA_DEF_UI_MaxPeriod", "optInMaxPeriod",
-        "Maximum Period", "TA_DEF_TimePeriod_Positive_Minimum2", 30,
-        "Value higher than maximum will be changed to Maximum period");
-
-    for (name, default) in &[
-        ("TimePeriod_30_MINIMUM2", 30),
-        ("TimePeriod_20_MINIMUM2", 20),
-        ("TimePeriod_21_MINIMUM2", 21),
-        ("TimePeriod_14_MINIMUM2", 14),
-        ("TimePeriod_10_MINIMUM2", 10),
-        ("TimePeriod_5_MINIMUM2", 5),
-    ] {
-        emit_opt_input_int_const(
-            &mut o,
-            &format!("TA_DEF_UI_{name}"),
-            "optInTimePeriod",
-            "Time Period",
-            "TA_DEF_TimePeriod_Positive_Minimum2",
-            *default,
-            "Time period",
-        );
+    // Re-usable ranges, then the pre-defined opt-input descriptors that point at
+    // them. Both come out of the tables `match_predefined_opt_input` folds
+    // against, so a descriptor and the values it stands for cannot drift apart.
+    for r in SHARED_RANGES {
+        match &r.domain {
+            SharedDomain::Int { min, max, suggested } => {
+                emit_int_range(&mut o, r.c_name, *min, *max, suggested.0, suggested.1, suggested.2);
+            }
+            SharedDomain::Real { min, max, precision, suggested } => {
+                emit_real_range(
+                    &mut o, r.c_name, min, max, *precision,
+                    suggested.0, suggested.1, suggested.2,
+                );
+            }
+        }
     }
 
-    emit_opt_input_int_const(
-        &mut o,
-        "TA_DEF_UI_TimePeriod_14_MINIMUM5",
-        "optInTimePeriod",
-        "Time Period",
-        "TA_DEF_TimePeriod_Positive_Minimum5",
-        14,
-        "Time period",
-    );
-
-    for (name, default) in &[
-        ("TimePeriod_30", 30),
-        ("TimePeriod_14", 14),
-        ("TimePeriod_10", 10),
-        ("TimePeriod_5", 5),
-    ] {
-        emit_opt_input_int_const(
-            &mut o,
-            &format!("TA_DEF_UI_{name}"),
-            "optInTimePeriod",
-            "Time Period",
-            "TA_DEF_TimePeriod_Positive",
-            *default,
-            "Time period",
-        );
+    // The MAType value list has to be defined before the descriptor that points
+    // at it, so it is emitted on the way past rather than at a fixed index a
+    // table edit could silently invalidate.
+    let mut ma_list_emitted = false;
+    for p in PREDEF_OPT_INPUTS {
+        if matches!(p.data_set, DataSet::MaTypeList) && !ma_list_emitted {
+            emit_ma_type_list(&mut o, enums);
+            ma_list_emitted = true;
+        }
+        emit_predef_opt_input(&mut o, p);
     }
 
-    // NbDeviation
-    o.push_str("const TA_OptInputParameterInfo TA_DEF_UI_NbDeviation =\n{\n");
-    o.push_str("   TA_OptInput_RealRange,\n");
-    o.push_str("   \"optInNbDev\",\n   0,\n\n");
-    o.push_str("   \"Deviations\",\n");
-    o.push_str("   (const void *)&TA_DEF_NbDeviation,\n");
-    o.push_str("   1.0,\n   \"Nb of deviations\",\n\n   NULL\n};\n\n");
+    o
+}
 
-    // Penetration
-    emit_opt_input_real_const(
-        &mut o, "TA_DEF_UI_Penetration_30", "optInPenetration", "Penetration",
-        "TA_DEF_RealPositive", "0.3",
-        "Percentage of penetration of a candle within another candle",
-    );
-    emit_opt_input_real_const(
-        &mut o, "TA_DEF_UI_Penetration_50", "optInPenetration", "Penetration",
-        "TA_DEF_RealPositive", "0.5",
-        "Percentage of penetration of a candle within another candle",
-    );
-
-    // Vertical/Horizontal shift
-    o.push_str("const TA_OptInputParameterInfo TA_DEF_UI_VerticalShift =\n{\n");
-    o.push_str("   TA_OptInput_RealRange,\n   \"optInVertShift\",\n");
-    o.push_str("   TA_OPTIN_IS_PERCENT,\n\n");
-    o.push_str("   \"Vertical Shift\",\n");
-    o.push_str("   (const void *)&TA_DEF_VerticalShiftPercent,\n");
-    o.push_str("   0,\n   \"Positive number shift upwards, negative downwards\",\n\n   NULL\n};\n\n");
-
-    emit_opt_input_int_const(
-        &mut o, "TA_DEF_UI_HorizontalShift", "optInHorizShift",
-        "Horizontal Shift", "TA_DEF_HorizontalShiftPeriod", 0,
-        "Positive number shift 'n' period to the right, negative shift to the left",
-    );
-
-    // MA Type list
+/// Emit `TA_MA_TypeDataPair` / `TA_MA_TypeList` from the `MAType` enum.
+fn emit_ma_type_list(o: &mut String, enums: &HashMap<String, EnumDef>) {
     let ma = enums.get("MAType").expect("MAType enum required");
     o.push_str("static const TA_IntegerDataPair TA_MA_TypeDataPair[] =\n{\n");
     for (i, v) in ma.variants.iter().enumerate() {
@@ -552,26 +463,21 @@ fn gen_def_ui_c(enums: &HashMap<String, EnumDef>) -> String {
     o.push_str("const TA_IntegerList TA_MA_TypeList =\n{\n");
     o.push_str("   &TA_MA_TypeDataPair[0],\n");
     o.push_str("   sizeof(TA_MA_TypeDataPair)/sizeof(TA_IntegerDataPair)\n};\n\n");
+}
 
-    // MA Method
-    o.push_str("const TA_OptInputParameterInfo TA_DEF_UI_MA_Method =\n{\n");
-    o.push_str("   TA_OptInput_IntegerList,\n   \"optInMAType\",\n   0,\n\n");
-    o.push_str("   \"MA Type\",\n   (const void *)&TA_MA_TypeList,\n");
-    o.push_str("   0,\n   \"Type of Moving Average\",\n\n   NULL\n};\n\n");
-
-    // Fast/Slow period
-    emit_opt_input_int_const(
-        &mut o, "TA_DEF_UI_Fast_Period", "optInFastPeriod",
-        "Fast Period", "TA_DEF_TimePeriod_Positive_Minimum2", 12,
-        "Period of the fast MA",
-    );
-    emit_opt_input_int_const(
-        &mut o, "TA_DEF_UI_Slow_Period", "optInSlowPeriod",
-        "Slow Period", "TA_DEF_TimePeriod_Positive_Minimum2", 26,
-        "Period of the slow MA",
-    );
-
-    o
+/// Emit one pre-defined `TA_OptInputParameterInfo`. All 21 have the same shape,
+/// which is why the descriptors can live in a table at all.
+fn emit_predef_opt_input(o: &mut String, p: &PredefOptInput) {
+    let flags: Vec<String> = p.flags.iter().map(|f| (*f).to_string()).collect();
+    let _ = writeln!(o, "const TA_OptInputParameterInfo {} =\n{{", p.c_name);
+    let _ = writeln!(o, "   {},", p.data_set.c_type());
+    let _ = writeln!(o, "   \"{}\",", p.param_name);
+    let _ = writeln!(o, "   {},\n", opt_input_flags_c(&flags));
+    let _ = writeln!(o, "   \"{}\",", p.display_name);
+    let _ = writeln!(o, "   (const void *)&{},", p.data_set.c_name());
+    let _ = writeln!(o, "   {},", p.default_c);
+    let _ = writeln!(o, "   \"{}\",\n", p.hint);
+    o.push_str("   NULL\n};\n\n");
 }
 
 /// The eight `TA_DEF_UI_Input_Price_*` constants `ta_def_ui.c` has declared since the
@@ -652,34 +558,237 @@ fn emit_real_range(
     o.push_str("};\n\n");
 }
 
-fn emit_opt_input_int_const(
-    o: &mut String, c_name: &str, param_name: &str,
-    display_name: &str, data_set: &str, default: i32, hint: &str,
-) {
-    let _ = writeln!(o, "const TA_OptInputParameterInfo {c_name} =\n{{");
-    o.push_str("   TA_OptInput_IntegerRange,\n");
-    let _ = writeln!(o, "   \"{param_name}\",");
-    o.push_str("   0,\n\n");
-    let _ = writeln!(o, "   \"{display_name}\",");
-    let _ = writeln!(o, "   (const void *)&{data_set},");
-    let _ = writeln!(o, "   {default},");
-    let _ = writeln!(o, "   \"{hint}\",\n");
-    o.push_str("   NULL\n};\n\n");
+// ---------------------------------------------------------------------------
+// The pre-defined descriptors `ta_def_ui.c` declares once and functions share
+// ---------------------------------------------------------------------------
+//
+// One table, two readers: `gen_def_ui_c` emits these, and
+// `match_predefined_opt_input` decides whether a YAML parameter may reuse one.
+// Reuse requires equality on *every* field the descriptor carries, so a fold is
+// pure `.rodata` dedup with no semantic content — matching cannot discard what
+// the YAML declared, because a match means there was nothing to discard (#195).
+//
+// Real bounds, suggested values and defaults are carried as the C spelling and
+// the numbers derived from them, never the reverse: `TA_DEF_RealPositive` spells
+// its min `0.00` and `TA_DEF_UI_VerticalShift` its default `0`, neither of which
+// a float formatter would reproduce.
+
+enum SharedDomain {
+    Int { min: i32, max: i32, suggested: (i32, i32, i32) },
+    Real {
+        min: &'static str,
+        max: &'static str,
+        precision: i32,
+        suggested: (&'static str, &'static str, &'static str),
+    },
 }
 
-fn emit_opt_input_real_const(
-    o: &mut String, c_name: &str, param_name: &str,
-    display_name: &str, data_set: &str, default: &str, hint: &str,
-) {
-    let _ = writeln!(o, "const TA_OptInputParameterInfo {c_name} =\n{{");
-    o.push_str("   TA_OptInput_RealRange,\n");
-    let _ = writeln!(o, "   \"{param_name}\",");
-    o.push_str("   0,\n\n");
-    let _ = writeln!(o, "   \"{display_name}\",");
-    let _ = writeln!(o, "   (const void *)&{data_set},");
-    let _ = writeln!(o, "   {default},");
-    let _ = writeln!(o, "   \"{hint}\",\n");
-    o.push_str("   NULL\n};\n\n");
+struct SharedRange {
+    c_name: &'static str,
+    domain: SharedDomain,
+}
+
+/// Emission order is the order `ta_def_ui.c` has always had.
+const SHARED_RANGES: &[SharedRange] = &[
+    SharedRange { c_name: "TA_DEF_TimePeriod_Positive",
+        domain: SharedDomain::Int { min: 1, max: 100_000, suggested: (1, 200, 1) } },
+    SharedRange { c_name: "TA_DEF_TimePeriod_Positive_Minimum5",
+        domain: SharedDomain::Int { min: 5, max: 100_000, suggested: (5, 200, 1) } },
+    SharedRange { c_name: "TA_DEF_TimePeriod_Positive_Minimum2",
+        domain: SharedDomain::Int { min: 2, max: 100_000, suggested: (4, 200, 1) } },
+    SharedRange { c_name: "TA_DEF_HorizontalShiftPeriod",
+        domain: SharedDomain::Int { min: -200, max: 200, suggested: (0, 8, 1) } },
+    SharedRange { c_name: "TA_DEF_VerticalShiftPercent",
+        domain: SharedDomain::Real { min: "-99.0", max: "99.0", precision: 1,
+            suggested: ("-10.0", "10.0", "0.5") } },
+    SharedRange { c_name: "TA_DEF_NbDeviation",
+        domain: SharedDomain::Real { min: "TA_REAL_MIN", max: "TA_REAL_MAX", precision: 2,
+            suggested: ("-2.0", "2.0", "0.2") } },
+    SharedRange { c_name: "TA_DEF_ZeroToOne",
+        domain: SharedDomain::Real { min: "0.00", max: "1.00", precision: 2,
+            suggested: ("0.01", "1.00", "0.05") } },
+    SharedRange { c_name: "TA_DEF_RealPositive",
+        domain: SharedDomain::Real { min: "0.00", max: "TA_REAL_MAX", precision: 0,
+            suggested: ("0.0", "0.0", "0.0") } },
+];
+
+/// What a descriptor's `dataSet` points at.
+enum DataSet {
+    Range(&'static str),
+    MaTypeList,
+}
+
+impl DataSet {
+    fn c_name(&self) -> &'static str {
+        match self {
+            Self::Range(name) => name,
+            Self::MaTypeList => "TA_MA_TypeList",
+        }
+    }
+
+    fn c_type(&self) -> &'static str {
+        match self {
+            Self::MaTypeList => "TA_OptInput_IntegerList",
+            Self::Range(name) => match shared_range(name).domain {
+                SharedDomain::Int { .. } => "TA_OptInput_IntegerRange",
+                SharedDomain::Real { .. } => "TA_OptInput_RealRange",
+            },
+        }
+    }
+}
+
+struct PredefOptInput {
+    c_name: &'static str,
+    param_name: &'static str,
+    display_name: &'static str,
+    /// YAML flag spellings, rendered by the same `opt_input_flags_c` the
+    /// bespoke path uses — so the table states what a YAML would have to say.
+    flags: &'static [&'static str],
+    hint: &'static str,
+    /// The default as C spells it.
+    default_c: &'static str,
+    data_set: DataSet,
+}
+
+/// Emission order is the order `ta_def_ui.c` has always had.
+const PREDEF_OPT_INPUTS: &[PredefOptInput] = &[
+    PredefOptInput { c_name: "TA_DEF_UI_MinPeriod", param_name: "optInMinPeriod",
+        display_name: "Minimum Period", flags: &[],
+        hint: "Value less than minimum will be changed to Minimum period",
+        default_c: "2", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_MaxPeriod", param_name: "optInMaxPeriod",
+        display_name: "Maximum Period", flags: &[],
+        hint: "Value higher than maximum will be changed to Maximum period",
+        default_c: "30", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_30_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "30", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_20_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "20", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_21_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "21", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_14_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "14", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_10_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "10", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_5_MINIMUM2", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "5", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_14_MINIMUM5", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "14", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum5") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_30", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "30", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_14", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "14", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_10", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "10", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive") },
+    PredefOptInput { c_name: "TA_DEF_UI_TimePeriod_5", param_name: "optInTimePeriod",
+        display_name: "Time Period", flags: &[], hint: "Time period",
+        default_c: "5", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_NbDeviation", param_name: "optInNbDev",
+        display_name: "Deviations", flags: &[], hint: "Nb of deviations",
+        default_c: "1.0", data_set: DataSet::Range("TA_DEF_NbDeviation") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_Penetration_30", param_name: "optInPenetration",
+        display_name: "Penetration", flags: &[],
+        hint: "Percentage of penetration of a candle within another candle",
+        default_c: "0.3", data_set: DataSet::Range("TA_DEF_RealPositive") },
+    PredefOptInput { c_name: "TA_DEF_UI_Penetration_50", param_name: "optInPenetration",
+        display_name: "Penetration", flags: &[],
+        hint: "Percentage of penetration of a candle within another candle",
+        default_c: "0.5", data_set: DataSet::Range("TA_DEF_RealPositive") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_VerticalShift", param_name: "optInVertShift",
+        display_name: "Vertical Shift", flags: &["percent"],
+        hint: "Positive number shift upwards, negative downwards",
+        default_c: "0", data_set: DataSet::Range("TA_DEF_VerticalShiftPercent") },
+    PredefOptInput { c_name: "TA_DEF_UI_HorizontalShift", param_name: "optInHorizShift",
+        display_name: "Horizontal Shift", flags: &[],
+        hint: "Positive number shift 'n' period to the right, negative shift to the left",
+        default_c: "0", data_set: DataSet::Range("TA_DEF_HorizontalShiftPeriod") },
+
+    PredefOptInput { c_name: "TA_DEF_UI_MA_Method", param_name: "optInMAType",
+        display_name: "MA Type", flags: &[], hint: "Type of Moving Average",
+        default_c: "0", data_set: DataSet::MaTypeList },
+
+    PredefOptInput { c_name: "TA_DEF_UI_Fast_Period", param_name: "optInFastPeriod",
+        display_name: "Fast Period", flags: &[], hint: "Period of the fast MA",
+        default_c: "12", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+    PredefOptInput { c_name: "TA_DEF_UI_Slow_Period", param_name: "optInSlowPeriod",
+        display_name: "Slow Period", flags: &[], hint: "Period of the slow MA",
+        default_c: "26", data_set: DataSet::Range("TA_DEF_TimePeriod_Positive_Minimum2") },
+];
+
+/// The order `ta_def_ui.h` declares the opt-input externs in, which is not the
+/// order `ta_def_ui.c` defines them in. `def_ui_h_declares_every_predef` pins
+/// the two lists to the same *set* — a header entry with no definition is the
+/// `TA_DEF_UI_Output_Lines` class of defect, and it fails silently.
+const DEF_UI_OPT_INPUT_EXTERNS: &[&str] = &[
+    "TimePeriod_30",
+    "TimePeriod_14",
+    "TimePeriod_10",
+    "TimePeriod_5",
+    "TimePeriod_30_MINIMUM2",
+    "TimePeriod_20_MINIMUM2",
+    "TimePeriod_21_MINIMUM2",
+    "TimePeriod_14_MINIMUM2",
+    "TimePeriod_14_MINIMUM5",
+    "TimePeriod_10_MINIMUM2",
+    "TimePeriod_5_MINIMUM2",
+    "VerticalShift",
+    "HorizontalShift",
+    "MA_Method",
+    "Fast_Period",
+    "Slow_Period",
+    "NbDeviation",
+    "Penetration_30",
+    "Penetration_50",
+    "MinPeriod",
+    "MaxPeriod",
+];
+
+fn shared_range(c_name: &str) -> &'static SharedRange {
+    SHARED_RANGES
+        .iter()
+        .find(|r| r.c_name == c_name)
+        .expect("pre-defined descriptor names a range that ta_def_ui.c declares")
+}
+
+/// The `f64` a plain C real literal in the tables above denotes. Only the
+/// bounds are ever spelled with a sentinel macro; `real_bound_matches` handles
+/// those, because a YAML may reach the same bound by more than one spelling.
+fn c_real_literal(lit: &str) -> f64 {
+    lit.parse().expect("ta_def_ui.c real literal must parse")
+}
+
+/// Does a YAML bound denote what the C literal spells? `TA_REAL_MIN` /
+/// `TA_REAL_MAX` go through the same predicates the bespoke emitter uses to
+/// decide it may print the macro, so the two paths agree by construction.
+fn real_bound_matches(lit: &str, v: f64) -> bool {
+    match lit {
+        "TA_REAL_MIN" => is_ta_real_min(v),
+        "TA_REAL_MAX" => is_ta_real_max(v),
+        other => real_eq(c_real_literal(other), v),
+    }
+}
+
+/// Two reals are the same descriptor value when they render the same. The
+/// tables carry exact decimal literals and so does every YAML, so this is an
+/// equality test with a tolerance only for decimal round-tripping.
+fn real_eq(a: f64, b: f64) -> bool {
+    a == b || (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1.0)
 }
 
 // ---------------------------------------------------------------------------
@@ -1274,91 +1383,78 @@ pub(crate) fn output_flag_to_c(flag: &str) -> Option<&'static str> {
 
 /// Match an `OptInput` against the pre-defined constants.
 /// Returns the C extern name (e.g. `"TA_DEF_UI_TimePeriod_30"`) if matched.
-#[allow(clippy::float_cmp, clippy::cast_possible_truncation)]
+///
+/// The test is **total**: a descriptor is reused only when every field it
+/// carries already equals what the bespoke emitter would have written from the
+/// YAML — param name, display name, hint, flags, default, range, suggested
+/// triple, and precision for a real. Keying on a subset (which is what this did
+/// until #195) let a new function silently inherit another one's wording, and
+/// the divergence only surfaced four server builds later, blaming the server.
+///
+/// `match_predefined_output` below is the same shape, and always has been.
 fn match_predefined_opt_input(opt: &OptInput) -> Option<String> {
-    let (range_min, range_max) = opt.range.unwrap_or((0.0, 0.0));
-    let default = opt.default.unwrap_or(0.0);
-    let min_i = range_min as i32;
-    let max_i = range_max as i32;
-    let def_i = default as i32;
+    PREDEF_OPT_INPUTS
+        .iter()
+        .find(|p| predef_matches(p, opt))
+        .map(|p| p.c_name.to_string())
+}
 
-    match &opt.param_type {
-        ParamType::Integer => {
-            if opt.name == "optInTimePeriod" && max_i == 100_000 {
-                // Min=1 variants
-                if min_i == 1 {
-                    return match def_i {
-                        30 => Some("TA_DEF_UI_TimePeriod_30".into()),
-                        14 => Some("TA_DEF_UI_TimePeriod_14".into()),
-                        10 => Some("TA_DEF_UI_TimePeriod_10".into()),
-                        5 => Some("TA_DEF_UI_TimePeriod_5".into()),
-                        _ => None,
-                    };
-                }
-                // Min=2 variants
-                if min_i == 2 {
-                    return match def_i {
-                        30 => Some("TA_DEF_UI_TimePeriod_30_MINIMUM2".into()),
-                        20 => Some("TA_DEF_UI_TimePeriod_20_MINIMUM2".into()),
-                        21 => Some("TA_DEF_UI_TimePeriod_21_MINIMUM2".into()),
-                        14 => Some("TA_DEF_UI_TimePeriod_14_MINIMUM2".into()),
-                        10 => Some("TA_DEF_UI_TimePeriod_10_MINIMUM2".into()),
-                        5 => Some("TA_DEF_UI_TimePeriod_5_MINIMUM2".into()),
-                        _ => None,
-                    };
-                }
-                // Min=5 variants
-                if min_i == 5 && def_i == 14 {
-                    return Some("TA_DEF_UI_TimePeriod_14_MINIMUM5".into());
-                }
-            }
-            if opt.name == "optInFastPeriod" && min_i == 2 && max_i == 100_000 && def_i == 12 {
-                return Some("TA_DEF_UI_Fast_Period".into());
-            }
-            if opt.name == "optInSlowPeriod" && min_i == 2 && max_i == 100_000 && def_i == 26 {
-                return Some("TA_DEF_UI_Slow_Period".into());
-            }
-            if opt.name == "optInHorizShift" && def_i == 0 {
-                return Some("TA_DEF_UI_HorizontalShift".into());
-            }
-            if opt.name == "optInMinPeriod" && min_i == 2 && max_i == 100_000 && def_i == 2 {
-                return Some("TA_DEF_UI_MinPeriod".into());
-            }
-            if opt.name == "optInMaxPeriod" && min_i == 2 && max_i == 100_000 && def_i == 30 {
-                return Some("TA_DEF_UI_MaxPeriod".into());
-            }
-        }
-        ParamType::Enum(_) => {
-            if opt.name == "optInMAType" && def_i == 0 {
-                return Some("TA_DEF_UI_MA_Method".into());
-            }
-        }
-        ParamType::Real => {
-            let min_is_ta_real_min = is_ta_real_min(range_min);
-            let max_is_ta_real_max = is_ta_real_max(range_max);
-
-            if opt.name == "optInNbDev"
-                && min_is_ta_real_min
-                && max_is_ta_real_max
-                && (default - 1.0).abs() < 1e-9
-            {
-                return Some("TA_DEF_UI_NbDeviation".into());
-            }
-            if opt.name == "optInPenetration" && range_min == 0.0 && max_is_ta_real_max {
-                if (default - 0.3).abs() < 1e-9 {
-                    return Some("TA_DEF_UI_Penetration_30".into());
-                }
-                if (default - 0.5).abs() < 1e-9 {
-                    return Some("TA_DEF_UI_Penetration_50".into());
-                }
-            }
-            if opt.name == "optInVertShift" && (default).abs() < 1e-9 {
-                return Some("TA_DEF_UI_VerticalShift".into());
-            }
-        }
-        ParamType::Price(_) => {}
+/// Would the bespoke descriptor for `opt` say exactly what `p` says?
+#[allow(clippy::cast_possible_truncation)]
+fn predef_matches(p: &PredefOptInput, opt: &OptInput) -> bool {
+    if p.param_name != opt.name
+        || p.display_name != opt.display_name.as_deref().unwrap_or(&opt.name)
+        || p.hint != opt.hint.as_deref().unwrap_or("")
+    {
+        return false;
     }
-    None
+    let table_flags: Vec<String> = p.flags.iter().map(|f| (*f).to_string()).collect();
+    if opt_input_flags_c(&opt.flags) != opt_input_flags_c(&table_flags) {
+        return false;
+    }
+
+    match (&p.data_set, &opt.param_type) {
+        (DataSet::MaTypeList, ParamType::Enum(name)) => {
+            // The only `TA_IntegerList` ta_def_ui.c declares.
+            name == "MAType" && c_real_literal(p.default_c) as i32 == opt.default.unwrap_or(0.0) as i32
+        }
+        (DataSet::Range(range_name), ParamType::Integer) => {
+            let SharedDomain::Int { min, max, suggested } = shared_range(range_name).domain else {
+                return false;
+            };
+            let (yaml_min, yaml_max) = opt.range.unwrap_or((1.0, 100_000.0));
+            let (yaml_min, yaml_max) = (yaml_min as i32, yaml_max as i32);
+            (min, max) == (yaml_min, yaml_max)
+                && suggested == int_suggested(opt, yaml_min, yaml_max)
+                && c_real_literal(p.default_c) as i32 == opt.default.unwrap_or(0.0) as i32
+        }
+        (DataSet::Range(range_name), ParamType::Real) => {
+            let SharedDomain::Real { min, max, precision, suggested } =
+                shared_range(range_name).domain
+            else {
+                return false;
+            };
+            let (yaml_min, yaml_max) = opt.range.unwrap_or((0.0, f64::MAX));
+            let (ss, se, si) = opt.suggested.unwrap_or((0.0, 0.0, 0.0));
+            real_bound_matches(min, yaml_min)
+                && real_bound_matches(max, yaml_max)
+                && precision == get_precision(opt)
+                && real_eq(c_real_literal(suggested.0), ss)
+                && real_eq(c_real_literal(suggested.1), se)
+                && real_eq(c_real_literal(suggested.2), si)
+                && real_eq(c_real_literal(p.default_c), opt.default.unwrap_or(0.0))
+        }
+        _ => false,
+    }
+}
+
+/// The suggested triple the bespoke integer emitter would write. Restated here
+/// rather than shared, for the reason `abstract_rows.rs` states: C keeps its own
+/// derivation so the runtime metadata gate is not a generator checking itself.
+#[allow(clippy::cast_possible_truncation)]
+fn int_suggested(opt: &OptInput, min: i32, max: i32) -> (i32, i32, i32) {
+    opt.suggested
+        .map_or((min, max.min(200), 1), |(a, b, c)| (a as i32, b as i32, c as i32))
 }
 
 /// Emit a custom range + `TA_OptInputParameterInfo` and return the C name.
@@ -1413,24 +1509,26 @@ fn emit_custom_int_opt_input(o: &mut String, func: &FuncDef, opt: &OptInput) -> 
     let (range_min, range_max) = opt.range.unwrap_or((1.0, 100_000.0));
     let min_i = range_min as i32;
     let max_i = range_max as i32;
+    let (sstart, send, sinc) = int_suggested(opt, min_i, max_i);
 
-    // Check if there is a matching predefined integer range.
-    let range_ref = match (min_i, max_i) {
-        (1, 100_000) => Some("TA_DEF_TimePeriod_Positive"),
-        (2, 100_000) => Some("TA_DEF_TimePeriod_Positive_Minimum2"),
-        (5, 100_000) => Some("TA_DEF_TimePeriod_Positive_Minimum5"),
-        _ => None,
-    };
+    // A shared range is reusable only when its suggested triple is the one this
+    // parameter declares — sharing on the bounds alone silently replaced the
+    // YAML's triple, on a path that needs no pre-defined descriptor to match
+    // and is therefore the likelier half of #195 to bite.
+    let range_ref = SHARED_RANGES.iter().find(|r| {
+        matches!(r.domain,
+            SharedDomain::Int { min, max, suggested }
+                if (min, max) == (min_i, max_i) && suggested == (sstart, send, sinc))
+    });
 
     let range_c_name;
     if let Some(existing) = range_ref {
-        range_c_name = existing.to_string();
+        range_c_name = existing.c_name.to_string();
     } else {
-        // Emit a custom integer range.
-        range_c_name = format!("TA_DEF_{}_Range", sanitize_param_name(&opt.name));
-        let (sstart, send, sinc) = opt
-            .suggested
-            .map_or((min_i, max_i.min(200), 1), |(a, b, c)| (a as i32, b as i32, c as i32));
+        // Emit a custom integer range. Function-qualified like the real path's
+        // `custom_range_name`: this branch went live with #195, and two
+        // functions in one table file could otherwise claim the same name.
+        range_c_name = custom_range_name(func, opt);
         let _ = writeln!(o, "static const TA_IntegerRange {range_c_name} =\n{{");
         let _ = writeln!(o, "   {min_i},");
         let _ = writeln!(o, "   {max_i},");
@@ -3245,6 +3343,160 @@ fn capitalize_first(s: &str) -> String {
         Some(c) => {
             let upper: String = c.to_uppercase().collect();
             upper + chars.as_str()
+        }
+    }
+}
+
+#[cfg(test)]
+mod predef_tests {
+    use super::{
+        emit_custom_int_opt_input, match_predefined_opt_input, DEF_UI_OPT_INPUT_EXTERNS,
+        PREDEF_OPT_INPUTS,
+    };
+    use crate::ir::{FuncDef, Input, OptInput, ParamType};
+
+    /// SMA's `optInTimePeriod`, the most-shared shape in the corpus.
+    fn time_period_30() -> OptInput {
+        OptInput {
+            name: "optInTimePeriod".to_string(),
+            param_type: ParamType::Integer,
+            range: Some((1.0, 100_000.0)),
+            default: Some(30.0),
+            display_name: Some("Time Period".to_string()),
+            hint: Some("Time period".to_string()),
+            flags: vec![],
+            suggested: Some((1.0, 200.0, 1.0)),
+            precision: None,
+        }
+    }
+
+    fn func(name: &str) -> FuncDef {
+        FuncDef {
+            name: name.to_string(),
+            group: "Overlap Studies".to_string(),
+            description: None,
+            hint: None,
+            flags: vec![],
+            inputs: vec![Input::new("inReal", ParamType::Real)],
+            optional_inputs: vec![],
+            outputs: vec![],
+            lookback: None,
+            body: vec![],
+            private_body: vec![],
+            private_extra_params: vec![],
+            private_param_init: vec![],
+            has_explicit_private: false,
+            header_comments: vec![],
+            doc: None,
+            streaming: false,
+            alternates: vec![],
+            resolved_stream_body: None,
+        }
+    }
+
+    #[test]
+    fn house_time_period_still_folds() {
+        assert_eq!(
+            match_predefined_opt_input(&time_period_30()).as_deref(),
+            Some("TA_DEF_UI_TimePeriod_30")
+        );
+    }
+
+    /// #195: the same range and default with different wording must NOT inherit
+    /// the shared descriptor's wording. Each field on its own, because a fold
+    /// keyed on any proper subset passes some of these and fails the rest.
+    #[test]
+    fn a_differing_descriptive_field_declines_the_fold() {
+        for (label, opt) in [
+            ("hint", OptInput { hint: Some("Number of period".into()), ..time_period_30() }),
+            (
+                "display_name",
+                OptInput { display_name: Some("Lookback Window".into()), ..time_period_30() },
+            ),
+            ("suggested", OptInput { suggested: Some((2.0, 150.0, 2.0)), ..time_period_30() }),
+            ("flags", OptInput { flags: vec!["advanced".into()], ..time_period_30() }),
+        ] {
+            assert!(
+                match_predefined_opt_input(&opt).is_none(),
+                "a differing {label} must not fold onto a pre-defined descriptor"
+            );
+        }
+    }
+
+    /// #195, second path: a shared `TA_IntegerRange` carries a suggested triple
+    /// too, so bounds alone do not make it reusable. This is the only thing that
+    /// emits a bespoke `TA_IntegerRange` — no shipped indicator does yet.
+    #[test]
+    fn a_differing_suggested_triple_declines_the_shared_range() {
+        let mut o = String::new();
+        let opt = OptInput { suggested: Some((2.0, 150.0, 2.0)), ..time_period_30() };
+        let name = emit_custom_int_opt_input(&mut o, &func("QSTICK"), &opt);
+
+        assert_eq!(name, "TA_DEF_UI_D_QSTICK_TimePeriod");
+        // Function-qualified: two functions in one table file would otherwise
+        // define the same static.
+        assert!(o.contains("static const TA_IntegerRange TA_DEF_QSTICK_TimePeriod ="), "{o}");
+        assert!(o.contains("(const void *)&TA_DEF_QSTICK_TimePeriod,"), "{o}");
+        assert!(!o.contains("TA_DEF_TimePeriod_Positive"), "{o}");
+        for v in ["   2,\n", "   150,\n", "   2\n"] {
+            assert!(o.contains(v), "bespoke range must carry the YAML triple: {o}");
+        }
+    }
+
+    /// The matching triple keeps sharing the range — the dedup is intact.
+    #[test]
+    fn a_matching_suggested_triple_reuses_the_shared_range() {
+        let mut o = String::new();
+        let opt = OptInput { default: Some(13.0), ..time_period_30() };
+        emit_custom_int_opt_input(&mut o, &func("EFI"), &opt);
+        assert!(o.contains("(const void *)&TA_DEF_TimePeriod_Positive,"), "{o}");
+        assert!(!o.contains("static const TA_IntegerRange"), "{o}");
+    }
+
+    /// Every pre-defined descriptor is declared, and every declaration has a
+    /// descriptor. The header's order differs from the `.c`'s, so this pins the
+    /// sets, not the sequences. A declaration with no definition is the
+    /// `TA_DEF_UI_Output_Lines` class of defect, and it fails silently.
+    #[test]
+    fn def_ui_h_declares_every_predef() {
+        let mut declared: Vec<String> = DEF_UI_OPT_INPUT_EXTERNS
+            .iter()
+            .map(|n| format!("TA_DEF_UI_{n}"))
+            .collect();
+        let mut defined: Vec<String> =
+            PREDEF_OPT_INPUTS.iter().map(|p| p.c_name.to_string()).collect();
+        declared.sort();
+        defined.sort();
+        assert_eq!(declared, defined);
+    }
+
+    /// Every descriptor points at a range `ta_def_ui.c` declares, with a kind
+    /// that agrees with its `TA_OptInput_*` tag. `c_type` panics otherwise.
+    #[test]
+    fn predef_data_sets_resolve() {
+        for p in PREDEF_OPT_INPUTS {
+            let _ = p.data_set.c_type();
+        }
+    }
+
+    /// Two descriptors saying the same thing would make the fold's choice
+    /// arbitrary, and the generated C unstable across a table reorder.
+    #[test]
+    fn predef_descriptors_are_pairwise_distinct() {
+        for (i, a) in PREDEF_OPT_INPUTS.iter().enumerate() {
+            for b in &PREDEF_OPT_INPUTS[i + 1..] {
+                assert!(
+                    !(a.param_name == b.param_name
+                        && a.display_name == b.display_name
+                        && a.hint == b.hint
+                        && a.flags == b.flags
+                        && a.default_c == b.default_c
+                        && a.data_set.c_name() == b.data_set.c_name()),
+                    "{} and {} are the same descriptor",
+                    a.c_name,
+                    b.c_name
+                );
+            }
         }
     }
 }

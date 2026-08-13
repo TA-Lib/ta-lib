@@ -366,6 +366,16 @@ pub struct DEMA_Stream {
     state: DEMA_StreamState,
 }
 
+#[allow(dead_code)]
+impl DEMA_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `DEMA_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct DEMA_StreamState {
@@ -373,6 +383,18 @@ struct DEMA_StreamState {
     prevEMA1: f64,
     prevEMA2: f64,
     optInK_1: f64,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl DEMA_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.prevEMA1 = src.prevEMA1;
+        self.prevEMA2 = src.prevEMA2;
+        self.optInK_1 = src.optInK_1;
+    }
 }
 
 #[allow(non_snake_case)]
@@ -624,9 +646,10 @@ impl DEMA_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. This handle holds only scalars, so the copy is a
+    /// few machine words and `peek` never allocates.
     #[doc(alias = "TA_DEMA_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

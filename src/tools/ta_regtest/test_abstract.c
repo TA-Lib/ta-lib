@@ -580,11 +580,11 @@ static ErrorNumber abstract_verify_func_metadata(
                    funcName, i, crefOpt->displayName, srvDisplayName);
             return TA_ABSTRACT_CALL_MISMATCH;
         }
-        /* hint. Worth comparing precisely because it was not compared before:
-         * for an opt slot whose C descriptor is a predefined TA_DEF_UI_*, the
-         * hint is a hand-written literal in the generator and is NOT derived
-         * from the YAML the other backends read — so this is one of the few
-         * metadata checks that is not a generator comparing against itself. */
+        /* hint. For a bespoke descriptor this is a genuine YAML-vs-C check.
+         * For a slot folded onto a predefined TA_DEF_UI_*, the generator now
+         * folds only on full equality (#195), so the hint agreeing is what
+         * selected the constant — this arm cannot fail there, and a stale
+         * generator literal shows up as a decline, not a divergence. */
         {
             char srvHint[256] = {0};
             const char *crefHint = crefOpt->hint ? crefOpt->hint : "";

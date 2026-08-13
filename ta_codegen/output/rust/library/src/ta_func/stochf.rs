@@ -436,6 +436,16 @@ pub struct STOCHF_Stream {
     state: STOCHF_StreamState,
 }
 
+#[allow(dead_code)]
+impl STOCHF_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `STOCHF_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct STOCHF_StreamState {
@@ -455,6 +465,30 @@ struct STOCHF_StreamState {
     x_inLow: Vec<f64>,
     x_inClose: Vec<f64>,
     sub0: MA_Stream,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl STOCHF_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInFastK_Period = src.optInFastK_Period;
+        self.optInFastD_Period = src.optInFastD_Period;
+        self.optInFastD_MAType = src.optInFastD_MAType;
+        self.lowest = src.lowest;
+        self.highest = src.highest;
+        self.diff = src.diff;
+        self.lowestIdx = src.lowestIdx;
+        self.highestIdx = src.highestIdx;
+        self.trailingIdx = src.trailingIdx;
+        self.i = src.i;
+        self.today = src.today;
+        self.xMask = src.xMask;
+        self.x_inHigh.clone_from(&src.x_inHigh);
+        self.x_inLow.clone_from(&src.x_inLow);
+        self.x_inClose.clone_from(&src.x_inClose);
+        self.sub0.restore_from(&src.sub0);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -865,6 +899,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `STOCHF_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static STOCHF_PEEK_SCRATCH: std::cell::Cell<Option<Box<STOCHF_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl STOCHF_Stream {
@@ -878,14 +920,20 @@ impl STOCHF_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_STOCHF_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> (f64, f64) {
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        STOCHF_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inHigh, inLow, inClose);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

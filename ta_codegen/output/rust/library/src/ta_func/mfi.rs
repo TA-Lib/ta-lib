@@ -352,6 +352,16 @@ pub struct MFI_Stream {
     state: MFI_StreamState,
 }
 
+#[allow(dead_code)]
+impl MFI_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `MFI_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct MFI_StreamState {
@@ -367,6 +377,26 @@ struct MFI_StreamState {
     cbSize_mflow: usize,
     cb_mflow_positive: Vec<f64>,
     cb_mflow_negative: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl MFI_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod = src.optInTimePeriod;
+        self.posSumMF = src.posSumMF;
+        self.negSumMF = src.negSumMF;
+        self.prevValue = src.prevValue;
+        self.tempValue1 = src.tempValue1;
+        self.tempValue2 = src.tempValue2;
+        self.tempValue3 = src.tempValue3;
+        self.mflow_Idx = src.mflow_Idx;
+        self.maxIdx_mflow = src.maxIdx_mflow;
+        self.cbSize_mflow = src.cbSize_mflow;
+        self.cb_mflow_positive.clone_from(&src.cb_mflow_positive);
+        self.cb_mflow_negative.clone_from(&src.cb_mflow_negative);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -619,6 +649,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `MFI_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static MFI_PEEK_SCRATCH: std::cell::Cell<Option<Box<MFI_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl MFI_Stream {
@@ -631,14 +669,20 @@ impl MFI_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_MFI_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64, inVolume: f64) -> f64 {
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose, inVolume)
+        MFI_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inHigh, inLow, inClose, inVolume);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

@@ -185,9 +185,27 @@ pub struct TYPPRICE_Stream {
     state: TYPPRICE_StreamState,
 }
 
+#[allow(dead_code)]
+impl TYPPRICE_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `TYPPRICE_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct TYPPRICE_StreamState {
+}
+
+#[allow(non_snake_case, dead_code)]
+impl TYPPRICE_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+    }
 }
 
 #[allow(non_snake_case)]
@@ -296,9 +314,10 @@ impl TYPPRICE_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. This handle holds only scalars, so the copy is a
+    /// few machine words and `peek` never allocates.
     #[doc(alias = "TA_TYPPRICE_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {

@@ -551,6 +551,9 @@ final class Dispatch {
          case "VWMA":
             return core.VWMA(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.intOpt(0), h.realOutput(0));
+         case "WAD":
+            return core.WAD(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
          case "WCLPRICE":
             return core.WCLPRICE(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
@@ -901,6 +904,8 @@ final class Dispatch {
             return core.VAR_Lookback(h.intOpt(0), h.realOpt(1));
          case "VWMA":
             return core.VWMA_Lookback(h.intOpt(0));
+         case "WAD":
+            return core.WAD_Lookback();
          case "WCLPRICE":
             return core.WCLPRICE_Lookback();
          case "WILLR":

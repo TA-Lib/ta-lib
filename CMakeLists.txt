@@ -449,6 +449,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ULTOSC.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_VAR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_VWMA.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WAD.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WCLPRICE.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WILLR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_WMA.c"

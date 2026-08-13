@@ -68,9 +68,17 @@ fn test_rust_sma_ring_stream_section() {
     // Capture: numeric ring cap from live locals + tail copy.
     assert!(s.contains("let cap_trailingIdx: i64 = (i as i64) - (trailingIdx as i64);"));
     assert!(s.contains(".copy_from_slice(&inReal[historyLen - cap_trailingIdx as usize..]);"));
-    // Handle impl: infallible update, clone-peek, auto-trait pin.
+    // Handle impl: infallible update, scratch-peek, auto-trait pin.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> f64 {"));
+    // Every state gets the buffer-reusing restore (#201) — a state can be some
+    // other handle's sub — but SMA's own peek does not use it: one ring, no
+    // sub-handle and a loop-free transition is the shape whose stack copy the
+    // optimizer deletes outright, which no scratch can beat.
+    assert!(s.contains("self.ring_trailingIdx_inReal.clone_from(&src.ring_trailingIdx_inReal);"));
+    assert!(s.contains("pub fn peek(&self, inReal: f64) -> f64 {"));
     assert!(s.contains("let mut scratch = self.clone();"));
+    assert!(s.contains("scratch.update(inReal)"));
+    assert!(!s.contains("PEEK_SCRATCH"));
     assert!(s.contains("_assert_auto::<SMA_Stream>();"));
     // Short history is an error, not batch's empty success.
     assert!(s.contains("return Err(RetCode::BadParam);"));
@@ -88,6 +96,13 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     assert!(s.contains("self.compatibility"));
     // Update returns the bare value.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> f64 {"));
+    // No heap in the state, so peek keeps the throwaway copy and no
+    // thread-local scratch is emitted at all (#201).
+    assert!(s.contains("let mut scratch = self.clone();"));
+    assert!(!s.contains("PEEK_SCRATCH"), "a scalar state needs no scratch buffer");
+    // The restore is still emitted: EMA is a sub-stream of several composed
+    // handles, whose own scratch restores through it.
+    assert!(s.contains("fn restore_from(&mut self, src: &Self) {"));
 }
 
 #[test]
@@ -111,6 +126,15 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
     // OHLC ring over all four price arrays.
     assert!(s.contains("ring_BodyDojiTrailingIdx_inOpen"));
     assert!(s.contains("ring_BodyDojiTrailingIdx_inClose"));
+    // Four buffers is several allocations per clone, none of which the
+    // optimizer folds away, so peek reuses a per-thread scratch (#201).
+    assert!(s.contains("static CDLDOJI_PEEK_SCRATCH: std::cell::Cell<Option<Box<CDLDOJI_Stream>>>"));
+    assert!(s.contains("CDLDOJI_PEEK_SCRATCH.with(|cell| {"));
+    assert!(s.contains("scratch.restore_from(self);"));
+    // The scratch is a HANDLE and peek calls `update` on it, so the transition
+    // keeps the single call site it had before #201 — see the emitter's note.
+    assert!(s.contains("let value = scratch.update(inOpen, inHigh, inLow, inClose);"));
+    assert!(s.contains("cell.set(Some(scratch));"));
 }
 
 #[test]
@@ -125,6 +149,9 @@ fn test_rust_minmaxindex_extrema_i32_and_rebase() {
     assert!(s.contains("today: (today) as i32,"));
     // Index outputs stay batch-exact i32 pairs.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> (i32, i32) {"));
+    // One buffer: peek keeps the throwaway copy, the shape whose clone the
+    // optimizer folds away (#201).
+    assert!(!s.contains("PEEK_SCRATCH"));
 }
 
 #[test]

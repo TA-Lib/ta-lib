@@ -689,7 +689,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_1in_1out, "MATH,VECTOR,DCPERIOD/PHASE,TRENDLINE/MODE" );
    DO_TEST( test_func_ma,       "All Moving Averages" );
    DO_TEST( test_func_per_hl,   "AROON,CORREL,BETA,MIDPRICE" );
-   DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR" );
+   DO_TEST( test_func_per_hlc,  "CCI,WILLR,ULTOSC,NATR,ACCBANDS,WAD" );
    DO_TEST( test_func_per_ohlc, "BOP,AVGPRICE" );
    DO_TEST( test_func_rsi,      "RSI,CMO" );
    DO_TEST( test_func_imi, "IMI" );

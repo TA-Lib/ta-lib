@@ -282,7 +282,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class STDDEV_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double optInNbDev;
       double cur_outReal;
@@ -309,6 +309,22 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( STDDEV_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.optInNbDev = other.optInNbDev;
+         this.cur_outReal = other.cur_outReal;
+         if( this.sub0 == null ) {
+            this.sub0 = new VAR_Stream(other.sub0);
+         } else {
+            this.sub0.copyFrom(other.sub0);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<STDDEV_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -321,12 +337,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
-         STDDEV_Stream scratch = new STDDEV_Stream(this);
+         STDDEV_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new STDDEV_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.STDDEV_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }

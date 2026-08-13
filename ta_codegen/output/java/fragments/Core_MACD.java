@@ -571,7 +571,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MACD_Stream {
-      final Core core;
+      Core core;
       int optInFastPeriod;
       int optInSlowPeriod;
       int optInSignalPeriod;
@@ -616,6 +616,24 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MACD_Stream other ) {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.prevFast = other.prevFast;
+         this.prevSlow = other.prevSlow;
+         this.prevSignal = other.prevSignal;
+         this.slowK = other.slowK;
+         this.fastK = other.fastK;
+         this.signalK = other.signalK;
+         this.cur_outMACD = other.cur_outMACD;
+         this.cur_outMACDSignal = other.cur_outMACDSignal;
+         this.cur_outMACDHist = other.cur_outMACDHist;
+         this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
+      }
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -643,9 +661,9 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public Value peek( double inReal ) {
          MACD_Stream scratch = new MACD_Stream(this);

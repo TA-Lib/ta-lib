@@ -77,8 +77,13 @@ def parse_rust(root):
         if why:
             declined[name] = why
             continue
-        impl = re.search(r"impl %s_Stream \{(.*?)\n\}" % name, src, re.S)
-        m2 = re.search(r"pub fn update\(&mut self(.*?)\) -> ", impl.group(1) if impl else src)
+        # Every `impl <N>_Stream` block, not just the first: the handle carries
+        # more than one (the scratch restore lives in its own).
+        m2 = None
+        for impl in re.finditer(r"impl %s_Stream \{(.*?)\n\}" % name, src, re.S):
+            m2 = re.search(r"pub fn update\(&mut self(.*?)\) -> ", impl.group(1))
+            if m2:
+                break
         if not m2:
             declined[name] = "no update method"
             continue

@@ -557,7 +557,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MACDEXT_Stream {
-      final Core core;
+      Core core;
       int optInFastPeriod;
       MAType optInFastMAType;
       int optInSlowPeriod;
@@ -602,6 +602,39 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MACDEXT_Stream other ) {
+         this.core = other.core;
+         this.optInFastPeriod = other.optInFastPeriod;
+         this.optInFastMAType = other.optInFastMAType;
+         this.optInSlowPeriod = other.optInSlowPeriod;
+         this.optInSlowMAType = other.optInSlowMAType;
+         this.optInSignalPeriod = other.optInSignalPeriod;
+         this.optInSignalMAType = other.optInSignalMAType;
+         this.cur_outMACD = other.cur_outMACD;
+         this.cur_outMACDSignal = other.cur_outMACDSignal;
+         this.cur_outMACDHist = other.cur_outMACDHist;
+         this.cachedValue = other.cachedValue;
+         if( this.sub0 == null ) {
+            this.sub0 = new MA_Stream(other.sub0);
+         } else {
+            this.sub0.copyFrom(other.sub0);
+         }
+         if( this.sub1 == null ) {
+            this.sub1 = new MA_Stream(other.sub1);
+         } else {
+            this.sub1.copyFrom(other.sub1);
+         }
+         if( this.sub2 == null ) {
+            this.sub2 = new MA_Stream(other.sub2);
+         } else {
+            this.sub2.copyFrom(other.sub2);
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<MACDEXT_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -629,12 +662,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public Value peek( double inReal ) {
-         MACDEXT_Stream scratch = new MACDEXT_Stream(this);
+         MACDEXT_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new MACDEXT_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.MACDEXT_StreamStep(scratch, inReal);
          return new Value(scratch.cur_outMACD, scratch.cur_outMACDSignal, scratch.cur_outMACDHist);
       }

@@ -460,6 +460,16 @@ pub struct ULTOSC_Stream {
     state: ULTOSC_StreamState,
 }
 
+#[allow(dead_code)]
+impl ULTOSC_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `ULTOSC_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct ULTOSC_StreamState {
@@ -481,6 +491,32 @@ struct ULTOSC_StreamState {
     cbSize_term: usize,
     cb_term_closeMinusTrueLow: Vec<f64>,
     cb_term_trueRange: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl ULTOSC_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.optInTimePeriod1 = src.optInTimePeriod1;
+        self.optInTimePeriod2 = src.optInTimePeriod2;
+        self.optInTimePeriod3 = src.optInTimePeriod3;
+        self.a1Total = src.a1Total;
+        self.a2Total = src.a2Total;
+        self.a3Total = src.a3Total;
+        self.b1Total = src.b1Total;
+        self.b2Total = src.b2Total;
+        self.b3Total = src.b3Total;
+        self.output = src.output;
+        self.trailingPos1 = src.trailingPos1;
+        self.trailingPos2 = src.trailingPos2;
+        self.term_Idx = src.term_Idx;
+        self.maxIdx_term = src.maxIdx_term;
+        self.lag1_inClose = src.lag1_inClose;
+        self.cbSize_term = src.cbSize_term;
+        self.cb_term_closeMinusTrueLow.clone_from(&src.cb_term_closeMinusTrueLow);
+        self.cb_term_trueRange.clone_from(&src.cb_term_trueRange);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -878,6 +914,14 @@ impl Core {
 
 }
 
+thread_local! {
+    /// `peek`'s reusable scratch handle (see `ULTOSC_StreamState::restore_from`).
+    /// Taken for the duration of the step and put back after, so a
+    /// panicking step costs the scratch, never leaves it borrowed.
+    static ULTOSC_PEEK_SCRATCH: std::cell::Cell<Option<Box<ULTOSC_Stream>>> =
+        const { std::cell::Cell::new(None) };
+}
+
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
 impl ULTOSC_Stream {
@@ -890,14 +934,20 @@ impl ULTOSC_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy it runs on is held per thread and reused,
+    /// so only the first peek of this function on a thread allocates.
     #[doc(alias = "TA_ULTOSC_Peek")]
     #[must_use]
     pub fn peek(&self, inHigh: f64, inLow: f64, inClose: f64) -> f64 {
-        let mut scratch = self.clone();
-        scratch.update(inHigh, inLow, inClose)
+        ULTOSC_PEEK_SCRATCH.with(|cell| {
+            let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));
+            scratch.restore_from(self);
+            let value = scratch.update(inHigh, inLow, inClose);
+            cell.set(Some(scratch));
+            value
+        })
     }
 }
 

@@ -270,7 +270,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class IMI_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       int winPos_i;
       int winCap_i;
@@ -301,6 +301,28 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( IMI_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.winPos_i = other.winPos_i;
+         this.winCap_i = other.winCap_i;
+         if( this.win_i_inOpen != null && this.win_i_inOpen.length == other.win_i_inOpen.length ) {
+            System.arraycopy( other.win_i_inOpen, 0, this.win_i_inOpen, 0, other.win_i_inOpen.length );
+         } else {
+            this.win_i_inOpen = other.win_i_inOpen.clone();
+         }
+         if( this.win_i_inClose != null && this.win_i_inClose.length == other.win_i_inClose.length ) {
+            System.arraycopy( other.win_i_inClose, 0, this.win_i_inClose, 0, other.win_i_inClose.length );
+         } else {
+            this.win_i_inClose = other.win_i_inClose.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<IMI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -313,12 +335,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inOpen, double inClose ) {
-         IMI_Stream scratch = new IMI_Stream(this);
+         IMI_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new IMI_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.IMI_StreamStep(scratch, inOpen, inClose);
          return scratch.cur_outReal;
       }

@@ -230,14 +230,28 @@ derivation (its own `get_precision`, its own fallbacks, and
 descriptors), and stays the oracle. `func_api_xml` is left out for the same
 reason plus a different projection (display labels, legacy ordering).
 
-That is stronger than it first looks. `match_predefined_opt_input` keys **only**
-on `(param name, range min, range max, default)`, so for the ~80 of 122 opt slots
-that match a predefined descriptor, C's `displayName`, `hint`, `precision` and
-`suggested` triple are hand-written literals in `ta_abstract_c.rs` — not derived
-from the YAML the other three read. Editing SMA's `display_name` or its
-`suggested` triple moves three backends and not C, and the gate fails. What it
-still cannot see is a wrong `default:` or a wrong function-level `hint:`, where
-every derivation moves together.
+The dedup is a **total equality test**, and it has to stay one. C's ~20
+pre-defined `TA_DEF_UI_*` descriptors are hand-written literals, and a slot
+reuses one only when the constant already says exactly what the YAML says —
+name, display name, hint, flags, default, range, suggested triple, precision.
+Anything else gets its own descriptor carrying its own values. So a fold is pure
+`.rodata` dedup with no semantic content: matching cannot discard what the YAML
+declared, because a match means there was nothing to discard.
+
+Keying on a subset is what issue #195 was. It let a new function inherit another
+function's wording, and the divergence surfaced only after a four-language server
+build, phrased as though the server were wrong. `match_predefined_output` in the
+same file was already total; the opt-input side is now too.
+
+The price is worth naming: for a folded slot the gate can no longer fail on
+`displayName` / `hint` / `suggested`, since equality is what selected the
+descriptor. That check was only ever detecting "YAML edited, generator literal
+stale" — a condition that now causes a decline instead of a divergence. Editing
+SMA's `display_name` today shows up as a diff to `src/ta_abstract/tables/table_s.c`,
+a committed generated file the nightly `regen-check` pins. C still derives
+`range`, `default` and `precision` on its own for every bespoke slot. What no
+gate sees is a wrong `default:` or a wrong function-level `hint:`, where every
+derivation moves together.
 
 Two pieces C *does* share are shared deliberately, because an independent gate
 already covers them: `price_bundle` (its own unit tests) and the flag bit values

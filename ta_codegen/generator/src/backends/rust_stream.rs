@@ -17,8 +17,12 @@
 //! expression text is hand-built outside the shared renderers.
 //!
 //! Deliberate simplifications vs the C emitter (see design spec):
-//! - `peek(&self)` = `self.clone()` + `update` on the throwaway clone (the
-//!   design doc's stated cost model). No mirror buffers, no `peekMode`.
+//! - `peek(&self)` = `update` on a scratch copy of the state. No `peekMode`
+//!   flag threaded through the transition, and the handle is never written —
+//!   which is what keeps the signature `&self` and the handle `Sync`. A state
+//!   that owns no heap buffer is copied onto the stack; one that does is
+//!   restored into a reused thread-local scratch, so a peek calls the
+//!   allocator only the first time that thread peeks that function (#201).
 //! - Drop replaces Close; RAII replaces every OOM-unwind ladder.
 //! - `historyLen` is the input slice length; multi-input opens require
 //!   non-empty, equal-length slices (`Err(BadParam)` otherwise).
@@ -497,7 +501,7 @@ fn emit_loop(
     counter: &Cell<usize>,
 ) {
     let typing = build_typing(func, model);
-    emit_handle_and_state_structs(o, func, model, &typing);
+    let shape = emit_handle_and_state_structs(o, func, model, &typing);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
     emit_step(o, func, model, &typing, enums, registry, helpers, counter);
@@ -507,7 +511,7 @@ fn emit_loop(
     emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func);
+    emit_update_and_peek(o, func, shape);
     emit_trait_pin(o, func);
 }
 
@@ -620,9 +624,9 @@ fn emit_handle_and_state_structs(
     func: &FuncDef,
     model: &StreamModel,
     typing: &Typing,
-) {
+) -> StateShape {
     emit_handle_struct(o, func);
-    emit_state_struct_from(o, func, &state_fields(func, model, typing));
+    emit_state_struct_from(o, func, &state_fields(func, model, typing))
 }
 
 /// The public opaque handle struct (identical for every tier).
@@ -641,16 +645,189 @@ fn emit_handle_struct(o: &mut String, func: &FuncDef) {
          #[doc(alias = \"TA_{n}_Stream\")]\n\
          pub struct {handle} {{\n    core: Core,\n    state: {state},\n}}\n"
     );
+    // The handle's half of the scratch restore: only a handle embedded in
+    // another handle's state (a composed sub, a dispatch arm, a period bank
+    // slot) reaches it, so most functions never call their own.
+    let _ = writeln!(
+        o,
+        "#[allow(dead_code)]\nimpl {handle} {{\n\
+         \x20   /// Overwrite from `src`, reusing this handle's buffers instead of\n\
+         \x20   /// allocating new ones. See `{state}::restore_from`.\n\
+         \x20   pub(crate) fn restore_from(&mut self, src: &Self) {{\n\
+         \x20       self.core.clone_from(&src.core);\n\
+         \x20       self.state.restore_from(&src.state);\n\
+         \x20   }}\n}}\n"
+    );
 }
 
-/// The private state struct from a prebuilt (name, rust_type, default) list.
-fn emit_state_struct_from(o: &mut String, func: &FuncDef, fields: &[(String, String, String)]) {
+/// Whether a state field's type owns a heap allocation — i.e. whether cloning
+/// it calls the allocator. The ring/window buffers, the sub-handles and the
+/// dispatch sub-enum do; every scalar, index and enum parameter does not.
+fn field_owns_heap(rty: &str) -> bool {
+    rty.starts_with("Vec<") || rty.ends_with("_Stream") || rty.ends_with("_Sub")
+}
+
+/// What a state costs to copy, counted by kind — the input to the choice
+/// between `peek`'s two scratches.
+#[derive(Clone, Copy, Default)]
+struct StateShape {
+    /// `Vec<f64>` fields: the rings, windows and CIRCBUFs.
+    buffers: usize,
+    /// Sub-handles and the dispatch sub-enum: each owns a `Core` and a state.
+    subs: usize,
+    /// A period bank: one `Vec` plus a sub-handle per slot, so its clone is
+    /// unbounded in the number of allocations and never a candidate for the
+    /// fold that makes a single buffer free.
+    banks: usize,
+}
+
+impl StateShape {
+    /// Whether the state owns anything on the heap — a buffer, a sub-handle or
+    /// a bank. It is what separates a declined function whose copy is a few
+    /// machine words from one whose copy is only free if the optimizer says so.
+    fn owns_heap(self) -> bool {
+        self.buffers + self.subs + self.banks > 0
+    }
+
+    /// Whether `peek` should reuse a thread-local scratch rather than keep the
+    /// throwaway copy every function used before #201.
+    ///
+    /// The throwaway is a local that dies at the end of `peek`, which leaves
+    /// the optimizer free to delete the clone outright and read the original
+    /// instead — and it does: `SUM::peek` measures 0.4 ns and `SMA::peek`
+    /// 1.0 ns, both under their own `update`, which a real clone cannot be.
+    /// A reused scratch has to survive the call, so it can never be deleted;
+    /// where the deletion was happening, reusing costs several nanoseconds
+    /// instead of saving them.
+    ///
+    /// So the test is not "does this allocate" but "would the allocation
+    /// survive optimization anyway". A single buffer read at fixed indices is
+    /// exactly the shape that gets folded away; two buffers, two sub-handles,
+    /// or a bank of them is not — the clone is then several allocations deep,
+    /// and no build in this tree has been seen to remove one.
+    ///
+    /// Deliberately conservative, because the two errors are not symmetric.
+    /// Declining a function that would have gained costs a win. Selecting one
+    /// whose clone the optimizer was already deleting makes it *slower than
+    /// the previous release* — and which functions those are is a property of
+    /// the compiler, so it moves with toolchain and target. Everything this
+    /// declines emits `peek` byte-identical to before, and cannot regress on
+    /// any of them (#201).
+    ///
+    /// To re-check the line on a new toolchain, no A/B is needed: a handle that
+    /// owns a buffer cannot be *cloned* faster than its own `update`, so any
+    /// function whose `peek` beats its `update` is one whose clone is already
+    /// being folded away. `stream_ab.py --call=peek` and `--call=update` over a
+    /// single revision names that set; it must stay inside what this declines.
+    /// Sufficient, not necessary — a partly folded clone can still sit above
+    /// `update` — so it bounds the risk rather than proving its absence.
+    ///
+    /// One shape looks like an oversight and is not: a single buffer *plus* a
+    /// sub-handle is declined, though that clone is two allocations deep and
+    /// the rationale above would take it. `ADXR` is the case, and selecting it
+    /// measured **+128%** — its clone is folded in practice, nested handle and
+    /// all. Widening to `buffers + subs >= 2` reinstates that regression.
+    fn scratch_pays(self) -> bool {
+        self.buffers >= 2 || self.subs >= 2 || self.banks >= 1
+    }
+}
+
+/// The private state struct from a prebuilt (name, rust_type, default) list,
+/// plus its `restore_from`. Returns the state's copy shape, which is what
+/// decides which scratch `peek` uses.
+fn emit_state_struct_from(
+    o: &mut String,
+    func: &FuncDef,
+    fields: &[(String, String, String)],
+) -> StateShape {
     let state = state_type_name(func);
+    emit_state_struct_decl(o, &state, fields, &[]);
+    emit_state_restore(o, &state, fields)
+}
+
+/// `struct <State> { .. }` from a field list, with an optional comment line
+/// before named fields.
+///
+/// Every tier declares its state through here and restores it through
+/// [`emit_state_restore`], from the SAME slice. A field that exists in the
+/// struct but not in the restore would leave the peek scratch holding the
+/// previous peek's value for it — a wrong answer with no compile error, and
+/// the two tiers that build their field list by hand (dispatch, period bank)
+/// are one edit away from it if the two ever read from different places.
+fn emit_state_struct_decl(
+    o: &mut String,
+    state: &str,
+    fields: &[(String, String, String)],
+    comments: &[(&str, String)],
+) {
     let _ = writeln!(o, "#[derive(Debug, Clone)]\n#[allow(non_snake_case, dead_code)]\nstruct {state} {{");
     for (name, rty, _) in fields {
+        for (field, text) in comments {
+            if field == name {
+                let _ = writeln!(o, "    // {text}");
+            }
+        }
         let _ = writeln!(o, "    {name}: {rty},");
     }
     let _ = writeln!(o, "}}\n");
+}
+
+/// `impl <State> { fn restore_from(&mut self, src: &Self) }` — a field-wise
+/// overwrite that reuses whatever this value already owns: `Vec::clone_from`
+/// keeps the existing allocation when the capacity fits, and a nested handle
+/// recurses into its own `restore_from`. It is `clone` with the allocator
+/// taken out of the loop, which is the whole point of the peek scratch.
+///
+/// Returns the state's copy shape.
+fn emit_state_restore(
+    o: &mut String,
+    state: &str,
+    fields: &[(String, String, String)],
+) -> StateShape {
+    let mut shape = StateShape::default();
+    let mut body = String::new();
+    for (name, rty, _) in fields {
+        if let Some(inner) = rty.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
+            if inner.ends_with("_Stream") {
+                shape.banks += 1;
+            } else {
+                shape.buffers += 1;
+            }
+        } else if field_owns_heap(rty) {
+            shape.subs += 1;
+        }
+        if let Some(inner) = rty.strip_prefix("Vec<").and_then(|t| t.strip_suffix('>')) {
+            if inner.ends_with("_Stream") {
+                // A bank of sub-handles: same length in practice (the scratch
+                // serves one handle at a time), so restore in place and only
+                // rebuild the Vec when a differently-shaped handle peeks.
+                let _ = writeln!(
+                    &mut body,
+                    "        if self.{name}.len() == src.{name}.len() {{\n\
+                     \x20           for (dst, s) in self.{name}.iter_mut().zip(src.{name}.iter()) {{\n\
+                     \x20               dst.restore_from(s);\n\
+                     \x20           }}\n\
+                     \x20       }} else {{\n\
+                     \x20           self.{name}.clone_from(&src.{name});\n\
+                     \x20       }}"
+                );
+                continue;
+            }
+            let _ = writeln!(&mut body, "        self.{name}.clone_from(&src.{name});");
+        } else if field_owns_heap(rty) {
+            let _ = writeln!(&mut body, "        self.{name}.restore_from(&src.{name});");
+        } else {
+            let _ = writeln!(&mut body, "        self.{name} = src.{name};");
+        }
+    }
+    let _ = writeln!(
+        o,
+        "#[allow(non_snake_case, dead_code)]\nimpl {state} {{\n\
+         \x20   /// Overwrite every field from `src`, reusing this value's buffers\n\
+         \x20   /// instead of allocating new ones — `peek`'s scratch restore.\n\
+         \x20   fn restore_from(&mut self, src: &Self) {{\n{body}    }}\n}}\n"
+    );
+    shape
 }
 
 // ---------------------------------------------------------------------------
@@ -1771,10 +1948,11 @@ fn stream_doctest(
     Some(lines)
 }
 
-fn emit_update_and_peek(o: &mut String, func: &FuncDef) {
+fn emit_update_and_peek(o: &mut String, func: &FuncDef, shape: StateShape) {
     let sn = snake(func);
     let n = func.name.to_uppercase();
     let handle = stream_type_name(func);
+    let state = state_type_name(func);
     let vt = value_type(func);
     let inputs = streaming::input_array_names(func);
     let mut sig_bars = String::new();
@@ -1798,6 +1976,30 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef) {
         let _ = write!(out_refs, ", &mut {}", out.name);
     }
     let ret = open_value_tuple_names(func);
+    let reuse = shape.scratch_pays();
+
+    // A state whose copy really allocates gets a reused thread-local scratch: one
+    // allocation per thread per function for the whole life of the program,
+    // instead of one per peek. Thread-local rather than a field on the handle
+    // because `peek` takes `&self` and the handle is `Sync` — two threads may
+    // peek the same handle at once, and they must not share a scratch.
+    //
+    // The retention that buys: one handle copy per (thread, function actually
+    // peeked), held until the thread ends, sized to the largest handle that
+    // thread peeked and keeping that handle's `Core` alive. Dropping every
+    // stream handle does not release it. Bounded and small per entry, but a
+    // long-lived pool thread that peeked a wide `MAVP` bank holds that bank.
+    if reuse {
+        let _ = writeln!(
+            o,
+            "thread_local! {{\n\
+             \x20   /// `peek`'s reusable scratch handle (see `{state}::restore_from`).\n\
+             \x20   /// Taken for the duration of the step and put back after, so a\n\
+             \x20   /// panicking step costs the scratch, never leaves it borrowed.\n\
+             \x20   static {n}_PEEK_SCRATCH: std::cell::Cell<Option<Box<{handle}>>> =\n\x20       const {{ std::cell::Cell::new(None) }};\n\
+             }}\n"
+        );
+    }
 
     let _ = writeln!(
         o,
@@ -1816,15 +2018,57 @@ fn emit_update_and_peek(o: &mut String, func: &FuncDef) {
     );
     let _ = writeln!(o, "        {ret}");
     let _ = writeln!(o, "    }}\n");
+    let alloc_note = if reuse {
+        "The copy it runs on is held per thread and reused,\n    /// so only the first peek of this function on a thread allocates."
+    } else if shape.owns_heap() {
+        // Do NOT promise the fold here. It is why these are declined, but it is
+        // a code-generation outcome that varies by toolchain — measured real on
+        // another box for exactly these functions — and a doc that promises it
+        // sends someone into a tick loop expecting a free call.
+        "The copy is a throwaway. Its buffer clone is\n    /// often removed outright by the optimizer, which is why nothing is\n    /// reused here, but that is not a guarantee: budget for a clone of the\n    /// window and prefer `update` on a `clone()` in a hot loop."
+    } else {
+        "This handle holds only scalars, so the copy is a\n    /// few machine words and `peek` never allocates."
+    };
     let _ = writeln!(
         o,
-        "    /// Evaluate a forming bar without committing — bit-identical to what the\n    /// next `update` with the same bar would return (it is the same code, run on\n    /// a throwaway clone). Clones the internal state (allocates for windowed\n    /// indicators)."
+        "    /// Evaluate a forming bar without committing — bit-identical to what the\n\
+         \x20   /// next `update` with the same bar would return (it is the same code, run\n\
+         \x20   /// on a scratch copy of the state). Never writes the handle, so peeks may\n\
+         \x20   /// run concurrently with each other. {alloc_note}"
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
     let _ = writeln!(o, "    #[must_use]");
     let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> {vt} {{");
-    let _ = writeln!(o, "        let mut scratch = self.clone();");
-    let _ = writeln!(o, "        scratch.update({fwd_bars})");
+    if reuse {
+        // `update` on the copy, not the transition on a bare state — so the
+        // transition keeps the single call site it has always had. Reached
+        // through the state directly it acquires a second one, and on the
+        // larger steps that alone is enough to change what the inliner does
+        // with both: measured, it cost `update` up to 70% on the functions
+        // whose step sits near the threshold. `update` is the tier this API
+        // exists to make cheap; it does not pay for peek's business (#201).
+        //
+        // One `with`, not a `take()` plus a `set()`: each is its own
+        // thread-local lookup, and on the cheapest indicators the second one
+        // is a measurable share of the call.
+        let _ = writeln!(
+            o,
+            "        {n}_PEEK_SCRATCH.with(|cell| {{\n\
+             \x20           let mut scratch = cell.take().unwrap_or_else(|| Box::new(self.clone()));\n\
+             \x20           scratch.restore_from(self);\n\
+             \x20           let value = scratch.update({fwd_bars});\n\
+             \x20           cell.set(Some(scratch));\n\
+             \x20           value\n\
+             \x20       }})"
+        );
+    } else {
+        // Verbatim what every function did before #201, so these functions are
+        // byte-identical to the previous release: the clone is a local that
+        // dies here, and where the state is one buffer with no sub-handle and
+        // a loop-free transition, the optimizer deletes it outright.
+        let _ = writeln!(o, "        let mut scratch = self.clone();");
+        let _ = writeln!(o, "        scratch.update({fwd_bars})");
+    }
     let _ = writeln!(o, "    }}\n}}\n");
 }
 
@@ -1982,7 +2226,7 @@ fn emit_dual_mode(
     let union_fields = dual_union_fields(func, &fields_a, &fields_b);
 
     emit_handle_struct(o, func);
-    emit_state_struct_from(o, func, &union_fields);
+    let shape = emit_state_struct_from(o, func, &union_fields);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
@@ -2013,7 +2257,7 @@ fn emit_dual_mode(
     emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func);
+    emit_update_and_peek(o, func, shape);
     emit_trait_pin(o, func);
 }
 
@@ -2182,17 +2426,24 @@ fn emit_dispatch(
 
     // --- structs + sub enum -------------------------------------------------
     emit_handle_struct(o, func);
-    let _ = writeln!(o, "#[derive(Debug, Clone)]\n#[allow(non_snake_case, dead_code)]\nstruct {state} {{");
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "    {}: {},", p.name, opt_param_rust_type(&p.param_type));
-    }
-    let _ = writeln!(
-        o,
-        "    // Sub-stream, tagged by {}; `{sub_enum}::Identity` on the identity path.",
+    let mut state_fields: Vec<(String, String, String)> = func
+        .optional_inputs
+        .iter()
+        .map(|p| {
+            (
+                p.name.clone(),
+                opt_param_rust_type(&p.param_type).clone(),
+                String::new(),
+            )
+        })
+        .collect();
+    state_fields.push(("sub".into(), sub_enum.clone(), String::new()));
+    let sub_note = format!(
+        "Sub-stream, tagged by {}; `{sub_enum}::Identity` on the identity path.",
         dp.param
     );
-    let _ = writeln!(o, "    sub: {sub_enum},");
-    let _ = writeln!(o, "}}\n");
+    emit_state_struct_decl(o, &state, &state_fields, &[("sub", sub_note)]);
+    let shape = emit_state_restore(o, &state, &state_fields);
     let _ = writeln!(o, "#[derive(Debug, Clone)]\nenum {sub_enum} {{");
     if dp.identity.is_some() {
         let _ = writeln!(o, "    Identity,");
@@ -2206,6 +2457,28 @@ fn emit_dispatch(
         );
     }
     let _ = writeln!(o, "}}\n");
+    // The sub-enum's restore: same arm, restore in place; a different arm can
+    // only mean a differently-parameterised handle borrowed the scratch, so
+    // rebuild it. `Identity` carries nothing and falls through either way.
+    let mut arms = String::new();
+    for arm in dp.arms.iter().filter(|a| a.supported) {
+        let v = callee_variant(&arm.callee);
+        let _ = writeln!(
+            &mut arms,
+            "            ({sub_enum}::{v}(dst), {sub_enum}::{v}(s)) => dst.restore_from(s),"
+        );
+    }
+    let _ = writeln!(
+        o,
+        "#[allow(dead_code)]\nimpl {sub_enum} {{\n\
+         \x20   /// Overwrite from `src`, reusing the sub-handle's buffers.\n\
+         \x20   fn restore_from(&mut self, src: &Self) {{\n\
+         \x20       if std::mem::discriminant(&*self) != std::mem::discriminant(src) {{\n\
+         \x20           self.clone_from(src);\n\
+         \x20           return;\n\
+         \x20       }}\n\
+         \x20       match (self, src) {{\n{arms}            _ => {{}}\n        }}\n    }}\n}}\n"
+    );
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
@@ -2425,7 +2698,7 @@ fn emit_dispatch(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func);
+    emit_update_and_peek(o, func, shape);
     emit_trait_pin(o, func);
 }
 
@@ -2484,17 +2757,24 @@ fn emit_period_bank(
 
     // --- structs ------------------------------------------------------------
     emit_handle_struct(o, func);
-    let _ = writeln!(o, "#[derive(Debug, Clone)]\n#[allow(non_snake_case, dead_code)]\nstruct {state} {{");
-    for p in &func.optional_inputs {
-        let _ = writeln!(o, "    {}: {},", p.name, opt_param_rust_type(&p.param_type));
-    }
-    let _ = writeln!(
-        o,
-        "    // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
+    let mut state_fields: Vec<(String, String, String)> = func
+        .optional_inputs
+        .iter()
+        .map(|p| {
+            (
+                p.name.clone(),
+                opt_param_rust_type(&p.param_type).clone(),
+                String::new(),
+            )
+        })
+        .collect();
+    state_fields.push(("bank".into(), format!("Vec<{subty}>"), String::new()));
+    let bank_note = format!(
+        "One sub-{} stream per period in [{min}, {max}], advanced in lockstep.",
         callee.to_uppercase()
     );
-    let _ = writeln!(o, "    bank: Vec<{subty}>,");
-    let _ = writeln!(o, "}}\n");
+    emit_state_struct_decl(o, &state, &state_fields, &[("bank", bank_note)]);
+    let shape = emit_state_restore(o, &state, &state_fields);
 
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
 
@@ -2601,7 +2881,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "    }}\n");
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func);
+    emit_update_and_peek(o, func, shape);
     emit_trait_pin(o, func);
 }
 
@@ -3378,7 +3658,7 @@ fn emit_composed(
         fields.push((format!("lagRingCap_{sr}"), "usize".into(), String::new()));
         fields.push((format!("lagRing_{sr}"), "Vec<f64>".into(), String::new()));
     }
-    emit_state_struct_from(o, func, &fields);
+    let shape = emit_state_struct_from(o, func, &fields);
 
     // --- impl Core ----------------------------------------------------------
     let _ = writeln!(o, "{IMPL_ALLOW}impl Core {{");
@@ -3393,6 +3673,6 @@ fn emit_composed(
     emit_open_and_fill_wrapper(o, func, enums);
     let _ = writeln!(o, "}}\n");
 
-    emit_update_and_peek(o, func);
+    emit_update_and_peek(o, func, shape);
     emit_trait_pin(o, func);
 }

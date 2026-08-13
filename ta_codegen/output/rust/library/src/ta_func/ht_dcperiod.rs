@@ -509,6 +509,16 @@ pub struct HT_DCPERIOD_Stream {
     state: HT_DCPERIOD_StreamState,
 }
 
+#[allow(dead_code)]
+impl HT_DCPERIOD_Stream {
+    /// Overwrite from `src`, reusing this handle's buffers instead of
+    /// allocating new ones. See `HT_DCPERIOD_StreamState::restore_from`.
+    pub(crate) fn restore_from(&mut self, src: &Self) {
+        self.core.clone_from(&src.core);
+        self.state.restore_from(&src.state);
+    }
+}
+
 #[derive(Debug, Clone)]
 #[allow(non_snake_case, dead_code)]
 struct HT_DCPERIOD_StreamState {
@@ -567,6 +577,69 @@ struct HT_DCPERIOD_StreamState {
     ringPos_trailingWMAIdx: usize,
     ringCap_trailingWMAIdx: usize,
     ring_trailingWMAIdx_inReal: Vec<f64>,
+}
+
+#[allow(non_snake_case, dead_code)]
+impl HT_DCPERIOD_StreamState {
+    /// Overwrite every field from `src`, reusing this value's buffers
+    /// instead of allocating new ones — `peek`'s scratch restore.
+    fn restore_from(&mut self, src: &Self) {
+        self.tempReal = src.tempReal;
+        self.tempReal2 = src.tempReal2;
+        self.period = src.period;
+        self.periodWMASum = src.periodWMASum;
+        self.periodWMASub = src.periodWMASub;
+        self.trailingWMAValue = src.trailingWMAValue;
+        self.smoothedValue = src.smoothedValue;
+        self.a = src.a;
+        self.b = src.b;
+        self.hilbertTempReal = src.hilbertTempReal;
+        self.hilbertIdx = src.hilbertIdx;
+        self.detrender_Odd = src.detrender_Odd;
+        self.detrender_Even = src.detrender_Even;
+        self.detrender = src.detrender;
+        self.prev_detrender_Odd = src.prev_detrender_Odd;
+        self.prev_detrender_Even = src.prev_detrender_Even;
+        self.prev_detrender_input_Odd = src.prev_detrender_input_Odd;
+        self.prev_detrender_input_Even = src.prev_detrender_input_Even;
+        self.Q1_Odd = src.Q1_Odd;
+        self.Q1_Even = src.Q1_Even;
+        self.Q1 = src.Q1;
+        self.prev_Q1_Odd = src.prev_Q1_Odd;
+        self.prev_Q1_Even = src.prev_Q1_Even;
+        self.prev_Q1_input_Odd = src.prev_Q1_input_Odd;
+        self.prev_Q1_input_Even = src.prev_Q1_input_Even;
+        self.jI_Odd = src.jI_Odd;
+        self.jI_Even = src.jI_Even;
+        self.jI = src.jI;
+        self.prev_jI_Odd = src.prev_jI_Odd;
+        self.prev_jI_Even = src.prev_jI_Even;
+        self.prev_jI_input_Odd = src.prev_jI_input_Odd;
+        self.prev_jI_input_Even = src.prev_jI_input_Even;
+        self.jQ_Odd = src.jQ_Odd;
+        self.jQ_Even = src.jQ_Even;
+        self.jQ = src.jQ;
+        self.prev_jQ_Odd = src.prev_jQ_Odd;
+        self.prev_jQ_Even = src.prev_jQ_Even;
+        self.prev_jQ_input_Odd = src.prev_jQ_input_Odd;
+        self.prev_jQ_input_Even = src.prev_jQ_input_Even;
+        self.Q2 = src.Q2;
+        self.I2 = src.I2;
+        self.prevQ2 = src.prevQ2;
+        self.prevI2 = src.prevI2;
+        self.Re = src.Re;
+        self.Im = src.Im;
+        self.I1ForOddPrev2 = src.I1ForOddPrev2;
+        self.I1ForOddPrev3 = src.I1ForOddPrev3;
+        self.I1ForEvenPrev2 = src.I1ForEvenPrev2;
+        self.I1ForEvenPrev3 = src.I1ForEvenPrev3;
+        self.rad2Deg = src.rad2Deg;
+        self.smoothPeriod = src.smoothPeriod;
+        self.streamParity = src.streamParity;
+        self.ringPos_trailingWMAIdx = src.ringPos_trailingWMAIdx;
+        self.ringCap_trailingWMAIdx = src.ringCap_trailingWMAIdx;
+        self.ring_trailingWMAIdx_inReal.clone_from(&src.ring_trailingWMAIdx_inReal);
+    }
 }
 
 #[allow(non_snake_case)]
@@ -1183,9 +1256,12 @@ impl HT_DCPERIOD_Stream {
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
-    /// next `update` with the same bar would return (it is the same code, run on
-    /// a throwaway clone). Clones the internal state (allocates for windowed
-    /// indicators).
+    /// next `update` with the same bar would return (it is the same code, run
+    /// on a scratch copy of the state). Never writes the handle, so peeks may
+    /// run concurrently with each other. The copy is a throwaway. Its buffer clone is
+    /// often removed outright by the optimizer, which is why nothing is
+    /// reused here, but that is not a guarantee: budget for a clone of the
+    /// window and prefer `update` on a `clone()` in a hot loop.
     #[doc(alias = "TA_HT_DCPERIOD_Peek")]
     #[must_use]
     pub fn peek(&self, inReal: f64) -> f64 {

@@ -600,7 +600,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HMA_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double dividerFull;
       double periodSubFull;
@@ -677,6 +677,55 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( HMA_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.dividerFull = other.dividerFull;
+         this.periodSubFull = other.periodSubFull;
+         this.periodSumFull = other.periodSumFull;
+         this.trailingFull = other.trailingFull;
+         this.fullOut = other.fullOut;
+         this.halfPeriod = other.halfPeriod;
+         this.sqrtPeriod = other.sqrtPeriod;
+         this.dividerHalf = other.dividerHalf;
+         this.dividerSqrt = other.dividerSqrt;
+         this.periodSubHalf = other.periodSubHalf;
+         this.periodSumHalf = other.periodSumHalf;
+         this.trailingHalf = other.trailingHalf;
+         this.periodSubSqrt = other.periodSubSqrt;
+         this.periodSumSqrt = other.periodSumSqrt;
+         this.trailingSqrt = other.trailingSqrt;
+         this.halfOut = other.halfOut;
+         this.diffReal = other.diffReal;
+         this.dRing_Idx = other.dRing_Idx;
+         this.maxIdx_dRing = other.maxIdx_dRing;
+         this.ringPos_trailingIdxFull = other.ringPos_trailingIdxFull;
+         this.ringCap_trailingIdxFull = other.ringCap_trailingIdxFull;
+         if( this.ring_trailingIdxFull_inReal != null && this.ring_trailingIdxFull_inReal.length == other.ring_trailingIdxFull_inReal.length ) {
+            System.arraycopy( other.ring_trailingIdxFull_inReal, 0, this.ring_trailingIdxFull_inReal, 0, other.ring_trailingIdxFull_inReal.length );
+         } else {
+            this.ring_trailingIdxFull_inReal = other.ring_trailingIdxFull_inReal.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.ringPos_trailingIdxHalf = other.ringPos_trailingIdxHalf;
+         this.ringCap_trailingIdxHalf = other.ringCap_trailingIdxHalf;
+         if( this.ring_trailingIdxHalf_inReal != null && this.ring_trailingIdxHalf_inReal.length == other.ring_trailingIdxHalf_inReal.length ) {
+            System.arraycopy( other.ring_trailingIdxHalf_inReal, 0, this.ring_trailingIdxHalf_inReal, 0, other.ring_trailingIdxHalf_inReal.length );
+         } else {
+            this.ring_trailingIdxHalf_inReal = other.ring_trailingIdxHalf_inReal.clone();
+         }
+         this.cbSize_dRing = other.cbSize_dRing;
+         if( this.cb_dRing != null && this.cb_dRing.length == other.cb_dRing.length ) {
+            System.arraycopy( other.cb_dRing, 0, this.cb_dRing, 0, other.cb_dRing.length );
+         } else {
+            this.cb_dRing = other.cb_dRing.clone();
+         }
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<HMA_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -689,12 +738,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inReal ) {
-         HMA_Stream scratch = new HMA_Stream(this);
+         HMA_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new HMA_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.HMA_StreamStep(scratch, inReal);
          return scratch.cur_outReal;
       }

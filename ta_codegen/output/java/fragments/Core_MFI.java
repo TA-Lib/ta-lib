@@ -433,7 +433,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MFI_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double posSumMF;
       double negSumMF;
@@ -478,6 +478,35 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MFI_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.posSumMF = other.posSumMF;
+         this.negSumMF = other.negSumMF;
+         this.prevValue = other.prevValue;
+         this.tempValue1 = other.tempValue1;
+         this.tempValue2 = other.tempValue2;
+         this.tempValue3 = other.tempValue3;
+         this.mflow_Idx = other.mflow_Idx;
+         this.maxIdx_mflow = other.maxIdx_mflow;
+         this.cbSize_mflow = other.cbSize_mflow;
+         if( this.cb_mflow_positive != null && this.cb_mflow_positive.length == other.cb_mflow_positive.length ) {
+            System.arraycopy( other.cb_mflow_positive, 0, this.cb_mflow_positive, 0, other.cb_mflow_positive.length );
+         } else {
+            this.cb_mflow_positive = other.cb_mflow_positive.clone();
+         }
+         if( this.cb_mflow_negative != null && this.cb_mflow_negative.length == other.cb_mflow_negative.length ) {
+            System.arraycopy( other.cb_mflow_negative, 0, this.cb_mflow_negative, 0, other.cb_mflow_negative.length );
+         } else {
+            this.cb_mflow_negative = other.cb_mflow_negative.clone();
+         }
+         this.cur_outReal = other.cur_outReal;
+         this.fillRange = other.fillRange;
+      }
+
+      /** {@code peek}'s reusable scratch — one per thread, see {@code copyFrom}. */
+      private static final ThreadLocal<MFI_Stream> PEEK_SCRATCH = new ThreadLocal<>();
+
       /**
        * Commit one closed bar; always produces the new current value.
        * Never throws after a successful open; never allocates handle state.
@@ -490,12 +519,20 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a scratch handle held per thread and
+       * reused, so the copy allocates nothing after the first peek of this
+       * indicator on this thread. That scratch is retained for the life of
+       * the thread.
        */
       public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
-         MFI_Stream scratch = new MFI_Stream(this);
+         MFI_Stream scratch = PEEK_SCRATCH.get();
+         if( scratch == null ) {
+            scratch = new MFI_Stream(this);
+            PEEK_SCRATCH.set(scratch);
+         } else {
+            scratch.copyFrom(this);
+         }
          core.MFI_StreamStep(scratch, inHigh, inLow, inClose, inVolume);
          return scratch.cur_outReal;
       }

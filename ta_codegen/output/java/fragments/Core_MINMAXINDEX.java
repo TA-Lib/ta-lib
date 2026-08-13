@@ -363,7 +363,7 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MINMAXINDEX_Stream {
-      final Core core;
+      Core core;
       int optInTimePeriod;
       double highest;
       double lowest;
@@ -412,6 +412,30 @@
          this.fillRange = other.fillRange;
       }
 
+      void copyFrom( MINMAXINDEX_Stream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.highest = other.highest;
+         this.lowest = other.lowest;
+         this.tmpHigh = other.tmpHigh;
+         this.tmpLow = other.tmpLow;
+         this.trailingIdx = other.trailingIdx;
+         this.i = other.i;
+         this.highestIdx = other.highestIdx;
+         this.lowestIdx = other.lowestIdx;
+         this.today = other.today;
+         this.xMask = other.xMask;
+         if( this.x_inReal != null && this.x_inReal.length == other.x_inReal.length ) {
+            System.arraycopy( other.x_inReal, 0, this.x_inReal, 0, other.x_inReal.length );
+         } else {
+            this.x_inReal = other.x_inReal.clone();
+         }
+         this.cur_outMinIdx = other.cur_outMinIdx;
+         this.cur_outMaxIdx = other.cur_outMaxIdx;
+         this.cachedValue = other.cachedValue;
+         this.fillRange = other.fillRange;
+      }
+
       /**
        * One output set, in batch output order. Immutable.
        *
@@ -438,9 +462,9 @@
       /**
        * Evaluate a forming bar without committing — bit-identical to what the
        * next {@code update} with the same bar would return (it is the same
-       * generated code, run on a throwaway copy). Deep-copies the handle state
-       * on every call: O(period) for windowed indicators — for hot loops,
-       * prefer {@code update} on a {@code copy()}.
+       * generated code, run on a copy). Never writes this handle, so peeks may
+       * run concurrently with each other. It runs on a throwaway copy, which for this
+       * handle's shape is cheaper than reusing one.
        */
       public Value peek( double inReal ) {
          MINMAXINDEX_Stream scratch = new MINMAXINDEX_Stream(this);

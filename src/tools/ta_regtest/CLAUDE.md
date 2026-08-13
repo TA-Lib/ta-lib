@@ -235,11 +235,12 @@ sentinel is asserted against the all-defaults result rather than only against th
 server — otherwise both tiers could be wrong together. All four counts are printed
 and asserted non-zero.
 
-Opt-level `hint` is compared too, and it was worth adding precisely because
-nothing compared it: for the ~80 opt slots whose C descriptor is a predefined
-`TA_DEF_UI_*`, the hint is a hand-written literal in the generator rather than a
-YAML-derived value, so this is one of the few metadata checks that is not a
-generator comparing against itself.
+Opt-level `hint` is compared too. For a bespoke descriptor that is a genuine
+YAML-vs-C check. For the ~80 slots folded onto a predefined `TA_DEF_UI_*` it is
+not: since #195 the generator folds only when every field already agrees, so the
+hint matching is what selected the constant, and a stale generator literal shows
+up as a decline — a diff to the generated `tables/table_*.c` — rather than a
+divergence this gate could fail on.
 
 Where this runs: **one** nightly job — dev-nightly's `xlang` step, which is the
 only one invoking `regtest.py --codegen` unfiltered. The other `--codegen`
