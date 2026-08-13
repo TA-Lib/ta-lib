@@ -19,6 +19,13 @@ Read the control split before any row. These binaries are single-CGU LTO (Rust)
 and one giant class (Java), so changing any function moves the layout of the
 rest; only a claim that clears the control noise is a claim.
 
+The change column is the output; the ns columns are not. Each invocation builds
+into its own directory, so a function's absolute ns is comparable only against
+the other arm of the SAME run — never against another invocation, whatever was
+varied between them (`--period`, `--call`, the revision). Sweeping a parameter
+one invocation per point and reading the result as a curve reports build layout
+as if it were the parameter.
+
 Inputs: the generated `ta_codegen/output/rust/library` crate and
 `ta_codegen/output/java/fragments`. Nothing else — no ta_abstract, no C library,
 no servers, no ta_regtest. Needs `cargo` for --lang=rust, `javac`/`java` for
