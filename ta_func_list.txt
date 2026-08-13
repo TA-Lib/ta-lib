@@ -135,6 +135,7 @@ PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator
 PVI                 Positive Volume Index
 PVO                 Percentage Volume Oscillator
+QSTICK              Qstick
 ROC                 Rate of change : ((price/prevPrice)-1)*100
 ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)

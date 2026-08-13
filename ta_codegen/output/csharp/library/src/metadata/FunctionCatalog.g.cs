@@ -248,6 +248,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakePpo(),
             MakePvi(),
             MakePvo(),
+            MakeQstick(),
             MakeRoc(),
             MakeRocp(),
             MakeRocr(),
@@ -3683,6 +3684,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         {
             RetCode rc = core.PVO(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        });
+
+    private static FunctionInfo MakeQstick() => new(
+        name: "QSTICK",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Qstick",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceOC", PriceComponents.Open | PriceComponents.Close, [PriceComponents.Open, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.QSTICK_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.QSTICK(
+                startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         });
 

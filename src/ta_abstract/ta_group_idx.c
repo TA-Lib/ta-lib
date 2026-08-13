@@ -177,6 +177,7 @@ extern const TA_FuncDef TA_DEF_PLUS_DM;
 extern const TA_FuncDef TA_DEF_PPO;
 extern const TA_FuncDef TA_DEF_PVI;
 extern const TA_FuncDef TA_DEF_PVO;
+extern const TA_FuncDef TA_DEF_QSTICK;
 extern const TA_FuncDef TA_DEF_ROC;
 extern const TA_FuncDef TA_DEF_ROCP;
 extern const TA_FuncDef TA_DEF_ROCR;
@@ -298,6 +299,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_PLUS_DI,
 &TA_DEF_PLUS_DM,
 &TA_DEF_PPO,
+&TA_DEF_QSTICK,
 &TA_DEF_ROC,
 &TA_DEF_ROCP,
 &TA_DEF_ROCR,

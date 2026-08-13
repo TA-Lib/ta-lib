@@ -1280,6 +1280,15 @@ TA_RetCode TA_PVO_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_PVO_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_QSTICK_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_QSTICK_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_ROC_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

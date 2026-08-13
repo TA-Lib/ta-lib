@@ -225,6 +225,7 @@ public final class Functions {
       put(m, f_PPO());
       put(m, f_PVI());
       put(m, f_PVO());
+      put(m, f_QSTICK());
       put(m, f_ROC());
       put(m, f_ROCP());
       put(m, f_ROCR());
@@ -2373,6 +2374,24 @@ public final class Functions {
                "MA Type", "Type of Moving Average", 1.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_QSTICK() {
+      return new FunctionInfo(
+         "QSTICK", "Momentum Indicators", "Qstick", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceOC", 0x00000009)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 4, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

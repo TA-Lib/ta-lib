@@ -38,12 +38,61 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* QSTICK BEGIN */
+static const TA_IntegerRange TA_DEF_QSTICK_TimePeriod =
+{
+   1,
+   100000,
+   4,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_QSTICK_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_QSTICK_TimePeriod,
+   10,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_QSTICK_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_QSTICK_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_QSTICK_OptInputs[] =
+{ &TA_DEF_UI_D_QSTICK_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( QSTICK,
+              TA_GroupId_MomentumIndicators,
+              "Qstick",
+              TA_FUNC_FLG_STREAM
+             );
+/* QSTICK END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableQ[] =
 {
+   ADD_TO_TABLE(QSTICK),
    NULL
 };
 

@@ -68,6 +68,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [PLUS_DI](/functions/plus_di.md) — Plus Directional Indicator
 - [PLUS_DM](/functions/plus_dm.md) — Plus Directional Movement
 - [PPO](/functions/ppo.md) — Percentage Price Oscillator
+- [QSTICK](/functions/qstick.md) — Qstick
 - [ROC](/functions/roc.md) — Rate of change : ((price/prevPrice)-1)*100
 - [ROCP](/functions/rocp.md) — Rate of change Percentage: (price-prevPrice)/prevPrice
 - [ROCR](/functions/rocr.md) — Rate of change ratio: (price/prevPrice)

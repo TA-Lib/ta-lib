@@ -1,0 +1,20 @@
+name: QSTICK
+group: Momentum Indicators
+hint: Qstick
+flags: [stream]
+inputs:
+  - name: inPriceOC
+    type: price
+    price_components: [open, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Time period
+    range: [1, 100000]
+    default: 10
+    suggested: [4, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
