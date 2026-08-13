@@ -29,18 +29,13 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~8x: MACD and MACDFIX
 - ~8x: MACDEXT when MA types are EMA.
 - ~2.4x: ACCBANDS
+- ~2x: SQRT (#192). Thanks @kevinlincg !
 - ~1.6x to 15x: MIN, MAX, MINMAX, MIDPOINT, MIDPRICE and WILLR (#147). Thanks @kevinlincg !
 - ~40%: ULTOSC (#154). Thanks @dexhunter !
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
 - ~10%: ATR and NATR
-- ~1.5x to 2.3x: opening a stream (`_Open` / `_OpenAndFill`) for BBANDS, MACDEXT,
-  PPO, PVO, STDDEV, STOCH, STOCHF, ADXR, STOCHRSI and APO (#192). These recomputed
-  each of their sub-indicators twice while opening. C, Rust and Java.
-- ~2x: SQRT, and ~25% more off STDDEV (#192). The library is now built with
-  `-fno-math-errno`, so `sqrt` no longer sets `errno` on a negative input.
-  Outputs are unchanged.
 
 ### Changed
 - (#202) VAR no longer returns a tiny negative variance on a flat stretch, where the
@@ -79,27 +74,6 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#77) CMake shared library now links libm directly, so it declares its own math-library dependency instead of relying on the consuming program to provide it. Thanks @BwL1289 !
 - (#102) Fixed ULTOSC and CDL3INSIDE performance regression (only in 0.7.1)
 - (#112) IMI returned NaN on an all-flat window (every bar `close == open`); now returns 50.0.
-- (#185) `TA_SetCandleSettings` validated only its `settingType`, so a negative `avgPeriod`
-  was accepted and every `CDL*` function then returned `TA_SUCCESS` with all of its values
-  shifted underneath a correct-looking `outBegIdx`. It now returns `TA_BAD_PARAM` unless
-  `settingType` names one setting, `rangeType` is a `TA_RangeType` member, `avgPeriod` is
-  between 0 and `TA_MAX_INDEX`, and `factor` is not NaN. Same domain in Rust
-  (reported by `CoreBuilder::build`, see #186), Java and C# (`CoreBuilder.candleSetting` /
-  `CoreBuilder.CandleSetting` throw). Thanks @kevinlincg !
-- Real optional parameters lost their range check in 0.7.0. Values far outside the
-  documented bounds were accepted — `TA_SAR` with a negative acceleration, or
-  `TA_CDLDARKCLOUDCOVER` with a penetration of `1e100`, returned `TA_SUCCESS` and a
-  meaningless result; `TA_BBANDS` with an infinite `optInNbDevUp` returned
-  `TA_SUCCESS` with a non-finite band. All 21 of them are validated again, exactly as
-  in 0.6.x, so these calls return `TA_BAD_PARAM`. Affects `TA_BBANDS`, `TA_STDDEV`,
-  `TA_VAR`, `TA_SAR`, `TA_SAREXT`, `TA_MAMA`, `TA_T3` and the seven `TA_CDL*` patterns
-  that take a penetration.
-
-### Removed
-- (#166) The `TA_*_Unguarded` / `TA_S_*_Unguarded` functions, and their Java `xxxUnguarded` and C# `XxxUnguarded` equivalents. Introduced in 0.7.1 as a faster tier that skipped parameter validation; measurement across four toolchains found it is not measurably faster at any range size (one was 20-45% slower) while costing 15.5% of the library's `.text`. Use the ordinary function — `TA_SMA`, `core.SMA(..)`, `SMA(..)` — which returns the same values for the same valid inputs.
-- (#166) `include/ta_func_unguarded.h`. Half of it declared the functions above and the rest was never public API. `include/ta_func.h` already carries the complete stream surface.
-- (#166,#183) `TA_EMA_Private` and `TA_S_EMA_Private`. They were exported up to 0.7.1; the
-  algorithm now lives in `TA_EMA` itself. Call `TA_EMA`, which returns the same values.
 
 ## [0.7.1] 2026-07-03
 ### Added
