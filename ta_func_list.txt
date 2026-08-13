@@ -163,6 +163,7 @@ TYPPRICE            Typical Price
 ULTOSC              Ultimate Oscillator
 VAR                 Variance
 VWMA                Volume Weighted Moving Average
+WAD                 Williams' Accumulation/Distribution (no volume)
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average

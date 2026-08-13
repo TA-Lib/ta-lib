@@ -190,6 +190,7 @@
 #include "ta_ULTOSC.c"
 #include "ta_VAR.c"
 #include "ta_VWMA.c"
+#include "ta_WAD.c"
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"
@@ -2951,6 +2952,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("VWMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "WAD") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_WAD(0, g_nPoints - 1, g_high, g_low, g_close, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("WAD %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "WCLPRICE") ) {

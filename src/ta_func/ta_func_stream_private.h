@@ -180,6 +180,7 @@ struct TA_TYPPRICE_Stream;
 struct TA_ULTOSC_Stream;
 struct TA_VAR_Stream;
 struct TA_VWMA_Stream;
+struct TA_WAD_Stream;
 struct TA_WCLPRICE_Stream;
 struct TA_WILLR_Stream;
 struct TA_WMA_Stream;
@@ -348,6 +349,7 @@ TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const d
 TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double *outReal );
 TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal );
 TA_RetCode TA_VWMA_OpenInternal( struct TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_WAD_OpenInternal( struct TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_WCLPRICE_OpenInternal( struct TA_WCLPRICE_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_WILLR_OpenInternal( struct TA_WILLR_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_WMA_OpenInternal( struct TA_WMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
