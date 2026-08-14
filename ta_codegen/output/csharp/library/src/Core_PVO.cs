@@ -253,6 +253,9 @@ public partial class Core
    /// PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
    /// The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -311,6 +314,9 @@ public partial class Core
    /// PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
    /// The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

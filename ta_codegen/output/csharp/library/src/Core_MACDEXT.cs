@@ -454,6 +454,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</description></item>
+   /// <item><description><c>TA_MAType_MAMA</c> ignores its period argument, so it always produces the same series regardless of the period requested. If both <c>optInFastMAType</c> and <c>optInSlowMAType</c> are set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one side to get a meaningful spread.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -534,6 +535,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</description></item>
+   /// <item><description><c>TA_MAType_MAMA</c> ignores its period argument, so it always produces the same series regardless of the period requested. If both <c>optInFastMAType</c> and <c>optInSlowMAType</c> are set to MAMA, the fast and slow lines are therefore identical and MACD, Signal, and Hist are all zero at every bar. Select MAMA for only one side to get a meaningful spread.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
