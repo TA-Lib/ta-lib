@@ -16,6 +16,8 @@
 
 int rsi_lookback(int optInTimePeriod)
 {
+   /* Probe for the #211 PR gate: this comment reaches the generated
+    * output, so committing it without regenerating must fail CI. */
    int retValue;
 
    retValue = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_RSI);
