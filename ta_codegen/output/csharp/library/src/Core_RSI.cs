@@ -81,6 +81,9 @@ public partial class Core
          return -1;
       }
       int retValue = 0;
+      /* Probe for the #211 PR gate: this comment reaches the generated
+       * output, so committing it without regenerating must fail CI.
+       */
       retValue = optInTimePeriod + this.unstablePeriod[(int)FuncUnstId.RSI];
       return retValue ;
 

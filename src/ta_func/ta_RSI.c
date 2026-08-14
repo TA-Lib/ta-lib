@@ -65,6 +65,9 @@ TA_LIB_API int TA_RSI_Lookback( int optInTimePeriod )
       optInTimePeriod = 14;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
+   /* Probe for the #211 PR gate: this comment reaches the generated
+    * output, so committing it without regenerating must fail CI.
+    */
    retValue = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_RSI,Rsi);
    if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
    {

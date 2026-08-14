@@ -36,6 +36,9 @@
          return -1;
       }
       int retValue;
+      /* Probe for the #211 PR gate: this comment reaches the generated
+       * output, so committing it without regenerating must fail CI.
+       */
       retValue = optInTimePeriod + this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       return retValue ;
 

@@ -83,6 +83,8 @@ impl Core {
             return usize::MAX;
         }
         let mut retValue: usize = 0_usize;
+        // Probe for the #211 PR gate: this comment reaches the generated
+        // output, so committing it without regenerating must fail CI.
         retValue = (optInTimePeriod + self.unstable_period[FuncUnstId::RSI as usize]) as usize;
         if self.compatibility == Compatibility::Metastock {
             retValue = retValue - 1;
