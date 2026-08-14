@@ -5,9 +5,12 @@ import { defineUserConfig } from "vuepress";
 // here is invisible to it and the analysis fails with "no source code seen".
 import theme from "../../config/theme.js";
 import { viteBundler } from "@vuepress/bundler-vite";
+import { fileURLToPath } from "node:url";
 
 export default defineUserConfig({
   base: "/",
+
+  clientConfigFile: fileURLToPath(new URL("../../config/client.ts", import.meta.url)),
 
   head: [
     ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" }],
