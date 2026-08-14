@@ -1,0 +1,47 @@
+# Free, always-on PR gate: the committed generated tree must match
+# ta_codegen/input/.
+#
+# ta_codegen/input/ is the source of truth and every file it produces is
+# committed, so a PR that edits an input without committing the regenerated
+# output is broken on arrival. Until now the only thing checking that was the
+# 5AM regen-check on dev — i.e. after merge, one branch too late (#211).
+#
+# Cargo + Python, about a minute: WRITING a .java or .cs source is text emission
+# from the IR, so this gate needs no JDK and no .NET SDK, and no contributor is
+# forced to install one to pass it. Compiling those servers and running the
+# cross-language suites needs both, and stays in the nightly.
+#
+# `scripts/build.py regen-check` is the whole gate, so the same command
+# reproduces a failure locally, exactly.
+name: PR Codegen Gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  regen-check:
+    name: ta_codegen output up-to-date
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # The default merge-commit ref is the right one to gate: it is what lands.
+      - uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      # cargo is preinstalled on ubuntu-latest; rust-toolchain.toml pins the
+      # version rustup installs on first use.
+      - name: Regenerate all backends and verify the committed output matches
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py regen-check; then
+            echo "::error::ta_codegen output is out of date. Run 'scripts/build.py generate' and commit the result — see the log above for which files drifted."
+            exit 1
+          fi

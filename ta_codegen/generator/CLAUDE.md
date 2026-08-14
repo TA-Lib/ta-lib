@@ -80,16 +80,30 @@ touching all three.
 # Runnable from ANY directory: the built binary locates the repo via its own
 # path (the `ta_codegen/input/` marker). Override with `TA_CODEGEN_ROOT=/path/to/ta-lib`.
 # `cargo run` from ta_codegen/generator/ works as before.
-cargo run -- generate                        # Generate indicator code for all backends
+cargo run -- generate                        # Everything: libraries + servers + benches
 cargo run -- generate --func=SMA,RSI         # Generate specific functions
 cargo run -- generate --backend=rust         # Generate for specific backend
 
-cargo run -- generate-servers                # Generate JSON-RPC servers for all languages
-cargo run -- generate-servers --backend=c    # Generate server for specific language
+cargo run -- generate-servers                # Only the JSON-RPC servers, all languages
+cargo run -- generate-servers --backend=c    # Only the server for one language
 
 cargo run -- build                           # Compile generated servers into executables
 cargo run -- build --backend=c,java          # Build specific servers
 ```
+
+`generate` writes **everything committed** — the shipped libraries, the four
+JSON-RPC servers, `ta_bench_cg.c` / `ta_bench_stream.c` — so "regenerate, then
+`git status` must be clean" is a total gate over the tree. `generate-servers`
+and `generate-bench` are narrowings of it, for the callers that rebuild a server
+without a full regeneration (`build.py servers`, `regtest.py`); they own no path
+`generate` does not write. Emitting a `.java` or `.cs` source is text, so none of
+this needs a JDK or the .NET SDK — those belong to `build`, which compiles only
+the backends asked for.
+
+The exception is `--func=`: whole-corpus files (`Core.java`, the servers, the
+benches) are skipped there, because rendering them from a filtered set would drop
+every function the filter excluded. A `--func` iteration loop must therefore end
+with one bare `generate` before committing.
 
 ## Testing
 

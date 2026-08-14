@@ -94,9 +94,10 @@ fn main() {
             eprintln!("Usage: ta_codegen <command> [options]");
             eprintln!();
             eprintln!("Commands:");
-            eprintln!("  generate         Generate code for all backends (default)");
-            eprintln!("  generate-servers  Generate JSON-RPC server wrappers for each language");
-            eprintln!("  generate-bench   Generate the direct-call C benchmark binary source");
+            eprintln!("  generate         Everything, all backends (default): libraries,");
+            eprintln!("                   JSON-RPC servers, benches. No compiler/JDK/SDK needed");
+            eprintln!("  generate-servers  Only the JSON-RPC servers (narrowing, for `build`)");
+            eprintln!("  generate-bench   Only the direct-call C benchmark binary source");
             eprintln!("  build            Compile generated server source into executables");
             eprintln!("  format           Re-indent the ta_codegen/input/ C source of truth");
             eprintln!("  stream-census    Report the IR-derived streamability per function");
@@ -723,6 +724,34 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // leave a catalogue whose entries the server's own
         // `FunctionCatalog.Default[name]` lookups no longer find.
         backends::csharp_metadata::generate(all_funcs, &enums, &csharp_src.join("metadata"));
+    }
+
+    // The JSON-RPC servers and the C benches, last: the Java server inlines the
+    // per-function fragments this run just rewrote, so it has to read them after
+    // the clean.
+    //
+    // They have their own subcommands (`generate-servers`, `generate-bench`)
+    // because `build.py servers` / `regtest.py` regenerate them alone, without a
+    // full `generate`. That is a narrowing, not a separate ownership: everything
+    // committed under `output/` is written by `generate` and pinned by
+    // "regenerate, then `git status` must be clean". Leaving them out is how a
+    // stale `TaCodegenServe.java` reached dev (#211).
+    //
+    // Writing them needs no JDK and no .NET SDK — it is text emission from the
+    // same IR the shipped libraries render. Those toolchains are what COMPILES a
+    // server (`build`), and only for the backends actually requested.
+    if func_filter.is_none() {
+        generate_servers(None, backend_filter);
+        if backends_to_run.contains(&"c") {
+            generate_bench(Some("c"));
+        }
+    } else {
+        // Same reason Core.java skips above: one file per corpus, so a subset
+        // would drop every function the filter excluded.
+        println!(
+            "  (skipping the JSON-RPC servers + C benches — whole-corpus files, \
+             need a full generate without --func)"
+        );
     }
 }
 

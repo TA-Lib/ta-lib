@@ -11,7 +11,8 @@
 #   scripts/build.py                Build library + all C tools (CMake)
 #   scripts/build.py ta_regtest     Build the regression test runner (CMake)
 #   scripts/build.py ta_codegen     Build the Rust codegen tool (cargo)
-#   scripts/build.py generate       Generate per-function source for all backends (cargo)
+#   scripts/build.py generate       Generate every committed source for all backends (cargo)
+#   scripts/build.py regen-check    The PR gate: regenerating must change nothing (cargo)
 #   scripts/build.py servers        Generate + compile JSON-RPC language servers (cargo),
 #                                   plus bin/ta_regtest so bin/ is runnable by hand
 #   scripts/build.py test           C reference regression tests
@@ -30,7 +31,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from utilities.common import (
     check_prerequisites,
     PREREQS_BUILD_BASIC, PREREQS_BUILD_CODEGEN, PREREQS_BUILD_SERVERS,
-    PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA, PREREQS_DOTNET,
+    PREREQS_CARGO, PREREQS_CMAKE, PREREQS_GCC, PREREQS_JAVAC, PREREQS_JAVA,
+    PREREQS_DOTNET,
     prereqs_for_languages, backends_for_languages,
 )
 
@@ -100,7 +102,10 @@ def show_help():
 
   Building (Rust ta_codegen, via cargo — CMake never invokes cargo):
     ta_codegen          Build the Rust codegen tool
-    generate            Generate per-function source for all backends
+    generate            Generate every committed source for all backends —
+                        the libraries, the JSON-RPC servers and the benches.
+                        Writing only: no JDK or .NET SDK needed for the Java
+                        and C# sources, only cargo.
     servers             Generate all source + compile JSON-RPC language servers,
                         and bring bin/ta_regtest — the only thing that drives
                         them — up to date, so bin/ can be run by hand
@@ -113,6 +118,11 @@ def show_help():
 
   Testing:
     test                C reference regression tests
+    regen-check         The gate every PR runs: input formatted, source lists
+                        agree, and regenerating changes nothing that is
+                        committed. Cargo + Python only — no JDK, no .NET SDK.
+                        Only drift this run introduces fails it, so it is
+                        usable on a dirty working tree.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
@@ -317,8 +327,162 @@ def check_regtest_source_lists(root_dir: str) -> bool:
           f"({len(cmake_set)} files). OK.")
     return True
 
+
+# --- The regeneration gate ------------------------------------------------
+#
+# `ta_codegen/input/` is the source of truth; everything it produces is
+# committed. The gate is therefore: regenerate, and the tree must not move.
+#
+# It runs on every PR (.github/workflows/pr-codegen-gate.yml) and again nightly
+# on dev — the nightly still matters because dev also takes direct pushes, which
+# no pull_request trigger sees. Cargo and Python only: writing a .java or .cs
+# source is text emission, so no contributor needs a JDK or the .NET SDK to pass
+# this (compiling those servers does, and that stays in the nightly).
+PROBE_MARK = '/* regen-gate probe */'
+
+# One file per generated tier, dirtied BEFORE regenerating. "Tree still clean"
+# is otherwise silent about a file the generator never writes at all: that is
+# exactly how a stale TaCodegenServe.java passed this gate for months (#211),
+# back when `generate` did not own the servers. A surviving probe means the
+# generator dropped that path.
+REGEN_PROBE_FILES = (
+    'src/ta_func/ta_SMA.c',
+    'src/ta_abstract/tables/table_s.c',
+    'ta_codegen/output/rust/library/src/ta_func/sma.rs',
+    'ta_codegen/output/csharp/library/src/Core_SMA.cs',
+    'ta_codegen/output/c/tools/ta_codegen_serve.c',
+    'ta_codegen/output/java/tools/TaCodegenServe.java',
+    'ta_codegen/output/csharp/tools/TaCodegenServe.cs',
+    'ta_codegen/output/rust/tools/src/bin/ta_codegen_serve.rs',
+    'ta_codegen/output/c/tools/ta_bench_cg.c',
+    'ta_codegen/output/c/tools/ta_bench_stream.c',
+    'website/src/functions/sma.md',
+)
+
+# These two are SPLICED, not rewritten: everything outside the GENCODE markers
+# is hand-written and preserved on purpose, so a probe appended at EOF survives
+# a perfectly healthy generator and the gate would be red forever. Probe inside
+# the section instead.
+REGEN_PROBE_SPLICED = (
+    'ta_codegen/output/java/library/src/main/java/io/github/talib/Core.java',
+    'include/ta_defs.h',
+)
+GENCODE_START = 'START GENCODE SECTION 1'
+
+def _git_dirty(root_dir: str) -> set:
+    """Repo-relative paths git currently reports as modified/untracked."""
+    out = subprocess.run(['git', 'status', '--porcelain'], cwd=root_dir,
+                         capture_output=True, text=True, check=True).stdout
+    return {line[3:].strip().strip('"') for line in out.splitlines() if line.strip()}
+
+def _write_probes(root_dir: str) -> bool:
+    """Dirty one file per generated tier. False if a probe path has moved."""
+    for rel in REGEN_PROBE_FILES:
+        path = os.path.join(root_dir, rel)
+        if not os.path.isfile(path):
+            print(f"Error: regen-gate probe {rel} does not exist — the path moved; "
+                  f"update REGEN_PROBE_FILES.")
+            return False
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write(f"\n{PROBE_MARK}\n")
+    for rel in REGEN_PROBE_SPLICED:
+        path = os.path.join(root_dir, rel)
+        try:
+            with open(path, encoding='utf-8') as f:
+                lines = f.readlines()
+        except OSError:
+            print(f"Error: regen-gate probe {rel} does not exist — the path moved; "
+                  f"update REGEN_PROBE_SPLICED.")
+            return False
+        for i, line in enumerate(lines):
+            if GENCODE_START in line:
+                lines.insert(i + 1, PROBE_MARK + '\n')
+                break
+        else:
+            print(f"Error: regen-gate probe: no '{GENCODE_START}' marker in {rel} — "
+                  f"update REGEN_PROBE_SPLICED.")
+            return False
+        with open(path, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+    return True
+
+def _surviving_probes(root_dir: str, was_dirty: set) -> list:
+    """Probed files the generator did not rewrite. Restores the ones it is safe
+    to restore — a file already dirty before the run is the developer's, not
+    ours, so that one is reported instead of reverted."""
+    survivors = []
+    for rel in REGEN_PROBE_FILES + REGEN_PROBE_SPLICED:
+        path = os.path.join(root_dir, rel)
+        try:
+            with open(path, encoding='utf-8') as f:
+                if PROBE_MARK not in f.read():
+                    continue
+        except OSError:
+            continue
+        survivors.append(rel)
+        if rel in was_dirty:
+            print(f"  NOTE: {rel} was already modified before this run — remove the "
+                  f"'{PROBE_MARK}' line by hand.")
+        else:
+            subprocess.run(['git', 'checkout', '--', rel], cwd=root_dir, check=False)
+    return survivors
+
+def regen_check(root_dir: str) -> int:
+    """Verify the committed generated output matches ta_codegen/input/.
+
+    The same gate CI runs, runnable locally before you commit. Only drift this
+    run INTRODUCES fails it: whatever was already modified in the working tree
+    stays out of the comparison, so a dirty tree does not make it useless (CI
+    checks out clean, where the baseline is empty and every path is gated).
+    """
+    if not check_regtest_source_lists(root_dir):
+        return 1
+
+    print("\n=== ta_codegen/input formatting ===")
+    if subprocess.run(['cargo', 'run', '--release', '--', 'format', '--check'],
+                      cwd=os.path.join(root_dir, 'ta_codegen', 'generator')).returncode != 0:
+        print("Error: ta_codegen/input is not formatted. "
+              "Run 'scripts/build.py format' and commit the result.")
+        return 1
+
+    was_dirty = _git_dirty(root_dir)
+    if was_dirty:
+        print(f"\nNote: {len(was_dirty)} path(s) already modified — excluded from the "
+              f"comparison below.")
+
+    print("\n=== Regenerating every backend ===")
+    if not _write_probes(root_dir):
+        return 1
+    run_codegen(root_dir, 'run', '--release', '--', 'generate')
+
+    rc = 0
+    survivors = _surviving_probes(root_dir, was_dirty)
+    if survivors:
+        print("\nError: 'generate' does not write these files at all, so the "
+              "regeneration gate is blind to them (#211):")
+        for rel in survivors:
+            print(f"  {rel}")
+        print("Fix the generator — not the file.")
+        rc = 1
+
+    new_drift = sorted(_git_dirty(root_dir) - was_dirty - set(survivors))
+    if new_drift:
+        print("\nError: regenerating changed the committed output. Run "
+              "'scripts/build.py generate' and commit the result:")
+        for rel in new_drift:
+            print(f"  {rel}")
+        print("\n----- git diff -----")
+        subprocess.run(['git', '--no-pager', 'diff', '--'] + new_drift, cwd=root_dir,
+                       check=False)
+        rc = 1
+
+    if rc == 0:
+        print("\nta_codegen output matches the committed source. OK.")
+    return rc
+
 # Rust targets run cargo directly (no CMake).
-CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy'}
+CARGO_TARGETS = {'ta_codegen', 'generate', 'format', 'format-check', 'clippy',
+                 'regen-check'}
 
 # C targets map to a cmake target.
 #
@@ -347,6 +511,9 @@ TARGET_PREREQS = {
     'ta_regtest':   PREREQS_BUILD_BASIC,
     'ta_codegen':   PREREQS_BUILD_CODEGEN,
     'generate':     PREREQS_BUILD_CODEGEN,
+    # Cargo only, deliberately: the point of this gate is that anyone can run
+    # it. It builds nothing C, so cmake is not a prerequisite either.
+    'regen-check':  [PREREQS_CARGO],
     'format':       PREREQS_BUILD_CODEGEN,
     'format-check': PREREQS_BUILD_CODEGEN,
     'clippy':       PREREQS_BUILD_CODEGEN,
@@ -446,6 +613,8 @@ def main():
             run_codegen(root_dir, 'run', '--release', '--', 'format', '--check')
         elif args.target == 'clippy':
             run_clippy(root_dir)
+        elif args.target == 'regen-check':
+            sys.exit(regen_check(root_dir))
         return
 
     ensure_configured(root_dir, build_dir, args.build_type, args.cmake_args)
