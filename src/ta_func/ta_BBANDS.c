@@ -767,12 +767,24 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
    sub0 = NULL;
    sub1 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outRealUpperBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outRealUpperBand ) { return TA_ALLOC_ERR; }
-   sc_outRealMiddleBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outRealMiddleBand ) { TA_Free( sc_outRealUpperBand ); return TA_ALLOC_ERR; }
-   sc_outRealLowerBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outRealLowerBand ) { TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); return TA_ALLOC_ERR; }
+   if( outStride ) sc_outRealUpperBand = outRealUpperBand;
+   else
+   {
+      sc_outRealUpperBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outRealUpperBand ) { return TA_ALLOC_ERR; }
+   }
+   if( outStride ) sc_outRealMiddleBand = outRealMiddleBand;
+   else
+   {
+      sc_outRealMiddleBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outRealMiddleBand ) { TA_Free( sc_outRealUpperBand ); return TA_ALLOC_ERR; }
+   }
+   if( outStride ) sc_outRealLowerBand = outRealLowerBand;
+   else
+   {
+      sc_outRealLowerBand = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outRealLowerBand ) { TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); return TA_ALLOC_ERR; }
+   }
 
    {
       TA_RetCode retCode;
@@ -791,13 +803,13 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
       tempBuffer1 = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer1 )
       {
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
       tempBuffer2 = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer2 )
       {
-         free( tempBuffer1 ); TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+         free( tempBuffer1 ); TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_ALLOC_ERR;
       }
       /* Calculate the middle band moving average. */
@@ -809,7 +821,7 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
          {
             free(tempBuffer1);
             free(tempBuffer2);
-            TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+            TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
             return subRc;
          }
       }
@@ -819,7 +831,7 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
          dummyNBElement = 0;
          free(tempBuffer1);
          free(tempBuffer2);
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
       /* Remember where the moving average begins, to realign it below. */
@@ -833,7 +845,7 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
          {
             free(tempBuffer1);
             free(tempBuffer2);
-            TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+            TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
             return subRc;
          }
       }
@@ -843,7 +855,7 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
          dummyNBElement = 0;
          free(tempBuffer1);
          free(tempBuffer2);
-         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand );
+         TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return retCode;
       }
       /* When the standard deviation (lookback optInTimePeriod-1) clamps to a later
@@ -886,9 +898,9 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
       free(tempBuffer2);
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_BAD_PARAM; }
       sp = (struct TA_BBANDS_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); TA_Free( sc_outRealUpperBand ); TA_Free( sc_outRealMiddleBand ); TA_Free( sc_outRealLowerBand ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_MA_Close( sub0 ); TA_STDDEV_Close( sub1 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInNbDevUp = optInNbDevUp;
@@ -898,15 +910,12 @@ static TA_RetCode TA_BBANDS_OpenCore( struct TA_BBANDS_Stream **stream, const do
       sp->sub1 = sub1;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outRealUpperBand, sc_outRealUpperBand, sizeof(double) * (size_t)dummyNBElement );
-      else outRealUpperBand[0] = sc_outRealUpperBand[dummyNBElement - 1];
-      if( outStride ) memcpy( outRealMiddleBand, sc_outRealMiddleBand, sizeof(double) * (size_t)dummyNBElement );
-      else outRealMiddleBand[0] = sc_outRealMiddleBand[dummyNBElement - 1];
-      if( outStride ) memcpy( outRealLowerBand, sc_outRealLowerBand, sizeof(double) * (size_t)dummyNBElement );
-      else outRealLowerBand[0] = sc_outRealLowerBand[dummyNBElement - 1];
-      TA_Free( sc_outRealUpperBand );
-      TA_Free( sc_outRealMiddleBand );
-      TA_Free( sc_outRealLowerBand );
+      if( !outStride ) outRealUpperBand[0] = sc_outRealUpperBand[dummyNBElement - 1];
+      if( !outStride ) outRealMiddleBand[0] = sc_outRealMiddleBand[dummyNBElement - 1];
+      if( !outStride ) outRealLowerBand[0] = sc_outRealLowerBand[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outRealUpperBand );
+      if( !outStride ) TA_Free( sc_outRealMiddleBand );
+      if( !outStride ) TA_Free( sc_outRealLowerBand );
       *stream = sp;
       return TA_SUCCESS;
    }

@@ -327,8 +327,12 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
    sub0 = NULL;
    sub1 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   if( outStride ) sc_outReal = outReal;
+   else
+   {
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   }
 
    {
       double *tempBuffer;
@@ -343,7 +347,7 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
       tempBuffer = malloc((endIdx - startIdx + 1) * sizeof(double));
       if( !tempBuffer )
       {
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
          return TA_ALLOC_ERR;
       }
       /* Make sure slow is really slower than
@@ -364,7 +368,7 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
             return subRc;
          }
       }
@@ -372,7 +376,7 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
          return retCode;
       }
       /* Calculate the slow MA into the output. */
@@ -383,7 +387,7 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
          if( subRc != TA_SUCCESS )
          {
             free(tempBuffer);
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
             return subRc;
          }
       }
@@ -391,7 +395,7 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
       if( retCode != TA_SUCCESS )
       {
          free(tempBuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal );
          return retCode;
       }
       /* fastNb - *outNBElement == slowBeg - fastBeg (the fast MA has at least as
@@ -414,9 +418,9 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
       free(tempBuffer);
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_BAD_PARAM; }
       sp = (struct TA_PVO_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInSlowPeriod = optInSlowPeriod;
@@ -425,9 +429,8 @@ static TA_RetCode TA_PVO_OpenCore( struct TA_PVO_Stream **stream, const double i
       sp->sub1 = sub1;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outReal, sc_outReal, sizeof(double) * (size_t)dummyNBElement );
-      else outReal[0] = sc_outReal[dummyNBElement - 1];
-      TA_Free( sc_outReal );
+      if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outReal );
       *stream = sp;
       return TA_SUCCESS;
    }

@@ -719,7 +719,9 @@ fn composed_cleanup(cp: &streaming::ComposedPlan, outputs: &[String]) -> String 
         let _ = write!(s, "{}_Close( sub{i} ); ", callee_prefix(&sub.callee));
     }
     for out in outputs {
-        let _ = write!(s, "TA_Free( sc_{out} ); ");
+        // `sc_<out>` is the caller's own output array when OUT_STRIDE (#205) —
+        // only free it when it was actually allocated (the scalar-sink mode).
+        let _ = write!(s, "if( !{OUT_STRIDE} ) TA_Free( sc_{out} ); ");
     }
     s.trim_end().trim_end_matches(';').to_string()
 }
@@ -1289,11 +1291,21 @@ fn emit_composed_open(
         "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;"
     );
     // Scratch output arrays: the batch tail writes REAL arrays (sub-call
-    // out args, memmoves) — a last-value scalar cannot stand in here.
+    // out args, memmoves) — a last-value scalar cannot stand in here. When
+    // the caller wants the whole range (OpenAndFill), its own output array
+    // IS the historyLen-sized destination the batch tail needs, so `sc_<out>`
+    // aliases it directly instead of allocating a throwaway copy that would
+    // only be memcpy'd back at the end (issue #205: 938 KB / 6 mmap'd blocks,
+    // about half of TA_BBANDS_OpenAndFill's own time). Only the scalar-sink
+    // mode (`!outStride`, the caller's array is a single `double`) still
+    // needs its own history-sized scratch.
     for (k, out) in outputs.iter().enumerate() {
+        let _ = writeln!(o, "   if( {OUT_STRIDE} ) sc_{out} = {out};");
+        let _ = writeln!(o, "   else");
+        let _ = writeln!(o, "   {{");
         let _ = writeln!(
             o,
-            "   sc_{out} = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );"
+            "      sc_{out} = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );"
         );
         let prior: String = outputs[..k]
             .iter()
@@ -1301,7 +1313,8 @@ fn emit_composed_open(
                 let _ = write!(s, "TA_Free( sc_{p} ); ");
                 s
             });
-        let _ = writeln!(o, "   if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
+        let _ = writeln!(o, "      if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
+        let _ = writeln!(o, "   }}");
     }
 
     // --- transcription ---------------------------------------------------------
@@ -1432,21 +1445,17 @@ fn emit_composed_open(
     for (i, _) in cp.subs.iter().enumerate() {
         let _ = writeln!(o, "      sp->sub{i} = sub{i};");
     }
-    // Both modes compute into `sc_<out>`; only the hand-back differs, and it is
-    // the ONE place a stride multiply cannot express the difference — a bulk copy
-    // takes a base pointer, not a subscript. Fill hands back the whole
-    // materialized history; the scalar sink takes the last element.
+    // Fill mode: `sc_<out>` already IS the caller's `<out>` (aliased above,
+    // #205), so the batch tail's writes landed there directly — nothing left
+    // to hand back. Scalar-sink mode: `sc_<out>` is the owned history-sized
+    // scratch; take its last element and free it.
     let _ = writeln!(o, "      *outBegIdx = dummyBegIdx;");
     let _ = writeln!(o, "      *outNBElement = dummyNBElement;");
     for out in outputs {
-        let _ = writeln!(
-            o,
-            "      if( {OUT_STRIDE} ) memcpy( {out}, sc_{out}, sizeof(double) * (size_t)dummyNBElement );"
-        );
-        let _ = writeln!(o, "      else {out}[0] = sc_{out}[dummyNBElement - 1];");
+        let _ = writeln!(o, "      if( !{OUT_STRIDE} ) {out}[0] = sc_{out}[dummyNBElement - 1];");
     }
     for out in outputs {
-        let _ = writeln!(o, "      TA_Free( sc_{out} );");
+        let _ = writeln!(o, "      if( !{OUT_STRIDE} ) TA_Free( sc_{out} );");
     }
     let _ = writeln!(o, "      *stream = sp;");
     let _ = writeln!(o, "      return TA_SUCCESS;");

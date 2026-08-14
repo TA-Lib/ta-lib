@@ -292,8 +292,12 @@ static TA_RetCode TA_STDDEV_OpenCore( struct TA_STDDEV_Stream **stream, const do
    subOpenDummy = 0.0;
    sub0 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   if( outStride ) sc_outReal = outReal;
+   else
+   {
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   }
 
    {
       int i;
@@ -306,14 +310,14 @@ static TA_RetCode TA_STDDEV_OpenCore( struct TA_STDDEV_Stream **stream, const do
          subRc = TA_VAR_OpenAndFillInternal( &sub0, inReal, (startIdx), (endIdx) + 1, optInTimePeriod, 1.0, &dummyBegIdx, &dummyNBElement, sc_outReal );
          if( subRc != TA_SUCCESS )
          {
-            TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
+            TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
             return subRc;
          }
       }
       retCode = subRc;
       if( retCode != TA_SUCCESS )
       {
-         TA_VAR_Close( sub0 ); TA_Free( sc_outReal );
+         TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return retCode;
       }
       /* Calculate the square root of each variance, this
@@ -350,18 +354,17 @@ static TA_RetCode TA_STDDEV_OpenCore( struct TA_STDDEV_Stream **stream, const do
       }
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_VAR_Close( sub0 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_BAD_PARAM; }
       sp = (struct TA_STDDEV_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_VAR_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->optInNbDev = optInNbDev;
       sp->sub0 = sub0;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outReal, sc_outReal, sizeof(double) * (size_t)dummyNBElement );
-      else outReal[0] = sc_outReal[dummyNBElement - 1];
-      TA_Free( sc_outReal );
+      if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outReal );
       *stream = sp;
       return TA_SUCCESS;
    }

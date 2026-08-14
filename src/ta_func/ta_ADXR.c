@@ -298,8 +298,12 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
    subOpenDummy = 0.0;
    sub0 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   if( outStride ) sc_outReal = outReal;
+   else
+   {
+      sc_outReal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outReal ) { return TA_ALLOC_ERR; }
+   }
 
    {
       double *adx;
@@ -333,13 +337,13 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return TA_BAD_PARAM;
       }
       adx = malloc((endIdx - startIdx + optInTimePeriod) * sizeof(double));
       if( !adx )
       {
-         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return TA_ALLOC_ERR;
       }
       /* Compute ADX over a range that starts (period-1) bars earlier, so each
@@ -352,7 +356,7 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
          if( subRc != TA_SUCCESS )
          {
             free(adx);
-            TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+            TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
             return subRc;
          }
       }
@@ -360,7 +364,7 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
       if( retCode != TA_SUCCESS )
       {
          free(adx);
-         TA_ADX_Close( sub0 ); TA_Free( sc_outReal );
+         TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return retCode;
       }
       /* ADXR[k] = (ADX[k] + ADX[k-(period-1)]) / 2. Walking a single cursor over
@@ -376,16 +380,16 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
       dummyNBElement = nbElement;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_BAD_PARAM; }
       sp = (struct TA_ADXR_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp ) { free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->lagRingCap_adx = optInTimePeriod - 1;
       sp->lagRing_adx = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_adx );
-      if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       sp->lagRingMirror_adx = (double *)TA_Malloc( sizeof(double) * (size_t)sp->lagRingCap_adx );
-      if( !sp->lagRingMirror_adx ) { TA_Free( sp->lagRing_adx ); TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
+      if( !sp->lagRingMirror_adx ) { TA_Free( sp->lagRing_adx ); TA_Free( sp ); free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       {
          int lagI;
          for( lagI = 0; lagI < sp->lagRingCap_adx; lagI++ )
@@ -396,9 +400,8 @@ static TA_RetCode TA_ADXR_OpenCore( struct TA_ADXR_Stream **stream, const double
       sp->sub0 = sub0;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outReal, sc_outReal, sizeof(double) * (size_t)dummyNBElement );
-      else outReal[0] = sc_outReal[dummyNBElement - 1];
-      TA_Free( sc_outReal );
+      if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outReal );
       *stream = sp;
       return TA_SUCCESS;
    }

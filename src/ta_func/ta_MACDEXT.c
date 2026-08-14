@@ -574,12 +574,24 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
    sub1 = NULL;
    sub2 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outMACD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outMACD ) { return TA_ALLOC_ERR; }
-   sc_outMACDSignal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outMACDSignal ) { TA_Free( sc_outMACD ); return TA_ALLOC_ERR; }
-   sc_outMACDHist = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outMACDHist ) { TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); return TA_ALLOC_ERR; }
+   if( outStride ) sc_outMACD = outMACD;
+   else
+   {
+      sc_outMACD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outMACD ) { return TA_ALLOC_ERR; }
+   }
+   if( outStride ) sc_outMACDSignal = outMACDSignal;
+   else
+   {
+      sc_outMACDSignal = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outMACDSignal ) { TA_Free( sc_outMACD ); return TA_ALLOC_ERR; }
+   }
+   if( outStride ) sc_outMACDHist = outMACDHist;
+   else
+   {
+      sc_outMACDHist = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outMACDHist ) { TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); return TA_ALLOC_ERR; }
+   }
 
    {
       double *slowMABuffer;
@@ -631,7 +643,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_BAD_PARAM;
       }
       /* Allocate intermediate buffer for fast/slow MA. */
@@ -639,13 +651,13 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       fastMABuffer = malloc(tempInteger * sizeof(double));
       if( !fastMABuffer )
       {
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
       slowMABuffer = malloc(tempInteger * sizeof(double));
       if( !slowMABuffer )
       {
-         free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         free( fastMABuffer ); TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_ALLOC_ERR;
       }
       /* Calculate the slow MA.
@@ -664,7 +676,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          {
             free(fastMABuffer);
             free(slowMABuffer);
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
             return subRc;
          }
       }
@@ -675,7 +687,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          dummyNBElement = 0;
          free(fastMABuffer);
          free(slowMABuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return retCode;
       }
       /* Calculate the fast MA. */
@@ -687,7 +699,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          {
             free(fastMABuffer);
             free(slowMABuffer);
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
             return subRc;
          }
       }
@@ -698,7 +710,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          dummyNBElement = 0;
          free(fastMABuffer);
          free(slowMABuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return retCode;
       }
       /* Parano tests. Will be removed eventually. */
@@ -708,7 +720,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          dummyNBElement = 0;
          free(fastMABuffer);
          free(slowMABuffer);
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_BAD_PARAM;
       }
       /* Calculate (fast MA) - (slow MA). */
@@ -730,7 +742,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
          {
             free(fastMABuffer);
             free(slowMABuffer);
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
             return subRc;
          }
       }
@@ -741,7 +753,7 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return retCode;
       }
       /* Calculate the histogram. */
@@ -754,9 +766,9 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       dummyNBElement = outNbElement2;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_BAD_PARAM; }
       sp = (struct TA_MACDEXT_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); TA_Free( sc_outMACD ); TA_Free( sc_outMACDSignal ); TA_Free( sc_outMACDHist ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastPeriod = optInFastPeriod;
       sp->optInFastMAType = optInFastMAType;
@@ -769,15 +781,12 @@ static TA_RetCode TA_MACDEXT_OpenCore( struct TA_MACDEXT_Stream **stream, const 
       sp->sub2 = sub2;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outMACD, sc_outMACD, sizeof(double) * (size_t)dummyNBElement );
-      else outMACD[0] = sc_outMACD[dummyNBElement - 1];
-      if( outStride ) memcpy( outMACDSignal, sc_outMACDSignal, sizeof(double) * (size_t)dummyNBElement );
-      else outMACDSignal[0] = sc_outMACDSignal[dummyNBElement - 1];
-      if( outStride ) memcpy( outMACDHist, sc_outMACDHist, sizeof(double) * (size_t)dummyNBElement );
-      else outMACDHist[0] = sc_outMACDHist[dummyNBElement - 1];
-      TA_Free( sc_outMACD );
-      TA_Free( sc_outMACDSignal );
-      TA_Free( sc_outMACDHist );
+      if( !outStride ) outMACD[0] = sc_outMACD[dummyNBElement - 1];
+      if( !outStride ) outMACDSignal[0] = sc_outMACDSignal[dummyNBElement - 1];
+      if( !outStride ) outMACDHist[0] = sc_outMACDHist[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outMACD );
+      if( !outStride ) TA_Free( sc_outMACDSignal );
+      if( !outStride ) TA_Free( sc_outMACDHist );
       *stream = sp;
       return TA_SUCCESS;
    }

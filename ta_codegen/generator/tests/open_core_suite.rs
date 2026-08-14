@@ -352,17 +352,23 @@ fn dispatch_open_modes_differ_only_where_intended() {
 
 #[test]
 fn composed_copy_out_is_stride_guarded() {
-    // Both modes compute into `sc_*`; only the hand-back differs. Fill memcpy's
-    // the whole history, scalar takes the last element.
+    // Fill mode aliases `sc_<out>` straight onto the caller's own output array
+    // (issue #205: no allocation, no copy — the batch tail already wrote the
+    // final values there). Scalar mode keeps the owned history-sized scratch
+    // and takes its last element.
     let src = stream_c("adxr");
     let core = body_of(&src, "TA_ADXR_OpenCore(");
     assert!(
-        core.contains("if( outStride )") && core.contains("memcpy( outReal, sc_outReal"),
-        "composed copy-out is guarded by stride:\n{core}"
+        core.contains("if( outStride ) sc_outReal = outReal;"),
+        "fill mode aliases the scratch onto the caller's array:\n{core}"
     );
     assert!(
-        core.contains("sc_outReal[dummyNBElement - 1]"),
+        core.contains("if( !outStride ) outReal[0] = sc_outReal[dummyNBElement - 1];"),
         "scalar arm takes the last scratch element:\n{core}"
+    );
+    assert!(
+        core.contains("if( !outStride ) TA_Free( sc_outReal );"),
+        "scratch is freed only when this call actually owns it:\n{core}"
     );
 }
 

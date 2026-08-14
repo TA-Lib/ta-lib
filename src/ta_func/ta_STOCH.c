@@ -748,10 +748,18 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
    sub0 = NULL;
    sub1 = NULL;
    (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
-   sc_outSlowK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outSlowK ) { return TA_ALLOC_ERR; }
-   sc_outSlowD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
-   if( !sc_outSlowD ) { TA_Free( sc_outSlowK ); return TA_ALLOC_ERR; }
+   if( outStride ) sc_outSlowK = outSlowK;
+   else
+   {
+      sc_outSlowK = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outSlowK ) { return TA_ALLOC_ERR; }
+   }
+   if( outStride ) sc_outSlowD = outSlowD;
+   else
+   {
+      sc_outSlowD = (double *)TA_Malloc( sizeof(double) * (size_t)historyLen );
+      if( !sc_outSlowD ) { TA_Free( sc_outSlowK ); return TA_ALLOC_ERR; }
+   }
 
    {
       TA_RetCode retCode;
@@ -819,7 +827,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
          /* Succeed... but no data in the output. */
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
          return TA_BAD_PARAM;
       }
       /* Do the K calculation:
@@ -866,7 +874,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
          tempBuffer = malloc((endIdx - today + 1) * sizeof(double));
          if( !tempBuffer )
          {
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
             return TA_ALLOC_ERR;
          }
       }
@@ -948,7 +956,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
             {
                free(tempBuffer);
             }
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
             return subRc;
          }
       }
@@ -962,7 +970,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
          /* Something wrong happen? No further data? */
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
          return retCode;
       }
       /* Calculate the %D which is simply a moving average of
@@ -978,7 +986,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
             {
                free(tempBuffer);
             }
-            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+            TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
             return subRc;
          }
       }
@@ -1002,7 +1010,7 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
          /* Something wrong happen while processing %D? */
          dummyBegIdx = 0;
          dummyNBElement = 0;
-         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD );
+         TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD );
          return retCode;
       }
       /* Note: Keep the outBegIdx relative to the
@@ -1011,9 +1019,9 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
       dummyBegIdx = startIdx;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); return TA_BAD_PARAM; }
+      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); return TA_BAD_PARAM; }
       sp = (struct TA_STOCH_Stream *)TA_Malloc( sizeof(*sp) );
-      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); return TA_ALLOC_ERR; }
+      if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
       sp->optInFastK_Period = optInFastK_Period;
       sp->optInSlowK_Period = optInSlowK_Period;
@@ -1029,22 +1037,22 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
       sp->i = i;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_INTERNAL_ERROR; }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;
       sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inHigh ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inLow ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->x_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->x_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       sp->xMirror_inClose = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
-      if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_Free( sc_outSlowK ); TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
+      if( !sp->xMirror_inClose ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); if( !outStride ) TA_Free( sc_outSlowK ); if( !outStride ) TA_Free( sc_outSlowD ); TA_STOCH_ReleaseInternal( sp ); return TA_ALLOC_ERR; }
       { int fillJ;
         for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
         {
@@ -1057,12 +1065,10 @@ static TA_RetCode TA_STOCH_OpenCore( struct TA_STOCH_Stream **stream, const doub
       sp->sub1 = sub1;
       *outBegIdx = dummyBegIdx;
       *outNBElement = dummyNBElement;
-      if( outStride ) memcpy( outSlowK, sc_outSlowK, sizeof(double) * (size_t)dummyNBElement );
-      else outSlowK[0] = sc_outSlowK[dummyNBElement - 1];
-      if( outStride ) memcpy( outSlowD, sc_outSlowD, sizeof(double) * (size_t)dummyNBElement );
-      else outSlowD[0] = sc_outSlowD[dummyNBElement - 1];
-      TA_Free( sc_outSlowK );
-      TA_Free( sc_outSlowD );
+      if( !outStride ) outSlowK[0] = sc_outSlowK[dummyNBElement - 1];
+      if( !outStride ) outSlowD[0] = sc_outSlowD[dummyNBElement - 1];
+      if( !outStride ) TA_Free( sc_outSlowK );
+      if( !outStride ) TA_Free( sc_outSlowD );
       *stream = sp;
       return TA_SUCCESS;
    }
