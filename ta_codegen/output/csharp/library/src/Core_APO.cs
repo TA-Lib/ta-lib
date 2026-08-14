@@ -245,6 +245,9 @@ public partial class Core
    /// $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
    /// The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical and the output is zero at every bar.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -300,6 +303,9 @@ public partial class Core
    /// $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
    /// The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description><c>optInMAType</c> applies to both the fast and slow moving average. <c>TA_MAType_MAMA</c> ignores its period argument, so with <c>optInMAType = TA_MAType_MAMA</c> the fast and slow MAs are identical and the output is zero at every bar.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
