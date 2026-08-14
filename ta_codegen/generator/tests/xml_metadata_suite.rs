@@ -34,8 +34,12 @@ fn input_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../input")
 }
 
+/// One optional input as the YAML declares it: identifier, display name, type,
+/// and the suggested (start, end, increment) triple where one is declared.
+type DeclaredOpt = (String, String, ParamType, Option<(f64, f64, f64)>);
+
 /// The declared metadata for every function: name -> (opt name, type, suggested).
-fn declared() -> Vec<(String, Vec<(String, String, ParamType, Option<(f64, f64, f64)>)>)> {
+fn declared() -> Vec<(String, Vec<DeclaredOpt>)> {
     let mut out = Vec::new();
     for e in std::fs::read_dir(input_dir()).expect("read input dir").filter_map(Result::ok) {
         let dir = e.path();
@@ -64,10 +68,13 @@ fn declared() -> Vec<(String, Vec<(String, String, ParamType, Option<(f64, f64, 
     out
 }
 
-/// One function's `<OptionalInputArgument>` blocks, in document order, each as
-/// (name, SuggestedStart, SuggestedEnd, SuggestedIncrement) with the suggested
-/// fields absent when the block declares no `<Range>`.
-fn xml_opt_blocks(xml: &str, func: &str) -> Vec<(String, Option<(String, String, String)>)> {
+/// One `<OptionalInputArgument>` block: its name, and the
+/// (SuggestedStart, SuggestedEnd, SuggestedIncrement) triple as written — absent
+/// when the block declares no `<Range>`.
+type XmlOptBlock = (String, Option<(String, String, String)>);
+
+/// One function's `<OptionalInputArgument>` blocks, in document order.
+fn xml_opt_blocks(xml: &str, func: &str) -> Vec<XmlOptBlock> {
     // The function's own <FinancialFunction> element, delimited so a name that
     // is a prefix of another (MIN / MININDEX) cannot bleed across.
     let open = format!("<Abbreviation>{func}</Abbreviation>");
