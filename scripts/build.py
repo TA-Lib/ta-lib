@@ -453,10 +453,28 @@ def regen_check(root_dir: str) -> int:
     print("\n=== Regenerating every backend ===")
     if not _write_probes(root_dir):
         return 1
-    run_codegen(root_dir, 'run', '--release', '--', 'generate')
+    # From here the tree carries probe lines, so every exit has to go through the
+    # cleanup — including a generator that fails (the likeliest reason to be
+    # running this) and a Ctrl-C. Otherwise the run leaves 13 stray comments
+    # behind, two of them spliced INTO Core.java and ta_defs.h.
+    generate_failed = False
+    try:
+        run_codegen(root_dir, 'run', '--release', '--', 'generate')
+    except subprocess.CalledProcessError:
+        generate_failed = True
+    finally:
+        survivors = _surviving_probes(root_dir, was_dirty)
+
+    if generate_failed:
+        # Every probe survives a generator that never ran, so the survivor list
+        # says nothing here — don't read it as the #211 blindness below.
+        print("\nError: `generate` failed (see its output above). The probe lines are "
+              "reverted, but a failed run can leave the rest of the tree half-written — "
+              "it cleans stale output before it writes — so re-run "
+              "'scripts/build.py generate' once the generator is fixed.")
+        return 1
 
     rc = 0
-    survivors = _surviving_probes(root_dir, was_dirty)
     if survivors:
         print("\nError: 'generate' does not write these files at all, so the "
               "regeneration gate is blind to them (#211):")

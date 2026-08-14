@@ -377,8 +377,12 @@ def main():
             cmd.append(f"--backend={backend_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
 
-    # 3b. generate bench binary source
-    if not no_gen_srv and not covered_by_generate:
+    # 3b. generate bench binary source. The benches are C, so step 2 covers them
+    # only when it actually ran the C backend — `--language=rust` narrows it to
+    # `generate --backend=rust`, which writes no bench at all.
+    c_covered = covered_by_generate and (
+        not backend_filter or 'c' in [b.strip() for b in backend_filter.split(',')])
+    if not no_gen_srv and not c_covered:
         print("\n=== Regenerating bench binary ===")
         cmd = ["cargo", "run", "--release", "--", "generate-bench", "--backend=c"]
         subprocess.run(cmd, check=True, cwd=codegen_dir)
