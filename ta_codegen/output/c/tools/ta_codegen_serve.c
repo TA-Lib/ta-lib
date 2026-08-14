@@ -399,6 +399,8 @@ static void preload_to_working(int nInputs, int isPriceInput) {
 /* ---- stream_verify: bitwise batch-vs-stream comparison ---- */
 #ifndef TA_REF_SERVE
 #define SV_MAXN 256
+#define SV_FILL_CANARY (-1.2345678901234e300)
+#define SV_FILL_CANARY_I (-987654321)
 #define SV_PEEK_EVERY 7
 static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];
 static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];
@@ -459,7 +461,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ACCBANDS_Stream *stf = NULL;
-            TA_RetCode frc = TA_ACCBANDS_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ACCBANDS_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
@@ -467,6 +475,12 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ACCBANDS_Close(stf);
         }
         {
@@ -566,12 +580,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ACOS_Stream *stf = NULL;
-            TA_RetCode frc = TA_ACOS_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ACOS_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ACOS_Close(stf);
         }
         {
@@ -654,12 +676,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_AD_Stream *stf = NULL;
-            TA_RetCode frc = TA_AD_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_AD_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_AD_Close(stf);
         }
         {
@@ -742,12 +772,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ADD_Stream *stf = NULL;
-            TA_RetCode frc = TA_ADD_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ADD_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ADD_Close(stf);
         }
         {
@@ -834,12 +872,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ADOSC_Stream *stf = NULL;
-            TA_RetCode frc = TA_ADOSC_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInFastPeriod, optInSlowPeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ADOSC_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInFastPeriod, optInSlowPeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ADOSC_Close(stf);
         }
         {
@@ -926,12 +972,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ADX_Stream *stf = NULL;
-            TA_RetCode frc = TA_ADX_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ADX_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ADX_Close(stf);
         }
         {
@@ -1018,12 +1072,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ADXR_Stream *stf = NULL;
-            TA_RetCode frc = TA_ADXR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ADXR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ADXR_Close(stf);
         }
         {
@@ -1118,12 +1180,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_APO_Stream *stf = NULL;
-            TA_RetCode frc = TA_APO_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_APO_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_APO_Close(stf);
         }
         {
@@ -1211,13 +1281,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_AROON_Stream *stf = NULL;
-            TA_RetCode frc = TA_AROON_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_AROON_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_AROON_Close(stf);
         }
         {
@@ -1313,12 +1393,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_AROONOSC_Stream *stf = NULL;
-            TA_RetCode frc = TA_AROONOSC_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_AROONOSC_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_AROONOSC_Close(stf);
         }
         {
@@ -1401,12 +1489,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ASIN_Stream *stf = NULL;
-            TA_RetCode frc = TA_ASIN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ASIN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ASIN_Close(stf);
         }
         {
@@ -1489,12 +1585,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ATAN_Stream *stf = NULL;
-            TA_RetCode frc = TA_ATAN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ATAN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ATAN_Close(stf);
         }
         {
@@ -1580,12 +1684,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ATR_Stream *stf = NULL;
-            TA_RetCode frc = TA_ATR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ATR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ATR_Close(stf);
         }
         {
@@ -1670,12 +1782,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_AVGDEV_Stream *stf = NULL;
-            TA_RetCode frc = TA_AVGDEV_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_AVGDEV_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_AVGDEV_Close(stf);
         }
         {
@@ -1758,12 +1878,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_AVGPRICE_Stream *stf = NULL;
-            TA_RetCode frc = TA_AVGPRICE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_AVGPRICE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_AVGPRICE_Close(stf);
         }
         {
@@ -1858,7 +1986,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_BBANDS_Stream *stf = NULL;
-            TA_RetCode frc = TA_BBANDS_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_BBANDS_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
@@ -1866,6 +2000,12 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_BBANDS_Close(stf);
         }
         {
@@ -1970,12 +2110,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_BETA_Stream *stf = NULL;
-            TA_RetCode frc = TA_BETA_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_BETA_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_BETA_Close(stf);
         }
         {
@@ -2058,12 +2206,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_BOP_Stream *stf = NULL;
-            TA_RetCode frc = TA_BOP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_BOP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_BOP_Close(stf);
         }
         {
@@ -2147,12 +2303,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CCI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CCI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CCI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CCI_Close(stf);
         }
         {
@@ -2243,12 +2407,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL2CROWS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL2CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL2CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL2CROWS_Close(stf);
         }
         npref = 0;
@@ -2334,12 +2506,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3BLACKCROWS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3BLACKCROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3BLACKCROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3BLACKCROWS_Close(stf);
         }
         npref = 0;
@@ -2425,12 +2605,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3INSIDE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3INSIDE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3INSIDE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3INSIDE_Close(stf);
         }
         npref = 0;
@@ -2516,12 +2704,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3LINESTRIKE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3LINESTRIKE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3LINESTRIKE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3LINESTRIKE_Close(stf);
         }
         npref = 0;
@@ -2607,12 +2803,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3OUTSIDE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3OUTSIDE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3OUTSIDE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3OUTSIDE_Close(stf);
         }
         npref = 0;
@@ -2698,12 +2902,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3STARSINSOUTH_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3STARSINSOUTH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3STARSINSOUTH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3STARSINSOUTH_Close(stf);
         }
         npref = 0;
@@ -2789,12 +3001,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDL3WHITESOLDIERS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDL3WHITESOLDIERS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDL3WHITESOLDIERS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDL3WHITESOLDIERS_Close(stf);
         }
         npref = 0;
@@ -2881,12 +3101,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLABANDONEDBABY_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLABANDONEDBABY_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLABANDONEDBABY_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLABANDONEDBABY_Close(stf);
         }
         npref = 0;
@@ -2972,12 +3200,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLADVANCEBLOCK_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLADVANCEBLOCK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLADVANCEBLOCK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLADVANCEBLOCK_Close(stf);
         }
         npref = 0;
@@ -3063,12 +3299,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLBELTHOLD_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLBELTHOLD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLBELTHOLD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLBELTHOLD_Close(stf);
         }
         npref = 0;
@@ -3154,12 +3398,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLBREAKAWAY_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLBREAKAWAY_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLBREAKAWAY_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLBREAKAWAY_Close(stf);
         }
         npref = 0;
@@ -3245,12 +3497,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLCLOSINGMARUBOZU_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLCLOSINGMARUBOZU_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLCLOSINGMARUBOZU_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLCLOSINGMARUBOZU_Close(stf);
         }
         npref = 0;
@@ -3336,12 +3596,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLCONCEALBABYSWALL_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLCONCEALBABYSWALL_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLCONCEALBABYSWALL_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLCONCEALBABYSWALL_Close(stf);
         }
         npref = 0;
@@ -3427,12 +3695,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLCOUNTERATTACK_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLCOUNTERATTACK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLCOUNTERATTACK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLCOUNTERATTACK_Close(stf);
         }
         npref = 0;
@@ -3519,12 +3795,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLDARKCLOUDCOVER_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLDARKCLOUDCOVER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLDARKCLOUDCOVER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLDARKCLOUDCOVER_Close(stf);
         }
         npref = 0;
@@ -3610,12 +3894,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLDOJI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLDOJI_Close(stf);
         }
         npref = 0;
@@ -3701,12 +3993,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLDOJISTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLDOJISTAR_Close(stf);
         }
         npref = 0;
@@ -3792,12 +4092,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLDRAGONFLYDOJI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLDRAGONFLYDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLDRAGONFLYDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLDRAGONFLYDOJI_Close(stf);
         }
         npref = 0;
@@ -3883,12 +4191,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLENGULFING_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLENGULFING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLENGULFING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLENGULFING_Close(stf);
         }
         npref = 0;
@@ -3975,12 +4291,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLEVENINGDOJISTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLEVENINGDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLEVENINGDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLEVENINGDOJISTAR_Close(stf);
         }
         npref = 0;
@@ -4067,12 +4391,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLEVENINGSTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLEVENINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLEVENINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLEVENINGSTAR_Close(stf);
         }
         npref = 0;
@@ -4158,12 +4490,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLGAPSIDESIDEWHITE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLGAPSIDESIDEWHITE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLGAPSIDESIDEWHITE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLGAPSIDESIDEWHITE_Close(stf);
         }
         npref = 0;
@@ -4249,12 +4589,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLGRAVESTONEDOJI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLGRAVESTONEDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLGRAVESTONEDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLGRAVESTONEDOJI_Close(stf);
         }
         npref = 0;
@@ -4340,12 +4688,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHAMMER_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHAMMER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHAMMER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHAMMER_Close(stf);
         }
         npref = 0;
@@ -4431,12 +4787,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHANGINGMAN_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHANGINGMAN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHANGINGMAN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHANGINGMAN_Close(stf);
         }
         npref = 0;
@@ -4522,12 +4886,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHARAMI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHARAMI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHARAMI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHARAMI_Close(stf);
         }
         npref = 0;
@@ -4613,12 +4985,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHARAMICROSS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHARAMICROSS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHARAMICROSS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHARAMICROSS_Close(stf);
         }
         npref = 0;
@@ -4704,12 +5084,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHIGHWAVE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHIGHWAVE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHIGHWAVE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHIGHWAVE_Close(stf);
         }
         npref = 0;
@@ -4795,12 +5183,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHIKKAKE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHIKKAKE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHIKKAKE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHIKKAKE_Close(stf);
         }
         npref = 0;
@@ -4886,12 +5282,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHIKKAKEMOD_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHIKKAKEMOD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHIKKAKEMOD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHIKKAKEMOD_Close(stf);
         }
         npref = 0;
@@ -4977,12 +5381,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLHOMINGPIGEON_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLHOMINGPIGEON_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLHOMINGPIGEON_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLHOMINGPIGEON_Close(stf);
         }
         npref = 0;
@@ -5068,12 +5480,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLIDENTICAL3CROWS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLIDENTICAL3CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLIDENTICAL3CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLIDENTICAL3CROWS_Close(stf);
         }
         npref = 0;
@@ -5159,12 +5579,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLINNECK_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLINNECK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLINNECK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLINNECK_Close(stf);
         }
         npref = 0;
@@ -5250,12 +5678,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLINVERTEDHAMMER_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLINVERTEDHAMMER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLINVERTEDHAMMER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLINVERTEDHAMMER_Close(stf);
         }
         npref = 0;
@@ -5341,12 +5777,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLKICKING_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLKICKING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLKICKING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLKICKING_Close(stf);
         }
         npref = 0;
@@ -5432,12 +5876,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLKICKINGBYLENGTH_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLKICKINGBYLENGTH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLKICKINGBYLENGTH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLKICKINGBYLENGTH_Close(stf);
         }
         npref = 0;
@@ -5523,12 +5975,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLLADDERBOTTOM_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLLADDERBOTTOM_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLLADDERBOTTOM_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLLADDERBOTTOM_Close(stf);
         }
         npref = 0;
@@ -5614,12 +6074,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLLONGLEGGEDDOJI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLLONGLEGGEDDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLLONGLEGGEDDOJI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLLONGLEGGEDDOJI_Close(stf);
         }
         npref = 0;
@@ -5705,12 +6173,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLLONGLINE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLLONGLINE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLLONGLINE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLLONGLINE_Close(stf);
         }
         npref = 0;
@@ -5796,12 +6272,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLMARUBOZU_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLMARUBOZU_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLMARUBOZU_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLMARUBOZU_Close(stf);
         }
         npref = 0;
@@ -5887,12 +6371,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLMATCHINGLOW_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLMATCHINGLOW_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLMATCHINGLOW_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLMATCHINGLOW_Close(stf);
         }
         npref = 0;
@@ -5979,12 +6471,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLMATHOLD_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLMATHOLD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLMATHOLD_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLMATHOLD_Close(stf);
         }
         npref = 0;
@@ -6071,12 +6571,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLMORNINGDOJISTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLMORNINGDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLMORNINGDOJISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLMORNINGDOJISTAR_Close(stf);
         }
         npref = 0;
@@ -6163,12 +6671,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLMORNINGSTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLMORNINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLMORNINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, optInPenetration, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLMORNINGSTAR_Close(stf);
         }
         npref = 0;
@@ -6254,12 +6770,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLONNECK_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLONNECK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLONNECK_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLONNECK_Close(stf);
         }
         npref = 0;
@@ -6345,12 +6869,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLPIERCING_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLPIERCING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLPIERCING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLPIERCING_Close(stf);
         }
         npref = 0;
@@ -6436,12 +6968,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLRICKSHAWMAN_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLRICKSHAWMAN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLRICKSHAWMAN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLRICKSHAWMAN_Close(stf);
         }
         npref = 0;
@@ -6527,12 +7067,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLRISEFALL3METHODS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLRISEFALL3METHODS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLRISEFALL3METHODS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLRISEFALL3METHODS_Close(stf);
         }
         npref = 0;
@@ -6618,12 +7166,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSEPARATINGLINES_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSEPARATINGLINES_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSEPARATINGLINES_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSEPARATINGLINES_Close(stf);
         }
         npref = 0;
@@ -6709,12 +7265,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSHOOTINGSTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSHOOTINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSHOOTINGSTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSHOOTINGSTAR_Close(stf);
         }
         npref = 0;
@@ -6800,12 +7364,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSHORTLINE_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSHORTLINE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSHORTLINE_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSHORTLINE_Close(stf);
         }
         npref = 0;
@@ -6891,12 +7463,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSPINNINGTOP_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSPINNINGTOP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSPINNINGTOP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSPINNINGTOP_Close(stf);
         }
         npref = 0;
@@ -6982,12 +7562,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSTALLEDPATTERN_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSTALLEDPATTERN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSTALLEDPATTERN_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSTALLEDPATTERN_Close(stf);
         }
         npref = 0;
@@ -7073,12 +7661,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLSTICKSANDWICH_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLSTICKSANDWICH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLSTICKSANDWICH_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLSTICKSANDWICH_Close(stf);
         }
         npref = 0;
@@ -7164,12 +7760,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLTAKURI_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLTAKURI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLTAKURI_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLTAKURI_Close(stf);
         }
         npref = 0;
@@ -7255,12 +7859,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLTASUKIGAP_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLTASUKIGAP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLTASUKIGAP_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLTASUKIGAP_Close(stf);
         }
         npref = 0;
@@ -7346,12 +7958,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLTHRUSTING_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLTHRUSTING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLTHRUSTING_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLTHRUSTING_Close(stf);
         }
         npref = 0;
@@ -7437,12 +8057,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLTRISTAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLTRISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLTRISTAR_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLTRISTAR_Close(stf);
         }
         npref = 0;
@@ -7528,12 +8156,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLUNIQUE3RIVER_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLUNIQUE3RIVER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLUNIQUE3RIVER_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLUNIQUE3RIVER_Close(stf);
         }
         npref = 0;
@@ -7619,12 +8255,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLUPSIDEGAP2CROWS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLUPSIDEGAP2CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLUPSIDEGAP2CROWS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLUPSIDEGAP2CROWS_Close(stf);
         }
         npref = 0;
@@ -7710,12 +8354,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CDLXSIDEGAP3METHODS_Stream *stf = NULL;
-            TA_RetCode frc = TA_CDLXSIDEGAP3METHODS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_CDLXSIDEGAP3METHODS_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_CDLXSIDEGAP3METHODS_Close(stf);
         }
         npref = 0;
@@ -7793,12 +8445,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CEIL_Stream *stf = NULL;
-            TA_RetCode frc = TA_CEIL_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CEIL_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CEIL_Close(stf);
         }
         {
@@ -7882,12 +8542,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CMF_Stream *stf = NULL;
-            TA_RetCode frc = TA_CMF_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CMF_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CMF_Close(stf);
         }
         {
@@ -7973,12 +8641,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CMO_Stream *stf = NULL;
-            TA_RetCode frc = TA_CMO_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CMO_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CMO_Close(stf);
         }
         {
@@ -8063,12 +8739,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CMOU_Stream *stf = NULL;
-            TA_RetCode frc = TA_CMOU_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CMOU_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CMOU_Close(stf);
         }
         {
@@ -8152,12 +8836,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_CORREL_Stream *stf = NULL;
-            TA_RetCode frc = TA_CORREL_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_CORREL_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_CORREL_Close(stf);
         }
         {
@@ -8240,12 +8932,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_COS_Stream *stf = NULL;
-            TA_RetCode frc = TA_COS_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_COS_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_COS_Close(stf);
         }
         {
@@ -8328,12 +9028,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_COSH_Stream *stf = NULL;
-            TA_RetCode frc = TA_COSH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_COSH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_COSH_Close(stf);
         }
         {
@@ -8419,12 +9127,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_DEMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_DEMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_DEMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_DEMA_Close(stf);
         }
         {
@@ -8508,12 +9224,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_DIV_Stream *stf = NULL;
-            TA_RetCode frc = TA_DIV_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_DIV_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_DIV_Close(stf);
         }
         {
@@ -8599,12 +9323,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_DX_Stream *stf = NULL;
-            TA_RetCode frc = TA_DX_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_DX_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_DX_Close(stf);
         }
         {
@@ -8689,12 +9421,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_EFI_Stream *stf = NULL;
-            TA_RetCode frc = TA_EFI_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_EFI_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_EFI_Close(stf);
         }
         {
@@ -8780,12 +9520,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_EMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_EMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_EMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_EMA_Close(stf);
         }
         {
@@ -8869,12 +9617,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_EXP_Stream *stf = NULL;
-            TA_RetCode frc = TA_EXP_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_EXP_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_EXP_Close(stf);
         }
         {
@@ -8957,12 +9713,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_FLOOR_Stream *stf = NULL;
-            TA_RetCode frc = TA_FLOOR_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_FLOOR_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_FLOOR_Close(stf);
         }
         {
@@ -9046,12 +9810,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_HMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HMA_Close(stf);
         }
         {
@@ -9136,12 +9908,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_DCPERIOD_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_DCPERIOD_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HT_DCPERIOD_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HT_DCPERIOD_Close(stf);
         }
         {
@@ -9227,12 +10007,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_DCPHASE_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_DCPHASE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HT_DCPHASE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HT_DCPHASE_Close(stf);
         }
         {
@@ -9318,13 +10106,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_PHASOR_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_PHASOR_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HT_PHASOR_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HT_PHASOR_Close(stf);
         }
         {
@@ -9422,13 +10220,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_SINE_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_SINE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HT_SINE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HT_SINE_Close(stf);
         }
         {
@@ -9526,12 +10334,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_TRENDLINE_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_TRENDLINE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HT_TRENDLINE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_HT_TRENDLINE_Close(stf);
         }
         {
@@ -9617,12 +10433,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_HT_TRENDMODE_Stream *stf = NULL;
-            TA_RetCode frc = TA_HT_TRENDMODE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_HT_TRENDMODE_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_HT_TRENDMODE_Close(stf);
         }
         npref = 0;
@@ -9700,12 +10524,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_IMI_Stream *stf = NULL;
-            TA_RetCode frc = TA_IMI_OpenAndFill(&stf, sv_o, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_IMI_OpenAndFill(&stf, sv_o, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_IMI_Close(stf);
         }
         {
@@ -9791,12 +10623,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_KAMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_KAMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_KAMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_KAMA_Close(stf);
         }
         {
@@ -9881,12 +10721,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LINEARREG_Stream *stf = NULL;
-            TA_RetCode frc = TA_LINEARREG_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LINEARREG_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LINEARREG_Close(stf);
         }
         {
@@ -9970,12 +10818,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LINEARREG_ANGLE_Stream *stf = NULL;
-            TA_RetCode frc = TA_LINEARREG_ANGLE_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LINEARREG_ANGLE_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LINEARREG_ANGLE_Close(stf);
         }
         {
@@ -10059,12 +10915,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LINEARREG_INTERCEPT_Stream *stf = NULL;
-            TA_RetCode frc = TA_LINEARREG_INTERCEPT_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LINEARREG_INTERCEPT_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LINEARREG_INTERCEPT_Close(stf);
         }
         {
@@ -10148,12 +11012,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LINEARREG_SLOPE_Stream *stf = NULL;
-            TA_RetCode frc = TA_LINEARREG_SLOPE_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LINEARREG_SLOPE_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LINEARREG_SLOPE_Close(stf);
         }
         {
@@ -10236,12 +11108,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LN_Stream *stf = NULL;
-            TA_RetCode frc = TA_LN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LN_Close(stf);
         }
         {
@@ -10324,12 +11204,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_LOG10_Stream *stf = NULL;
-            TA_RetCode frc = TA_LOG10_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_LOG10_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_LOG10_Close(stf);
         }
         {
@@ -10422,12 +11310,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MA_Stream *stf = NULL;
-            TA_RetCode frc = TA_MA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInMAType, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MA_Close(stf);
         }
         {
@@ -10519,7 +11415,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MACD_Stream *stf = NULL;
-            TA_RetCode frc = TA_MACD_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MACD_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
@@ -10527,6 +11429,12 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MACD_Close(stf);
         }
         {
@@ -10641,7 +11549,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MACDEXT_Stream *stf = NULL;
-            TA_RetCode frc = TA_MACDEXT_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MACDEXT_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
@@ -10649,6 +11563,12 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MACDEXT_Close(stf);
         }
         {
@@ -10755,7 +11675,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MACDFIX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MACDFIX_OpenAndFill(&stf, sv_c, svN, optInSignalPeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MACDFIX_OpenAndFill(&stf, sv_c, svN, optInSignalPeriod, &fBeg, &fNb, sv_f0, sv_f1, sv_f2);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
@@ -10763,6 +11689,12 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MACDFIX_Close(stf);
         }
         {
@@ -10867,13 +11799,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MAMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_MAMA_OpenAndFill(&stf, sv_c, svN, optInFastLimit, optInSlowLimit, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MAMA_OpenAndFill(&stf, sv_c, svN, optInFastLimit, optInSlowLimit, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MAMA_Close(stf);
         }
         {
@@ -10969,12 +11911,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MARKETFI_Stream *stf = NULL;
-            TA_RetCode frc = TA_MARKETFI_OpenAndFill(&stf, sv_h, sv_l, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MARKETFI_OpenAndFill(&stf, sv_h, sv_l, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MARKETFI_Close(stf);
         }
         {
@@ -11069,12 +12019,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MAVP_Stream *stf = NULL;
-            TA_RetCode frc = TA_MAVP_OpenAndFill(&stf, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MAVP_OpenAndFill(&stf, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MAVP_Close(stf);
         }
         {
@@ -11162,12 +12120,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MAX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MAX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MAX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MAX_Close(stf);
         }
         {
@@ -11251,12 +12217,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MAXINDEX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MAXINDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_MAXINDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_MAXINDEX_Close(stf);
         }
         npref = 0;
@@ -11332,12 +12306,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MEDPRICE_Stream *stf = NULL;
-            TA_RetCode frc = TA_MEDPRICE_OpenAndFill(&stf, sv_h, sv_l, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MEDPRICE_OpenAndFill(&stf, sv_h, sv_l, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MEDPRICE_Close(stf);
         }
         {
@@ -11421,12 +12403,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MFI_Stream *stf = NULL;
-            TA_RetCode frc = TA_MFI_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MFI_OpenAndFill(&stf, sv_h, sv_l, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MFI_Close(stf);
         }
         {
@@ -11510,12 +12500,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MIDPOINT_Stream *stf = NULL;
-            TA_RetCode frc = TA_MIDPOINT_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MIDPOINT_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MIDPOINT_Close(stf);
         }
         {
@@ -11599,12 +12597,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MIDPRICE_Stream *stf = NULL;
-            TA_RetCode frc = TA_MIDPRICE_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MIDPRICE_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MIDPRICE_Close(stf);
         }
         {
@@ -11688,12 +12694,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MIN_Stream *stf = NULL;
-            TA_RetCode frc = TA_MIN_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MIN_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MIN_Close(stf);
         }
         {
@@ -11777,12 +12791,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MININDEX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MININDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_MININDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_MININDEX_Close(stf);
         }
         npref = 0;
@@ -11859,13 +12881,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MINMAX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MINMAX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MINMAX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MINMAX_Close(stf);
         }
         {
@@ -11961,13 +12993,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MINMAXINDEX_Stream *stf = NULL;
-            TA_RetCode frc = TA_MINMAXINDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0, sv_if1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+               sv_if1[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_MINMAXINDEX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_if0, sv_if1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
                 if( sv_if1[ft] != sv_ib1[ft] ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+                  if( sv_if1[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
             if( stf ) TA_MINMAXINDEX_Close(stf);
         }
         {
@@ -12058,12 +13100,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MINUS_DI_Stream *stf = NULL;
-            TA_RetCode frc = TA_MINUS_DI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MINUS_DI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MINUS_DI_Close(stf);
         }
         {
@@ -12150,12 +13200,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MINUS_DM_Stream *stf = NULL;
-            TA_RetCode frc = TA_MINUS_DM_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MINUS_DM_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MINUS_DM_Close(stf);
         }
         {
@@ -12240,12 +13298,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MOM_Stream *stf = NULL;
-            TA_RetCode frc = TA_MOM_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MOM_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MOM_Close(stf);
         }
         {
@@ -12328,12 +13394,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_MULT_Stream *stf = NULL;
-            TA_RetCode frc = TA_MULT_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_MULT_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_MULT_Close(stf);
         }
         {
@@ -12419,12 +13493,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_NATR_Stream *stf = NULL;
-            TA_RetCode frc = TA_NATR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_NATR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_NATR_Close(stf);
         }
         {
@@ -12508,12 +13590,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_NVI_Stream *stf = NULL;
-            TA_RetCode frc = TA_NVI_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_NVI_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_NVI_Close(stf);
         }
         {
@@ -12596,12 +13686,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_OBV_Stream *stf = NULL;
-            TA_RetCode frc = TA_OBV_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_OBV_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_OBV_Close(stf);
         }
         {
@@ -12687,12 +13785,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_PLUS_DI_Stream *stf = NULL;
-            TA_RetCode frc = TA_PLUS_DI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PLUS_DI_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_PLUS_DI_Close(stf);
         }
         {
@@ -12779,12 +13885,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_PLUS_DM_Stream *stf = NULL;
-            TA_RetCode frc = TA_PLUS_DM_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PLUS_DM_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_PLUS_DM_Close(stf);
         }
         {
@@ -12879,12 +13993,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_PPO_Stream *stf = NULL;
-            TA_RetCode frc = TA_PPO_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PPO_OpenAndFill(&stf, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_PPO_Close(stf);
         }
         {
@@ -12971,12 +14093,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_PVI_Stream *stf = NULL;
-            TA_RetCode frc = TA_PVI_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PVI_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_PVI_Close(stf);
         }
         {
@@ -13070,12 +14200,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_PVO_Stream *stf = NULL;
-            TA_RetCode frc = TA_PVO_OpenAndFill(&stf, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PVO_OpenAndFill(&stf, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_PVO_Close(stf);
         }
         {
@@ -13163,12 +14301,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_QSTICK_Stream *stf = NULL;
-            TA_RetCode frc = TA_QSTICK_OpenAndFill(&stf, sv_o, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_QSTICK_OpenAndFill(&stf, sv_o, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_QSTICK_Close(stf);
         }
         {
@@ -13252,12 +14398,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ROC_Stream *stf = NULL;
-            TA_RetCode frc = TA_ROC_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ROC_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ROC_Close(stf);
         }
         {
@@ -13341,12 +14495,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ROCP_Stream *stf = NULL;
-            TA_RetCode frc = TA_ROCP_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ROCP_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ROCP_Close(stf);
         }
         {
@@ -13430,12 +14592,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ROCR_Stream *stf = NULL;
-            TA_RetCode frc = TA_ROCR_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ROCR_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ROCR_Close(stf);
         }
         {
@@ -13519,12 +14689,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ROCR100_Stream *stf = NULL;
-            TA_RetCode frc = TA_ROCR100_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ROCR100_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ROCR100_Close(stf);
         }
         {
@@ -13610,12 +14788,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_RSI_Stream *stf = NULL;
-            TA_RetCode frc = TA_RSI_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_RSI_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_RSI_Close(stf);
         }
         {
@@ -13701,12 +14887,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_SAR_OpenAndFill(&stf, sv_h, sv_l, svN, optInAcceleration, optInMaximum, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SAR_OpenAndFill(&stf, sv_h, sv_l, svN, optInAcceleration, optInMaximum, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SAR_Close(stf);
         }
         {
@@ -13797,12 +14991,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SAREXT_Stream *stf = NULL;
-            TA_RetCode frc = TA_SAREXT_OpenAndFill(&stf, sv_h, sv_l, svN, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SAREXT_OpenAndFill(&stf, sv_h, sv_l, svN, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SAREXT_Close(stf);
         }
         {
@@ -13885,12 +15087,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SIN_Stream *stf = NULL;
-            TA_RetCode frc = TA_SIN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SIN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SIN_Close(stf);
         }
         {
@@ -13973,12 +15183,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SINH_Stream *stf = NULL;
-            TA_RetCode frc = TA_SINH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SINH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SINH_Close(stf);
         }
         {
@@ -14062,12 +15280,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_SMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SMA_Close(stf);
         }
         {
@@ -14150,12 +15376,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SQRT_Stream *stf = NULL;
-            TA_RetCode frc = TA_SQRT_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SQRT_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SQRT_Close(stf);
         }
         {
@@ -14240,12 +15474,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_STDDEV_Stream *stf = NULL;
-            TA_RetCode frc = TA_STDDEV_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDev, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_STDDEV_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDev, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_STDDEV_Close(stf);
         }
         {
@@ -14341,13 +15583,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_STOCH_Stream *stf = NULL;
-            TA_RetCode frc = TA_STOCH_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_STOCH_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_STOCH_Close(stf);
         }
         {
@@ -14457,13 +15709,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_STOCHF_Stream *stf = NULL;
-            TA_RetCode frc = TA_STOCHF_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_STOCHF_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_STOCHF_Close(stf);
         }
         {
@@ -14576,13 +15838,23 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_STOCHRSI_Stream *stf = NULL;
-            TA_RetCode frc = TA_STOCHRSI_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_STOCHRSI_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &fBeg, &fNb, sv_f0, sv_f1);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_STOCHRSI_Close(stf);
         }
         {
@@ -14682,12 +15954,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SUB_Stream *stf = NULL;
-            TA_RetCode frc = TA_SUB_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SUB_OpenAndFill(&stf, sv_c, sv_v, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SUB_Close(stf);
         }
         {
@@ -14771,12 +16051,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_SUM_Stream *stf = NULL;
-            TA_RetCode frc = TA_SUM_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_SUM_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_SUM_Close(stf);
         }
         {
@@ -14863,12 +16151,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_T3_Stream *stf = NULL;
-            TA_RetCode frc = TA_T3_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInVFactor, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_T3_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInVFactor, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_T3_Close(stf);
         }
         {
@@ -14952,12 +16248,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TAN_Stream *stf = NULL;
-            TA_RetCode frc = TA_TAN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TAN_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TAN_Close(stf);
         }
         {
@@ -15040,12 +16344,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TANH_Stream *stf = NULL;
-            TA_RetCode frc = TA_TANH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TANH_OpenAndFill(&stf, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TANH_Close(stf);
         }
         {
@@ -15131,12 +16443,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TEMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_TEMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TEMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TEMA_Close(stf);
         }
         {
@@ -15220,12 +16540,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TRANGE_Stream *stf = NULL;
-            TA_RetCode frc = TA_TRANGE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TRANGE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TRANGE_Close(stf);
         }
         {
@@ -15309,12 +16637,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TRIMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_TRIMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TRIMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TRIMA_Close(stf);
         }
         {
@@ -15400,12 +16736,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TRIX_Stream *stf = NULL;
-            TA_RetCode frc = TA_TRIX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TRIX_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TRIX_Close(stf);
         }
         {
@@ -15490,12 +16834,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TSF_Stream *stf = NULL;
-            TA_RetCode frc = TA_TSF_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TSF_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TSF_Close(stf);
         }
         {
@@ -15578,12 +16930,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_TYPPRICE_Stream *stf = NULL;
-            TA_RetCode frc = TA_TYPPRICE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_TYPPRICE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_TYPPRICE_Close(stf);
         }
         {
@@ -15669,12 +17029,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_ULTOSC_Stream *stf = NULL;
-            TA_RetCode frc = TA_ULTOSC_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_ULTOSC_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_ULTOSC_Close(stf);
         }
         {
@@ -15759,12 +17127,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_VAR_Stream *stf = NULL;
-            TA_RetCode frc = TA_VAR_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDev, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_VAR_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInNbDev, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_VAR_Close(stf);
         }
         {
@@ -15848,12 +17224,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_VWMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_VWMA_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_VWMA_OpenAndFill(&stf, sv_c, sv_v, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_VWMA_Close(stf);
         }
         {
@@ -15936,12 +17320,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_WAD_Stream *stf = NULL;
-            TA_RetCode frc = TA_WAD_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_WAD_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_WAD_Close(stf);
         }
         {
@@ -16024,12 +17416,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_WCLPRICE_Stream *stf = NULL;
-            TA_RetCode frc = TA_WCLPRICE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_WCLPRICE_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_WCLPRICE_Close(stf);
         }
         {
@@ -16113,12 +17513,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_WILLR_Stream *stf = NULL;
-            TA_RetCode frc = TA_WILLR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_WILLR_OpenAndFill(&stf, sv_h, sv_l, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_WILLR_Close(stf);
         }
         {
@@ -16202,12 +17610,20 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         {
             int fBeg = 0, fNb = 0, ft;
             TA_WMA_Stream *stf = NULL;
-            TA_RetCode frc = TA_WMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_WMA_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
             fillChecked = 1;
             if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
             else for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
             }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
             if( stf ) TA_WMA_Close(stf);
         }
         {

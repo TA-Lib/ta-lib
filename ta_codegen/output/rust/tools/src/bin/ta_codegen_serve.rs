@@ -15561,9 +15561,9 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
-        let mut f2: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ACCBANDS_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2) {
@@ -15574,6 +15574,9 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -15665,7 +15668,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ACOS_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -15674,6 +15677,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -15757,7 +15761,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.AD_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -15766,6 +15770,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -15849,7 +15854,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ADD_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -15858,6 +15863,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -15944,7 +15950,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ADOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInFastPeriod, optInSlowPeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -15953,6 +15959,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16038,7 +16045,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ADX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -16047,6 +16054,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16132,7 +16140,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ADXR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -16141,6 +16149,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16235,7 +16244,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.APO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
@@ -16244,6 +16253,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16329,8 +16339,8 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.AROON_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -16340,6 +16350,8 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16428,7 +16440,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.AROONOSC_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -16437,6 +16449,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16520,7 +16533,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ASIN_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -16529,6 +16542,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16612,7 +16626,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ATAN_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -16621,6 +16635,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16706,7 +16721,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -16715,6 +16730,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16799,7 +16815,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.AVGDEV_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -16808,6 +16824,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16891,7 +16908,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.AVGPRICE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -16900,6 +16917,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -16997,9 +17015,9 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
-        let mut f2: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.BBANDS_OpenAndFill(&fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2) {
@@ -17010,6 +17028,9 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -17102,7 +17123,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.BETA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -17111,6 +17132,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -17194,7 +17216,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.BOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17203,6 +17225,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -17287,7 +17310,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CCI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -17296,6 +17319,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -17383,7 +17407,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17392,6 +17416,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17479,7 +17504,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3BLACKCROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17488,6 +17513,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17575,7 +17601,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3INSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17584,6 +17610,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17671,7 +17698,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3LINESTRIKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17680,6 +17707,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17767,7 +17795,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3OUTSIDE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17776,6 +17804,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17863,7 +17892,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3STARSINSOUTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17872,6 +17901,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -17959,7 +17989,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDL3WHITESOLDIERS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -17968,6 +17998,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18056,7 +18087,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLABANDONEDBABY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -18065,6 +18096,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18152,7 +18184,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLADVANCEBLOCK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18161,6 +18193,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18248,7 +18281,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLBELTHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18257,6 +18290,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18344,7 +18378,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLBREAKAWAY_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18353,6 +18387,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18440,7 +18475,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLCLOSINGMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18449,6 +18484,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18536,7 +18572,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLCONCEALBABYSWALL_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18545,6 +18581,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18632,7 +18669,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLCOUNTERATTACK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18641,6 +18678,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18729,7 +18767,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLDARKCLOUDCOVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -18738,6 +18776,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18825,7 +18864,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18834,6 +18873,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -18921,7 +18961,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -18930,6 +18970,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19017,7 +19058,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLDRAGONFLYDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19026,6 +19067,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19113,7 +19155,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLENGULFING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19122,6 +19164,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19210,7 +19253,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLEVENINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -19219,6 +19262,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19307,7 +19351,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLEVENINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -19316,6 +19360,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19403,7 +19448,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLGAPSIDESIDEWHITE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19412,6 +19457,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19499,7 +19545,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLGRAVESTONEDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19508,6 +19554,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19595,7 +19642,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19604,6 +19651,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19691,7 +19739,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHANGINGMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19700,6 +19748,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19787,7 +19836,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHARAMI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19796,6 +19845,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19883,7 +19933,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHARAMICROSS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19892,6 +19942,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -19979,7 +20030,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHIGHWAVE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -19988,6 +20039,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20075,7 +20127,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHIKKAKE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20084,6 +20136,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20171,7 +20224,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHIKKAKEMOD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20180,6 +20233,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20267,7 +20321,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLHOMINGPIGEON_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20276,6 +20330,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20363,7 +20418,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLIDENTICAL3CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20372,6 +20427,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20459,7 +20515,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLINNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20468,6 +20524,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20555,7 +20612,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLINVERTEDHAMMER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20564,6 +20621,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20651,7 +20709,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLKICKING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20660,6 +20718,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20747,7 +20806,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLKICKINGBYLENGTH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20756,6 +20815,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20843,7 +20903,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLLADDERBOTTOM_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20852,6 +20912,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -20939,7 +21000,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLLONGLEGGEDDOJI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -20948,6 +21009,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21035,7 +21097,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLLONGLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21044,6 +21106,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21131,7 +21194,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLMARUBOZU_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21140,6 +21203,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21227,7 +21291,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLMATCHINGLOW_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21236,6 +21300,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21324,7 +21389,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLMATHOLD_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -21333,6 +21398,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21421,7 +21487,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLMORNINGDOJISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -21430,6 +21496,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21518,7 +21585,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLMORNINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, optInPenetration, &mut fBeg, &mut fNb, &mut f0) {
@@ -21527,6 +21594,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21614,7 +21682,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLONNECK_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21623,6 +21691,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21710,7 +21779,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLPIERCING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21719,6 +21788,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21806,7 +21876,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLRICKSHAWMAN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21815,6 +21885,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21902,7 +21973,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLRISEFALL3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -21911,6 +21982,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -21998,7 +22070,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSEPARATINGLINES_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22007,6 +22079,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22094,7 +22167,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSHOOTINGSTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22103,6 +22176,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22190,7 +22264,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSHORTLINE_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22199,6 +22273,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22286,7 +22361,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSPINNINGTOP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22295,6 +22370,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22382,7 +22458,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSTALLEDPATTERN_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22391,6 +22467,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22478,7 +22555,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLSTICKSANDWICH_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22487,6 +22564,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22574,7 +22652,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLTAKURI_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22583,6 +22661,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22670,7 +22749,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLTASUKIGAP_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22679,6 +22758,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22766,7 +22846,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLTHRUSTING_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22775,6 +22855,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22862,7 +22943,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLTRISTAR_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22871,6 +22952,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -22958,7 +23040,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLUNIQUE3RIVER_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -22967,6 +23049,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -23054,7 +23137,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLUPSIDEGAP2CROWS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -23063,6 +23146,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -23150,7 +23234,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CDLXSIDEGAP3METHODS_OpenAndFill(&fz_o, &fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -23159,6 +23243,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -23242,7 +23327,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CEIL_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -23251,6 +23336,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23335,7 +23421,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CMF_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -23344,6 +23430,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23429,7 +23516,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CMO_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -23438,6 +23525,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23522,7 +23610,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CMOU_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -23531,6 +23619,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23615,7 +23704,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.CORREL_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -23624,6 +23713,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23707,7 +23797,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.COS_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -23716,6 +23806,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23799,7 +23890,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.COSH_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -23808,6 +23899,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23893,7 +23985,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.DEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -23902,6 +23994,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -23985,7 +24078,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.DIV_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -23994,6 +24087,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24079,7 +24173,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.DX_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -24088,6 +24182,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24172,7 +24267,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.EFI_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -24181,6 +24276,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24266,7 +24362,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.EMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -24275,6 +24371,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24358,7 +24455,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.EXP_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -24367,6 +24464,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24450,7 +24548,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.FLOOR_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -24459,6 +24557,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24543,7 +24642,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -24552,6 +24651,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24636,7 +24736,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_DCPERIOD_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -24645,6 +24745,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24729,7 +24830,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_DCPHASE_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -24738,6 +24839,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24823,8 +24925,8 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_PHASOR_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -24834,6 +24936,8 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -24923,8 +25027,8 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_SINE_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -24934,6 +25038,8 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25022,7 +25128,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_TRENDLINE_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -25031,6 +25137,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25115,7 +25222,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.HT_TRENDMODE_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -25124,6 +25231,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -25208,7 +25316,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.IMI_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25217,6 +25325,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25302,7 +25411,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.KAMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25311,6 +25420,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25395,7 +25505,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LINEARREG_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25404,6 +25514,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25488,7 +25599,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LINEARREG_ANGLE_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25497,6 +25608,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25581,7 +25693,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LINEARREG_INTERCEPT_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25590,6 +25702,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25674,7 +25787,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LINEARREG_SLOPE_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -25683,6 +25796,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25766,7 +25880,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LN_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -25775,6 +25889,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25858,7 +25973,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.LOG10_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -25867,6 +25982,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -25960,7 +26076,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MA_OpenAndFill(&fz_c, optInTimePeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
@@ -25969,6 +26085,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26058,9 +26175,9 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
-        let mut f2: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MACD_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2) {
@@ -26071,6 +26188,9 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26186,9 +26306,9 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
-        let mut f2: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MACDEXT_OpenAndFill(&fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2) {
@@ -26199,6 +26319,9 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26294,9 +26417,9 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
-        let mut f2: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MACDFIX_OpenAndFill(&fz_c, optInSignalPeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1, &mut f2) {
@@ -26307,6 +26430,9 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26402,8 +26528,8 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MAMA_OpenAndFill(&fz_c, optInFastLimit, optInSlowLimit, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -26413,6 +26539,8 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26500,7 +26628,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MARKETFI_OpenAndFill(&fz_h, &fz_l, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -26509,6 +26637,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26604,7 +26733,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MAVP_OpenAndFill(&fz_c, &fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
@@ -26613,6 +26742,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26697,7 +26827,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MAX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -26706,6 +26836,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26790,7 +26921,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -26799,6 +26930,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -26882,7 +27014,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MEDPRICE_OpenAndFill(&fz_h, &fz_l, &mut fBeg, &mut fNb, &mut f0) {
@@ -26891,6 +27023,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -26975,7 +27108,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MFI_OpenAndFill(&fz_h, &fz_l, &fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -26984,6 +27117,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27068,7 +27202,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MIDPOINT_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27077,6 +27211,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27161,7 +27296,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MIDPRICE_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27170,6 +27305,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27254,7 +27390,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MIN_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27263,6 +27399,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27347,7 +27484,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MININDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27356,6 +27493,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -27441,8 +27579,8 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MINMAX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -27452,6 +27590,8 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27541,8 +27681,8 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<i32> = vec![0i32; svN];
-        let mut f1: Vec<i32> = vec![0i32; svN];
+        let mut f0: Vec<i32> = vec![-987654321i32; svN];
+        let mut f1: Vec<i32> = vec![-987654321i32; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MINMAXINDEX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -27552,6 +27692,8 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if f0[i] != b0[i] { fill_ok = false; } }
                     for i in 0..nb { if f1[i] != b1[i] { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -987654321i32 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -987654321i32 { fill_ok = false; } }
                 }
             }
         }
@@ -27641,7 +27783,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MINUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27650,6 +27792,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27735,7 +27878,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MINUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27744,6 +27887,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27828,7 +27972,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MOM_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -27837,6 +27981,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -27920,7 +28065,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.MULT_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -27929,6 +28074,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28014,7 +28160,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.NATR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28023,6 +28169,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28106,7 +28253,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.NVI_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -28115,6 +28262,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28198,7 +28346,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.OBV_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -28207,6 +28355,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28292,7 +28441,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.PLUS_DI_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28301,6 +28450,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28386,7 +28536,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.PLUS_DM_OpenAndFill(&fz_h, &fz_l, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28395,6 +28545,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28489,7 +28640,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.PPO_OpenAndFill(&fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
@@ -28498,6 +28649,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28581,7 +28733,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.PVI_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -28590,6 +28742,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28684,7 +28837,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.PVO_OpenAndFill(&fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, &mut fBeg, &mut fNb, &mut f0) {
@@ -28693,6 +28846,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28777,7 +28931,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.QSTICK_OpenAndFill(&fz_o, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28786,6 +28940,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28870,7 +29025,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ROC_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28879,6 +29034,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -28963,7 +29119,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ROCP_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -28972,6 +29128,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29056,7 +29213,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ROCR_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -29065,6 +29222,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29149,7 +29307,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ROCR100_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -29158,6 +29316,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29243,7 +29402,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.RSI_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -29252,6 +29411,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29337,7 +29497,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SAR_OpenAndFill(&fz_h, &fz_l, optInAcceleration, optInMaximum, &mut fBeg, &mut fNb, &mut f0) {
@@ -29346,6 +29506,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29437,7 +29598,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SAREXT_OpenAndFill(&fz_h, &fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &mut fBeg, &mut fNb, &mut f0) {
@@ -29446,6 +29607,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29529,7 +29691,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SIN_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -29538,6 +29700,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29621,7 +29784,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SINH_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -29630,6 +29793,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29714,7 +29878,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -29723,6 +29887,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29806,7 +29971,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SQRT_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -29815,6 +29980,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -29900,7 +30066,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.STDDEV_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut fBeg, &mut fNb, &mut f0) {
@@ -29909,6 +30075,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30010,8 +30177,8 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.STOCH_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -30021,6 +30188,8 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30120,8 +30289,8 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.STOCHF_OpenAndFill(&fz_h, &fz_l, &fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -30131,6 +30300,8 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30232,8 +30403,8 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
-        let mut f1: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.STOCHRSI_OpenAndFill(&fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &mut fBeg, &mut fNb, &mut f0, &mut f1) {
@@ -30243,6 +30414,8 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
                     for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30330,7 +30503,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SUB_OpenAndFill(&fz_c, &fz_v, &mut fBeg, &mut fNb, &mut f0) {
@@ -30339,6 +30512,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30423,7 +30597,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.SUM_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -30432,6 +30606,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30518,7 +30693,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.T3_OpenAndFill(&fz_c, optInTimePeriod, optInVFactor, &mut fBeg, &mut fNb, &mut f0) {
@@ -30527,6 +30702,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30610,7 +30786,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TAN_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -30619,6 +30795,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30702,7 +30879,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TANH_OpenAndFill(&fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -30711,6 +30888,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30796,7 +30974,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TEMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -30805,6 +30983,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30888,7 +31067,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TRANGE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -30897,6 +31076,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -30981,7 +31161,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TRIMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -30990,6 +31170,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31075,7 +31256,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TRIX_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -31084,6 +31265,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31168,7 +31350,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TSF_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -31177,6 +31359,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31260,7 +31443,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.TYPPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -31269,6 +31452,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31355,7 +31539,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.ULTOSC_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &mut fBeg, &mut fNb, &mut f0) {
@@ -31364,6 +31548,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31449,7 +31634,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.VAR_OpenAndFill(&fz_c, optInTimePeriod, optInNbDev, &mut fBeg, &mut fNb, &mut f0) {
@@ -31458,6 +31643,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31542,7 +31728,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.VWMA_OpenAndFill(&fz_c, &fz_v, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -31551,6 +31737,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31634,7 +31821,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.WAD_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -31643,6 +31830,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31726,7 +31914,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.WCLPRICE_OpenAndFill(&fz_h, &fz_l, &fz_c, &mut fBeg, &mut fNb, &mut f0) {
@@ -31735,6 +31923,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31819,7 +32008,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.WILLR_OpenAndFill(&fz_h, &fz_l, &fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -31828,6 +32017,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }
@@ -31912,7 +32102,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
         }
         fill_checked = 1;
         {
-        let mut f0: Vec<f64> = vec![0.0f64; svN];
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
         let mut fBeg = 0usize;
         let mut fNb = 0usize;
         match c2.WMA_OpenAndFill(&fz_c, optInTimePeriod, &mut fBeg, &mut fNb, &mut f0) {
@@ -31921,6 +32111,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                 if fBeg != beg || fNb != nb { fill_ok = false; }
                 else {
                     for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
                 }
             }
         }

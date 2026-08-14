@@ -155467,8 +155467,11 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.ACCBANDS_Stream _fh = c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1, f2);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
@@ -155476,6 +155479,9 @@ public class TaCodegenServe {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.ACCBANDS_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -155590,11 +155596,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ACOS_Stream _fh = c2.ACOS_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ACOS_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -155690,11 +155698,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AD_Stream _fh = c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.AD_OpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -155790,11 +155800,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADD_Stream _fh = c2.ADD_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ADD_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -155893,11 +155905,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADOSC_Stream _fh = c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ADOSC_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156000,11 +156014,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADX_Stream _fh = c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ADX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156107,11 +156123,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ADXR_Stream _fh = c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ADXR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156225,11 +156243,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.APO_Stream _fh = c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.APO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156332,13 +156352,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.AROON_Stream _fh = c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.AROON_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -156448,11 +156472,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AROONOSC_Stream _fh = c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.AROONOSC_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156553,11 +156579,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ASIN_Stream _fh = c2.ASIN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ASIN_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156653,11 +156681,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ATAN_Stream _fh = c2.ATAN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ATAN_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156755,11 +156785,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ATR_Stream _fh = c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156861,11 +156893,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AVGDEV_Stream _fh = c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.AVGDEV_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -156966,11 +157000,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.AVGPRICE_Stream _fh = c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.AVGPRICE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -157082,8 +157118,11 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.BBANDS_Stream _fh = c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, f2);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
@@ -157091,6 +157130,9 @@ public class TaCodegenServe {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.BBANDS_OpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -157206,11 +157248,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.BETA_Stream _fh = c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.BETA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -157311,11 +157355,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.BOP_Stream _fh = c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.BOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -157412,11 +157458,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CCI_Stream _fh = c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CCI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -157521,11 +157569,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL2CROWS_Stream _fh = c2.CDL2CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -157624,11 +157674,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3BLACKCROWS_Stream _fh = c2.CDL3BLACKCROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -157727,11 +157779,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3INSIDE_Stream _fh = c2.CDL3INSIDE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -157830,11 +157884,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3LINESTRIKE_Stream _fh = c2.CDL3LINESTRIKE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -157933,11 +157989,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3OUTSIDE_Stream _fh = c2.CDL3OUTSIDE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158036,11 +158094,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3STARSINSOUTH_Stream _fh = c2.CDL3STARSINSOUTH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158139,11 +158199,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDL3WHITESOLDIERS_Stream _fh = c2.CDL3WHITESOLDIERS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158243,11 +158305,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLABANDONEDBABY_Stream _fh = c2.CDLABANDONEDBABY_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158346,11 +158410,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLADVANCEBLOCK_Stream _fh = c2.CDLADVANCEBLOCK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158449,11 +158515,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLBELTHOLD_Stream _fh = c2.CDLBELTHOLD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158552,11 +158620,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLBREAKAWAY_Stream _fh = c2.CDLBREAKAWAY_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158655,11 +158725,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCLOSINGMARUBOZU_Stream _fh = c2.CDLCLOSINGMARUBOZU_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158758,11 +158830,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCONCEALBABYSWALL_Stream _fh = c2.CDLCONCEALBABYSWALL_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158861,11 +158935,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLCOUNTERATTACK_Stream _fh = c2.CDLCOUNTERATTACK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -158965,11 +159041,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDARKCLOUDCOVER_Stream _fh = c2.CDLDARKCLOUDCOVER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159068,11 +159146,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDOJI_Stream _fh = c2.CDLDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159171,11 +159251,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDOJISTAR_Stream _fh = c2.CDLDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159274,11 +159356,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLDRAGONFLYDOJI_Stream _fh = c2.CDLDRAGONFLYDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159377,11 +159461,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLENGULFING_Stream _fh = c2.CDLENGULFING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159481,11 +159567,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLEVENINGDOJISTAR_Stream _fh = c2.CDLEVENINGDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159585,11 +159673,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLEVENINGSTAR_Stream _fh = c2.CDLEVENINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159688,11 +159778,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLGAPSIDESIDEWHITE_Stream _fh = c2.CDLGAPSIDESIDEWHITE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159791,11 +159883,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLGRAVESTONEDOJI_Stream _fh = c2.CDLGRAVESTONEDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159894,11 +159988,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHAMMER_Stream _fh = c2.CDLHAMMER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -159997,11 +160093,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHANGINGMAN_Stream _fh = c2.CDLHANGINGMAN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160100,11 +160198,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHARAMI_Stream _fh = c2.CDLHARAMI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160203,11 +160303,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHARAMICROSS_Stream _fh = c2.CDLHARAMICROSS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160306,11 +160408,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIGHWAVE_Stream _fh = c2.CDLHIGHWAVE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160409,11 +160513,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIKKAKE_Stream _fh = c2.CDLHIKKAKE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160512,11 +160618,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHIKKAKEMOD_Stream _fh = c2.CDLHIKKAKEMOD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160615,11 +160723,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLHOMINGPIGEON_Stream _fh = c2.CDLHOMINGPIGEON_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160718,11 +160828,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLIDENTICAL3CROWS_Stream _fh = c2.CDLIDENTICAL3CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160821,11 +160933,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLINNECK_Stream _fh = c2.CDLINNECK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -160924,11 +161038,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLINVERTEDHAMMER_Stream _fh = c2.CDLINVERTEDHAMMER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161027,11 +161143,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLKICKING_Stream _fh = c2.CDLKICKING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161130,11 +161248,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLKICKINGBYLENGTH_Stream _fh = c2.CDLKICKINGBYLENGTH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161233,11 +161353,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLADDERBOTTOM_Stream _fh = c2.CDLLADDERBOTTOM_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161336,11 +161458,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLONGLEGGEDDOJI_Stream _fh = c2.CDLLONGLEGGEDDOJI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161439,11 +161563,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLLONGLINE_Stream _fh = c2.CDLLONGLINE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161542,11 +161668,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMARUBOZU_Stream _fh = c2.CDLMARUBOZU_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161645,11 +161773,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMATCHINGLOW_Stream _fh = c2.CDLMATCHINGLOW_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161749,11 +161879,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMATHOLD_Stream _fh = c2.CDLMATHOLD_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161853,11 +161985,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMORNINGDOJISTAR_Stream _fh = c2.CDLMORNINGDOJISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -161957,11 +162091,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLMORNINGSTAR_Stream _fh = c2.CDLMORNINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, optInPenetration, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162060,11 +162196,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLONNECK_Stream _fh = c2.CDLONNECK_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162163,11 +162301,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLPIERCING_Stream _fh = c2.CDLPIERCING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162266,11 +162406,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLRICKSHAWMAN_Stream _fh = c2.CDLRICKSHAWMAN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162369,11 +162511,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLRISEFALL3METHODS_Stream _fh = c2.CDLRISEFALL3METHODS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162472,11 +162616,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSEPARATINGLINES_Stream _fh = c2.CDLSEPARATINGLINES_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162575,11 +162721,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSHOOTINGSTAR_Stream _fh = c2.CDLSHOOTINGSTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162678,11 +162826,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSHORTLINE_Stream _fh = c2.CDLSHORTLINE_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162781,11 +162931,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSPINNINGTOP_Stream _fh = c2.CDLSPINNINGTOP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162884,11 +163036,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSTALLEDPATTERN_Stream _fh = c2.CDLSTALLEDPATTERN_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -162987,11 +163141,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLSTICKSANDWICH_Stream _fh = c2.CDLSTICKSANDWICH_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163090,11 +163246,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTAKURI_Stream _fh = c2.CDLTAKURI_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163193,11 +163351,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTASUKIGAP_Stream _fh = c2.CDLTASUKIGAP_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163296,11 +163456,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTHRUSTING_Stream _fh = c2.CDLTHRUSTING_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163399,11 +163561,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLTRISTAR_Stream _fh = c2.CDLTRISTAR_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163502,11 +163666,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLUNIQUE3RIVER_Stream _fh = c2.CDLUNIQUE3RIVER_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163605,11 +163771,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLUPSIDEGAP2CROWS_Stream _fh = c2.CDLUPSIDEGAP2CROWS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163708,11 +163876,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.CDLXSIDEGAP3METHODS_Stream _fh = c2.CDLXSIDEGAP3METHODS_OpenAndFill(fz_o, fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -163807,11 +163977,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CEIL_Stream _fh = c2.CEIL_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CEIL_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -163908,11 +164080,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMF_Stream _fh = c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CMF_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164015,11 +164189,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMO_Stream _fh = c2.CMO_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CMO_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164121,11 +164297,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CMOU_Stream _fh = c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CMOU_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164227,11 +164405,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.CORREL_Stream _fh = c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.CORREL_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164332,11 +164512,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.COS_Stream _fh = c2.COS_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.COS_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164432,11 +164614,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.COSH_Stream _fh = c2.COSH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.COSH_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164534,11 +164718,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DEMA_Stream _fh = c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.DEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164639,11 +164825,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DIV_Stream _fh = c2.DIV_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.DIV_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164741,11 +164929,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.DX_Stream _fh = c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.DX_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164847,11 +165037,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EFI_Stream _fh = c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.EFI_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -164954,11 +165146,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EMA_Stream _fh = c2.EMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.EMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165059,11 +165253,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.EXP_Stream _fh = c2.EXP_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.EXP_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165159,11 +165355,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.FLOOR_Stream _fh = c2.FLOOR_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.FLOOR_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165260,11 +165458,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HMA_Stream _fh = c2.HMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165366,11 +165566,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_DCPERIOD_Stream _fh = c2.HT_DCPERIOD_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HT_DCPERIOD_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165467,11 +165669,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_DCPHASE_Stream _fh = c2.HT_DCPHASE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HT_DCPHASE_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165569,13 +165773,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.HT_PHASOR_Stream _fh = c2.HT_PHASOR_OpenAndFill(fz_c, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HT_PHASOR_OpenAndFill(fz_c, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.HT_PHASOR_OpenAndFill(fz_c, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -165680,13 +165888,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.HT_SINE_Stream _fh = c2.HT_SINE_OpenAndFill(fz_c, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HT_SINE_OpenAndFill(fz_c, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.HT_SINE_OpenAndFill(fz_c, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -165790,11 +166002,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.HT_TRENDLINE_Stream _fh = c2.HT_TRENDLINE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.HT_TRENDLINE_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -165891,11 +166105,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.HT_TRENDMODE_Stream _fh = c2.HT_TRENDMODE_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -165991,11 +166207,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.IMI_Stream _fh = c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.IMI_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166098,11 +166316,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.KAMA_Stream _fh = c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.KAMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166204,11 +166424,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_Stream _fh = c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LINEARREG_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166310,11 +166532,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_ANGLE_Stream _fh = c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LINEARREG_ANGLE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166416,11 +166640,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_INTERCEPT_Stream _fh = c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LINEARREG_INTERCEPT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166522,11 +166748,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LINEARREG_SLOPE_Stream _fh = c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LINEARREG_SLOPE_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166627,11 +166855,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LN_Stream _fh = c2.LN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LN_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166727,11 +166957,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.LOG10_Stream _fh = c2.LOG10_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.LOG10_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166839,11 +167071,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MA_Stream _fh = c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MA_OpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -166950,8 +167184,11 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACD_Stream _fh = c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, f2);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
@@ -166959,6 +167196,9 @@ public class TaCodegenServe {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.MACD_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -167103,8 +167343,11 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACDEXT_Stream _fh = c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, f2);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
@@ -167112,6 +167355,9 @@ public class TaCodegenServe {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.MACDEXT_OpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -167230,8 +167476,11 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
                 Core.MACDFIX_Stream _fh = c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f1, f2);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
@@ -167239,6 +167488,9 @@ public class TaCodegenServe {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.MACDFIX_OpenAndFill(fz_c, optInSignalPeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -167357,13 +167609,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.MAMA_Stream _fh = c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.MAMA_OpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -167466,11 +167722,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MARKETFI_Stream _fh = c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MARKETFI_OpenAndFill(fz_h, fz_l, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -167580,11 +167838,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MAVP_Stream _fh = c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MAVP_OpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -167686,11 +167946,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MAX_Stream _fh = c2.MAX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MAX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -167792,11 +168054,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.MAXINDEX_Stream _fh = c2.MAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -167896,11 +168160,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MEDPRICE_Stream _fh = c2.MEDPRICE_OpenAndFill(fz_h, fz_l, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MEDPRICE_OpenAndFill(fz_h, fz_l, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -167997,11 +168263,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MFI_Stream _fh = c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MFI_OpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168103,11 +168371,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIDPOINT_Stream _fh = c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MIDPOINT_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168209,11 +168479,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIDPRICE_Stream _fh = c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MIDPRICE_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168315,11 +168587,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MIN_Stream _fh = c2.MIN_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MIN_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168421,11 +168695,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 Core.MININDEX_Stream _fh = c2.MININDEX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -168527,13 +168803,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.MINMAX_Stream _fh = c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.MINMAX_OpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -168644,13 +168924,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
                 int[] f1 = new int[svN];
+                java.util.Arrays.fill(f1, (int)-987654321);
                 Core.MINMAXINDEX_Stream _fh = c2.MINMAXINDEX_OpenAndFill(fz_c, optInTimePeriod, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (f1[i] != b1[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
             int seedShift = 0;
@@ -168759,11 +169043,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MINUS_DI_Stream _fh = c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MINUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168866,11 +169152,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MINUS_DM_Stream _fh = c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MINUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -168972,11 +169260,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MOM_Stream _fh = c2.MOM_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MOM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169077,11 +169367,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.MULT_Stream _fh = c2.MULT_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.MULT_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169179,11 +169471,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.NATR_Stream _fh = c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.NATR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169284,11 +169578,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.NVI_Stream _fh = c2.NVI_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.NVI_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169384,11 +169680,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.OBV_Stream _fh = c2.OBV_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.OBV_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169486,11 +169784,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PLUS_DI_Stream _fh = c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.PLUS_DI_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169593,11 +169893,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PLUS_DM_Stream _fh = c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.PLUS_DM_OpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169711,11 +170013,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PPO_Stream _fh = c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.PPO_OpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169816,11 +170120,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PVI_Stream _fh = c2.PVI_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.PVI_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -169929,11 +170235,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.PVO_Stream _fh = c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.PVO_OpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170035,11 +170343,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.QSTICK_Stream _fh = c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.QSTICK_OpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170141,11 +170451,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROC_Stream _fh = c2.ROC_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ROC_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170247,11 +170559,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCP_Stream _fh = c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ROCP_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170353,11 +170667,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCR_Stream _fh = c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ROCR_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170459,11 +170775,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ROCR100_Stream _fh = c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ROCR100_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170566,11 +170884,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.RSI_Stream _fh = c2.RSI_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.RSI_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170673,11 +170993,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SAR_Stream _fh = c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SAR_OpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170781,11 +171103,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SAREXT_Stream _fh = c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SAREXT_OpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170881,11 +171205,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SIN_Stream _fh = c2.SIN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SIN_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -170981,11 +171307,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SINH_Stream _fh = c2.SINH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SINH_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -171082,11 +171410,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SMA_Stream _fh = c2.SMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -171187,11 +171517,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SQRT_Stream _fh = c2.SQRT_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SQRT_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -171289,11 +171621,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.STDDEV_Stream _fh = c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.STDDEV_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -171416,13 +171750,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCH_Stream _fh = c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.STOCH_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -171545,13 +171883,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCHF_Stream _fh = c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.STOCHF_OpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -171676,13 +172018,17 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
                 Core.STOCHRSI_Stream _fh = c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f1);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.STOCHRSI_OpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
@@ -171791,11 +172137,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SUB_Stream _fh = c2.SUB_OpenAndFill(fz_c, fz_v, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SUB_OpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -171892,11 +172240,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.SUM_Stream _fh = c2.SUM_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.SUM_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172000,11 +172350,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.T3_Stream _fh = c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.T3_OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172105,11 +172457,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TAN_Stream _fh = c2.TAN_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TAN_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172205,11 +172559,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TANH_Stream _fh = c2.TANH_OpenAndFill(fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TANH_OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172307,11 +172663,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TEMA_Stream _fh = c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TEMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172412,11 +172770,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRANGE_Stream _fh = c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TRANGE_OpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172513,11 +172873,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRIMA_Stream _fh = c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TRIMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172620,11 +172982,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TRIX_Stream _fh = c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TRIX_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172726,11 +173090,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TSF_Stream _fh = c2.TSF_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TSF_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172831,11 +173197,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.TYPPRICE_Stream _fh = c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.TYPPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -172934,11 +173302,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.ULTOSC_Stream _fh = c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.ULTOSC_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173041,11 +173411,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.VAR_Stream _fh = c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.VAR_OpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173147,11 +173519,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.VWMA_Stream _fh = c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.VWMA_OpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173252,11 +173626,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WAD_Stream _fh = c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.WAD_OpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173352,11 +173728,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WCLPRICE_Stream _fh = c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.WCLPRICE_OpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173453,11 +173831,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WILLR_Stream _fh = c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.WILLR_OpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
@@ -173559,11 +173939,13 @@ public class TaCodegenServe {
             fillChecked = 1;
             try {
                 double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
                 Core.WMA_Stream _fh = c2.WMA_OpenAndFill(fz_c, optInTimePeriod, f0);
                 OutRange _fr = _fh.fillRange();
                 if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
                 else {
                     for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
                 }
                 try { c2.WMA_OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }

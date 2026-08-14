@@ -1028,12 +1028,51 @@ fn sv_identity_guard_subst(
     None
 }
 
+/// Stamp the canary across the FULL width of the C fill buffers.
+///
+/// Not `svN`: a lookback-0 function fills the whole series, so `fNb == svN` and
+/// a `[fNb, svN)` window is empty — the assert would be a no-op for exactly the
+/// functions whose overrun has the furthest to travel. A one-past-the-range
+/// write also lands at index `svN` itself. Stamp and assert must use the same
+/// bound; widening only the assert would read whatever an earlier function in
+/// the same request left in these `static` buffers and fail spuriously.
+fn c_canary_stamp(fbuf: &[String], out_is_int: &[bool]) -> String {
+    let mut s = String::from("            for( ft = 0; ft < SV_MAXN; ft++ ) {\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let canary = if *is_int { "SV_FILL_CANARY_I" } else { "SV_FILL_CANARY" };
+        let _ = writeln!(s, "               {}[ft] = {canary};", fbuf[i]);
+    }
+    s.push_str("            }\n");
+    s
+}
+
+/// Assert the slack above the produced range still holds the canary. Nothing
+/// else in the tree checks it: every gate sizes the fill buffer at full history
+/// and compares only `[0, nb)`, so a write past `nb` lands in unread space.
+fn c_canary_check(fbuf: &[String], out_is_int: &[bool]) -> String {
+    let mut s = String::from("            if( frc == TA_SUCCESS )\n");
+    s.push_str("               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {\n");
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let canary = if *is_int { "SV_FILL_CANARY_I" } else { "SV_FILL_CANARY" };
+        let _ = writeln!(s, "                  if( {}[ft] != {canary} ) fillOk = 0;", fbuf[i]);
+    }
+    s.push_str("               }\n");
+    s
+}
+
 #[allow(clippy::too_many_lines)]
 fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
     let mut s = String::new();
     s.push_str("/* ---- stream_verify: bitwise batch-vs-stream comparison ---- */\n");
     s.push_str("#ifndef TA_REF_SERVE\n");
     s.push_str("#define SV_MAXN 256\n");
+    // Canary for the OpenAndFill slack. The fill buffers are SV_MAXN wide but
+    // the call may only write `nb` elements; everything above that is stamped
+    // before the call and asserted untouched after it, so a write past the
+    // produced range fails instead of landing in unread space. Values no
+    // indicator can produce from the generated series.
+    s.push_str("#define SV_FILL_CANARY (-1.2345678901234e300)\n");
+    s.push_str("#define SV_FILL_CANARY_I (-987654321)\n");
     s.push_str("#define SV_PEEK_EVERY 7\n");
     s.push_str("static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];\n");
     s.push_str("static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];\n");
@@ -1271,8 +1310,21 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        {\n");
             s.push_str("            int fBeg = 0, fNb = 0, ft;\n");
             s.push_str(&format!("            TA_{name}_Stream *stf = NULL;\n"));
+            // Declared, not initialised: the canary stamp has to run between the
+            // declarations and the call, and these buffers are `static` (reused
+            // across every function in the request), so a stale value left by an
+            // earlier call would otherwise read as a write by this one.
+            s.push_str("            TA_RetCode frc;\n");
+            // Stamped over the FULL buffer width, not `svN`. Two reasons, and
+            // both bounds must move together: a lookback-0 function has
+            // `fNb == svN`, so a window of `[fNb, svN)` is empty and the check
+            // is a no-op for it; and a one-past-the-range write lands at index
+            // `svN` itself, in the tail beyond the request's series length.
+            // Widening only the assert would instead read bytes an earlier
+            // function in the same request left behind (these are `static`).
+            s.push_str(&c_canary_stamp(&fbuf, &out_is_int));
             s.push_str(&format!(
-                "            TA_RetCode frc = TA_{name}_OpenAndFill(&stf, {in_args}svN, {opt_args}&fBeg, &fNb, {fill_arrays});\n"
+                "            frc = TA_{name}_OpenAndFill(&stf, {in_args}svN, {opt_args}&fBeg, &fNb, {fill_arrays});\n"
             ));
             s.push_str("            fillChecked = 1;\n");
             s.push_str("            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;\n");
@@ -1291,6 +1343,11 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                 }
             }
             s.push_str("            }\n");
+            // The slack above the produced range must still hold the canary.
+            // Nothing else in the tree checks it: every gate sizes the fill
+            // buffer at full history and reads only [0, nb), so a write past
+            // `nb` lands in `lookback` elements of unread space.
+            s.push_str(&c_canary_check(&fbuf, &out_is_int));
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -4635,6 +4692,19 @@ fn sv_rust_input_array(name: &str, generic_idx: &mut usize) -> &'static str {
     }
 }
 
+/// Assert the slack above the produced range still holds the canary. The Rust
+/// fill buffers are allocated at exactly `svN`, so the whole allocation beyond
+/// `nb` is covered by this window (unlike C's fixed-width `static` buffers,
+/// which must be walked to `SV_MAXN`).
+fn rust_canary_check(out_is_int: &[bool]) -> String {
+    let mut s = String::new();
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let canary = if *is_int { "-987654321i32" } else { "-1.2345678901234e300f64" };
+        let _ = writeln!(s, "                    for i in nb..svN {{ if f{i}[i] != {canary} {{ fill_ok = false; }} }}");
+    }
+    s
+}
+
 /// One `sv_<name>` verify function for a function with an emitted Rust stream.
 #[allow(clippy::too_many_lines)]
 fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> String {
@@ -4778,7 +4848,11 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         let (ty, z) = if *is_int { ("i32", "0i32") } else { ("f64", "0.0f64") };
         let _ = writeln!(bdecls, "    let mut b{i}: Vec<{ty}> = vec![{z}; svN];");
         let _ = write!(bargs, ", &mut b{i}");
-        let _ = writeln!(fdecls, "        let mut f{i}: Vec<{ty}> = vec![{z}; svN];");
+        // Canary-filled, not zero-filled: the slack above the produced range is
+        // asserted untouched after the call (#205's write bound), so a write
+        // past `nb` fails instead of landing in unread space.
+        let canary = if *is_int { "-987654321i32" } else { "-1.2345678901234e300f64" };
+        let _ = writeln!(fdecls, "        let mut f{i}: Vec<{ty}> = vec![{canary}; svN];");
         let _ = write!(fargs, ", &mut f{i}");
     }
     s.push_str(&bdecls);
@@ -4880,6 +4954,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
             let _ = writeln!(s, "                    for i in 0..nb {{ if sv_xtier_ne(f{i}[i], b{i}[i], &mut zsign) {{ fill_ok = false; }} }}");
         }
     }
+    s.push_str(&rust_canary_check(&out_is_int));
     s.push_str("                }\n            }\n        }\n        }\n");
 
     // Prefix sweep.
@@ -5197,7 +5272,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         let ty = if *is_int { "int" } else { "double" };
         let _ = writeln!(bdecls, "        {ty}[] b{i} = new {ty}[svN];");
         let _ = write!(bargs, ", b{i}");
+        // Canary-filled, not zero-filled: the slack above the produced range is
+        // asserted untouched after the call (#205's write bound), so a write
+        // past `nb` fails instead of landing in unread space.
+        let canary = if *is_int { "-987654321" } else { "-1.2345678901234e300" };
         let _ = writeln!(fdecls, "            {ty}[] f{i} = new {ty}[svN];");
+        let _ = writeln!(fdecls, "            java.util.Arrays.fill(f{i}, ({ty}){canary});");
         let _ = write!(fargs, ", f{i}");
     }
     s.push_str(&bdecls);
@@ -5290,6 +5370,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
         } else {
             let _ = writeln!(s, "                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f{i}[i], b{i}[i], zsign)) fillOk = false;");
         }
+    }
+    // Slack canary: everything above the produced range must be untouched.
+    for (i, is_int) in out_is_int.iter().enumerate() {
+        let ty = if *is_int { "int" } else { "double" };
+        let canary = if *is_int { "-987654321" } else { "-1.2345678901234e300" };
+        let _ = writeln!(s, "                    for (int i = nb.value; i < svN; i++) if (f{i}[i] != ({ty}){canary}) fillOk = false;");
     }
     s.push_str("                }\n");
     // Aliasing probes (Java arrays make out==in expressible; the guards must
