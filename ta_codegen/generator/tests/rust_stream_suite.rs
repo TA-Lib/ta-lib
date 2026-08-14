@@ -401,12 +401,33 @@ fn rust_dispatch_open_modes_differ_only_where_intended() {
 
 #[test]
 fn rust_composed_copy_out_is_stride_guarded() {
-    // Both modes compute into `sc_*`; only the hand-back differs, and a bulk
-    // copy takes a base pointer rather than a subscript — the one place the
-    // stride cannot express the difference on its own.
+    // Issue #205: at stride 1 the scratch BORROWS the caller's slice, so the
+    // bulk copy-back is gone. The negative would pass on any re-render of the
+    // copy, so it is paired with the positive that must replace it.
+    // BOTH arms are pinned as whole lines, not as a prefix. Asserting only the
+    // `if` arm left two wrong applications passing the whole suite: aliasing the
+    // scalar sink too (`else { &mut *outReal }`, which indexes a 1-element slice
+    // and panics on the first composed Open), and allocating `owned_sc_`
+    // unconditionally, which is value-identical and silently reverts #205 —
+    // invisible to every value gate, since only a timing tool could see it.
     let s = rust_stream_section("adxr");
     assert!(
-        s.contains("if outStride == 1 {") && s.contains("copy_from_slice"),
-        "the composed copy-out is guarded by the stride"
+        s.contains("if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };"),
+        "fill mode borrows the caller's slice AND the scalar sink keeps its own buffer:\n{s}"
+    );
+    assert!(
+        s.contains("if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };"),
+        "the owned buffer is allocated ONLY for the scalar sink — an unconditional \
+         vec![] here reverts the optimization with no value change:\n{s}"
+    );
+    assert!(
+        !s.contains("copy_from_slice"),
+        "no bulk copy-back survives: stride 1 wrote through the borrow"
+    );
+    // The scalar arm must read the value out before writing the slice, or the
+    // scratch's borrow would still be live across the write (borrowck).
+    assert!(
+        s.contains("let last_sc_outReal = sc_outReal[*outNBElement - 1];"),
+        "scalar arm lifts the last value out before the borrow ends"
     );
 }

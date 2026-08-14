@@ -478,6 +478,49 @@ pub struct ComposedPlan<'a> {
     pub sub_lag_rings: Vec<SubLagRing>,
 }
 
+impl ComposedPlan<'_> {
+    /// Whether the fill-mode `sc_<out>` scratch may alias the caller's own
+    /// output array instead of owning a `historyLen` buffer (issue #205).
+    ///
+    /// **The condition is a bound on WRITES.** The scratch is `historyLen` wide;
+    /// the caller's array is exactly `historyLen - lookback`, which for an
+    /// OpenAndFill anchored at bar 0 is exactly `outNBElement` — zero slack, by
+    /// definition rather than by luck. Aliasing is sound while every write into
+    /// `sc_<out>` lands below that final count. Note *final*: `*outNBElement` is
+    /// reassigned mid-body by sub-calls, so "bounded by outNBElement" does not
+    /// name one quantity, and the intermediate a sub-call leaves behind is not
+    /// the bound that matters.
+    ///
+    /// Two shapes could break it, and only the first is screened here:
+    ///
+    /// 1. A sub-call that **reads** one of our outputs as a source. The callee
+    ///    is handed the series up to its own `endIdx` — full history, not the
+    ///    produced range. Screened by this method; no shipped function does it.
+    /// 2. A sub-call whose **destination** is one of our outputs, which writes
+    ///    the *callee's* count into our shorter array. Eight of the ten shipped
+    ///    composed functions do exactly this (STDDEV, APO, PPO, PVO, STOCH,
+    ///    STOCHF, STOCHRSI, MACDEXT — see `composed_sub_call_destination_funcs`
+    ///    in the backend suite, which pins the set). It is **not** screened,
+    ///    because for each of them the callee's count *is* our final count: the
+    ///    sub-call that writes our output is what defines it. That is a
+    ///    per-function argument, not a structural guarantee, so the set is
+    ///    pinned by test rather than left to drift.
+    ///
+    /// Failure is loud in Rust (slice bound panic) and Java (AIOOBE) but
+    /// **silent in C**, which is why the set is pinned rather than trusted.
+    /// Declining here keeps a future function correct-by-default: it keeps the
+    /// owned scratch and loses only the optimization.
+    ///
+    /// Credit: kevinlincg identified that the source check alone states the
+    /// wrong reason for safety (issue #205).
+    pub fn fill_scratch_may_alias_output(&self, outputs: &[String]) -> bool {
+        !self
+            .subs
+            .iter()
+            .any(|sub| sub.srcs.iter().any(|src| outputs.contains(src)))
+    }
+}
+
 /// The derived stream implementation plan for one function: a steady-loop
 /// transition model, a dispatch over other functions' public streams, or a
 /// composed producer-plus-pipeline over public sub-streams.

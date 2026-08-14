@@ -411,7 +411,7 @@
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -452,7 +452,6 @@
       sp.optInNbDev = optInNbDev;
       sp.sub0 = sub0;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )

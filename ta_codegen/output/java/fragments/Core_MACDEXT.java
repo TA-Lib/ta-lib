@@ -767,9 +767,9 @@
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outMACD = new double[historyLen];
-      double[] sc_outMACDSignal = new double[historyLen];
-      double[] sc_outMACDHist = new double[historyLen];
+      double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
+      double[] sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
+      double[] sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -884,9 +884,6 @@
       sp.cur_outMACDSignal = sc_outMACDSignal[outNBElement.value - 1];
       sp.cur_outMACDHist = sc_outMACDHist[outNBElement.value - 1];
       sp.cachedValue = new MACDEXT_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
-      if( outStride == 1 ) System.arraycopy(sc_outMACD, 0, outMACD, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outMACDSignal, 0, outMACDSignal, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outMACDHist, 0, outMACDHist, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode MACDEXT_OpenBody( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )

@@ -1296,3 +1296,61 @@ TA_RetCode apo( int startIdx, int endIdx,
         "combine over sub-calls with different endIdx must be refused as not same-bar, got: {err}"
     );
 }
+
+/* ---- #205: the fill-mode scratch-aliasing precondition ---- */
+
+/// Inventory of composed functions that hand one of their OWN outputs to a
+/// sub-call as its **destination**.
+///
+/// This is the shape that bounds `sc_<out>`'s writes by the *callee's* output
+/// count rather than by the caller's own final count. Since #205 the fill-mode
+/// scratch IS the caller's array (exactly `historyLen - lookback` wide), so for
+/// every function in this set, safety rests on the callee's count equalling our
+/// final count — true for each of them because the sub-call that writes our
+/// output is what defines that count, but a per-function argument rather than a
+/// structural guarantee.
+///
+/// `fill_scratch_may_alias_output` deliberately does NOT screen this shape (it
+/// would decline eight of the ten and forfeit most of the win). Pinning the set
+/// is what keeps that decision honest: a new composed function joins it by
+/// someone updating this list, not by silently inheriting the optimization.
+/// Failure is loud in Rust (slice bound) and Java (AIOOBE) but **silent in C**.
+#[test]
+fn composed_sub_call_destination_funcs() {
+    let lk = lookup();
+    let mut found: Vec<String> = Vec::new();
+    for entry in std::fs::read_dir(input_dir()).expect("input dir") {
+        let path = entry.expect("dir entry").path();
+        if !path.is_dir() {
+            continue;
+        }
+        let name = path.file_name().unwrap().to_str().unwrap().to_string();
+        if !path.join(format!("{name}.yaml")).exists() || !path.join(format!("{name}.c")).exists() {
+            continue;
+        }
+        let f = load(&name);
+        if !f.streaming {
+            continue;
+        }
+        let Ok(streaming::StreamPlan::Composed(cp)) = streaming::validate_streamable(&f, &lk) else {
+            continue;
+        };
+        let outs: Vec<String> = f.outputs.iter().map(|o| o.name.clone()).collect();
+        if cp
+            .subs
+            .iter()
+            .any(|s| s.dsts.iter().any(|d| outs.contains(d)))
+        {
+            found.push(name.to_uppercase());
+        }
+    }
+    found.sort();
+    assert_eq!(
+        found,
+        ["APO", "MACDEXT", "PPO", "PVO", "STDDEV", "STOCH", "STOCHF", "STOCHRSI"],
+        "a composed function's sub-call now writes into one of its own outputs. \
+         Since #205 that output IS the caller's array in fill mode, so confirm the \
+         callee's output count equals this function's FINAL count (not whichever \
+         intermediate a sub-call left in *outNBElement) before adding it here."
+    );
+}

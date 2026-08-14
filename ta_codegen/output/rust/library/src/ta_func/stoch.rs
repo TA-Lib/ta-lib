@@ -651,8 +651,14 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sc_outSlowK: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outSlowD: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut owned_sc_outSlowK: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outSlowK: &mut [f64] =
+            if outStride == 1 { &mut *outSlowK } else { &mut owned_sc_outSlowK };
+        let mut owned_sc_outSlowD: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outSlowD: &mut [f64] =
+            if outStride == 1 { &mut *outSlowD } else { &mut owned_sc_outSlowD };
         let mut retCode: RetCode = RetCode::Success;
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
@@ -898,15 +904,13 @@ impl Core {
             sub0,
             sub1,
         };
-        if outStride == 1 {
-            outSlowK[..*outNBElement].copy_from_slice(&sc_outSlowK[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outSlowK[0] = sc_outSlowK[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outSlowK = sc_outSlowK[*outNBElement - 1];
+            outSlowK[0] = last_sc_outSlowK;
         }
-        if outStride == 1 {
-            outSlowD[..*outNBElement].copy_from_slice(&sc_outSlowD[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outSlowD[0] = sc_outSlowD[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outSlowD = sc_outSlowD[*outNBElement - 1];
+            outSlowD[0] = last_sc_outSlowD;
         }
         Ok(STOCH_Stream { core: self.clone(), state })
     }

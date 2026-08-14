@@ -860,8 +860,8 @@
       if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outFastK = new double[historyLen];
-      double[] sc_outFastD = new double[historyLen];
+      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -1079,8 +1079,6 @@
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
       sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
-      if( outStride == 1 ) System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STOCHF_OpenBody( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )

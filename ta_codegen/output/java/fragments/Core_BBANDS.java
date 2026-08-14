@@ -915,9 +915,9 @@
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outRealUpperBand = new double[historyLen];
-      double[] sc_outRealMiddleBand = new double[historyLen];
-      double[] sc_outRealLowerBand = new double[historyLen];
+      double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
+      double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
+      double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
        * at the same bar. Two intermediate buffers are allocated so the input may
@@ -989,9 +989,6 @@
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
       sp.cachedValue = new BBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
-      if( outStride == 1 ) System.arraycopy(sc_outRealUpperBand, 0, outRealUpperBand, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outRealMiddleBand, 0, outRealMiddleBand, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outRealLowerBand, 0, outRealLowerBand, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )

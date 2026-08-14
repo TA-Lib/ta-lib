@@ -242,11 +242,15 @@ fn test_java_stoch_composed() {
     assert!(s.contains("this.sub0 = new MA_Stream(other.sub0);"));
     // Pipeline in batch tail order over per-bar scalars.
     assert!(s.contains("cur_tempBuffer = sp.sub0.update(cur_tempBuffer);"));
-    // Open: scratch outputs + sub-opens spliced at the consumption points,
-    // then the Fill tail memcpys scratch into the caller arrays.
-    assert!(s.contains("double[] sc_outSlowK = new double[historyLen];"));
+    // Open: scratch outputs + sub-opens spliced at the consumption points. At
+    // stride 1 the scratch IS the caller's array, so the Fill tail has nothing
+    // left to copy back (issue #205).
+    assert!(s.contains("double[] sc_outSlowK = outStride == 1 ? outSlowK : new double[historyLen];"));
     assert!(s.contains("OpenInternal(java.util.Arrays.copyOfRange("));
-    assert!(s.contains("System.arraycopy(sc_outSlowK, 0, outSlowK, 0, outNBElement.value);"));
+    assert!(
+        !s.contains("System.arraycopy(sc_outSlowK, 0, outSlowK, 0, outNBElement.value);"),
+        "the stride-1 copy-back is elided: the scratch already IS outSlowK"
+    );
     // Multi-output Value with the stripped component names.
     assert!(s.contains("public record Value(double slowK, double slowD) { }"));
 }
@@ -495,10 +499,18 @@ fn java_exempt_tiers_keep_two_bodies() {
 
 #[test]
 fn java_composed_copy_out_is_stride_guarded() {
+    // Issue #205: the fill-mode scratch aliases the caller's array, so the
+    // stride-guarded copy-back is gone. The negative alone would pass on any
+    // re-render of the copy, so it is paired with the positive that must
+    // replace it — one of the two fails whichever way the shape drifts.
     let s = java_stream_section("adxr");
     assert!(
-        s.contains("if( outStride == 1 ) System.arraycopy("),
-        "the composed copy-out is guarded by the stride"
+        s.contains("double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];"),
+        "fill mode aliases the scratch onto the caller's array"
+    );
+    assert!(
+        !s.contains("System.arraycopy(sc_outReal, 0, outReal,"),
+        "no copy-back survives: the scratch already IS outReal at stride 1"
     );
 }
 

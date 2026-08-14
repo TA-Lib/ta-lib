@@ -425,7 +425,7 @@
       if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
        *
@@ -488,7 +488,6 @@
       sp.lagRingCap_adx = lagCap_adx;
       sp.lagRing_adx = lagRing_adx;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode ADXR_OpenBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )

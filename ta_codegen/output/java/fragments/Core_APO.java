@@ -469,7 +469,7 @@
       if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -516,7 +516,6 @@
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode APO_OpenBody( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )

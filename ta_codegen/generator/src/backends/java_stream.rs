@@ -3035,8 +3035,20 @@ fn emit_composed_open(
         let _ = writeln!(o, "      }}");
     }
     emit_extras_and_candle(o, func, &combined, registry, helpers, counter, stream_fma);
+    // At stride 1 the caller's array is already the destination the transcribed
+    // tail writes, so the scratch aliases it instead of being allocated and
+    // copied back (issue #205). Only the scalar sink still needs its own
+    // buffer. See `fill_scratch_may_alias_output` for when this is unsound.
+    let alias_fill = cp.fill_scratch_may_alias_output(outputs);
     for out in outputs {
-        let _ = writeln!(o, "      double[] sc_{out} = new double[historyLen];");
+        if alias_fill {
+            let _ = writeln!(
+                o,
+                "      double[] sc_{out} = outStride == 1 ? {out} : new double[historyLen];"
+            );
+        } else {
+            let _ = writeln!(o, "      double[] sc_{out} = new double[historyLen];");
+        }
     }
 
     // Sub-open inserts, keyed to combined region++tail indices. The sub reads
@@ -3210,11 +3222,13 @@ fn emit_composed_open(
     // the difference — a bulk copy takes a base array, not a subscript. At stride
     // 0 there is nothing to hand back: the scalar sink is one element and the
     // handle already carries the value.
-    for out in outputs {
-        let _ = writeln!(
-            o,
-            "      if( outStride == 1 ) System.arraycopy(sc_{out}, 0, {out}, 0, outNBElement.value);"
-        );
+    if !alias_fill {
+        for out in outputs {
+            let _ = writeln!(
+                o,
+                "      if( outStride == 1 ) System.arraycopy(sc_{out}, 0, {out}, 0, outNBElement.value);"
+            );
+        }
     }
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");

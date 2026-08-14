@@ -643,9 +643,18 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sc_outRealUpperBand: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outRealMiddleBand: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outRealLowerBand: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut owned_sc_outRealUpperBand: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outRealUpperBand: &mut [f64] =
+            if outStride == 1 { &mut *outRealUpperBand } else { &mut owned_sc_outRealUpperBand };
+        let mut owned_sc_outRealMiddleBand: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outRealMiddleBand: &mut [f64] =
+            if outStride == 1 { &mut *outRealMiddleBand } else { &mut owned_sc_outRealMiddleBand };
+        let mut owned_sc_outRealLowerBand: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outRealLowerBand: &mut [f64] =
+            if outStride == 1 { &mut *outRealLowerBand } else { &mut owned_sc_outRealLowerBand };
         let mut retCode: RetCode = RetCode::Success;
         let mut i: usize = 0_usize;
         let mut maBegIdx: usize = 0_usize;
@@ -733,20 +742,17 @@ impl Core {
             sub0,
             sub1,
         };
-        if outStride == 1 {
-            outRealUpperBand[..*outNBElement].copy_from_slice(&sc_outRealUpperBand[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outRealUpperBand[0] = sc_outRealUpperBand[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outRealUpperBand = sc_outRealUpperBand[*outNBElement - 1];
+            outRealUpperBand[0] = last_sc_outRealUpperBand;
         }
-        if outStride == 1 {
-            outRealMiddleBand[..*outNBElement].copy_from_slice(&sc_outRealMiddleBand[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outRealMiddleBand[0] = sc_outRealMiddleBand[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outRealMiddleBand = sc_outRealMiddleBand[*outNBElement - 1];
+            outRealMiddleBand[0] = last_sc_outRealMiddleBand;
         }
-        if outStride == 1 {
-            outRealLowerBand[..*outNBElement].copy_from_slice(&sc_outRealLowerBand[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outRealLowerBand[0] = sc_outRealLowerBand[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outRealLowerBand = sc_outRealLowerBand[*outNBElement - 1];
+            outRealLowerBand[0] = last_sc_outRealLowerBand;
         }
         Ok(BBANDS_Stream { core: self.clone(), state })
     }

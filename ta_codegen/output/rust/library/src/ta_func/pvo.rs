@@ -365,7 +365,10 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sc_outReal: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut owned_sc_outReal: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outReal: &mut [f64] =
+            if outStride == 1 { &mut *outReal } else { &mut owned_sc_outReal };
         let mut tempBuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
         let mut tempReal: f64 = 0.0_f64;
@@ -428,10 +431,9 @@ impl Core {
             sub0,
             sub1,
         };
-        if outStride == 1 {
-            outReal[..*outNBElement].copy_from_slice(&sc_outReal[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outReal[0] = sc_outReal[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outReal = sc_outReal[*outNBElement - 1];
+            outReal[0] = last_sc_outReal;
         }
         Ok(PVO_Stream { core: self.clone(), state })
     }

@@ -4940,7 +4940,7 @@ public final class Core {
       if( historyLen < ADXR_Lookback(optInTimePeriod) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Original implementation from Wilder's book was doing some integer
        * rounding in its calculations.
        *
@@ -5003,7 +5003,6 @@ public final class Core {
       sp.lagRingCap_adx = lagCap_adx;
       sp.lagRing_adx = lagRing_adx;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode ADXR_OpenBody( ADXR_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
@@ -5568,7 +5567,7 @@ public final class Core {
       if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -5615,7 +5614,6 @@ public final class Core {
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode APO_OpenBody( APO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -10685,9 +10683,9 @@ public final class Core {
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outRealUpperBand = new double[historyLen];
-      double[] sc_outRealMiddleBand = new double[historyLen];
-      double[] sc_outRealLowerBand = new double[historyLen];
+      double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
+      double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
+      double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
        * at the same bar. Two intermediate buffers are allocated so the input may
@@ -10759,9 +10757,6 @@ public final class Core {
       sp.cur_outRealMiddleBand = sc_outRealMiddleBand[outNBElement.value - 1];
       sp.cur_outRealLowerBand = sc_outRealLowerBand[outNBElement.value - 1];
       sp.cachedValue = new BBANDS_Stream.Value(sp.cur_outRealUpperBand, sp.cur_outRealMiddleBand, sp.cur_outRealLowerBand);
-      if( outStride == 1 ) System.arraycopy(sc_outRealUpperBand, 0, outRealUpperBand, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outRealMiddleBand, 0, outRealMiddleBand, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outRealLowerBand, 0, outRealLowerBand, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -94127,9 +94122,9 @@ public final class Core {
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outMACD = new double[historyLen];
-      double[] sc_outMACDSignal = new double[historyLen];
-      double[] sc_outMACDHist = new double[historyLen];
+      double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
+      double[] sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
+      double[] sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -94244,9 +94239,6 @@ public final class Core {
       sp.cur_outMACDSignal = sc_outMACDSignal[outNBElement.value - 1];
       sp.cur_outMACDHist = sc_outMACDHist[outNBElement.value - 1];
       sp.cachedValue = new MACDEXT_Stream.Value(sp.cur_outMACD, sp.cur_outMACDSignal, sp.cur_outMACDHist);
-      if( outStride == 1 ) System.arraycopy(sc_outMACD, 0, outMACD, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outMACDSignal, 0, outMACDSignal, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outMACDHist, 0, outMACDHist, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode MACDEXT_OpenBody( MACDEXT_Stream sp, double inReal[], int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -114231,7 +114223,7 @@ public final class Core {
       if( historyLen < PPO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -114283,7 +114275,6 @@ public final class Core {
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode PPO_OpenBody( PPO_Stream sp, double inReal[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -115391,7 +115382,7 @@ public final class Core {
       if( historyLen < PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -115443,7 +115434,6 @@ public final class Core {
       sp.sub0 = sub0;
       sp.sub1 = sub1;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode PVO_OpenBody( PVO_Stream sp, double inVolume[], int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -124034,7 +124024,7 @@ public final class Core {
       if( historyLen < STDDEV_Lookback(optInTimePeriod, optInNbDev) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = new double[historyLen];
+      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Calculate the variance. */
       /* Sub-stream 0: var over `inReal`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
@@ -124075,7 +124065,6 @@ public final class Core {
       sp.optInNbDev = optInNbDev;
       sp.sub0 = sub0;
       sp.cur_outReal = sc_outReal[outNBElement.value - 1];
-      if( outStride == 1 ) System.arraycopy(sc_outReal, 0, outReal, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STDDEV_OpenBody( STDDEV_Stream sp, double inReal[], int startIdx, int optInTimePeriod, double optInNbDev )
@@ -125123,8 +125112,8 @@ public final class Core {
       if( historyLen < STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outSlowK = new double[historyLen];
-      double[] sc_outSlowD = new double[historyLen];
+      double[] sc_outSlowK = outStride == 1 ? outSlowK : new double[historyLen];
+      double[] sc_outSlowD = outStride == 1 ? outSlowD : new double[historyLen];
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -125355,8 +125344,6 @@ public final class Core {
       sp.cur_outSlowK = sc_outSlowK[outNBElement.value - 1];
       sp.cur_outSlowD = sc_outSlowD[outNBElement.value - 1];
       sp.cachedValue = new STOCH_Stream.Value(sp.cur_outSlowK, sp.cur_outSlowD);
-      if( outStride == 1 ) System.arraycopy(sc_outSlowK, 0, outSlowK, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outSlowD, 0, outSlowD, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STOCH_OpenBody( STOCH_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -126313,8 +126300,8 @@ public final class Core {
       if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outFastK = new double[historyLen];
-      double[] sc_outFastD = new double[historyLen];
+      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -126532,8 +126519,6 @@ public final class Core {
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
       sp.cachedValue = new STOCHF_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
-      if( outStride == 1 ) System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STOCHF_OpenBody( STOCHF_Stream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -127208,8 +127193,8 @@ public final class Core {
       if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outFastK = new double[historyLen];
-      double[] sc_outFastD = new double[historyLen];
+      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
       /* Stochastic RSI
        *
        * Reference: "Stochastic RSI and Dynamic Momentum Index"
@@ -127282,8 +127267,6 @@ public final class Core {
       sp.cur_outFastK = sc_outFastK[outNBElement.value - 1];
       sp.cur_outFastD = sc_outFastD[outNBElement.value - 1];
       sp.cachedValue = new STOCHRSI_Stream.Value(sp.cur_outFastK, sp.cur_outFastD);
-      if( outStride == 1 ) System.arraycopy(sc_outFastK, 0, outFastK, 0, outNBElement.value);
-      if( outStride == 1 ) System.arraycopy(sc_outFastD, 0, outFastD, 0, outNBElement.value);
       return RetCode.Success;
    }
    private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, double inReal[], int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )

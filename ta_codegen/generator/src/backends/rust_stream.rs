@@ -3408,11 +3408,29 @@ fn emit_composed_open(
     // names, so the transcribed tail (deref writes AND sub-call pass-through
     // args) renders exactly like the proven batch text with no shim.
 
+    // At stride 1 the caller's slice is already the destination the transcribed
+    // tail writes, so the scratch borrows it instead of owning a `historyLen`
+    // Vec that is copied back and dropped (issue #205). C assigns a pointer and
+    // Java a reference; Rust needs the scratch to become a `&mut [f64]` that is
+    // conditionally the caller's slice or a locally-owned buffer, which is why
+    // the owned Vec stays declared (empty, unallocated) in the aliased arm.
+    let alias_fill = cp.fill_scratch_may_alias_output(outputs);
     for out in outputs {
-        let _ = writeln!(
-            o,
-            "        let mut sc_{out}: Vec<f64> = vec![0.0_f64; historyLen];"
-        );
+        if alias_fill {
+            let _ = writeln!(
+                o,
+                "        let mut owned_sc_{out}: Vec<f64> =\n            if outStride == 1 {{ Vec::new() }} else {{ vec![0.0_f64; historyLen] }};"
+            );
+            let _ = writeln!(
+                o,
+                "        let sc_{out}: &mut [f64] =\n            if outStride == 1 {{ &mut *{out} }} else {{ &mut owned_sc_{out} }};"
+            );
+        } else {
+            let _ = writeln!(
+                o,
+                "        let mut sc_{out}: Vec<f64> = vec![0.0_f64; historyLen];"
+            );
+        }
     }
 
     // Sub-open inserts, keyed to combined region++tail indices.
@@ -3576,14 +3594,29 @@ fn emit_composed_open(
         // copy takes a base slice, not a subscript.
         {
             for out in outputs {
-                let _ = writeln!(o, "        if outStride == 1 {{");
-                let _ = writeln!(
-                    o,
-                    "            {out}[..*outNBElement].copy_from_slice(&sc_{out}[..*outNBElement]);"
-                );
-                let _ = writeln!(o, "        }} else if *outNBElement > 0 {{");
-                let _ = writeln!(o, "            {out}[0] = sc_{out}[*outNBElement - 1];");
-                let _ = writeln!(o, "        }}");
+                if alias_fill {
+                    // Stride 1 already wrote through the borrow — nothing to hand
+                    // back. The scalar arm reads the value out FIRST so the
+                    // scratch's borrow of `{out}` ends (NLL) before `{out}` is
+                    // written; assigning straight from the subscript would be a
+                    // read and a write of the same borrow in one statement.
+                    let _ = writeln!(o, "        if outStride != 1 && *outNBElement > 0 {{");
+                    let _ = writeln!(
+                        o,
+                        "            let last_sc_{out} = sc_{out}[*outNBElement - 1];"
+                    );
+                    let _ = writeln!(o, "            {out}[0] = last_sc_{out};");
+                    let _ = writeln!(o, "        }}");
+                } else {
+                    let _ = writeln!(o, "        if outStride == 1 {{");
+                    let _ = writeln!(
+                        o,
+                        "            {out}[..*outNBElement].copy_from_slice(&sc_{out}[..*outNBElement]);"
+                    );
+                    let _ = writeln!(o, "        }} else if *outNBElement > 0 {{");
+                    let _ = writeln!(o, "            {out}[0] = sc_{out}[*outNBElement - 1];");
+                    let _ = writeln!(o, "        }}");
+                }
             }
             let _ = writeln!(o, "        Ok({handle} {{ core: self.clone(), state }})");
         }

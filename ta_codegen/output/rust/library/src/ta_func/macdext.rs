@@ -518,9 +518,18 @@ impl Core {
         let mut startIdx = startIdx;
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sc_outMACD: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outMACDSignal: Vec<f64> = vec![0.0_f64; historyLen];
-        let mut sc_outMACDHist: Vec<f64> = vec![0.0_f64; historyLen];
+        let mut owned_sc_outMACD: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outMACD: &mut [f64] =
+            if outStride == 1 { &mut *outMACD } else { &mut owned_sc_outMACD };
+        let mut owned_sc_outMACDSignal: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outMACDSignal: &mut [f64] =
+            if outStride == 1 { &mut *outMACDSignal } else { &mut owned_sc_outMACDSignal };
+        let mut owned_sc_outMACDHist: Vec<f64> =
+            if outStride == 1 { Vec::new() } else { vec![0.0_f64; historyLen] };
+        let sc_outMACDHist: &mut [f64] =
+            if outStride == 1 { &mut *outMACDHist } else { &mut owned_sc_outMACDHist };
         let mut slowMABuffer: Vec<f64> = Vec::new();
         let mut fastMABuffer: Vec<f64> = Vec::new();
         let mut retCode: RetCode = RetCode::Success;
@@ -654,20 +663,17 @@ impl Core {
             sub1,
             sub2,
         };
-        if outStride == 1 {
-            outMACD[..*outNBElement].copy_from_slice(&sc_outMACD[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outMACD[0] = sc_outMACD[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outMACD = sc_outMACD[*outNBElement - 1];
+            outMACD[0] = last_sc_outMACD;
         }
-        if outStride == 1 {
-            outMACDSignal[..*outNBElement].copy_from_slice(&sc_outMACDSignal[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outMACDSignal[0] = sc_outMACDSignal[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outMACDSignal = sc_outMACDSignal[*outNBElement - 1];
+            outMACDSignal[0] = last_sc_outMACDSignal;
         }
-        if outStride == 1 {
-            outMACDHist[..*outNBElement].copy_from_slice(&sc_outMACDHist[..*outNBElement]);
-        } else if *outNBElement > 0 {
-            outMACDHist[0] = sc_outMACDHist[*outNBElement - 1];
+        if outStride != 1 && *outNBElement > 0 {
+            let last_sc_outMACDHist = sc_outMACDHist[*outNBElement - 1];
+            outMACDHist[0] = last_sc_outMACDHist;
         }
         Ok(MACDEXT_Stream { core: self.clone(), state })
     }
