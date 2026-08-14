@@ -1344,13 +1344,36 @@ fn composed_sub_call_destination_funcs() {
             found.push(name.to_uppercase());
         }
     }
+    // Membership alone would not tell the next author WHICH invariant to keep:
+    // no two of these are safe for the same reason. The reason is recorded with
+    // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
+    let expected: [(&str, &str); 8] = [
+        ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
+                 the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
+        ("MACDEXT", "the body RUNTIME-CHECKS the premise (outNbElement1 == endIdx-startIdx+1+lookbackSignal) \
+                 and bails otherwise, so signal count == N_MACDEXT"),
+        ("PPO", "as APO -- the slow/fast swap is the precondition"),
+        ("PVO", "as APO -- the slow/fast swap is the precondition"),
+        ("STDDEV", "stddev_lookback DELEGATES to var_lookback in the source, so the counts are \
+                 equal by construction rather than by arithmetic coincidence"),
+        ("STOCH", "the callee is handed tempBuffer[..*outNBElement], so its output cannot exceed \
+                 the slice it was given -- bound holds via the INPUT length, not a lookback identity"),
+        ("STOCHF", "as STOCH, with outIdx in place of *outNBElement"),
+        ("STOCHRSI", "tempRSIBuffer is SIZED as endIdx-startIdx+1+lookbackSTOCHF precisely so the \
+                 callee's count comes out at N_STOCHRSI"),
+    ];
     found.sort();
+    let want: Vec<String> = expected.iter().map(|(n, _)| (*n).to_string()).collect();
+    let why: String = expected
+        .iter()
+        .map(|(n, r)| format!("\n  {n}: {r}"))
+        .collect();
     assert_eq!(
-        found,
-        ["APO", "MACDEXT", "PPO", "PVO", "STDDEV", "STOCH", "STOCHF", "STOCHRSI"],
-        "a composed function's sub-call now writes into one of its own outputs. \
-         Since #205 that output IS the caller's array in fill mode, so confirm the \
-         callee's output count equals this function's FINAL count (not whichever \
-         intermediate a sub-call left in *outNBElement) before adding it here."
+        found, want,
+        "a composed function's sub-call writes into one of its own outputs. Since #205 that \
+         output IS the caller's array in fill mode, so the callee's count must equal this \
+         function's FINAL count -- not whichever intermediate a sub-call left in *outNBElement \
+         (ADXR is the case where the intermediate is LARGER). State the reason for the new \
+         function here; the existing ones hold for four different reasons:{why}"
     );
 }

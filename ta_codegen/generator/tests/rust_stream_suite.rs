@@ -431,3 +431,32 @@ fn rust_composed_copy_out_is_stride_guarded() {
         "scalar arm lifts the last value out before the borrow ends"
     );
 }
+
+/// The APO/PPO/PVO period swap is a MEMORY-SAFETY precondition, not a
+/// normalization convenience.
+///
+/// Their `sc_<out>`-writing sub-call passes `optInSlowPeriod`, while the
+/// caller's fill slice is sized by `ma_lookback(max(slow, fast))`. Those agree
+/// only because the body swaps first, so post-swap `slow == max`. Point the
+/// sub-call at the fast period, or drop the swap, and the callee writes
+/// `H - ma_lookback(min)` values into an array holding `H - ma_lookback(max)` —
+/// more than it can take. Since #205 that array is the caller's own, so Rust
+/// and Java would panic and **C would corrupt silently**.
+///
+/// Nothing in the input `.c` says the swap carries this weight, which is why it
+/// is pinned here. Identified by kevinlincg in the issue #205 write-bound proof.
+#[test]
+fn apo_family_period_swap_is_a_write_bound_precondition() {
+    for name in ["apo", "ppo", "pvo"] {
+        let s = rust_stream_section(name);
+        assert!(
+            s.contains("optInSlowPeriod = optInFastPeriod;"),
+            "{name}: the slow/fast swap must survive into the composed Open"
+        );
+        assert!(
+            s.contains("optInSlowPeriod, optInMAType, outBegIdx, outNBElement, &mut sc_"),
+            "{name}: the sub-call filling the caller's array must use the SWAPPED \
+             (larger) period — the fast period would overrun it"
+        );
+    }
+}
