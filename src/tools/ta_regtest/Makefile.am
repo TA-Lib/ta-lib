@@ -38,6 +38,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_mavp.c \
 	ta_test_func/test_s_overflow.c \
 	ta_test_func/test_composite.c \
+	ta_test_func/test_marketfi.c \
 	ta_test_func/test_cmf.c \
 	ta_test_func/test_cmou.c \
 	ta_test_func/test_variants.c \
