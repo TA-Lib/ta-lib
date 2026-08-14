@@ -28,7 +28,9 @@ For cross-language server testing (`servers`, `regtest` targets), also: JDK (`ja
 scripts/build.py                # Build the C library + all C tools (CMake)
 scripts/build.py ta_regtest     # Build just the C test runner (CMake)
 scripts/build.py ta_codegen     # Build the Rust codegen tool (cargo)
-scripts/build.py generate       # Regenerate per-function source for all backends (cargo)
+scripts/build.py generate       # Regenerate every committed source for all backends —
+                                # libraries, JSON-RPC servers, benches (cargo only: writing
+                                # the Java/C# sources needs no JDK or .NET SDK)
 scripts/build.py servers        # Generate + compile JSON-RPC language servers (cargo)
 ```
 
@@ -40,7 +42,15 @@ To run tests:
 ```
 scripts/build.py test           # C reference tests only (quick)
 scripts/build.py regtest        # Full pipeline: servers + C tests + cross-language verification
+scripts/build.py regen-check    # The gate every PR runs (cargo + Python, ~1 min)
 ```
+
+`regen-check` is worth running before you open a PR if you touched anything under
+`ta_codegen/input/`: `ta_codegen/input/` is the source of truth and everything it
+produces is committed, so an input edit whose regenerated output was not committed
+fails CI. It is the same command the PR workflow runs, so a failure reproduces
+locally exactly. Only drift *that run introduces* fails it — the rest of your
+working tree can be dirty.
 
 For more control, run `ta_regtest` directly from `bin/`:
 ```
@@ -56,9 +66,9 @@ For more control, run `ta_regtest` directly from `bin/`:
 
 ```
 cd ta_codegen/generator
-cargo run -- generate                            # Generate indicator code for all backends
+cargo run -- generate                            # Generate everything, all backends
 cargo run -- generate --func=SMA --backend=rust  # Specific function + backend
-cargo run -- generate-servers                    # Generate JSON-RPC servers
+cargo run -- generate-servers                    # Only the JSON-RPC servers
 cargo run -- build                               # Compile servers
 ```
 

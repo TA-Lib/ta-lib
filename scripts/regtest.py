@@ -5,7 +5,9 @@ Build control:
   --no-build                 Skip cmake (ta_regtest, ta_bench)
   --no-generate              Skip indicator AND server regeneration
   --no-generate-indicators   Skip indicator regeneration only
-  --no-generate-servers      Skip server regeneration only
+  --no-generate-servers      Skip the separate server/bench regeneration step. An
+                             unfiltered indicator regeneration writes those too, so
+                             pair it with --no-generate-indicators or --function=
 
 Test control:
   --no-regtest               Skip correctness verification
@@ -215,10 +217,11 @@ def ensure_reference_serve(root, bin_dir):
         if post_funcs:
             print(f"  post-reference functions (skipped by the subset gate): {', '.join(post_funcs)}")
         # Self-heal a stale transport: a post-reference function with no
-        # list_functions entry means `generate` ran without `generate-servers`
-        # (a brand-new function's first regtest.py run). Regenerate the server
-        # sources here rather than letting filter_list_functions assert; if an
-        # entry is still missing after regeneration, that assert still fires.
+        # list_functions entry means the server sources predate it — a brand-new
+        # function whose only regenerations so far were `--func`-filtered, which
+        # skip the whole-corpus files. Regenerate them here rather than letting
+        # filter_list_functions assert; if an entry is still missing after
+        # regeneration, that assert still fires.
         with open(serve_src) as f:
             serve_text = f.read()
         stale = [n for n in post_funcs if ('\\"TA_%s\\"' % n) not in serve_text]
@@ -362,8 +365,12 @@ def main():
             cmd.append(f"--function={func_filter}")
         subprocess.run(cmd, check=True, cwd=codegen_dir)
 
-    # 3a. generate servers
-    if not no_gen_srv:
+    # 3a. generate servers — skipped when step 2 already wrote them: a full
+    # `generate` owns every committed source, the servers and benches included
+    # (it skips them only under --func, where they would lose every other
+    # function).
+    covered_by_generate = not no_gen_ind and not func_filter
+    if not no_gen_srv and not covered_by_generate:
         print("\n=== Regenerating server files ===")
         cmd = ["cargo", "run", "--release", "--", "generate-servers"]
         if backend_filter:
@@ -371,7 +378,7 @@ def main():
         subprocess.run(cmd, check=True, cwd=codegen_dir)
 
     # 3b. generate bench binary source
-    if not no_gen_srv:
+    if not no_gen_srv and not covered_by_generate:
         print("\n=== Regenerating bench binary ===")
         cmd = ["cargo", "run", "--release", "--", "generate-bench", "--backend=c"]
         subprocess.run(cmd, check=True, cwd=codegen_dir)

@@ -277,12 +277,30 @@ static ErrorNumber test_marketfi_zero_volume( void )
 
    /* Bar 1 has volume 0 with a real range; bar 3 has volume 0 and a zero range,
     * which is the 0/0 that would produce NaN rather than Inf. Both report 0.
+    *
+    * Compared BITWISE against +0.0 rather than with `!= 0.0`, which is also
+    * false for -0.0 and would accept a guard that wrote the wrong zero. That
+    * is the issue #147 class, and it is reachable here: the guard's value is a
+    * literal in the generated C, so nothing but an edit to the guard can move
+    * it -- which is precisely what this leg exists to catch.
+    *
+    * Worth recording for whoever mutates this next: -0.0 cannot be introduced
+    * through ta_codegen/input/marketfi/marketfi.c. Writing it there and
+    * regenerating yields `= 0.0;` in src/ta_func/ta_MARKETFI.c -- the literal
+    * is normalised on the way through -- so a sabotage run at the input tier
+    * silently tests nothing and reads as "this check has no discriminating
+    * power". Patch the generated C to prove this leg bites.
     */
-   if( out[1] != 0.0 || out[3] != 0.0 )
    {
-      printf( "Fail: TA_MARKETFI zero-volume out[1]=%f out[3]=%f, expected 0/0\n",
-              out[1], out[3] );
-      return TA_TESTUTIL_TFRR_BAD_PARAM;
+      const TA_Real posZero = 0.0;
+      if( memcmp( &out[1], &posZero, sizeof(TA_Real) ) != 0 ||
+          memcmp( &out[3], &posZero, sizeof(TA_Real) ) != 0 )
+      {
+         printf( "Fail: TA_MARKETFI zero-volume out[1]=%.17g out[3]=%.17g, "
+                 "expected exactly +0.0 (a -0.0 here passes a != 0.0 check)\n",
+                 out[1], out[3] );
+         return TA_TESTUTIL_TFRR_BAD_PARAM;
+      }
    }
 
    /* The traded bars must be unaffected by the guard. */
