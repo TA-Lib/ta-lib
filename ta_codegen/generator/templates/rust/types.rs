@@ -440,6 +440,76 @@ impl CoreBuilder {
         self
     }
 
+    /// Restore one candlestick setting to its TA-Lib default, or every setting
+    /// when given [`CandleSettingType::AllCandleSettings`].
+    ///
+    /// **This does not reset anything.** C's `TA_RestoreCandleDefaultSettings`
+    /// writes over a process-wide global that every later call then reads; there
+    /// is no such global here. A [`Core`] is immutable and its settings are
+    /// fixed at [`build`](CoreBuilder::build), so the operation this names is
+    /// *deriving a new `Core`* whose settings happen to be the defaults again:
+    ///
+    /// ```
+    /// use ta_lib::{CandleSetting, CandleSettingType, Core};
+    ///
+    /// let tuned = Core::builder()
+    ///     .candle_setting(
+    ///         CandleSettingType::BodyLong,
+    ///         CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 },
+    ///     )
+    ///     .build()?;
+    ///
+    /// // A SECOND Core. `tuned` still has its override -- nothing was reset.
+    /// let plain = tuned
+    ///     .to_builder()
+    ///     .restore_candle_default(CandleSettingType::BodyLong)
+    ///     .build()?;
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    ///
+    /// On a fresh [`Core::builder()`] it is a no-op, and correctly so — that
+    /// builder is already sitting on the defaults, so the way to "not override"
+    /// a setting there is simply not to call
+    /// [`candle_setting`](CoreBuilder::candle_setting) for it. The call earns its
+    /// place only after [`Core::to_builder`], which is also the only thing the
+    /// JSON-RPC server uses it for.
+    ///
+    /// Unlike [`candle_setting`](CoreBuilder::candle_setting) this cannot fail:
+    /// the wildcard is a legal argument here rather than a rejected one, and an
+    /// out-of-domain `setting_type` is unrepresentable in the enum — where C has
+    /// to bound-check an `int` and C# has to throw, Rust has nothing left to
+    /// reject. It records no error, so a builder that was already poisoned by an
+    /// earlier rejection stays poisoned.
+    #[must_use]
+    pub fn restore_candle_default(mut self, setting_type: CandleSettingType) -> Self {
+        let defaults = CandleSettings::default_settings();
+        match setting_type {
+            CandleSettingType::BodyLong => self.candle_settings.body_long = defaults.body_long,
+            CandleSettingType::BodyVeryLong => {
+                self.candle_settings.body_very_long = defaults.body_very_long;
+            }
+            CandleSettingType::BodyShort => self.candle_settings.body_short = defaults.body_short,
+            CandleSettingType::BodyDoji => self.candle_settings.body_doji = defaults.body_doji,
+            CandleSettingType::ShadowLong => {
+                self.candle_settings.shadow_long = defaults.shadow_long;
+            }
+            CandleSettingType::ShadowVeryLong => {
+                self.candle_settings.shadow_very_long = defaults.shadow_very_long;
+            }
+            CandleSettingType::ShadowShort => {
+                self.candle_settings.shadow_short = defaults.shadow_short;
+            }
+            CandleSettingType::ShadowVeryShort => {
+                self.candle_settings.shadow_very_short = defaults.shadow_very_short;
+            }
+            CandleSettingType::Near => self.candle_settings.near = defaults.near,
+            CandleSettingType::Far => self.candle_settings.far = defaults.far,
+            CandleSettingType::Equal => self.candle_settings.equal = defaults.equal,
+            CandleSettingType::AllCandleSettings => self.candle_settings = defaults,
+        }
+        self
+    }
+
     /// Consume the builder and produce an immutable [`Core`].
     ///
     /// # Errors
@@ -645,6 +715,88 @@ mod tests {
         assert_eq!(core.candle_settings.body_long.factor, 1.5);
         // A different setting keeps its default.
         assert_eq!(core.candle_settings.body_doji.avg_period, 10);
+    }
+
+    #[test]
+    fn restore_candle_default_derives_a_new_core_and_leaves_the_old_one_alone() {
+        // The operation is "build a second Core", not "reset the first". Nothing
+        // in this crate can reach into a built Core, and this is the assertion
+        // that says so: `tuned` must still carry its override afterwards. C
+        // cannot make the same claim -- its restore writes a process-wide global.
+        let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
+        let other = CandleSetting { range_type: 0, avg_period: 7, factor: 4.0 };
+        let tuned = Core::builder()
+            .candle_setting(CandleSettingType::BodyLong, custom)
+            .candle_setting(CandleSettingType::BodyDoji, other)
+            .build()
+            .unwrap();
+
+        let derived = tuned
+            .to_builder()
+            .restore_candle_default(CandleSettingType::BodyLong)
+            .build()
+            .unwrap();
+
+        // The derived Core has that one slot back at its default...
+        assert_eq!(derived.candle_settings.body_long, CandleSetting {
+            range_type: 0,
+            avg_period: 10,
+            factor: 1.0
+        });
+        // ...the other override survived, so this is a single-slot restore and
+        // not a rebuild from defaults...
+        assert_eq!(derived.candle_settings.body_doji, other);
+        // ...and the Core it was derived FROM is untouched.
+        assert_eq!(tuned.candle_settings.body_long, custom);
+    }
+
+    #[test]
+    fn restore_candle_default_is_a_no_op_on_a_fresh_builder() {
+        // Stated as a test because it is the shape of the API, not an accident:
+        // a fresh builder already sits on the defaults, so there is nothing for
+        // this call to undo there. Anyone reaching for it on `Core::builder()`
+        // wants to simply not call candle_setting.
+        let plain = Core::builder().build().unwrap();
+        let restored = Core::builder()
+            .restore_candle_default(CandleSettingType::AllCandleSettings)
+            .build()
+            .unwrap();
+        assert_eq!(plain.candle_settings, restored.candle_settings);
+    }
+
+    #[test]
+    fn restore_candle_default_takes_the_wildcard_that_candle_setting_rejects() {
+        // The asymmetry is the point, and it mirrors C exactly: the same
+        // TA_AllCandleSettings that TA_SetCandleSettings answers TA_BAD_PARAM to
+        // is a legal selector for TA_RestoreCandleDefaultSettings.
+        let custom = CandleSetting { range_type: 2, avg_period: 20, factor: 1.5 };
+        let tuned = Core::builder()
+            .candle_setting(CandleSettingType::BodyLong, custom)
+            .candle_setting(CandleSettingType::Equal, custom)
+            .build()
+            .unwrap();
+        let derived = tuned
+            .to_builder()
+            .restore_candle_default(CandleSettingType::AllCandleSettings)
+            .build()
+            .unwrap();
+        assert_eq!(derived.candle_settings, CandleSettings::default_settings());
+        // Again: the source Core kept both overrides.
+        assert_eq!(tuned.candle_settings.body_long, custom);
+        assert_eq!(tuned.candle_settings.equal, custom);
+    }
+
+    #[test]
+    fn restore_candle_default_does_not_clear_a_latched_rejection() {
+        // Restoring is not an apology for an earlier bad argument. `err` is
+        // first-wins precisely so a later valid call cannot swallow the report.
+        let bad = CandleSetting { range_type: 9, avg_period: 10, factor: 1.0 };
+        let err = Core::builder()
+            .candle_setting(CandleSettingType::BodyLong, bad)
+            .restore_candle_default(CandleSettingType::AllCandleSettings)
+            .build()
+            .unwrap_err();
+        assert_eq!(err, RetCode::BadParam);
     }
 
     #[test]

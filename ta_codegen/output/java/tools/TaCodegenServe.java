@@ -45,9 +45,9 @@ enum RangeType {
 }
 
 class CandleSetting {
-    RangeType rangeType;
-    int avgPeriod;
-    double factor;
+    final RangeType rangeType;
+    final int avgPeriod;
+    final double factor;
     CandleSetting(RangeType rt, int ap, double f) { rangeType = rt; avgPeriod = ap; factor = f; }
 }
 
@@ -66,7 +66,7 @@ class Core {
     static final int INTEGER_MAX = Integer.MAX_VALUE;
     static final int MAX_INDEX = 100000000;
     int[] unstablePeriod = new int[FuncUnstId.COUNT];
-    CandleSetting[] candleSettings = {
+    static final CandleSetting[] DEFAULT_CANDLE_SETTINGS = {
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong
         new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong
         new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyShort
@@ -79,6 +79,8 @@ class Core {
         new CandleSetting(RangeType.HighLow,  5,  0.6),   // Far
         new CandleSetting(RangeType.HighLow,  5,  0.05),  // Equal
     };
+
+    CandleSetting[] candleSettings = DEFAULT_CANDLE_SETTINGS.clone();
 
     static RuntimeException failure(String funcName, RetCode retCode) {
         String where = funcName + ": ";
@@ -139641,6 +139643,22 @@ public class TaCodegenServe {
         return Double.parseDouble(json.substring(idx, end));
     }
 
+    static double jsonF64Bits(String json, String field, double def) {
+        int idx = json.indexOf('"' + field + '"');
+        if (idx < 0) return def;
+        idx = json.indexOf(':', idx) + 1;
+        while (idx < json.length() && json.charAt(idx) == ' ') idx++;
+        if (idx >= json.length() || json.charAt(idx) != '"') return def;
+        int end = json.indexOf('"', idx + 1);
+        if (end != idx + 17) return def;
+        try {
+            return Double.longBitsToDouble(
+                Long.parseUnsignedLong(json.substring(idx + 1, end), 16));
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
     static double[] jsonDoubleArray(String json, String field) {
         int idx = json.indexOf('"' + field + '"');
         if (idx < 0) return new double[0];
@@ -141113,6 +141131,40 @@ public class TaCodegenServe {
                 return "{\"status\":\"ok\"}";
             }
             return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        else if (json.contains("\"set_candle_settings\"")) {
+            int settingType = jsonInt(json, "settingType");
+            int rangeType = jsonInt(json, "rangeType");
+            int avgPeriod = jsonInt(json, "avgPeriod");
+            double factor = jsonF64Bits(json, "factorBits", 1.0);
+            if (settingType < 0 || settingType >= CandleSettingType.AllCandleSettings.ordinal()) {
+                return "{\"error\":\"Invalid candle setting\"}";
+            }
+            if (rangeType < 0 || rangeType > RangeType.Shadows.ordinal()) {
+                return "{\"error\":\"Invalid candle setting\"}";
+            }
+            if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX) {
+                return "{\"error\":\"Invalid candle setting\"}";
+            }
+            if (Double.isNaN(factor)) {
+                return "{\"error\":\"Invalid candle setting\"}";
+            }
+            core.candleSettings[settingType] =
+                new CandleSetting(RangeType.values()[rangeType], avgPeriod, factor);
+            return "{\"status\":\"ok\"}";
+        }
+        else if (json.contains("\"restore_candle_default_settings\"")) {
+            int settingType = jsonInt(json, "settingType");
+            if (settingType < 0 || settingType > CandleSettingType.AllCandleSettings.ordinal()) {
+                return "{\"error\":\"Invalid candle setting type\"}";
+            }
+            if (settingType == CandleSettingType.AllCandleSettings.ordinal()) {
+                System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, core.candleSettings, 0,
+                    core.candleSettings.length);
+            } else {
+                core.candleSettings[settingType] = Core.DEFAULT_CANDLE_SETTINGS[settingType];
+            }
+            return "{\"status\":\"ok\"}";
         }
         else if (json.contains("\"eval_predicate\"")) {
             int which = jsonInt(json, "which");
@@ -155416,10 +155468,18 @@ public class TaCodegenServe {
     }
 
     static void svApplyCandleRound(Core c, int rd) {
-        for (CandleSetting cs : c.candleSettings) {
-            if (rd == 1) cs.avgPeriod += 3;
-            else if (rd == 2) cs.avgPeriod = 0;
-            else if (rd == 3) cs.rangeType = RangeType.Shadows;
+        if (rd == 0) return;
+        for (int i = 0; i < c.candleSettings.length; i++) {
+            CandleSetting cs = c.candleSettings[i];
+            if (rd == 1) {
+                c.candleSettings[i] =
+                    new CandleSetting(cs.rangeType, cs.avgPeriod + 3, cs.factor);
+            } else if (rd == 2) {
+                c.candleSettings[i] = new CandleSetting(cs.rangeType, 0, cs.factor);
+            } else if (rd == 3) {
+                c.candleSettings[i] =
+                    new CandleSetting(RangeType.Shadows, cs.avgPeriod, cs.factor);
+            }
         }
     }
 

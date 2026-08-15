@@ -24,6 +24,7 @@
 #include "server_verify.h"
 #include "test_codegen.h"   /* codegen_output_hash / codegen_hash_compare / XHash* */
 #include "ta_abstract.h"
+#include "../../ta_common/ta_global.h"   /* TA_Globals->candleSettings[] */
 #include "../ta_alloc_check.h"
 
 /* ---- Configuration ---- */
@@ -120,6 +121,16 @@ static const PriceComponent PRICE_COMPONENTS[] = {
 static unsigned int g_lastUnstPeriods[SV_MAX_PIPES][TA_FUNC_UNST_COUNT];
 static int          g_unstInitialized[SV_MAX_PIPES];
 
+/* Cached candle settings, per pipe, same reasoning as the periods above (#215).
+ * Read from TA_Globals->candleSettings[] rather than from a copy the tests hand
+ * us: the property being verified is "the server computed under the settings the
+ * C library was actually holding", and only the library knows that. There is no
+ * public getter, so this reads the global the setter writes -- the same thing
+ * test_internals.c does. */
+static TA_CandleSetting g_lastCandle[SV_MAX_PIPES][TA_AllCandleSettings];
+static int              g_candleInitialized[SV_MAX_PIPES];
+static int              g_candleSyncs;   /* non-vacuity: settings pushed, all pipes */
+
 /* ---- Init / shutdown ---- */
 
 void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
@@ -143,7 +154,9 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         {
             g_lastCompatibility[p] = -1;
             g_unstInitialized[p] = 0;
+            g_candleInitialized[p] = 0;
         }
+        g_candleSyncs = 0;
     }
 }
 
@@ -156,8 +169,14 @@ void server_verify_shutdown(void)
     {
         g_lastCompatibility[p] = -1;
         g_unstInitialized[p] = 0;
+        g_candleInitialized[p] = 0;
         g_pipeLang[p] = NULL;
     }
+}
+
+int server_verify_candle_syncs(void)
+{
+    return g_candleSyncs;
 }
 
 int server_verify_active(void)
@@ -210,6 +229,86 @@ static ErrorNumber sync_unstable_periods(int pipeIdx)
             }
             g_lastUnstPeriods[pipeIdx][id] = curPeriod;
         }
+    }
+    return TA_TEST_PASS;
+}
+
+/* Push the C library's live candle settings to one server (#215, #216 gap 6).
+ *
+ * Before this, no cross-language comparison could run at anything but the
+ * defaults: the servers had no method to set them. A candlestick verified here
+ * while the C side held custom settings was therefore being compared against a
+ * server still on the defaults -- which passed anyway, because the hand-written
+ * candle tests never left the defaults. Both halves of that are fixed: the
+ * transport exists, and this makes every server_verify() call carry whatever
+ * settings the calling test established.
+ *
+ * `factor` travels as hex-of-IEEE-bits, like every other double this file sends
+ * (#115). %.15g would round-trip a threshold scale lossily, and the whole point
+ * of the comparison downstream is that it is bitwise.
+ */
+static ErrorNumber sync_candle_settings(int pipeIdx)
+{
+    CodegenPipe *pipe = g_pipes[pipeIdx];
+    char syncReq[256];
+    char syncResp[256];
+    ErrorNumber err;
+
+    if( !g_candleInitialized[pipeIdx] )
+    {
+        /* First call: put the server on the documented defaults, matching a
+         * fresh TA_Initialize, so the delta loop below has a known baseline
+         * rather than trusting the server's constructor to agree. */
+        snprintf(syncReq, sizeof(syncReq),
+                 "{\"method\":\"restore_candle_default_settings\",\"params\":{\"settingType\":%d}}",
+                 (int)TA_AllCandleSettings);
+        err = codegen_pipe_call(pipe, syncReq, syncResp, sizeof(syncResp));
+        if( err != TA_TEST_PASS )
+            return err;
+        if( sv_json_is_error(syncResp) )
+        {
+            printf("  SV WARN: restore_candle_default_settings rejected by server: %s\n",
+                   syncResp);
+            return TA_SV_RETCODE_MISMATCH;
+        }
+        TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
+        for( int i = 0; i < (int)TA_AllCandleSettings; i++ )
+            g_lastCandle[pipeIdx][i] = TA_Globals->candleSettings[i];
+        g_candleInitialized[pipeIdx] = 1;
+        return TA_TEST_PASS;
+    }
+
+    for( int i = 0; i < (int)TA_AllCandleSettings; i++ )
+    {
+        const TA_CandleSetting *cur  = &TA_Globals->candleSettings[i];
+        const TA_CandleSetting *last = &g_lastCandle[pipeIdx][i];
+
+        /* Compared by BITS, not by ==: a factor of NaN can never be stored (the
+         * setter refuses it), but -0.0 can, and -0.0 == 0.0 would make a real
+         * change invisible to this loop. */
+        unsigned long long curBits, lastBits;
+        memcpy(&curBits,  &cur->factor,  sizeof(curBits));
+        memcpy(&lastBits, &last->factor, sizeof(lastBits));
+        if( cur->rangeType == last->rangeType &&
+            cur->avgPeriod == last->avgPeriod &&
+            curBits == lastBits )
+            continue;
+
+        snprintf(syncReq, sizeof(syncReq),
+                 "{\"method\":\"set_candle_settings\",\"params\":"
+                 "{\"settingType\":%d,\"rangeType\":%d,\"avgPeriod\":%d,"
+                 "\"factorBits\":\"%016llx\"}}",
+                 i, (int)cur->rangeType, cur->avgPeriod, curBits);
+        err = codegen_pipe_call(pipe, syncReq, syncResp, sizeof(syncResp));
+        if( err != TA_TEST_PASS )
+            return err;
+        if( sv_json_is_error(syncResp) )
+        {
+            printf("  SV WARN: set_candle_settings rejected by server: %s\n", syncResp);
+            return TA_SV_RETCODE_MISMATCH;
+        }
+        g_lastCandle[pipeIdx][i] = *cur;
+        g_candleSyncs++;
     }
     return TA_TEST_PASS;
 }
@@ -567,6 +666,12 @@ ErrorNumber server_verify(
         if( err != TA_TEST_PASS )
         {
             printf("  SV WARN [%s]: failed to sync compatibility\n", funcName);
+            continue;
+        }
+        err = sync_candle_settings(p);
+        if( err != TA_TEST_PASS )
+        {
+            printf("  SV WARN [%s]: failed to sync candle settings\n", funcName);
             continue;
         }
 

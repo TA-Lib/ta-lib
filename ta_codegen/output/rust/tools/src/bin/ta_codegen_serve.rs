@@ -853,6 +853,63 @@ fn apply_unstable_period(core: &mut Core, id: usize, period: i64) -> Result<(), 
     }
 }
 
+fn parse_f64_bits(val: &Value, def: f64) -> f64 {
+    let Some(h) = val.as_str() else { return def };
+    if h.len() != 16 { return def; }
+    match u64::from_str_radix(h, 16) {
+        Ok(bits) => f64::from_bits(bits),
+        Err(_) => def,
+    }
+}
+
+fn candle_setting_type_from_int(id: i64) -> Option<CandleSettingType> {
+    Some(match id {
+        0 => CandleSettingType::BodyLong,
+        1 => CandleSettingType::BodyVeryLong,
+        2 => CandleSettingType::BodyShort,
+        3 => CandleSettingType::BodyDoji,
+        4 => CandleSettingType::ShadowLong,
+        5 => CandleSettingType::ShadowVeryLong,
+        6 => CandleSettingType::ShadowShort,
+        7 => CandleSettingType::ShadowVeryShort,
+        8 => CandleSettingType::Near,
+        9 => CandleSettingType::Far,
+        10 => CandleSettingType::Equal,
+        11 => CandleSettingType::AllCandleSettings,
+        _ => return None,
+    })
+}
+
+fn apply_candle_setting(core: &mut Core, st: i64, rt: i64, ap: i64, factor: f64) -> Result<(), &'static str> {
+    let Some(setting_type) = candle_setting_type_from_int(st) else {
+        return Err("Invalid candle setting");
+    };
+    let (Ok(range_type), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {
+        return Err("Invalid candle setting");
+    };
+    let setting = CandleSetting { range_type, avg_period, factor };
+    match core.to_builder().candle_setting(setting_type, setting).build() {
+        Ok(built) => {
+            *core = built;
+            Ok(())
+        }
+        Err(_) => Err("Invalid candle setting"),
+    }
+}
+
+fn apply_restore_candle_default(core: &mut Core, st: i64) -> Result<(), &'static str> {
+    let Some(setting_type) = candle_setting_type_from_int(st) else {
+        return Err("Invalid candle setting type");
+    };
+    match core.to_builder().restore_candle_default(setting_type).build() {
+        Ok(built) => {
+            *core = built;
+            Ok(())
+        }
+        Err(_) => Err("Invalid candle setting type"),
+    }
+}
+
 fn handle_request(core: &mut Core, ref_data: &mut RefData, line: &str) -> String {
     let req: Value = match serde_json::from_str(line) {
         Ok(v) => v,
@@ -15093,6 +15150,23 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 "{\"status\":\"ok\"}".to_string()
             } else {
                 "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string()
+            }
+        }
+        "set_candle_settings" => {
+            let st = params["settingType"].as_i64().unwrap_or(-1);
+            let rt = params["rangeType"].as_i64().unwrap_or(-1);
+            let ap = params["avgPeriod"].as_i64().unwrap_or(0);
+            let factor = parse_f64_bits(&params["factorBits"], 1.0);
+            match apply_candle_setting(core, st, rt, ap, factor) {
+                Ok(()) => "{\"status\":\"ok\"}".to_string(),
+                Err(msg) => format!("{{\"error\":\"{msg}\"}}"),
+            }
+        }
+        "restore_candle_default_settings" => {
+            let st = params["settingType"].as_i64().unwrap_or(-1);
+            match apply_restore_candle_default(core, st) {
+                Ok(()) => "{\"status\":\"ok\"}".to_string(),
+                Err(msg) => format!("{{\"error\":\"{msg}\"}}"),
             }
         }
         "eval_predicate" => {

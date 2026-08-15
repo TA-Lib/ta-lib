@@ -409,6 +409,15 @@ typedef enum
   TA_REGTEST_LEGACY_BAD_HISTORY      = 1569,
   TA_REGTEST_LEGACY_VACUOUS          = 1570,
 
+  /* Candlestick settings matrix, C-side and cross-language (#215/#216). */
+  TA_CDLSET_SETTING_REJECTED         = 1580,
+  TA_CDLSET_CALL_FAILED              = 1581,
+  TA_CDLSET_RESTORE_FAILED           = 1582,
+  TA_CDLSET_XLANG_MISMATCH           = 1583,
+  TA_CDLSET_VACUOUS_NO_MOVE          = 1584,
+  TA_CDLSET_VACUOUS_NO_SYNC          = 1585,
+  TA_CDLSET_NOT_RESTORED             = 1586,
+
   TA_LAST_VALID_ERROR = 0xFFFF
 } ErrorNumber;
 #endif
