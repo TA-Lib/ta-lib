@@ -308,6 +308,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>
+   /// <item><description>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -361,6 +362,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>
+   /// <item><description>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

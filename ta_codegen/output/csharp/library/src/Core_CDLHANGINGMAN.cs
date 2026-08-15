@@ -318,6 +318,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
+   /// <item><description>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -366,6 +367,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
+   /// <item><description>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

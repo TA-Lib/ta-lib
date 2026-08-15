@@ -5,7 +5,7 @@ description: "A single-candle pattern: a long real body with short upper and sho
 
 ## Summary
 
-A single-candle pattern: a long real body with short upper and short lower shadow. The signal direction follows the candle color (bullish if white, bearish if black). Signals strong directional conviction on the bar: +100 white/bullish, -100 black/bearish. Not intrinsically a reversal or continuation signal.
+A single-candle pattern: a long real body with short upper and short lower shadow. The signal direction follows the candle color (bullish if white, bearish if black). Signals strong directional conviction on the bar. Not intrinsically a reversal or continuation signal.
 
 ## Inputs
 
@@ -17,6 +17,14 @@ A single-candle pattern: a long real body with short upper and short lower shado
 ## Outputs
 
 - `outInteger` — +100 on a white (close>=open) long line, -100 on a black long line, 0 when no pattern
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Black long-line candle (long body, short shadows) |
+| 0 | No pattern |
+| 100 | White long-line candle (long body, short shadows) |
 
 ## Properties
 

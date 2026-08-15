@@ -232,6 +232,10 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -280,6 +284,10 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -256,6 +256,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -311,6 +312,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

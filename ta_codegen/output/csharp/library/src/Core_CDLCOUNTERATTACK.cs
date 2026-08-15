@@ -260,13 +260,12 @@ public partial class Core
    /// A two-candle pattern of two long, opposite-colored real bodies whose
    /// closing prices are (nearly) equal. Emits a bullish signal when the second
    /// candle is white and a bearish signal when it is black (a reversal signal,
-   /// though its trend context is not checked). A hit signals a reversal: +100
-   /// (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-   /// depends on a prior trend the code does not check.
+   /// though its trend context is not checked).
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -311,13 +310,12 @@ public partial class Core
    /// A two-candle pattern of two long, opposite-colored real bodies whose
    /// closing prices are (nearly) equal. Emits a bullish signal when the second
    /// candle is white and a bearish signal when it is black (a reversal signal,
-   /// though its trend context is not checked). A hit signals a reversal: +100
-   /// (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-   /// depends on a prior trend the code does not check.
+   /// though its trend context is not checked).
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

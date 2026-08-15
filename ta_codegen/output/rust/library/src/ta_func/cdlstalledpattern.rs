@@ -102,6 +102,10 @@ impl Core {
     ///
     /// * The pattern classically appears in an uptrend, but this function does not verify a prior
     ///   uptrend; the caller must confirm it.
+    /// * Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish
+    ///   continuation 77% of the time — the reverse of the label — because price tends to close
+    ///   above the pattern's top rather than turning down.
+    ///   ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))
     ///
     /// # Arguments
     ///

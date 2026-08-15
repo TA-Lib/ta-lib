@@ -202,9 +202,8 @@
    }
    /**
     * Two-candle pattern: a long black candle followed by a small black candle
-    * whose real body sits inside the prior body. Bullish reversal signal. A hit
-    * signals a bullish reversal (meaningful in a downtrend, which the code does
-    * not verify).
+    * whose real body sits inside the prior body. A hit signals a bullish
+    * reversal, most meaningful in a downtrend, which the code does not verify.
     * <p><b>Formula</b>
     * <pre>{@code
     * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
@@ -212,6 +211,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -257,9 +257,8 @@
    }
    /**
     * Two-candle pattern: a long black candle followed by a small black candle
-    * whose real body sits inside the prior body. Bullish reversal signal. A hit
-    * signals a bullish reversal (meaningful in a downtrend, which the code does
-    * not verify).
+    * whose real body sits inside the prior body. A hit signals a bullish
+    * reversal, most meaningful in a downtrend, which the code does not verify.
     * <p><b>Formula</b>
     * <pre>{@code
     * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
@@ -267,6 +266,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

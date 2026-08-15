@@ -261,6 +261,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -314,6 +315,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

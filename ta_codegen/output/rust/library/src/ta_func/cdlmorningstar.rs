@@ -105,6 +105,10 @@ impl Core {
     /// * The gap-down is measured between the candles' real bodies, not between their high/low
     ///   ranges.
     /// * A prior downtrend is not verified.
+    /// * Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and
+    ///   12th of 103 for overall post-breakout performance — one of the few classic candle
+    ///   patterns whose textbook reputation his statistics confirm rather than debunk.
+    ///   ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))
     ///
     /// # Arguments
     ///

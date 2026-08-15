@@ -282,6 +282,9 @@ public partial class Core
    /// indecision/uncertainty; neutral, neither bullish nor bearish.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -328,6 +331,9 @@ public partial class Core
    /// indecision/uncertainty; neutral, neither bullish nor bearish.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

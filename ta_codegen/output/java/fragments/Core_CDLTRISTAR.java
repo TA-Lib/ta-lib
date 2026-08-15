@@ -187,11 +187,11 @@
    /**
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
-    * signal. +100 = bullish reversal (middle doji gapped down), -100 = bearish
-    * reversal (middle doji gapped up).
+    * signal.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
+    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -240,11 +240,11 @@
    /**
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
-    * signal. +100 = bullish reversal (middle doji gapped down), -100 = bearish
-    * reversal (middle doji gapped up).
+    * signal.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
+    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

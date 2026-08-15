@@ -162,8 +162,8 @@
    }
    /**
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
-    * at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-    * Market indecision; neither bullish nor bearish on its own.
+    * at or below the BodyDoji threshold. Market indecision; neither bullish nor
+    * bearish on its own.
     * <p><b>Formula</b>
     * <pre>{@code
     * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
@@ -213,8 +213,8 @@
    }
    /**
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
-    * at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-    * Market indecision; neither bullish nor bearish on its own.
+    * at or below the BodyDoji threshold. Market indecision; neither bullish nor
+    * bearish on its own.
     * <p><b>Formula</b>
     * <pre>{@code
     * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$

@@ -398,6 +398,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -447,6 +448,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

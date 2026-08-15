@@ -251,6 +251,9 @@ public partial class Core
    /// <code>
    /// One candle at index i. Hit when all hold: (1) short real body: real body &lt; the BodyShort average; (2) very long upper shadow: upper shadow &gt; the ShadowVeryLong average; (3) very long lower shadow: lower shadow &gt; the ShadowVeryLong average. No color, gap, or trend condition.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -302,6 +305,9 @@ public partial class Core
    /// <code>
    /// One candle at index i. Hit when all hold: (1) short real body: real body &lt; the BodyShort average; (2) very long upper shadow: upper shadow &gt; the ShadowVeryLong average; (3) very long lower shadow: lower shadow &gt; the ShadowVeryLong average. No color, gap, or trend condition.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

@@ -209,12 +209,11 @@
     * similar body size that both gap the same direction (up or down) from the
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
-    * not verify a prior trend. A hit signals continuation in the gap's
-    * direction: +100 with an upside gap is bullish, -100 with a downside gap is
-    * bearish.
+    * not verify a prior trend.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
+    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -264,12 +263,11 @@
     * similar body size that both gap the same direction (up or down) from the
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
-    * not verify a prior trend. A hit signals continuation in the gap's
-    * direction: +100 with an upside gap is bullish, -100 with a downside gap is
-    * bearish.
+    * not verify a prior trend.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
+    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

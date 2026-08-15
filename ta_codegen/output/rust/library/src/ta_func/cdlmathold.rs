@@ -105,6 +105,10 @@ impl Core {
     /// * The colors of the third and fourth (reaction) candles are not checked, although they are
     ///   classically black.
     /// * The continuation reading assumes a prior uptrend, which is not verified.
+    /// * Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle
+    ///   lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or
+    ///   at least subject to large change as additional samples become available."
+    ///   ([thepatternsite.com](https://thepatternsite.com/MatHold.html))
     ///
     /// # Arguments
     ///

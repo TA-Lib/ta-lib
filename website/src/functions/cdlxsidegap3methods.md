@@ -5,11 +5,12 @@ description: "A three-candle continuation pattern: two same-color candles separa
 
 ## Summary
 
-A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap. Bullish (upside) when the first two candles are white, bearish (downside) when they are black. A hit signals trend continuation: +100 bullish (uptrend resumes), -100 bearish (downtrend resumes).
+A three-candle continuation pattern: two same-color candles separated by a real-body gap, followed by an opposite-color candle that fills into the gap. Bullish (upside) when the first two candles are white, bearish (downside) when they are black.
 
 ## Notes
 
 - This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.
+- Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A three-candle continuation pattern: two same-color candles separated by a real-
 ## Outputs
 
 - `outInteger` — +100 when the two same-color candles are white (bullish/upside continuation), -100 when black (bearish/downside continuation), 0 otherwise. Equals candlecolor(1st candle) * 100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Downside Gap Three Methods: the first two candles are black — bearish continuation |
+| 0 | No pattern |
+| 100 | Upside Gap Three Methods: the first two candles are white — bullish continuation |
 
 ## Properties
 

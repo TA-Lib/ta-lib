@@ -201,6 +201,10 @@
     * <pre>{@code
     * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -256,6 +260,10 @@
     * <pre>{@code
     * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

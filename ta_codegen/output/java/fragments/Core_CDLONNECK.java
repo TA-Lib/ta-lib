@@ -212,6 +212,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -267,6 +268,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

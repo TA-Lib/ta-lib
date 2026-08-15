@@ -82,8 +82,8 @@ impl Core {
         return ((BodyShort_avgPeriod).max(BodyLong_avgPeriod) + 1) as usize;
     }
     /// Two-candle pattern: a long black candle followed by a small black candle whose real body
-    /// sits inside the prior body. Bullish reversal signal. A hit signals a bullish reversal
-    /// (meaningful in a downtrend, which the code does not verify).
+    /// sits inside the prior body. A hit signals a bullish reversal, most meaningful in a
+    /// downtrend, which the code does not verify.
     ///
     /// # Formula
     ///
@@ -94,6 +94,10 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the preceding downtrend that the bullish reversal classically assumes.
+    /// * Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish
+    ///   continuation 56% of the time — "near random" by his own description — though its
+    ///   overall post-breakout performance rank (21st of 103) is comparatively strong.
+    ///   ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))
     ///
     /// # Arguments
     ///

@@ -277,13 +277,12 @@ public partial class Core
    /// <summary>
    /// Two-candle pattern: a long real body followed by a short real body
    /// contained within the first candle's real body. A reversal signal whose
-   /// direction is the opposite of the first candle's color. A hit signals a
-   /// potential reversal opposite the 1st candle: positive (black 1st) is
-   /// bullish, negative (white 1st) is bearish.
+   /// direction is the opposite of the first candle's color.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -328,13 +327,12 @@ public partial class Core
    /// <summary>
    /// Two-candle pattern: a long real body followed by a short real body
    /// contained within the first candle's real body. A reversal signal whose
-   /// direction is the opposite of the first candle's color. A hit signals a
-   /// potential reversal opposite the 1st candle: positive (black 1st) is
-   /// bullish, negative (white 1st) is bearish.
+   /// direction is the opposite of the first candle's color.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

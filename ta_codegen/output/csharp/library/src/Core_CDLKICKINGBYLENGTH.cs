@@ -267,9 +267,7 @@ public partial class Core
    /// <summary>
    /// A two-candle pattern of two opposite-color marubozu (long body, very short
    /// shadows on both ends) separated by a gap. A strong directional/reversal
-   /// signal whose bull/bear bias is set by the longer of the two marubozu. A
-   /// hit signals a strong directional move; +100 bullish / -100 bearish per the
-   /// color of the longer marubozu.
+   /// signal whose bull/bear bias is set by the longer of the two marubozu.
    /// </summary>
    /// <remarks>
    /// <para>
@@ -315,9 +313,7 @@ public partial class Core
    /// <summary>
    /// A two-candle pattern of two opposite-color marubozu (long body, very short
    /// shadows on both ends) separated by a gap. A strong directional/reversal
-   /// signal whose bull/bear bias is set by the longer of the two marubozu. A
-   /// hit signals a strong directional move; +100 bullish / -100 bearish per the
-   /// color of the longer marubozu.
+   /// signal whose bull/bear bias is set by the longer of the two marubozu.
    /// </summary>
    /// <remarks>
    /// <para>

@@ -260,6 +260,9 @@ public partial class Core
    /// downtrend, which the function does not verify.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -306,6 +309,9 @@ public partial class Core
    /// downtrend, which the function does not verify.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

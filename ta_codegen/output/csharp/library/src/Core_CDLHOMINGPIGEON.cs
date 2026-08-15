@@ -250,9 +250,8 @@ public partial class Core
    }
    /// <summary>
    /// Two-candle pattern: a long black candle followed by a small black candle
-   /// whose real body sits inside the prior body. Bullish reversal signal. A hit
-   /// signals a bullish reversal (meaningful in a downtrend, which the code does
-   /// not verify).
+   /// whose real body sits inside the prior body. A hit signals a bullish
+   /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -261,6 +260,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
+   /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -302,9 +302,8 @@ public partial class Core
    }
    /// <summary>
    /// Two-candle pattern: a long black candle followed by a small black candle
-   /// whose real body sits inside the prior body. Bullish reversal signal. A hit
-   /// signals a bullish reversal (meaningful in a downtrend, which the code does
-   /// not verify).
+   /// whose real body sits inside the prior body. A hit signals a bullish
+   /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -313,6 +312,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
+   /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

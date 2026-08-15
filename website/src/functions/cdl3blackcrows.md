@@ -22,6 +22,13 @@ A four-bar pattern: a white candle followed by three consecutive black (down) ca
 
 - `outInteger` — -100 when the bearish pattern is detected, 0 otherwise. Never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Three Black Crows pattern detected: bearish |
+| 0 | No pattern |
+
 ## Properties
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)

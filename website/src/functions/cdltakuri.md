@@ -18,6 +18,13 @@ Single-candle pattern: a doji whose open and close sit at the high (no/very shor
 
 - `outInteger` — +100 when the takuri pattern is detected, 0 otherwise. Never negative; the positive sign is a convention and does not by itself imply bullishness
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Takuri (dragonfly doji with an exceptionally long lower shadow) detected — directional meaning depends on the prevailing trend, which the code does not check |
+
 ## Properties
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)

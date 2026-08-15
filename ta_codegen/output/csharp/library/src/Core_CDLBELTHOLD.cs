@@ -254,6 +254,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</description></item>
+   /// <item><description>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -308,6 +309,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</description></item>
+   /// <item><description>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

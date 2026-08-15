@@ -2,11 +2,12 @@
 
 ## Summary
 
-A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white) reversal signal. Bullish reversal at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or uptrend (bearish), which the code does not verify.
+A two-candle reversal pattern where the second candle's real body engulfs the first candle's opposite-colored real body. Bullish (white engulfs black) or bearish (black engulfs white) reversal signal; ideally after a downtrend (bullish) or uptrend (bearish), which the code does not verify.
 
 ## Notes
 
 - Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.
+- Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))
 
 ## Inputs
 
@@ -18,6 +19,16 @@ A two-candle reversal pattern where the second candle's real body engulfs the fi
 ## Outputs
 
 - `outInteger` — +100/+80 (bullish, white engulfs black), -100/-80 (bearish, black engulfs white), 0 otherwise. Magnitude 100 when the second body strictly engulfs both ends; 80 when the bodies share an exact endpoint (open[i]==close[i-1] or close[i]==open[i-1])
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish engulfing: the black body fully swallows the prior white body — a strong reversal signal |
+| -80 | Bearish engulfing, weaker variant: one edge of the two bodies lines up exactly rather than fully overhanging it |
+| 0 | No pattern |
+| 80 | Bullish engulfing, weaker variant: one edge of the two bodies lines up exactly rather than fully overhanging it |
+| 100 | Bullish engulfing: the white body fully swallows the prior black body — a strong reversal signal |
 
 ## Implementation
 

@@ -229,12 +229,11 @@
    /**
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
-    * direction is the opposite of the first candle's color. A hit signals a
-    * potential reversal opposite the 1st candle: positive (black 1st) is
-    * bullish, negative (white 1st) is bearish.
+    * direction is the opposite of the first candle's color.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -282,12 +281,11 @@
    /**
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
-    * direction is the opposite of the first candle's color. A hit signals a
-    * potential reversal opposite the 1st candle: positive (black 1st) is
-    * bullish, negative (white 1st) is bearish.
+    * direction is the opposite of the first candle's color.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

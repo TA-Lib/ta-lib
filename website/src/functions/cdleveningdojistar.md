@@ -22,6 +22,13 @@ A three-candle bearish reversal pattern: a long white candle, a doji that gaps u
 
 - `outInteger` — -100 when the pattern is detected, 0 otherwise. Always bearish; never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Evening Doji Star pattern detected: bearish |
+| 0 | No pattern |
+
 ## Parameters
 
 | Parameter | Type | Default | Accepted values | Description |

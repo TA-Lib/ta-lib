@@ -261,6 +261,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</description></item>
    /// <item><description>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</description></item>
+   /// <item><description>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -311,6 +312,7 @@ public partial class Core
    /// <list type="bullet">
    /// <item><description>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</description></item>
    /// <item><description>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</description></item>
+   /// <item><description>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

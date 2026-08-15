@@ -94,13 +94,16 @@ impl Core {
         return (((ShadowVeryShort_avgPeriod).max(BodyShort_avgPeriod)).max((Far_avgPeriod).max(Near_avgPeriod)) + 2) as usize;
     }
     /// A three-candle pattern of consecutive white candles with progressively higher closes, each
-    /// opening within/near the prior body and each with a very short upper shadow. It is a bullish
-    /// reversal signal. A hit (+100) is bullish, signaling a reversal (most meaningful in a
-    /// downtrend, which the code does not verify).
+    /// opening within/near the prior body and each with a very short upper shadow. A hit is a
+    /// bullish reversal signal, most meaningful in a downtrend, which the code does not verify.
     ///
     /// # Notes
     ///
     /// * Does not verify the prior downtrend the pattern classically assumes for significance.
+    /// * Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high
+    ///   rate mostly reflects how rare downward breakouts are afterward — moves following an
+    ///   upward breakout perform poorly.
+    ///   ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))
     ///
     /// # Arguments
     ///

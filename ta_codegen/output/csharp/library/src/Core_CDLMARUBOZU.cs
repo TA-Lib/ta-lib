@@ -241,15 +241,16 @@ public partial class Core
    /// <summary>
    /// Single candle with a long real body and no/very-short upper and lower
    /// shadows, so open and close sit at the range extremes. Bullish (white) or
-   /// bearish (black) reversal/strength signal per the body color. +100 = white
-   /// marubozu (strong buying pressure); -100 = black marubozu (strong selling
-   /// pressure).
+   /// bearish (black) reversal/strength signal per the body color.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
    /// One candle at i. Match when: realbody(i) &gt; BodyLong average AND upperShadow(i) &lt; ShadowVeryShort average AND lowerShadow(i) &lt; ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close&gt;=open, -100 black when close&lt;open); else 0.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -292,15 +293,16 @@ public partial class Core
    /// <summary>
    /// Single candle with a long real body and no/very-short upper and lower
    /// shadows, so open and close sit at the range extremes. Bullish (white) or
-   /// bearish (black) reversal/strength signal per the body color. +100 = white
-   /// marubozu (strong buying pressure); -100 = black marubozu (strong selling
-   /// pressure).
+   /// bearish (black) reversal/strength signal per the body color.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
    /// One candle at i. Match when: realbody(i) &gt; BodyLong average AND upperShadow(i) &lt; ShadowVeryShort average AND lowerShadow(i) &lt; ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close&gt;=open, -100 black when close&lt;open); else 0.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

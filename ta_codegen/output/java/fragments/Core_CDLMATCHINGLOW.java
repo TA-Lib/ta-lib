@@ -177,6 +177,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
+    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -231,6 +232,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
+    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

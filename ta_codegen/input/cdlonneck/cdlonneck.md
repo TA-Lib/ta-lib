@@ -11,6 +11,7 @@ Two candles. 1st: black (close<open) with long real body (realbody > BodyLong av
 ## Notes
 
 - The bearish-continuation reading assumes a prior downtrend, which is not verified.
+- Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))
 
 ## Inputs
 
@@ -22,6 +23,13 @@ Two candles. 1st: black (close<open) with long real body (realbody > BodyLong av
 ## Outputs
 
 - `outInteger` — -100 on a match, 0 otherwise. Only -100 is ever emitted (never +100); on-neck is always bearish
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | On-Neck pattern detected: bearish continuation |
+| 0 | No pattern |
 
 ## Implementation
 

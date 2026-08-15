@@ -83,6 +83,10 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the prior uptrend the pattern classically assumes for significance.
+    /// * Bulkowski's testing found this reverses bearishly only 54% of the time — "near random"
+    ///   — despite the pattern's classic always-bearish label; the breakout direction cannot be
+    ///   predicted with any real accuracy.
+    ///   ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))
     ///
     /// # Arguments
     ///

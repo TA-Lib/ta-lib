@@ -269,6 +269,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
+    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -321,6 +322,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
+    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

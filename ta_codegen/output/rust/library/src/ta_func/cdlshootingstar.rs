@@ -94,6 +94,9 @@ impl Core {
     /// # Notes
     ///
     /// * A preceding uptrend is not verified.
+    /// * Bulkowski found this reverses only 59% of the time — "near random," summarized in his
+    ///   words as "this candle looks better than it performs" — ranking 55th of 103 patterns.
+    ///   ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))
     ///
     /// # Arguments
     ///

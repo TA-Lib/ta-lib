@@ -308,12 +308,12 @@
    /**
     * A three-candle pattern of consecutive white candles with progressively
     * higher closes, each opening within/near the prior body and each with a
-    * very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-    * bullish, signaling a reversal (most meaningful in a downtrend, which the
-    * code does not verify).
+    * very short upper shadow. A hit is a bullish reversal signal, most
+    * meaningful in a downtrend, which the code does not verify.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -361,12 +361,12 @@
    /**
     * A three-candle pattern of consecutive white candles with progressively
     * higher closes, each opening within/near the prior body and each with a
-    * very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-    * bullish, signaling a reversal (most meaningful in a downtrend, which the
-    * code does not verify).
+    * very short upper shadow. A hit is a bullish reversal signal, most
+    * meaningful in a downtrend, which the code does not verify.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

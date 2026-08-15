@@ -212,6 +212,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -268,6 +269,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

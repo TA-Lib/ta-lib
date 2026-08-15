@@ -306,12 +306,11 @@ public partial class Core
    /// A three-candle reversal pattern: a long body, then a gapped-away doji,
    /// then a body of opposite color that gaps back the other way and closes deep
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
-   /// Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-   /// abandoned baby top (bearish).
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -359,12 +358,11 @@ public partial class Core
    /// A three-candle reversal pattern: a long body, then a gapped-away doji,
    /// then a body of opposite color that gaps back the other way and closes deep
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
-   /// Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-   /// abandoned baby top (bearish).
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

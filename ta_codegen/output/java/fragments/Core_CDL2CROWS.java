@@ -183,6 +183,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -235,6 +236,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

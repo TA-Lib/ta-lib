@@ -12905,6 +12905,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -12957,6 +12958,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -14456,12 +14458,12 @@ class Core {
         * A three-candle reversal pattern: a long real body, then a short real body
         * totally engulfed by it (a harami), then a third candle of opposite color
         * to the first that closes past the first candle's open. Signals a bullish
-        * (three inside up) or bearish (three inside down) reversal. A hit is a
-        * reversal signal: +100 = three inside up (bullish, significant in a
-        * downtrend); -100 = three inside down (bearish, significant in an uptrend).
+        * reversal (three inside up, significant in a downtrend) or a bearish
+        * reversal (three inside down, significant in an uptrend).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
+        * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -14511,12 +14513,12 @@ class Core {
         * A three-candle reversal pattern: a long real body, then a short real body
         * totally engulfed by it (a harami), then a third candle of opposite color
         * to the first that closes past the first candle's open. Signals a bullish
-        * (three inside up) or bearish (three inside down) reversal. A hit is a
-        * reversal signal: +100 = three inside up (bullish, significant in a
-        * downtrend); -100 = three inside down (bearish, significant in an uptrend).
+        * reversal (three inside up, significant in a downtrend) or a bearish
+        * reversal (three inside down, significant in an uptrend).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
+        * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -15264,12 +15266,12 @@ class Core {
         * (or lower) closes, each opening within or near the prior real body, then a
         * fourth opposite-color candle that opens beyond the third close and closes
         * past the first candle's open. TA-Lib emits a signed continuation-style
-        * signal keyed to the color of the first three candles. +100 = three-white
-        * (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-        * as significant only inside a trend matching the first three candles.
+        * signal keyed to the color of the first three candles, traditionally read
+        * as significant only inside a trend matching those three candles.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
+        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -15319,12 +15321,12 @@ class Core {
         * (or lower) closes, each opening within or near the prior real body, then a
         * fourth opposite-color candle that opens beyond the third close and closes
         * past the first candle's open. TA-Lib emits a signed continuation-style
-        * signal keyed to the color of the first three candles. +100 = three-white
-        * (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-        * as significant only inside a trend matching the first three candles.
+        * signal keyed to the color of the first three candles, traditionally read
+        * as significant only inside a trend matching those three candles.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
+        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -16032,11 +16034,11 @@ class Core {
         * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
         * candle 1's body) followed by a third candle that confirms in the engulfing
         * direction. Signals a bullish reversal (Three Outside Up) or bearish
-        * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
-        * -100 = bearish reversal (Three Outside Down).
+        * reversal (Three Outside Down).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
+        * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -16086,11 +16088,11 @@ class Core {
         * A three-candle pattern: an engulfing pair (candle 2's body fully engulfs
         * candle 1's body) followed by a third candle that confirms in the engulfing
         * direction. Signals a bullish reversal (Three Outside Up) or bearish
-        * reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up);
-        * -100 = bearish reversal (Three Outside Down).
+        * reversal (Three Outside Down).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
+        * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -16696,12 +16698,13 @@ class Core {
         * A three-candle bullish reversal pattern of three consecutive black candles
         * that progressively shrink and stabilize: a long black candle with a long
         * lower shadow, a smaller black candle probing lower, then a small black
-        * marubozu contained within the second candle's range. A hit (+100) signals
-        * a bullish reversal; per the code comment it is meaningful in a downtrend,
+        * marubozu contained within the second candle's range. A hit signals a
+        * bullish reversal; per the code comment it is meaningful in a downtrend,
         * but the function does not verify prior trend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+        * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -16750,12 +16753,13 @@ class Core {
         * A three-candle bullish reversal pattern of three consecutive black candles
         * that progressively shrink and stabilize: a long black candle with a long
         * lower shadow, a smaller black candle probing lower, then a small black
-        * marubozu contained within the second candle's range. A hit (+100) signals
-        * a bullish reversal; per the code comment it is meaningful in a downtrend,
+        * marubozu contained within the second candle's range. A hit signals a
+        * bullish reversal; per the code comment it is meaningful in a downtrend,
         * but the function does not verify prior trend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+        * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -17955,12 +17959,12 @@ class Core {
        /**
         * A three-candle pattern of consecutive white candles with progressively
         * higher closes, each opening within/near the prior body and each with a
-        * very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-        * bullish, signaling a reversal (most meaningful in a downtrend, which the
-        * code does not verify).
+        * very short upper shadow. A hit is a bullish reversal signal, most
+        * meaningful in a downtrend, which the code does not verify.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -18008,12 +18012,12 @@ class Core {
        /**
         * A three-candle pattern of consecutive white candles with progressively
         * higher closes, each opening within/near the prior body and each with a
-        * very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-        * bullish, signaling a reversal (most meaningful in a downtrend, which the
-        * code does not verify).
+        * very short upper shadow. A hit is a bullish reversal signal, most
+        * meaningful in a downtrend, which the code does not verify.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -19184,11 +19188,10 @@ class Core {
         * A three-candle reversal pattern: a long body, then a gapped-away doji,
         * then a body of opposite color that gaps back the other way and closes deep
         * into the first body. Bullish (bottom) or bearish (top) reversal signal.
-        * Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-        * abandoned baby top (bearish).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -19243,11 +19246,10 @@ class Core {
         * A three-candle reversal pattern: a long body, then a gapped-away doji,
         * then a body of opposite color that gaps back the other way and closes deep
         * into the first body. Bullish (bottom) or bearish (top) reversal signal.
-        * Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-        * abandoned baby top (bearish).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
+        * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -20274,6 +20276,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+        * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -20326,6 +20329,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
+        * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -21567,6 +21571,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
+        * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -21624,6 +21629,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
+        * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -22308,11 +22314,11 @@ class Core {
         * candle that gaps away from it by its real body, two more candles extending
         * the move, and an opposite-colored fifth candle that closes back inside the
         * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-        * reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-        * (top).
+        * reversal).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
+        * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -22362,11 +22368,11 @@ class Core {
         * candle that gaps away from it by its real body, two more candles extending
         * the move, and an opposite-colored fifth candle that closes back inside the
         * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-        * reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-        * (top).
+        * reversal).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
+        * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -23071,14 +23077,17 @@ class Core {
        }
        /**
         * Single-candle pattern: a long real body whose closing end has no or very
-        * short shadow, so the close sits at the candle's extreme. Non-directional
-        * strong bar that emits +100 for a white body and -100 for a black body.
-        * White (+100) is bullish, black (-100) is bearish; a strong directional
-        * bar, not a defined reversal/continuation signal.
+        * short shadow, so the close sits at the candle's extreme. A strong
+        * directional bar, not a defined reversal/continuation signal — white is
+        * bullish, black is bearish.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -23124,14 +23133,17 @@ class Core {
        }
        /**
         * Single-candle pattern: a long real body whose closing end has no or very
-        * short shadow, so the close sits at the candle's extreme. Non-directional
-        * strong bar that emits +100 for a white body and -100 for a black body.
-        * White (+100) is bullish, black (-100) is bearish; a strong directional
-        * bar, not a defined reversal/continuation signal.
+        * short shadow, so the close sits at the candle's extreme. A strong
+        * directional bar, not a defined reversal/continuation signal — white is
+        * bullish, black is bearish.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -23834,11 +23846,11 @@ class Core {
        /**
         * A four-candle pattern: two black marubozus, then a black candle that gaps
         * down but pokes its upper shadow into the prior body, then a larger black
-        * candle fully engulfing the third. Bullish reversal signal. A hit signals a
-        * bullish reversal.
+        * candle fully engulfing the third. A hit signals a bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -23885,11 +23897,11 @@ class Core {
        /**
         * A four-candle pattern: two black marubozus, then a black candle that gaps
         * down but pokes its upper shadow into the prior body, then a larger black
-        * candle fully engulfing the third. Bullish reversal signal. A hit signals a
-        * bullish reversal.
+        * candle fully engulfing the third. A hit signals a bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -24683,12 +24695,11 @@ class Core {
         * A two-candle pattern of two long, opposite-colored real bodies whose
         * closing prices are (nearly) equal. Emits a bullish signal when the second
         * candle is white and a bearish signal when it is black (a reversal signal,
-        * though its trend context is not checked). A hit signals a reversal: +100
-        * (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-        * depends on a prior trend the code does not check.
+        * though its trend context is not checked).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+        * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -24737,12 +24748,11 @@ class Core {
         * A two-candle pattern of two long, opposite-colored real bodies whose
         * closing prices are (nearly) equal. Emits a bullish signal when the second
         * candle is white and a bearish signal when it is black (a reversal signal,
-        * though its trend context is not checked). A hit signals a reversal: +100
-        * (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance
-        * depends on a prior trend the code does not check.
+        * though its trend context is not checked).
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+        * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -26257,8 +26267,8 @@ class Core {
        }
        /**
         * Single-candle Doji recognizer: fires when the real body (|close-open|) is
-        * at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-        * Market indecision; neither bullish nor bearish on its own.
+        * at or below the BodyDoji threshold. Market indecision; neither bullish nor
+        * bearish on its own.
         * <p><b>Formula</b>
         * <pre>{@code
         * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
@@ -26308,8 +26318,8 @@ class Core {
        }
        /**
         * Single-candle Doji recognizer: fires when the real body (|close-open|) is
-        * at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-        * Market indecision; neither bullish nor bearish on its own.
+        * at or below the BodyDoji threshold. Market indecision; neither bullish nor
+        * bearish on its own.
         * <p><b>Formula</b>
         * <pre>{@code
         * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
@@ -26928,6 +26938,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+        * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -26989,6 +27000,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
+        * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -27733,6 +27745,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+        * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -27792,6 +27805,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+        * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -28446,12 +28460,12 @@ class Core {
        /**
         * A two-candle reversal pattern where the second candle's real body engulfs
         * the first candle's opposite-colored real body. Bullish (white engulfs
-        * black) or bearish (black engulfs white) reversal signal. Bullish reversal
-        * at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-        * uptrend (bearish), which the code does not verify.
+        * black) or bearish (black engulfs white) reversal signal; ideally after a
+        * downtrend (bullish) or uptrend (bearish), which the code does not verify.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
+        * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -28501,12 +28515,12 @@ class Core {
        /**
         * A two-candle reversal pattern where the second candle's real body engulfs
         * the first candle's opposite-colored real body. Bullish (white engulfs
-        * black) or bearish (black engulfs white) reversal signal. Bullish reversal
-        * at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-        * uptrend (bearish), which the code does not verify.
+        * black) or bearish (black engulfs white) reversal signal; ideally after a
+        * downtrend (bullish) or uptrend (bearish), which the code does not verify.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
+        * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -30926,12 +30940,11 @@ class Core {
         * similar body size that both gap the same direction (up or down) from the
         * first candle's real body and open at about the same level. It is a
         * continuation signal whose sign reports the gap direction; the code does
-        * not verify a prior trend. A hit signals continuation in the gap's
-        * direction: +100 with an upside gap is bullish, -100 with a downside gap is
-        * bearish.
+        * not verify a prior trend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
+        * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -30981,12 +30994,11 @@ class Core {
         * similar body size that both gap the same direction (up or down) from the
         * first candle's real body and open at about the same level. It is a
         * continuation signal whose sign reports the gap direction; the code does
-        * not verify a prior trend. A hit signals continuation in the gap's
-        * direction: +100 with an upside gap is bullish, -100 with a downside gap is
-        * bearish.
+        * not verify a prior trend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
+        * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -31770,6 +31782,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+        * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -31829,6 +31842,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+        * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -32601,11 +32615,11 @@ class Core {
        /**
         * Single-candle pattern: a small real body at the top of the range with a
         * long lower shadow and little or no upper shadow, sitting at or near the
-        * prior candle's low. Bullish reversal signal. A hit (+100) flags a
-        * potential bullish reversal.
+        * prior candle's low. A hit flags a potential bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
+        * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -32653,11 +32667,11 @@ class Core {
        /**
         * Single-candle pattern: a small real body at the top of the range with a
         * long lower shadow and little or no upper shadow, sitting at or near the
-        * prior candle's low. Bullish reversal signal. A hit (+100) flags a
-        * potential bullish reversal.
+        * prior candle's low. A hit flags a potential bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
+        * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -33665,6 +33679,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
+        * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -33717,6 +33732,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
+        * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -34684,12 +34700,11 @@ class Core {
        /**
         * Two-candle pattern: a long real body followed by a short real body
         * contained within the first candle's real body. A reversal signal whose
-        * direction is the opposite of the first candle's color. A hit signals a
-        * potential reversal opposite the 1st candle: positive (black 1st) is
-        * bullish, negative (white 1st) is bearish.
+        * direction is the opposite of the first candle's color.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+        * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -34737,12 +34752,11 @@ class Core {
        /**
         * Two-candle pattern: a long real body followed by a short real body
         * contained within the first candle's real body. A reversal signal whose
-        * direction is the opposite of the first candle's color. A hit signals a
-        * potential reversal opposite the 1st candle: positive (black 1st) is
-        * bullish, negative (white 1st) is bearish.
+        * direction is the opposite of the first candle's color.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+        * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -35534,11 +35548,11 @@ class Core {
         * A two-candle reversal pattern: a long real body followed by a doji whose
         * real body is contained within the first candle's real body (the doji
         * variant of the Harami). Bullish after a black first candle, bearish after
-        * a white first candle. A hit signals a potential reversal: +100/+80 bullish
-        * (black first candle), -100/-80 bearish (white first candle).
+        * a white first candle.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+        * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -35587,11 +35601,11 @@ class Core {
         * A two-candle reversal pattern: a long real body followed by a doji whose
         * real body is contained within the first candle's real body (the doji
         * variant of the Harami). Bullish after a black first candle, bearish after
-        * a white first candle. A hit signals a potential reversal: +100/+80 bullish
-        * (black first candle), -100/-80 bearish (white first candle).
+        * a white first candle.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
+        * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -36354,6 +36368,10 @@ class Core {
         * <pre>{@code
         * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -36409,6 +36427,10 @@ class Core {
         * <pre>{@code
         * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -37134,6 +37156,10 @@ class Core {
         * reversal/continuation depending on the breakout direction. A
         * false-breakout setup: positive = bullish, negative = bearish; magnitude
         * 200 flags the confirming bar.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -37182,6 +37208,10 @@ class Core {
         * reversal/continuation depending on the breakout direction. A
         * false-breakout setup: positive = bullish, negative = bearish; magnitude
         * 200 flags the confirming bar.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -38643,9 +38673,8 @@ class Core {
        }
        /**
         * Two-candle pattern: a long black candle followed by a small black candle
-        * whose real body sits inside the prior body. Bullish reversal signal. A hit
-        * signals a bullish reversal (meaningful in a downtrend, which the code does
-        * not verify).
+        * whose real body sits inside the prior body. A hit signals a bullish
+        * reversal, most meaningful in a downtrend, which the code does not verify.
         * <p><b>Formula</b>
         * <pre>{@code
         * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
@@ -38653,6 +38682,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -38698,9 +38728,8 @@ class Core {
        }
        /**
         * Two-candle pattern: a long black candle followed by a small black candle
-        * whose real body sits inside the prior body. Bullish reversal signal. A hit
-        * signals a bullish reversal (meaningful in a downtrend, which the code does
-        * not verify).
+        * whose real body sits inside the prior body. A hit signals a bullish
+        * reversal, most meaningful in a downtrend, which the code does not verify.
         * <p><b>Formula</b>
         * <pre>{@code
         * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
@@ -38708,6 +38737,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -40444,6 +40474,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
+        * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -40500,6 +40531,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
+        * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -41292,11 +41324,12 @@ class Core {
        }
        /**
         * Single-candle pattern: a small real body with a long upper shadow and
-        * little-to-no lower shadow that gaps down from the prior candle. Bullish
-        * reversal signal. A hit (+100) flags a potential bullish reversal.
+        * little-to-no lower shadow that gaps down from the prior candle. A hit
+        * flags a potential bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -41343,11 +41376,12 @@ class Core {
        }
        /**
         * Single-candle pattern: a small real body with a long upper shadow and
-        * little-to-no lower shadow that gaps down from the prior candle. Bullish
-        * reversal signal. A hit (+100) flags a potential bullish reversal.
+        * little-to-no lower shadow that gaps down from the prior candle. A hit
+        * flags a potential bullish reversal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
+        * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -42194,8 +42228,11 @@ class Core {
        /**
         * Two-candle pattern of two opposite-color marubozu (long bodies with very
         * short shadows) separated by a price gap. A reversal signal whose direction
-        * is set by the second candle's color. Hit signals a reversal in the
-        * direction of the second candle: +100 bullish, -100 bearish.
+        * is set by the second candle's color.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -42242,8 +42279,11 @@ class Core {
        /**
         * Two-candle pattern of two opposite-color marubozu (long bodies with very
         * short shadows) separated by a price gap. A reversal signal whose direction
-        * is set by the second candle's color. Hit signals a reversal in the
-        * direction of the second candle: +100 bullish, -100 bearish.
+        * is set by the second candle's color.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -43107,9 +43147,7 @@ class Core {
        /**
         * A two-candle pattern of two opposite-color marubozu (long body, very short
         * shadows on both ends) separated by a gap. A strong directional/reversal
-        * signal whose bull/bear bias is set by the longer of the two marubozu. A
-        * hit signals a strong directional move; +100 bullish / -100 bearish per the
-        * color of the longer marubozu.
+        * signal whose bull/bear bias is set by the longer of the two marubozu.
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -43157,9 +43195,7 @@ class Core {
        /**
         * A two-candle pattern of two opposite-color marubozu (long body, very short
         * shadows on both ends) separated by a gap. A strong directional/reversal
-        * signal whose bull/bear bias is set by the longer of the two marubozu. A
-        * hit signals a strong directional move; +100 bullish / -100 bearish per the
-        * color of the longer marubozu.
+        * signal whose bull/bear bias is set by the longer of the two marubozu.
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -43987,11 +44023,12 @@ class Core {
         * Five-candle bullish reversal pattern: three consecutively lower black
         * candles, a fourth black candle with a non-very-short upper shadow, then a
         * white candle that opens above the prior open and closes above the prior
-        * high. Signals a potential bottom reversal. A hit (+100) is a bullish
-        * reversal signal, most meaningful after a downtrend.
+        * high. A hit is a bullish reversal signal, most meaningful after a
+        * downtrend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
+        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -44040,11 +44077,12 @@ class Core {
         * Five-candle bullish reversal pattern: three consecutively lower black
         * candles, a fourth black candle with a non-very-short upper shadow, then a
         * white candle that opens above the prior open and closes above the prior
-        * high. Signals a potential bottom reversal. A hit (+100) is a bullish
-        * reversal signal, most meaningful after a downtrend.
+        * high. A hit is a bullish reversal signal, most meaningful after a
+        * downtrend.
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
+        * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -44739,6 +44777,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
+        * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -44795,6 +44834,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
+        * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -45494,9 +45534,8 @@ class Core {
        /**
         * A single-candle pattern: a long real body with short upper and short lower
         * shadow. The signal direction follows the candle color (bullish if white,
-        * bearish if black). Signals strong directional conviction on the bar: +100
-        * white/bullish, -100 black/bearish. Not intrinsically a reversal or
-        * continuation signal.
+        * bearish if black). Signals strong directional conviction on the bar. Not
+        * intrinsically a reversal or continuation signal.
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -45544,9 +45583,8 @@ class Core {
        /**
         * A single-candle pattern: a long real body with short upper and short lower
         * shadow. The signal direction follows the candle color (bullish if white,
-        * bearish if black). Signals strong directional conviction on the bar: +100
-        * white/bullish, -100 black/bearish. Not intrinsically a reversal or
-        * continuation signal.
+        * bearish if black). Signals strong directional conviction on the bar. Not
+        * intrinsically a reversal or continuation signal.
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -46244,13 +46282,15 @@ class Core {
        /**
         * Single candle with a long real body and no/very-short upper and lower
         * shadows, so open and close sit at the range extremes. Bullish (white) or
-        * bearish (black) reversal/strength signal per the body color. +100 = white
-        * marubozu (strong buying pressure); -100 = black marubozu (strong selling
-        * pressure).
+        * bearish (black) reversal/strength signal per the body color.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -46297,13 +46337,15 @@ class Core {
        /**
         * Single candle with a long real body and no/very-short upper and lower
         * shadows, so open and close sit at the range extremes. Bullish (white) or
-        * bearish (black) reversal/strength signal per the body color. +100 = white
-        * marubozu (strong buying pressure); -100 = black marubozu (strong selling
-        * pressure).
+        * bearish (black) reversal/strength signal per the body color.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
         * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -46984,6 +47026,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
+        * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -47038,6 +47081,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
+        * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -47739,6 +47783,7 @@ class Core {
         * <ul>
         * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
         * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
+        * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -47795,6 +47840,7 @@ class Core {
         * <ul>
         * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
         * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
+        * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -49777,6 +49823,7 @@ class Core {
         * <ul>
         * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
         * <li>A prior downtrend is not verified.</li>
+        * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -49836,6 +49883,7 @@ class Core {
         * <ul>
         * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
         * <li>A prior downtrend is not verified.</li>
+        * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -50647,6 +50695,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
+        * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -50702,6 +50751,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
+        * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -52262,6 +52312,10 @@ class Core {
         * of the high-low range. It is a neutral indecision signal, not a
         * directional (bullish/bearish) reversal. A hit marks market
         * indecision/uncertainty; neutral, neither bullish nor bearish.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -52310,6 +52364,10 @@ class Core {
         * of the high-low range. It is a neutral indecision signal, not a
         * directional (bullish/bearish) reversal. A hit marks market
         * indecision/uncertainty; neutral, neither bullish nor bearish.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -53161,14 +53219,13 @@ class Core {
         * A five-candle continuation pattern: a long candle, three small
         * counter-color candles that stay partly within the first candle's high-low
         * range, then a long same-color candle that resumes the trend. Bullish
-        * (rising) or bearish (falling) continuation signal. A hit signals trend
-        * continuation: +100 = bullish (rising three methods), -100 = bearish
-        * (falling three methods).
+        * (rising) or bearish (falling) continuation signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
         * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
         * <li>The prior trend the continuation reading assumes is not verified.</li>
+        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -53218,14 +53275,13 @@ class Core {
         * A five-candle continuation pattern: a long candle, three small
         * counter-color candles that stay partly within the first candle's high-low
         * range, then a long same-color candle that resumes the trend. Bullish
-        * (rising) or bearish (falling) continuation signal. A hit signals trend
-        * continuation: +100 = bullish (rising three methods), -100 = bearish
-        * (falling three methods).
+        * (rising) or bearish (falling) continuation signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
         * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
         * <li>The prior trend the continuation reading assumes is not verified.</li>
+        * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -54186,8 +54242,7 @@ class Core {
         * A two-candle continuation pattern: the second candle opposes the first in
         * color, opens at the same price as the first, and is a long-bodied belt
         * hold. Bullish (white second candle) or bearish (black second candle)
-        * continuation signal. Trend continuation: +100 = bullish (white belt hold),
-        * -100 = bearish (black belt hold).
+        * continuation signal.
         * <p><b>Formula</b>
         * <pre>{@code
         * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
@@ -54241,8 +54296,7 @@ class Core {
         * A two-candle continuation pattern: the second candle opposes the first in
         * color, opens at the same price as the first, and is a long-bodied belt
         * hold. Bullish (white second candle) or bearish (black second candle)
-        * continuation signal. Trend continuation: +100 = bullish (white belt hold),
-        * -100 = bearish (black belt hold).
+        * continuation signal.
         * <p><b>Formula</b>
         * <pre>{@code
         * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
@@ -55134,6 +55188,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A preceding uptrend is not verified.</li>
+        * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -55187,6 +55242,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A preceding uptrend is not verified.</li>
+        * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -56010,9 +56066,7 @@ class Core {
        /**
         * Single-candle pattern: a short real body with short upper and lower
         * shadows (a small-range candle). Not a directional signal — the output sign
-        * encodes candle color, not bullish/bearish sentiment. A hit only flags a
-        * small-range candle; the +/- sign is the candle's color (white/black), not
-        * a reversal or continuation call.
+        * encodes candle color, not bullish/bearish sentiment.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle at i, all three:
@@ -56068,9 +56122,7 @@ class Core {
        /**
         * Single-candle pattern: a short real body with short upper and lower
         * shadows (a small-range candle). Not a directional signal — the output sign
-        * encodes candle color, not bullish/bearish sentiment. A hit only flags a
-        * small-range candle; the +/- sign is the candle's color (white/black), not
-        * a reversal or continuation call.
+        * encodes candle color, not bullish/bearish sentiment.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle at i, all three:
@@ -56747,8 +56799,7 @@ class Core {
        /**
         * Single-candle pattern: a small real body with both an upper and a lower
         * shadow longer than the body. Signals indecision; the code does not
-        * classify it as bullish or bearish. A hit marks indecision (small body,
-        * both shadows long); the sign only reports candle color, not direction.
+        * classify it as bullish or bearish.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
@@ -56799,8 +56850,7 @@ class Core {
        /**
         * Single-candle pattern: a small real body with both an upper and a lower
         * shadow longer than the body. Signals indecision; the code does not
-        * classify it as bullish or bearish. A hit marks indecision (small body,
-        * both shadows long); the sign only reports candle color, not direction.
+        * classify it as bullish or bearish.
         * <p><b>Formula</b>
         * <pre>{@code
         * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
@@ -57506,6 +57556,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
+        * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -57558,6 +57609,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
+        * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -58627,6 +58679,10 @@ class Core {
         * level as the 1st (the "bread"). A hit signals a bullish reversal (code
         * comment notes it is significant in a downtrend, which the function does
         * not verify).
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -58675,6 +58731,10 @@ class Core {
         * level as the 1st (the "bread"). A hit signals a bullish reversal (code
         * comment notes it is significant in a downtrend, which the function does
         * not verify).
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -60223,11 +60283,11 @@ class Core {
         * A three-candle pattern: a real-body-gapping candle followed by an
         * opposite-color candle that opens inside its body and closes back into the
         * gap without filling it. An upside gap is a bullish continuation signal; a
-        * downside gap is a bearish continuation signal. Hit signals trend
-        * continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+        * downside gap is a bearish continuation signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+        * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -60276,11 +60336,11 @@ class Core {
         * A three-candle pattern: a real-body-gapping candle followed by an
         * opposite-color candle that opens inside its body and closes back into the
         * gap without filling it. An upside gap is a bullish continuation signal; a
-        * downside gap is a bearish continuation signal. Hit signals trend
-        * continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+        * downside gap is a bearish continuation signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+        * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -60971,6 +61031,7 @@ class Core {
         * <ul>
         * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
         * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
+        * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -61025,6 +61086,7 @@ class Core {
         * <ul>
         * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
         * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
+        * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -61775,11 +61837,11 @@ class Core {
        /**
         * A three-candle pattern of three consecutive doji where the middle doji is
         * a star (its body gaps away from the first). Bullish or bearish reversal
-        * signal. +100 = bullish reversal (middle doji gapped down), -100 = bearish
-        * reversal (middle doji gapped up).
+        * signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
+        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -61828,11 +61890,11 @@ class Core {
        /**
         * A three-candle pattern of three consecutive doji where the middle doji is
         * a star (its body gaps away from the first). Bullish or bearish reversal
-        * signal. +100 = bullish reversal (middle doji gapped down), -100 = bearish
-        * reversal (middle doji gapped up).
+        * signal.
         * <p><b>Notes</b>
         * <ul>
         * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
+        * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -62517,6 +62579,10 @@ class Core {
         * potential bullish reversal, ideally in a downtrend (trend not checked by
         * the code). A hit (+100) marks a bullish reversal; significant in a
         * downtrend, which the function does not verify.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</li>
+        * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
         * outside that range is touched, and the library never pads with NaN. A
@@ -62566,6 +62632,10 @@ class Core {
         * potential bullish reversal, ideally in a downtrend (trend not checked by
         * the code). A hit (+100) marks a bullish reversal; significant in a
         * downtrend, which the function does not verify.
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</li>
+        * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
         * result beyond {@code float} range is still representable.
@@ -63346,6 +63416,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
+        * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -63398,6 +63469,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
+        * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -64109,11 +64181,11 @@ class Core {
         * A three-candle continuation pattern: two same-color candles separated by a
         * real-body gap, followed by an opposite-color candle that fills into the
         * gap. Bullish (upside) when the first two candles are white, bearish
-        * (downside) when they are black. A hit signals trend continuation: +100
-        * bullish (uptrend resumes), -100 bearish (downtrend resumes).
+        * (downside) when they are black.
         * <p><b>Notes</b>
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+        * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -64163,11 +64235,11 @@ class Core {
         * A three-candle continuation pattern: two same-color candles separated by a
         * real-body gap, followed by an opposite-color candle that fills into the
         * gap. Bullish (upside) when the first two candles are white, bearish
-        * (downside) when they are black. A hit signals trend continuation: +100
-        * bullish (uptrend resumes), -100 bearish (downtrend resumes).
+        * (downside) when they are black.
         * <p><b>Notes</b>
         * <ul>
         * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+        * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a

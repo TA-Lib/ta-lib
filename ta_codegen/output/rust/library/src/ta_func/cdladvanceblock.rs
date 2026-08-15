@@ -107,6 +107,9 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the prior uptrend the pattern classically assumes for significance.
+    /// * Although classically read as a bearish reversal, Bulkowski's testing found the Advance
+    ///   Block actually acts as a bullish continuation 64% of the time.
+    ///   ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))
     ///
     /// # Arguments
     ///

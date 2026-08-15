@@ -11,6 +11,7 @@ One candle. Requires real body > BodyLong average (long body), then either: whit
 ## Notes
 
 - Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.
+- Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))
 
 ## Inputs
 
@@ -22,6 +23,14 @@ One candle. Requires real body > BodyLong average (long body), then either: whit
 ## Outputs
 
 - `outInteger` — +100 for a bullish (white) belt-hold, -100 for a bearish (black) belt-hold, 0 otherwise
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish belt-hold — opens at (or near) the high and sells off hard into the close, showing strong seller conviction |
+| 0 | No pattern |
+| 100 | Bullish belt-hold — opens at (or near) the low and rallies hard into the close, showing strong buyer conviction |
 
 ## Implementation
 

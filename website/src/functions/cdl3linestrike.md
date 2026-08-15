@@ -5,11 +5,12 @@ description: "A four-candle pattern: three same-color candles with consecutively
 
 ## Summary
 
-A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a fourth opposite-color candle that opens beyond the third close and closes past the first candle's open. TA-Lib emits a signed continuation-style signal keyed to the color of the first three candles. +100 = three-white (bullish) strike, -100 = three-black (bearish) strike; traditionally read as significant only inside a trend matching the first three candles.
+A four-candle pattern: three same-color candles with consecutively higher (or lower) closes, each opening within or near the prior real body, then a fourth opposite-color candle that opens beyond the third close and closes past the first candle's open. TA-Lib emits a signed continuation-style signal keyed to the color of the first three candles, traditionally read as significant only inside a trend matching those three candles.
 
 ## Notes
 
 - Does not verify the surrounding trend the pattern classically assumes for significance.
+- TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A four-candle pattern: three same-color candles with consecutively higher (or lo
 ## Outputs
 
 - `outInteger` — +100 for a white (rising) three-line strike, -100 for a black (falling) three-line strike, 0 otherwise. Sign is the color of the first three candles: candlecolor(i-1)*100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Three-Line Strike — three falling candles abruptly erased by one strong reversal bar; classically read as a bearish continuation despite the apparent reversal |
+| 0 | No pattern |
+| 100 | Bullish Three-Line Strike — three rising candles abruptly erased by one strong reversal bar; classically read as a bullish continuation despite the apparent reversal |
 
 ## Properties
 

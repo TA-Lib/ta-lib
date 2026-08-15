@@ -23,6 +23,13 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 - `outInteger` — -100 when the pattern is detected (always bearish), 0 otherwise. Never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Identical Three Crows pattern detected: bearish |
+| 0 | No pattern |
+
 ## Properties
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)

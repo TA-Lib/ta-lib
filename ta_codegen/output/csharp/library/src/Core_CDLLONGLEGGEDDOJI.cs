@@ -251,6 +251,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</description></item>
+   /// <item><description>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -303,6 +304,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</description></item>
+   /// <item><description>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

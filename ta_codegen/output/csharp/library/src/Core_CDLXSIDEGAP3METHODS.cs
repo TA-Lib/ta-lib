@@ -192,12 +192,12 @@ public partial class Core
    /// A three-candle continuation pattern: two same-color candles separated by a
    /// real-body gap, followed by an opposite-color candle that fills into the
    /// gap. Bullish (upside) when the first two candles are white, bearish
-   /// (downside) when they are black. A hit signals trend continuation: +100
-   /// bullish (uptrend resumes), -100 bearish (downtrend resumes).
+   /// (downside) when they are black.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
+   /// <item><description>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -243,12 +243,12 @@ public partial class Core
    /// A three-candle continuation pattern: two same-color candles separated by a
    /// real-body gap, followed by an opposite-color candle that fills into the
    /// gap. Bullish (upside) when the first two candles are white, bearish
-   /// (downside) when they are black. A hit signals trend continuation: +100
-   /// bullish (uptrend resumes), -100 bearish (downtrend resumes).
+   /// (downside) when they are black.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
+   /// <item><description>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

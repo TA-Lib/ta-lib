@@ -356,13 +356,13 @@ public partial class Core
    /// <summary>
    /// A three-candle pattern of consecutive white candles with progressively
    /// higher closes, each opening within/near the prior body and each with a
-   /// very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-   /// bullish, signaling a reversal (most meaningful in a downtrend, which the
-   /// code does not verify).
+   /// very short upper shadow. A hit is a bullish reversal signal, most
+   /// meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -406,13 +406,13 @@ public partial class Core
    /// <summary>
    /// A three-candle pattern of consecutive white candles with progressively
    /// higher closes, each opening within/near the prior body and each with a
-   /// very short upper shadow. It is a bullish reversal signal. A hit (+100) is
-   /// bullish, signaling a reversal (most meaningful in a downtrend, which the
-   /// code does not verify).
+   /// very short upper shadow. A hit is a bullish reversal signal, most
+   /// meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

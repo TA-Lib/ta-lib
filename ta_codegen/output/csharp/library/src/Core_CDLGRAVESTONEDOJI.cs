@@ -256,6 +256,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -311,6 +312,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
+   /// <item><description>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

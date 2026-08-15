@@ -19,6 +19,13 @@ A four-bar pattern: a white candle followed by three consecutive black (down) ca
 
 - `outInteger` — -100 when the bearish pattern is detected, 0 otherwise. Never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Three Black Crows pattern detected: bearish |
+| 0 | No pattern |
+
 ## Implementation
 
 TA-Lib Definition: [`cdl3blackcrows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.c) · [`cdl3blackcrows.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdl3blackcrows/cdl3blackcrows.yaml)

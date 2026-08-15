@@ -144,11 +144,11 @@
     * A three-candle continuation pattern: two same-color candles separated by a
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
-    * (downside) when they are black. A hit signals trend continuation: +100
-    * bullish (uptrend resumes), -100 bearish (downtrend resumes).
+    * (downside) when they are black.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -198,11 +198,11 @@
     * A three-candle continuation pattern: two same-color candles separated by a
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
-    * (downside) when they are black. A hit signals trend continuation: +100
-    * bullish (uptrend resumes), -100 bearish (downtrend resumes).
+    * (downside) when they are black.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

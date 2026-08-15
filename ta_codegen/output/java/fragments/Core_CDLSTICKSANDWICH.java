@@ -176,6 +176,10 @@
     * level as the 1st (the "bread"). A hit signals a bullish reversal (code
     * comment notes it is significant in a downtrend, which the function does
     * not verify).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -224,6 +228,10 @@
     * level as the 1st (the "bread"). A hit signals a bullish reversal (code
     * comment notes it is significant in a downtrend, which the function does
     * not verify).
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -88,6 +88,10 @@ impl Core {
     /// # Notes
     ///
     /// * The bullish-reversal reading assumes a prior downtrend, which is not verified.
+    /// * Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's
+    ///   testing found it actually acts as a bearish continuation 61% of the time — even so, it
+    ///   still ranks a strong 8th of 103 patterns for overall performance.
+    ///   ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))
     ///
     /// # Arguments
     ///

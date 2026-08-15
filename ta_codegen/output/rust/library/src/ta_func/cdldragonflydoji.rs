@@ -96,6 +96,10 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
+    /// * Bulkowski's testing found this reverses the prior trend only about 50% of the time —
+    ///   statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns
+    ///   for post-breakout performance.
+    ///   ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))
     ///
     /// # Arguments
     ///

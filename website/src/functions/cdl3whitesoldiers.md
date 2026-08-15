@@ -5,11 +5,12 @@ description: "A three-candle pattern of consecutive white candles with progressi
 
 ## Summary
 
-A three-candle pattern of consecutive white candles with progressively higher closes, each opening within/near the prior body and each with a very short upper shadow. It is a bullish reversal signal. A hit (+100) is bullish, signaling a reversal (most meaningful in a downtrend, which the code does not verify).
+A three-candle pattern of consecutive white candles with progressively higher closes, each opening within/near the prior body and each with a very short upper shadow. A hit is a bullish reversal signal, most meaningful in a downtrend, which the code does not verify.
 
 ## Notes
 
 - Does not verify the prior downtrend the pattern classically assumes for significance.
+- Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))
 
 ## Inputs
 
@@ -21,6 +22,13 @@ A three-candle pattern of consecutive white candles with progressively higher cl
 ## Outputs
 
 - `outInteger` — +100 when the pattern is detected, 0 otherwise; never negative (three white soldiers is always bullish)
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Three White Soldiers detected — a bullish reversal signal, most meaningful after a downtrend (unverified by the function) |
 
 ## Properties
 

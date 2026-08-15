@@ -211,8 +211,7 @@ public partial class Core
    /// <summary>
    /// Single-candle pattern: a small real body with both an upper and a lower
    /// shadow longer than the body. Signals indecision; the code does not
-   /// classify it as bullish or bearish. A hit marks indecision (small body,
-   /// both shadows long); the sign only reports candle color, not direction.
+   /// classify it as bullish or bearish.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -261,8 +260,7 @@ public partial class Core
    /// <summary>
    /// Single-candle pattern: a small real body with both an upper and a lower
    /// shadow longer than the body. Signals indecision; the code does not
-   /// classify it as bullish or bearish. A hit marks indecision (small body,
-   /// both shadows long); the sign only reports candle color, not direction.
+   /// classify it as bullish or bearish.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

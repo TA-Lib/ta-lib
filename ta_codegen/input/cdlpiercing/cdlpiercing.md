@@ -19,6 +19,13 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 
 - `outInteger` — +100 when the piercing pattern is detected; 0 otherwise. Always bullish, never emits -100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Piercing pattern detected — bullish reversal signal |
+
 ## Implementation
 
 TA-Lib Definition: [`cdlpiercing.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.c) · [`cdlpiercing.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlpiercing/cdlpiercing.yaml)

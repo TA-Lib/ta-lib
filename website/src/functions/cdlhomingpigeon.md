@@ -1,11 +1,11 @@
 ---
 title: "Homing Pigeon (CDLHOMINGPIGEON)"
-description: "Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. Bullish reversal signal."
+description: "Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body."
 ---
 
 ## Summary
 
-Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. Bullish reversal signal. A hit signals a bullish reversal (meaningful in a downtrend, which the code does not verify).
+Two-candle pattern: a long black candle followed by a small black candle whose real body sits inside the prior body. A hit signals a bullish reversal, most meaningful in a downtrend, which the code does not verify.
 
 ## Formula
 
@@ -14,6 +14,7 @@ Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open
 ## Notes
 
 - Does not verify the preceding downtrend that the bullish reversal classically assumes.
+- Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))
 
 ## Inputs
 
@@ -25,6 +26,13 @@ Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open
 ## Outputs
 
 - `outInteger` — +100 when the pattern is detected, 0 otherwise. Never emits -100 (always bullish)
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Homing Pigeon detected — a bullish reversal signal, most meaningful after a downtrend (unverified by the function) |
 
 ## Properties
 

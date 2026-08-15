@@ -71,13 +71,17 @@ impl Core {
     }
     /// A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body)
     /// followed by a third candle that confirms in the engulfing direction. Signals a bullish
-    /// reversal (Three Outside Up) or bearish reversal (Three Outside Down). +100 = bullish
-    /// reversal (Three Outside Up); -100 = bearish reversal (Three Outside Down).
+    /// reversal (Three Outside Up) or bearish reversal (Three Outside Down).
     ///
     /// # Notes
     ///
     /// * Does not verify the prior trend the pattern classically assumes (three outside up is
     ///   meaningful in a downtrend, three outside down in an uptrend).
+    /// * Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus
+    ///   69% for Three Outside Down — both notably higher than the closely related Three Inside
+    ///   Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the
+    ///   harami "inside" variant.
+    ///   ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))
     ///
     /// # Arguments
     ///

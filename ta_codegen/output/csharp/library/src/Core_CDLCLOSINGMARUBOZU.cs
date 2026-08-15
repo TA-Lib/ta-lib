@@ -242,16 +242,18 @@ public partial class Core
    }
    /// <summary>
    /// Single-candle pattern: a long real body whose closing end has no or very
-   /// short shadow, so the close sits at the candle's extreme. Non-directional
-   /// strong bar that emits +100 for a white body and -100 for a black body.
-   /// White (+100) is bullish, black (-100) is bearish; a strong directional
-   /// bar, not a defined reversal/continuation signal.
+   /// short shadow, so the close sits at the candle's extreme. A strong
+   /// directional bar, not a defined reversal/continuation signal — white is
+   /// bullish, black is bearish.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
    /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -292,16 +294,18 @@ public partial class Core
    }
    /// <summary>
    /// Single-candle pattern: a long real body whose closing end has no or very
-   /// short shadow, so the close sits at the candle's extreme. Non-directional
-   /// strong bar that emits +100 for a white body and -100 for a black body.
-   /// White (+100) is bullish, black (-100) is bearish; a strong directional
-   /// bar, not a defined reversal/continuation signal.
+   /// short shadow, so the close sits at the candle's extreme. A strong
+   /// directional bar, not a defined reversal/continuation signal — white is
+   /// bullish, black is bearish.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
    /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

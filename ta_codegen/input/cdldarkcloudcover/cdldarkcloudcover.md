@@ -19,6 +19,13 @@ A two-candle bearish reversal pattern: a long white candle followed by a black c
 
 - `outInteger` — -100 when the pattern is detected (always bearish), 0 otherwise; never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Dark Cloud Cover pattern detected: bearish |
+| 0 | No pattern |
+
 ## Parameters
 
 - `optInPenetration` — Fraction of candle 1's real body that candle 2's close must penetrate below close[i-1]; larger values require deeper penetration

@@ -259,11 +259,10 @@
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
-    * Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-    * abandoned baby top (bearish).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -318,11 +317,10 @@
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
-    * Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100
-    * abandoned baby top (bearish).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
+    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

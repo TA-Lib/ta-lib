@@ -5,11 +5,12 @@ description: "A three-candle reversal pattern: a long real body, then a short re
 
 ## Summary
 
-A three-candle reversal pattern: a long real body, then a short real body totally engulfed by it (a harami), then a third candle of opposite color to the first that closes past the first candle's open. Signals a bullish (three inside up) or bearish (three inside down) reversal. A hit is a reversal signal: +100 = three inside up (bullish, significant in a downtrend); -100 = three inside down (bearish, significant in an uptrend).
+A three-candle reversal pattern: a long real body, then a short real body totally engulfed by it (a harami), then a third candle of opposite color to the first that closes past the first candle's open. Signals a bullish reversal (three inside up, significant in a downtrend) or a bearish reversal (three inside down, significant in an uptrend).
 
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).
+- Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A three-candle reversal pattern: a long real body, then a short real body totall
 ## Outputs
 
 - `outInteger` — +100 for three inside up (bullish reversal, first candle black), -100 for three inside down (bearish reversal, first candle white), 0 when no pattern. Computed as -candlecolor(1st)*100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Three Inside Down — bearish reversal, most meaningful after an uptrend |
+| 0 | No pattern |
+| 100 | Three Inside Up — bullish reversal, most meaningful after a downtrend |
 
 ## Properties
 

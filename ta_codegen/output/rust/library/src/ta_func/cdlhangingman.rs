@@ -101,6 +101,10 @@ impl Core {
     ///
     /// * Does not verify the preceding uptrend that the pattern classically assumes; confirm the
     ///   trend context yourself.
+    /// * Bulkowski's testing found this acts as a bullish continuation 59% of the time — the
+    ///   opposite of the bearish-reversal reading it's named for ("near random") — and it ranks
+    ///   87th of 103 patterns for post-breakout performance.
+    ///   ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))
     ///
     /// # Arguments
     ///

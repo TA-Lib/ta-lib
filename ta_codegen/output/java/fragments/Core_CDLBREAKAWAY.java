@@ -176,11 +176,11 @@
     * candle that gaps away from it by its real body, two more candles extending
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-    * reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-    * (top).
+    * reversal).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
+    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -230,11 +230,11 @@
     * candle that gaps away from it by its real body, two more candles extending
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
-    * reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish
-    * (top).
+    * reversal).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
+    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

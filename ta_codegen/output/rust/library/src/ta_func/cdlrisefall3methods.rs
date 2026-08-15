@@ -83,9 +83,7 @@ impl Core {
     }
     /// A five-candle continuation pattern: a long candle, three small counter-color candles that
     /// stay partly within the first candle's high-low range, then a long same-color candle that
-    /// resumes the trend. Bullish (rising) or bearish (falling) continuation signal. A hit signals
-    /// trend continuation: +100 = bullish (rising three methods), -100 = bearish (falling three
-    /// methods).
+    /// resumes the trend. Bullish (rising) or bearish (falling) continuation signal.
     ///
     /// # Notes
     ///
@@ -94,6 +92,11 @@ impl Core {
     /// * The middle candles need only partially overlap the first candle's range, not be fully
     ///   contained within it.
     /// * The prior trend the continuation reading assumes is not verified.
+    /// * Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out
+    ///   of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64
+    ///   examples) — both act as classically labeled, but Bulkowski flags the samples as too thin
+    ///   to trust: Falling Three Methods is so rare he omitted its statistics from his book
+    ///   entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
     ///
     /// # Arguments
     ///

@@ -146,12 +146,12 @@
    /**
     * A two-candle reversal pattern where the second candle's real body engulfs
     * the first candle's opposite-colored real body. Bullish (white engulfs
-    * black) or bearish (black engulfs white) reversal signal. Bullish reversal
-    * at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-    * uptrend (bearish), which the code does not verify.
+    * black) or bearish (black engulfs white) reversal signal; ideally after a
+    * downtrend (bullish) or uptrend (bearish), which the code does not verify.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
+    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -201,12 +201,12 @@
    /**
     * A two-candle reversal pattern where the second candle's real body engulfs
     * the first candle's opposite-colored real body. Bullish (white engulfs
-    * black) or bearish (black engulfs white) reversal signal. Bullish reversal
-    * at +100/+80, bearish at -100/-80; ideally after a downtrend (bullish) or
-    * uptrend (bearish), which the code does not verify.
+    * black) or bearish (black engulfs white) reversal signal; ideally after a
+    * downtrend (bullish) or uptrend (bearish), which the code does not verify.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
+    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

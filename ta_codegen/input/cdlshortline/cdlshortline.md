@@ -2,7 +2,7 @@
 
 ## Summary
 
-Single-candle pattern: a short real body with short upper and lower shadows (a small-range candle). Not a directional signal — the output sign encodes candle color, not bullish/bearish sentiment. A hit only flags a small-range candle; the +/- sign is the candle's color (white/black), not a reversal or continuation call.
+Single-candle pattern: a short real body with short upper and lower shadows (a small-range candle). Not a directional signal — the output sign encodes candle color, not bullish/bearish sentiment.
 
 ## Formula
 
@@ -22,6 +22,14 @@ If matched: output = candle color * 100 (+100 white, -100 black); else 0.
 ## Outputs
 
 - `outInteger` — +100 for a matching white candle (close>=open), -100 for a matching black candle (close<open), 0 when no pattern. Sign is candle color, NOT bullish/bearish
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Matching black short-line candle (color only — not a bearish call) |
+| 0 | No pattern |
+| 100 | Matching white short-line candle (color only — not a bullish call) |
 
 ## Implementation
 

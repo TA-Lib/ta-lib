@@ -347,6 +347,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</description></item>
+   /// <item><description>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -395,6 +396,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</description></item>
+   /// <item><description>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

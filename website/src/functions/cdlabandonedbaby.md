@@ -5,11 +5,12 @@ description: "A three-candle reversal pattern: a long body, then a gapped-away d
 
 ## Summary
 
-A three-candle reversal pattern: a long body, then a gapped-away doji, then a body of opposite color that gaps back the other way and closes deep into the first body. Bullish (bottom) or bearish (top) reversal signal. Nonzero hit signals a reversal: +100 abandoned baby bottom (bullish), -100 abandoned baby top (bearish).
+A three-candle reversal pattern: a long body, then a gapped-away doji, then a body of opposite color that gaps back the other way and closes deep into the first body. Bullish (bottom) or bearish (top) reversal signal.
 
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes for significance.
+- Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A three-candle reversal pattern: a long body, then a gapped-away doji, then a bo
 ## Outputs
 
 - `outInteger` — +100 at a bullish abandoned baby bottom (3rd candle white), -100 at a bearish abandoned baby top (3rd candle black), 0 otherwise; sign = color of the 3rd candle
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Abandoned Baby Top — an isolated doji stranded by gaps on both sides at a high, a rare but strong bearish reversal |
+| 0 | No pattern |
+| 100 | Abandoned Baby Bottom — an isolated doji stranded by gaps on both sides at a low, a rare but strong bullish reversal |
 
 ## Parameters
 

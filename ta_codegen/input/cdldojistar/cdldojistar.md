@@ -11,6 +11,7 @@ Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: d
 ## Notes
 
 - Does not verify the prior trend the reversal signal classically assumes.
+- Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))
 
 ## Inputs
 
@@ -22,6 +23,14 @@ Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: d
 ## Outputs
 
 - `outInteger` — Emits +100 or -100 on a hit, 0 otherwise. Value is -candlecolor(candle1)*100: -100 when candle 1 is white (gap up), +100 when candle 1 is black (gap down)
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Doji Star gapping up after a strong advance — waning momentum, a bearish warning if it appears in an uptrend |
+| 0 | No pattern |
+| 100 | Doji Star gapping down after a strong decline — waning momentum, a bullish warning if it appears in a downtrend |
 
 ## Implementation
 

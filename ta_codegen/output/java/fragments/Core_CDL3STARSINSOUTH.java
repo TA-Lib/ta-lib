@@ -288,12 +288,13 @@
     * A three-candle bullish reversal pattern of three consecutive black candles
     * that progressively shrink and stabilize: a long black candle with a long
     * lower shadow, a smaller black candle probing lower, then a small black
-    * marubozu contained within the second candle's range. A hit (+100) signals
-    * a bullish reversal; per the code comment it is meaningful in a downtrend,
+    * marubozu contained within the second candle's range. A hit signals a
+    * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -342,12 +343,13 @@
     * A three-candle bullish reversal pattern of three consecutive black candles
     * that progressively shrink and stabilize: a long black candle with a long
     * lower shadow, a smaller black candle probing lower, then a small black
-    * marubozu contained within the second candle's range. A hit (+100) signals
-    * a bullish reversal; per the code comment it is meaningful in a downtrend,
+    * marubozu contained within the second candle's range. A hit signals a
+    * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
+    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

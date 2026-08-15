@@ -11,6 +11,7 @@ One candle. Detected when all hold: (1) doji body: realbody |close-open| <= Body
 ## Notes
 
 - Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
+- Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))
 
 ## Inputs
 
@@ -22,6 +23,13 @@ One candle. Detected when all hold: (1) doji body: realbody |close-open| <= Body
 ## Outputs
 
 - `outInteger` — +100 on a detected gravestone doji, 0 otherwise. Never negative; the positive sign is not a directional signal (evaluate relative to the trend)
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Gravestone Doji detected — a potential reversal; direction (bullish/bearish) must be read from the prevailing trend, which this function does not check |
 
 ## Implementation
 

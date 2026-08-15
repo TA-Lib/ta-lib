@@ -23,6 +23,13 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 - `outInteger` — +100 when the pattern is detected, 0 otherwise. Always bullish; never emits -100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Morning Doji Star detected — bullish reversal signal |
+
 ## Parameters
 
 | Parameter | Type | Default | Accepted values | Description |

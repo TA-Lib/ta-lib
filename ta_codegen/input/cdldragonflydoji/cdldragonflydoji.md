@@ -11,6 +11,7 @@ Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < Shado
 ## Notes
 
 - Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
+- Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))
 
 ## Inputs
 
@@ -22,6 +23,13 @@ Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < Shado
 ## Outputs
 
 - `outInteger` — +100 when the pattern is present, 0 otherwise; never -100. The +100 does not itself imply bullishness (must be read against the trend)
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Dragonfly Doji detected — a potential reversal; direction (bullish/bearish) must be read from the prevailing trend, which this function does not check |
 
 ## Implementation
 

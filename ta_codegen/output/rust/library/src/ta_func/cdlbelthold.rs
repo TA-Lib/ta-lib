@@ -96,6 +96,10 @@ impl Core {
     ///
     /// * Does not verify the prior trend that the pattern's bullish/bearish reading classically
     ///   assumes.
+    /// * Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns
+    ///   for pure reversal reliability (bearish reverses 68% of the time) — though its overall
+    ///   post-breakout performance rank is a more middling 62nd/63rd of 103.
+    ///   ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))
     ///
     /// # Arguments
     ///

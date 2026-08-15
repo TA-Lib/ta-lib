@@ -193,9 +193,8 @@
    /**
     * A single-candle pattern: a long real body with short upper and short lower
     * shadow. The signal direction follows the candle color (bullish if white,
-    * bearish if black). Signals strong directional conviction on the bar: +100
-    * white/bullish, -100 black/bearish. Not intrinsically a reversal or
-    * continuation signal.
+    * bearish if black). Signals strong directional conviction on the bar. Not
+    * intrinsically a reversal or continuation signal.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -243,9 +242,8 @@
    /**
     * A single-candle pattern: a long real body with short upper and short lower
     * shadow. The signal direction follows the candle color (bullish if white,
-    * bearish if black). Signals strong directional conviction on the bar: +100
-    * white/bullish, -100 black/bearish. Not intrinsically a reversal or
-    * continuation signal.
+    * bearish if black). Signals strong directional conviction on the bar. Not
+    * intrinsically a reversal or continuation signal.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

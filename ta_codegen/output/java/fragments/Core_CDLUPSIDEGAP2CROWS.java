@@ -215,6 +215,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
+    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -267,6 +268,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
+    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

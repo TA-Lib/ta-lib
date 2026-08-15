@@ -207,6 +207,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -266,6 +267,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
+    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

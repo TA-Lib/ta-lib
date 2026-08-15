@@ -83,8 +83,7 @@ impl Core {
     }
     /// Single-candle pattern: a short real body with short upper and lower shadows (a small-range
     /// candle). Not a directional signal — the output sign encodes candle color, not
-    /// bullish/bearish sentiment. A hit only flags a small-range candle; the +/- sign is the
-    /// candle's color (white/black), not a reversal or continuation call.
+    /// bullish/bearish sentiment.
     ///
     /// # Formula
     ///

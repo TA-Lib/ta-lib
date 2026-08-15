@@ -204,12 +204,12 @@
     * A three-candle reversal pattern: a long real body, then a short real body
     * totally engulfed by it (a harami), then a third candle of opposite color
     * to the first that closes past the first candle's open. Signals a bullish
-    * (three inside up) or bearish (three inside down) reversal. A hit is a
-    * reversal signal: +100 = three inside up (bullish, significant in a
-    * downtrend); -100 = three inside down (bearish, significant in an uptrend).
+    * reversal (three inside up, significant in a downtrend) or a bearish
+    * reversal (three inside down, significant in an uptrend).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
+    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -259,12 +259,12 @@
     * A three-candle reversal pattern: a long real body, then a short real body
     * totally engulfed by it (a harami), then a third candle of opposite color
     * to the first that closes past the first candle's open. Signals a bullish
-    * (three inside up) or bearish (three inside down) reversal. A hit is a
-    * reversal signal: +100 = three inside up (bullish, significant in a
-    * downtrend); -100 = three inside down (bearish, significant in an uptrend).
+    * reversal (three inside up, significant in a downtrend) or a bearish
+    * reversal (three inside down, significant in an uptrend).
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
+    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

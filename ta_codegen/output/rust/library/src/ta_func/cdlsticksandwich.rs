@@ -80,6 +80,13 @@ impl Core {
     /// signals a bullish reversal (code comment notes it is significant in a downtrend, which the
     /// function does not verify).
     ///
+    /// # Notes
+    ///
+    /// * Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing
+    ///   found it actually acts as a bearish continuation 62% of the time — despite that, it
+    ///   still ranks a respectable 14th of 103 patterns for overall performance.
+    ///   ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))
+    ///
     /// # Arguments
     ///
     /// * `startIdx` — Start index of the requested calculation range.

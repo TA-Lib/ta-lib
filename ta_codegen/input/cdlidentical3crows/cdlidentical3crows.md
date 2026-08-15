@@ -20,6 +20,13 @@ A three-candle bearish reversal pattern: three consecutive declining black candl
 
 - `outInteger` — -100 when the pattern is detected (always bearish), 0 otherwise. Never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Identical Three Crows pattern detected: bearish |
+| 0 | No pattern |
+
 ## Implementation
 
 TA-Lib Definition: [`cdlidentical3crows.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlidentical3crows/cdlidentical3crows.c) · [`cdlidentical3crows.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/cdlidentical3crows/cdlidentical3crows.yaml)

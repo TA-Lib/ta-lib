@@ -8,6 +8,7 @@ A two-candle pattern: a long black candle followed by a white candle that opens 
 
 - The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.
 - Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.
+- Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))
 
 ## Inputs
 
@@ -19,6 +20,13 @@ A two-candle pattern: a long black candle followed by a white candle that opens 
 ## Outputs
 
 - `outInteger` — -100 when the pattern is detected, 0 otherwise. Always bearish; never emits +100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Thrusting pattern detected: bearish continuation |
+| 0 | No pattern |
 
 ## Implementation
 

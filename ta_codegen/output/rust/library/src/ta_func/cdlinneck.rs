@@ -95,6 +95,9 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the preceding downtrend that this bearish continuation pattern assumes.
+    /// * Bulkowski's testing found the bearish continuation holds only 53% of the time — "near
+    ///   random" — though its overall post-breakout performance still ranks a strong 17th of 103.
+    ///   ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))
     ///
     /// # Arguments
     ///

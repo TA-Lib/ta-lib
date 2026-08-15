@@ -5,7 +5,7 @@ description: "A two-candle continuation pattern: the second candle opposes the f
 
 ## Summary
 
-A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold. Bullish (white second candle) or bearish (black second candle) continuation signal. Trend continuation: +100 = bullish (white belt hold), -100 = bearish (black belt hold).
+A two-candle continuation pattern: the second candle opposes the first in color, opens at the same price as the first, and is a long-bodied belt hold. Bullish (white second candle) or bearish (black second candle) continuation signal.
 
 ## Formula
 
@@ -25,6 +25,14 @@ Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2
 ## Outputs
 
 - `outInteger` — +100 for a bullish (white second candle) hit, -100 for a bearish (black second candle) hit, 0 otherwise
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Separating Lines: the second candle (belt hold) closed black |
+| 0 | No pattern |
+| 100 | Bullish Separating Lines: the second candle (belt hold) closed white |
 
 ## Properties
 

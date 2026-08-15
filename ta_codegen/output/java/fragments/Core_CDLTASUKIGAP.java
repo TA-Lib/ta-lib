@@ -184,11 +184,11 @@
     * A three-candle pattern: a real-body-gapping candle followed by an
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
-    * downside gap is a bearish continuation signal. Hit signals trend
-    * continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+    * downside gap is a bearish continuation signal.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -237,11 +237,11 @@
     * A three-candle pattern: a real-body-gapping candle followed by an
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
-    * downside gap is a bearish continuation signal. Hit signals trend
-    * continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+    * downside gap is a bearish continuation signal.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
+    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

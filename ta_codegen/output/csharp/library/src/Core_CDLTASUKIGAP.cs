@@ -232,12 +232,12 @@ public partial class Core
    /// A three-candle pattern: a real-body-gapping candle followed by an
    /// opposite-color candle that opens inside its body and closes back into the
    /// gap without filling it. An upside gap is a bullish continuation signal; a
-   /// downside gap is a bearish continuation signal. Hit signals trend
-   /// continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+   /// downside gap is a bearish continuation signal.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
+   /// <item><description>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -283,12 +283,12 @@ public partial class Core
    /// A three-candle pattern: a real-body-gapping candle followed by an
    /// opposite-color candle that opens inside its body and closes back into the
    /// gap without filling it. An upside gap is a bullish continuation signal; a
-   /// downside gap is a bearish continuation signal. Hit signals trend
-   /// continuation: +100 bullish (in an uptrend), -100 bearish (in a downtrend).
+   /// downside gap is a bearish continuation signal.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
+   /// <item><description>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

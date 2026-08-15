@@ -4,6 +4,10 @@
 
 A three-candle bullish reversal pattern: a long black candle, then a black harami candle that makes a lower low, then a small white candle. Signals a potential bullish reversal, ideally in a downtrend (trend not checked by the code). A hit (+100) marks a bullish reversal; significant in a downtrend, which the function does not verify.
 
+## Notes
+
+- Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))
+
 ## Inputs
 
 - `inOpen` — Open price of each bar
@@ -14,6 +18,13 @@ A three-candle bullish reversal pattern: a long black candle, then a black haram
 ## Outputs
 
 - `outInteger` — +100 when the pattern is present, 0 otherwise. Bullish-only: never emits -100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Unique 3 River detected — bullish reversal signal |
 
 ## Implementation
 

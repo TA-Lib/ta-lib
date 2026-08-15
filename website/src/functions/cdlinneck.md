@@ -14,6 +14,7 @@ Two candles. First: black (close1 < open1) with a long real body (realbody > can
 ## Notes
 
 - Does not verify the preceding downtrend that this bearish continuation pattern assumes.
+- Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))
 
 ## Inputs
 
@@ -25,6 +26,13 @@ Two candles. First: black (close1 < open1) with a long real body (realbody > can
 ## Outputs
 
 - `outInteger` — -100 when the in-neck pattern is detected, 0 otherwise. This pattern only ever emits the negative (bearish) signal; it never emits +100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | In-Neck pattern detected: bearish continuation |
+| 0 | No pattern |
 
 ## Properties
 

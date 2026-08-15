@@ -5,11 +5,12 @@ description: "A two-candle pattern of two long, opposite-colored real bodies who
 
 ## Summary
 
-A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal. Emits a bullish signal when the second candle is white and a bearish signal when it is black (a reversal signal, though its trend context is not checked). A hit signals a reversal: +100 (white 2nd candle) bullish, -100 (black 2nd candle) bearish; significance depends on a prior trend the code does not check.
+A two-candle pattern of two long, opposite-colored real bodies whose closing prices are (nearly) equal. Emits a bullish signal when the second candle is white and a bearish signal when it is black (a reversal signal, though its trend context is not checked).
 
 ## Notes
 
 - Does not verify the prior trend the reversal signal classically assumes.
+- Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A two-candle pattern of two long, opposite-colored real bodies whose closing pri
 ## Outputs
 
 - `outInteger` — +100 when the second candle is white (bullish), -100 when it is black (bearish), 0 when no pattern
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Counterattack — a strong rally is matched and stopped cold by an equally strong opposite close, a reversal warning at a top |
+| 0 | No pattern |
+| 100 | Bullish Counterattack — a strong decline is matched and stopped cold by an equally strong opposite close, a reversal warning at a bottom |
 
 ## Properties
 

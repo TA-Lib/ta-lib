@@ -96,6 +96,9 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the prior trend that determines the pattern's bullish/bearish meaning.
+    /// * Bulkowski's testing found the bearish reversal traders expect actually shows up only 51%
+    ///   of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout
+    ///   performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))
     ///
     /// # Arguments
     ///

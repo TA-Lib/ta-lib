@@ -194,14 +194,17 @@
    }
    /**
     * Single-candle pattern: a long real body whose closing end has no or very
-    * short shadow, so the close sits at the candle's extreme. Non-directional
-    * strong bar that emits +100 for a white body and -100 for a black body.
-    * White (+100) is bullish, black (-100) is bearish; a strong directional
-    * bar, not a defined reversal/continuation signal.
+    * short shadow, so the close sits at the candle's extreme. A strong
+    * directional bar, not a defined reversal/continuation signal — white is
+    * bullish, black is bearish.
     * <p><b>Formula</b>
     * <pre>{@code
     * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -247,14 +250,17 @@
    }
    /**
     * Single-candle pattern: a long real body whose closing end has no or very
-    * short shadow, so the close sits at the candle's extreme. Non-directional
-    * strong bar that emits +100 for a white body and -100 for a black body.
-    * White (+100) is bullish, black (-100) is bearish; a strong directional
-    * bar, not a defined reversal/continuation signal.
+    * short shadow, so the close sits at the candle's extreme. A strong
+    * directional bar, not a defined reversal/continuation signal — white is
+    * bullish, black is bearish.
     * <p><b>Formula</b>
     * <pre>{@code
     * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

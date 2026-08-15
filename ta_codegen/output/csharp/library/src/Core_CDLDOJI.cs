@@ -210,8 +210,8 @@ public partial class Core
    }
    /// <summary>
    /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
-   /// at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-   /// Market indecision; neither bullish nor bearish on its own.
+   /// at or below the BodyDoji threshold. Market indecision; neither bullish nor
+   /// bearish on its own.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -258,8 +258,8 @@ public partial class Core
    }
    /// <summary>
    /// Single-candle Doji recognizer: fires when the real body (|close-open|) is
-   /// at or below the BodyDoji threshold. Returns 100 on a match, 0 otherwise.
-   /// Market indecision; neither bullish nor bearish on its own.
+   /// at or below the BodyDoji threshold. Market indecision; neither bullish nor
+   /// bearish on its own.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

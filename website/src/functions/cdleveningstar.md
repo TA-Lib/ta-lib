@@ -23,6 +23,13 @@ A three-candle bearish reversal pattern: a long white candle, a short-bodied sta
 
 - `outInteger` — -100 when detected (always bearish), 0 otherwise. Never emits +100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Evening Star pattern detected: bearish |
+| 0 | No pattern |
+
 ## Parameters
 
 | Parameter | Type | Default | Accepted values | Description |

@@ -260,6 +260,7 @@
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
+    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -316,6 +317,7 @@
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
+    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

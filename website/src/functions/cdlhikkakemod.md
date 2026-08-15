@@ -22,6 +22,16 @@ A four-candle pattern: two successively narrower inside bars, then a breakout ba
 
 - `outInteger` — +100 bullish hikkake bar, -100 bearish; +200 confirmed bullish, -200 confirmed bearish (confirmation adds another +/-100); 0 otherwise
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -200 | Bearish Modified Hikkake confirmed — price breaks down through the setup's low within 3 bars, confirming the reversal lower |
+| -100 | Bearish Modified Hikkake — a false upside breakout traps buyers, warning that the uptrend may be topping out |
+| 0 | No pattern, and no trap awaiting confirmation |
+| 100 | Bullish Modified Hikkake — a false downside breakout traps sellers, warning that the downtrend may be bottoming out |
+| 200 | Bullish Modified Hikkake confirmed — price breaks up through the setup's high within 3 bars, confirming the reversal higher |
+
 ## Properties
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)

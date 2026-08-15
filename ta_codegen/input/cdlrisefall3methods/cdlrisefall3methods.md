@@ -2,13 +2,14 @@
 
 ## Summary
 
-A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a long same-color candle that resumes the trend. Bullish (rising) or bearish (falling) continuation signal. A hit signals trend continuation: +100 = bullish (rising three methods), -100 = bearish (falling three methods).
+A five-candle continuation pattern: a long candle, three small counter-color candles that stay partly within the first candle's high-low range, then a long same-color candle that resumes the trend. Bullish (rising) or bearish (falling) continuation signal.
 
 ## Notes
 
 - Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.
 - The middle candles need only partially overlap the first candle's range, not be fully contained within it.
 - The prior trend the continuation reading assumes is not verified.
+- Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))
 
 ## Inputs
 
@@ -20,6 +21,14 @@ A five-candle continuation pattern: a long candle, three small counter-color can
 ## Outputs
 
 - `outInteger` — +100 when candle 1 is white (rising/bullish continuation), -100 when candle 1 is black (falling/bearish continuation), 0 otherwise. Sign = 100 * color of candle 1
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Falling Three Methods: candle 1 is black — bearish continuation |
+| 0 | No pattern |
+| 100 | Rising Three Methods: candle 1 is white — bullish continuation |
 
 ## Implementation
 

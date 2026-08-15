@@ -83,8 +83,8 @@ impl Core {
     }
     /// A single-candle pattern: a long real body with short upper and short lower shadow. The
     /// signal direction follows the candle color (bullish if white, bearish if black). Signals
-    /// strong directional conviction on the bar: +100 white/bullish, -100 black/bearish. Not
-    /// intrinsically a reversal or continuation signal.
+    /// strong directional conviction on the bar. Not intrinsically a reversal or continuation
+    /// signal.
     ///
     /// # Arguments
     ///

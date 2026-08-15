@@ -95,6 +95,10 @@ impl Core {
     ///
     /// * Only one long shadow (upper or lower) is required, whereas the classic pattern shows both
     ///   long upper and lower shadows.
+    /// * Bulkowski's testing found this continues in the direction of the prior trend only 51% of
+    ///   the time — statistically random — and ranks 37th of 103 patterns overall; in his
+    ///   words, "it means nothing."
+    ///   ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))
     ///
     /// # Arguments
     ///

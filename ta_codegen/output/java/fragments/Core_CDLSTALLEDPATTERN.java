@@ -298,6 +298,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
+    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -350,6 +351,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
+    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

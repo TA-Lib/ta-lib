@@ -231,11 +231,12 @@
    }
    /**
     * Single-candle pattern: a small real body with a long upper shadow and
-    * little-to-no lower shadow that gaps down from the prior candle. Bullish
-    * reversal signal. A hit (+100) flags a potential bullish reversal.
+    * little-to-no lower shadow that gaps down from the prior candle. A hit
+    * flags a potential bullish reversal.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -282,11 +283,12 @@
    }
    /**
     * Single-candle pattern: a small real body with a long upper shadow and
-    * little-to-no lower shadow that gaps down from the prior candle. Bullish
-    * reversal signal. A hit (+100) flags a potential bullish reversal.
+    * little-to-no lower shadow that gaps down from the prior candle. A hit
+    * flags a potential bullish reversal.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

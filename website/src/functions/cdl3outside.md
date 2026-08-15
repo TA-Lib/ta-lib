@@ -5,11 +5,12 @@ description: "A three-candle pattern: an engulfing pair (candle 2's body fully e
 
 ## Summary
 
-A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body) followed by a third candle that confirms in the engulfing direction. Signals a bullish reversal (Three Outside Up) or bearish reversal (Three Outside Down). +100 = bullish reversal (Three Outside Up); -100 = bearish reversal (Three Outside Down).
+A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 1's body) followed by a third candle that confirms in the engulfing direction. Signals a bullish reversal (Three Outside Up) or bearish reversal (Three Outside Down).
 
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).
+- Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))
 
 ## Inputs
 
@@ -21,6 +22,14 @@ A three-candle pattern: an engulfing pair (candle 2's body fully engulfs candle 
 ## Outputs
 
 - `outInteger` — +100 for Three Outside Up (bullish), -100 for Three Outside Down (bearish), 0 when no pattern. Emits both signs; value is candle i-1's color * 100
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Three Outside Down — bearish reversal, most meaningful after an uptrend |
+| 0 | No pattern |
+| 100 | Three Outside Up — bullish reversal, most meaningful after a downtrend |
 
 ## Properties
 

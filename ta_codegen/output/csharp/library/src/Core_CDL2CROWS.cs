@@ -232,6 +232,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -281,6 +282,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
+   /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

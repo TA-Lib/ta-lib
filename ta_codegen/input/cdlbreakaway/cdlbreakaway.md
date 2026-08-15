@@ -2,11 +2,12 @@
 
 ## Summary
 
-A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the move, and an opposite-colored fifth candle that closes back inside the gap. Emits a bullish signal (bottom reversal) or bearish signal (top reversal). A hit signals a reversal: +100 bullish (bottom), -100 bearish (top).
+A five-candle reversal pattern: a long first candle, a same-colored second candle that gaps away from it by its real body, two more candles extending the move, and an opposite-colored fifth candle that closes back inside the gap. Emits a bullish signal (bottom reversal) or bearish signal (top reversal).
 
 ## Notes
 
 - Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).
+- Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))
 
 ## Inputs
 
@@ -18,6 +19,14 @@ A five-candle reversal pattern: a long first candle, a same-colored second candl
 ## Outputs
 
 - `outInteger` — +100 when the fifth candle is white (bullish breakaway), -100 when it is black (bearish breakaway), 0 otherwise
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Breakaway — a gap-up advance gets erased by a sharp reversal candle, signaling a top |
+| 0 | No pattern |
+| 100 | Bullish Breakaway — a gap-down decline gets erased by a sharp reversal candle, signaling a bottom |
 
 ## Implementation
 

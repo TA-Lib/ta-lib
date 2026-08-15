@@ -96,6 +96,11 @@ impl Core {
     /// # Notes
     ///
     /// * Does not verify the prior trend the reversal signal classically assumes.
+    /// * Bulkowski's testing contradicts the classic reading for the bullish case: theory says a
+    ///   bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he
+    ///   found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the
+    ///   opposite of the textbook signal.
+    ///   ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))
     ///
     /// # Arguments
     ///

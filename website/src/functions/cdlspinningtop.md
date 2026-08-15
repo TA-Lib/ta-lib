@@ -5,7 +5,7 @@ description: "Single-candle pattern: a small real body with both an upper and a 
 
 ## Summary
 
-Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body. Signals indecision; the code does not classify it as bullish or bearish. A hit marks indecision (small body, both shadows long); the sign only reports candle color, not direction.
+Single-candle pattern: a small real body with both an upper and a lower shadow longer than the body. Signals indecision; the code does not classify it as bullish or bearish.
 
 ## Formula
 
@@ -21,6 +21,14 @@ One candle where: upper shadow > real body AND lower shadow > real body AND real
 ## Outputs
 
 - `outInteger` — +100 when the candle is white (close>=open), -100 when black (close<open), 0 when no pattern. Sign is candle color, NOT bullish/bearish
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Matching black spinning top (indecision; color only — not a bearish call) |
+| 0 | No pattern |
+| 100 | Matching white spinning top (indecision; color only — not a bullish call) |
 
 ## Properties
 

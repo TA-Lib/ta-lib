@@ -84,12 +84,16 @@ impl Core {
     /// A three-candle pattern: a first candle followed by two white candles of similar body size
     /// that both gap the same direction (up or down) from the first candle's real body and open at
     /// about the same level. It is a continuation signal whose sign reports the gap direction; the
-    /// code does not verify a prior trend. A hit signals continuation in the gap's direction: +100
-    /// with an upside gap is bullish, -100 with a downside gap is bearish.
+    /// code does not verify a prior trend.
     ///
     /// # Notes
     ///
     /// * Does not verify the prior trend the continuation signal classically assumes.
+    /// * Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle
+    ///   lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form
+    ///   is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" —
+    ///   Bulkowski cautions the bearish sample is too thin to trust.
+    ///   ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))
     ///
     /// # Arguments
     ///

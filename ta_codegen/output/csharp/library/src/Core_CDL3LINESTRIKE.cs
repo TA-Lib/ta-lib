@@ -236,13 +236,13 @@ public partial class Core
    /// (or lower) closes, each opening within or near the prior real body, then a
    /// fourth opposite-color candle that opens beyond the third close and closes
    /// past the first candle's open. TA-Lib emits a signed continuation-style
-   /// signal keyed to the color of the first three candles. +100 = three-white
-   /// (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-   /// as significant only inside a trend matching the first three candles.
+   /// signal keyed to the color of the first three candles, traditionally read
+   /// as significant only inside a trend matching those three candles.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the surrounding trend the pattern classically assumes for significance.</description></item>
+   /// <item><description>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -289,13 +289,13 @@ public partial class Core
    /// (or lower) closes, each opening within or near the prior real body, then a
    /// fourth opposite-color candle that opens beyond the third close and closes
    /// past the first candle's open. TA-Lib emits a signed continuation-style
-   /// signal keyed to the color of the first three candles. +100 = three-white
-   /// (bullish) strike, -100 = three-black (bearish) strike; traditionally read
-   /// as significant only inside a trend matching the first three candles.
+   /// signal keyed to the color of the first three candles, traditionally read
+   /// as significant only inside a trend matching those three candles.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the surrounding trend the pattern classically assumes for significance.</description></item>
+   /// <item><description>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

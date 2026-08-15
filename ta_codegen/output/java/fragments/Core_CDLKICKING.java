@@ -218,8 +218,11 @@
    /**
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
-    * is set by the second candle's color. Hit signals a reversal in the
-    * direction of the second candle: +100 bullish, -100 bearish.
+    * is set by the second candle's color.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -266,8 +269,11 @@
    /**
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
-    * is set by the second candle's color. Hit signals a reversal in the
-    * direction of the second candle: +100 bullish, -100 bearish.
+    * is set by the second candle's color.
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

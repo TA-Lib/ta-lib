@@ -212,6 +212,7 @@
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
     * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
+    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -266,6 +267,7 @@
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
     * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
+    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

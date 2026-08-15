@@ -286,6 +286,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>A preceding uptrend is not verified.</description></item>
+   /// <item><description>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -335,6 +336,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>A preceding uptrend is not verified.</description></item>
+   /// <item><description>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

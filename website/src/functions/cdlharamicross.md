@@ -5,11 +5,12 @@ description: "A two-candle reversal pattern: a long real body followed by a doji
 
 ## Summary
 
-A two-candle reversal pattern: a long real body followed by a doji whose real body is contained within the first candle's real body (the doji variant of the Harami). Bullish after a black first candle, bearish after a white first candle. A hit signals a potential reversal: +100/+80 bullish (black first candle), -100/-80 bearish (white first candle).
+A two-candle reversal pattern: a long real body followed by a doji whose real body is contained within the first candle's real body (the doji variant of the Harami). Bullish after a black first candle, bearish after a white first candle.
 
 ## Notes
 
 - Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.
+- Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))
 
 ## Inputs
 
@@ -21,6 +22,16 @@ A two-candle reversal pattern: a long real body followed by a doji whose real bo
 ## Outputs
 
 - `outInteger` — +100/+80 when the first candle is black (bullish), -100/-80 when the first candle is white (bearish), 0 otherwise. Magnitude 100 for strict containment inside the first body, 80 when one real-body end matches
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Harami Cross: a doji forms inside the prior long white candle — indecision after an advance, a sharper warning than a plain Harami |
+| -80 | Bearish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long white candle |
+| 0 | No pattern |
+| 80 | Bullish Harami Cross, weaker variant: the doji's edge lines up exactly with one end of the long black candle |
+| 100 | Bullish Harami Cross: a doji forms inside the prior long black candle — indecision after a decline, a sharper warning than a plain Harami |
 
 ## Properties
 

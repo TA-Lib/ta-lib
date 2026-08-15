@@ -20,6 +20,13 @@ A three-candle bullish reversal pattern: a long black candle, then a doji that g
 
 - `outInteger` — +100 when the pattern is detected, 0 otherwise. Always bullish; never emits -100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Morning Doji Star detected — bullish reversal signal |
+
 ## Parameters
 
 - `optInPenetration` — Fraction of the 1st candle's real body the 3rd close must exceed above close[i-2]; larger values demand deeper penetration into the black body

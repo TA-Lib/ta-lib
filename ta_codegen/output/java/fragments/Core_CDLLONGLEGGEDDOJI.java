@@ -202,6 +202,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
+    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -258,6 +259,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
+    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

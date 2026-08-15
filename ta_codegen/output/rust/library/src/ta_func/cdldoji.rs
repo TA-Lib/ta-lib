@@ -76,8 +76,7 @@ impl Core {
         return (BodyDoji_avgPeriod) as usize;
     }
     /// Single-candle Doji recognizer: fires when the real body (|close-open|) is at or below the
-    /// BodyDoji threshold. Returns 100 on a match, 0 otherwise. Market indecision; neither bullish
-    /// nor bearish on its own.
+    /// BodyDoji threshold. Market indecision; neither bullish nor bearish on its own.
     ///
     /// # Formula
     ///

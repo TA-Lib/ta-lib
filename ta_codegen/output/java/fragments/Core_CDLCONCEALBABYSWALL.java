@@ -195,11 +195,11 @@
    /**
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
-    * candle fully engulfing the third. Bullish reversal signal. A hit signals a
-    * bullish reversal.
+    * candle fully engulfing the third. A hit signals a bullish reversal.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -246,11 +246,11 @@
    /**
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
-    * candle fully engulfing the third. Bullish reversal signal. A hit signals a
-    * bullish reversal.
+    * candle fully engulfing the third. A hit signals a bullish reversal.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

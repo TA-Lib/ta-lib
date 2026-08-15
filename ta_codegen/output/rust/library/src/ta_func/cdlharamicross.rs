@@ -85,13 +85,17 @@ impl Core {
     }
     /// A two-candle reversal pattern: a long real body followed by a doji whose real body is
     /// contained within the first candle's real body (the doji variant of the Harami). Bullish
-    /// after a black first candle, bearish after a white first candle. A hit signals a potential
-    /// reversal: +100/+80 bullish (black first candle), -100/-80 bearish (white first candle).
+    /// after a black first candle, bearish after a white first candle.
     ///
     /// # Notes
     ///
     /// * Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the
     ///   reversal signal assumes.
+    /// * Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label
+    ///   even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the
+    ///   time rather than a bearish reversal, and the bullish Harami Cross likewise fails to
+    ///   reverse the downtrend 55% of the time.
+    ///   ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))
     ///
     /// # Arguments
     ///

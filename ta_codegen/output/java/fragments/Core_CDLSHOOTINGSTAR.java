@@ -237,6 +237,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
+    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -290,6 +291,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
+    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a

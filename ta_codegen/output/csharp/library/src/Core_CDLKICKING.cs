@@ -266,10 +266,12 @@ public partial class Core
    /// <summary>
    /// Two-candle pattern of two opposite-color marubozu (long bodies with very
    /// short shadows) separated by a price gap. A reversal signal whose direction
-   /// is set by the second candle's color. Hit signals a reversal in the
-   /// direction of the second candle: +100 bullish, -100 bearish.
+   /// is set by the second candle's color.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -312,10 +314,12 @@ public partial class Core
    /// <summary>
    /// Two-candle pattern of two opposite-color marubozu (long bodies with very
    /// short shadows) separated by a price gap. A reversal signal whose direction
-   /// is set by the second candle's color. Hit signals a reversal in the
-   /// direction of the second candle: +100 bullish, -100 bearish.
+   /// is set by the second candle's color.
    /// </summary>
    /// <remarks>
+   /// <list type="bullet">
+   /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

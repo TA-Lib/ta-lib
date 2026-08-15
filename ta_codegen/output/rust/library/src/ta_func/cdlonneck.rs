@@ -94,6 +94,9 @@ impl Core {
     /// # Notes
     ///
     /// * The bearish-continuation reading assumes a prior downtrend, which is not verified.
+    /// * Bulkowski's testing found the bearish continuation holds only 56% of the time, which he
+    ///   explicitly calls "near random."
+    ///   ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))
     ///
     /// # Arguments
     ///

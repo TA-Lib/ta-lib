@@ -22,6 +22,13 @@ Two-candle pattern: a long black candle followed by a long white candle that ope
 
 - `outInteger` — +100 when the piercing pattern is detected; 0 otherwise. Always bullish, never emits -100
 
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| 0 | No pattern |
+| 100 | Piercing pattern detected — bullish reversal signal |
+
 ## Properties
 
 **Numerical Stability:** [Start-Independent](/functions/stability.md#start-independent)

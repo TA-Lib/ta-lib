@@ -312,12 +312,12 @@ public partial class Core
    /// <summary>
    /// Single-candle pattern: a small real body at the top of the range with a
    /// long lower shadow and little or no upper shadow, sitting at or near the
-   /// prior candle's low. Bullish reversal signal. A hit (+100) flags a
-   /// potential bullish reversal.
+   /// prior candle's low. A hit flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
+   /// <item><description>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -360,12 +360,12 @@ public partial class Core
    /// <summary>
    /// Single-candle pattern: a small real body at the top of the range with a
    /// long lower shadow and little or no upper shadow, sitting at or near the
-   /// prior candle's low. Bullish reversal signal. A hit (+100) flags a
-   /// potential bullish reversal.
+   /// prior candle's low. A hit flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
+   /// <item><description>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

@@ -5,11 +5,12 @@ description: "Two-candle pattern: a long real body followed by a short real body
 
 ## Summary
 
-Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body. A reversal signal whose direction is the opposite of the first candle's color. A hit signals a potential reversal opposite the 1st candle: positive (black 1st) is bullish, negative (white 1st) is bearish.
+Two-candle pattern: a long real body followed by a short real body contained within the first candle's real body. A reversal signal whose direction is the opposite of the first candle's color.
 
 ## Notes
 
 - Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.
+- Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))
 
 ## Inputs
 
@@ -21,6 +22,16 @@ Two-candle pattern: a long real body followed by a short real body contained wit
 ## Outputs
 
 - `outInteger` — +100/+80 when the long 1st candle is black (bullish), -100/-80 when it is white (bearish), 0 otherwise; 80 when the two real bodies share an end, 100 when the 1st body strictly overhangs both ends of the 2nd
+
+## Output Values
+
+| Value | Meaning |
+|-------|---------|
+| -100 | Bearish Harami: a small real body forms inside the prior long white candle — momentum stalling after an advance |
+| -80 | Bearish Harami, weaker variant: the small body's edge lines up exactly with one end of the long white candle |
+| 0 | No pattern |
+| 80 | Bullish Harami, weaker variant: the small body's edge lines up exactly with one end of the long black candle |
+| 100 | Bullish Harami: a small real body forms inside the prior long black candle — momentum stalling after a decline |
 
 ## Properties
 
