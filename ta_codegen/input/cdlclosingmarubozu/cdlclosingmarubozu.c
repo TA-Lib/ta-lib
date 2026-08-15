@@ -80,11 +80,11 @@ TA_RetCode cdlclosingmarubozu(int startIdx, int endIdx,
    {
       if( ta_realbody(inClose[i], inOpen[i]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i]) &&             // long body
          (
-         ( // white body and very short lower shadow
+         ( // white body and very short upper shadow
          ta_candlecolor(inClose[i], inOpen[i]) == 1 &&
          ta_uppershadow(inHigh[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
       ) ||
-         ( // black body and very short upper shadow
+         ( // black body and very short lower shadow
          ta_candlecolor(inClose[i], inOpen[i]) == -1 &&
          ta_lowershadow(inLow[i], inClose[i], inOpen[i]) < ta_candleaverage(ShadowVeryShort_rangeType, ShadowVeryShort_avgPeriod, ShadowVeryShort_factor, ShadowVeryShortPeriodTotal, inOpen[i], inHigh[i], inLow[i], inClose[i])
       )
