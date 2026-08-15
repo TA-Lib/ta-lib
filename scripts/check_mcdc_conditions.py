@@ -19,6 +19,19 @@ This closes both by counting the top-level `&&` conjuncts in the pattern's own
 detection expression and requiring the builder to agree.
 
 Run standalone, or via `scripts/build.py check-mcdc`.
+
+Declared exemption: CDLHIKKAKE and CDLHIKKAKEMOD are never wired to
+pb_check_mcdc and this script never looks at them -- their `patternResult` is
+carried in a local across loop iterations (an initial +/-100 on one bar, a
++/-200 confirmation within a few bars of it, tracked by a countdown counter),
+not a single per-bar boolean expression, so the firing-arm model this script
+counts does not apply. Both have MC/DC-shaped coverage already, just not
+through this gate: `test_hikkake_predicate_coverage` in test_candlestick.c
+exercises every structural predicate (P1/P2/P34/P56) via near-miss scenarios,
+on the legacy pb_check/pb_expect shape rather than pb_conditions/pb_flip/
+pb_control. #219's "12 do (10 true MC/DC, 2 Hikkake predicate gates)" already
+counted these two as covered on that basis; nothing here proposes converting
+them.
 """
 
 import os
@@ -97,6 +110,45 @@ def _peel(expr):
     return c
 
 
+def _directly_nested(src, if_pos):
+    """True if the if-statement starting at `if_pos` is the SOLE content of
+    another if's block: `if( X ) { if( Y ) ... }` with nothing else between
+    the braces. That shape means the firing decision spans more than one
+    if-level, and a single-level conjunct count cannot describe it -- it can
+    only land on whichever level happens to be nearest the assignment and
+    silently omit every outer guard. CDLENGULFING, CDLHARAMI and
+    CDLHARAMICROSS are exactly this shape: the counter used to return 2, 2
+    and 1 respectively, each measuring only the innermost level and each a
+    plausible-looking number that omitted the rest of the decision.
+
+    A regular flat pattern's innermost `if(` is preceded by other statements
+    (a loop's `do {`, an index bump, an accumulator update) rather than a
+    bare `{` that closes straight back to another `if(...)`, so this cannot
+    trip on the 55 flat patterns -- it only fires when there is genuinely
+    nothing else in the enclosing block.
+    """
+    j = if_pos
+    while j > 0 and src[j - 1] in " \t\n\r":
+        j -= 1
+    if j == 0 or src[j - 1] != "{":
+        return False
+    j -= 1
+    while j > 0 and src[j - 1] in " \t\n\r":
+        j -= 1
+    if j == 0 or src[j - 1] != ")":
+        return False
+    depth, k = 1, j - 2
+    while k >= 0 and depth > 0:
+        if src[k] == ")":
+            depth += 1
+        elif src[k] == "(":
+            depth -= 1
+        k -= 1
+    if depth != 0:
+        return False
+    return src[:k + 1].rstrip().endswith("if")
+
+
 def count_conditions(path):
     """Atomic conditions of the detection expression in a candlestick source.
 
@@ -131,6 +183,12 @@ def count_conditions(path):
         k = head.rfind("if (")
     if k < 0:
         return None, "no enclosing if( found"
+
+    if _directly_nested(src, k):
+        return None, ("assignment is guarded by nested if-statements, not one "
+                       "flat decision -- conjunct counting cannot span nesting "
+                       "levels without silently dropping the outer guard(s); "
+                       "needs a hand-derived condition model")
 
     open_paren = src.index("(", k)
     depth, i, expr = 0, open_paren, None
