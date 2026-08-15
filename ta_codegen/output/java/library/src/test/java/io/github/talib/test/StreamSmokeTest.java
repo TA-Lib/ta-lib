@@ -283,9 +283,53 @@ public class StreamSmokeTest {
               "Value has one component per batch output");
 
         /* ...and EVERY multi-output handle, not just MACD: one class checked by
-         * name would let the other thirteen regress to a hand-rolled class. The
-         * count is asserted exactly, so a Value that stopped being generated is
-         * a failure rather than a smaller sweep. */
+         * name would let the others regress to a hand-rolled class. The count is
+         * asserted exactly, so a Value that stopped being generated is a failure
+         * rather than a smaller sweep.
+         *
+         * The expectation is DERIVED FROM THE REGISTRY, not a literal. A literal
+         * is a corpus count, and this suite also runs against an input/ that the
+         * synth gate has injected fixtures into (scripts/synth_gate.py copies
+         * every input_synth/synth<n>/ in before regenerating). The first fixture
+         * with more than one real output therefore turns a correct tree red here,
+         * with a message about MACD's Value that names nothing to do with the
+         * change under test. Deriving it also strengthens the check: the
+         * component count is now pinned per function against the registry's
+         * output list, where before only MACD's was. */
+        java.util.List<String> wrongValue = new java.util.ArrayList<String>();
+        int expectedValueTypes = 0;
+        for (io.github.talib.metadata.FunctionInfo vf : io.github.talib.metadata.Functions.all()) {
+            if (vf.outputs().size() <= 1) {
+                continue;
+            }
+            Class<?> handle = null;
+            for (Class<?> nested : Core.class.getDeclaredClasses()) {
+                if (nested.getSimpleName().equals(vf.name() + "_Stream")) {
+                    handle = nested;
+                    break;
+                }
+            }
+            if (handle == null) {
+                continue;                       // not stream-capable
+            }
+            expectedValueTypes++;
+            Class<?> value = null;
+            for (Class<?> inner : handle.getDeclaredClasses()) {
+                if (inner.getSimpleName().equals("Value")) {
+                    value = inner;
+                    break;
+                }
+            }
+            if (value == null) {
+                wrongValue.add(vf.name() + ": no Value");
+            } else if (!value.isRecord()) {
+                wrongValue.add(vf.name() + ": Value is not a record");
+            } else if (value.getRecordComponents().length != vf.outputs().size()) {
+                wrongValue.add(vf.name() + ": Value has "
+                    + value.getRecordComponents().length + " components, registry declares "
+                    + vf.outputs().size());
+            }
+        }
         int valueTypes = 0, records = 0;
         for (Class<?> nested : Core.class.getDeclaredClasses()) {
             for (Class<?> inner : nested.getDeclaredClasses()) {
@@ -300,7 +344,15 @@ public class StreamSmokeTest {
                 }
             }
         }
-        check(valueTypes == 14, "14 multi-output handles carry a Value (found " + valueTypes + ")");
+        for (String w : wrongValue) {
+            System.out.println("  (wrong Value: " + w + ")");
+        }
+        check(wrongValue.isEmpty(),
+              "every multi-output stream handle carries a Value matching its registry outputs");
+        check(expectedValueTypes > 0,
+              "the registry named at least one multi-output stream handle (non-vacuity)");
+        check(valueTypes == expectedValueTypes,
+              expectedValueTypes + " multi-output handles carry a Value (found " + valueTypes + ")");
         check(records == valueTypes, "every Value is a record");
 
         /* Dispatch DX: every MAType opens through the same entry point. */
