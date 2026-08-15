@@ -2415,6 +2415,500 @@ static void build_gravestonedoji( void )
   pb_flat(8);
 }
 
+/* ---- Mechanical tier, unit 2: the remaining seven single-bar patterns ----- *
+ *
+ * Same primer as unit 1, pb_primer(12,100,2,4) -- RealBody 2, HighLow 10 -- and
+ * the same discipline: every flip on the comparison boundary. Three more
+ * thresholds come into play here, and all three are exact under that primer
+ * (checked by running the arithmetic, not by assuming it):
+ *
+ *   avg(BodyShort)       = 1.0 * (20/10) / 1   = 2.0
+ *   avg(ShadowShort)     = 1.0 * (80/10) / 2   = 4.0   <- Shadows-typed, so the
+ *                                                         divisor is 2, not 1
+ *   avg(Near)            = 0.2 * (50/5)  / 1   = 2.0   <- avgPeriod 5, not 10
+ *   avg(ShadowVeryLong)  = 2.0 * body(i)       (avgPeriod 0)
+ *   avg(ShadowLong)      = 1.0 * body(i)       (avgPeriod 0)
+ *
+ * The two avgPeriod-0 settings are the reason several flips below cannot be
+ * built by moving a shadow while holding the body: the threshold moves with
+ * the bar. Where that bites, the comment says so.
+ *
+ * Five of the seven are BI-SIGNED and carry pb_signs(2) with a firing scenario
+ * on each colour. Unit 1 shipped two bi-signed patterns with white-only
+ * scenarios, which left the -100 class and half of a disjunction unexercised;
+ * that gap is what pb_signs() now refuses to let happen silently.
+ *
+ * No waivers: single-bar patterns have no cross-bar entailment, so all 22
+ * conditions are independently falsifiable.
+ */
+
+/* CDLHIGHWAVE -- a small body with two very long shadows.
+ *
+ *   c0  realbody(i)    <  avg(BodyShort)
+ *   c1  uppershadow(i) >  avg(ShadowVeryLong)      = 2 * realbody(i)
+ *   c2  lowershadow(i) >  avg(ShadowVeryLong)
+ *
+ * c1 and c2 share a threshold that is a multiple of the CURRENT body, so the
+ * c0 flip has to grow the shadows as it grows the body: at body 2 the shadow
+ * threshold is 4, and a bar that merely kept the detect's shadows would break
+ * three conditions at once instead of one.
+ */
+static void cond_highwave( int i, int *c )
+{
+   double vl = pb_avg(TA_ShadowVeryLong, i);
+   c[0] = pb_body(i) < pb_avg(TA_BodyShort, i);
+   c[1] = pb_upsh(i) > vl;
+   c[2] = pb_losh(i) > vl;
+}
+
+static void build_highwave( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,104,97,101);            /* white, body 1, shadows 3 and 3, threshold 2 */
+  pb_detect(d,100,"detect: body 1 < 2, both shadows 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,107,94,102);           /* body 2 == avg; shadows 5 and 6 clear 4 */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,104,97,101);
+  pb_control(k0,100,0,"restore c0: body 1 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,103,97,101);           /* upper shadow 2 == 2*body */
+  pb_flip(f1,1,"break c1: upper shadow 2 == threshold 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,104,97,101);
+  pb_control(k1,100,1,"restore c1: upper shadow 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,104,98,101);           /* lower shadow 2 == 2*body */
+  pb_flip(f2,2,"break c2: lower shadow 2 == threshold 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,104,97,101);
+  pb_control(k2,100,2,"restore c2: lower shadow 3 > 2");
+  pb_flat(8);
+
+  /* The BLACK arm: same geometry with open and close exchanged. */
+  pb_primer(12,100,2,4);
+  int db=pb_bar(101,104,97,100);
+  pb_detect(db,-100,"detect black: body 1 < 2, both shadows 3 > 2");
+  pb_flat(8);
+}
+
+/* CDLLONGLINE -- a long body with short shadows.
+ *
+ *   c0  realbody(i)    >  avg(BodyLong)
+ *   c1  uppershadow(i) <  avg(ShadowShort)
+ *   c2  lowershadow(i) <  avg(ShadowShort)
+ *
+ * ShadowShort is the one Shadows-typed setting in this unit, so its threshold
+ * carries the halving divisor: 8/2, not 8. A model that forgot the divisor
+ * would put the threshold at 8 and agree with the library on every scenario
+ * whose shadows are under 4 -- which is why both flips sit exactly at 4.
+ */
+static void cond_longline( int i, int *c )
+{
+   double ss = pb_avg(TA_ShadowShort, i);
+   c[0] = pb_body(i) > pb_avg(TA_BodyLong, i);
+   c[1] = pb_upsh(i) < ss;
+   c[2] = pb_losh(i) < ss;
+}
+
+static void build_longline( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,108,98,105);            /* white, body 5, upper 3, lower 2 */
+  pb_detect(d,100,"detect: body 5 > 2, shadows 3 and 2 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,105,98,102);           /* body 2 == avg */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,106,98,103);           /* body 3 */
+  pb_control(k0,100,0,"restore c0: body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,109,98,105);           /* upper shadow 4 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 4 == avg 4, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,108,98,105);
+  pb_control(k1,100,1,"restore c1: upper shadow 3 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,108,96,105);           /* lower shadow 4 == avg */
+  pb_flip(f2,2,"break c2: lower shadow 4 == avg 4, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,108,98,105);
+  pb_control(k2,100,2,"restore c2: lower shadow 2 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int db=pb_bar(105,108,98,100);
+  pb_detect(db,-100,"detect black: body 5 > 2, shadows 3 and 2 < 4");
+  pb_flat(8);
+}
+
+/* CDLMARUBOZU -- a long body with almost no shadow at either end.
+ *
+ *   c0  realbody(i)    >  avg(BodyLong)
+ *   c1  uppershadow(i) <  avg(ShadowVeryShort)
+ *   c2  lowershadow(i) <  avg(ShadowVeryShort)
+ *
+ * Same shape as LONGLINE with a much tighter shadow threshold (1 rather than
+ * 4), and that difference is the whole distinction between the two patterns.
+ * The flips are placed at each pattern's own threshold, so a model that
+ * borrowed the other's setting fails here rather than agreeing by luck.
+ */
+static void cond_marubozu( int i, int *c )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_body(i) > pb_avg(TA_BodyLong, i);
+   c[1] = pb_upsh(i) < vs;
+   c[2] = pb_losh(i) < vs;
+}
+
+static void build_marubozu( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,105.5,99.5,105);        /* white, body 5, both shadows 0.5 */
+  pb_detect(d,100,"detect: body 5 > 2, both shadows 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,102.5,99.5,102);       /* body 2 == avg */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,103.5,99.5,103);       /* body 3 */
+  pb_control(k0,100,0,"restore c0: body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,106,99.5,105);         /* upper shadow 1 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,105.5,99.5,105);
+  pb_control(k1,100,1,"restore c1: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,105.5,99,105);         /* lower shadow 1 == avg */
+  pb_flip(f2,2,"break c2: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,105.5,99.5,105);
+  pb_control(k2,100,2,"restore c2: lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int db=pb_bar(105,105.5,99.5,100);
+  pb_detect(db,-100,"detect black: body 5 > 2, both shadows 0.5 < 1");
+  pb_flat(8);
+}
+
+/* CDLSHORTLINE -- a short body with short shadows.
+ *
+ *   c0  realbody(i)    <  avg(BodyShort)
+ *   c1  uppershadow(i) <  avg(ShadowShort)
+ *   c2  lowershadow(i) <  avg(ShadowShort)
+ *
+ * The exact complement of LONGLINE on c0 and identical on c1/c2, so the c0
+ * flip is the one that separates them: at body 2 SHORTLINE stops firing and
+ * LONGLINE starts.
+ */
+static void cond_shortline( int i, int *c )
+{
+   double ss = pb_avg(TA_ShadowShort, i);
+   c[0] = pb_body(i) < pb_avg(TA_BodyShort, i);
+   c[1] = pb_upsh(i) < ss;
+   c[2] = pb_losh(i) < ss;
+}
+
+static void build_shortline( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,103,98,101);            /* white, body 1, shadows 2 and 2 */
+  pb_detect(d,100,"detect: body 1 < 2, both shadows 2 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,104,98,102);           /* body 2 == avg */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,103,98,101);
+  pb_control(k0,100,0,"restore c0: body 1 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,105,98,101);           /* upper shadow 4 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 4 == avg 4, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,103,98,101);
+  pb_control(k1,100,1,"restore c1: upper shadow 2 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,103,96,101);           /* lower shadow 4 == avg */
+  pb_flip(f2,2,"break c2: lower shadow 4 == avg 4, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,103,98,101);
+  pb_control(k2,100,2,"restore c2: lower shadow 2 < 4");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int db=pb_bar(101,103,98,100);
+  pb_detect(db,-100,"detect black: body 1 < 2, both shadows 2 < 4");
+  pb_flat(8);
+}
+
+/* CDLSPINNINGTOP -- a small body with shadows longer than itself.
+ *
+ *   c0  uppershadow(i) >  realbody(i)
+ *   c1  lowershadow(i) >  realbody(i)
+ *   c2  realbody(i)    <  avg(BodyShort)
+ *
+ * The only pattern in this unit whose first two thresholds are the body
+ * ITSELF rather than a setting -- no candle setting is consulted for c0 or c1.
+ * That makes the c2 flip the awkward one: growing the body to the BodyShort
+ * threshold also raises c0's and c1's thresholds, so the shadows have to grow
+ * with it or three conditions break at once.
+ */
+static void cond_spinningtop( int i, int *c )
+{
+   double b = pb_body(i);
+   c[0] = pb_upsh(i) > b;
+   c[1] = pb_losh(i) > b;
+   c[2] = b < pb_avg(TA_BodyShort, i);
+}
+
+static void build_spinningtop( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,103,98,101);            /* white, body 1, shadows 2 and 2 */
+  pb_detect(d,100,"detect: shadows 2 and 2 > body 1, body 1 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,102,98,101);           /* upper shadow 1 == body */
+  pb_flip(f0,0,"break c0: upper shadow 1 == body 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,103,98,101);
+  pb_control(k0,100,0,"restore c0: upper shadow 2 > body 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,103,99,101);           /* lower shadow 1 == body */
+  pb_flip(f1,1,"break c1: lower shadow 1 == body 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,103,98,101);
+  pb_control(k1,100,1,"restore c1: lower shadow 2 > body 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,105,97,102);           /* body 2 == avg; shadows 3 and 3 still clear it */
+  pb_flip(f2,2,"break c2: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,103,98,101);
+  pb_control(k2,100,2,"restore c2: body 1 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int db=pb_bar(101,103,98,100);
+  pb_detect(db,-100,"detect black: shadows 2 and 2 > body 1, body 1 < 2");
+  pb_flat(8);
+}
+
+/* CDLTAKURI -- a dragonfly doji whose lower shadow is very long.
+ *
+ *   c0  realbody(i)    <= avg(BodyDoji)
+ *   c1  uppershadow(i) <  avg(ShadowVeryShort)
+ *   c2  lowershadow(i) >  avg(ShadowVeryLong)      = 2 * realbody(i)
+ *
+ * Single-class: the firing arm is a literal 100, so pb_signs stays at its
+ * default of 1. c2's threshold is twice the CURRENT body, which at a body of 0
+ * is 0 -- so the only bar that falsifies c2 alone is one with no lower shadow
+ * at all, and the c0 flip has to keep a lower shadow above the RAISED
+ * threshold rather than the detect's.
+ */
+static void cond_takuri( int i, int *c )
+{
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+   c[1] = pb_upsh(i) <  pb_avg(TA_ShadowVeryShort, i);
+   c[2] = pb_losh(i) >  pb_avg(TA_ShadowVeryLong, i);
+}
+
+static void build_takuri( void )
+{
+  pb_conditions(3);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,100.5,95,100);          /* body 0, upper 0.5, lower 5, threshold 0 */
+  pb_detect(d,100,"detect: body 0 <= 1, upper 0.5 < 1, lower 5 > 0");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,102.5,95,102);         /* body 2 > 1; lower 5 still clears 2*2=4 */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,101.5,95,101);         /* body 1 == avg, inclusive; lower 5 > 2 */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,101,95,100);           /* upper shadow 1 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,100.5,95,100);
+  pb_control(k1,100,1,"restore c1: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,100.5,100,100);        /* no lower shadow: 0 > 0 is false */
+  pb_flip(f2,2,"break c2: lower shadow 0 == threshold 0, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,100.5,95,100);
+  pb_control(k2,100,2,"restore c2: lower shadow 5 > 0");
+  pb_flat(8);
+}
+
+/* CDLRICKSHAWMAN -- a long-legged doji whose body sits near the midpoint.
+ *
+ *   c0  realbody(i)    <= avg(BodyDoji)
+ *   c1  lowershadow(i) >  avg(ShadowLong)          = realbody(i)
+ *   c2  uppershadow(i) >  avg(ShadowLong)
+ *   c3  bodylo(i) <= low + hlrange/2 + avg(Near)
+ *       && bodyhi(i) >= low + hlrange/2 - avg(Near)
+ *
+ * c3 is a single top-level conjunct holding a two-sided band, the same shape
+ * as BELTHOLD's disjunction in unit 1: pb_conditions() counts what the
+ * decision tests, and this is one test of "near the midpoint". Its flip pushes
+ * the body clear of the band's upper edge -- and because the band is measured
+ * from the midpoint, moving the body also moves the shadows, so the flip has
+ * to keep both of them above their own threshold.
+ *
+ * Near is the only setting in either unit with avgPeriod 5 rather than 10.
+ * Under this primer that changes nothing (every primer bar has HighLow 10, so
+ * a 5-bar mean and a 10-bar mean agree), which is worth stating: the exactness
+ * of 2.0 here does not depend on the window length.
+ */
+static void cond_rickshawman( int i, int *c )
+{
+   double sl   = pb_avg(TA_ShadowLong, i);
+   double near = pb_avg(TA_Near, i);
+   double mid  = pbL[i] + (pbH[i] - pbL[i]) / 2;
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+   c[1] = pb_losh(i) > sl;
+   c[2] = pb_upsh(i) > sl;
+   c[3] = pb_bodylo(i) <= mid + near && pb_bodyhi(i) >= mid - near;
+}
+
+static void build_rickshawman( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,104,96,100);            /* body 0 at the midpoint, shadows 4 and 4 */
+  pb_detect(d,100,"detect: body 0 <= 1, both shadows 4 > 0, body on the midpoint");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,106,94,102);           /* body 2 > 1; shadows 4 and 6 clear 2; band +/-2 around 100 */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,105,95,101);           /* body 1 == avg, inclusive */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,104,100,100);          /* lower shadow 0 == threshold 0 */
+  pb_flip(f1,1,"break c1: lower shadow 0 == threshold 0, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,104,96,100);
+  pb_control(k1,100,1,"restore c1: lower shadow 4 > 0");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,100,96,100);           /* upper shadow 0 == threshold 0 */
+  pb_flip(f2,2,"break c2: upper shadow 0 == threshold 0, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,104,96,100);
+  pb_control(k2,100,2,"restore c2: upper shadow 4 > 0");
+  pb_flat(8);
+
+  /* c3: the body must sit inside a band of +/-Near around the bar's midpoint.
+   * With high 110 and low 96 the midpoint is 103 and Near is 2, so the band is
+   * [101,105].
+   *
+   * Both bars here carry a real body of 1 rather than the doji used above, and
+   * that is load-bearing: c3 reads min(open,close) against the band's top and
+   * max(open,close) against its bottom, so a scenario with open == close makes
+   * those two terms the SAME NUMBER and any confusion between them invisible.
+   * A mutation swapping the min for a max sailed through an earlier version of
+   * these cases for exactly that reason -- it was the v0.6.4 freeze that caught
+   * it, and the freeze reaches only 35 of the 61 patterns.
+   *
+   * The control puts min(open,close) exactly ON 105, which pins the comparison
+   * as inclusive, while max sits at 106 above it -- so the two terms disagree
+   * and reading the wrong one stops the control firing.
+   */
+  pb_primer(12,100,2,4);
+  int f3=pb_bar(106,110,96,107);           /* min 106 is above the band top 105 */
+  pb_flip(f3,3,"break c3: min(open,close) 106 > band top 105");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k3=pb_bar(105,110,96,106);           /* min 105 == band top, max 106 above it */
+  pb_control(k3,100,3,"restore c3: min 105 == band top, inclusive; max 106 differs");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -2428,6 +2922,13 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_longleggeddoji();   e = pb_check_mcdc("CDLLONGLEGGEDDOJI",   TA_CDLLONGLEGGEDDOJI,   cond_longleggeddoji);   if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_dragonflydoji();    e = pb_check_mcdc("CDLDRAGONFLYDOJI",    TA_CDLDRAGONFLYDOJI,    cond_dragonflydoji);    if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_gravestonedoji();   e = pb_check_mcdc("CDLGRAVESTONEDOJI",   TA_CDLGRAVESTONEDOJI,   cond_gravestonedoji);   if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_highwave();          e = pb_check_mcdc("CDLHIGHWAVE",          TA_CDLHIGHWAVE,          cond_highwave);          if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_longline();          e = pb_check_mcdc("CDLLONGLINE",          TA_CDLLONGLINE,          cond_longline);          if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_marubozu();          e = pb_check_mcdc("CDLMARUBOZU",          TA_CDLMARUBOZU,          cond_marubozu);          if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_shortline();         e = pb_check_mcdc("CDLSHORTLINE",         TA_CDLSHORTLINE,         cond_shortline);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_spinningtop();       e = pb_check_mcdc("CDLSPINNINGTOP",       TA_CDLSPINNINGTOP,       cond_spinningtop);       if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_takuri();            e = pb_check_mcdc("CDLTAKURI",            TA_CDLTAKURI,            cond_takuri);            if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_rickshawman();       e = pb_check_mcdc("CDLRICKSHAWMAN",       TA_CDLRICKSHAWMAN,       cond_rickshawman);       if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
