@@ -1,0 +1,15 @@
+name: SYNTH8
+group: Math Operators
+hint: Synthetic gate function 8 - ta_candleaverage values as real outputs (never shipped)
+flags: [stream]
+inputs:
+  - name: inPriceOHLC
+    type: price
+    price_components: [open, high, low, close]
+outputs:
+  - name: outAvgShadows
+    type: real
+    flags: [line]
+  - name: outAvgCurrentBar
+    type: real
+    flags: [line]
