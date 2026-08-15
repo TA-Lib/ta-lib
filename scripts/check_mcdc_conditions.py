@@ -109,6 +109,95 @@ def count_conditions(path):
     return conj + 1, None
 
 
+def _drop_calls(expr, fname):
+    """Remove `fname( ... )` calls, parens balanced, so the multiplier is what's
+    left. Needed because the call's own arguments carry digits -- CDLHARAMI's
+    arm indexes inClose[i-1], and CDLENGULFING's picks its bar with a ternary
+    inside the subscript."""
+    out, i = [], 0
+    while i < len(expr):
+        k = expr.find(fname + "(", i)
+        if k < 0:
+            out.append(expr[i:])
+            break
+        out.append(expr[i:k])
+        j = expr.index("(", k)
+        depth = 0
+        while j < len(expr):
+            if expr[j] == "(":
+                depth += 1
+            elif expr[j] == ")":
+                depth -= 1
+                if depth == 0:
+                    j += 1
+                    break
+            j += 1
+        i = j
+    return "".join(out)
+
+
+def arm_classes(arm):
+    """The set of non-zero values one firing arm can produce, or None."""
+    if "ta_candlecolor" in arm:
+        # +/-1 times a magnitude: both signs, whatever the magnitude is.
+        rest = _drop_calls(arm, "ta_candlecolor")
+        mags = re.findall(r"\d+", rest)
+        if len(set(mags)) != 1:
+            return None
+        m = int(mags[0])
+        return {m, -m}
+    # A signed literal. The sign may be spelled explicitly: CDLTRISTAR writes
+    # `+100` against its sibling `-100`.
+    if re.fullmatch(r"[+-]?\s*\d+", arm):
+        return {int(arm.replace(" ", ""))}
+    # A ternary selecting between two literals, e.g. `cond ? 100 : -100`.
+    t = re.fullmatch(r"\(?\s*[^?]*\?\s*([+-]?\s*\d+)\s*:\s*([+-]?\s*\d+)\s*\)?", arm)
+    if t:
+        return {int(t.group(1).replace(" ", "")), int(t.group(2).replace(" ", ""))}
+    return None
+
+
+def count_signs(path):
+    """Distinct non-zero values the pattern's firing arms can emit.
+
+    A pattern that hard-codes 100 or -100 emits one class. One whose arm is
+    ta_candlecolor(...)*N emits two, and a builder can cover it entirely on a
+    single colour without the completeness check noticing: `condition` there
+    means a top-level conjunct, so a (white && x) || (black && y) disjunction is
+    ONE condition and its interior is invisible by construction. pb_signs()
+    declares the domain and this pins the declaration, exactly as
+    count_conditions() pins pb_conditions().
+
+    EVERY firing arm counts, not just the first. CDLENGULFING, CDLHARAMI and
+    CDLHARAMICROSS each have two, ta_candlecolor(...)*100 and *80, so they emit
+    FOUR classes; stopping at the first arm called them bi-signed and would have
+    let a builder declare 2, satisfy this check, and leave the +/-80 arm
+    uncovered -- the same hole one level down.
+    """
+    src = strip_comments(open(path, encoding="utf-8").read())
+
+    # Deliberately looser than count_conditions': `outIdx` with or without the
+    # ++. CDLTRISTAR writes its +/-100 through a bare outInteger[outIdx] and
+    # post-increments once at the end, so the strict form finds none of its
+    # firing arms. Do NOT loosen count_conditions to match: TRISTAR's -100 and
+    # +100 come from two decisions NESTED inside the outer one, which the
+    # top-level-conjunct model does not describe, and the strict regex failing
+    # closed there is what forces a human to look. A class set does not depend
+    # on decision structure, so this direction is safe and the other is not.
+    classes = set()
+    for cand in re.finditer(r"outInteger\s*\[\s*outIdx\+*\s*\]\s*=\s*([^;]+);", src):
+        arm = " ".join(cand.group(1).split())
+        if arm.strip().rstrip("0").strip() in ("", "+", "-"):
+            continue                      # the non-firing `= 0` branch
+        got = arm_classes(arm)
+        if got is None:
+            return None, "unrecognised firing arm: %s" % arm
+        classes |= got
+    if not classes:
+        return None, "no non-zero outInteger assignment found"
+    return len(classes), None
+
+
 def main():
     root = find_repo_root()
     test_path = os.path.join(root, TEST_FILE)
@@ -130,7 +219,8 @@ def main():
         d = re.search(r"pb_conditions\(\s*(\d+)\s*\)", m.group(1))
         if not d:
             sys.exit("check_mcdc_conditions: %s never calls pb_conditions()" % fn)
-        declared[fn] = int(d.group(1))
+        s = re.search(r"pb_signs\(\s*(\d+)\s*\)", m.group(1))
+        declared[fn] = (int(d.group(1)), int(s.group(1)) if s else 1)
 
     bad = 0
     print("MC/DC declared-condition check (%d builder(s))" % len(pairs))
@@ -144,19 +234,31 @@ def main():
             print("  %-20s FAIL  cannot parse: %s" % (name, err))
             bad += 1
             continue
-        want = declared[fn]
-        flag = "ok" if want == actual else "MISMATCH"
-        print("  %-20s %-8s declared %2d, source has %2d" % (name, flag, want, actual))
-        if want != actual:
+        want, wantSigns = declared[fn]
+        signs, sErr = count_signs(pat)
+        if signs is None:
+            print("  %-20s FAIL  cannot parse firing arm: %s" % (name, sErr))
+            bad += 1
+            continue
+        okCond, okSigns = want == actual, wantSigns == signs
+        flag = "ok" if okCond and okSigns else "MISMATCH"
+        print("  %-20s %-8s declared %2d, source has %2d   signs: declared %d, "
+              "source has %d" % (name, flag, want, actual, wantSigns, signs))
+        if not okCond or not okSigns:
             bad += 1
 
     if bad:
         print("\ncheck_mcdc_conditions: %d builder(s) disagree with their pattern "
               "source. Either the builder under-declares -- in which case those "
               "conditions are silently untested -- or a conjunct was added to the "
-              "indicator and no case covers it." % bad)
+              "indicator and no case covers it. A signs mismatch means the pattern "
+              "emits both +N and -N but the builder declares one class, so half "
+              "its decision can go uncovered: pb_conditions() counts TOP-LEVEL "
+              "conjuncts, so a colour disjunction is one condition and its "
+              "interior is invisible to the completeness check." % bad)
         return 1
-    print("Every builder's pb_conditions() matches its pattern source. OK.")
+    print("Every builder's pb_conditions() and pb_signs() matches its pattern "
+          "source. OK.")
     return 0
 
 

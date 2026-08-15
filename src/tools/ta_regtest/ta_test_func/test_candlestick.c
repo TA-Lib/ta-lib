@@ -397,6 +397,7 @@ static const TA_CDLGlobals cdlGlobalsMatrix[] =
 #define PB_MAXEXP  256
 #define PB_MAXWAIVE 64
 #define PB_MAXCOND  64
+#define PB_MAXCLASS  8
 static double pbO[PB_N], pbH[PB_N], pbL[PB_N], pbC[PB_N];
 static int    pbCur;
 static int    pbOverflow;            /* sticky: a builder ran past a buffer */
@@ -422,6 +423,14 @@ static int         pbNbCond;
 static int         pbWcond[PB_MAXWAIVE];
 static const char *pbWhy[PB_MAXWAIVE];
 static int         pbNw;
+
+/* Distinct non-zero values the pattern's firing arm can emit: 1 for a pattern
+ * that hard-codes 100 or -100, 2 for one whose arm is ta_candlecolor(...)*100.
+ * Declared by the builder, defaulted to 1, and pinned against the pattern
+ * source by scripts/check_mcdc_conditions.py -- so a bi-signed pattern that
+ * never declares it fails the static check rather than quietly covering half
+ * its decision. See the coverage check in pb_check_mcdc for why. */
+static int         pbNbSigns;
 
 static int pb_bar4( double o, double h, double l, double c )
 {
@@ -456,6 +465,10 @@ static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEG
  * pb_conditions(n)  declare how many atomic conditions the pattern's detection
  *                   decision has. Every one must end up either flipped or
  *                   waived; pb_check_mcdc fails if the totals disagree.
+ * pb_signs(n)       declare how many distinct non-zero values the pattern can
+ *                   emit (1, or 2 for a ta_candlecolor(...)*100 arm). Defaults
+ *                   to 1. Every declared class must be exercised by a detect or
+ *                   a control -- see the coverage check in pb_check_mcdc.
  * pb_detect(i,v,s)  bars satisfying EVERY condition: the pattern must fire.
  * pb_flip(i,c,s)    the detect bars with condition `c` broken: must NOT fire.
  * pb_control(i,v,c,s)
@@ -475,6 +488,7 @@ static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEG
  * written to guard.
  */
 static void pb_conditions( int n ) { pbNbCond = n; }
+static void pb_signs( int n ) { pbNbSigns = n; }
 static void pb_detect( int i, int v, const char *s ) { pb_record(i, v, s, PB_DETECT, -1); }
 static void pb_flip( int i, int cond, const char *s ) { pb_record(i, 0, s, PB_FLIP, cond); }
 /* Ids are checked at pb_check_mcdc against pbNbCond, which a builder may declare
@@ -497,7 +511,7 @@ static void pb_waive( int cond, const char *why )
 
 static void pb_reset( void )
 {
-   pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbOverflow=0;
+   pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbNbSigns=1; pbOverflow=0;
 }
 
 /* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
@@ -598,12 +612,19 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
 }
 
 /* ---- MC/DC gate helpers for the marquee multi-candle patterns (issue #109) ---
- * Same idea as the Hikkake gate above, for single-sign patterns: a detection
- * scenario that fires the exact value, then one near-miss per structural
- * predicate (that predicate flipped false, the rest held) asserting 0 — so every
- * decision boundary is exercised in both directions. Each scenario self-primes
- * and is separated by flat filler so the candle-setting averages reset between
- * them. Every scenario was validated against the shipped library. */
+ * Same idea as the Hikkake gate above: a detection scenario that fires the exact
+ * value, then one near-miss per structural predicate (that predicate flipped
+ * false, the rest held) asserting 0 — so every decision boundary is exercised in
+ * both directions. Each scenario self-primes and is separated by flat filler so
+ * the candle-setting averages reset between them. Every scenario was validated
+ * against the shipped library.
+ *
+ * BI-SIGNED patterns are in scope and need pb_signs(2). This read "for
+ * single-sign patterns" while every builder happened to be one, and the
+ * assumption went straight into the checker: nothing required a firing scenario
+ * per output class, so the first two-sign patterns to arrive (#220's BELTHOLD
+ * and CLOSINGMARUBOZU) were covered on their white arm alone and the gate was
+ * satisfied. See the output-class check in pb_check_mcdc. */
 
 /* Valid-candle bar: clamps high>=max(o,c), low<=min(o,c). Returns its index. */
 static int pb_bar( double o, double h, double l, double c )
@@ -858,6 +879,53 @@ static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn, PbCondFn conds )
       printf("  %s MC/DC VACUOUS: flips but no detect -- nothing proves the "
              "pattern can fire on these bars at all\n", name);
       fails++;
+   }
+
+   /* OUTPUT-CLASS COVERAGE. A pattern whose firing arm is
+    * ta_candlecolor(...)*100 emits BOTH +100 and -100, and every scenario
+    * written for it can still sit on a single colour without anything noticing:
+    * the flips assert 0 whatever the colour, and the controls assert whichever
+    * sign the author happened to build. What is then left untested is the other
+    * arm of the decision and the sign of the output itself.
+    *
+    * That is not hypothetical. CDLBELTHOLD and CDLCLOSINGMARUBOZU arrived
+    * white-only, and BOTH of these survived the whole MC/DC tier green:
+    * replacing ta_candlecolor(...)*100 with a bare 100, and deleting the black
+    * arm of the colour disjunction outright. Only the v0.6.4 freeze caught
+    * them -- and it reaches just the 35 of 61 patterns that fire on the 252-bar
+    * series, so for a bi-signed pattern among the other 26 there would have
+    * been no gate at all.
+    *
+    * Note the granularity this compensates for: `condition` here means a
+    * TOP-LEVEL CONJUNCT, which is what check-mcdc counts, so a
+    * (white && x) || (black && y) disjunction is one condition and its interior
+    * is invisible to the completeness check by construction. Requiring every
+    * output class to fire is what reaches inside it. */
+   if( pbNbCond > 0 )
+   {
+      int cls[PB_MAXCLASS], nCls = 0, tooMany = 0;
+      for( k=0; k<pbNe; k++ )
+      {
+         int seen = 0;
+         if( pbEkind[k] != PB_DETECT && pbEkind[k] != PB_CONTROL ) continue;
+         if( pbEv[k] == 0 ) continue;
+         for( j=0; j<nCls; j++ ) if( cls[j] == pbEv[k] ) { seen = 1; break; }
+         if( seen ) continue;
+         if( nCls >= PB_MAXCLASS ) { tooMany = 1; break; }
+         cls[nCls++] = pbEv[k];
+      }
+      if( tooMany )
+      {
+         printf("  %s MC/DC: more than %d distinct output classes\n", name, PB_MAXCLASS);
+         fails++;
+      }
+      else if( nCls != pbNbSigns )
+      {
+         printf("  %s MC/DC: %d of the pattern's %d output class(es) exercised"
+                " -- a firing scenario is missing for one of its arms\n",
+                name, nCls, pbNbSigns);
+         fails++;
+      }
    }
 
    /* Completeness. Every DECLARED condition is either flipped or waived, and
@@ -2073,6 +2141,7 @@ static void cond_belthold( int i, int *c )
 static void build_belthold( void )
 {
   pb_conditions(2);
+  pb_signs(2);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2096,6 +2165,24 @@ static void build_belthold( void )
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,108,99.5,105);
   pb_control(k1,100,1,"restore c1: lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  /* The BLACK arm. Everything above is white, which leaves the other half of
+   * c1's disjunction and the -100 output class untouched -- the gap pb_signs()
+   * exists to close. Black reads the UPPER shadow here, the mirror of the white
+   * arm above and the opposite of CLOSINGMARUBOZU's black arm. */
+  pb_primer(12,100,2,4);
+  int db=pb_bar(105,105.5,97,100);         /* black, body 5, upper shadow 0.5 */
+  pb_detect(db,-100,"detect black: body 5 > 2, upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1b=pb_bar(105,106,97,100);          /* upper shadow 1 == avg */
+  pb_flip(f1b,1,"break c1 black: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1b=pb_bar(105,105.5,97,100);
+  pb_control(k1b,-100,1,"restore c1 black: upper shadow 0.5 < 1");
   pb_flat(8);
 }
 
@@ -2122,6 +2209,7 @@ static void cond_closingmarubozu( int i, int *c )
 static void build_closingmarubozu( void )
 {
   pb_conditions(2);
+  pb_signs(2);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2145,6 +2233,24 @@ static void build_closingmarubozu( void )
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,105.5,99,105);
   pb_control(k1,100,1,"restore c1: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  /* The BLACK arm, which here reads the LOWER shadow -- exactly the exchange
+   * that separates this pattern from BELTHOLD. A model copy-pasted between the
+   * two stays self-consistent on the white arm alone, so this is the pair that
+   * makes the copy fail. */
+  pb_primer(12,100,2,4);
+  int db=pb_bar(105,108,99.5,100);         /* black, body 5, lower shadow 0.5 */
+  pb_detect(db,-100,"detect black: body 5 > 2, lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1b=pb_bar(105,108,99,100);          /* lower shadow 1 == avg */
+  pb_flip(f1b,1,"break c1 black: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1b=pb_bar(105,108,99.5,100);
+  pb_control(k1b,-100,1,"restore c1 black: lower shadow 0.5 < 1");
   pb_flat(8);
 }
 
