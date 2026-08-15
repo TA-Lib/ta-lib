@@ -1993,6 +1993,322 @@ static void build_3starsinsouth( void )
   pb_flat(8);
 }
 
+/* ---- Mechanical tier, unit 1: the six smallest single-bar patterns -------- *
+ *
+ * Every one of these decides on the CURRENT bar alone, so the primer is the
+ * whole of the averaging context and the scenario is a single bar appended to
+ * it. That makes the thresholds exact, which is the point:
+ *
+ *   pb_primer(12,100,2,4) lays down bars with RealBody 2 and HighLow 10, so
+ *
+ *     avg(BodyLong)         = 1.0 * (20/10) / 1  = 2.0   exactly
+ *     avg(BodyDoji)         = 0.1 * (100/10) / 1 = 1.0   exactly
+ *     avg(ShadowVeryShort)  = 0.1 * (100/10) / 1 = 1.0   exactly
+ *     avg(ShadowLong)       = the CURRENT bar's real body (avgPeriod 0)
+ *
+ *   0.1*10.0 is exactly 1.0 in IEEE-754 and the library reaches it by the same
+ *   multiplication, so a flip can sit ON the comparison boundary instead of a
+ *   safe distance from it. Every flip below does: where the library tests `>`
+ *   or `<` the flip is placed at equality, and where it tests `<=` the paired
+ *   control is placed at equality. A relaxed comparison therefore fails a case
+ *   rather than passing one, which is what the whole-unit-off flips in #219's
+ *   point 4 could not do.
+ *
+ * A single-bar pattern has no bar-to-bar coupling, so nothing here needs a
+ * waiver: all 13 conditions across the six are independently falsifiable and
+ * all 13 get a flip.
+ */
+
+/* CDLDOJI -- one condition: the body is no larger than the doji threshold.
+ *
+ *   c0  realbody(i) <= avg(BodyDoji)
+ *
+ * The control sits exactly at equality, which is what pins the comparison as
+ * inclusive: were it `<`, the control would stop firing.
+ */
+static void cond_doji( int i, int *c )
+{
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+}
+
+static void build_doji( void )
+{
+  pb_conditions(1);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,105,95,100);            /* body 0 */
+  pb_detect(d,100,"detect: body 0 <= 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,105,95,102);           /* body 2 */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,105,95,101);           /* body 1 == avg */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+}
+
+/* CDLBELTHOLD -- a long body whose OPENING side has no shadow to speak of.
+ *
+ *   c0  realbody(i) > avg(BodyLong)
+ *   c1  ( white(i) && lowershadow(i) < avg(ShadowVeryShort) )
+ *       || ( black(i) && uppershadow(i) < avg(ShadowVeryShort) )
+ *
+ * c1 is one condition, not two: the colour selects which shadow is read, so
+ * the disjunction is the atomic thing the decision tests. A white scenario
+ * falsifies the black arm by construction, so raising the lower shadow to the
+ * threshold falsifies c1 as a whole.
+ */
+static void cond_belthold( int i, int *c )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_body(i) > pb_avg(TA_BodyLong, i);
+   c[1] = (  pb_white(i) && pb_losh(i) < vs )
+       || ( !pb_white(i) && pb_upsh(i) < vs );
+}
+
+static void build_belthold( void )
+{
+  pb_conditions(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,108,99.5,105);          /* white, body 5, lower shadow 0.5 */
+  pb_detect(d,100,"detect: body 5 > 2, lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,108,99.5,102);         /* body 2 == avg, strict > fails */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,108,99.5,103);         /* body 3 */
+  pb_control(k0,100,0,"restore c0: body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,108,99,105);           /* lower shadow 1 == avg */
+  pb_flip(f1,1,"break c1: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,108,99.5,105);
+  pb_control(k1,100,1,"restore c1: lower shadow 0.5 < 1");
+  pb_flat(8);
+}
+
+/* CDLCLOSINGMARUBOZU -- the mirror of BELTHOLD: a long body whose CLOSING
+ * side has no shadow to speak of.
+ *
+ *   c0  realbody(i) > avg(BodyLong)
+ *   c1  ( white(i) && uppershadow(i) < avg(ShadowVeryShort) )
+ *       || ( black(i) && lowershadow(i) < avg(ShadowVeryShort) )
+ *
+ * The two patterns differ only in which shadow each colour reads, so a
+ * copy-paste between them would leave the model agreeing with the wrong
+ * library function -- the flips below are on the upper shadow for white,
+ * where BELTHOLD's are on the lower.
+ */
+static void cond_closingmarubozu( int i, int *c )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_body(i) > pb_avg(TA_BodyLong, i);
+   c[1] = (  pb_white(i) && pb_upsh(i) < vs )
+       || ( !pb_white(i) && pb_losh(i) < vs );
+}
+
+static void build_closingmarubozu( void )
+{
+  pb_conditions(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,105.5,99,105);          /* white, body 5, upper shadow 0.5 */
+  pb_detect(d,100,"detect: body 5 > 2, upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,102.5,99,102);         /* body 2 == avg */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,103.5,99,103);         /* body 3 */
+  pb_control(k0,100,0,"restore c0: body 3 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,106,99,105);           /* upper shadow 1 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,105.5,99,105);
+  pb_control(k1,100,1,"restore c1: upper shadow 0.5 < 1");
+  pb_flat(8);
+}
+
+/* CDLLONGLEGGEDDOJI -- a doji with at least one shadow longer than its body.
+ *
+ *   c0  realbody(i) <= avg(BodyDoji)
+ *   c1  lowershadow(i) > avg(ShadowLong) || uppershadow(i) > avg(ShadowLong)
+ *
+ * ShadowLong has avgPeriod 0, so avg(ShadowLong) is the CURRENT bar's real
+ * body rather than a windowed mean. That is the one place in this unit where
+ * the threshold moves with the bar under test, and it is why c1's flip cannot
+ * be built by shrinking a shadow while holding the body: at body 0 the
+ * threshold is 0 and only a shadowless bar falsifies it. The flip is therefore
+ * the degenerate O=H=L=C bar, which is a valid candle and leaves c0 true.
+ */
+static void cond_longleggeddoji( int i, int *c )
+{
+   double sl = pb_avg(TA_ShadowLong, i);
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+   c[1] = pb_losh(i) > sl || pb_upsh(i) > sl;
+}
+
+static void build_longleggeddoji( void )
+{
+  pb_conditions(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,104,96,100);            /* body 0, shadows 4 and 4 */
+  pb_detect(d,100,"detect: body 0 <= 1, lower shadow 4 > 0");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,104,96,102);           /* body 2 > 1; shadows 4 and 2 still clear it */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,104,96,101);           /* body 1 == avg */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,100,100,100);          /* no shadows at all: 0 > 0 is false both sides */
+  pb_flip(f1,1,"break c1: both shadows 0, threshold 0, strict >");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,104,96,100);
+  pb_control(k1,100,1,"restore c1: lower shadow 4 > 0");
+  pb_flat(8);
+}
+
+/* CDLDRAGONFLYDOJI -- a doji sitting at the top of its range.
+ *
+ *   c0  realbody(i)    <= avg(BodyDoji)
+ *   c1  uppershadow(i) <  avg(ShadowVeryShort)
+ *   c2  lowershadow(i) >  avg(ShadowVeryShort)
+ *
+ * c1 and c2 read the SAME threshold in opposite directions, so a model that
+ * swapped them would still be self-consistent -- the flips are what separate
+ * them: c1's raises the upper shadow to exactly 1 and c2's shrinks the lower
+ * shadow to exactly 1, and each leaves the other satisfied.
+ */
+static void cond_dragonflydoji( int i, int *c )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+   c[1] = pb_upsh(i) < vs;
+   c[2] = pb_losh(i) > vs;
+}
+
+static void build_dragonflydoji( void )
+{
+  pb_conditions(3);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,100.5,95,100);          /* body 0, upper 0.5, lower 5 */
+  pb_detect(d,100,"detect: body 0 <= 1, upper 0.5 < 1, lower 5 > 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,102.5,95,102);         /* body 2; upper 0.5; lower 5 */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,101.5,95,101);         /* body 1 == avg */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,101,95,100);           /* upper shadow 1 == avg */
+  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,100.5,95,100);
+  pb_control(k1,100,1,"restore c1: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,100.5,99,100);         /* lower shadow 1 == avg */
+  pb_flip(f2,2,"break c2: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,100.5,95,100);
+  pb_control(k2,100,2,"restore c2: lower shadow 5 > 1");
+  pb_flat(8);
+}
+
+/* CDLGRAVESTONEDOJI -- DRAGONFLY upside down: the doji sits at the bottom.
+ *
+ *   c0  realbody(i)    <= avg(BodyDoji)
+ *   c1  lowershadow(i) <  avg(ShadowVeryShort)
+ *   c2  uppershadow(i) >  avg(ShadowVeryShort)
+ *
+ * Identical in shape to DRAGONFLY with the two shadows exchanged, which is
+ * exactly the mistake this pair is placed to catch: reusing DRAGONFLY's model
+ * here would agree with itself and disagree with the library.
+ */
+static void cond_gravestonedoji( int i, int *c )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
+   c[1] = pb_losh(i) < vs;
+   c[2] = pb_upsh(i) > vs;
+}
+
+static void build_gravestonedoji( void )
+{
+  pb_conditions(3);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  int d=pb_bar(100,105,99.5,100);          /* body 0, lower 0.5, upper 5 */
+  pb_detect(d,100,"detect: body 0 <= 1, lower 0.5 < 1, upper 5 > 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f0=pb_bar(100,105,99.5,102);         /* body 2; lower 0.5; upper 3 */
+  pb_flip(f0,0,"break c0: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k0=pb_bar(100,105,99.5,101);         /* body 1 == avg */
+  pb_control(k0,100,0,"restore c0: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f1=pb_bar(100,105,99,100);           /* lower shadow 1 == avg */
+  pb_flip(f1,1,"break c1: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k1=pb_bar(100,105,99.5,100);
+  pb_control(k1,100,1,"restore c1: lower shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f2=pb_bar(100,101,99.5,100);         /* upper shadow 1 == avg */
+  pb_flip(f2,2,"break c2: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k2=pb_bar(100,105,99.5,100);
+  pb_control(k2,100,2,"restore c2: upper shadow 5 > 1");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -2000,6 +2316,12 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_3blackcrows(); e = pb_check_mcdc("CDL3BLACKCROWS", TA_CDL3BLACKCROWS, cond_3blackcrows); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3whitesoldiers(); e = pb_check_mcdc("CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS, cond_3whitesoldiers); if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_3starsinsouth(); e = pb_check_mcdc("CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH, cond_3starsinsouth); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_doji();             e = pb_check_mcdc("CDLDOJI",             TA_CDLDOJI,             cond_doji);             if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_belthold();         e = pb_check_mcdc("CDLBELTHOLD",         TA_CDLBELTHOLD,         cond_belthold);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_closingmarubozu();  e = pb_check_mcdc("CDLCLOSINGMARUBOZU",  TA_CDLCLOSINGMARUBOZU,  cond_closingmarubozu);  if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_longleggeddoji();   e = pb_check_mcdc("CDLLONGLEGGEDDOJI",   TA_CDLLONGLEGGEDDOJI,   cond_longleggeddoji);   if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_dragonflydoji();    e = pb_check_mcdc("CDLDRAGONFLYDOJI",    TA_CDLDRAGONFLYDOJI,    cond_dragonflydoji);    if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_gravestonedoji();   e = pb_check_mcdc("CDLGRAVESTONEDOJI",   TA_CDLGRAVESTONEDOJI,   cond_gravestonedoji);   if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
