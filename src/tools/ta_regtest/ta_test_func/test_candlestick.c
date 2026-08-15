@@ -548,6 +548,12 @@ static int pb_mod_win( int dir, int brk )
 }
 
 typedef TA_RetCode (*PbCdlFn)(int,int,const double*,const double*,const double*,const double*,int*,int*,int*);
+/* Same shape, for the seven candlesticks that take optInPenetration
+ * (CDLABANDONEDBABY, CDLDARKCLOUDCOVER, CDLEVENINGDOJISTAR, CDLEVENINGSTAR,
+ * CDLMATHOLD, CDLMORNINGDOJISTAR, CDLMORNINGSTAR). PbCdlFn has no slot for
+ * the extra real, so none of the seven can be passed to pb_check_mcdc at
+ * all -- see pb_check_mcdc_p below. */
+typedef TA_RetCode (*PbCdlFnP)(int,int,const double*,const double*,const double*,const double*,double,int*,int*,int*);
 
 static ErrorNumber pb_check( const char *name, PbCdlFn fn )
 {
@@ -736,25 +742,17 @@ static void pb_report_totals( void )
           pbTotWaive);
 }
 
-static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn, PbCondFn conds )
+/* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
+ * "call the pattern function", which is the one thing that differs between a
+ * parameterless candlestick and one of the seven that take optInPenetration.
+ * `out` is read-only here: both callers own their own PB_N buffer. */
+static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
+                                          const int out[], int begIdx, int nb,
+                                          PbCondFn conds )
 {
-   int out[PB_N], begIdx=0, nb=0, k, j, fails=0;
+   int k, j, fails=0;
    int nDetect=0, nFlip=0, nControl=0;
-   TA_RetCode rc;
 
-   /* A builder that ran off the end of the tape wrote nothing, so every
-    * expectation past that point reads a bar that was never laid down. Caught
-    * before the values are compared -- otherwise it surfaces as a puzzling
-    * value mismatch instead of what it is. */
-   if( pbOverflow )
-   {
-      printf("  %s MC/DC: builder overflowed a harness buffer "
-             "(bars=%d/%d expectations=%d/%d waivers=%d/%d)\n",
-             name, pbCur, PB_N, pbNe, PB_MAXEXP, pbNw, PB_MAXWAIVE);
-      return TA_TSTCDL_PREDICATE_VACUOUS;
-   }
-
-   rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
    if( rc != TA_SUCCESS ) { printf("  %s MC/DC: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
 
    for( k=0; k<pbNe; k++ )
@@ -1049,6 +1047,55 @@ static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn, PbCondFn conds )
    }
 
    return TA_TEST_PASS;
+}
+
+static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn, PbCondFn conds )
+{
+   int out[PB_N], begIdx=0, nb=0;
+   TA_RetCode rc;
+
+   /* A builder that ran off the end of the tape wrote nothing, so every
+    * expectation past that point reads a bar that was never laid down. Caught
+    * before the values are compared -- otherwise it surfaces as a puzzling
+    * value mismatch instead of what it is. */
+   if( pbOverflow )
+   {
+      printf("  %s MC/DC: builder overflowed a harness buffer "
+             "(bars=%d/%d expectations=%d/%d waivers=%d/%d)\n",
+             name, pbCur, PB_N, pbNe, PB_MAXEXP, pbNw, PB_MAXWAIVE);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+
+   rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
+   return pb_check_mcdc_finish( name, rc, out, begIdx, nb, conds );
+}
+
+/* Same contract, for the seven optInPenetration candlesticks (see PbCdlFnP).
+ * `penetration` is the CALLER's job, not a shared constant here: the seven do
+ * NOT share one default -- CDLABANDONEDBABY, CDLEVENINGDOJISTAR,
+ * CDLEVENINGSTAR, CDLMORNINGDOJISTAR and CDLMORNINGSTAR default to 0.3
+ * (TA_DEF_UI_Penetration_30), CDLDARKCLOUDCOVER and CDLMATHOLD to 0.5
+ * (TA_DEF_UI_Penetration_50) -- see each ta_codegen/input/<name>/<name>.yaml.
+ * A single hardcoded 0.5 would silently test five of the seven off their
+ * documented default. Pass the pattern's own default so a boundary flip
+ * works the same way as on every parameterless pattern; probing the
+ * parameter itself is out of scope here. */
+static ErrorNumber pb_check_mcdc_p( const char *name, PbCdlFnP fn,
+                                     double penetration, PbCondFn conds )
+{
+   int out[PB_N], begIdx=0, nb=0;
+   TA_RetCode rc;
+
+   if( pbOverflow )
+   {
+      printf("  %s MC/DC: builder overflowed a harness buffer "
+             "(bars=%d/%d expectations=%d/%d waivers=%d/%d)\n",
+             name, pbCur, PB_N, pbNe, PB_MAXEXP, pbNw, PB_MAXWAIVE);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+
+   rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, penetration, &begIdx, &nb, out);
+   return pb_check_mcdc_finish( name, rc, out, begIdx, nb, conds );
 }
 
 static ErrorNumber test_hikkake_predicate_coverage( void )
