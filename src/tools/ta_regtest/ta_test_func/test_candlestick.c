@@ -2942,6 +2942,490 @@ static void build_rickshawman( void )
   pb_flat(8);
 }
 
+/* ---- Moderate tier, unit 3: the first six two-bar patterns --------------- *
+ *
+ * These are the first builders whose decision reads a bar OTHER than the one
+ * under test, and that changes how the scenarios have to be built:
+ *
+ *   The prior bar sits inside the current bar's averaging window. A 10-bar
+ *   window ending at i covers bars i-10..i-1, so bar i-1 is one of the ten
+ *   that set avg(BodyShort), avg(BodyDoji) and the rest AT i. Give it any
+ *   geometry that differs from the primer's and every threshold at i moves off
+ *   its exact value.
+ *
+ * Every prior bar below therefore keeps the primer's RealBody 2 and HighLow
+ * 10, even where the pattern wants it to look different -- DOJISTAR needs a
+ * body of 5 on the prior bar and gets it as (100,106,96,105), which is a body
+ * of 5 inside a HighLow of exactly 10. The thresholds at i stay 2.0 and 1.0
+ * and the flips stay on their boundaries.
+ *
+ * One threshold is new here and is exact for the same reason as the others:
+ *
+ *   avg(Equal) = 0.05 * (50/5) / 1 = 0.5     avgPeriod 5, HighLow-typed
+ *
+ * HAMMER and HANGINGMAN read avg(Near) at i-1 rather than at i, so their band
+ * is set by the five bars before the PRIOR bar. Under this primer that is
+ * still 2.0, but the model computes it at i-1 as the library does rather than
+ * assuming the two agree.
+ *
+ * The pairs are built together on purpose, as in units 1 and 2: HAMMER and
+ * HANGINGMAN differ only in whether the body sits near the prior bar's low or
+ * its high, INVERTEDHAMMER and SHOOTINGSTAR only in the direction of the gap.
+ * A model copy-pasted between either pair stays self-consistent and disagrees
+ * with the library.
+ */
+
+/* CDLHAMMER -- a small body with a long lower shadow, near the prior low.
+ *
+ *   c0  realbody(i)    <  avg(BodyShort, i)
+ *   c1  lowershadow(i) >  avg(ShadowLong, i)        = realbody(i)
+ *   c2  uppershadow(i) <  avg(ShadowVeryShort, i)
+ *   c3  min(open,close)(i) <= low(i-1) + avg(Near, i-1)
+ *
+ * c1's threshold is the current body, so the c0 flip -- which raises the body
+ * to the BodyShort boundary -- has to lengthen the lower shadow with it.
+ */
+static void cond_hammer( int i, int *c )
+{
+   c[0] = pb_body(i) <  pb_avg(TA_BodyShort, i);
+   c[1] = pb_losh(i) >  pb_avg(TA_ShadowLong, i);
+   c[2] = pb_upsh(i) <  pb_avg(TA_ShadowVeryShort, i);
+   c[3] = pb_bodylo(i) <= pbL[i-1] + pb_avg(TA_Near, i-1);
+}
+
+static void build_hammer( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior: primer geometry, low 96 -> band top 98 */
+  int d=pb_bar(98,98.5,94,97.5);           /* body 0.5, lower 3.5, upper 0.5, min 97.5 */
+  pb_detect(d,100,"detect: body 0.5 < 2, lower 3.5 > 0.5, upper 0.5 < 1, min 97.5 <= 98");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f0=pb_bar(98,98.5,93,96);            /* body 2 == avg; lower 3 still clears it */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k0=pb_bar(98,98.5,94,97.5);
+  pb_control(k0,100,0,"restore c0: body 0.5 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f1=pb_bar(98,98.5,97,97.5);          /* lower shadow 0.5 == body */
+  pb_flip(f1,1,"break c1: lower shadow 0.5 == body 0.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k1=pb_bar(98,98.5,94,97.5);
+  pb_control(k1,100,1,"restore c1: lower shadow 3.5 > 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f2=pb_bar(98,99,94,97.5);            /* upper shadow 1 == avg */
+  pb_flip(f2,2,"break c2: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k2=pb_bar(98,98.5,94,97.5);
+  pb_control(k2,100,2,"restore c2: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f3=pb_bar(98.5,99,94,98.6);          /* min 98.5 is above the band top 98 */
+  pb_flip(f3,3,"break c3: min 98.5 > band top 98");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k3=pb_bar(98,98.5,94,98.2);          /* min exactly 98 */
+  pb_control(k3,100,3,"restore c3: min 98 == band top, inclusive");
+  pb_flat(8);
+}
+
+/* CDLHANGINGMAN -- HAMMER's mirror: the same candle near the prior HIGH.
+ *
+ *   c0..c2  identical to HAMMER
+ *   c3      min(open,close)(i) >= high(i-1) - avg(Near, i-1)
+ *
+ * Only c3 differs, and it differs in both the bar-i-1 field it reads and the
+ * direction of the comparison. Its flip and control are what separate this
+ * builder from HAMMER's.
+ */
+static void cond_hangingman( int i, int *c )
+{
+   c[0] = pb_body(i) <  pb_avg(TA_BodyShort, i);
+   c[1] = pb_losh(i) >  pb_avg(TA_ShadowLong, i);
+   c[2] = pb_upsh(i) <  pb_avg(TA_ShadowVeryShort, i);
+   c[3] = pb_bodylo(i) >= pbH[i-1] - pb_avg(TA_Near, i-1);
+}
+
+static void build_hangingman( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior: high 106 -> band bottom 104 */
+  int d=pb_bar(105,105.5,101,104.5);       /* body 0.5, lower 3.5, upper 0.5, min 104.5 */
+  pb_detect(d,-100,"detect: body 0.5 < 2, lower 3.5 > 0.5, upper 0.5 < 1, min 104.5 >= 104");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f0=pb_bar(106,106.5,101,104);        /* body 2 == avg; min 104 still on the band */
+  pb_flip(f0,0,"break c0: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k0=pb_bar(105,105.5,101,104.5);
+  pb_control(k0,-100,0,"restore c0: body 0.5 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f1=pb_bar(105,105.5,104,104.5);      /* lower shadow 0.5 == body */
+  pb_flip(f1,1,"break c1: lower shadow 0.5 == body 0.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k1=pb_bar(105,105.5,101,104.5);
+  pb_control(k1,-100,1,"restore c1: lower shadow 3.5 > 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f2=pb_bar(105,106,101,104.5);        /* upper shadow 1 == avg */
+  pb_flip(f2,2,"break c2: upper shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k2=pb_bar(105,105.5,101,104.5);
+  pb_control(k2,-100,2,"restore c2: upper shadow 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f3=pb_bar(104,104.5,100,103.5);      /* min 103.5 is below the band bottom 104 */
+  pb_flip(f3,3,"break c3: min 103.5 < band bottom 104");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k3=pb_bar(104.5,105,101,104);        /* min exactly 104 */
+  pb_control(k3,-100,3,"restore c3: min 104 == band bottom, inclusive");
+  pb_flat(8);
+}
+
+/* CDLINVERTEDHAMMER -- a small body with a long UPPER shadow, gapping down.
+ *
+ *   c0  realbodygapdown(i, i-1)   max(open,close)(i) < min(open,close)(i-1)
+ *   c1  realbody(i)    <  avg(BodyShort, i)
+ *   c2  uppershadow(i) >  avg(ShadowLong, i)        = realbody(i)
+ *   c3  lowershadow(i) <  avg(ShadowVeryShort, i)
+ *
+ * The gap is the first condition in this unit that is a relation BETWEEN two
+ * bars rather than a bar against a threshold, so its flip moves the current
+ * body up to touch the prior body's floor rather than changing any average.
+ */
+static void cond_invertedhammer( int i, int *c )
+{
+   c[0] = pb_bodyhi(i) < pb_bodylo(i-1);
+   c[1] = pb_body(i) <  pb_avg(TA_BodyShort, i);
+   c[2] = pb_upsh(i) >  pb_avg(TA_ShadowLong, i);
+   c[3] = pb_losh(i) <  pb_avg(TA_ShadowVeryShort, i);
+}
+
+static void build_invertedhammer( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior: body floor 100 */
+  int d=pb_bar(98,102,97.5,98.5);          /* body 0.5, upper 3.5, lower 0.5, top 98.5 */
+  pb_detect(d,100,"detect: gap down 98.5 < 100, body 0.5 < 2, upper 3.5 > 0.5, lower 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f0=pb_bar(99.5,103,99,100);          /* body top 100 == prior floor */
+  pb_flip(f0,0,"break c0: body top 100 == prior floor 100, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k0=pb_bar(98,102,97.5,98.5);
+  pb_control(k0,100,0,"restore c0: body top 98.5 < 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f1=pb_bar(97,103,96.5,99);           /* body 2 == avg; upper 4 still clears it */
+  pb_flip(f1,1,"break c1: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k1=pb_bar(98,102,97.5,98.5);
+  pb_control(k1,100,1,"restore c1: body 0.5 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f2=pb_bar(98,99,97.5,98.5);          /* upper shadow 0.5 == body */
+  pb_flip(f2,2,"break c2: upper shadow 0.5 == body 0.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k2=pb_bar(98,102,97.5,98.5);
+  pb_control(k2,100,2,"restore c2: upper shadow 3.5 > 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f3=pb_bar(98,102,97,98.5);           /* lower shadow 1 == avg */
+  pb_flip(f3,3,"break c3: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k3=pb_bar(98,102,97.5,98.5);
+  pb_control(k3,100,3,"restore c3: lower shadow 0.5 < 1");
+  pb_flat(8);
+}
+
+/* CDLSHOOTINGSTAR -- INVERTEDHAMMER's mirror: the same candle gapping UP.
+ *
+ *   c0  realbodygapup(i, i-1)     min(open,close)(i) > max(open,close)(i-1)
+ *   c1..c3  identical to INVERTEDHAMMER
+ *
+ * Only c0 differs, and only in direction. Its flip sits on the prior body's
+ * ceiling where INVERTEDHAMMER's sits on the prior body's floor.
+ */
+static void cond_shootingstar( int i, int *c )
+{
+   c[0] = pb_bodylo(i) > pb_bodyhi(i-1);
+   c[1] = pb_body(i) <  pb_avg(TA_BodyShort, i);
+   c[2] = pb_upsh(i) >  pb_avg(TA_ShadowLong, i);
+   c[3] = pb_losh(i) <  pb_avg(TA_ShadowVeryShort, i);
+}
+
+static void build_shootingstar( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior: body ceiling 102 */
+  int d=pb_bar(103,107,102.5,103.5);       /* body 0.5, upper 3.5, lower 0.5, floor 103 */
+  pb_detect(d,-100,"detect: gap up 103 > 102, body 0.5 < 2, upper 3.5 > 0.5, lower 0.5 < 1");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f0=pb_bar(102,106,101.5,102.5);      /* body floor 102 == prior ceiling */
+  pb_flip(f0,0,"break c0: body floor 102 == prior ceiling 102, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k0=pb_bar(103,107,102.5,103.5);
+  pb_control(k0,-100,0,"restore c0: body floor 103 > 102");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f1=pb_bar(103,108,102.5,105);        /* body 2 == avg; upper 3 still clears it */
+  pb_flip(f1,1,"break c1: body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k1=pb_bar(103,107,102.5,103.5);
+  pb_control(k1,-100,1,"restore c1: body 0.5 < 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f2=pb_bar(103,104,102.5,103.5);      /* upper shadow 0.5 == body */
+  pb_flip(f2,2,"break c2: upper shadow 0.5 == body 0.5, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k2=pb_bar(103,107,102.5,103.5);
+  pb_control(k2,-100,2,"restore c2: upper shadow 3.5 > 0.5");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int f3=pb_bar(103,107,102,103.5);        /* lower shadow 1 == avg */
+  pb_flip(f3,3,"break c3: lower shadow 1 == avg 1, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);
+  int k3=pb_bar(103,107,102.5,103.5);
+  pb_control(k3,-100,3,"restore c3: lower shadow 0.5 < 1");
+  pb_flat(8);
+}
+
+/* CDLMATCHINGLOW -- two black candles closing at the same level.
+ *
+ *   c0  color(i-1) == -1
+ *   c1  color(i)   == -1
+ *   c2  close(i) <= close(i-1) + avg(Equal, i-1)
+ *   c3  close(i) >= close(i-1) - avg(Equal, i-1)
+ *
+ * c2 and c3 are the two edges of one band, and the counter now reads them as
+ * two conditions rather than one -- which is what makes each edge flippable on
+ * its own. Both are inclusive, so each is pinned by a CONTROL sitting exactly
+ * on it: an inclusive boundary has no minimal violating value, so a flip a
+ * whole step away says nothing about whether the comparison is `<=` or `<`.
+ */
+static void cond_matchinglow( int i, int *c )
+{
+   double eq = pb_avg(TA_Equal, i-1);
+   c[0] = !pb_white(i-1);
+   c[1] = !pb_white(i);
+   c[2] = pbC[i] <= pbC[i-1] + eq;
+   c[3] = pbC[i] >= pbC[i-1] - eq;
+}
+
+static void build_matchinglow( void )
+{
+  pb_conditions(4);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);                  /* prior: black, close 100, band [99.5,100.5] */
+  int d=pb_bar(102,106,96,100);            /* black, close 100 */
+  pb_detect(d,100,"detect: both black, close 100 inside [99.5,100.5]");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior WHITE, close 102 -> band [101.5,102.5] */
+  int f0=pb_bar(104,106,96,102);           /* black, close 102 keeps c2 and c3 true */
+  pb_flip(f0,0,"break c0: the prior candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int k0=pb_bar(102,106,96,100);
+  pb_control(k0,100,0,"restore c0: the prior candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int f1=pb_bar(98,106,96,100);            /* WHITE, close still 100 */
+  pb_flip(f1,1,"break c1: this candle is white");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int k1=pb_bar(102,106,96,100);
+  pb_control(k1,100,1,"restore c1: this candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int f2=pb_bar(103,106,96,100.6);         /* close 100.6 above the band top 100.5 */
+  pb_flip(f2,2,"break c2: close 100.6 > band top 100.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int k2=pb_bar(103,106,96,100.5);         /* close exactly on the band top */
+  pb_control(k2,100,2,"restore c2: close 100.5 == band top, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int f3=pb_bar(103,106,96,99.4);          /* close 99.4 below the band bottom 99.5 */
+  pb_flip(f3,3,"break c3: close 99.4 < band bottom 99.5");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(102,106,96,100);
+  int k3=pb_bar(103,106,96,99.5);          /* close exactly on the band bottom */
+  pb_control(k3,100,3,"restore c3: close 99.5 == band bottom, inclusive");
+  pb_flat(8);
+}
+
+/* CDLDOJISTAR -- a long body followed by a doji that gaps away from it.
+ *
+ *   c0  realbody(i-1) >  avg(BodyLong, i-1)
+ *   c1  realbody(i)   <= avg(BodyDoji, i)
+ *   c2  ( white(i-1) && realbodygapup(i, i-1) )
+ *       || ( black(i-1) && realbodygapdown(i, i-1) )
+ *
+ * Bi-signed, and the sign comes from the PRIOR bar rather than this one:
+ * -color(i-1)*100, so a white first candle gives -100. c2 is a disjunction
+ * selected by that same colour, which makes the two output classes and the two
+ * disjuncts the same axis -- exactly the shape pb_signs() exists for. The
+ * black-first scenario at the end is what reaches the second disjunct.
+ *
+ * The prior bar carries a body of 5 inside a HighLow of exactly 10, so it
+ * leaves the averages at i untouched while still clearing BodyLong.
+ */
+static void cond_dojistar( int i, int *c )
+{
+   c[0] = pb_body(i-1) >  pb_avg(TA_BodyLong, i-1);
+   c[1] = pb_body(i)   <= pb_avg(TA_BodyDoji, i);
+   c[2] = (  pb_white(i-1) && pb_bodylo(i) > pb_bodyhi(i-1) )
+       || ( !pb_white(i-1) && pb_bodyhi(i) < pb_bodylo(i-1) );
+}
+
+static void build_dojistar( void )
+{
+  pb_conditions(3);
+  pb_signs(2);
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);                  /* prior: WHITE, body 5, HighLow still 10 */
+  int d=pb_bar(106,106.5,105.5,106);       /* doji gapping up over the ceiling 105 */
+  pb_detect(d,-100,"detect white-first: prior body 5 > 2, doji body 0 <= 1, gap up 106 > 105");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,102);                  /* prior body 2 == avg */
+  int f0=pb_bar(103,103.5,102.5,103);
+  pb_flip(f0,0,"break c0: prior body 2 == avg 2, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);
+  int k0=pb_bar(106,106.5,105.5,106);
+  pb_control(k0,-100,0,"restore c0: prior body 5 > 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);
+  int f1=pb_bar(106,108.5,105.5,108);      /* body 2 > 1 */
+  pb_flip(f1,1,"break c1: body 2 > 1");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);
+  int k1=pb_bar(106,107.5,105.5,107);      /* body 1 == avg */
+  pb_control(k1,-100,1,"restore c1: body 1 == 1, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);
+  int f2=pb_bar(105,105.5,104.5,105);      /* floor 105 == prior ceiling: no gap */
+  pb_flip(f2,2,"break c2: body floor 105 == prior ceiling 105, the gap test is strict");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,105);
+  int k2=pb_bar(106,106.5,105.5,106);
+  pb_control(k2,-100,2,"restore c2: gap up 106 > 105");
+  pb_flat(8);
+
+  /* BLACK-FIRST: the other output class AND the other disjunct of c2. The
+   * prior candle is black, so the sign flips to +100 and the gap must be
+   * downward. Reaching this arm is what pb_signs(2) requires. */
+  pb_primer(12,100,2,4);
+  pb_bar(105,106,96,100);                  /* prior: BLACK, body 5, HighLow still 10 */
+  int db=pb_bar(99,99.5,98.5,99);          /* doji gapping down under the floor 100 */
+  pb_detect(db,100,"detect black-first: prior body 5 > 2, doji body 0 <= 1, gap down 99 < 100");
+  pb_flat(8);
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -2962,6 +3446,12 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_spinningtop();       e = pb_check_mcdc("CDLSPINNINGTOP",       TA_CDLSPINNINGTOP,       cond_spinningtop);       if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_takuri();            e = pb_check_mcdc("CDLTAKURI",            TA_CDLTAKURI,            cond_takuri);            if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_rickshawman();       e = pb_check_mcdc("CDLRICKSHAWMAN",       TA_CDLRICKSHAWMAN,       cond_rickshawman);       if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_hammer();              e = pb_check_mcdc("CDLHAMMER",              TA_CDLHAMMER,              cond_hammer);              if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_hangingman();          e = pb_check_mcdc("CDLHANGINGMAN",          TA_CDLHANGINGMAN,          cond_hangingman);          if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_invertedhammer();      e = pb_check_mcdc("CDLINVERTEDHAMMER",      TA_CDLINVERTEDHAMMER,      cond_invertedhammer);      if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_shootingstar();        e = pb_check_mcdc("CDLSHOOTINGSTAR",        TA_CDLSHOOTINGSTAR,        cond_shootingstar);        if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_matchinglow();         e = pb_check_mcdc("CDLMATCHINGLOW",         TA_CDLMATCHINGLOW,         cond_matchinglow);         if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_dojistar();            e = pb_check_mcdc("CDLDOJISTAR",            TA_CDLDOJISTAR,            cond_dojistar);            if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
