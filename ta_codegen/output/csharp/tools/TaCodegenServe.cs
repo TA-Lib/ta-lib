@@ -33,6 +33,17 @@ public class TaCodegenServe {
     static double GetDouble(JsonElement p, string name, double def) =>
         p.TryGetProperty(name, out var v) ? v.GetDouble() : def;
 
+    static double GetF64Bits(JsonElement p, string name, double def) {
+        if (!p.TryGetProperty(name, out var v) || v.ValueKind != JsonValueKind.String)
+            return def;
+        string? h = v.GetString();
+        if (h == null || h.Length != 16) return def;
+        return ulong.TryParse(h, System.Globalization.NumberStyles.HexNumber,
+                              System.Globalization.CultureInfo.InvariantCulture, out ulong bits)
+            ? BitConverter.Int64BitsToDouble(unchecked((long)bits))
+            : def;
+    }
+
     static void LoadRef(JsonElement p, string name, double[] dst) {
         double[] tmp = GetDoubleArray(p, name);
         Array.Copy(tmp, dst, Math.Min(tmp.Length, MAX_ARRAY_SIZE));
@@ -652,6 +663,32 @@ public class TaCodegenServe {
                     return "{\"status\":\"ok\"}";
                 }
                 return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
+            }
+            else if (method == "set_candle_settings") {
+                int settingType = GetInt(p, "settingType", -1);
+                int rangeType = GetInt(p, "rangeType", -1);
+                int avgPeriod = GetInt(p, "avgPeriod", 0);
+                double factor = GetF64Bits(p, "factorBits", 1.0);
+                try {
+                    core = core.ToBuilder()
+                        .CandleSetting((CandleSettingType)settingType, (RangeType)rangeType,
+                                       avgPeriod, factor)
+                        .Build();
+                } catch (ArgumentOutOfRangeException) {
+                    return "{\"error\":\"Invalid candle setting\"}";
+                }
+                return "{\"status\":\"ok\"}";
+            }
+            else if (method == "restore_candle_default_settings") {
+                int settingType = GetInt(p, "settingType", -1);
+                try {
+                    core = core.ToBuilder()
+                        .RestoreCandleDefault((CandleSettingType)settingType)
+                        .Build();
+                } catch (ArgumentOutOfRangeException) {
+                    return "{\"error\":\"Invalid candle setting type\"}";
+                }
+                return "{\"status\":\"ok\"}";
             }
             else if (method == "eval_predicate") {
                 int which = GetInt(p, "which", 0);

@@ -438,6 +438,37 @@ static double json_find_double(const char *json, const char *field) {
     return strtod(p, NULL);
 }
 
+/* One f64, transported as the 16 hex chars of its IEEE-754 bit pattern.
+ *
+ * A scalar the caller wants delivered EXACTLY cannot go over the wire as a JSON
+ * number. %.17g does round-trip every finite double, but NaN and the infinities
+ * have no JSON number spelling at all -- and `factor` has to carry a NaN,
+ * because refusing one is part of the contract being compared across languages.
+ * Same encoding json_find_double_array already uses for arrays (#115), one
+ * group instead of many. Returns `def` when the field is absent or malformed,
+ * so a caller that omits it gets a documented value rather than a silent 0. */
+static double json_find_f64_bits(const char *json, const char *field, double def) {
+    char pattern[256];
+    unsigned long long bits = 0;
+    double out;
+    int k;
+    snprintf(pattern, sizeof(pattern), "\"%s\":\"", field);
+    const char *p = strstr(json, pattern);
+    if( !p ) return def;
+    p += strlen(pattern);
+    for( k = 0; k < 16; k++ ) {
+        char c = p[k];
+        unsigned int v;
+        if     ( c >= '0' && c <= '9' ) v = (unsigned int)(c - '0');
+        else if( c >= 'a' && c <= 'f' ) v = (unsigned int)(c - 'a' + 10);
+        else if( c >= 'A' && c <= 'F' ) v = (unsigned int)(c - 'A' + 10);
+        else return def;   /* short or non-hex group */
+        bits = (bits << 4) | v;
+    }
+    memcpy(&out, &bits, sizeof(double));
+    return out;
+}
+
 static int json_find_double_array(const char *json, const char *field,
                                    double *out, int max_count) {
     char pattern[256];
@@ -2065,6 +2096,45 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
     s.push_str("    }\n");
 
+    // set_candle_settings method (#215) —
+    // {"method":"set_candle_settings","params":{"settingType":6,"rangeType":2,"avgPeriod":10,"factorBits":"3ff0000000000000"}}
+    //
+    // The C server validates nothing of its own: it hands the four arguments
+    // straight to the library and reports the RetCode. That is what makes C the
+    // reference arm here rather than a fourth opinion -- every other server has
+    // to reproduce the domain TA_SetCandleSettings enforces, and this one simply
+    // asks it. (The same reasoning as #186, where a discarded RetCode had made C
+    // the one backend that could not be held to its own contract.)
+    s.push_str("    else if ( methodLen == 19 && strncmp(method, \"set_candle_settings\", 19) == 0 ) {\n");
+    s.push_str("        int settingType = json_find_int(json, \"settingType\");\n");
+    s.push_str("        int rangeType   = json_find_int(json, \"rangeType\");\n");
+    s.push_str("        int avgPeriod   = json_find_int(json, \"avgPeriod\");\n");
+    s.push_str("        double factor   = json_find_f64_bits(json, \"factorBits\", 1.0);\n");
+    s.push_str("        TA_RetCode csRc = TA_SetCandleSettings((TA_CandleSettingType)settingType,\n");
+    s.push_str("                                              (TA_RangeType)rangeType,\n");
+    s.push_str("                                              avgPeriod, factor);\n");
+    s.push_str("        if( csRc == TA_SUCCESS )\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
+    s.push_str("        else\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\");\n");
+    s.push_str("    }\n");
+
+    // restore_candle_default_settings method (#215) —
+    // {"method":"restore_candle_default_settings","params":{"settingType":11}}
+    //
+    // settingType 11 (TA_AllCandleSettings) is the wildcard here, and is the one
+    // value set_candle_settings must REJECT. Keeping both methods on the same
+    // parameter name is what lets one cross-language table drive both and see
+    // that asymmetry.
+    s.push_str("    else if ( methodLen == 31 && strncmp(method, \"restore_candle_default_settings\", 31) == 0 ) {\n");
+    s.push_str("        int settingType = json_find_int(json, \"settingType\");\n");
+    s.push_str("        TA_RetCode csRc = TA_RestoreCandleDefaultSettings((TA_CandleSettingType)settingType);\n");
+    s.push_str("        if( csRc == TA_SUCCESS )\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
+    s.push_str("        else\n");
+    s.push_str("           snprintf(resp, resp_size, \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\");\n");
+    s.push_str("    }\n");
+
     // eval_predicate — evaluate a boolean near-zero builtin on each input value,
     // returning a 0/1 int array. Uses the SAME rendered form the indicators use.
     s.push_str("    else if ( methodLen == 14 && strncmp(method, \"eval_predicate\", 14) == 0 ) {\n");
@@ -2236,9 +2306,12 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
 
     // CandleSetting holds rangeType, avgPeriod, factor for one candle setting
     s.push_str("class CandleSetting {\n");
-    s.push_str("    RangeType rangeType;\n");
-    s.push_str("    int avgPeriod;\n");
-    s.push_str("    double factor;\n");
+    // final, so the shared default instances below cannot be mutated through the
+    // live array: restore_candle_default_settings hands the same objects back out,
+    // and set_candle_settings always replaces a slot rather than writing into one.
+    s.push_str("    final RangeType rangeType;\n");
+    s.push_str("    final int avgPeriod;\n");
+    s.push_str("    final double factor;\n");
     s.push_str("    CandleSetting(RangeType rt, int ap, double f) { rangeType = rt; avgPeriod = ap; factor = f; }\n");
     s.push_str("}\n\n");
 
@@ -2268,7 +2341,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    int[] unstablePeriod = new int[FuncUnstId.COUNT];\n");
     // candleSettings[] in CandleSettingType ordinal order. Defaults from
     // TA_RestoreCandleDefaultSettings in ta_global.c. RangeType: 0=RealBody, 1=HighLow, 2=Shadows.
-    s.push_str("    CandleSetting[] candleSettings = {\n");
+    s.push_str("    static final CandleSetting[] DEFAULT_CANDLE_SETTINGS = {\n");
     s.push_str("        new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyLong\n");
     s.push_str("        new CandleSetting(RangeType.RealBody, 10, 3.0),   // BodyVeryLong\n");
     s.push_str("        new CandleSetting(RangeType.RealBody, 10, 1.0),   // BodyShort\n");
@@ -2281,6 +2354,9 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        new CandleSetting(RangeType.HighLow,  5,  0.6),   // Far\n");
     s.push_str("        new CandleSetting(RangeType.HighLow,  5,  0.05),  // Equal\n");
     s.push_str("    };\n\n");
+    // The live array is a clone, so restoring a default is a slot copy out of the
+    // table above rather than a second literal that could drift from it (#215).
+    s.push_str("    CandleSetting[] candleSettings = DEFAULT_CANDLE_SETTINGS.clone();\n\n");
     // Mirrors the shipped Core's mapper — the spliced public wrappers call it.
     s.push_str("    static RuntimeException failure(String funcName, RetCode retCode) {\n");
     s.push_str("        String where = funcName + \": \";\n");
@@ -2329,6 +2405,28 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("        int end = idx;\n");
     s.push_str("        while (end < json.length() && \"0123456789-.eE+\".indexOf(json.charAt(end)) >= 0) end++;\n");
     s.push_str("        return Double.parseDouble(json.substring(idx, end));\n");
+    s.push_str("    }\n\n");
+
+    // One f64 as the 16 hex chars of its IEEE-754 bits — the scalar counterpart
+    // of jsonDoubleArray's transport (#115). Used for `factor`, which has to be
+    // able to carry a NaN: NaN has no JSON number spelling, and refusing one is
+    // part of the contract compared across languages (#215).
+    s.push_str("    static double jsonF64Bits(String json, String field, double def) {\n");
+    s.push_str("        int idx = json.indexOf('\"' + field + '\"');\n");
+    s.push_str("        if (idx < 0) return def;\n");
+    s.push_str("        idx = json.indexOf(':', idx) + 1;\n");
+    s.push_str("        while (idx < json.length() && json.charAt(idx) == ' ') idx++;\n");
+    s.push_str("        if (idx >= json.length() || json.charAt(idx) != '\"') return def;\n");
+    s.push_str("        int end = json.indexOf('\"', idx + 1);\n");
+    s.push_str("        if (end != idx + 17) return def;\n");
+    s.push_str("        try {\n");
+    // parseUnsignedLong, not parseLong: any bit pattern with the sign bit set
+    // overflows a signed long and would throw.
+    s.push_str("            return Double.longBitsToDouble(\n");
+    s.push_str("                Long.parseUnsignedLong(json.substring(idx + 1, end), 16));\n");
+    s.push_str("        } catch (NumberFormatException e) {\n");
+    s.push_str("            return def;\n");
+    s.push_str("        }\n");
     s.push_str("    }\n\n");
 
     s.push_str("    static double[] jsonDoubleArray(String json, String field) {\n");
@@ -2502,6 +2600,51 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("            }\n");
     s.push_str("            return \"{\\\"error\\\":\\\"java has no compatibility API (pinned to Default)\\\"}\";\n");
+    s.push_str("        }\n");
+
+    // set_candle_settings (#215). The C server delegates to the library and just
+    // reports its RetCode; this server has no such library to ask, so it spells
+    // out the same domain TA_SetCandleSettings enforces — settingType names a
+    // single setting (the AllCandleSettings wildcard is NOT a target), rangeType
+    // is 0..2, avgPeriod is a lookback and bounded like one, and factor is any
+    // non-NaN value. Every check precedes the write, so a rejected call leaves
+    // all eleven settings as they were (#186).
+    s.push_str("        else if (json.contains(\"\\\"set_candle_settings\\\"\")) {\n");
+    s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
+    s.push_str("            int rangeType = jsonInt(json, \"rangeType\");\n");
+    s.push_str("            int avgPeriod = jsonInt(json, \"avgPeriod\");\n");
+    s.push_str("            double factor = jsonF64Bits(json, \"factorBits\", 1.0);\n");
+    s.push_str("            if (settingType < 0 || settingType >= CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            if (rangeType < 0 || rangeType > RangeType.Shadows.ordinal()) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            if (avgPeriod < 0 || avgPeriod > Core.MAX_INDEX) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            if (Double.isNaN(factor)) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            core.candleSettings[settingType] =\n");
+    s.push_str("                new CandleSetting(RangeType.values()[rangeType], avgPeriod, factor);\n");
+    s.push_str("            return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("        }\n");
+
+    // restore_candle_default_settings (#215). AllCandleSettings IS a legal
+    // argument here — it is the wildcard that set_candle_settings rejects.
+    s.push_str("        else if (json.contains(\"\\\"restore_candle_default_settings\\\"\")) {\n");
+    s.push_str("            int settingType = jsonInt(json, \"settingType\");\n");
+    s.push_str("            if (settingType < 0 || settingType > CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("                return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
+    s.push_str("            }\n");
+    s.push_str("            if (settingType == CandleSettingType.AllCandleSettings.ordinal()) {\n");
+    s.push_str("                System.arraycopy(Core.DEFAULT_CANDLE_SETTINGS, 0, core.candleSettings, 0,\n");
+    s.push_str("                    core.candleSettings.length);\n");
+    s.push_str("            } else {\n");
+    s.push_str("                core.candleSettings[settingType] = Core.DEFAULT_CANDLE_SETTINGS[settingType];\n");
+    s.push_str("            }\n");
+    s.push_str("            return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("        }\n");
 
     // eval_predicate method — boolean near-zero builtin on each input value.
@@ -3031,6 +3174,20 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("        p.TryGetProperty(name, out var v) ? v.GetInt32() : def;\n\n");
     s.push_str("    static double GetDouble(JsonElement p, string name, double def) =>\n");
     s.push_str("        p.TryGetProperty(name, out var v) ? v.GetDouble() : def;\n\n");
+    // One f64 as the 16 hex chars of its IEEE-754 bits — the scalar counterpart of
+    // GetDoubleArray's transport (#115). Used for `factor`, which has to be able to
+    // carry a NaN: NaN has no JSON number spelling, and refusing one is part of the
+    // contract compared across languages (#215).
+    s.push_str("    static double GetF64Bits(JsonElement p, string name, double def) {\n");
+    s.push_str("        if (!p.TryGetProperty(name, out var v) || v.ValueKind != JsonValueKind.String)\n");
+    s.push_str("            return def;\n");
+    s.push_str("        string? h = v.GetString();\n");
+    s.push_str("        if (h == null || h.Length != 16) return def;\n");
+    s.push_str("        return ulong.TryParse(h, System.Globalization.NumberStyles.HexNumber,\n");
+    s.push_str("                              System.Globalization.CultureInfo.InvariantCulture, out ulong bits)\n");
+    s.push_str("            ? BitConverter.Int64BitsToDouble(unchecked((long)bits))\n");
+    s.push_str("            : def;\n");
+    s.push_str("    }\n\n");
     s.push_str("    static void LoadRef(JsonElement p, string name, double[] dst) {\n");
     s.push_str("        double[] tmp = GetDoubleArray(p, name);\n");
     s.push_str("        Array.Copy(tmp, dst, Math.Min(tmp.Length, MAX_ARRAY_SIZE));\n");
@@ -3186,6 +3343,42 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                return \"{\\\"error\\\":\\\"csharp has no compatibility API (pinned to Default)\\\"}\";\n");
+    s.push_str("            }\n");
+
+    // set_candle_settings (#215). Unlike the unstable period above, this does NOT
+    // reach into core's fields: it goes through the shipped CoreBuilder, so the
+    // validation being compared across languages is the library's own and not a
+    // second copy living in the server. Core is immutable, so a change is a
+    // rebuild; the assignment happens only if the builder accepted every
+    // argument, which is what keeps a rejected call from writing anything.
+    s.push_str("            else if (method == \"set_candle_settings\") {\n");
+    s.push_str("                int settingType = GetInt(p, \"settingType\", -1);\n");
+    s.push_str("                int rangeType = GetInt(p, \"rangeType\", -1);\n");
+    s.push_str("                int avgPeriod = GetInt(p, \"avgPeriod\", 0);\n");
+    s.push_str("                double factor = GetF64Bits(p, \"factorBits\", 1.0);\n");
+    s.push_str("                try {\n");
+    s.push_str("                    core = core.ToBuilder()\n");
+    s.push_str("                        .CandleSetting((CandleSettingType)settingType, (RangeType)rangeType,\n");
+    s.push_str("                                       avgPeriod, factor)\n");
+    s.push_str("                        .Build();\n");
+    s.push_str("                } catch (ArgumentOutOfRangeException) {\n");
+    s.push_str("                    return \"{\\\"error\\\":\\\"Invalid candle setting\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
+    s.push_str("            }\n");
+
+    // restore_candle_default_settings (#215). AllCandleSettings IS a legal
+    // argument here — it is the wildcard that set_candle_settings rejects.
+    s.push_str("            else if (method == \"restore_candle_default_settings\") {\n");
+    s.push_str("                int settingType = GetInt(p, \"settingType\", -1);\n");
+    s.push_str("                try {\n");
+    s.push_str("                    core = core.ToBuilder()\n");
+    s.push_str("                        .RestoreCandleDefault((CandleSettingType)settingType)\n");
+    s.push_str("                        .Build();\n");
+    s.push_str("                } catch (ArgumentOutOfRangeException) {\n");
+    s.push_str("                    return \"{\\\"error\\\":\\\"Invalid candle setting type\\\"}\";\n");
+    s.push_str("                }\n");
+    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("            }\n");
 
     // eval_predicate — boolean near-zero builtin on each input value; the SAME
@@ -3765,6 +3958,83 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    }\n");
     s.push_str("}\n\n");
 
+    // Helper: one f64 from the 16 hex chars of its IEEE-754 bits — the scalar
+    // counterpart of parse_f64_array's transport (#115). Used for `factor`, which
+    // has to be able to carry a NaN: NaN has no JSON number spelling, and refusing
+    // one is part of the contract compared across languages (#215).
+    s.push_str("fn parse_f64_bits(val: &Value, def: f64) -> f64 {\n");
+    s.push_str("    let Some(h) = val.as_str() else { return def };\n");
+    s.push_str("    if h.len() != 16 { return def; }\n");
+    s.push_str("    match u64::from_str_radix(h, 16) {\n");
+    s.push_str("        Ok(bits) => f64::from_bits(bits),\n");
+    s.push_str("        Err(_) => def,\n");
+    s.push_str("    }\n");
+    s.push_str("}\n\n");
+
+    // Helper: CandleSettingType from integer, in C TA_CandleSettingType order.
+    // 11 (AllCandleSettings) is included: it is a legal RESTORE selector, and
+    // candle_setting's own rejection of it is what the cross-language gate reads.
+    s.push_str("fn candle_setting_type_from_int(id: i64) -> Option<CandleSettingType> {\n");
+    s.push_str("    Some(match id {\n");
+    s.push_str("        0 => CandleSettingType::BodyLong,\n");
+    s.push_str("        1 => CandleSettingType::BodyVeryLong,\n");
+    s.push_str("        2 => CandleSettingType::BodyShort,\n");
+    s.push_str("        3 => CandleSettingType::BodyDoji,\n");
+    s.push_str("        4 => CandleSettingType::ShadowLong,\n");
+    s.push_str("        5 => CandleSettingType::ShadowVeryLong,\n");
+    s.push_str("        6 => CandleSettingType::ShadowShort,\n");
+    s.push_str("        7 => CandleSettingType::ShadowVeryShort,\n");
+    s.push_str("        8 => CandleSettingType::Near,\n");
+    s.push_str("        9 => CandleSettingType::Far,\n");
+    s.push_str("        10 => CandleSettingType::Equal,\n");
+    s.push_str("        11 => CandleSettingType::AllCandleSettings,\n");
+    s.push_str("        _ => return None,\n");
+    s.push_str("    })\n");
+    s.push_str("}\n\n");
+
+    // apply_candle_setting — the candle counterpart of apply_unstable_period, and
+    // for the same reason: `Core` is immutable, so a settings change is a rebuild
+    // through the public builder. Every value check lives in the library, not
+    // here; the server's only job is to keep an unrepresentable wire value from
+    // becoming a wrapped one, so rangeType and avgPeriod are `try_from`'d rather
+    // than cast. `*core` is reassigned only on success, so a rejected RPC leaves
+    // all eleven settings exactly as they were.
+    s.push_str(
+        "fn apply_candle_setting(core: &mut Core, st: i64, rt: i64, ap: i64, factor: f64) -> Result<(), &'static str> {\n",
+    );
+    s.push_str("    let Some(setting_type) = candle_setting_type_from_int(st) else {\n");
+    s.push_str("        return Err(\"Invalid candle setting\");\n");
+    s.push_str("    };\n");
+    s.push_str("    let (Ok(range_type), Ok(avg_period)) = (i32::try_from(rt), i32::try_from(ap)) else {\n");
+    s.push_str("        return Err(\"Invalid candle setting\");\n");
+    s.push_str("    };\n");
+    s.push_str("    let setting = CandleSetting { range_type, avg_period, factor };\n");
+    s.push_str("    match core.to_builder().candle_setting(setting_type, setting).build() {\n");
+    s.push_str("        Ok(built) => {\n");
+    s.push_str("            *core = built;\n");
+    s.push_str("            Ok(())\n");
+    s.push_str("        }\n");
+    s.push_str("        Err(_) => Err(\"Invalid candle setting\"),\n");
+    s.push_str("    }\n");
+    s.push_str("}\n\n");
+
+    // apply_restore_candle_default — same rebuild, and the one place where
+    // AllCandleSettings is an argument rather than an error.
+    s.push_str(
+        "fn apply_restore_candle_default(core: &mut Core, st: i64) -> Result<(), &'static str> {\n",
+    );
+    s.push_str("    let Some(setting_type) = candle_setting_type_from_int(st) else {\n");
+    s.push_str("        return Err(\"Invalid candle setting type\");\n");
+    s.push_str("    };\n");
+    s.push_str("    match core.to_builder().restore_candle_default(setting_type).build() {\n");
+    s.push_str("        Ok(built) => {\n");
+    s.push_str("            *core = built;\n");
+    s.push_str("            Ok(())\n");
+    s.push_str("        }\n");
+    s.push_str("        Err(_) => Err(\"Invalid candle setting type\"),\n");
+    s.push_str("    }\n");
+    s.push_str("}\n\n");
+
     // handle_request function
     s.push_str("fn handle_request(core: &mut Core, ref_data: &mut RefData, line: &str) -> String {\n");
     s.push_str("    let req: Value = match serde_json::from_str(line) {\n");
@@ -4187,6 +4457,35 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            } else {\n");
     s.push_str(
         "                \"{\\\"error\\\":\\\"rust has no compatibility API (pinned to Default)\\\"}\".to_string()\n",
+    );
+    s.push_str("            }\n");
+    s.push_str("        }\n");
+
+    // set_candle_settings method (#215).
+    s.push_str("        \"set_candle_settings\" => {\n");
+    s.push_str("            let st = params[\"settingType\"].as_i64().unwrap_or(-1);\n");
+    s.push_str("            let rt = params[\"rangeType\"].as_i64().unwrap_or(-1);\n");
+    s.push_str("            let ap = params[\"avgPeriod\"].as_i64().unwrap_or(0);\n");
+    s.push_str("            let factor = parse_f64_bits(&params[\"factorBits\"], 1.0);\n");
+    s.push_str("            match apply_candle_setting(core, st, rt, ap, factor) {\n");
+    s.push_str(
+        "                Ok(()) => \"{\\\"status\\\":\\\"ok\\\"}\".to_string(),\n",
+    );
+    s.push_str(
+        "                Err(msg) => format!(\"{{\\\"error\\\":\\\"{msg}\\\"}}\"),\n",
+    );
+    s.push_str("            }\n");
+    s.push_str("        }\n");
+
+    // restore_candle_default_settings method (#215).
+    s.push_str("        \"restore_candle_default_settings\" => {\n");
+    s.push_str("            let st = params[\"settingType\"].as_i64().unwrap_or(-1);\n");
+    s.push_str("            match apply_restore_candle_default(core, st) {\n");
+    s.push_str(
+        "                Ok(()) => \"{\\\"status\\\":\\\"ok\\\"}\".to_string(),\n",
+    );
+    s.push_str(
+        "                Err(msg) => format!(\"{{\\\"error\\\":\\\"{msg}\\\"}}\"),\n",
     );
     s.push_str("            }\n");
     s.push_str("        }\n");
@@ -5628,11 +5927,26 @@ pub(crate) fn generate_java_stream_verify(
     s.push_str("    }\n\n");
     // Candle-settings rounds (mirror the C/Rust sweep): defaults / avgPeriod+3
     // / avgPeriod=0 (instant candle) / rangeType=Shadows.
+    // REPLACES each slot rather than mutating the CandleSetting in it. `new Core()`
+    // shallow-clones DEFAULT_CANDLE_SETTINGS, so every Core's slot i is the SAME
+    // object as the default's slot i; writing `cs.avgPeriod += 3` there would edit
+    // the defaults themselves, and round 1 of the first candlestick would leave
+    // every later Core -- and every later round, and restore_candle_default_settings
+    // -- reading +3. CandleSetting's fields are final so that spelling does not
+    // compile (#215).
     s.push_str("    static void svApplyCandleRound(Core c, int rd) {\n");
-    s.push_str("        for (CandleSetting cs : c.candleSettings) {\n");
-    s.push_str("            if (rd == 1) cs.avgPeriod += 3;\n");
-    s.push_str("            else if (rd == 2) cs.avgPeriod = 0;\n");
-    s.push_str("            else if (rd == 3) cs.rangeType = RangeType.Shadows;\n");
+    s.push_str("        if (rd == 0) return;\n");
+    s.push_str("        for (int i = 0; i < c.candleSettings.length; i++) {\n");
+    s.push_str("            CandleSetting cs = c.candleSettings[i];\n");
+    s.push_str("            if (rd == 1) {\n");
+    s.push_str("                c.candleSettings[i] =\n");
+    s.push_str("                    new CandleSetting(cs.rangeType, cs.avgPeriod + 3, cs.factor);\n");
+    s.push_str("            } else if (rd == 2) {\n");
+    s.push_str("                c.candleSettings[i] = new CandleSetting(cs.rangeType, 0, cs.factor);\n");
+    s.push_str("            } else if (rd == 3) {\n");
+    s.push_str("                c.candleSettings[i] =\n");
+    s.push_str("                    new CandleSetting(RangeType.Shadows, cs.avgPeriod, cs.factor);\n");
+    s.push_str("            }\n");
     s.push_str("        }\n");
     s.push_str("    }\n\n");
 

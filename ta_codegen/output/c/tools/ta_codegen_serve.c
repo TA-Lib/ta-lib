@@ -253,6 +253,37 @@ static double json_find_double(const char *json, const char *field) {
     return strtod(p, NULL);
 }
 
+/* One f64, transported as the 16 hex chars of its IEEE-754 bit pattern.
+ *
+ * A scalar the caller wants delivered EXACTLY cannot go over the wire as a JSON
+ * number. %.17g does round-trip every finite double, but NaN and the infinities
+ * have no JSON number spelling at all -- and `factor` has to carry a NaN,
+ * because refusing one is part of the contract being compared across languages.
+ * Same encoding json_find_double_array already uses for arrays (#115), one
+ * group instead of many. Returns `def` when the field is absent or malformed,
+ * so a caller that omits it gets a documented value rather than a silent 0. */
+static double json_find_f64_bits(const char *json, const char *field, double def) {
+    char pattern[256];
+    unsigned long long bits = 0;
+    double out;
+    int k;
+    snprintf(pattern, sizeof(pattern), "\"%s\":\"", field);
+    const char *p = strstr(json, pattern);
+    if( !p ) return def;
+    p += strlen(pattern);
+    for( k = 0; k < 16; k++ ) {
+        char c = p[k];
+        unsigned int v;
+        if     ( c >= '0' && c <= '9' ) v = (unsigned int)(c - '0');
+        else if( c >= 'a' && c <= 'f' ) v = (unsigned int)(c - 'a' + 10);
+        else if( c >= 'A' && c <= 'F' ) v = (unsigned int)(c - 'A' + 10);
+        else return def;   /* short or non-hex group */
+        bits = (bits << 4) | v;
+    }
+    memcpy(&out, &bits, sizeof(double));
+    return out;
+}
+
 static int json_find_double_array(const char *json, const char *field,
                                    double *out, int max_count) {
     char pattern[256];
@@ -33306,6 +33337,27 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         int mode = json_find_int(json, "mode");
         TA_SetCompatibility((TA_Compatibility)mode);
         snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+    }
+    else if ( methodLen == 19 && strncmp(method, "set_candle_settings", 19) == 0 ) {
+        int settingType = json_find_int(json, "settingType");
+        int rangeType   = json_find_int(json, "rangeType");
+        int avgPeriod   = json_find_int(json, "avgPeriod");
+        double factor   = json_find_f64_bits(json, "factorBits", 1.0);
+        TA_RetCode csRc = TA_SetCandleSettings((TA_CandleSettingType)settingType,
+                                              (TA_RangeType)rangeType,
+                                              avgPeriod, factor);
+        if( csRc == TA_SUCCESS )
+           snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+        else
+           snprintf(resp, resp_size, "{\"error\":\"Invalid candle setting\"}");
+    }
+    else if ( methodLen == 31 && strncmp(method, "restore_candle_default_settings", 31) == 0 ) {
+        int settingType = json_find_int(json, "settingType");
+        TA_RetCode csRc = TA_RestoreCandleDefaultSettings((TA_CandleSettingType)settingType);
+        if( csRc == TA_SUCCESS )
+           snprintf(resp, resp_size, "{\"status\":\"ok\"}");
+        else
+           snprintf(resp, resp_size, "{\"error\":\"Invalid candle setting type\"}");
     }
     else if ( methodLen == 14 && strncmp(method, "eval_predicate", 14) == 0 ) {
         double _pv[512]; double _ps[512]; int _pr[512];
