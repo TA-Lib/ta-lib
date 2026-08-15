@@ -155,9 +155,13 @@ TA_RetCode TA_SetCandleSettings( TA_CandleSettingType settingType,
     if( avgPeriod < 0 || avgPeriod > TA_MAX_INDEX )
         return TA_BAD_PARAM;
 
-    /* factor scales a threshold, never an index, so any finite value is legal
-     * (a negative one simply never matches). NaN is refused because it silences
-     * every comparison it feeds without being asked to. */
+    /* factor scales a threshold, never an index, so any finite value is legal.
+     * A negative one is legal too, and it does not "never match" -- the range
+     * and the average are both non-negative, so `range > factor*avg` becomes
+     * unconditionally TRUE rather than false, and the pattern fires on every
+     * bar. Legal, and worth knowing before setting one.
+     * NaN is refused because it silences every comparison it feeds without
+     * being asked to. */
     if( factor != factor )
         return TA_BAD_PARAM;
 
