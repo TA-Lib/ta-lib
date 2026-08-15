@@ -25,6 +25,12 @@ int server_verify_active(void);
  * defaults and passes without testing anything it claims to test. */
 int server_verify_candle_syncs(void);
 
+/* Comparisons whose verdict was actually taken, summed over pipes. Require this
+ * to ADVANCE across a gate: "no failure reported" and "nothing was ever
+ * compared" are otherwise the same observation, which is how a server erroring
+ * every request produced a byte-identical green run. */
+int server_verify_comparisons(void);
+
 /* Verify a C function call against all active servers.
  *
  * Uses ta_abstract metadata to build JSON-RPC requests internally.

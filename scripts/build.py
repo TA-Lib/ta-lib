@@ -125,6 +125,10 @@ def show_help():
                         usable on a dirty working tree.
     check-source-lists  Verify the CMake and autotools ta_regtest source
                         lists agree (no build; pure text check)
+    check-mcdc          Verify each MC/DC builder's pb_conditions(N) matches the
+                        conjunct count of the indicator it tests (no build; pure
+                        text check). Catches a builder that under-declares, and
+                        a conjunct added to an indicator that no case covers.
     regtest             Full pipeline: servers (cargo) + C tests + codegen verification
     fuzz-064            Bit-exact differential fuzz of the current library vs the
                         frozen released v0.6.4 (opt-in; builds ta_064_serve then
@@ -603,6 +607,11 @@ def main():
     # Pure text check — no build prerequisites.
     if args.target == 'check-source-lists':
         sys.exit(0 if check_regtest_source_lists(root_dir) else 1)
+
+    if args.target == 'check-mcdc':
+        sys.exit(subprocess.call(
+            [sys.executable, os.path.join(root_dir, 'scripts',
+                                          'check_mcdc_conditions.py')]))
 
     # Targets that build language servers narrow their prerequisites to the
     # backends actually requested: `servers --language=c,rust` must not demand a

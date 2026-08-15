@@ -338,9 +338,17 @@ static const TA_CDLGlobals cdlGlobalsMatrix[] =
      TA_RangeType_RealBody,12, 0.9 },
 
    /* 4: strict factors -- the opposite direction, so a pattern that stops
-    * firing is visible too. A negative factor is legal and makes a `>` test
-    * unconditionally true (ta_global.c's comment claims the opposite); Far's
-    * `>=` comparison is the one place that shows up. */
+    * firing is visible too, and a negative factor because that is legal and
+    * ta_global.c used to claim it "never matches" when in fact it makes a
+    * `range > factor*avg` test unconditionally TRUE.
+    *
+    * The negative sits on Far, and the earlier claim here that Far's comparison
+    * is "the one place that shows up" was wrong: Far is used as
+    * `rb(b2) > rb(b1) - Far`, where a negative makes the test HARDER, not
+    * unconditionally true. The per-setting sweep is what settled it -- Far moves
+    * 2 pairs, which is both of the two functions that read it, and none of them
+    * through this row's sign. Kept for the strict-factor direction it does
+    * provide; the unconditional-true case is exercised via BodyLong/BodyShort. */
    { TA_RangeType_RealBody, 5, 4.0,
      TA_RangeType_RealBody, 5, 9.0,
      TA_RangeType_RealBody, 5, 0.05,
@@ -373,14 +381,57 @@ static const TA_CDLGlobals cdlGlobalsMatrix[] =
  * stream vs batch — runs on the same pattern geometry via fuzz_data.h's
  * FUZZ_CANDLE shape (fuzz-064 and stream_verify).
  * ------------------------------------------------------------------------ */
-#define PB_N 512
+/* PB_N sizes the scenario tape. It is deliberately far larger than any builder
+ * needs: a builder is primer + pattern + flat filler per scenario, and a
+ * pattern with ~20 conditions needs a detect, a flip and a control for each.
+ * 512 fitted the six builders that existed when this was written and nothing
+ * else; the ceiling is not a budget to spend, it is headroom. The four migrated
+ * builders use 305/558/719/765 bars, and the largest plausible future one
+ * (CDLHIKKAKEMOD, ~27 conditions over 4 pattern bars) computes to ~1330 -- so
+ * 4096 is about 3x the worst case rather than the 1.5x that 2048 would be.
+ *
+ * The bound is CHECKED now. pb_bar4 and pb_expect used to write past the end of
+ * these static arrays with no guard at all -- silent memory corruption, not an
+ * assert -- which was survivable only because six builders happened to fit. */
+#define PB_N      4096
+#define PB_MAXEXP  256
+#define PB_MAXWAIVE 64
+#define PB_MAXCOND  64
 static double pbO[PB_N], pbH[PB_N], pbL[PB_N], pbC[PB_N];
 static int    pbCur;
-static int    pbEi[80], pbEv[80], pbNe;
-static const char *pbEl[80];
+static int    pbOverflow;            /* sticky: a builder ran past a buffer */
+static int    pbEi[PB_MAXEXP], pbEv[PB_MAXEXP], pbNe;
+static const char *pbEl[PB_MAXEXP];
+
+/* What each recorded expectation IS, which is what turns this from a golden
+ * table into an MC/DC gate. See pb_check_mcdc for the contract each kind
+ * carries. PB_LEGACY is the un-migrated pb_expect used by the Hikkake
+ * predicate tests, which are not MC/DC and assert their own output classes. */
+#define PB_LEGACY  0
+#define PB_DETECT  1
+#define PB_FLIP    2
+#define PB_CONTROL 3
+static int pbEkind[PB_MAXEXP];
+static int pbEcond[PB_MAXEXP];       /* condition id for FLIP/CONTROL, else -1 */
+
+/* Conditions the pattern is DECLARED to have, and the ones deliberately not
+ * given a flip case. Every declared condition must be either flipped or
+ * waived -- that equality is what stops a condition from being silently
+ * skipped, which no counter of "cases written" can detect. */
+static int         pbNbCond;
+static int         pbWcond[PB_MAXWAIVE];
+static const char *pbWhy[PB_MAXWAIVE];
+static int         pbNw;
 
 static int pb_bar4( double o, double h, double l, double c )
 {
+   if( pbCur >= PB_N )
+   {
+      /* Do not write. Return a valid index so the caller's arithmetic stays in
+       * bounds; pbOverflow is what fails the run. */
+      pbOverflow = 1;
+      return PB_N - 1;
+   }
    pbO[pbCur]=o; pbH[pbCur]=h; pbL[pbCur]=l; pbC[pbCur]=c; return pbCur++;
 }
 /* body-as-a-point bar: O=C=mid, caller controls the high/low geometry */
@@ -390,8 +441,64 @@ static int pb_close( double v ) { return pb_bar4(v, v+1.0, v-1.0, v); }
 /* flat filler: constant high/low so it forms no inside-bar pattern and the
  * confirmation countdown expires between scenarios */
 static void pb_flat( int k ) { while(k-->0) pb_bar4(100.0,101.0,99.0,100.0); }
-static void pb_expect( int i, int v, const char *s ) { pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbNe++; }
-static void pb_reset( void ) { pbCur=0; pbNe=0; }
+/* Record one expectation. `kind` and `cond` are what pb_check_mcdc enforces;
+ * pb_expect keeps the un-kinded legacy shape for the Hikkake predicate tests. */
+static void pb_record( int i, int v, const char *s, int kind, int cond )
+{
+   if( pbNe >= PB_MAXEXP ) { pbOverflow = 1; return; }
+   pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbEkind[pbNe]=kind; pbEcond[pbNe]=cond;
+   pbNe++;
+}
+static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEGACY, -1); }
+
+/* --- The MC/DC scenario vocabulary -------------------------------------- *
+ *
+ * pb_conditions(n)  declare how many atomic conditions the pattern's detection
+ *                   decision has. Every one must end up either flipped or
+ *                   waived; pb_check_mcdc fails if the totals disagree.
+ * pb_detect(i,v,s)  bars satisfying EVERY condition: the pattern must fire.
+ * pb_flip(i,c,s)    the detect bars with condition `c` broken: must NOT fire.
+ * pb_control(i,v,c,s)
+ *                   the FLIP bars with only the target quantity moved back
+ *                   across its threshold: must fire again.
+ * pb_waive(c,why)   condition `c` cannot be broken alone by any valid OHLC
+ *                   input. A claim, not an excuse -- refutable by anyone who
+ *                   can produce a passing flip+control pair for it.
+ *
+ * The control is the load-bearing half and the reason this is a gate rather
+ * than a freeze. A flip case asserts 0, but 0 is also what a distant miss
+ * returns, what a DIFFERENT accidentally-broken condition returns, and what
+ * the pattern returns nearly everywhere on nearly any data. Pairing it with a
+ * control that fires proves the zero is attributable to the one quantity the
+ * case claims to be testing. Without it a wrong case is green today, green
+ * tomorrow, and still green after a rewrite breaks the very predicate it was
+ * written to guard.
+ */
+static void pb_conditions( int n ) { pbNbCond = n; }
+static void pb_detect( int i, int v, const char *s ) { pb_record(i, v, s, PB_DETECT, -1); }
+static void pb_flip( int i, int cond, const char *s ) { pb_record(i, 0, s, PB_FLIP, cond); }
+/* Ids are checked at pb_check_mcdc against pbNbCond, which a builder may declare
+ * after its first pb_flip; validating here would depend on call order. */
+static void pb_control( int i, int v, int cond, const char *s )
+{
+   pb_record(i, v, s, PB_CONTROL, cond);
+}
+static void pb_waive( int cond, const char *why )
+{
+   int k;
+   if( pbNw >= PB_MAXWAIVE ) { pbOverflow = 1; return; }
+   /* A duplicate waiver inflates the total while covering one condition, and a
+    * waiver with no reason is not a claim anybody can refute. */
+   for( k = 0; k < pbNw; k++ )
+      if( pbWcond[k] == cond ) { pbOverflow = 1; return; }
+   if( !why ) { pbOverflow = 1; return; }
+   pbWcond[pbNw] = cond; pbWhy[pbNw] = why; pbNw++;
+}
+
+static void pb_reset( void )
+{
+   pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbOverflow=0;
+}
 
 /* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
  * flips one detection predicate false. Returns the detection (3rd) bar index. */
@@ -432,7 +539,17 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
 {
    int out[PB_N], begIdx=0, nb=0, k, fails=0;
    int s1=0, sn1=0, s2=0, sn2=0;
-   TA_RetCode rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
+   TA_RetCode rc;
+   /* Same guard pb_check_mcdc carries. It was added to only one of the two
+    * consumers, so an overflowing Hikkake tape lost expectations and still
+    * returned PASS. */
+   if( pbOverflow )
+   {
+      printf("  %s predicate test: builder overflowed a harness buffer "
+             "(bars=%d/%d expectations=%d/%d)\n", name, pbCur, PB_N, pbNe, PB_MAXEXP);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+   rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
    if( rc != TA_SUCCESS ) { printf("  %s predicate test: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
    for( k=0; k<nb; k++ ) { int v=out[k]; if(v==100)s1=1; else if(v==-100)sn1=1; else if(v==200)s2=1; else if(v==-200)sn2=1; }
    for( k=0; k<pbNe; k++ )
@@ -450,6 +567,32 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
    {
       printf("  %s PREDICATE VACUOUS: missing an output class (+100=%d -100=%d +200=%d -200=%d)\n", name, s1,sn1,s2,sn2);
       return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+
+   /* Cross-language, same as pb_check_mcdc. These tapes are the ONLY bars in
+    * the tree that reach the +/-200 confirmation arm, and until now they never
+    * crossed a pipe -- the only CDLHIKKAKE* requests any server ever saw were
+    * the settings matrix's, which never produce a 200. */
+   if( server_verify_active() )
+   {
+      const TA_Real *inputs[5];
+      const TA_Integer *outInteger[2];
+      ErrorNumber svErr;
+      int cmpBefore = server_verify_comparisons();
+      inputs[0] = pbO; inputs[1] = pbH; inputs[2] = pbL; inputs[3] = pbC; inputs[4] = NULL;
+      outInteger[0] = out; outInteger[1] = NULL;
+      svErr = server_verify( name, 0, pbCur-1, pbCur, rc, begIdx, nb,
+                             inputs, NULL, 0, NULL, outInteger );
+      if( svErr != TA_TEST_PASS )
+      {
+         printf("  %s: cross-language mismatch on the predicate bars\n", name);
+         return svErr;
+      }
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf("  %s: arm B compared nothing despite live servers\n", name);
+         return TA_TSTCDL_PREDICATE_VACUOUS;
+      }
    }
    return TA_TEST_PASS;
 }
@@ -480,11 +623,108 @@ static void pb_primer( int k, double base, double bd, double hr )
 }
 /* Single-sign check: every pb_expect must match, AND at least one expected
  * NON-zero must actually fire (else the gate is vacuous). */
-static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn )
+/* --- The independent condition model ------------------------------------- *
+ *
+ * This is what turns the paired control from a convention into a checked
+ * property. Each builder supplies a function that evaluates the pattern's
+ * atomic conditions DIRECTLY from the bars, transcribed by hand from
+ * ta_codegen/input/<name>/<name>.c. pb_check_mcdc then asserts, at every
+ * scenario:
+ *
+ *   DETECT  / CONTROL   every condition true
+ *   FLIP                exactly one condition false, and it is the declared one
+ *
+ * The duplication is the point. Matching a flip to a control by condition id
+ * proves nothing -- rewiring every control to the detect bar passed byte for
+ * byte before this existed. Re-deriving the conditions here is a second,
+ * independent statement of the pattern, so a case that breaks the WRONG
+ * condition, a copy-pasted block, or a control unrelated to its flip all fail.
+ * And if this model and the library ever disagree, that disagreement is itself
+ * the signal -- which is the only mechanism in this file that could catch a
+ * predicate that has been wrong since 2005.
+ *
+ * The leaf helpers below are re-implemented rather than shared with
+ * ta_utility.h on purpose, so the averaging windows are computed independently
+ * too. They are the naive form (sum the trailing window each time) where the
+ * library slides an incremental total -- a deliberate second implementation.
+ */
+static double pb_range( int rangeType, int i )
 {
-   int out[PB_N], begIdx=0, nb=0, k, fails=0, sawNonzero=0;
-   TA_RetCode rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
+   double o=pbO[i], h=pbH[i], l=pbL[i], c=pbC[i];
+   switch( rangeType )
+   {
+   case TA_RangeType_RealBody: return c > o ? c-o : o-c;
+   case TA_RangeType_HighLow:  return h-l;
+   case TA_RangeType_Shadows:  return (h - (c>=o?c:o)) + ((c>=o?o:c) - l);
+   default:                    return 0.0;
+   }
+}
+
+static double pb_avg( TA_CandleSettingType st, int i )
+{
+   const TA_CandleSetting *cs = &TA_Globals->candleSettings[st];
+   double avg, divisor;
+   if( cs->avgPeriod == 0 )
+      avg = pb_range(cs->rangeType, i);
+   else
+   {
+      double sum = 0.0;
+      int k;
+      for( k = i - cs->avgPeriod; k < i; k++ )
+         sum += pb_range(cs->rangeType, k);
+      avg = sum / cs->avgPeriod;
+   }
+   divisor = (cs->rangeType == TA_RangeType_Shadows) ? 2.0 : 1.0;
+   return cs->factor * avg / divisor;
+}
+
+static double pb_body( int i )  { return pb_range(TA_RangeType_RealBody, i); }
+static double pb_upsh( int i )  { return pbH[i] - (pbC[i] >= pbO[i] ? pbC[i] : pbO[i]); }
+static double pb_losh( int i )  { return (pbC[i] >= pbO[i] ? pbO[i] : pbC[i]) - pbL[i]; }
+static int    pb_white( int i ) { return pbC[i] >= pbO[i]; }
+static double pb_bodylo( int i ){ return pbC[i] >= pbO[i] ? pbO[i] : pbC[i]; }
+static double pb_bodyhi( int i ){ return pbC[i] >= pbO[i] ? pbC[i] : pbO[i]; }
+
+typedef void (*PbCondFn)( int i, int *c );
+
+/* Totals across every MC/DC function, printed once so the gate's own coverage
+ * is visible rather than asserted in the dark. A waiver count that drifts is
+ * the thing most likely to hollow this gate out silently. */
+static int pbTotDetect, pbTotFlip, pbTotControl, pbTotWaive, pbTotCond;
+static int pbTotMigrated;
+
+/* Print what the gate actually covered. A gate that does not report its own
+ * coverage cannot be seen to be shrinking: a waiver count that drifts upward,
+ * or a migration that stalls, both look exactly like a green run. */
+static void pb_report_totals( void )
+{
+   printf("  MC/DC: %d function(s), %d condition(s) declared, %d detect(s), "
+          "%d flipped, %d control(s), %d waived\n",
+          pbTotMigrated, pbTotCond, pbTotDetect, pbTotFlip, pbTotControl,
+          pbTotWaive);
+}
+
+static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn, PbCondFn conds )
+{
+   int out[PB_N], begIdx=0, nb=0, k, j, fails=0;
+   int nDetect=0, nFlip=0, nControl=0;
+   TA_RetCode rc;
+
+   /* A builder that ran off the end of the tape wrote nothing, so every
+    * expectation past that point reads a bar that was never laid down. Caught
+    * before the values are compared -- otherwise it surfaces as a puzzling
+    * value mismatch instead of what it is. */
+   if( pbOverflow )
+   {
+      printf("  %s MC/DC: builder overflowed a harness buffer "
+             "(bars=%d/%d expectations=%d/%d waivers=%d/%d)\n",
+             name, pbCur, PB_N, pbNe, PB_MAXEXP, pbNw, PB_MAXWAIVE);
+      return TA_TSTCDL_PREDICATE_VACUOUS;
+   }
+
+   rc = fn(0, pbCur-1, pbO, pbH, pbL, pbC, &begIdx, &nb, out);
    if( rc != TA_SUCCESS ) { printf("  %s MC/DC: retCode %d\n", name, rc); return TA_TSTCDL_PREDICATE_MISMATCH; }
+
    for( k=0; k<pbNe; k++ )
    {
       int oi = pbEi[k]-begIdx;
@@ -492,16 +732,243 @@ static ErrorNumber pb_check_mcdc( const char *name, PbCdlFn fn )
       if( got != pbEv[k] )
       {
          printf("  %s MC/DC FAIL bar=%d expected=%d got=%d  (%s)\n", name, pbEi[k], pbEv[k], got, pbEl[k]);
+         /* Print the bars the failing expectation was written against. Deriving
+          * these by re-reading the builder is the slowest part of writing one,
+          * and a wrong number is usually visible the moment the four values are
+          * side by side. */
+         { int z, z0 = pbEi[k]-3; if( z0 < 0 ) z0 = 0;
+           printf("     bars:");
+           for(z=z0; z<=pbEi[k]; z++)
+              printf(" [%d o=%g h=%g l=%g c=%g]", z, pbO[z],pbH[z],pbL[z],pbC[z]);
+           printf("\n"); }
          fails++;
       }
-      if( pbEv[k] != 0 && got == pbEv[k] ) sawNonzero = 1;
+      switch( pbEkind[k] )
+      {
+      case PB_DETECT:  nDetect++;  break;
+      case PB_FLIP:    nFlip++;    break;
+      case PB_CONTROL: nControl++; break;
+      default:                     break;
+      }
+      /* A detect or a control that expects 0 asserts nothing: 0 is what the
+       * pattern returns nearly everywhere. Only a firing expectation carries
+       * information. */
+      if( (pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL) && pbEv[k] == 0 )
+      {
+         printf("  %s MC/DC VACUOUS: %s expects 0 (%s)\n", name,
+                pbEkind[k] == PB_DETECT ? "detect" : "control", pbEl[k]);
+         fails++;
+      }
+      if( pbEkind[k] == PB_FLIP && pbEv[k] != 0 )
+      {
+         printf("  %s MC/DC: flip expects %d, must be 0 (%s)\n", name, pbEv[k], pbEl[k]);
+         fails++;
+      }
    }
-   if( fails ) return TA_TSTCDL_PREDICATE_MISMATCH;
-   if( !sawNonzero )
+
+   /* THE ATTRIBUTION CHECK. Evaluate the pattern's conditions independently at
+    * every scenario and require exactly what MC/DC means: nothing false at a
+    * detect or a control, and precisely the declared condition false at a flip.
+    * This is what the id-matching loop below cannot do. */
+   if( conds && pbNbCond > 0 )
    {
-      printf("  %s MC/DC VACUOUS: no expected non-zero output fired\n", name);
-      return TA_TSTCDL_PREDICATE_VACUOUS;
+      if( pbNbCond > PB_MAXCOND )
+      {
+         printf("  %s MC/DC: %d conditions exceeds PB_MAXCOND\n", name, pbNbCond);
+         return TA_TSTCDL_PREDICATE_MISMATCH;
+      }
+      for( k=0; k<pbNe; k++ )
+      {
+         int cv[PB_MAXCOND];
+         int nFalse = 0, firstFalse = -1, m;
+         if( pbEkind[k] == PB_LEGACY ) continue;
+         for( m=0; m<pbNbCond; m++ ) cv[m] = -1;
+         conds(pbEi[k], cv);
+         for( m=0; m<pbNbCond; m++ )
+         {
+            if( cv[m] == -1 )
+            {
+               printf("  %s MC/DC: condition model left c%d unset (%s)\n", name, m, pbEl[k]);
+               fails++;
+            }
+            else if( !cv[m] ) { nFalse++; if( firstFalse < 0 ) firstFalse = m; }
+         }
+         if( pbEkind[k] == PB_DETECT || pbEkind[k] == PB_CONTROL )
+         {
+            if( nFalse != 0 )
+            {
+               printf("  %s MC/DC: %s has %d condition(s) false, first c%d (%s)\n",
+                      name, pbEkind[k]==PB_DETECT ? "detect" : "control",
+                      nFalse, firstFalse, pbEl[k]);
+               fails++;
+            }
+         }
+         else if( pbEkind[k] == PB_FLIP )
+         {
+            if( nFalse != 1 )
+            {
+               printf("  %s MC/DC: flip for c%d breaks %d condition(s)%s (%s)\n",
+                      name, pbEcond[k], nFalse,
+                      nFalse > 1 ? " -- not a single-condition case" : " -- it breaks nothing",
+                      pbEl[k]);
+               fails++;
+            }
+            else if( firstFalse != pbEcond[k] )
+            {
+               printf("  %s MC/DC: flip filed under c%d actually breaks c%d (%s)\n",
+                      name, pbEcond[k], firstFalse, pbEl[k]);
+               fails++;
+            }
+         }
+      }
    }
+   else if( pbNbCond > 0 )
+   {
+      printf("  %s MC/DC: no condition model supplied -- attribution unchecked\n", name);
+      fails++;
+   }
+
+   /* Every flip needs its control.
+    *
+    * KNOW WHAT THIS DOES AND DOES NOT CHECK. It checks only that a control
+    * EXISTS carrying the same condition id. Nothing here compares the control's
+    * bars to the flip's, so the contract stated above -- "the flip bars with
+    * only the target quantity moved back" -- is upheld by the builder's author
+    * and not by this loop. Rewiring every control to the detect bar passes,
+    * byte for byte. Binding the two structurally (or, better, evaluating the
+    * pattern's conditions directly at each scenario) is the next thing this
+    * harness needs; until then the control catches an honest mistake in the
+    * bars, not a dishonest or copy-pasted case. */
+   for( k=0; k<pbNe; k++ )
+   {
+      int found = 0;
+      if( pbEkind[k] != PB_FLIP ) continue;
+      for( j=0; j<pbNe; j++ )
+         if( pbEkind[j] == PB_CONTROL && pbEcond[j] == pbEcond[k] ) { found = 1; break; }
+      if( !found )
+      {
+         printf("  %s MC/DC: flip for condition %d has no paired control (%s)\n",
+                name, pbEcond[k], pbEl[k]);
+         fails++;
+      }
+   }
+
+   if( nDetect == 0 && nFlip > 0 )
+   {
+      printf("  %s MC/DC VACUOUS: flips but no detect -- nothing proves the "
+             "pattern can fire on these bars at all\n", name);
+      fails++;
+   }
+
+   /* Completeness. Every DECLARED condition is either flipped or waived, and
+    * the totals must agree exactly. A counter of "cases written" cannot see a
+    * condition that was quietly skipped; this can. */
+   if( pbNbCond > 0 )
+   {
+      int covered = 0;
+      for( k=0; k<pbNe; k++ )
+      {
+         if( pbEkind[k] != PB_FLIP && pbEkind[k] != PB_CONTROL ) continue;
+         if( pbEcond[k] < 0 || pbEcond[k] >= pbNbCond )
+         {
+            printf("  %s MC/DC: condition id %d outside 0..%d (%s)\n",
+                   name, pbEcond[k], pbNbCond-1, pbEl[k]);
+            fails++;
+         }
+      }
+      for( k=0; k<pbNw; k++ )
+      {
+         if( pbWcond[k] < 0 || pbWcond[k] >= pbNbCond )
+         {
+            printf("  %s MC/DC: waived condition %d outside 0..%d\n",
+                   name, pbWcond[k], pbNbCond-1);
+            fails++;
+         }
+         /* Printed, not just stored: a waiver is a claim, and a claim nobody
+          * can see is a claim nobody can refute. */
+         printf("  %s MC/DC waiver c%d: %s\n", name, pbWcond[k], pbWhy[k]);
+      }
+      for( k=0; k<pbNbCond; k++ )
+      {
+         int hit = 0;
+         for( j=0; j<pbNe; j++ )
+            if( pbEkind[j] == PB_FLIP && pbEcond[j] == k ) { hit = 1; break; }
+         if( !hit )
+            for( j=0; j<pbNw; j++ )
+               if( pbWcond[j] == k ) { hit = 1; break; }
+         if( hit ) covered++;
+         else printf("  %s MC/DC: condition %d is neither flipped nor waived\n", name, k);
+      }
+      if( covered != pbNbCond )
+      {
+         printf("  %s MC/DC: %d of %d declared condition(s) covered\n",
+                name, covered, pbNbCond);
+         fails++;
+      }
+      pbTotCond += pbNbCond;
+   }
+   else if( nFlip > 0 )
+   {
+      printf("  %s MC/DC: flips recorded but pb_conditions() never declared a "
+             "total -- completeness cannot be checked\n", name);
+      fails++;
+   }
+
+   if( fails ) return TA_TSTCDL_PREDICATE_MISMATCH;
+
+   pbTotDetect += nDetect; pbTotFlip += nFlip; pbTotControl += nControl;
+   pbTotWaive  += pbNw;
+   pbTotMigrated++;
+
+   /* The pre-migration guard, kept for the builders still on the legacy shape:
+    * at least one non-zero expectation must have fired. Strictly weaker than
+    * everything above -- one non-zero anywhere satisfied it, so on a function
+    * with 18 flips, 18 wrong flips still passed. */
+   if( nDetect == 0 )
+   {
+      int sawNonzero = 0;
+      for( k=0; k<pbNe; k++ )
+      {
+         int oi = pbEi[k]-begIdx;
+         int got = (oi>=0 && oi<nb) ? out[oi] : -99999;
+         if( pbEv[k] != 0 && got == pbEv[k] ) sawNonzero = 1;
+      }
+      if( !sawNonzero )
+      {
+         printf("  %s MC/DC VACUOUS: no expected non-zero output fired\n", name);
+         return TA_TSTCDL_PREDICATE_VACUOUS;
+      }
+   }
+
+   /* Arm B: the same bars, compared against every language server. These are
+    * the best candlestick inputs in the tree -- hand-placed on the decision
+    * boundaries, where the 252-bar series and the fuzz shapes essentially
+    * never land -- and until now they were never sent anywhere. Degrades to a
+    * no-op when no server is running, so a bare ./ta_regtest is unaffected. */
+   if( server_verify_active() )
+   {
+      const TA_Real *inputs[5];
+      const TA_Integer *outInteger[2];
+      ErrorNumber svErr;
+      inputs[0] = pbO; inputs[1] = pbH; inputs[2] = pbL; inputs[3] = pbC; inputs[4] = NULL;
+      outInteger[0] = out; outInteger[1] = NULL;
+      int cmpBefore = server_verify_comparisons();
+      svErr = server_verify( name, 0, pbCur-1, pbCur, rc, begIdx, nb,
+                             inputs, NULL, 0, NULL, outInteger );
+      if( svErr != TA_TEST_PASS )
+      {
+         printf("  %s MC/DC: cross-language mismatch on the predicate bars\n", name);
+         return svErr;
+      }
+      /* And prove it actually compared. A server that answers every request
+       * with an error used to leave this leg green and silent. */
+      if( server_verify_comparisons() == cmpBefore )
+      {
+         printf("  %s MC/DC: arm B compared nothing despite live servers\n", name);
+         return TA_TSTCDL_PREDICATE_VACUOUS;
+      }
+   }
+
    return TA_TEST_PASS;
 }
 
@@ -565,495 +1032,975 @@ static ErrorNumber test_hikkake_predicate_coverage( void )
 }
 
 /* CDL2CROWS MC/DC: detection (-100) + one flip per structural predicate. */
+/* Condition models, transcribed from ta_codegen/input/<name>/<name>.c in source
+ * order. cN here is cN there and cN in the builder below. */
+
+static void cond_2crows( int i, int *c )
+{
+   c[0] = pb_white(i-2);
+   c[1] = pb_body(i-2) > pb_avg(TA_BodyLong, i-2);
+   c[2] = !pb_white(i-1);
+   c[3] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+   c[4] = !pb_white(i);
+   c[5] = pbO[i] < pbO[i-1];
+   c[6] = pbO[i] > pbC[i-1];
+   c[7] = pbC[i] > pbO[i-2];
+   c[8] = pbC[i] < pbC[i-2];
+}
+
+static void cond_3blackcrows( int i, int *c )
+{
+   c[0]  = pb_white(i-3);
+   c[1]  = !pb_white(i-2);
+   c[2]  = !pb_white(i-1);
+   c[3]  = !pb_white(i);
+   c[4]  = pbO[i-1] < pbO[i-2];
+   c[5]  = pbO[i-1] > pbC[i-2];
+   c[6]  = pbO[i]   < pbO[i-1];
+   c[7]  = pbO[i]   > pbC[i-1];
+   c[8]  = pbH[i-3] > pbC[i-2];
+   c[9]  = pbC[i-2] > pbC[i-1];
+   c[10] = pbC[i-1] > pbC[i];
+   c[11] = pb_losh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[12] = pb_losh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[13] = pb_losh(i)   < pb_avg(TA_ShadowVeryShort, i);
+}
+
+static void cond_3whitesoldiers( int i, int *c )
+{
+   c[0]  = pb_white(i-2);
+   c[1]  = pb_upsh(i-2) < pb_avg(TA_ShadowVeryShort, i-2);
+   c[2]  = pb_white(i-1);
+   c[3]  = pb_upsh(i-1) < pb_avg(TA_ShadowVeryShort, i-1);
+   c[4]  = pb_white(i);
+   c[5]  = pb_upsh(i)   < pb_avg(TA_ShadowVeryShort, i);
+   c[6]  = pbC[i]   > pbC[i-1];
+   c[7]  = pbC[i-1] > pbC[i-2];
+   c[8]  = pbO[i-1] > pbO[i-2];
+   c[9]  = pbO[i-1] <= pbC[i-2] + pb_avg(TA_Near, i-2);
+   c[10] = pbO[i]   > pbO[i-1];
+   c[11] = pbO[i]   <= pbC[i-1] + pb_avg(TA_Near, i-1);
+   c[12] = pb_body(i-1) > pb_body(i-2) - pb_avg(TA_Far, i-2);
+   c[13] = pb_body(i)   > pb_body(i-1) - pb_avg(TA_Far, i-1);
+   c[14] = pb_body(i)   > pb_avg(TA_BodyShort, i);
+}
+
+static void cond_3starsinsouth( int i, int *c )
+{
+   c[0]  = !pb_white(i-2);
+   c[1]  = !pb_white(i-1);
+   c[2]  = !pb_white(i);
+   c[3]  = pb_body(i-2) > pb_avg(TA_BodyLong, i-2);
+   c[4]  = pb_losh(i-2) > pb_avg(TA_ShadowLong, i-2);
+   c[5]  = pb_body(i-1) < pb_body(i-2);
+   c[6]  = pbO[i-1] > pbC[i-2];
+   c[7]  = pbO[i-1] <= pbH[i-2];
+   c[8]  = pbL[i-1] < pbC[i-2];
+   c[9]  = pbL[i-1] >= pbL[i-2];
+   c[10] = pb_losh(i-1) > pb_avg(TA_ShadowVeryShort, i-1);
+   c[11] = pb_body(i)   < pb_avg(TA_BodyShort, i);
+   c[12] = pb_losh(i)   < pb_avg(TA_ShadowVeryShort, i);
+   c[13] = pb_upsh(i)   < pb_avg(TA_ShadowVeryShort, i);
+   c[14] = pbL[i] > pbL[i-1];
+   c[15] = pbH[i] < pbH[i-1];
+}
+
+/* CDL2CROWS -- the reference MC/DC builder. Every other one follows this shape.
+ *
+ * The nine atomic conditions of the detection decision, in source order
+ * (cdl2crows.c), indexed as pb_conditions() declares them:
+ *
+ *   c0  color(i-2) == 1                     1st white
+ *   c1  realbody(i-2) > avg(BodyLong)       1st long
+ *   c2  color(i-1) == -1                    2nd black
+ *   c3  realbodygapup(i-1, i-2)             2nd body clears the 1st
+ *   c4  color(i) == -1                      3rd black
+ *   c5  open[i]  < open[i-1]
+ *   c6  open[i]  > close[i-1]
+ *   c7  close[i] > open[i-2]
+ *   c8  close[i] < close[i-2]
+ *
+ * Three of the nine cannot be falsified alone by ANY valid OHLC input -- they
+ * are entailed by their siblings -- so they are waived with the derivation
+ * rather than given a flip case that would really be testing two conditions at
+ * once. Each waiver is refutable: produce a flip whose paired control fires and
+ * it is wrong.
+ *
+ * Detect bars, referenced by every derivation below:
+ *   bar1 (100,106, 99,105)  white, rb 5 > avg 2
+ *   bar2 (110,111,106,107)  black, min(110,107)=107 > max(100,105)=105
+ *   bar3 (109,110,102,103)  black, 109<110, 109>107, 103>100, 103<105
+ */
 static void build_2crows( void )
 {
+  pb_conditions(9);
+
+  pb_waive(0, "c7 & c8 give open1 < close3 < close1, so the 1st is white by construction");
+  pb_waive(2, "c5 & c6 give close2 < open3 < open2, so the 2nd is black by construction");
+  pb_waive(4, "c3 & c6 give open3 > close2 > close1, and c8 gives close3 < close1, "
+              "so open3 > close3 and the 3rd is black by construction");
+
   pb_flat(6);
-  /* DETECTION: 1st long white, 2nd black gap-up, 3rd black opening in 2nd rb & closing in 1st rb */
+  /* DETECT: all nine hold. */
   pb_primer(12,100,2,1);
-  pb_bar(100,106,99,105);                 /* 1st: long white  body[100,105] rb=5>avg2 */
-  pb_bar(110,111,106,107);                /* 2nd: black gap-up body[107,110] min107>105 */
-  int d=pb_bar(109,110,102,103);          /* 3rd: black open109 in(107,110), close103 in(100,105) */
-  pb_expect(d,-100,"detect");
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int d=pb_bar(109,110,102,103);
+  pb_detect(d,-100,"detect");
   pb_flat(8);
-  /* FLIP 1: break 1st-white==1  (make 1st BLACK)  [also breaks close3<close1 - coupled] */
+
+  /* c1: 1st long. Flip shrinks the 1st real body to exactly the average
+   * (rb 2, avg 2 -- the test is strict >). Control widens it to 3. */
   pb_primer(12,100,2,1);
-  pb_bar(102,103,98,99);                  /* 1st BLACK body[99,102] rb=3>2 */
+  pb_bar(102,106,99,104);
   pb_bar(110,111,106,107);
   int f1=pb_bar(109,110,102,103);
-  pb_expect(f1,0,"break 1st-white");
+  pb_flip(f1,1,"break c1 1st-long: rb==avg");
   pb_flat(8);
-  /* FLIP 2: break 1st-long  (rb==avg, not > ) */
   pb_primer(12,100,2,1);
-  pb_bar(102,106,99,104);                 /* 1st white SHORT body[102,104] rb=2, 2>2 false */
+  pb_bar(102,106,99,105);
   pb_bar(110,111,106,107);
-  int f2=pb_bar(109,110,102,103);
-  pb_expect(f2,0,"break 1st-long");
+  int k1=pb_bar(109,110,102,103);
+  pb_control(k1,-100,1,"restore c1: rb 3 > avg 2");
   pb_flat(8);
-  /* FLIP 3: break 2nd-black==-1  (make 2nd WHITE)  [also breaks open3>close2 - coupled] */
+
+  /* c3: gap up. Flip drops the 2nd body's floor to 104, below the 1st body's
+   * top of 105. Control raises that same close to 106. */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
-  pb_bar(110,112,106,111);                /* 2nd WHITE body[110,111] */
+  pb_bar(110,111,103,105);
   int f3=pb_bar(109,110,102,103);
-  pb_expect(f3,0,"break 2nd-black");
+  pb_flip(f3,3,"break c3 gap-up: min(O2,C2)=105 !> 105");
   pb_flat(8);
-  /* FLIP 4: break gap-up  (2nd body overlaps 1st: min104 <= max105) */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
-  pb_bar(110,111,103,104);                /* 2nd black body[104,110] min104 !> 105 */
-  int f4=pb_bar(109,110,102,103);
-  pb_expect(f4,0,"break gapup");
+  pb_bar(110,111,103,106);
+  int k3=pb_bar(109,110,102,103);
+  pb_control(k3,-100,3,"restore c3: min(O2,C2)=106 > 105");
   pb_flat(8);
-  /* FLIP 5: break 3rd-black==-1  (make 3rd WHITE)  [also breaks close3<close1 - coupled] */
-  pb_primer(12,100,2,1);
-  pb_bar(100,106,99,105);
-  pb_bar(110,111,106,107);
-  int f5=pb_bar(109,111,108,110);         /* 3rd WHITE body[109,110] */
-  pb_expect(f5,0,"break 3rd-black");
-  pb_flat(8);
-  /* FLIP 6: break open3<open2  (open3=111 >= open2=110) */
+
+  /* c5: open3 < open2. Flip opens the 3rd at 111, above the 2nd's 110.
+   * Control moves that one open back to 109. */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
   pb_bar(110,111,106,107);
-  int f6=pb_bar(111,112,102,103);
-  pb_expect(f6,0,"break open3<open2");
+  int f5=pb_bar(110,111,102,103);
+  pb_flip(f5,5,"break c5: open3 110 >= open2 110");
   pb_flat(8);
-  /* FLIP 7: break open3>close2  (open3=106 <= close2=107) */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
   pb_bar(110,111,106,107);
-  int f7=pb_bar(106,107,102,103);
-  pb_expect(f7,0,"break open3>close2");
+  int k5=pb_bar(109,112,102,103);
+  pb_control(k5,-100,5,"restore c5: open3 109 < open2 110");
   pb_flat(8);
-  /* FLIP 8: break close3>open1  (close3=99 <= open1=100) */
+
+  /* c6: open3 > close2. Flip opens the 3rd at 106, at or below the 2nd's close
+   * of 107. Control moves it to 108, back inside the 2nd's body. */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
   pb_bar(110,111,106,107);
-  int f8=pb_bar(109,110,98,99);
-  pb_expect(f8,0,"break close3>open1");
+  int f6=pb_bar(107,108,102,103);
+  pb_flip(f6,6,"break c6: open3 107 <= close2 107");
   pb_flat(8);
-  /* FLIP 9: break close3<close1  (close3=106 >= close1=105) */
   pb_primer(12,100,2,1);
   pb_bar(100,106,99,105);
   pb_bar(110,111,106,107);
-  int f9=pb_bar(109,110,104,106);
-  pb_expect(f9,0,"break close3<close1");
+  int k6=pb_bar(108,109,102,103);
+  pb_control(k6,-100,6,"restore c6: open3 108 > close2 107");
+  pb_flat(8);
+
+  /* c7: close3 > open1. Flip closes the 3rd at 99, below the 1st's open of 100.
+   * Control lifts that close to 101, back inside the 1st body. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f7=pb_bar(109,110,98,100);
+  pb_flip(f7,7,"break c7: close3 100 <= open1 100");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int k7=pb_bar(109,110,98,101);
+  pb_control(k7,-100,7,"restore c7: close3 101 > open1 100");
+  pb_flat(8);
+
+  /* c8: close3 < close1. Flip closes the 3rd at 106, at or above the 1st's
+   * close of 105. Control lowers that close to 104. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int f8=pb_bar(109,110,103,105);
+  pb_flip(f8,8,"break c8: close3 105 >= close1 105");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,106,99,105);
+  pb_bar(110,111,106,107);
+  int k8=pb_bar(109,110,103,104);
+  pb_control(k8,-100,8,"restore c8: close3 104 < close1 105");
   pb_flat(8);
 }
 
-/* CDL3BLACKCROWS MC/DC: detection (-100) + one flip per structural predicate. */
+/* CDL3BLACKCROWS -- second reference builder. Adds the condition class 2CROWS
+ * has none of: a SHADOW AVERAGE (ShadowVeryShort, HighLow/10/0.1).
+ *
+ * Fourteen atomic conditions (cdl3blackcrows.c), bars A=i-3, B=i-2, C=i-1, D=i:
+ *
+ *   c0  color(A) == 1                 c7  open(D)  > close(C)
+ *   c1  color(B) == -1                c8  high(A)  > close(B)
+ *   c2  color(C) == -1                c9  close(B) > close(C)
+ *   c3  color(D) == -1                c10 close(C) > close(D)
+ *   c4  open(C) < open(B)             c11 lowershadow(B) < avg(ShadowVeryShort)
+ *   c5  open(C) > close(B)            c12 lowershadow(C) < avg(ShadowVeryShort)
+ *   c6  open(D) < open(C)             c13 lowershadow(D) < avg(ShadowVeryShort)
+ *
+ * The same structural fact as 2CROWS decides the waivers, and it is worth
+ * stating as a rule because it recurs across the family: WHERE A PATTERN
+ * ORDERS A BAR'S OPEN AND CLOSE AGAINST OTHER PRICES, ITS COLOUR TEST IS
+ * ENTAILED AND CANNOT BE FLIPPED ALONE. ta_candlecolor returns only +1/-1, so
+ * "not black" is "white", and the ordering conditions already force which.
+ * c0 is the exception here: A's open and close are ordered against nothing, so
+ * its colour IS independently flippable.
+ *
+ * The shadow threshold is ~0.39-0.41 (primer range 4, factor 0.1, and the
+ * pattern bars themselves enter the trailing window). Flips overshoot it to 1.0
+ * and controls sit at 0.2, so neither rides the boundary.
+ */
 static void build_3blackcrows( void )
 {
+  pb_conditions(14);
+
+  pb_waive(1, "c4 & c5 give close(B) < open(C) < open(B), so B is black by construction");
+  pb_waive(2, "c6 & c7 give close(C) < open(D) < open(C), so C is black by construction");
+  pb_waive(3, "c7 & c10 give open(D) > close(C) > close(D), so D is black by construction");
+
   pb_flat(6);
-  /* ===== DETECTION =====
-     A white, B/C/D three declining black crows, each opens within prior body,
-     each near-zero lower shadow, A.high > B.close. */
-  pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);        /* A  white */
-  pb_bar(103,103.5,101,101);      /* B  1st black */
-  pb_bar(102,102.5,99,99);        /* C  2nd black */
-  int d=pb_bar(101,101.5,97,97);  /* D  3rd black */
-  pb_expect(d,-100,"detect");
-  pb_flat(8);
-
-  /* FLIP 1 : break p1  colorA==white -> make A black (only p1) */
-  pb_primer(12,100,2,1);
-  pb_bar(104,105,100,100);        /* A  black */
-  pb_bar(103,103.5,101,101);
-  pb_bar(102,102.5,99,99);
-  int f1=pb_bar(101,101.5,97,97);
-  pb_expect(f1,0,"break p1 colorA-white");
-  pb_flat(8);
-
-  /* FLIP 2 : break p2  colorB==black -> B doji/white (p6 co-flips: coupled) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);
-  pb_bar(103,103.5,103,103);      /* B  doji -> white */
-  pb_bar(102,102.5,99,99);
-  int f2=pb_bar(101,101.5,97,97);
-  pb_expect(f2,0,"break p2 colorB-black");
-  pb_flat(8);
-
-  /* FLIP 3 : break p3  colorC==black -> C doji/white (p8,p10 co-flip: coupled) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);
-  pb_bar(103,103.5,101,101);
-  pb_bar(102,102.5,102,102);      /* C  doji -> white */
-  int f3=pb_bar(101,101.5,97,97);
-  pb_expect(f3,0,"break p3 colorC-black");
-  pb_flat(8);
-
-  /* FLIP 4 : break p4  colorD==black -> D doji/white (p11 co-flips: coupled) */
+  /* DETECT */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
   pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
-  int f4=pb_bar(101,101.5,101,101); /* D  doji -> white */
-  pb_expect(f4,0,"break p4 colorD-black");
+  int d=pb_bar(101,101.5,97,97);
+  pb_detect(d,-100,"detect");
   pb_flat(8);
 
-  /* FLIP 5 : break p5  openC<openB -> openC above openB (only p5) */
+  /* c0: A is white. A's open/close are ordered against nothing, so unlike
+   * B/C/D this colour test is genuinely independent. */
   pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);
-  pb_bar(103,103.5,101,101);
-  pb_bar(103.5,104,99,99);        /* C  opens above B.open=103 */
-  int f5=pb_bar(101,101.5,97,97);
-  pb_expect(f5,0,"break p5 openC<openB");
-  pb_flat(8);
-
-  /* FLIP 6 : break p6  openC>closeB -> openC below closeB (only p6) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);
-  pb_bar(103,103.5,101,101);
-  pb_bar(100,100.5,99,99);        /* C  opens below B.close=101 */
-  int f6=pb_bar(99.5,100,97,97);  /* D  re-fit inside C body (99,100) */
-  pb_expect(f6,0,"break p6 openC>closeB");
-  pb_flat(8);
-
-  /* FLIP 7 : break p7  openD<openC -> openD above openC (only p7) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,105,100,104);
+  pb_bar(104,105,100,100);
   pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
-  int f7=pb_bar(102.5,103,97,97); /* D  opens above C.open=102 */
-  pb_expect(f7,0,"break p7 openD<openC");
+  int f0=pb_bar(101,101.5,97,97);
+  pb_flip(f0,0,"break c0: A black");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,103);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k0=pb_bar(101,101.5,97,97);
+  pb_control(k0,-100,0,"restore c0: A white");
   pb_flat(8);
 
-  /* FLIP 8 : break p8  openD>closeC -> openD below closeC (only p8) */
+  /* c4: open(C) < open(B). */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(103,103.5,99,99);
+  int f4=pb_bar(101,101.5,97,97);
+  pb_flip(f4,4,"break c4: open(C) 103 >= open(B) 103");
+  pb_flat(8);
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
   pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
-  int f8=pb_bar(98,98.5,97,97);   /* D  opens below C.close=99 */
-  pb_expect(f8,0,"break p8 openD>closeC");
+  int k4=pb_bar(101,101.5,97,97);
+  pb_control(k4,-100,4,"restore c4: open(C) 102 < open(B) 103");
   pb_flat(8);
 
-  /* FLIP 9 : break p9  highA>closeB -> A.high below B.close (only p9) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,100.9,100,100.8);    /* A  white, high 100.9 < B.close 101 */
-  pb_bar(103,103.5,101,101);
-  pb_bar(102,102.5,99,99);
-  int f9=pb_bar(101,101.5,97,97);
-  pb_expect(f9,0,"break p9 highA>closeB");
-  pb_flat(8);
-
-  /* FLIP 10: break p10 closeB>closeC -> B.close below C.close (only p10) */
+  /* c5: open(C) > close(B). D's open moves with it only to keep c6 true --
+   * the condition under test is still the only one broken. */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
-  pb_bar(103,103.5,98.5,98.5);    /* B  close 98.5 <= C.close 99 */
-  pb_bar(102,102.5,99,99);
-  int f10=pb_bar(101,101.5,97,97);
-  pb_expect(f10,0,"break p10 closeB>closeC");
+  pb_bar(103,103.5,101,101);
+  pb_bar(101,101.5,99,99);
+  int f5=pb_bar(100,100.5,97,97);
+  pb_flip(f5,5,"break c5: open(C) 101 <= close(B) 101");
   pb_flat(8);
-
-  /* FLIP 11: break p11 closeC>closeD -> D.close above C.close (only p11) */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
   pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
-  int f11=pb_bar(101,101.5,99.5,99.5); /* D  close 99.5 >= C.close 99 */
-  pb_expect(f11,0,"break p11 closeC>closeD");
+  int k5=pb_bar(100,100.5,97,97);
+  pb_control(k5,-100,5,"restore c5: open(C) 102 > close(B) 101");
   pb_flat(8);
 
-  /* FLIP 12: break p12 B lower shadow short -> long lower shadow (only p12) */
+  /* c6: open(D) < open(C). */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
-  pb_bar(103,103.5,100,101);      /* B  lowershadow = 101-100 = 1 > ~0.4 */
+  pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
+  int f6=pb_bar(102,102.5,97,97);
+  pb_flip(f6,6,"break c6: open(D) 102 >= open(C) 102");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k6=pb_bar(101,101.5,97,97);
+  pb_control(k6,-100,6,"restore c6: open(D) 101 < open(C) 102");
+  pb_flat(8);
+
+  /* c7: open(D) > close(C). */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f7=pb_bar(99,99.5,97,97);
+  pb_flip(f7,7,"break c7: open(D) 99 <= close(C) 99");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k7=pb_bar(100,100.5,97,97);
+  pb_control(k7,-100,7,"restore c7: open(D) 100 > close(C) 99");
+  pb_flat(8);
+
+  /* c8: high(A) > close(B). Only A's high moves. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,101,100,100.5);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f8=pb_bar(101,101.5,97,97);
+  pb_flip(f8,8,"break c8: high(A) 101 <= close(B) 101");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,102,100,100.5);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k8=pb_bar(101,101.5,97,97);
+  pb_control(k8,-100,8,"restore c8: high(A) 102 > close(B) 101");
+  pb_flat(8);
+
+  /* c9: close(B) > close(C). D's open moves only to keep c7 true. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,101,101);
+  int f9=pb_bar(101.5,102,97,97);
+  pb_flip(f9,9,"break c9: close(B) 101 <= close(C) 101");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k9=pb_bar(101.5,102,97,97);
+  pb_control(k9,-100,9,"restore c9: close(B) 101 > close(C) 99");
+  pb_flat(8);
+
+  /* c10: close(C) > close(D). */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int f10=pb_bar(101,101.5,99,99);
+  pb_flip(f10,10,"break c10: close(D) 99 >= close(C) 99");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k10=pb_bar(101,101.5,97,97);
+  pb_control(k10,-100,10,"restore c10: close(D) 97 < close(C) 99");
+  pb_flat(8);
+
+  /* c11: B's lower shadow under the ShadowVeryShort average (~0.41). */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,100,101);
+  pb_bar(102,102.5,99,99);
+  int f11=pb_bar(101,101.5,97,97);
+  pb_flip(f11,11,"break c11: lowershadow(B) 1.0 >= avg");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,100.8,101);
+  pb_bar(102,102.5,99,99);
+  int k11=pb_bar(101,101.5,97,97);
+  pb_control(k11,-100,11,"restore c11: lowershadow(B) 0.2 < avg");
+  pb_flat(8);
+
+  /* c12: C's lower shadow. */
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,98,99);
   int f12=pb_bar(101,101.5,97,97);
-  pb_expect(f12,0,"break p12 shadowB-short");
+  pb_flip(f12,12,"break c12: lowershadow(C) 1.0 >= avg");
   pb_flat(8);
-
-  /* FLIP 13: break p13 C lower shadow short -> long lower shadow (only p13) */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
   pb_bar(103,103.5,101,101);
-  pb_bar(102,102.5,97,99);        /* C  lowershadow = 99-97 = 2 > ~0.4 */
-  int f13=pb_bar(101,101.5,97,97);
-  pb_expect(f13,0,"break p13 shadowC-short");
+  pb_bar(102,102.5,98.8,99);
+  int k12=pb_bar(101,101.5,97,97);
+  pb_control(k12,-100,12,"restore c12: lowershadow(C) 0.2 < avg");
   pb_flat(8);
 
-  /* FLIP 14: break p14 D lower shadow short -> long lower shadow (only p14) */
+  /* c13: D's lower shadow. */
   pb_primer(12,100,2,1);
   pb_bar(100,105,100,104);
   pb_bar(103,103.5,101,101);
   pb_bar(102,102.5,99,99);
-  int f14=pb_bar(101,101.5,95,97); /* D  lowershadow = 97-95 = 2 > ~0.4 */
-  pb_expect(f14,0,"break p14 shadowD-short");
+  int f13=pb_bar(101,101.5,96,97);
+  pb_flip(f13,13,"break c13: lowershadow(D) 1.0 >= avg");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(100,105,100,104);
+  pb_bar(103,103.5,101,101);
+  pb_bar(102,102.5,99,99);
+  int k13=pb_bar(101,101.5,96.8,97);
+  pb_control(k13,-100,13,"restore c13: lowershadow(D) 0.2 < avg");
   pb_flat(8);
 }
 
-/* CDL3WHITESOLDIERS MC/DC: detection (100) + one flip per structural predicate. */
+/* CDL3WHITESOLDIERS -- third reference builder. Adds the TOLERANCE-BASED
+ * threshold class: Near (HighLow/5/0.2) and Far (HighLow/5/0.6), where the
+ * comparison is against "a neighbouring price PLUS an average" rather than
+ * against a price directly.
+ *
+ * Fifteen conditions (cdl3whitesoldiers.c), bars b1=i-2, b2=i-1, b3=i:
+ *
+ *   c0  color(b1) == 1                c7  close(b2) > close(b1)
+ *   c1  uppershadow(b1) < avg(SVS)    c8  open(b2)  > open(b1)
+ *   c2  color(b2) == 1                c9  open(b2)  <= close(b1) + avg(Near)
+ *   c3  uppershadow(b2) < avg(SVS)    c10 open(b3)  > open(b2)
+ *   c4  color(b3) == 1                c11 open(b3)  <= close(b2) + avg(Near)
+ *   c5  uppershadow(b3) < avg(SVS)    c12 rb(b2) > rb(b1) - avg(Far)
+ *   c6  close(b3) > close(b2)         c13 rb(b3) > rb(b2) - avg(Far)
+ *                                     c14 rb(b3) > avg(BodyShort)
+ *
+ * NO WAIVERS -- and that is the point of keeping this one as a reference. The
+ * colour-test rule that forces three waivers in 2CROWS and 3BLACKCROWS does NOT
+ * apply here, because the ordering conditions are separated by a tolerance:
+ * c8 and c9 give open(b1) < open(b2) <= close(b1) + Near, which permits
+ * open(b1) > close(b1) whenever the real body is smaller than Near. So all
+ * three colour tests are independently flippable, with a black bar whose body
+ * fits inside the tolerance. A rule inferred from the first two patterns alone
+ * would have waived them wrongly.
+ *
+ * Primer range is 18 (pb_primer(12,100,2,8)), giving SVS ~1.6-1.8, Near ~3.1-3.6
+ * and Far ~9.4-10.8; the trailing windows also swallow the pattern bars, so each
+ * scenario below keeps the bars it is not testing at a range that leaves those
+ * thresholds where the detect case put them.
+ */
 static void build_3whitesoldiers( void )
 {
+  pb_conditions(15);
+
   pb_flat(6);
-  /* ---- DETECTION: three ascending white soldiers ---- */
+  /* DETECT */
   pb_primer(12,100,2,8);
-  pb_bar(100,106.2,99.8,106);          /* b1 white rb6 */
-  pb_bar(104,112.2,103.8,112);         /* b2 white rb8 */
-  int d=pb_bar(110,118.2,109.8,118);   /* b3 white rb8 -> 100 */
-  pb_expect(d,100,"detect");
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int d=pb_bar(110,118.2,109.8,118);
+  pb_detect(d,100,"detect");
   pb_flat(8);
-  /* ---- FLIP P1: 1st NOT white (black) ---- */
+
+  /* c0: b1 white. Flip uses a black b1 whose 2-wide body fits inside Near, so
+   * c8/c9 still hold -- the tolerance is exactly what makes this flippable. */
   pb_primer(12,100,2,8);
-  pb_bar(103,103.2,100.8,101);         /* b1 BLACK (c<o) */
+  pb_bar(103,103.2,100.8,101);
+  pb_bar(104,112.2,103.8,112);
+  int f0=pb_bar(110,118.2,109.8,118);
+  pb_flip(f0,0,"break c0: b1 black");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(101,103.2,100.8,103);
+  pb_bar(104,112.2,103.8,112);
+  int k0=pb_bar(110,118.2,109.8,118);
+  pb_control(k0,100,0,"restore c0: b1 white, same range");
+  pb_flat(8);
+
+  /* c1: b1 upper shadow. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,110,99.8,106);
   pb_bar(104,112.2,103.8,112);
   int f1=pb_bar(110,118.2,109.8,118);
-  pb_expect(f1,0,"break P1 1st-white");
+  pb_flip(f1,1,"break c1: uppershadow(b1) 4.0 >= avg");
   pb_flat(8);
-  /* ---- FLIP P2: 1st upper shadow NOT very short ---- */
   pb_primer(12,100,2,8);
-  pb_bar(100,108,99.8,106);            /* b1 tall upper shadow (2.0 >= 1.8) */
+  pb_bar(100,107.5,99.8,106);
   pb_bar(104,112.2,103.8,112);
+  int k1=pb_bar(110,118.2,109.8,118);
+  pb_control(k1,100,1,"restore c1: uppershadow(b1) 1.5 < avg");
+  pb_flat(8);
+
+  /* c2: b2 white. Body kept inside Near, and b3's open follows it so c10/c11
+   * stay true -- only the colour of b2 is under test. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(109,109.2,107.8,108);
   int f2=pb_bar(110,118.2,109.8,118);
-  pb_expect(f2,0,"break P2 1st-uppershadow");
+  pb_flip(f2,2,"break c2: b2 black");
   pb_flat(8);
-  /* ---- FLIP P3: 2nd NOT white (black) ---- */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
-  pb_bar(109,109.2,106.8,107);         /* b2 BLACK (c<o), still c2>c1 & o2<=c1+Near */
-  int f3=pb_bar(109.5,118.2,109.3,118);
-  pb_expect(f3,0,"break P3 2nd-white");
+  pb_bar(108,109.2,107.8,109);
+  int k2=pb_bar(110,118.2,109.8,118);
+  pb_control(k2,100,2,"restore c2: b2 white, same range");
   pb_flat(8);
-  /* ---- FLIP P4: 2nd upper shadow NOT very short ---- */
+
+  /* c3: b2 upper shadow. */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
-  pb_bar(104,115,103.8,112);           /* b2 tall upper shadow (3.0 >= 1.684) */
-  int f4=pb_bar(110,118.2,109.8,118);
-  pb_expect(f4,0,"break P4 2nd-uppershadow");
+  pb_bar(104,118,103.8,112);
+  int f3=pb_bar(110,118.2,109.8,118);
+  pb_flip(f3,3,"break c3: uppershadow(b2) 6.0 >= avg");
   pb_flat(8);
-  /* ---- FLIP P5: 3rd NOT white (black) ---- */
-  pb_primer(12,100,2,8);
-  pb_bar(100,102.2,88,102);            /* b1 small white, big HL to fatten Near/Far */
-  pb_bar(103,105.2,102.8,105);         /* b2 small white */
-  int f5=pb_bar(108,108.2,105.3,105.5);/* b3 BLACK, rb2.5>BodyShort2.0, o3<=c2+Near */
-  pb_expect(f5,0,"break P5 3rd-white");
-  pb_flat(8);
-  /* ---- FLIP P6: 3rd upper shadow NOT very short ---- */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
-  pb_bar(104,112.2,103.8,112);
-  int f6=pb_bar(110,121,109.8,118);    /* b3 tall upper shadow (3.0 >= 1.588) */
-  pb_expect(f6,0,"break P6 3rd-uppershadow");
+  pb_bar(104,113.2,103.8,112);
+  int k3=pb_bar(110,118.2,109.8,118);
+  pb_control(k3,100,3,"restore c3: uppershadow(b2) 1.2 < avg");
   pb_flat(8);
-  /* ---- FLIP P7: NOT c3>c2 ---- */
+
+  /* c4: b3 white -- again only reachable through the Near tolerance on c11. */
   pb_primer(12,100,2,8);
-  pb_bar(100,106.2,99.8,106);
-  pb_bar(104,112.2,103.8,112);
-  int f7=pb_bar(107,111.2,106.8,111);  /* c3=111 <= c2=112, rb3=4 keeps P14/P15 */
-  pb_expect(f7,0,"break P7 c3>c2");
+  pb_bar(100,102.2,94,102);
+  pb_bar(103,105.2,102.8,105);
+  int f4=pb_bar(107.9,108.1,105.2,105.4);
+  pb_flip(f4,4,"break c4: b3 black");
   pb_flat(8);
-  /* ---- FLIP P8: NOT c2>c1 ---- */
   pb_primer(12,100,2,8);
-  pb_bar(100,106.2,99.8,106);
-  pb_bar(104,105.2,103.8,105);         /* c2=105 <= c1=106 */
-  int f8=pb_bar(107,115.2,106.8,115);  /* o3 lowered so P12 holds under lower c2 */
-  pb_expect(f8,0,"break P8 c2>c1");
+  pb_bar(100,102.2,94,102);
+  pb_bar(103,105.2,102.8,105);
+  int k4=pb_bar(105.4,108.1,105.2,107.9);
+  pb_control(k4,100,4,"restore c4: b3 white, same range");
   pb_flat(8);
-  /* ---- FLIP P9: NOT o2>o1 ---- */
-  pb_primer(12,100,2,8);
-  pb_bar(100,106.2,99.8,106);
-  pb_bar(100,112.2,99.8,112);          /* o2=100 == o1=100 */
-  int f9=pb_bar(110,118.2,109.8,118);
-  pb_expect(f9,0,"break P9 o2>o1");
-  pb_flat(8);
-  /* ---- FLIP P10: NOT o2<=c1+Near ---- */
-  pb_primer(12,100,2,8);
-  pb_bar(100,106.2,99.8,106);
-  pb_bar(110,112.2,109.8,112);         /* o2=110 > c1+Near=109.6 */
-  int f10=pb_bar(111,118.2,110.8,118); /* o3 raised so P11 (o3>o2) holds */
-  pb_expect(f10,0,"break P10 o2<=c1+Near");
-  pb_flat(8);
-  /* ---- FLIP P11: NOT o3>o2 ---- */
+
+  /* c5: b3 upper shadow. */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
   pb_bar(104,112.2,103.8,112);
-  int f11=pb_bar(104,118.2,103.8,118); /* o3=104 == o2=104 */
-  pb_expect(f11,0,"break P11 o3>o2");
+  int f5=pb_bar(110,125,109.8,118);
+  pb_flip(f5,5,"break c5: uppershadow(b3) 7.0 >= avg");
   pb_flat(8);
-  /* ---- FLIP P12: NOT o3<=c2+Near ---- */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
   pb_bar(104,112.2,103.8,112);
-  int f12=pb_bar(116,124.2,115.8,124); /* o3=116 > c2+Near=115.136 */
-  pb_expect(f12,0,"break P12 o3<=c2+Near");
+  int k5=pb_bar(110,119.2,109.8,118);
+  pb_control(k5,100,5,"restore c5: uppershadow(b3) 1.2 < avg");
   pb_flat(8);
-  /* ---- FLIP P13: NOT rb2>rb1-Far ---- */
-  pb_primer(12,100,2,8);
-  pb_bar(100,115.2,99.8,115);          /* b1 rb15 */
-  pb_bar(116,117.2,115.8,117);         /* b2 rb1 <= rb1-Far=4.2 */
-  int f13=pb_bar(118,126.2,117.8,126);
-  pb_expect(f13,0,"break P13 rb2>rb1-Far");
-  pb_flat(8);
-  /* ---- FLIP P14: NOT rb3>rb2-Far ---- */
-  pb_primer(12,100,2,8);
-  pb_bar(100,102.2,95.8,102);          /* b1 rb2 */
-  pb_bar(105,125.2,104.8,125);         /* b2 rb20 */
-  int f14=pb_bar(126,131.2,125.8,131); /* rb3=5 <= rb2-Far=10.592, >BodyShort=3.8 */
-  pb_expect(f14,0,"break P14 rb3>rb2-Far");
-  pb_flat(8);
-  /* ---- FLIP P15: NOT rb3>BodyShort ---- */
+
+  /* c6: close(b3) > close(b2). The high moves with the close only to keep c5
+   * true; the quantity under test is the close. */
   pb_primer(12,100,2,8);
   pb_bar(100,106.2,99.8,106);
   pb_bar(104,112.2,103.8,112);
-  int f15=pb_bar(113,115.2,112.8,115); /* rb3=2 <= BodyShort=3.0 */
-  pb_expect(f15,0,"break P15 rb3>BodyShort");
+  int f6=pb_bar(105,112.2,104.8,112);
+  pb_flip(f6,6,"break c6: close(b3) 112 <= close(b2) 112");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int k6=pb_bar(105,113.2,104.8,113);
+  pb_control(k6,100,6,"restore c6: close(b3) 113 > close(b2) 112");
+  pb_flat(8);
+
+  /* c7: close(b2) > close(b1). b3 opens lower so c11 survives the smaller
+   * close(b2); only c7 is broken. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,106.2,103.8,106);
+  int f7=pb_bar(108,118.2,107.8,118);
+  pb_flip(f7,7,"break c7: close(b2) 106 <= close(b1) 106");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,108.2,103.8,108);
+  int k7=pb_bar(108,118.2,107.8,118);
+  pb_control(k7,100,7,"restore c7: close(b2) 108 > close(b1) 106");
+  pb_flat(8);
+
+  /* c8: open(b2) > open(b1). */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(100,112.2,99.8,112);
+  int f8=pb_bar(110,118.2,109.8,118);
+  pb_flip(f8,8,"break c8: open(b2) 100 <= open(b1) 100");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(101,112.2,100.8,112);
+  int k8=pb_bar(110,118.2,109.8,118);
+  pb_control(k8,100,8,"restore c8: open(b2) 101 > open(b1) 100");
+  pb_flat(8);
+
+  /* c9: open(b2) <= close(b1) + Near. b3's open follows b2's so c10 holds. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(110,118.2,109.8,118);
+  int f9=pb_bar(112,120.2,111.8,120);
+  pb_flip(f9,9,"break c9: open(b2) 110 > close(b1) 106 + Near");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(109,118.2,108.8,118);
+  int k9=pb_bar(112,120.2,111.8,120);
+  pb_control(k9,100,9,"restore c9: open(b2) 109 <= close(b1) 106 + Near");
+  pb_flat(8);
+
+  /* c10: open(b3) > open(b2). */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int f10=pb_bar(104,118.2,103.8,118);
+  pb_flip(f10,10,"break c10: open(b3) 104 <= open(b2) 104");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int k10=pb_bar(105,118.2,104.8,118);
+  pb_control(k10,100,10,"restore c10: open(b3) 105 > open(b2) 104");
+  pb_flat(8);
+
+  /* c11: open(b3) <= close(b2) + Near. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int f11=pb_bar(116,124.2,115.8,124);
+  pb_flip(f11,11,"break c11: open(b3) 116 > close(b2) 112 + Near");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int k11=pb_bar(115,123.2,114.8,123);
+  pb_control(k11,100,11,"restore c11: open(b3) 115 <= close(b2) 112 + Near");
+  pb_flat(8);
+
+  /* c12: rb(b2) > rb(b1) - Far. Needs a 22-wide b1 before the shortfall is
+   * even reachable, since Far is ~10.8 -- which is why this condition is
+   * nearly always true on ordinary data and why it needs a case at all. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,122.2,99.8,122);
+  pb_bar(124,126.2,123.8,126);
+  int f12=pb_bar(128,134.2,127.8,134);
+  pb_flip(f12,12,"break c12: rb(b2) 2 <= rb(b1) 22 - Far");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,122.2,99.8,122);
+  pb_bar(114,126.2,113.8,126);
+  int k12=pb_bar(128,134.2,127.8,134);
+  pb_control(k12,100,12,"restore c12: rb(b2) 12 > rb(b1) 22 - Far");
+  pb_flat(8);
+
+  /* c13: rb(b3) > rb(b2) - Far. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,122.2,103.8,122);
+  int f13=pb_bar(124,130.2,123.8,130);
+  pb_flip(f13,13,"break c13: rb(b3) 6 <= rb(b2) 18 - Far");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,122.2,103.8,122);
+  int k13=pb_bar(118,130.2,117.8,130);
+  pb_control(k13,100,13,"restore c13: rb(b3) 12 > rb(b2) 18 - Far");
+  pb_flat(8);
+
+  /* c14: rb(b3) > avg(BodyShort). The condition that is easiest to miss when
+   * enumerating this pattern by eye -- it sits alone after the two Far tests
+   * and reads like a repeat of them. Every threshold puzzle in this builder
+   * traced back to omitting it. */
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int f14=pb_bar(111,113.2,110.8,113);
+  pb_flip(f14,14,"break c14: rb(b3) 2 <= avg(BodyShort) 3");
+  pb_flat(8);
+  pb_primer(12,100,2,8);
+  pb_bar(100,106.2,99.8,106);
+  pb_bar(104,112.2,103.8,112);
+  int k14=pb_bar(109,113.2,108.8,113);
+  pb_control(k14,100,14,"restore c14: rb(b3) 4 > avg(BodyShort) 3");
   pb_flat(8);
 }
 
-/* CDL3STARSINSOUTH MC/DC: detection (100) + one flip per structural predicate. */
+/* CDL3STARSINSOUTH -- fourth reference builder. Adds the last threshold class:
+ * a SELF-REFERENTIAL average. ShadowLong defaults to {RealBody, 0, 1.0}, and an
+ * avgPeriod of 0 makes ta_candleaverage return the CURRENT bar's own range
+ * rather than a trailing mean -- so c4 reads "this candle's lower shadow
+ * exceeds this candle's own body". The threshold moves with the bar under test,
+ * which is why the eight functions reading ShadowLong/ShadowVeryLong cannot be
+ * flipped by the usual "move the value, leave the threshold" edit.
+ *
+ * Sixteen conditions (cdl3starsinsouth.c), bars C1=i-2, C2=i-1, C3=i:
+ *
+ *   c0  color(C1) == -1               c8  low(C2)  < close(C1)
+ *   c1  color(C2) == -1               c9  low(C2)  >= low(C1)
+ *   c2  color(C3) == -1               c10 lowershadow(C2) > avg(SVS)
+ *   c3  rb(C1) > avg(BodyLong)        c11 rb(C3) < avg(BodyShort)
+ *   c4  lowershadow(C1) > avg(ShadowLong)   [== rb(C1), self-referential]
+ *   c5  rb(C2) < rb(C1)               c12 lowershadow(C3) < avg(SVS)
+ *   c6  open(C2) > close(C1)          c13 uppershadow(C3) < avg(SVS)
+ *   c7  open(C2) <= high(C1)          c14 low(C3)  > low(C2)
+ *                                     c15 high(C3) < high(C2)
+ *
+ * No waivers: every colour test here is ordered against prices loosely enough
+ * (or not at all) to be flipped on its own, unlike 2CROWS and 3BLACKCROWS.
+ *
+ * Several flips move a SECOND bar as well -- breaking c4 raises C1's low, which
+ * would drag c9 and c14 down with it unless C2 and C3 follow. That is allowed
+ * and is the normal case: the contract is that exactly one CONDITION ends up
+ * false, not that exactly one number changes.
+ */
 static void build_3starsinsouth( void )
 {
-  int d,f;
+  pb_conditions(16);
+
   pb_flat(6);
-
-  /* DETECTION: valid Three Stars in the South -> 100 */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,95,110);            /* C1: long black, long lower shadow */
-  pb_bar(118,118,100,112);           /* C2: smaller black, opens higher within range, lower shadow */
-  d=pb_bar(106,106.3,104.7,105);     /* C3: small black marubozu engulfed */
-  pb_expect(d,100,"detect");
-  pb_flat(8);
-
-  /* P1: break color(1st)==-1 -> make C1 white (close>=open) */
-  pb_primer(12,100,2,1);
-  pb_bar(100,121,85,110);            /* white body [100,110] */
-  pb_bar(118,118,100,112);
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p1 color1st");
-  pb_flat(8);
-
-  /* P2: break color(2nd)==-1 -> make C2 white */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,95,110);
-  pb_bar(113,116,100,116);           /* white body [113,116] */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p2 color2nd");
-  pb_flat(8);
-
-  /* P3: break color(3rd)==-1 -> make C3 white */
+  /* DETECT */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
   pb_bar(118,118,100,112);
-  f=pb_bar(105,106.3,104.7,106);     /* white body [105,106] */
-  pb_expect(f,0,"break p3 color3rd");
+  int d=pb_bar(106,106.3,104.7,105);
+  pb_detect(d,100,"detect");
   pb_flat(8);
 
-  /* P4: break realbody(1st) > BodyLong avg -> C1 short body (2nd shrunk to keep p6) */
+  /* c0: C1 black. C2 opens above C1's white close so c6 survives. */
   pb_primer(12,100,2,1);
-  pb_bar(111.9,121,95,110);          /* body 1.9 <= 2 */
-  pb_bar(113,113,100,112);           /* body 1 (< 1.9 keeps p6) */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p4 bodyLong1st");
+  pb_bar(110,121,95,120);
+  pb_bar(120.5,120.6,100,115);
+  int f0=pb_bar(106,106.3,104.7,105);
+  pb_flip(f0,0,"break c0: C1 white");
   pb_flat(8);
-
-  /* P5: break lowershadow(1st) > ShadowLong avg -> lower shadow == threshold */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,100,110);           /* lowsh=10 == realbody=10 */
-  pb_bar(118,118,100,112);
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p5 lowerShadow1st");
-  pb_flat(8);
-
-  /* P6: break realbody(2nd) < realbody(1st) -> C2 body bigger than C1 */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
-  pb_bar(120,120,100,108);           /* body 12 >= 10 */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p6 smaller2nd");
+  pb_bar(120.5,120.6,100,115);
+  int k0=pb_bar(106,106.3,104.7,105);
+  pb_control(k0,100,0,"restore c0: C1 black");
   pb_flat(8);
 
-  /* P7: break open(2nd) > close(1st) -> open2 == close1 */
+  /* c1: C2 black. */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
-  pb_bar(110,110,100,105);           /* open2=110=close1 */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p7 open2GTclose1");
+  pb_bar(118,124,100,122);
+  int f1=pb_bar(106,106.3,104.7,105);
+  pb_flip(f1,1,"break c1: C2 white");
   pb_flat(8);
-
-  /* P8: break open(2nd) <= high(1st) -> open2 above high1 */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
-  pb_bar(122,122,100,118);           /* open2=122 > high1=121 */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p8 open2LEhigh1");
+  pb_bar(118,124,100,114);
+  int k1=pb_bar(106,106.3,104.7,105);
+  pb_control(k1,100,1,"restore c1: C2 black, same range");
   pb_flat(8);
 
-  /* P9: break low(2nd) < close(1st) -> lower close1 to == low2 */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,75,100);            /* close1=100 == low2 */
-  pb_bar(118,118,100,112);
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p9 low2LTclose1");
-  pb_flat(8);
-
-  /* P10: break low(2nd) >= low(1st) -> low2 below low1 */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,95,110);
-  pb_bar(118,118,90,112);            /* low2=90 < low1=95 */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p10 low2GElow1");
-  pb_flat(8);
-
-  /* P11: break lowershadow(2nd) > ShadowVeryShort avg -> C2 tiny lower shadow (C3 raised) */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,95,110);
-  pb_bar(112,112,105.7,106);         /* lowsh2=0.3 < ~0.62 */
-  f=pb_bar(109,109.3,107.7,108);     /* engulfed above low2=105.7 */
-  pb_expect(f,0,"break p11 lowerShadow2nd");
-  pb_flat(8);
-
-  /* P12: break realbody(3rd) < BodyShort avg -> C3 big body */
+  /* c2: C3 black. */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
   pb_bar(118,118,100,112);
-  f=pb_bar(108,108.3,102.7,103);     /* body 5 > ~3.2 */
-  pb_expect(f,0,"break p12 bodyShort3rd");
+  int f2=pb_bar(105,106.3,104.7,106);
+  pb_flip(f2,2,"break c2: C3 white");
   pb_flat(8);
-
-  /* P13: break lowershadow(3rd) < ShadowVeryShort avg -> C3 big lower shadow */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
   pb_bar(118,118,100,112);
-  f=pb_bar(106,106.3,103,105);       /* lowsh3=2 > ~0.76 */
-  pb_expect(f,0,"break p13 lowerShadow3rd");
+  int k2=pb_bar(106,106.3,104.7,105);
+  pb_control(k2,100,2,"restore c2: C3 black");
   pb_flat(8);
 
-  /* P14: break uppershadow(3rd) < ShadowVeryShort avg -> C3 big upper shadow */
+  /* c3: C1's body over BodyLong. C2 shrinks so c5 survives the shorter C1. */
+  pb_primer(12,100,2,1);
+  pb_bar(112,121,95,110);
+  pb_bar(118,118,100,117);
+  int f3=pb_bar(106,106.3,104.7,105);
+  pb_flip(f3,3,"break c3: rb(C1) 2 <= avg(BodyLong) 2");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(113,121,95,110);
+  pb_bar(118,118,100,117);
+  int k3=pb_bar(106,106.3,104.7,105);
+  pb_control(k3,100,3,"restore c3: rb(C1) 3 > avg(BodyLong) 2");
+  pb_flat(8);
+
+  /* c4: THE SELF-REFERENTIAL ONE. Raising C1's low shrinks its lower shadow
+   * below its own body; C2 and C3 follow so c9 and c14 stay true. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,105,110);
+  pb_bar(118,118,106,112);
+  int f4=pb_bar(108,108.3,106.7,107);
+  pb_flip(f4,4,"break c4: lowershadow(C1) 5 <= rb(C1) 10");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,106,112);
+  int k4=pb_bar(108,108.3,106.7,107);
+  pb_control(k4,100,4,"restore c4: lowershadow(C1) 15 > rb(C1) 10");
+  pb_flat(8);
+
+  /* c5: rb(C2) < rb(C1). */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,106);
+  int f5=pb_bar(106,106.3,104.7,105);
+  pb_flip(f5,5,"break c5: rb(C2) 12 >= rb(C1) 10");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,110);
+  int k5=pb_bar(106,106.3,104.7,105);
+  pb_control(k5,100,5,"restore c5: rb(C2) 8 < rb(C1) 10");
+  pb_flat(8);
+
+  /* c6: open(C2) > close(C1). */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(110,118,100,105);
+  int f6=pb_bar(106,106.3,104.7,105);
+  pb_flip(f6,6,"break c6: open(C2) 110 <= close(C1) 110");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(112,118,100,107);
+  int k6=pb_bar(106,106.3,104.7,105);
+  pb_control(k6,100,6,"restore c6: open(C2) 112 > close(C1) 110");
+  pb_flat(8);
+
+  /* c7: open(C2) <= high(C1). */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(122,124,100,116);
+  int f7=pb_bar(106,106.3,104.7,105);
+  pb_flip(f7,7,"break c7: open(C2) 122 > high(C1) 121");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(120,124,100,114);
+  int k7=pb_bar(106,106.3,104.7,105);
+  pb_control(k7,100,7,"restore c7: open(C2) 120 <= high(C1) 121");
+  pb_flat(8);
+
+  /* c8: low(C2) < close(C1). C3 rises so c14 survives the higher C2 low. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,110,112);
+  int f8=pb_bar(112,112.3,110.7,111);
+  pb_flip(f8,8,"break c8: low(C2) 110 >= close(C1) 110");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,108,112);
+  int k8=pb_bar(112,112.3,110.7,111);
+  pb_control(k8,100,8,"restore c8: low(C2) 108 < close(C1) 110");
+  pb_flat(8);
+
+  /* c9: low(C2) >= low(C1). */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,94,112);
+  int f9=pb_bar(106,106.3,104.7,105);
+  pb_flip(f9,9,"break c9: low(C2) 94 < low(C1) 95");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,96,112);
+  int k9=pb_bar(106,106.3,104.7,105);
+  pb_control(k9,100,9,"restore c9: low(C2) 96 >= low(C1) 95");
+  pb_flat(8);
+
+  /* c10: C2's lower shadow over the SVS average. C2's close drops near its low
+   * (a low alone cannot shrink the shadow without breaking c8), and C3 rises. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,109.4,109.5);
+  int f10=pb_bar(111,111.3,109.7,110);
+  pb_flip(f10,10,"break c10: lowershadow(C2) 0.1 <= avg(SVS)");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,108,109.5);
+  int k10=pb_bar(111,111.3,109.7,110);
+  pb_control(k10,100,10,"restore c10: lowershadow(C2) 1.5 > avg(SVS)");
+  pb_flat(8);
+
+  /* c11: rb(C3) under BodyShort. */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
   pb_bar(118,118,100,112);
-  f=pb_bar(106,108,104.7,105);       /* uppsh3=2 > ~0.76 */
-  pb_expect(f,0,"break p14 upperShadow3rd");
+  int f11=pb_bar(110,110.3,104.7,105);
+  pb_flip(f11,11,"break c11: rb(C3) 5 >= avg(BodyShort) 3.2");
   pb_flat(8);
-
-  /* P15: break low(3rd) > low(2nd) -> raise low2 above low3 */
-  pb_primer(12,100,2,1);
-  pb_bar(120,121,95,110);
-  pb_bar(118,118,106,112);           /* low2=106 > low3=104.7 */
-  f=pb_bar(106,106.3,104.7,105);
-  pb_expect(f,0,"break p15 low3GTlow2");
-  pb_flat(8);
-
-  /* P16: break high(3rd) < high(2nd) -> raise C3 above high2 */
   pb_primer(12,100,2,1);
   pb_bar(120,121,95,110);
   pb_bar(118,118,100,112);
-  f=pb_bar(118,118.3,116.7,117);     /* high3=118.3 > high2=118 */
-  pb_expect(f,0,"break p16 high3LThigh2");
+  int k11=pb_bar(107,107.3,104.7,105);
+  pb_control(k11,100,11,"restore c11: rb(C3) 2 < avg(BodyShort) 3.2");
+  pb_flat(8);
+
+  /* c12: C3's lower shadow under the SVS average. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int f12=pb_bar(106,106.3,102,105);
+  pb_flip(f12,12,"break c12: lowershadow(C3) 3.0 >= avg(SVS)");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int k12=pb_bar(106,106.3,104.7,105);
+  pb_control(k12,100,12,"restore c12: lowershadow(C3) 0.3 < avg(SVS)");
+  pb_flat(8);
+
+  /* c13: C3's upper shadow under the SVS average. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int f13=pb_bar(106,109,104.7,105);
+  pb_flip(f13,13,"break c13: uppershadow(C3) 3.0 >= avg(SVS)");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int k13=pb_bar(106,106.3,104.7,105);
+  pb_control(k13,100,13,"restore c13: uppershadow(C3) 0.3 < avg(SVS)");
+  pb_flat(8);
+
+  /* c14: low(C3) > low(C2). C3 drops as a whole so its shadows stay short. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int f14=pb_bar(101,101.3,99.7,100);
+  pb_flip(f14,14,"break c14: low(C3) 99.7 <= low(C2) 100");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int k14=pb_bar(101.5,101.8,100.7,101);
+  pb_control(k14,100,14,"restore c14: low(C3) 100.7 > low(C2) 100");
+  pb_flat(8);
+
+  /* c15: high(C3) < high(C2). C3 rises as a whole so its shadows stay short. */
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int f15=pb_bar(117.7,118,116.4,117);
+  pb_flip(f15,15,"break c15: high(C3) 118 >= high(C2) 118");
+  pb_flat(8);
+  pb_primer(12,100,2,1);
+  pb_bar(120,121,95,110);
+  pb_bar(118,118,100,112);
+  int k15=pb_bar(117.2,117.5,116.4,116.9);
+  pb_control(k15,100,15,"restore c15: high(C3) 117.5 < high(C2) 118");
+  pb_flat(8);
 }
 
-/* Predicate-coverage (MC/DC) gate for the marquee multi-candle patterns. Runs
- * the actual TA function over detection + per-predicate near-miss scenarios and
- * asserts the exact integer output at each (the rarer multi-candle patterns that
- * random fuzz data never triggers). Complements the FUZZ_CANDLE differential/
- * stream coverage; extended one pattern at a time (issue #109). */
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
-   pb_reset(); build_2crows();      e = pb_check_mcdc("CDL2CROWS",      TA_CDL2CROWS);      if( e != TA_TEST_PASS ) return e;
-   pb_reset(); build_3blackcrows(); e = pb_check_mcdc("CDL3BLACKCROWS", TA_CDL3BLACKCROWS); if( e != TA_TEST_PASS ) return e;
-   pb_reset(); build_3whitesoldiers(); e = pb_check_mcdc("CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS); if( e != TA_TEST_PASS ) return e;
-   pb_reset(); build_3starsinsouth(); e = pb_check_mcdc("CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_2crows();      e = pb_check_mcdc("CDL2CROWS",      TA_CDL2CROWS, cond_2crows);      if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3blackcrows(); e = pb_check_mcdc("CDL3BLACKCROWS", TA_CDL3BLACKCROWS, cond_3blackcrows); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3whitesoldiers(); e = pb_check_mcdc("CDL3WHITESOLDIERS", TA_CDL3WHITESOLDIERS, cond_3whitesoldiers); if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_3starsinsouth(); e = pb_check_mcdc("CDL3STARSINSOUTH", TA_CDL3STARSINSOUTH, cond_3starsinsouth); if( e != TA_TEST_PASS ) return e;
+   pb_report_totals();
    return TA_TEST_PASS;
 }
 
@@ -1116,6 +2063,27 @@ static ErrorNumber apply_cdl_globals( const TA_CDLGlobals *g )
  *
  * A differing begin index or count is itself a move -- the lookback moved.
  */
+/* Did a VALUE change on a bar both runs produced? Distinct from cdl_output_moved,
+ * which also counts a lookback shift. Both are real changes, but only this one
+ * says the pattern decided differently about a bar it actually evaluated -- and
+ * a headline "196 outputs moved" built mostly from lookback shifts on all-zero
+ * output would overstate what the matrix proves. */
+static int cdl_value_moved( const int *ref, int refBeg, int refNb,
+                            const int *cur, int curBeg, int curNb, int *sawNonZero )
+{
+   int firstBar = (refBeg > curBeg) ? refBeg : curBeg;
+   int lastBar  = ((refBeg + refNb) < (curBeg + curNb) ? (refBeg + refNb)
+                                                       : (curBeg + curNb)) - 1;
+   int bar, diff = 0;
+   for( bar = firstBar; bar <= lastBar; bar++ )
+   {
+      int a = ref[bar - refBeg], b = cur[bar - curBeg];
+      if( a || b ) *sawNonZero = 1;
+      if( a != b ) diff = 1;
+   }
+   return diff;
+}
+
 static int cdl_output_moved( const int *ref, int refBeg, int refNb,
                              const int *cur, int curBeg, int curNb )
 {
@@ -1133,6 +2101,77 @@ static int cdl_output_moved( const int *ref, int refBeg, int refNb,
          return 1;
    }
    return 0;
+}
+
+/* Per-setting coverage.
+ *
+ * A row that varies eleven settings at once proves nothing about any single
+ * one: the matrix could exercise BodyLong thoroughly and never touch Far, and
+ * the headline count would look identical. For each setting, this puts one
+ * setting back to its default while the rest of the row stays custom, and
+ * counts the (row, function) pairs whose output changes. A zero means the
+ * matrix says nothing about that setting.
+ *
+ * TA_BodyVeryLong is exempt and the exemption is the finding: it is part of the
+ * public TA_SetCandleSettings API and NO shipped indicator reads it
+ * (`grep -lw TA_BodyVeryLong src/ta_func/ta_CDL*.c` is empty). No matrix can
+ * make it matter, so requiring coverage of it would be requiring a lie.
+ */
+static ErrorNumber cdl_setting_coverage( const TA_History *history, int perSetting[] )
+{
+   int nbBars = (int)history->nbBars;
+   int *outA = (int *)malloc((size_t)nbBars * sizeof(int));
+   int *outB = (int *)malloc((size_t)nbBars * sizeof(int));
+   ErrorNumber errNb = TA_TEST_PASS;
+   int st, r;
+   unsigned int f;
+
+   if( !outA || !outB ) { free(outA); free(outB); return TA_CDLSET_CALL_FAILED; }
+
+   for( st = 0; st < (int)TA_AllCandleSettings; st++ )
+   {
+      perSetting[st] = 0;
+      for( r = 1; r < (int)NB_CDL_GLOBALS && errNb == TA_TEST_PASS; r++ )
+      {
+         for( f = 0; f < NB_TEST; f++ )
+         {
+            int begA=0, nbA=0, begB=0, nbB=0, lb=0;
+            TA_RetCode rcA=TA_SUCCESS, rcB=TA_SUCCESS;
+            TA_ParamHolder *ph;
+
+            errNb = apply_cdl_globals( &cdlGlobalsMatrix[r] );
+            if( errNb != TA_TEST_PASS ) break;
+            ph = NULL;
+            errNb = callCandlestick( &ph, tableTest[f].name, 0, nbBars-1,
+                                     history->open, history->high,
+                                     history->low, history->close,
+                                     tableTest[f].params, &begA, &nbA,
+                                     outA, &lb, &rcA );
+            if( ph ) TA_ParamHolderFree( ph );
+            if( errNb != TA_TEST_PASS ) break;
+
+            /* Same row, this one setting back at its default. */
+            errNb = apply_cdl_globals( &cdlGlobalsMatrix[r] );
+            if( errNb != TA_TEST_PASS ) break;
+            if( TA_RestoreCandleDefaultSettings( (TA_CandleSettingType)st ) != TA_SUCCESS )
+            { errNb = TA_CDLSET_RESTORE_FAILED; break; }
+            ph = NULL;
+            errNb = callCandlestick( &ph, tableTest[f].name, 0, nbBars-1,
+                                     history->open, history->high,
+                                     history->low, history->close,
+                                     tableTest[f].params, &begB, &nbB,
+                                     outB, &lb, &rcB );
+            if( ph ) TA_ParamHolderFree( ph );
+            if( errNb != TA_TEST_PASS ) break;
+
+            if( cdl_output_moved(outA, begA, nbA, outB, begB, nbB) )
+               perSetting[st]++;
+         }
+      }
+   }
+
+   free(outA); free(outB);
+   return errNb;
 }
 
 /* Run every candlestick under every matrix row, in C and (when servers are up)
@@ -1158,7 +2197,7 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
    ErrorNumber errNb = TA_TEST_PASS;
    int nbBars = (int)history->nbBars;
    unsigned int r, f;
-   int moved = 0, calls = 0, restoredMismatch = 0;
+   int moved = 0, valueMoved = 0, nonZeroPairs = 0, calls = 0, restoredMismatch = 0;
    int syncsBefore = server_verify_candle_syncs();
 
    outDefault = (int *)malloc((size_t)nbBars * NB_TEST * sizeof(int));
@@ -1205,11 +2244,19 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
             defBeg[f] = outBegIdx;
             defNb[f]  = outNbElement;
          }
-         else if( cdl_output_moved( outDefault + (size_t)f * nbBars,
-                                    defBeg[f], defNb[f],
-                                    dst, outBegIdx, outNbElement ) )
+         else
          {
-            moved++;
+            int sawNonZero = 0;
+            if( cdl_output_moved( outDefault + (size_t)f * nbBars,
+                                  defBeg[f], defNb[f],
+                                  dst, outBegIdx, outNbElement ) )
+               moved++;
+            if( cdl_value_moved( outDefault + (size_t)f * nbBars,
+                                 defBeg[f], defNb[f],
+                                 dst, outBegIdx, outNbElement, &sawNonZero ) )
+               valueMoved++;
+            if( sawNonZero )
+               nonZeroPairs++;
          }
 
          /* Cross-language: server_verify carries this row's settings to every
@@ -1316,17 +2363,50 @@ static ErrorNumber test_candle_settings_matrix( const TA_History *history )
       return TA_CDLSET_NOT_RESTORED;
 
    printf( "  Candle settings matrix: %u row(s) x %u function(s), %d call(s), "
-           "%d output(s) moved off the defaults, %d setting(s) pushed to the "
-           "language servers\n",
+           "%d moved (%d by value, %d on a non-zero output), %d setting(s) "
+           "pushed to the language servers\n",
            (unsigned int)NB_CDL_GLOBALS, (unsigned int)NB_TEST, calls, moved,
-           server_verify_candle_syncs() - syncsBefore );
+           valueMoved, nonZeroPairs, server_verify_candle_syncs() - syncsBefore );
+
+   /* Per-setting coverage. Without this the totals above can be carried
+    * entirely by two or three popular settings while the rest are inert. */
+   {
+      static const char *SETTING_NAME[] = {
+         "BodyLong","BodyVeryLong","BodyShort","BodyDoji","ShadowLong",
+         "ShadowVeryLong","ShadowShort","ShadowVeryShort","Near","Far","Equal" };
+      int perSetting[TA_AllCandleSettings];
+      int st, inert = 0;
+      errNb = cdl_setting_coverage( history, perSetting );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+      printf( "  Candle settings matrix, per setting:" );
+      for( st = 0; st < (int)TA_AllCandleSettings; st++ )
+         printf( " %s=%d", SETTING_NAME[st], perSetting[st] );
+      printf( "\n" );
+      for( st = 0; st < (int)TA_AllCandleSettings; st++ )
+      {
+         /* BodyVeryLong is exempt BY MEASUREMENT, not by convenience: it is in
+          * the public setter's domain and no shipped candlestick reads it. */
+         if( st == (int)TA_BodyVeryLong ) continue;
+         if( perSetting[st] == 0 )
+         {
+            printf( "Failed: the matrix never exercises %s -- no row changes any "
+                    "output through it\n", SETTING_NAME[st] );
+            inert++;
+         }
+      }
+      if( inert )
+         return TA_CDLSET_VACUOUS_NO_MOVE;
+   }
 
    /* Non-vacuity. A row that never changes an output, or settings that never
     * reach the servers, would let this whole sweep pass while comparing every
     * language at the defaults -- the exact hole #216 was filed for. */
-   if( moved == 0 )
+   if( moved == 0 || valueMoved == 0 || nonZeroPairs == 0 )
    {
-      printf( "Failed: the candle settings matrix moved no output at all\n" );
+      printf( "Failed: the candle settings matrix is vacuous "
+              "(%d moved, %d by value, %d on a non-zero output)\n",
+              moved, valueMoved, nonZeroPairs );
       return TA_CDLSET_VACUOUS_NO_MOVE;
    }
    if( server_verify_active() && server_verify_candle_syncs() == syncsBefore )
@@ -1342,6 +2422,13 @@ ErrorNumber test_candlestick( TA_History *history )
 {
    unsigned int i;
    ErrorNumber retValue;
+
+   /* DO_TEST resets compatibility between groups but not candle settings, and
+    * earlier groups change them. Establish the state this group needs rather
+    * than inherit it -- ta_test_legacy.c does the same. Without this the MC/DC
+    * gates fail with messages blaming pattern logic for a threshold someone
+    * else moved. */
+   TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );
 
    /* Predicate-coverage (MC/DC) gate: prove the pattern logic is exercised
     * (non-vacuously) and each decision boundary is correct, before the
@@ -1516,6 +2603,11 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
    if( *taFuncRetCode != TA_SUCCESS )
    {
       printf( "TA_CallFunc() failed [%d]\n", *taFuncRetCode );
+      /* Clear the out-param before freeing: it was published to the caller at
+       * allocation time and every call site frees it too. Unreachable today --
+       * no legal candle setting makes TA_CallFunc fail -- but a double free is
+       * a poor thing to leave armed behind a metadata change. */
+      *paramHolderPtr = NULL;
       TA_ParamHolderFree( paramHolder );
       return TA_TSTCDL_CALLFUNC_FAIL;
    }
@@ -1525,6 +2617,7 @@ static ErrorNumber callCandlestick( TA_ParamHolder **paramHolderPtr,
    if( retCode != TA_SUCCESS )
    {
       printf( "TA_GetLookback() failed [%d]\n", retCode );
+      *paramHolderPtr = NULL;
       TA_ParamHolderFree( paramHolder );
       return TA_TSTCDL_GETLOOKBACK_FAIL;
    }
