@@ -624,7 +624,18 @@ static ErrorNumber pb_check( const char *name, PbCdlFn fn )
  * assumption went straight into the checker: nothing required a firing scenario
  * per output class, so the first two-sign patterns to arrive (#220's BELTHOLD
  * and CLOSINGMARUBOZU) were covered on their white arm alone and the gate was
- * satisfied. See the output-class check in pb_check_mcdc. */
+ * satisfied. See the output-class check in pb_check_mcdc.
+ *
+ * That gap and #221's are one shape, and naming it is worth more than either
+ * instance: A SCENARIO MUST BE NON-DEGENERATE ALONG WHATEVER THE CONDITION
+ * COMPARES. White-only bars leave a colour disjunction unreached; open == close
+ * leaves a min/max pair unreached, because min(open,close) and max(open,close)
+ * are then the SAME NUMBER and reading the wrong one changes nothing --
+ * CDLRICKSHAWMAN's c3 carries a real body for exactly that reason. Neither gap
+ * moves the totals: the condition is declared, flipped and controlled precisely
+ * as the checker asks, so nothing here can report it. The only fallback is the
+ * v0.6.4 freeze, and it reaches the 35 of 61 patterns that fire on the 252-bar
+ * series -- for the other 26 there is none. */
 
 /* Valid-candle bar: clamps high>=max(o,c), low<=min(o,c). Returns its index. */
 static int pb_bar( double o, double h, double l, double c )
