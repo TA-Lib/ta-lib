@@ -2122,10 +2122,19 @@ fn try_render_candle_ternary(
             let high = r(&args[2]);
             let low = r(&args[3]);
             let close = r(&args[4]);
+            // The Shadows arm is upper + lower, NOT the algebraically equal
+            // (high - low) - |close - open|. It must match TA_CANDLERANGE in
+            // ta_utility.h term for term: the two forms differ by
+            // reassociation on any bar whose low sits below half its high,
+            // and C is the reference (#217). This spelling is hardcoded here
+            // rather than read from input/helpers/candlestick.c, so a fix to
+            // the helper alone does NOT reach Java -- csharp.rs carries the
+            // same duplicate.
             Some(format!(
                 "(({rt} == 0) ? (Math.abs({close} - {open})) \
                  : (({rt} == 1) ? ({high} - {low}) \
-                 : (({rt} == 2) ? (({high} - {low}) - Math.abs({close} - {open})) \
+                 : (({rt} == 2) ? (({high} - ((({close}) >= ({open})) ? ({close}) : ({open}))) \
+                 + (((({close}) >= ({open})) ? ({open}) : ({close})) - {low})) \
                  : 0.0)))"
             ))
         }

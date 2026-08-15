@@ -38,7 +38,25 @@ double ta_candlerange(int rangeType, double open, double high, double low, doubl
    switch (rangeType) {
       case 0: return fabs(close - open);
       case 1: return high - low;
-      case 2: return high - low - fabs(close - open);
+      /* Shadows: upper plus lower, NOT the algebraically equal
+       * high - low - fabs(close - open). The two differ by reassociation
+       * whenever a bar's low sits below half its high, which is where
+       * Sterbenz' lemma stops making the subtractions exact.
+       *
+       * C is the reference and never reads this body: backends/c.rs maps
+       * ta_candlerange onto the TA_CANDLERANGE macro, which has always been
+       * upper + lower. Writing it the other way here made the generated
+       * Rust, Java and C# disagree with C on such bars (#217). Both
+       * artifacts that have ever shipped -- the C library and the 2007
+       * com.tictactec Java port, two hand-written implementations twenty
+       * years apart -- use this spelling; the generated helper was the sole
+       * outlier.
+       *
+       * Calling the two shadow helpers rather than respelling them keeps the
+       * operation order tied to the macro's by construction: TA_UPPERSHADOW
+       * and TA_LOWERSHADOW are these functions, term for term.
+       */
+      case 2: return ta_uppershadow(high, close, open) + ta_lowershadow(low, close, open);
       default: return 0.0;
    }
 }

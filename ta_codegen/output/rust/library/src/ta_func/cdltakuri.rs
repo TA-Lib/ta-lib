@@ -239,7 +239,7 @@ impl Core {
                     _candlerange_0 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_0 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_0 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_0 = 0.0;
@@ -259,7 +259,7 @@ impl Core {
                     _candlerange_1 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_1 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_1 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_1 = 0.0;
@@ -279,7 +279,7 @@ impl Core {
                     _candlerange_2 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_2 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_2 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_2 = 0.0;
@@ -317,7 +317,7 @@ impl Core {
                     _candlerange_3 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_3 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_3 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_3 = 0.0;
@@ -332,7 +332,7 @@ impl Core {
                     _candlerange_4 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
                 }
                 2 => {
-                    _candlerange_4 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx] - (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                    _candlerange_4 = (inHigh[BodyDojiTrailingIdx] - (if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inClose[BodyDojiTrailingIdx] } else { inOpen[BodyDojiTrailingIdx] })) + ((if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inOpen[BodyDojiTrailingIdx] } else { inClose[BodyDojiTrailingIdx] }) - inLow[BodyDojiTrailingIdx]);
                 }
                 _ => {
                     _candlerange_4 = 0.0;
@@ -348,7 +348,7 @@ impl Core {
                     _candlerange_5 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_5 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_5 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_5 = 0.0;
@@ -363,7 +363,7 @@ impl Core {
                     _candlerange_6 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx];
                 }
                 2 => {
-                    _candlerange_6 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx] - (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
+                    _candlerange_6 = (inHigh[ShadowVeryShortTrailingIdx] - (if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inClose[ShadowVeryShortTrailingIdx] } else { inOpen[ShadowVeryShortTrailingIdx] })) + ((if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inOpen[ShadowVeryShortTrailingIdx] } else { inClose[ShadowVeryShortTrailingIdx] }) - inLow[ShadowVeryShortTrailingIdx]);
                 }
                 _ => {
                     _candlerange_6 = 0.0;
@@ -379,7 +379,7 @@ impl Core {
                     _candlerange_7 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_7 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_7 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_7 = 0.0;
@@ -394,7 +394,7 @@ impl Core {
                     _candlerange_8 = inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx];
                 }
                 2 => {
-                    _candlerange_8 = inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx] - (inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx]).abs();
+                    _candlerange_8 = (inHigh[ShadowVeryLongTrailingIdx] - (if inClose[ShadowVeryLongTrailingIdx] >= inOpen[ShadowVeryLongTrailingIdx] { inClose[ShadowVeryLongTrailingIdx] } else { inOpen[ShadowVeryLongTrailingIdx] })) + ((if inClose[ShadowVeryLongTrailingIdx] >= inOpen[ShadowVeryLongTrailingIdx] { inOpen[ShadowVeryLongTrailingIdx] } else { inClose[ShadowVeryLongTrailingIdx] }) - inLow[ShadowVeryLongTrailingIdx]);
                 }
                 _ => {
                     _candlerange_8 = 0.0;
@@ -551,7 +551,7 @@ impl Core {
                 _candlerange_0 = inHigh - inLow;
             }
             2 => {
-                _candlerange_0 = inHigh - inLow - (inClose - inOpen).abs();
+                _candlerange_0 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_0 = 0.0;
@@ -566,7 +566,7 @@ impl Core {
                 _candlerange_1 = sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx];
             }
             2 => {
-                _candlerange_1 = sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx] - (sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] - sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx]).abs();
+                _candlerange_1 = (sp.ring_BodyDojiTrailingIdx_inHigh[sp.ringPos_BodyDojiTrailingIdx] - (if sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] >= sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] { sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] } else { sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] })) + ((if sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] >= sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] { sp.ring_BodyDojiTrailingIdx_inOpen[sp.ringPos_BodyDojiTrailingIdx] } else { sp.ring_BodyDojiTrailingIdx_inClose[sp.ringPos_BodyDojiTrailingIdx] }) - sp.ring_BodyDojiTrailingIdx_inLow[sp.ringPos_BodyDojiTrailingIdx]);
             }
             _ => {
                 _candlerange_1 = 0.0;
@@ -582,7 +582,7 @@ impl Core {
                 _candlerange_2 = inHigh - inLow;
             }
             2 => {
-                _candlerange_2 = inHigh - inLow - (inClose - inOpen).abs();
+                _candlerange_2 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_2 = 0.0;
@@ -597,7 +597,7 @@ impl Core {
                 _candlerange_3 = sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx];
             }
             2 => {
-                _candlerange_3 = sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx] - (sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] - sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx]).abs();
+                _candlerange_3 = (sp.ring_ShadowVeryShortTrailingIdx_inHigh[sp.ringPos_ShadowVeryShortTrailingIdx] - (if sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] { sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] } else { sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] })) + ((if sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] >= sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] { sp.ring_ShadowVeryShortTrailingIdx_inOpen[sp.ringPos_ShadowVeryShortTrailingIdx] } else { sp.ring_ShadowVeryShortTrailingIdx_inClose[sp.ringPos_ShadowVeryShortTrailingIdx] }) - sp.ring_ShadowVeryShortTrailingIdx_inLow[sp.ringPos_ShadowVeryShortTrailingIdx]);
             }
             _ => {
                 _candlerange_3 = 0.0;
@@ -613,7 +613,7 @@ impl Core {
                 _candlerange_4 = inHigh - inLow;
             }
             2 => {
-                _candlerange_4 = inHigh - inLow - (inClose - inOpen).abs();
+                _candlerange_4 = (inHigh - (if inClose >= inOpen { inClose } else { inOpen })) + ((if inClose >= inOpen { inOpen } else { inClose }) - inLow);
             }
             _ => {
                 _candlerange_4 = 0.0;
@@ -628,7 +628,7 @@ impl Core {
                 _candlerange_5 = sp.ring_ShadowVeryLongTrailingIdx_inHigh[sp.ringPos_ShadowVeryLongTrailingIdx] - sp.ring_ShadowVeryLongTrailingIdx_inLow[sp.ringPos_ShadowVeryLongTrailingIdx];
             }
             2 => {
-                _candlerange_5 = sp.ring_ShadowVeryLongTrailingIdx_inHigh[sp.ringPos_ShadowVeryLongTrailingIdx] - sp.ring_ShadowVeryLongTrailingIdx_inLow[sp.ringPos_ShadowVeryLongTrailingIdx] - (sp.ring_ShadowVeryLongTrailingIdx_inClose[sp.ringPos_ShadowVeryLongTrailingIdx] - sp.ring_ShadowVeryLongTrailingIdx_inOpen[sp.ringPos_ShadowVeryLongTrailingIdx]).abs();
+                _candlerange_5 = (sp.ring_ShadowVeryLongTrailingIdx_inHigh[sp.ringPos_ShadowVeryLongTrailingIdx] - (if sp.ring_ShadowVeryLongTrailingIdx_inClose[sp.ringPos_ShadowVeryLongTrailingIdx] >= sp.ring_ShadowVeryLongTrailingIdx_inOpen[sp.ringPos_ShadowVeryLongTrailingIdx] { sp.ring_ShadowVeryLongTrailingIdx_inClose[sp.ringPos_ShadowVeryLongTrailingIdx] } else { sp.ring_ShadowVeryLongTrailingIdx_inOpen[sp.ringPos_ShadowVeryLongTrailingIdx] })) + ((if sp.ring_ShadowVeryLongTrailingIdx_inClose[sp.ringPos_ShadowVeryLongTrailingIdx] >= sp.ring_ShadowVeryLongTrailingIdx_inOpen[sp.ringPos_ShadowVeryLongTrailingIdx] { sp.ring_ShadowVeryLongTrailingIdx_inOpen[sp.ringPos_ShadowVeryLongTrailingIdx] } else { sp.ring_ShadowVeryLongTrailingIdx_inClose[sp.ringPos_ShadowVeryLongTrailingIdx] }) - sp.ring_ShadowVeryLongTrailingIdx_inLow[sp.ringPos_ShadowVeryLongTrailingIdx]);
             }
             _ => {
                 _candlerange_5 = 0.0;
@@ -737,7 +737,7 @@ impl Core {
                     _candlerange_6 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_6 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_6 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_6 = 0.0;
@@ -757,7 +757,7 @@ impl Core {
                     _candlerange_7 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_7 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_7 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_7 = 0.0;
@@ -777,7 +777,7 @@ impl Core {
                     _candlerange_8 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_8 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_8 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_8 = 0.0;
@@ -813,7 +813,7 @@ impl Core {
                     _candlerange_9 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_9 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_9 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_9 = 0.0;
@@ -828,7 +828,7 @@ impl Core {
                     _candlerange_10 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx];
                 }
                 2 => {
-                    _candlerange_10 = inHigh[BodyDojiTrailingIdx] - inLow[BodyDojiTrailingIdx] - (inClose[BodyDojiTrailingIdx] - inOpen[BodyDojiTrailingIdx]).abs();
+                    _candlerange_10 = (inHigh[BodyDojiTrailingIdx] - (if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inClose[BodyDojiTrailingIdx] } else { inOpen[BodyDojiTrailingIdx] })) + ((if inClose[BodyDojiTrailingIdx] >= inOpen[BodyDojiTrailingIdx] { inOpen[BodyDojiTrailingIdx] } else { inClose[BodyDojiTrailingIdx] }) - inLow[BodyDojiTrailingIdx]);
                 }
                 _ => {
                     _candlerange_10 = 0.0;
@@ -844,7 +844,7 @@ impl Core {
                     _candlerange_11 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_11 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_11 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_11 = 0.0;
@@ -859,7 +859,7 @@ impl Core {
                     _candlerange_12 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx];
                 }
                 2 => {
-                    _candlerange_12 = inHigh[ShadowVeryShortTrailingIdx] - inLow[ShadowVeryShortTrailingIdx] - (inClose[ShadowVeryShortTrailingIdx] - inOpen[ShadowVeryShortTrailingIdx]).abs();
+                    _candlerange_12 = (inHigh[ShadowVeryShortTrailingIdx] - (if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inClose[ShadowVeryShortTrailingIdx] } else { inOpen[ShadowVeryShortTrailingIdx] })) + ((if inClose[ShadowVeryShortTrailingIdx] >= inOpen[ShadowVeryShortTrailingIdx] { inOpen[ShadowVeryShortTrailingIdx] } else { inClose[ShadowVeryShortTrailingIdx] }) - inLow[ShadowVeryShortTrailingIdx]);
                 }
                 _ => {
                     _candlerange_12 = 0.0;
@@ -875,7 +875,7 @@ impl Core {
                     _candlerange_13 = inHigh[i] - inLow[i];
                 }
                 2 => {
-                    _candlerange_13 = inHigh[i] - inLow[i] - (inClose[i] - inOpen[i]).abs();
+                    _candlerange_13 = (inHigh[i] - (if inClose[i] >= inOpen[i] { inClose[i] } else { inOpen[i] })) + ((if inClose[i] >= inOpen[i] { inOpen[i] } else { inClose[i] }) - inLow[i]);
                 }
                 _ => {
                     _candlerange_13 = 0.0;
@@ -890,7 +890,7 @@ impl Core {
                     _candlerange_14 = inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx];
                 }
                 2 => {
-                    _candlerange_14 = inHigh[ShadowVeryLongTrailingIdx] - inLow[ShadowVeryLongTrailingIdx] - (inClose[ShadowVeryLongTrailingIdx] - inOpen[ShadowVeryLongTrailingIdx]).abs();
+                    _candlerange_14 = (inHigh[ShadowVeryLongTrailingIdx] - (if inClose[ShadowVeryLongTrailingIdx] >= inOpen[ShadowVeryLongTrailingIdx] { inClose[ShadowVeryLongTrailingIdx] } else { inOpen[ShadowVeryLongTrailingIdx] })) + ((if inClose[ShadowVeryLongTrailingIdx] >= inOpen[ShadowVeryLongTrailingIdx] { inOpen[ShadowVeryLongTrailingIdx] } else { inClose[ShadowVeryLongTrailingIdx] }) - inLow[ShadowVeryLongTrailingIdx]);
                 }
                 _ => {
                     _candlerange_14 = 0.0;
