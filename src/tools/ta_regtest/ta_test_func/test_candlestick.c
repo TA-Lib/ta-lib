@@ -2449,7 +2449,7 @@ static void build_gravestonedoji( void )
  * scenarios, which left the -100 class and half of a disjunction unexercised;
  * that gap is what pb_signs() now refuses to let happen silently.
  *
- * No waivers: single-bar patterns have no cross-bar entailment, so all 22
+ * No waivers: single-bar patterns have no cross-bar entailment, so all 23
  * conditions are independently falsifiable.
  */
 
@@ -2831,15 +2831,26 @@ static void build_takuri( void )
  *   c0  realbody(i)    <= avg(BodyDoji)
  *   c1  lowershadow(i) >  avg(ShadowLong)          = realbody(i)
  *   c2  uppershadow(i) >  avg(ShadowLong)
- *   c3  bodylo(i) <= low + hlrange/2 + avg(Near)
- *       && bodyhi(i) >= low + hlrange/2 - avg(Near)
+ *   c3  bodylo(i) <= low + hlrange/2 + avg(Near)      the band's UPPER edge
+ *   c4  bodyhi(i) >= low + hlrange/2 - avg(Near)      the band's LOWER edge
  *
- * c3 is a single top-level conjunct holding a two-sided band, the same shape
- * as BELTHOLD's disjunction in unit 1: pb_conditions() counts what the
- * decision tests, and this is one test of "near the midpoint". Its flip pushes
- * the body clear of the band's upper edge -- and because the band is measured
- * from the midpoint, moving the body also moves the shadows, so the flip has
- * to keep both of them above their own threshold.
+ * The source writes c3 and c4 as one parenthesised group -- "body near the
+ * midpoint" -- and that grouping is NOT the BELTHOLD shape it resembles.
+ * BELTHOLD's parens hold a DISJUNCTION, where a disjunct cannot be falsified
+ * while its sibling holds; these hold a plain conjunction, so `A && (B && C)`
+ * is `A && B && C` and the parens mean nothing. Counting them as one condition
+ * cost a real boundary: with only the upper edge pinned, relaxing the lower one
+ * from >= to > left the entire tier green -- 89 conditions, 85 flips, every one
+ * passing -- because no flip and no control ever sat on it. check-mcdc now
+ * flattens a pure-conjunction group, so this is five conditions and a builder
+ * cannot under-declare the shape again.
+ *
+ * Both edges are INCLUSIVE, and an inclusive boundary cannot be pinned by a
+ * flip: there is no minimal value above a `<=` threshold, so the flip is always
+ * a whole unit clear and says nothing about the comparison. The control does it
+ * instead, sitting exactly on the equality -- k3 puts bodylo ON the band's top,
+ * k4 puts bodyhi ON its bottom. Both keep bodylo != bodyhi so that reading one
+ * for the other is visible; a doji makes them the same number and hides it.
  *
  * Near is the only setting in either unit with avgPeriod 5 rather than 10.
  * Under this primer that changes nothing (every primer bar has HighLow 10, so
@@ -2854,12 +2865,13 @@ static void cond_rickshawman( int i, int *c )
    c[0] = pb_body(i) <= pb_avg(TA_BodyDoji, i);
    c[1] = pb_losh(i) > sl;
    c[2] = pb_upsh(i) > sl;
-   c[3] = pb_bodylo(i) <= mid + near && pb_bodyhi(i) >= mid - near;
+   c[3] = pb_bodylo(i) <= mid + near;
+   c[4] = pb_bodyhi(i) >= mid - near;
 }
 
 static void build_rickshawman( void )
 {
-  pb_conditions(4);
+  pb_conditions(5);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2894,21 +2906,22 @@ static void build_rickshawman( void )
   pb_control(k2,100,2,"restore c2: upper shadow 4 > 0");
   pb_flat(8);
 
-  /* c3: the body must sit inside a band of +/-Near around the bar's midpoint.
-   * With high 110 and low 96 the midpoint is 103 and Near is 2, so the band is
-   * [101,105].
+  /* c3 and c4: the body must sit inside a band of +/-Near around the bar's
+   * midpoint. Every bar below has high 110 and low 96, so the midpoint is 103
+   * and Near is 2: the band is [101,105]. c3 tests its TOP against
+   * min(open,close), c4 its BOTTOM against max(open,close).
    *
-   * Both bars here carry a real body of 1 rather than the doji used above, and
-   * that is load-bearing: c3 reads min(open,close) against the band's top and
-   * max(open,close) against its bottom, so a scenario with open == close makes
-   * those two terms the SAME NUMBER and any confusion between them invisible.
-   * A mutation swapping the min for a max sailed through an earlier version of
-   * these cases for exactly that reason -- it was the v0.6.4 freeze that caught
-   * it, and the freeze reaches only 35 of the 61 patterns.
+   * All four bars carry a real body of 1 rather than the doji used above, and
+   * that is load-bearing: with open == close the two terms are the SAME NUMBER
+   * and any confusion between them is invisible. A mutation swapping the min
+   * for a max sailed through an earlier version of these cases for exactly that
+   * reason -- it was the v0.6.4 freeze that caught it, and the freeze reaches
+   * only 35 of the 61 patterns.
    *
-   * The control puts min(open,close) exactly ON 105, which pins the comparison
-   * as inclusive, while max sits at 106 above it -- so the two terms disagree
-   * and reading the wrong one stops the control firing.
+   * Both edges are inclusive, so the CONTROL is what pins each: k3 puts
+   * min(open,close) exactly ON 105 with max at 106 above it, k4 puts
+   * max(open,close) exactly ON 101 with min at 100 below it. In both the two
+   * terms disagree, so reading the wrong one stops the control firing.
    */
   pb_primer(12,100,2,4);
   int f3=pb_bar(106,110,96,107);           /* min 106 is above the band top 105 */
@@ -2917,6 +2930,15 @@ static void build_rickshawman( void )
   pb_primer(12,100,2,4);
   int k3=pb_bar(105,110,96,106);           /* min 105 == band top, max 106 above it */
   pb_control(k3,100,3,"restore c3: min 105 == band top, inclusive; max 106 differs");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  int f4=pb_bar(99,110,96,100);            /* max 100 is below the band bottom 101 */
+  pb_flip(f4,4,"break c4: max(open,close) 100 < band bottom 101");
+  pb_flat(8);
+  pb_primer(12,100,2,4);
+  int k4=pb_bar(100,110,96,101);           /* max 101 == band bottom, min 100 below it */
+  pb_control(k4,100,4,"restore c4: max 101 == band bottom, inclusive; min 100 differs");
   pb_flat(8);
 }
 

@@ -60,13 +60,58 @@ def strip_comments(src):
     return "".join(out)
 
 
+def _split_top(expr, tok):
+    """Split `expr` on every `tok` sitting at parenthesis depth 0."""
+    parts, depth, last, i = [], 0, 0, 0
+    while i < len(expr):
+        ch = expr[i]
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        elif depth == 0 and expr.startswith(tok, i):
+            parts.append(expr[last:i])
+            last = i + len(tok)
+            i += len(tok) - 1
+        i += 1
+    parts.append(expr[last:])
+    return parts
+
+
+def _peel(expr):
+    """Drop redundant outer parentheses: `(( a && b ))` -> `a && b`."""
+    c = expr.strip()
+    while c.startswith("(") and c.endswith(")"):
+        depth, ok = 0, True
+        for ch in c[1:-1]:
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth < 0:
+                    ok = False
+                    break
+        if not ok or depth != 0:
+            break
+        c = c[1:-1].strip()
+    return c
+
+
 def count_conditions(path):
-    """Top-level conjuncts of the detection expression in a candlestick source.
+    """Atomic conditions of the detection expression in a candlestick source.
 
     The detection expression is the `if(` guarding the assignment of a non-zero
-    value to outInteger. Conjuncts are `&&` at the depth of the if's own
-    parenthesis; anything nested inside a call or a sub-expression is part of one
-    atomic condition, not a separate one.
+    value to outInteger. Its conditions are the `&&` at that expression's own
+    depth, PLUS those of any parenthesised group that is itself a pure
+    conjunction -- because `A && (B && C)` is `A && B && C` and those parens
+    carry no meaning. Counting such a group as one condition is not a
+    conservative reading, it is a wrong one: it leaves an interior comparison
+    with no flip, no control and nothing in the totals to show it (CDLRICKSHAWMAN
+    c3, whose band's lower edge could be relaxed with the whole tier still green).
+
+    A group containing `||` is genuinely NOT flattenable and stays one condition.
+    Its interior is reached on a different axis -- the output class, pb_signs() --
+    because a disjunct is not falsifiable while its sibling holds.
     """
     src = strip_comments(open(path, encoding="utf-8").read())
 
@@ -88,7 +133,7 @@ def count_conditions(path):
         return None, "no enclosing if( found"
 
     open_paren = src.index("(", k)
-    depth, i, conj = 0, open_paren, 0
+    depth, i, expr = 0, open_paren, None
     while i < len(src):
         ch = src[i]
         if ch == "(":
@@ -96,17 +141,23 @@ def count_conditions(path):
         elif ch == ")":
             depth -= 1
             if depth == 0:
+                expr = src[open_paren + 1:i]
                 break
-        elif depth == 1 and src.startswith("&&", i):
-            conj += 1
-            i += 1
-        elif depth == 1 and src.startswith("||", i):
-            return None, "top-level || present; conjunct counting does not apply"
         i += 1
-    else:
+    if expr is None:
         return None, "unterminated if( expression"
 
-    return conj + 1, None
+    if len(_split_top(expr, "||")) > 1:
+        return None, "top-level || present; conjunct counting does not apply"
+
+    total = 0
+    for conj in _split_top(expr, "&&"):
+        c = _peel(conj)
+        if len(_split_top(c, "||")) > 1:
+            total += 1                       # disjunction: one condition
+        else:
+            total += len(_split_top(c, "&&"))  # pure conjunction: flatten it
+    return total, None
 
 
 def _drop_calls(expr, fname):
@@ -251,11 +302,14 @@ def main():
         print("\ncheck_mcdc_conditions: %d builder(s) disagree with their pattern "
               "source. Either the builder under-declares -- in which case those "
               "conditions are silently untested -- or a conjunct was added to the "
-              "indicator and no case covers it. A signs mismatch means the pattern "
-              "emits both +N and -N but the builder declares one class, so half "
-              "its decision can go uncovered: pb_conditions() counts TOP-LEVEL "
-              "conjuncts, so a colour disjunction is one condition and its "
-              "interior is invisible to the completeness check." % bad)
+              "indicator and no case covers it. Note the count FLATTENS a "
+              "parenthesised pure conjunction, because `A && (B && C)` is three "
+              "conditions and grouping two comparisons cost CDLRICKSHAWMAN a "
+              "boundary nothing tested. A DISJUNCTION is the one group that "
+              "stays a single condition: a disjunct cannot be falsified while "
+              "its sibling holds, so its interior is unreachable by flips and is "
+              "covered on the output-class axis (pb_signs) instead -- which is "
+              "what a signs mismatch means." % bad)
         return 1
     print("Every builder's pb_conditions() and pb_signs() matches its pattern "
           "source. OK.")
