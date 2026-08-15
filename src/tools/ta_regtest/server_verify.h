@@ -19,6 +19,12 @@ void server_verify_shutdown(void);
 /* Returns 1 if server verification is active (at least one pipe). */
 int server_verify_active(void);
 
+/* How many candle-setting changes have been pushed to servers, summed over all
+ * pipes (#215). A caller that varies the settings asserts this moved: a sweep
+ * whose settings never reached the servers compares every language at the
+ * defaults and passes without testing anything it claims to test. */
+int server_verify_candle_syncs(void);
+
 /* Verify a C function call against all active servers.
  *
  * Uses ta_abstract metadata to build JSON-RPC requests internally.

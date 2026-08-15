@@ -52,11 +52,14 @@
 
 /**** Headers ****/
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
 #include "ta_utility.h"
+#include "../server_verify.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -108,6 +111,12 @@ typedef struct
    TA_RangeType far_type;
    int          far_avg;
    double       far_factor;
+   /* Equal completes the set. The struct sat here for two decades with ten of
+    * the eleven settings and no reader at all (#216 gap 2); a matrix missing
+    * Equal could never vary what CDLTASUKIGAP / CDLSTICKSANDWICH read. */
+   TA_RangeType equal_type;
+   int          equal_avg;
+   double       equal_factor;
 } TA_CDLGlobals;
 
 typedef struct
@@ -252,6 +261,100 @@ static TA_Test tableTest[] =
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
+
+/* ------------------------------------------------------------------------ *
+ * The candle-settings matrix (#216 gap 2/3, on the #215 transport).
+ *
+ * Every candlestick in this file has only ever run at the DEFAULT settings, in
+ * every language. `TA_CDLGlobals` above was declared for this and then never
+ * read. That left two holes at once: the eleven thresholds had no C-side
+ * coverage away from their defaults, and — because no server could be told to
+ * change them until #215 — no cross-language comparison could either.
+ *
+ * The matrix below is the C side; server_verify() carries the same settings to
+ * every language server (sync_candle_settings), so one sweep closes both.
+ *
+ * Row 0 IS the defaults, and is the baseline every other row is diffed against
+ * rather than a redundant re-run: a row that moves no output is a row that
+ * tested nothing, and the run fails if none of them move.
+ */
+static const TA_CDLGlobals cdlGlobalsMatrix[] =
+{
+   /* 0: the documented defaults, verbatim from TA_RestoreCandleDefaultSettings. */
+   { TA_RangeType_RealBody, 10, 1.0,    /* BodyLong        */
+     TA_RangeType_RealBody, 10, 3.0,    /* BodyVeryLong    */
+     TA_RangeType_RealBody, 10, 1.0,    /* BodyShort       */
+     TA_RangeType_HighLow,  10, 0.1,    /* BodyDoji        */
+     TA_RangeType_RealBody,  0, 1.0,    /* ShadowLong      */
+     TA_RangeType_RealBody,  0, 2.0,    /* ShadowVeryLong  */
+     TA_RangeType_Shadows,  10, 1.0,    /* ShadowShort     */
+     TA_RangeType_HighLow,  10, 0.1,    /* ShadowVeryShort */
+     TA_RangeType_HighLow,   5, 0.2,    /* Near            */
+     TA_RangeType_HighLow,   5, 0.6,    /* Far             */
+     TA_RangeType_HighLow,   5, 0.05 }, /* Equal           */
+
+   /* 1: every setting measured against Shadows. Reaches the arm that only
+    * ShadowShort reaches by default -- the arm #217 found spelled two ways. */
+   { TA_RangeType_Shadows, 10, 1.0,
+     TA_RangeType_Shadows, 10, 3.0,
+     TA_RangeType_Shadows, 10, 1.0,
+     TA_RangeType_Shadows, 10, 0.1,
+     TA_RangeType_Shadows,  0, 1.0,
+     TA_RangeType_Shadows,  0, 2.0,
+     TA_RangeType_Shadows, 10, 1.0,
+     TA_RangeType_Shadows, 10, 0.1,
+     TA_RangeType_Shadows,  5, 0.2,
+     TA_RangeType_Shadows,  5, 0.6,
+     TA_RangeType_Shadows,  5, 0.05 },
+
+   /* 2: every averaging window collapsed to 0 -- the "instant candle" branch,
+    * where ta_candleaverage reads the CURRENT bar instead of the running sum.
+    * Also drives every lookback that is an avgPeriod down to its floor. */
+   { TA_RangeType_RealBody, 0, 1.0,
+     TA_RangeType_RealBody, 0, 3.0,
+     TA_RangeType_RealBody, 0, 1.0,
+     TA_RangeType_HighLow,  0, 0.1,
+     TA_RangeType_RealBody, 0, 1.0,
+     TA_RangeType_RealBody, 0, 2.0,
+     TA_RangeType_Shadows,  0, 1.0,
+     TA_RangeType_HighLow,  0, 0.1,
+     TA_RangeType_HighLow,  0, 0.2,
+     TA_RangeType_HighLow,  0, 0.6,
+     TA_RangeType_HighLow,  0, 0.05 },
+
+   /* 3: long windows and permissive factors -- patterns that almost never fire
+    * at the defaults start firing, which is the direction all-zero output
+    * cannot detect. */
+   { TA_RangeType_HighLow, 25, 0.25,
+     TA_RangeType_HighLow, 25, 0.5,
+     TA_RangeType_HighLow, 25, 2.0,
+     TA_RangeType_RealBody,25, 0.9,
+     TA_RangeType_HighLow, 20, 0.2,
+     TA_RangeType_HighLow, 20, 0.3,
+     TA_RangeType_RealBody,25, 0.2,
+     TA_RangeType_RealBody,25, 0.9,
+     TA_RangeType_RealBody,12, 0.9,
+     TA_RangeType_RealBody,12, 0.05,
+     TA_RangeType_RealBody,12, 0.9 },
+
+   /* 4: strict factors -- the opposite direction, so a pattern that stops
+    * firing is visible too. A negative factor is legal and makes a `>` test
+    * unconditionally true (ta_global.c's comment claims the opposite); Far's
+    * `>=` comparison is the one place that shows up. */
+   { TA_RangeType_RealBody, 5, 4.0,
+     TA_RangeType_RealBody, 5, 9.0,
+     TA_RangeType_RealBody, 5, 0.05,
+     TA_RangeType_HighLow,  5, 0.01,
+     TA_RangeType_RealBody, 3, 4.0,
+     TA_RangeType_RealBody, 3, 8.0,
+     TA_RangeType_Shadows,  5, 0.05,
+     TA_RangeType_HighLow,  5, 0.01,
+     TA_RangeType_HighLow,  3, 0.02,
+     TA_RangeType_HighLow,  3, -1.0,
+     TA_RangeType_HighLow,  3, 0.005 },
+};
+
+#define NB_CDL_GLOBALS (sizeof(cdlGlobalsMatrix)/sizeof(TA_CDLGlobals))
 
 /**** Global functions definitions.   ****/
 /* ------------------------------------------------------------------------ *
@@ -954,6 +1057,287 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    return TA_TEST_PASS;
 }
 
+/* Push one matrix row into the library. Fails loudly rather than skipping: a
+ * rejected setting would leave the sweep comparing a row it never applied. */
+static ErrorNumber apply_cdl_globals( const TA_CDLGlobals *g )
+{
+   static const struct { size_t typeOff, avgOff, factorOff; } field[] = {
+      { offsetof(TA_CDLGlobals, bodyLong_type),        offsetof(TA_CDLGlobals, bodyLong_avg),        offsetof(TA_CDLGlobals, bodyLong_factor) },
+      { offsetof(TA_CDLGlobals, bodyVeryLong_type),    offsetof(TA_CDLGlobals, bodyVeryLong_avg),    offsetof(TA_CDLGlobals, bodyVeryLong_factor) },
+      { offsetof(TA_CDLGlobals, bodyShort_type),       offsetof(TA_CDLGlobals, bodyShort_avg),       offsetof(TA_CDLGlobals, bodyShort_factor) },
+      { offsetof(TA_CDLGlobals, bodyDoji_type),        offsetof(TA_CDLGlobals, bodyDoji_avg),        offsetof(TA_CDLGlobals, bodyDoji_factor) },
+      { offsetof(TA_CDLGlobals, shadowLong_type),      offsetof(TA_CDLGlobals, shadowLong_avg),      offsetof(TA_CDLGlobals, shadowLong_factor) },
+      { offsetof(TA_CDLGlobals, shadowVeryLong_type),  offsetof(TA_CDLGlobals, shadowVeryLong_avg),  offsetof(TA_CDLGlobals, shadowVeryLong_factor) },
+      { offsetof(TA_CDLGlobals, shadowShort_type),     offsetof(TA_CDLGlobals, shadowShort_avg),     offsetof(TA_CDLGlobals, shadowShort_factor) },
+      { offsetof(TA_CDLGlobals, shadowVeryShort_type), offsetof(TA_CDLGlobals, shadowVeryShort_avg), offsetof(TA_CDLGlobals, shadowVeryShort_factor) },
+      { offsetof(TA_CDLGlobals, near_type),            offsetof(TA_CDLGlobals, near_avg),            offsetof(TA_CDLGlobals, near_factor) },
+      { offsetof(TA_CDLGlobals, far_type),             offsetof(TA_CDLGlobals, far_avg),             offsetof(TA_CDLGlobals, far_factor) },
+      { offsetof(TA_CDLGlobals, equal_type),           offsetof(TA_CDLGlobals, equal_avg),           offsetof(TA_CDLGlobals, equal_factor) },
+   };
+   const char *base = (const char *)g;
+   TA_RetCode retCode;
+   int i;
+
+   /* One row per setting, in TA_CandleSettingType order, or the loop below
+    * would set the wrong slots. Constant-folded away when it holds. */
+   if( sizeof(field)/sizeof(field[0]) != (size_t)TA_AllCandleSettings )
+      return TA_CDLSET_SETTING_REJECTED;
+
+   for( i = 0; i < (int)TA_AllCandleSettings; i++ )
+   {
+      TA_RangeType rt;
+      int          avg;
+      double       factor;
+      memcpy(&rt,     base + field[i].typeOff,   sizeof(rt));
+      memcpy(&avg,    base + field[i].avgOff,    sizeof(avg));
+      memcpy(&factor, base + field[i].factorOff, sizeof(factor));
+
+      retCode = TA_SetCandleSettings( (TA_CandleSettingType)i, rt, avg, factor );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "TA_SetCandleSettings(%d,%d,%d,%f) rejected [%d]\n",
+                 i, (int)rt, avg, factor, retCode );
+         return TA_CDLSET_SETTING_REJECTED;
+      }
+   }
+   return TA_TEST_PASS;
+}
+
+/* Did this row change what C computes, versus the defaults row?
+ *
+ * Aligned on the BAR index, not on the buffer offset. A row that changes an
+ * avgPeriod changes the lookback, so the two runs start at different bars and
+ * produce different counts -- comparing element 0 against element 0 would diff
+ * two unrelated bars, and comparing over the current row's count would read
+ * past what the defaults row actually wrote. (Doing exactly that made this
+ * counter fluctuate run to run: row 2 zeroes every avgPeriod, which SHRINKS the
+ * lookback, so the current row is the longer one and the overrun landed in
+ * uninitialized malloc memory.)
+ *
+ * A differing begin index or count is itself a move -- the lookback moved.
+ */
+static int cdl_output_moved( const int *ref, int refBeg, int refNb,
+                             const int *cur, int curBeg, int curNb )
+{
+   int firstBar, lastBar, bar;
+
+   if( refBeg != curBeg || refNb != curNb )
+      return 1;
+
+   firstBar = (refBeg > curBeg) ? refBeg : curBeg;
+   lastBar  = ((refBeg + refNb) < (curBeg + curNb) ? (refBeg + refNb)
+                                                   : (curBeg + curNb)) - 1;
+   for( bar = firstBar; bar <= lastBar; bar++ )
+   {
+      if( ref[bar - refBeg] != cur[bar - curBeg] )
+         return 1;
+   }
+   return 0;
+}
+
+/* Run every candlestick under every matrix row, in C and (when servers are up)
+ * in every language, and prove the sweep is not vacuous.
+ *
+ * Three assertions, in ascending order of what they can catch:
+ *   - the C output MOVED for some (row, function) pair vs the defaults row.
+ *     A matrix whose rows all compute the defaults tests nothing;
+ *   - server_verify() agreed, per call, bit-for-bit. That is the cross-language
+ *     half, and it is what the #215 transport bought;
+ *   - restoring the defaults reproduces row 0's output exactly, so the sweep
+ *     cannot leave the library in a state later groups inherit.
+ */
+static ErrorNumber test_candle_settings_matrix( const TA_History *history )
+{
+   /* Two output buffers: the defaults row is kept for the whole sweep so every
+    * later row can be diffed against it. */
+   int *outDefault = NULL;
+   int *outCur     = NULL;
+   int *defBeg     = NULL;   /* row 0's outBegIdx / outNBElement, per function: */
+   int *defNb      = NULL;   /* every later row is aligned against these.       */
+   TA_ParamHolder *paramHolder;
+   ErrorNumber errNb = TA_TEST_PASS;
+   int nbBars = (int)history->nbBars;
+   unsigned int r, f;
+   int moved = 0, calls = 0, restoredMismatch = 0;
+   int syncsBefore = server_verify_candle_syncs();
+
+   outDefault = (int *)malloc((size_t)nbBars * NB_TEST * sizeof(int));
+   outCur     = (int *)malloc((size_t)nbBars * sizeof(int));
+   defBeg     = (int *)malloc(NB_TEST * sizeof(int));
+   defNb      = (int *)malloc(NB_TEST * sizeof(int));
+   if( !outDefault || !outCur || !defBeg || !defNb )
+   {
+      free(outDefault); free(outCur); free(defBeg); free(defNb);
+      return TA_CDLSET_CALL_FAILED;
+   }
+
+   for( r = 0; r < NB_CDL_GLOBALS && errNb == TA_TEST_PASS; r++ )
+   {
+      errNb = apply_cdl_globals( &cdlGlobalsMatrix[r] );
+      if( errNb != TA_TEST_PASS )
+         break;
+
+      for( f = 0; f < NB_TEST; f++ )
+      {
+         int outBegIdx = 0, outNbElement = 0, lookback = 0;
+         TA_RetCode taFuncRetCode = TA_SUCCESS;
+         const TA_Real *inputs[5];
+         const TA_Integer *outInteger[2];
+         int *dst = (r == 0) ? (outDefault + (size_t)f * nbBars) : outCur;
+
+         paramHolder = NULL;
+         errNb = callCandlestick( &paramHolder,
+                                  tableTest[f].name,
+                                  0, nbBars - 1,
+                                  history->open, history->high,
+                                  history->low,  history->close,
+                                  tableTest[f].params,
+                                  &outBegIdx, &outNbElement,
+                                  dst, &lookback, &taFuncRetCode );
+         if( paramHolder )
+            TA_ParamHolderFree( paramHolder );
+         if( errNb != TA_TEST_PASS )
+            break;
+         calls++;
+
+         if( r == 0 )
+         {
+            defBeg[f] = outBegIdx;
+            defNb[f]  = outNbElement;
+         }
+         else if( cdl_output_moved( outDefault + (size_t)f * nbBars,
+                                    defBeg[f], defNb[f],
+                                    dst, outBegIdx, outNbElement ) )
+         {
+            moved++;
+         }
+
+         /* Cross-language: server_verify carries this row's settings to every
+          * server through sync_candle_settings before comparing (#215). */
+         inputs[0] = history->open;
+         inputs[1] = history->high;
+         inputs[2] = history->low;
+         inputs[3] = history->close;
+         inputs[4] = NULL;
+         outInteger[0] = dst;
+         outInteger[1] = NULL;
+         errNb = server_verify( tableTest[f].name,
+                                0, nbBars - 1, nbBars,
+                                taFuncRetCode, outBegIdx, outNbElement,
+                                inputs, NULL, 0, NULL, outInteger );
+         if( errNb != TA_TEST_PASS )
+         {
+            printf( "Failed: candle settings matrix row %u, %s (cross-language)\n",
+                    r, tableTest[f].name );
+            errNb = TA_CDLSET_XLANG_MISMATCH;
+            break;
+         }
+      }
+   }
+
+   /* Always restore, even on failure: later groups inherit these globals. */
+   if( TA_RestoreCandleDefaultSettings( TA_AllCandleSettings ) != TA_SUCCESS )
+   {
+      free(outDefault); free(outCur); free(defBeg); free(defNb);
+      return TA_CDLSET_RESTORE_FAILED;
+   }
+   if( errNb != TA_TEST_PASS )
+   {
+      free(outDefault); free(outCur); free(defBeg); free(defNb);
+      return errNb;
+   }
+
+   /* The restore must reproduce row 0 exactly -- otherwise the sweep leaks a
+    * changed threshold into every group that runs after it. */
+   for( f = 0; f < NB_TEST; f++ )
+   {
+      int outBegIdx = 0, outNbElement = 0, lookback = 0;
+      TA_RetCode taFuncRetCode = TA_SUCCESS;
+      paramHolder = NULL;
+      errNb = callCandlestick( &paramHolder, tableTest[f].name,
+                               0, nbBars - 1,
+                               history->open, history->high,
+                               history->low,  history->close,
+                               tableTest[f].params,
+                               &outBegIdx, &outNbElement,
+                               outCur, &lookback, &taFuncRetCode );
+      if( paramHolder )
+         TA_ParamHolderFree( paramHolder );
+      if( errNb != TA_TEST_PASS )
+      {
+         free(outDefault); free(outCur); free(defBeg); free(defNb);
+         return errNb;
+      }
+      /* Same bar-aligned comparison the move counter uses -- here it must find
+       * NO difference, index and count included. */
+      if( cdl_output_moved( outDefault + (size_t)f * nbBars, defBeg[f], defNb[f],
+                            outCur, outBegIdx, outNbElement ) )
+      {
+         printf( "Failed: %s differs after restoring the candle defaults\n",
+                 tableTest[f].name );
+         restoredMismatch++;
+      }
+
+      /* Verified cross-language too, which is what carries the restore OUT to
+       * the servers: sync_candle_settings pushes the delta back to the defaults
+       * before comparing. Without this the servers would still be holding the
+       * last row's settings when this group ends, and "restore works" would be
+       * a C-only claim. */
+      {
+         const TA_Real *inputs[5];
+         const TA_Integer *outInteger[2];
+         inputs[0] = history->open;
+         inputs[1] = history->high;
+         inputs[2] = history->low;
+         inputs[3] = history->close;
+         inputs[4] = NULL;
+         outInteger[0] = outCur;
+         outInteger[1] = NULL;
+         errNb = server_verify( tableTest[f].name,
+                                0, nbBars - 1, nbBars,
+                                taFuncRetCode, outBegIdx, outNbElement,
+                                inputs, NULL, 0, NULL, outInteger );
+         if( errNb != TA_TEST_PASS )
+         {
+            printf( "Failed: %s after restoring the candle defaults "
+                    "(cross-language)\n", tableTest[f].name );
+            free(outDefault); free(outCur); free(defBeg); free(defNb);
+            return TA_CDLSET_XLANG_MISMATCH;
+         }
+      }
+   }
+
+   free(outDefault);
+   free(outCur);
+   free(defBeg);
+   free(defNb);
+
+   if( restoredMismatch )
+      return TA_CDLSET_NOT_RESTORED;
+
+   printf( "  Candle settings matrix: %u row(s) x %u function(s), %d call(s), "
+           "%d output(s) moved off the defaults, %d setting(s) pushed to the "
+           "language servers\n",
+           (unsigned int)NB_CDL_GLOBALS, (unsigned int)NB_TEST, calls, moved,
+           server_verify_candle_syncs() - syncsBefore );
+
+   /* Non-vacuity. A row that never changes an output, or settings that never
+    * reach the servers, would let this whole sweep pass while comparing every
+    * language at the defaults -- the exact hole #216 was filed for. */
+   if( moved == 0 )
+   {
+      printf( "Failed: the candle settings matrix moved no output at all\n" );
+      return TA_CDLSET_VACUOUS_NO_MOVE;
+   }
+   if( server_verify_active() && server_verify_candle_syncs() == syncsBefore )
+   {
+      printf( "Failed: no candle setting was pushed to any language server\n" );
+      return TA_CDLSET_VACUOUS_NO_SYNC;
+   }
+
+   return TA_TEST_PASS;
+}
+
 ErrorNumber test_candlestick( TA_History *history )
 {
    unsigned int i;
@@ -996,6 +1380,16 @@ ErrorNumber test_candlestick( TA_History *history )
 
    /* Re-initialize all the unstable period to zero. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
+
+   /* Everything above runs at the DEFAULT candle settings, in C only. The
+    * matrix is the other half: non-default thresholds, and the same thresholds
+    * carried to every language server (#215/#216). */
+   retValue = test_candle_settings_matrix( history );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed: candle settings matrix (retValue=%d)\n", retValue );
+      return retValue;
+   }
 
    /* All tests succeed. */
    return TA_TEST_PASS;
