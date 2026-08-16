@@ -8156,6 +8156,169 @@ static void build_ladderbottom( void )
 
 }
 
+/* ---- Hard tier: CDLUNIQUE3RIVER ------------------------------------------ *
+ *
+ * A long black candle, a black harami making a lower low, and a short white
+ * third opening above that low. Nine conditions over three bars with two
+ * settings reads -- BodyLong at i-2 on an all-primer window and BodyShort at i
+ * carrying the first two bodies -- so 12 and 2 put them on 2 and 3 exactly.
+ *
+ * c0 IS WAIVED and the derivation needs no threshold. Were the 1st candle
+ * white, open(1st) <= close(1st); c4 puts open(2nd) at or below open(1st) and
+ * c3 puts close(2nd) above close(1st), so
+ *   open(2nd) <= open(1st) <= close(1st) < close(2nd)
+ * and the 2nd candle is white -- which c1 forbids. Price ordering only, so
+ * unlike CDLSTALLEDPATTERN's c0 no choice of primer makes this one flippable.
+ *
+ * c7's flip is the one that moves a second bar, and for a reason worth naming
+ * because it is the mirror of the usual cascade problem. Shrinking the 1st body
+ * to its BodyLong boundary does not lower a threshold here -- it RAISES
+ * open(1st), because the close is what stays fixed. c4 holds open(2nd) at or
+ * below open(1st), so the 2nd candle has to come down to follow it, and the
+ * BodyShort window at i then carries two smaller bodies and drops from 3 to
+ * 1.9. Both effects come from one bar's body moving, in opposite directions.
+ */
+static void cond_unique3river( int i, int *c )
+{
+   c[0] = !pb_white(i-2);
+   c[1] = !pb_white(i-1);
+   c[2] = pb_white(i);
+   c[3] = pbC[i-1] > pbC[i-2];
+   c[4] = pbO[i-1] <= pbO[i-2];
+   c[5] = pbL[i-1] < pbL[i-2];
+   c[6] = pbO[i]   > pbL[i-1];
+   c[7] = pb_body(i-2) > pb_avg(TA_BodyLong,  i-2);
+   c[8] = pb_body(i)   < pb_avg(TA_BodyShort, i);
+}
+
+static void build_unique3river( void )
+{
+  pb_conditions(9);
+
+  pb_waive(0, "were the 1st candle white, open(1st) <= close(1st); c4 puts open(2nd) at or below open(1st) and c3 puts close(2nd) above close(1st), so open(2nd) <= open(1st) <= close(1st) < close(2nd) and the 2nd candle is white -- which c1 forbids. So c1, c3 and c4 entail a black 1st candle. Price ordering only, with no threshold in it, so no choice of primer makes it flippable; a 300k-sample random search over all three bars found no case breaking it alone");
+
+  pb_flat(6);
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y1=pb_bar(105,108,104,107);
+  pb_detect(y1,100,"detect: a long black candle, a black harami with a lower low, and a short white 3rd opening above that low");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(101,111,97,102);
+  int y2=pb_bar(105,108,104,107);
+  pb_flip(y2,1,"break c1: the 2nd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y3=pb_bar(105,108,104,107);
+  pb_control(y3,100,1,"restore c1: the 2nd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y4=pb_bar(107,108,104,105);
+  pb_flip(y4,2,"break c2: the 3rd candle is black");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y5=pb_bar(105,108,104,107);
+  pb_control(y5,100,2,"restore c2: the 3rd candle is white");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,100);
+  int y6=pb_bar(105,108,104,107);
+  pb_flip(y6,3,"break c3: 2nd closes 100 == the 1st close, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,101);
+  int y7=pb_bar(105,108,104,107);
+  pb_control(y7,100,3,"restore c3: 2nd closes 101 > the 1st close 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(112.5,113,97,108);
+  int y8=pb_bar(105,108,104,107);
+  pb_flip(y8,4,"break c4: 2nd opens 112.5, above the 1st open 112");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(112,113,97,108);
+  int y9=pb_bar(105,108,104,107);
+  pb_control(y9,100,4,"restore c4: 2nd opens 112 == the 1st open, inclusive");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,98,108);
+  int y10=pb_bar(105,108,104,107);
+  pb_flip(y10,5,"break c5: 2nd low 98 == the 1st low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97.5,108);
+  int y11=pb_bar(105,108,104,107);
+  pb_control(y11,100,5,"restore c5: 2nd low 97.5 < the 1st low 98");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y12=pb_bar(97,108,96,99);
+  pb_flip(y12,6,"break c6: 3rd opens 97 == the 2nd low, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y13=pb_bar(97.5,108,96,99);
+  pb_control(y13,100,6,"restore c6: 3rd opens 97.5 > the 2nd low 97");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(102,113,98,100);
+  pb_bar(102,111,97,101);
+  int y14=pb_bar(105,108,104,106.5);
+  pb_flip(y14,7,"break c7: 1st body 2 == avg 2, the test is strict -- the 2nd has to come down with it, because c4 holds open(2nd) under open(1st) and shrinking the 1st body raises that open");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(103,113,98,100);
+  pb_bar(102,111,97,101);
+  int y15=pb_bar(105,108,104,106.5);
+  pb_control(y15,100,7,"restore c7: 1st body 3 > avg 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y16=pb_bar(105,109,104,108);
+  pb_flip(y16,8,"break c8: 3rd body 3 == avg 3, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(112,113,98,100);
+  pb_bar(110,111,97,108);
+  int y17=pb_bar(105,109,104,107.5);
+  pb_control(y17,100,8,"restore c8: 3rd body 2.5 < avg 3");
+  pb_flat(8);
+
+}
+
 static ErrorNumber test_marquee_predicate_coverage( void )
 {
    ErrorNumber e;
@@ -8203,6 +8366,7 @@ static ErrorNumber test_marquee_predicate_coverage( void )
    pb_reset(); build_3linestrike();         e = pb_check_mcdc("CDL3LINESTRIKE",        TA_CDL3LINESTRIKE,         cond_3linestrike);         if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_identical3crows();     e = pb_check_mcdc("CDLIDENTICAL3CROWS",   TA_CDLIDENTICAL3CROWS,     cond_identical3crows);     if( e != TA_TEST_PASS ) return e;
    pb_reset(); build_ladderbottom();        e = pb_check_mcdc("CDLLADDERBOTTOM",       TA_CDLLADDERBOTTOM,        cond_ladderbottom);        if( e != TA_TEST_PASS ) return e;
+   pb_reset(); build_unique3river();        e = pb_check_mcdc("CDLUNIQUE3RIVER",       TA_CDLUNIQUE3RIVER,        cond_unique3river);        if( e != TA_TEST_PASS ) return e;
    pb_report_totals();
    return TA_TEST_PASS;
 }
