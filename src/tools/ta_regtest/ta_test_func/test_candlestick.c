@@ -416,6 +416,8 @@ static const char *pbEl[PB_MAXEXP];
 static int pbEkind[PB_MAXEXP];
 static int pbEcond[PB_MAXEXP];       /* condition id for FLIP/CONTROL/SOLE, else -1 */
 static int pbEdisj[PB_MAXEXP];       /* disjunct id for SOLE, else -1 */
+static int pbEarm[PB_MAXEXP];        /* arm id for an attributed FLIP, else -1 */
+static int pbEconj[PB_MAXEXP];       /* conjunct id within that arm, else -1 */
 
 /* Conditions the pattern is DECLARED to have, and the ones deliberately not
  * given a flip case. Every declared condition must be either flipped or
@@ -452,7 +454,19 @@ static int         pbNbSigns;
  * The axis that does reach them is SOLE-TRUE: a firing case in which exactly
  * one alternative holds. That is what shows the alternative to be independently
  * sufficient, and it is the disjunction's form of the control. */
+#define PB_MAXALT 8
 static int         pbNbDisj[PB_MAXCOND];   /* alternatives per condition, 0 = plain */
+/* Conjuncts INSIDE each alternative. pb_signs and the sole-true axis both reach
+ * arm SELECTION only -- which alternative carries the decision -- and say
+ * nothing about what an alternative is made of. An arm of `colour && shadow`
+ * has its colour half covered by the class axis and its shadow half covered by
+ * nothing, and an arm of eight conjuncts has seven such halves. Declaring the
+ * sizes is what lets the completeness check ask for a case per conjunct. */
+static int         pbArmN[PB_MAXCOND][PB_MAXALT];
+static int         pbNbArm[PB_MAXCOND];
+static int         pbAwCond[PB_MAXWAIVE], pbAwArm[PB_MAXWAIVE], pbAwJ[PB_MAXWAIVE];
+static const char *pbAwWhy[PB_MAXWAIVE];
+static int         pbNaw;
 static int         pbDwCond[PB_MAXWAIVE];
 static int         pbDwK[PB_MAXWAIVE];
 static const char *pbDwWhy[PB_MAXWAIVE];
@@ -482,7 +496,7 @@ static void pb_record( int i, int v, const char *s, int kind, int cond )
 {
    if( pbNe >= PB_MAXEXP ) { pbOverflow = 1; return; }
    pbEi[pbNe]=i; pbEv[pbNe]=v; pbEl[pbNe]=s; pbEkind[pbNe]=kind; pbEcond[pbNe]=cond;
-   pbEdisj[pbNe]=-1;
+   pbEdisj[pbNe]=-1; pbEarm[pbNe]=-1; pbEconj[pbNe]=-1;
    pbNe++;
 }
 static void pb_expect( int i, int v, const char *s ) { pb_record(i, v, s, PB_LEGACY, -1); }
@@ -553,9 +567,40 @@ static void pb_waive( int cond, const char *why )
  */
 static void pb_disjuncts( int cond, int n )
 {
-   if( cond < 0 || cond >= PB_MAXCOND || n < 2 || n > PB_MAXCOND )
+   if( cond < 0 || cond >= PB_MAXCOND || n < 2 || n > PB_MAXALT )
       { pbOverflow = 1; return; }
    pbNbDisj[cond] = n;
+}
+/* pb_arm(c,k,n)        alternative k of condition c is a conjunction of n terms.
+ * pb_flip_in(i,c,k,j,s) the decision does not fire, every other condition holds,
+ *                      and within alternative k exactly term j is false -- so the
+ *                      zero is attributable to that term and not merely to the
+ *                      alternative. This is the flip an interior term can have;
+ *                      a plain pb_flip of the condition falsifies every
+ *                      alternative at once and names none of them.
+ * pb_waive_arm(c,k,j,why)
+ *                      term j cannot be broken alone. Two shapes recur: the
+ *                      arm's own selector (a colour test, already covered on the
+ *                      output-class axis) and a term entailed by its siblings. */
+static void pb_arm( int cond, int arm, int n )
+{
+   if( cond < 0 || cond >= PB_MAXCOND || arm < 0 || arm >= PB_MAXALT || n < 1 )
+      { pbOverflow = 1; return; }
+   pbArmN[cond][arm] = n;
+   if( arm + 1 > pbNbArm[cond] ) pbNbArm[cond] = arm + 1;
+}
+static void pb_flip_in( int i, int cond, int arm, int j, const char *s )
+{
+   pb_record(i, 0, s, PB_FLIP, cond);
+   if( pbNe > 0 ) { pbEarm[pbNe-1] = arm; pbEconj[pbNe-1] = j; }
+}
+static void pb_waive_arm( int cond, int arm, int j, const char *why )
+{
+   int m;
+   if( pbNaw >= PB_MAXWAIVE || !why ) { pbOverflow = 1; return; }
+   for( m = 0; m < pbNaw; m++ )
+      if( pbAwCond[m]==cond && pbAwArm[m]==arm && pbAwJ[m]==j ) { pbOverflow=1; return; }
+   pbAwCond[pbNaw]=cond; pbAwArm[pbNaw]=arm; pbAwJ[pbNaw]=j; pbAwWhy[pbNaw]=why; pbNaw++;
 }
 static void pb_sole( int i, int v, int cond, int k, const char *s )
 {
@@ -576,16 +621,36 @@ static void pb_waive_disjunct( int cond, int k, const char *why )
  * mention one, and a new argument on the entry point would make every one of
  * them say "none". Cleared by pb_reset, set inside build_<x>(), read by
  * pb_check_mcdc_finish. */
-typedef void (*PbDisjFn)( int i, int cond, int *d );
-static PbDisjFn pbDisjModel;
-static void pb_disj_model( PbDisjFn f ) { pbDisjModel = f; }
+/* The model reports each alternative's TERMS, not merely whether the
+ * alternative holds: an arm's truth is the AND of its terms, so the finer model
+ * yields the coarser one and there is only ever one function to write. */
+typedef void (*PbArmFn)( int i, int cond, int arm, int *a );
+static PbArmFn pbArmModel;
+static void pb_arm_model( PbArmFn f ) { pbArmModel = f; }
+
+/* Truth of alternative `arm`, or -1 if the model left a term unset. */
+static int pb_arm_true( int i, int cond, int arm )
+{
+   int a[PB_MAXCOND], q, n = pbArmN[cond][arm], v = 1;
+   if( n <= 0 || n > PB_MAXCOND ) return -1;
+   for( q = 0; q < n; q++ ) a[q] = -1;
+   pbArmModel(i, cond, arm, a);
+   for( q = 0; q < n; q++ )
+   {
+      if( a[q] == -1 ) return -1;
+      if( !a[q] ) v = 0;
+   }
+   return v;
+}
 
 static void pb_reset( void )
 {
    int k;
    pbCur=0; pbNe=0; pbNw=0; pbNbCond=0; pbNbSigns=1; pbOverflow=0;
-   pbNdw=0; pbDisjModel=0;
-   for( k=0; k<PB_MAXCOND; k++ ) pbNbDisj[k] = 0;
+   pbNdw=0; pbNaw=0; pbArmModel=0;
+   for( k=0; k<PB_MAXCOND; k++ )
+   { int q; pbNbDisj[k] = 0; pbNbArm[k] = 0;
+     for( q=0; q<PB_MAXALT; q++ ) pbArmN[k][q] = 0; }
 }
 
 /* HIKKAKE detection window (3 bars). dir +1 bull/-1 bear; each of p1/p2/p34/p56
@@ -804,6 +869,7 @@ typedef void (*PbCondFn)( int i, int *c );
  * the thing most likely to hollow this gate out silently. */
 static int pbTotDetect, pbTotFlip, pbTotControl, pbTotWaive, pbTotCond;
 static int pbTotSole, pbTotDisj, pbTotDisjCond, pbTotDisjWaive;
+static int pbTotArmTerm, pbTotArmFlip, pbTotArmWaive;
 static int pbTotMigrated;
 
 /* Print what the gate actually covered. A gate that does not report its own
@@ -818,6 +884,9 @@ static void pb_report_totals( void )
    printf("  MC/DC disjuncts: %d alternative(s) inside %d condition(s), "
           "%d sole-true case(s), %d waived\n",
           pbTotDisj, pbTotDisjCond, pbTotSole, pbTotDisjWaive);
+   printf("  MC/DC arm terms: %d term(s) inside those alternatives, "
+          "%d attributed flip(s), %d waived\n",
+          pbTotArmTerm, pbTotArmFlip, pbTotArmWaive);
 }
 
 /* The body shared by pb_check_mcdc and pb_check_mcdc_p -- everything past
@@ -915,16 +984,14 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
           * scenario rather than only the sole-true ones, is what makes them a
           * decomposition OF that condition: the flips are where OR is false,
           * and a fabricated model has to get those right too. */
-         if( pbDisjModel )
+         if( pbArmModel )
          {
             int c2;
             for( c2 = 0; c2 < pbNbCond && c2 < PB_MAXCOND; c2++ )
             {
-               int dv[PB_MAXCOND], any = 0, q, n2 = pbNbDisj[c2];
+               int any = 0, q, n2 = pbNbArm[c2];
                if( n2 <= 0 ) continue;
-               for( q = 0; q < n2; q++ ) dv[q] = 0;
-               pbDisjModel(pbEi[k], c2, dv);
-               for( q = 0; q < n2; q++ ) if( dv[q] ) any = 1;
+               for( q = 0; q < n2; q++ ) if( pb_arm_true(pbEi[k], c2, q) == 1 ) any = 1;
                if( cv[c2] != -1 && any != (cv[c2] ? 1 : 0) )
                {
                   printf("  %s MC/DC: c%d's alternatives OR to %d but the "
@@ -1008,11 +1075,11 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
       for( c = 0; c < pbNbCond && c < PB_MAXCOND; c++ )
       {
          if( pbNbDisj[c] <= 0 ) continue;
-         if( !pbDisjModel )
+         if( !pbArmModel )
          {
-            printf("  %s MC/DC: c%d declares %d alternative(s) but no disjunct "
+            printf("  %s MC/DC: c%d declares %d alternative(s) but no arm "
                    "model was registered -- they are unchecked\n",
-                   name, c, pbNbDisj[c]);
+                   name, c, pbNbArm[c]);
             fails++;
             continue;
          }
@@ -1040,14 +1107,112 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
       }
    }
 
-   /* Each sole-true case must actually be sole-true. Without this the kind is
-    * just a second control: a case tagged alt0 that happens to satisfy alt0 AND
-    * alt2 proves neither of them independently sufficient. */
-   if( pbDisjModel )
+   /* INTERIOR TERM COVERAGE. Everything above reaches arm SELECTION -- which
+    * alternative carries the decision -- and nothing inside one. A plain flip of
+    * the condition falsifies every alternative at once and names none of their
+    * terms, so an arm of eight conjuncts is satisfied by breaking any one of
+    * them and the other seven are asked for by nothing. That is not theoretical:
+    * CDLBELTHOLD's arms hold a colour test and a shadow test, and its shadow
+    * halves are covered only because unit 1 chose to write a second flip per
+    * arm; the gate would have printed the same "ok" without them. */
+   {
+      int c, a, j, w;
+      for( c = 0; c < pbNbCond && c < PB_MAXCOND; c++ )
+      {
+         if( pbNbArm[c] <= 0 ) continue;
+         for( a = 0; a < pbNbArm[c] && a < PB_MAXALT; a++ )
+         {
+            if( pbArmN[c][a] <= 0 )
+            {
+               printf("  %s MC/DC: c%d alt%d declares no term count -- its "
+                      "interior is unchecked\n", name, c, a);
+               fails++;
+               continue;
+            }
+            /* An arm of ONE term needs no attribution: the term and the arm
+             * are the same proposition, so the sole-true case (that arm alone
+             * true) and the condition's own flip (every arm false) already show
+             * the term determining the condition in both directions. Only from
+             * two terms up does "the arm is false" stop naming which one. */
+            if( pbArmN[c][a] == 1 ) continue;
+            for( j = 0; j < pbArmN[c][a]; j++ )
+            {
+               int found = 0;
+               for( k = 0; k < pbNe; k++ )
+                  if( pbEkind[k] == PB_FLIP && pbEcond[k] == c &&
+                      pbEarm[k] == a && pbEconj[k] == j ) { found = 1; break; }
+               for( w = 0; w < pbNaw && !found; w++ )
+                  if( pbAwCond[w]==c && pbAwArm[w]==a && pbAwJ[w]==j )
+                  {
+                     found = 1;
+                     printf("  %s MC/DC arm waiver c%d alt%d term%d: %s\n",
+                            name, c, a, j, pbAwWhy[w]);
+                  }
+               if( !found )
+               {
+                  printf("  %s MC/DC: c%d alt%d term %d has no attributed flip "
+                         "and no waiver -- breaking it alone is asked for by "
+                         "nothing\n", name, c, a, j);
+                  fails++;
+               }
+            }
+         }
+      }
+   }
+
+   /* An attributed flip must be attributable: exactly the named term false
+    * inside the named arm, every other term of that arm true, and every other
+    * alternative false -- otherwise the zero it asserts belongs to something
+    * else and the case proves nothing about the term on its label. */
+   if( pbArmModel )
    {
       for( k = 0; k < pbNe; k++ )
       {
-         int dv[PB_MAXCOND];
+         int a[PB_MAXCOND], q, n, nFalse = 0, firstFalse = -1, other;
+         if( pbEkind[k] != PB_FLIP || pbEarm[k] < 0 ) continue;
+         n = pbArmN[pbEcond[k]][pbEarm[k]];
+         if( n <= 0 || n > PB_MAXCOND ) continue;
+         for( q = 0; q < n; q++ ) a[q] = -1;
+         pbArmModel(pbEi[k], pbEcond[k], pbEarm[k], a);
+         for( q = 0; q < n; q++ )
+         {
+            if( a[q] == -1 )
+            {
+               printf("  %s MC/DC: arm model left c%d alt%d term%d unset (%s)\n",
+                      name, pbEcond[k], pbEarm[k], q, pbEl[k]);
+               fails++;
+            }
+            else if( !a[q] ) { nFalse++; if( firstFalse < 0 ) firstFalse = q; }
+         }
+         if( nFalse != 1 || firstFalse != pbEconj[k] )
+         {
+            printf("  %s MC/DC: flip filed as c%d alt%d term%d has %d term(s) "
+                   "false%s (%s)\n", name, pbEcond[k], pbEarm[k], pbEconj[k],
+                   nFalse, nFalse == 1 ? " -- and it is a different term" : "",
+                   pbEl[k]);
+            fails++;
+         }
+         for( other = 0; other < pbNbArm[pbEcond[k]] && other < PB_MAXALT; other++ )
+         {
+            if( other == pbEarm[k] ) continue;
+            if( pb_arm_true(pbEi[k], pbEcond[k], other) == 1 )
+            {
+               printf("  %s MC/DC: flip filed as c%d alt%d term%d leaves alt%d "
+                      "true, so the condition still holds (%s)\n",
+                      name, pbEcond[k], pbEarm[k], pbEconj[k], other, pbEl[k]);
+               fails++;
+            }
+         }
+      }
+   }
+
+   /* Each sole-true case must actually be sole-true. Without this the kind is
+    * just a second control: a case tagged alt0 that happens to satisfy alt0 AND
+    * alt2 proves neither of them independently sufficient. */
+   if( pbArmModel )
+   {
+      for( k = 0; k < pbNe; k++ )
+      {
          int n, m, nTrue = 0, firstTrue = -1;
          if( pbEkind[k] != PB_SOLE ) continue;
          n = (pbEcond[k] >= 0 && pbEcond[k] < PB_MAXCOND) ? pbNbDisj[pbEcond[k]] : 0;
@@ -1058,17 +1223,16 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
             fails++;
             continue;
          }
-         for( m = 0; m < n; m++ ) dv[m] = -1;
-         pbDisjModel(pbEi[k], pbEcond[k], dv);
          for( m = 0; m < n; m++ )
          {
-            if( dv[m] == -1 )
+            int t = pb_arm_true(pbEi[k], pbEcond[k], m);
+            if( t == -1 )
             {
-               printf("  %s MC/DC: disjunct model left c%d alt%d unset (%s)\n",
+               printf("  %s MC/DC: arm model left a term of c%d alt%d unset (%s)\n",
                       name, pbEcond[k], m, pbEl[k]);
                fails++;
             }
-            else if( dv[m] ) { nTrue++; if( firstTrue < 0 ) firstTrue = m; }
+            else if( t ) { nTrue++; if( firstTrue < 0 ) firstTrue = m; }
          }
          if( nTrue != 1 )
          {
@@ -1201,6 +1365,10 @@ static ErrorNumber pb_check_mcdc_finish( const char *name, TA_RetCode rc,
    pbTotWaive  += pbNw;
    pbTotSole   += nSole;
    pbTotDisjWaive += pbNdw;
+   pbTotArmWaive  += pbNaw;
+   for( k=0; k<pbNe; k++ ) if( pbEkind[k]==PB_FLIP && pbEarm[k]>=0 ) pbTotArmFlip++;
+   { int c2,a2; for( c2=0; c2<pbNbCond && c2<PB_MAXCOND; c2++ )
+        for( a2=0; a2<pbNbArm[c2] && a2<PB_MAXALT; a2++ ) pbTotArmTerm += pbArmN[c2][a2]; }
    { int c; for( c=0; c<pbNbCond && c<PB_MAXCOND; c++ )
         if( pbNbDisj[c] > 0 ) { pbTotDisj += pbNbDisj[c]; pbTotDisjCond++; } }
    pbTotMigrated++;
@@ -2403,11 +2571,24 @@ static void cond_belthold( int i, int *c )
    c[1] = (  pb_white(i) && pb_losh(i) < vs )
        || ( !pb_white(i) && pb_upsh(i) < vs );
 }
+/* Each arm is a colour selector AND a shadow test. pb_signs reaches the
+ * selectors; until these were declared, nothing reached the shadows. */
+static void arm_belthold( int i, int cond, int arm, int *a )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   if( cond != 1 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i); a[1] = pb_losh(i) < vs; }
+   else           { a[0] = !pb_white(i); a[1] = pb_upsh(i) < vs; }
+}
 
 static void build_belthold( void )
 {
   pb_conditions(2);
   pb_signs(2);
+  pb_arm(1,0,2); pb_arm(1,1,2);
+  pb_arm_model(arm_belthold);
+  pb_waive_arm(1,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(1,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2426,7 +2607,7 @@ static void build_belthold( void )
 
   pb_primer(12,100,2,4);
   int f1=pb_bar(100,108,99,105);           /* lower shadow 1 == avg */
-  pb_flip(f1,1,"break c1: lower shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1,1,0,1,"break c1 alt0 term1: lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,108,99.5,105);
@@ -2444,7 +2625,7 @@ static void build_belthold( void )
 
   pb_primer(12,100,2,4);
   int f1b=pb_bar(105,106,97,100);          /* upper shadow 1 == avg */
-  pb_flip(f1b,1,"break c1 black: upper shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1b,1,1,1,"break c1 alt1 term1: upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1b=pb_bar(105,105.5,97,100);
@@ -2471,11 +2652,22 @@ static void cond_closingmarubozu( int i, int *c )
    c[1] = (  pb_white(i) && pb_upsh(i) < vs )
        || ( !pb_white(i) && pb_losh(i) < vs );
 }
+static void arm_closingmarubozu( int i, int cond, int arm, int *a )
+{
+   double vs = pb_avg(TA_ShadowVeryShort, i);
+   if( cond != 1 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i); a[1] = pb_upsh(i) < vs; }
+   else           { a[0] = !pb_white(i); a[1] = pb_losh(i) < vs; }
+}
 
 static void build_closingmarubozu( void )
 {
   pb_conditions(2);
   pb_signs(2);
+  pb_arm(1,0,2); pb_arm(1,1,2);
+  pb_arm_model(arm_closingmarubozu);
+  pb_waive_arm(1,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(1,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -2494,7 +2686,7 @@ static void build_closingmarubozu( void )
 
   pb_primer(12,100,2,4);
   int f1=pb_bar(100,106,99,105);           /* upper shadow 1 == avg */
-  pb_flip(f1,1,"break c1: upper shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1,1,0,1,"break c1 alt0 term1: upper shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1=pb_bar(100,105.5,99,105);
@@ -2512,7 +2704,7 @@ static void build_closingmarubozu( void )
 
   pb_primer(12,100,2,4);
   int f1b=pb_bar(105,108,99,100);          /* lower shadow 1 == avg */
-  pb_flip(f1b,1,"break c1 black: lower shadow 1 == avg 1, the test is strict");
+  pb_flip_in(f1b,1,1,1,"break c1 alt1 term1: lower shadow 1 == avg 1, the test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   int k1b=pb_bar(105,108,99.5,100);
@@ -2542,17 +2734,18 @@ static void cond_longleggeddoji( int i, int *c )
  * BOTH shadows long -- so neither arm was ever the one carrying the decision and
  * either could be deleted from the pattern with the whole suite green. The two
  * sole-true cases are what close that. */
-static void disj_longleggeddoji( int i, int cond, int *d )
+static void arm_longleggeddoji( int i, int cond, int arm, int *a )
 {
    double sl = pb_avg(TA_ShadowLong, i);
-   if( cond == 1 ) { d[0] = pb_losh(i) > sl; d[1] = pb_upsh(i) > sl; }
+   if( cond == 1 ) a[0] = arm == 0 ? pb_losh(i) > sl : pb_upsh(i) > sl;
 }
 
 static void build_longleggeddoji( void )
 {
   pb_conditions(2);
   pb_disjuncts(1,2);
-  pb_disj_model(disj_longleggeddoji);
+  pb_arm(1,0,1); pb_arm(1,1,1);
+  pb_arm_model(arm_longleggeddoji);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -3645,11 +3838,21 @@ static void cond_dojistar( int i, int *c )
    c[2] = (  pb_white(i-1) && pb_bodylo(i) > pb_bodyhi(i-1) )
        || ( !pb_white(i-1) && pb_bodyhi(i) < pb_bodylo(i-1) );
 }
+static void arm_dojistar( int i, int cond, int arm, int *a )
+{
+   if( cond != 2 ) return;
+   if( arm == 0 ) { a[0] =  pb_white(i-1); a[1] = pb_bodylo(i) > pb_bodyhi(i-1); }
+   else           { a[0] = !pb_white(i-1); a[1] = pb_bodyhi(i) < pb_bodylo(i-1); }
+}
 
 static void build_dojistar( void )
 {
   pb_conditions(3);
   pb_signs(2);
+  pb_arm(2,0,2); pb_arm(2,1,2);
+  pb_arm_model(arm_dojistar);
+  pb_waive_arm(2,0,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
+  pb_waive_arm(2,1,0,"the arm's own colour selector -- it is what chooses the arm, and the class it chooses is fired by pb_signs(2)");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -3683,7 +3886,7 @@ static void build_dojistar( void )
   pb_primer(12,100,2,4);
   pb_bar(100,106,96,105);
   int f2=pb_bar(105,105.5,104.5,105);      /* floor 105 == prior ceiling: no gap */
-  pb_flip(f2,2,"break c2: body floor 105 == prior ceiling 105, the gap test is strict");
+  pb_flip_in(f2,2,0,1,"break c2 alt0 term1: body floor 105 == prior ceiling 105, the gap test is strict");
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(100,106,96,105);
@@ -3698,6 +3901,12 @@ static void build_dojistar( void )
   pb_bar(105,106,96,100);                  /* prior: BLACK, body 5, HighLow still 10 */
   int db=pb_bar(99,99.5,98.5,99);          /* doji gapping down under the floor 100 */
   pb_detect(db,100,"detect black-first: prior body 5 > 2, doji body 0 <= 1, gap down 99 < 100");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(105,106,96,100);
+  int f2b=pb_bar(100,100.5,99.5,100);      /* doji body ceiling 100 == prior floor 100 */
+  pb_flip_in(f2b,2,1,1,"break c2 alt1 term1: body ceiling 100 == prior floor 100, the gap test is strict");
   pb_flat(8);
 }
 
@@ -5080,25 +5289,36 @@ static void cond_advanceblock( int i, int *c )
  * above this makes any single alternative necessary: with D3 and D4 both live
  * in the detect, D2 could be deleted from the pattern outright and every case
  * here still passed. */
-static void disj_advanceblock( int i, int cond, int *d )
+static void arm_advanceblock( int i, int cond, int arm, int *a )
 {
    if( cond != 11 ) return;
-   d[0] = ( pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2) &&
-            pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1) );
-   d[1] = ( pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1) );
-   d[2] = ( pb_body(i)   < pb_body(i-1) &&
-            pb_body(i-1) < pb_body(i-2) &&
-            ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
-              pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) ) );
-   d[3] = ( pb_body(i)   < pb_body(i-1) &&
-            pb_upsh(i)   > pb_avg(TA_ShadowLong, i) );
+   switch( arm ) {
+   case 0:
+      a[0] = pb_body(i-1) < pb_body(i-2) - pb_avg(TA_Far,  i-2);
+      a[1] = pb_body(i)   < pb_body(i-1) + pb_avg(TA_Near, i-1);
+      break;
+   case 1:
+      a[0] = pb_body(i)   < pb_body(i-1) - pb_avg(TA_Far,  i-1);
+      break;
+   case 2:
+      a[0] = pb_body(i)   < pb_body(i-1);
+      a[1] = pb_body(i-1) < pb_body(i-2);
+      a[2] = ( pb_upsh(i)   > pb_avg(TA_ShadowShort, i) ||
+               pb_upsh(i-1) > pb_avg(TA_ShadowShort, i-1) );
+      break;
+   default:
+      a[0] = pb_body(i)   < pb_body(i-1);
+      a[1] = pb_upsh(i)   > pb_avg(TA_ShadowLong, i);
+      break;
+   }
 }
 
 static void build_advanceblock( void )
 {
   pb_conditions(12);
   pb_disjuncts(11,4);
-  pb_disj_model(disj_advanceblock);
+  pb_arm(11,0,2); pb_arm(11,1,1); pb_arm(11,2,3); pb_arm(11,3,2);
+  pb_arm_model(arm_advanceblock);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -5304,6 +5524,62 @@ static void build_advanceblock( void )
   int a3=pb_bar(114,121,113,117);          /* body 3, ush 4 > ShadowLong 3; 3 is not < 8-6 */
   pb_sole(a3,-100,11,3,"c11 alt D4 alone: 3rd smaller than 2nd with a long upper shadow");
   pb_flat(8);
+
+  /* c11's alternatives are conjunctions, and a flip of c11 falsifies all four
+   * at once without naming a term inside any of them. These do: each leaves
+   * exactly one term of one alternative false, every other term of that
+   * alternative true, and the other three alternatives false -- so the zero is
+   * attributable to the term on the label. D2 is a single term and needs none:
+   * there, the term and the alternative are the same proposition. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,110);
+  int t00=pb_bar(109,111,107,111);
+  pb_flip_in(t00,11,0,0,"break c11 alt D1 term0: 2nd body 2 == 1st body 8 - Far 6, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,109,99,108);
+  pb_bar(108,110,107,109);
+  int t01=pb_bar(109,116,107,115);
+  pb_flip_in(t01,11,0,1,"break c11 alt D1 term1: 3rd body 6 exceeds 2nd body 1 + Near 2");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,114,102,110);
+  int t20=pb_bar(106,113,105,112);
+  pb_flip_in(t20,11,2,0,"break c11 alt D3 term0: 3rd body 6 == 2nd body 6, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,115,102,111);
+  int t21=pb_bar(107,113,105,112);
+  pb_flip_in(t21,11,2,1,"break c11 alt D3 term1: 2nd body 7 == 1st body 7, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(104,111,102,110);
+  int t22=pb_bar(106,111,105,111);
+  pb_flip_in(t22,11,2,2,"break c11 alt D3 term2: neither upper shadow clears its ShadowShort average");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);
+  int t30=pb_bar(114,131,113,122);
+  pb_flip_in(t30,11,3,0,"break c11 alt D4 term0: 3rd body 8 == 2nd body 8, the test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,108,98,107);
+  pb_bar(105,114,103,113);
+  int t31=pb_bar(114,120,113,117);
+  pb_flip_in(t31,11,3,1,"break c11 alt D4 term1: upper shadow 3 == ShadowLong 3 (its own body), the test is strict");
+  pb_flat(8);
+
 }
 
 /* ---- Hard tier: CDLGAPSIDESIDEWHITE -------------------------------------- *
@@ -5357,11 +5633,13 @@ static void cond_gapsidesidewhite( int i, int *c )
    c[5] = pbO[i]     >= pbO[i-1]     - e;
    c[6] = pbO[i]     <= pbO[i-1]     + e;
 }
-static void disj_gapsidesidewhite( int i, int cond, int *d )
+static void arm_gapsidesidewhite( int i, int cond, int arm, int *a )
 {
    if( cond != 0 ) return;
-   d[0] = ( pb_bodylo(i-1) > pb_bodyhi(i-2) && pb_bodylo(i) > pb_bodyhi(i-2) );
-   d[1] = ( pb_bodyhi(i-1) < pb_bodylo(i-2) && pb_bodyhi(i) < pb_bodylo(i-2) );
+   if( arm == 0 ) { a[0] = pb_bodylo(i-1) > pb_bodyhi(i-2);
+                    a[1] = pb_bodylo(i)   > pb_bodyhi(i-2); }
+   else           { a[0] = pb_bodyhi(i-1) < pb_bodylo(i-2);
+                    a[1] = pb_bodyhi(i)   < pb_bodylo(i-2); }
 }
 
 static void build_gapsidesidewhite( void )
@@ -5369,7 +5647,8 @@ static void build_gapsidesidewhite( void )
   pb_conditions(7);
   pb_signs(2);
   pb_disjuncts(0,2);
-  pb_disj_model(disj_gapsidesidewhite);
+  pb_arm(0,0,2); pb_arm(0,1,2);
+  pb_arm_model(arm_gapsidesidewhite);
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -5489,6 +5768,40 @@ static void build_gapsidesidewhite( void )
   int a1=pb_bar(90,97,89,96);
   pb_sole(a1,-100,0,1,"c0 alt1 alone: both bodies gap DOWN, so the gap-up alternative cannot hold");
   pb_flat(8);
+
+  /* Both terms of an arm are gap tests, and c5/c6 hold the two opens within
+   * Equal of each other -- so the two body edges they compare move together and
+   * can only be separated by straddling the first candle's edge inside that
+   * half-point band. That coupling is why a single flip of c0 breaks both terms
+   * at once and names neither. */
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(104,117,103,110);
+  int g00=pb_bar(104.25,117,103,110.25);
+  pb_flip_in(g00,0,0,0,"break c0 alt0 term0: 2nd body floor 104 == the 1st candle's ceiling 104, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(104.25,117,103,110.25);
+  int g01=pb_bar(104,117,103,110);
+  pb_flip_in(g01,0,0,1,"break c0 alt0 term1: 3rd body floor 104 == the 1st candle's ceiling 104, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(94,97,89,100);
+  int g10=pb_bar(93.75,97,89,99.75);
+  pb_flip_in(g10,0,1,0,"break c0 alt1 term0: 2nd body ceiling 100 == the 1st candle's floor 100, the gap test is strict");
+  pb_flat(8);
+
+  pb_primer(12,100,2,4);
+  pb_bar(100,106,96,104);
+  pb_bar(93.75,97,89,99.75);
+  int g11=pb_bar(94,97,89,100);
+  pb_flip_in(g11,0,1,1,"break c0 alt1 term1: 3rd body ceiling 100 == the 1st candle's floor 100, the gap test is strict");
+  pb_flat(8);
+
 }
 
 /* ---- Hard tier: CDLRISEFALL3METHODS -------------------------------------- *
