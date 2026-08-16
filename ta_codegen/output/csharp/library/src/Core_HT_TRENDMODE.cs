@@ -93,10 +93,10 @@ public partial class Core
    }
    internal RetCode HT_TRENDMODE( int startIdx,
                                   int endIdx,
-                                  double[] inReal,
+                                  ReadOnlySpan<double> inReal,
                                   out int outBegIdx,
                                   out int outNBElement,
-                                  int[] outInteger )
+                                  Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -582,10 +582,10 @@ public partial class Core
    }
    internal RetCode HT_TRENDMODE( int startIdx,
                                   int endIdx,
-                                  float[] inReal,
+                                  ReadOnlySpan<float> inReal,
                                   out int outBegIdx,
                                   out int outNBElement,
-                                  int[] outInteger )
+                                  Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1014,11 +1014,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_TRENDMODE( int startIdx,
                                  int endIdx,
-                                 double[] inReal,
-                                 int[] outInteger )
+                                 ReadOnlySpan<double> inReal,
+                                 Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_TRENDMODE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDMODE", retCode);
@@ -1060,11 +1059,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_TRENDMODE( int startIdx,
                                  int endIdx,
-                                 float[] inReal,
-                                 int[] outInteger )
+                                 ReadOnlySpan<float> inReal,
+                                 Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_TRENDMODE(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_TRENDMODE", retCode);
@@ -1723,7 +1721,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_TRENDMODE_OpenCore( HT_TRENDMODE_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode HT_TRENDMODE_OpenCore( HT_TRENDMODE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -2214,13 +2212,13 @@ public partial class Core
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
-      Array.Copy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
+      inReal.Slice(historyLen - cap_trailingWMAIdx, cap_trailingWMAIdx).CopyTo(capRing_trailingWMAIdx_inReal);
       int cap_j = (int)(50);
       if( cap_j < 1 || cap_j > historyLen ) {
          return RetCode.InternalError;
       }
       double[] capWin_j_inReal = new double[cap_j];
-      Array.Copy(inReal, historyLen - cap_j, capWin_j_inReal, 0, cap_j);
+      inReal.Slice(historyLen - cap_j, cap_j).CopyTo(capWin_j_inReal);
       int capCb_smoothPrice = maxIdx_smoothPrice + 1;
       if( capCb_smoothPrice > historyLen + 1 ) {
          return RetCode.InternalError;
@@ -2312,29 +2310,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_TRENDMODE_OpenBody( HT_TRENDMODE_Stream sp, double[] inReal, int startIdx )
+   private RetCode HT_TRENDMODE_OpenBody( HT_TRENDMODE_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return HT_TRENDMODE_OpenCore( sp, inReal, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode HT_TRENDMODE_OpenAndFillBody( HT_TRENDMODE_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode HT_TRENDMODE_OpenAndFillBody( HT_TRENDMODE_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inReal) ) {
-         return RetCode.BadParam;
-      }
       return HT_TRENDMODE_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode HT_TRENDMODE_OpenAndFillInternalBody( HT_TRENDMODE_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode HT_TRENDMODE_OpenAndFillInternalBody( HT_TRENDMODE_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return HT_TRENDMODE_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* HT_TRENDMODE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       RetCode retCode = HT_TRENDMODE_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -2345,7 +2340,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind HT_TRENDMODE_Open (composition seam). */
-   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( double[] inReal, int startIdx )
+   internal HT_TRENDMODE_Stream HT_TRENDMODE_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       RetCode retCode = HT_TRENDMODE_OpenBody(sp, inReal, startIdx);
@@ -2370,9 +2365,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public HT_TRENDMODE_Stream HT_TRENDMODE_Open( double[] inReal )
+   public HT_TRENDMODE_Stream HT_TRENDMODE_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return HT_TRENDMODE_OpenInternal(inReal, 0);
    }
 
@@ -2398,10 +2393,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( double[] inReal, int[] outInteger )
+   public HT_TRENDMODE_Stream HT_TRENDMODE_OpenAndFill( ReadOnlySpan<double> inReal, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       HT_TRENDMODE_Stream sp = new HT_TRENDMODE_Stream(this);
       RetCode retCode = HT_TRENDMODE_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

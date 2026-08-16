@@ -76,11 +76,11 @@ public partial class Core
    }
    internal RetCode OBV( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inReal,
+                         ReadOnlySpan<double> inVolume,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -114,11 +114,11 @@ public partial class Core
    }
    internal RetCode OBV( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inReal,
+                         ReadOnlySpan<float> inVolume,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -183,13 +183,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange OBV( int startIdx,
                         int endIdx,
-                        double[] inReal,
-                        double[] inVolume,
-                        double[] outReal )
+                        ReadOnlySpan<double> inReal,
+                        ReadOnlySpan<double> inVolume,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = OBV(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
@@ -235,13 +234,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange OBV( int startIdx,
                         int endIdx,
-                        float[] inReal,
-                        float[] inVolume,
-                        double[] outReal )
+                        ReadOnlySpan<float> inReal,
+                        ReadOnlySpan<float> inVolume,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = OBV(startIdx, endIdx, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("OBV", retCode);
@@ -364,7 +362,7 @@ public partial class Core
       sp.prevReal = tempReal;
    }
 
-   private RetCode OBV_OpenCore( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode OBV_OpenCore( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -403,29 +401,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode OBV_OpenBody( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx )
+   private RetCode OBV_OpenBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return OBV_OpenCore( sp, inReal, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode OBV_OpenAndFillBody( OBV_Stream sp, double[] inReal, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode OBV_OpenAndFillBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return OBV_OpenCore( sp, inReal, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode OBV_OpenAndFillInternalBody( OBV_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return OBV_OpenCore(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* OBV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal OBV_Stream OBV_OpenAndFillInternal( double[] inReal, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal OBV_Stream OBV_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       OBV_Stream sp = new OBV_Stream(this);
       RetCode retCode = OBV_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -436,7 +434,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind OBV_Open (composition seam). */
-   internal OBV_Stream OBV_OpenInternal( double[] inReal, double[] inVolume, int startIdx )
+   internal OBV_Stream OBV_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx )
    {
       OBV_Stream sp = new OBV_Stream(this);
       RetCode retCode = OBV_OpenBody(sp, inReal, inVolume, startIdx);
@@ -461,10 +459,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public OBV_Stream OBV_Open( double[] inReal, double[] inVolume )
+   public OBV_Stream OBV_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return OBV_OpenInternal(inReal, inVolume, 0);
    }
 
@@ -490,11 +488,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public OBV_Stream OBV_OpenAndFill( double[] inReal, double[] inVolume, double[] outReal )
+   public OBV_Stream OBV_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       OBV_Stream sp = new OBV_Stream(this);
       RetCode retCode = OBV_OpenAndFillBody(sp, inReal, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

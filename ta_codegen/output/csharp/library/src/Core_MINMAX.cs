@@ -78,12 +78,12 @@ public partial class Core
    }
    internal RetCode MINMAX( int startIdx,
                             int endIdx,
-                            double[] inReal,
+                            ReadOnlySpan<double> inReal,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outMin,
-                            double[] outMax )
+                            Span<double> outMin,
+                            Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -269,12 +269,12 @@ public partial class Core
    }
    internal RetCode MINMAX( int startIdx,
                             int endIdx,
-                            float[] inReal,
+                            ReadOnlySpan<float> inReal,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outMin,
-                            double[] outMax )
+                            Span<double> outMin,
+                            Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -449,14 +449,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINMAX( int startIdx,
                            int endIdx,
-                           double[] inReal,
+                           ReadOnlySpan<double> inReal,
                            int optInTimePeriod,
-                           double[] outMin,
-                           double[] outMax )
+                           Span<double> outMin,
+                           Span<double> outMax )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMin);
-      ArgumentNullException.ThrowIfNull(outMax);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
@@ -501,14 +499,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINMAX( int startIdx,
                            int endIdx,
-                           float[] inReal,
+                           ReadOnlySpan<float> inReal,
                            int optInTimePeriod,
-                           double[] outMin,
-                           double[] outMax )
+                           Span<double> outMin,
+                           Span<double> outMax )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMin);
-      ArgumentNullException.ThrowIfNull(outMax);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MINMAX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       if( retCode != RetCode.Success ) {
          throw Failure("MINMAX", retCode);
@@ -718,7 +714,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MINMAX_OpenCore( MINMAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outMin, double[] outMax, int outStride )
+   private RetCode MINMAX_OpenCore( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -865,30 +861,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MINMAX_OpenBody( MINMAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode MINMAX_OpenBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outMin = new double[1];
       double[] sink_outMax = new double[1];
       return MINMAX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outMin, sink_outMax, 0 );
    }
 
-   private RetCode MINMAX_OpenAndFillBody( MINMAX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outMin, double[] outMax )
+   private RetCode MINMAX_OpenAndFillBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outMin, inReal) || ReferenceEquals(outMax, inReal) || ReferenceEquals(outMin, outMax) ) {
+      if( outMin.Overlaps(inReal) || outMax.Overlaps(inReal) || outMin.Overlaps(outMax) ) {
          return RetCode.BadParam;
       }
       return MINMAX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1 );
    }
 
-   private RetCode MINMAX_OpenAndFillInternalBody( MINMAX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outMin, double[] outMax )
+   private RetCode MINMAX_OpenAndFillInternalBody( MINMAX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       return MINMAX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax, 1);
    }
 
    /* MINMAX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MINMAX_Stream MINMAX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outMin, double[] outMax )
+   internal MINMAX_Stream MINMAX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outMin, Span<double> outMax )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
       RetCode retCode = MINMAX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outMin, outMax);
@@ -899,7 +895,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MINMAX_Open (composition seam). */
-   internal MINMAX_Stream MINMAX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal MINMAX_Stream MINMAX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MINMAX_Stream sp = new MINMAX_Stream(this);
       RetCode retCode = MINMAX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -926,9 +922,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MINMAX_Stream MINMAX_Open( double[] inReal, int optInTimePeriod )
+   public MINMAX_Stream MINMAX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MINMAX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -958,11 +954,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MINMAX_Stream MINMAX_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outMin, double[] outMax )
+   public MINMAX_Stream MINMAX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outMin, Span<double> outMax )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMin);
-      ArgumentNullException.ThrowIfNull(outMax);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MINMAX_Stream sp = new MINMAX_Stream(this);
       RetCode retCode = MINMAX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outMin, outMax);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

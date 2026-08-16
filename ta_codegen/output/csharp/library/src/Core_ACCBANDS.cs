@@ -87,15 +87,15 @@ public partial class Core
    }
    internal RetCode ACCBANDS( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
-                              double[] inClose,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outRealUpperBand,
-                              double[] outRealMiddleBand,
-                              double[] outRealLowerBand )
+                              Span<double> outRealUpperBand,
+                              Span<double> outRealMiddleBand,
+                              Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -219,15 +219,15 @@ public partial class Core
    }
    internal RetCode ACCBANDS( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
-                              float[] inClose,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outRealUpperBand,
-                              double[] outRealMiddleBand,
-                              double[] outRealLowerBand )
+                              Span<double> outRealUpperBand,
+                              Span<double> outRealMiddleBand,
+                              Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -360,20 +360,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ACCBANDS( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
-                             double[] inClose,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
                              int optInTimePeriod,
-                             double[] outRealUpperBand,
-                             double[] outRealMiddleBand,
-                             double[] outRealLowerBand )
+                             Span<double> outRealUpperBand,
+                             Span<double> outRealMiddleBand,
+                             Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("ACCBANDS", retCode);
@@ -427,20 +424,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ACCBANDS( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
-                             float[] inClose,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
                              int optInTimePeriod,
-                             double[] outRealUpperBand,
-                             double[] outRealMiddleBand,
-                             double[] outRealLowerBand )
+                             Span<double> outRealUpperBand,
+                             Span<double> outRealMiddleBand,
+                             Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = ACCBANDS(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("ACCBANDS", retCode);
@@ -671,7 +665,7 @@ public partial class Core
       }
    }
 
-   private RetCode ACCBANDS_OpenCore( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand, int outStride )
+   private RetCode ACCBANDS_OpenCore( ACCBANDS_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -797,11 +791,11 @@ public partial class Core
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
-      Array.Copy(inHigh, historyLen - cap_trailingIdx, capRing_trailingIdx_inHigh, 0, cap_trailingIdx);
+      inHigh.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inHigh);
       double[] capRing_trailingIdx_inLow = new double[allocN_trailingIdx];
-      Array.Copy(inLow, historyLen - cap_trailingIdx, capRing_trailingIdx_inLow, 0, cap_trailingIdx);
+      inLow.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inLow);
       double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-      Array.Copy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+      inClose.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inClose);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotalUpper = periodTotalUpper;
       sp.periodTotalMiddle = periodTotalMiddle;
@@ -820,7 +814,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   private RetCode ACCBANDS_OpenBody( ACCBANDS_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       double[] sink_outRealUpperBand = new double[1];
       double[] sink_outRealMiddleBand = new double[1];
@@ -828,23 +822,23 @@ public partial class Core
       return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
    }
 
-   private RetCode ACCBANDS_OpenAndFillBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   private RetCode ACCBANDS_OpenAndFillBody( ACCBANDS_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outRealUpperBand, inHigh) || ReferenceEquals(outRealUpperBand, inLow) || ReferenceEquals(outRealUpperBand, inClose) || ReferenceEquals(outRealMiddleBand, inHigh) || ReferenceEquals(outRealMiddleBand, inLow) || ReferenceEquals(outRealMiddleBand, inClose) || ReferenceEquals(outRealLowerBand, inHigh) || ReferenceEquals(outRealLowerBand, inLow) || ReferenceEquals(outRealLowerBand, inClose) || ReferenceEquals(outRealUpperBand, outRealMiddleBand) || ReferenceEquals(outRealUpperBand, outRealLowerBand) || ReferenceEquals(outRealMiddleBand, outRealLowerBand) ) {
+      if( outRealUpperBand.Overlaps(inHigh) || outRealUpperBand.Overlaps(inLow) || outRealUpperBand.Overlaps(inClose) || outRealMiddleBand.Overlaps(inHigh) || outRealMiddleBand.Overlaps(inLow) || outRealMiddleBand.Overlaps(inClose) || outRealLowerBand.Overlaps(inHigh) || outRealLowerBand.Overlaps(inLow) || outRealLowerBand.Overlaps(inClose) || outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam;
       }
       return ACCBANDS_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
    }
 
-   private RetCode ACCBANDS_OpenAndFillInternalBody( ACCBANDS_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   private RetCode ACCBANDS_OpenAndFillInternalBody( ACCBANDS_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       return ACCBANDS_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
    }
 
    /* ACCBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ACCBANDS_Stream ACCBANDS_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   internal ACCBANDS_Stream ACCBANDS_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -855,7 +849,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind ACCBANDS_Open (composition seam). */
-   internal ACCBANDS_Stream ACCBANDS_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   internal ACCBANDS_Stream ACCBANDS_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
@@ -884,11 +878,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public ACCBANDS_Stream ACCBANDS_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
+   public ACCBANDS_Stream ACCBANDS_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return ACCBANDS_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -921,14 +915,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public ACCBANDS_Stream ACCBANDS_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   public ACCBANDS_Stream ACCBANDS_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       ACCBANDS_Stream sp = new ACCBANDS_Stream(this);
       RetCode retCode = ACCBANDS_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

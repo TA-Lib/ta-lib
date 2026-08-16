@@ -86,11 +86,11 @@ public partial class Core
    }
    internal RetCode HMA( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -324,11 +324,11 @@ public partial class Core
    }
    internal RetCode HMA( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -548,12 +548,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HMA( int startIdx,
                         int endIdx,
-                        double[] inReal,
+                        ReadOnlySpan<double> inReal,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HMA", retCode);
@@ -616,12 +615,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HMA( int startIdx,
                         int endIdx,
-                        float[] inReal,
+                        ReadOnlySpan<float> inReal,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HMA(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HMA", retCode);
@@ -898,7 +896,7 @@ public partial class Core
       }
    }
 
-   private RetCode HMA_OpenCore( HMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode HMA_OpenCore( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1079,7 +1077,7 @@ public partial class Core
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
          double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
-         Array.Copy(inReal, historyLen - cap_trailingIdxFull, capRing_trailingIdxFull_inReal, 0, cap_trailingIdxFull);
+         inReal.Slice(historyLen - cap_trailingIdxFull, cap_trailingIdxFull).CopyTo(capRing_trailingIdxFull_inReal);
          sp.optInTimePeriod = optInTimePeriod;
          sp.dividerFull = dividerFull;
          sp.periodSubFull = periodSubFull;
@@ -1294,14 +1292,14 @@ public partial class Core
          }
          int allocN_trailingIdxFull = (cap_trailingIdxFull > 0)? cap_trailingIdxFull : 1;
          double[] capRing_trailingIdxFull_inReal = new double[allocN_trailingIdxFull];
-         Array.Copy(inReal, historyLen - cap_trailingIdxFull, capRing_trailingIdxFull_inReal, 0, cap_trailingIdxFull);
+         inReal.Slice(historyLen - cap_trailingIdxFull, cap_trailingIdxFull).CopyTo(capRing_trailingIdxFull_inReal);
          int cap_trailingIdxHalf = today - trailingIdxHalf;
          if( cap_trailingIdxHalf < 0 || cap_trailingIdxHalf > historyLen ) {
             return RetCode.InternalError;
          }
          int allocN_trailingIdxHalf = (cap_trailingIdxHalf > 0)? cap_trailingIdxHalf : 1;
          double[] capRing_trailingIdxHalf_inReal = new double[allocN_trailingIdxHalf];
-         Array.Copy(inReal, historyLen - cap_trailingIdxHalf, capRing_trailingIdxHalf_inReal, 0, cap_trailingIdxHalf);
+         inReal.Slice(historyLen - cap_trailingIdxHalf, cap_trailingIdxHalf).CopyTo(capRing_trailingIdxHalf_inReal);
          int capCb_dRing = maxIdx_dRing + 1;
          if( capCb_dRing > historyLen + 1 ) {
             return RetCode.InternalError;
@@ -1339,29 +1337,29 @@ public partial class Core
       }
    }
 
-   private RetCode HMA_OpenBody( HMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode HMA_OpenBody( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return HMA_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode HMA_OpenAndFillBody( HMA_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode HMA_OpenAndFillBody( HMA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return HMA_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode HMA_OpenAndFillInternalBody( HMA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode HMA_OpenAndFillInternalBody( HMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return HMA_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* HMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HMA_Stream HMA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal HMA_Stream HMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -1372,7 +1370,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind HMA_Open (composition seam). */
-   internal HMA_Stream HMA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal HMA_Stream HMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -1399,9 +1397,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public HMA_Stream HMA_Open( double[] inReal, int optInTimePeriod )
+   public HMA_Stream HMA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return HMA_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -1429,10 +1427,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public HMA_Stream HMA_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   public HMA_Stream HMA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       HMA_Stream sp = new HMA_Stream(this);
       RetCode retCode = HMA_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

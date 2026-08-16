@@ -78,11 +78,11 @@ public partial class Core
    }
    internal RetCode AVGDEV( int startIdx,
                             int endIdx,
-                            double[] inReal,
+                            ReadOnlySpan<double> inReal,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -135,11 +135,11 @@ public partial class Core
    }
    internal RetCode AVGDEV( int startIdx,
                             int endIdx,
-                            float[] inReal,
+                            ReadOnlySpan<float> inReal,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -223,12 +223,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AVGDEV( int startIdx,
                            int endIdx,
-                           double[] inReal,
+                           ReadOnlySpan<double> inReal,
                            int optInTimePeriod,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
@@ -276,12 +275,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AVGDEV( int startIdx,
                            int endIdx,
-                           float[] inReal,
+                           ReadOnlySpan<float> inReal,
                            int optInTimePeriod,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = AVGDEV(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGDEV", retCode);
@@ -421,7 +419,7 @@ public partial class Core
       }
    }
 
-   private RetCode AVGDEV_OpenCore( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode AVGDEV_OpenCore( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -478,7 +476,7 @@ public partial class Core
          return RetCode.InternalError;
       }
       double[] capWin_i_inReal = new double[cap_i];
-      Array.Copy(inReal, historyLen - cap_i, capWin_i_inReal, 0, cap_i);
+      inReal.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inReal);
       sp.optInTimePeriod = optInTimePeriod;
       sp.winPos_i = 0;
       sp.winCap_i = cap_i;
@@ -487,29 +485,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AVGDEV_OpenBody( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode AVGDEV_OpenBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return AVGDEV_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AVGDEV_OpenAndFillBody( AVGDEV_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AVGDEV_OpenAndFillBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return AVGDEV_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AVGDEV_OpenAndFillInternalBody( AVGDEV_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return AVGDEV_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AVGDEV_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AVGDEV_Stream AVGDEV_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal AVGDEV_Stream AVGDEV_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       RetCode retCode = AVGDEV_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -520,7 +518,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind AVGDEV_Open (composition seam). */
-   internal AVGDEV_Stream AVGDEV_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal AVGDEV_Stream AVGDEV_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       RetCode retCode = AVGDEV_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -546,9 +544,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public AVGDEV_Stream AVGDEV_Open( double[] inReal, int optInTimePeriod )
+   public AVGDEV_Stream AVGDEV_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return AVGDEV_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -575,10 +573,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public AVGDEV_Stream AVGDEV_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   public AVGDEV_Stream AVGDEV_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       AVGDEV_Stream sp = new AVGDEV_Stream(this);
       RetCode retCode = AVGDEV_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

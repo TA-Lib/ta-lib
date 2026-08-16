@@ -94,13 +94,13 @@ public partial class Core
    }
    internal RetCode NATR( int startIdx,
                           int endIdx,
-                          double[] inHigh,
-                          double[] inLow,
-                          double[] inClose,
+                          ReadOnlySpan<double> inHigh,
+                          ReadOnlySpan<double> inLow,
+                          ReadOnlySpan<double> inClose,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -304,13 +304,13 @@ public partial class Core
    }
    internal RetCode NATR( int startIdx,
                           int endIdx,
-                          float[] inHigh,
-                          float[] inLow,
-                          float[] inClose,
+                          ReadOnlySpan<float> inHigh,
+                          ReadOnlySpan<float> inLow,
+                          ReadOnlySpan<float> inClose,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -471,16 +471,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange NATR( int startIdx,
                          int endIdx,
-                         double[] inHigh,
-                         double[] inLow,
-                         double[] inClose,
+                         ReadOnlySpan<double> inHigh,
+                         ReadOnlySpan<double> inLow,
+                         ReadOnlySpan<double> inClose,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NATR", retCode);
@@ -531,16 +530,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange NATR( int startIdx,
                          int endIdx,
-                         float[] inHigh,
-                         float[] inLow,
-                         float[] inClose,
+                         ReadOnlySpan<float> inHigh,
+                         ReadOnlySpan<float> inLow,
+                         ReadOnlySpan<float> inClose,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = NATR(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("NATR", retCode);
@@ -699,7 +697,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode NATR_OpenCore( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode NATR_OpenCore( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -911,29 +909,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode NATR_OpenBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   private RetCode NATR_OpenBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return NATR_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode NATR_OpenAndFillBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode NATR_OpenAndFillBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return NATR_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode NATR_OpenAndFillInternalBody( NATR_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode NATR_OpenAndFillInternalBody( NATR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return NATR_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* NATR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal NATR_Stream NATR_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal NATR_Stream NATR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       NATR_Stream sp = new NATR_Stream(this);
       RetCode retCode = NATR_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -944,7 +942,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind NATR_Open (composition seam). */
-   internal NATR_Stream NATR_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod )
+   internal NATR_Stream NATR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       NATR_Stream sp = new NATR_Stream(this);
       RetCode retCode = NATR_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod);
@@ -972,11 +970,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public NATR_Stream NATR_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod )
+   public NATR_Stream NATR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return NATR_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
    }
 
@@ -1005,12 +1003,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public NATR_Stream NATR_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod, double[] outReal )
+   public NATR_Stream NATR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       NATR_Stream sp = new NATR_Stream(this);
       RetCode retCode = NATR_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

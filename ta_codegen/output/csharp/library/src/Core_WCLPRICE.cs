@@ -75,12 +75,12 @@ public partial class Core
    }
    internal RetCode WCLPRICE( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
-                              double[] inClose,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -103,12 +103,12 @@ public partial class Core
    }
    internal RetCode WCLPRICE( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
-                              float[] inClose,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -161,15 +161,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange WCLPRICE( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
-                             double[] inClose,
-                             double[] outReal )
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("WCLPRICE", retCode);
@@ -215,15 +214,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange WCLPRICE( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
-                             float[] inClose,
-                             double[] outReal )
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = WCLPRICE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("WCLPRICE", retCode);
@@ -335,7 +333,7 @@ public partial class Core
       sp.cur_outReal = (Math.FusedMultiplyAdd(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
 
-   private RetCode WCLPRICE_OpenCore( WCLPRICE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode WCLPRICE_OpenCore( WCLPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -361,29 +359,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode WCLPRICE_OpenBody( WCLPRICE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode WCLPRICE_OpenBody( WCLPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return WCLPRICE_OpenCore( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode WCLPRICE_OpenAndFillBody( WCLPRICE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode WCLPRICE_OpenAndFillBody( WCLPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return WCLPRICE_OpenCore( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode WCLPRICE_OpenAndFillInternalBody( WCLPRICE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode WCLPRICE_OpenAndFillInternalBody( WCLPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return WCLPRICE_OpenCore(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* WCLPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal WCLPRICE_Stream WCLPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
       RetCode retCode = WCLPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -394,7 +392,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind WCLPRICE_Open (composition seam). */
-   internal WCLPRICE_Stream WCLPRICE_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal WCLPRICE_Stream WCLPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
       RetCode retCode = WCLPRICE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
@@ -421,11 +419,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public WCLPRICE_Stream WCLPRICE_Open( double[] inHigh, double[] inLow, double[] inClose )
+   public WCLPRICE_Stream WCLPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return WCLPRICE_OpenInternal(inHigh, inLow, inClose, 0);
    }
 
@@ -452,12 +450,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public WCLPRICE_Stream WCLPRICE_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] outReal )
+   public WCLPRICE_Stream WCLPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       WCLPRICE_Stream sp = new WCLPRICE_Stream(this);
       RetCode retCode = WCLPRICE_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

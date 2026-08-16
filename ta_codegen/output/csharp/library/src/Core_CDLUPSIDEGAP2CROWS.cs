@@ -78,13 +78,13 @@ public partial class Core
    }
    internal RetCode CDLUPSIDEGAP2CROWS( int startIdx,
                                         int endIdx,
-                                        double[] inOpen,
-                                        double[] inHigh,
-                                        double[] inLow,
-                                        double[] inClose,
+                                        ReadOnlySpan<double> inOpen,
+                                        ReadOnlySpan<double> inHigh,
+                                        ReadOnlySpan<double> inLow,
+                                        ReadOnlySpan<double> inClose,
                                         out int outBegIdx,
                                         out int outNBElement,
-                                        int[] outInteger )
+                                        Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -184,13 +184,13 @@ public partial class Core
    }
    internal RetCode CDLUPSIDEGAP2CROWS( int startIdx,
                                         int endIdx,
-                                        float[] inOpen,
-                                        float[] inHigh,
-                                        float[] inLow,
-                                        float[] inClose,
+                                        ReadOnlySpan<float> inOpen,
+                                        ReadOnlySpan<float> inHigh,
+                                        ReadOnlySpan<float> inLow,
+                                        ReadOnlySpan<float> inClose,
                                         out int outBegIdx,
                                         out int outNBElement,
-                                        int[] outInteger )
+                                        Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -291,17 +291,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLUPSIDEGAP2CROWS( int startIdx,
                                        int endIdx,
-                                       double[] inOpen,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       double[] inClose,
-                                       int[] outInteger )
+                                       ReadOnlySpan<double> inOpen,
+                                       ReadOnlySpan<double> inHigh,
+                                       ReadOnlySpan<double> inLow,
+                                       ReadOnlySpan<double> inClose,
+                                       Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLUPSIDEGAP2CROWS", retCode);
@@ -351,17 +350,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLUPSIDEGAP2CROWS( int startIdx,
                                        int endIdx,
-                                       float[] inOpen,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       float[] inClose,
-                                       int[] outInteger )
+                                       ReadOnlySpan<float> inOpen,
+                                       ReadOnlySpan<float> inHigh,
+                                       ReadOnlySpan<float> inLow,
+                                       ReadOnlySpan<float> inClose,
+                                       Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLUPSIDEGAP2CROWS(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLUPSIDEGAP2CROWS", retCode);
@@ -660,7 +658,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLUPSIDEGAP2CROWS_OpenCore( CDLUPSIDEGAP2CROWS_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenCore( CDLUPSIDEGAP2CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -765,26 +763,26 @@ public partial class Core
       }
       int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
       double[] capRing_BodyLongTrailingIdx_inOpen = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inOpen, 0, cap_BodyLongTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inOpen);
       double[] capRing_BodyLongTrailingIdx_inHigh = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inHigh, 0, cap_BodyLongTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inHigh);
       double[] capRing_BodyLongTrailingIdx_inLow = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inLow, 0, cap_BodyLongTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inLow);
       double[] capRing_BodyLongTrailingIdx_inClose = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inClose, 0, cap_BodyLongTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inClose);
       int cap_BodyShortTrailingIdx = i - BodyShortTrailingIdx;
       if( cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_BodyShortTrailingIdx = (cap_BodyShortTrailingIdx > 0)? cap_BodyShortTrailingIdx : 1;
       double[] capRing_BodyShortTrailingIdx_inOpen = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inOpen, 0, cap_BodyShortTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inOpen);
       double[] capRing_BodyShortTrailingIdx_inHigh = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inHigh, 0, cap_BodyShortTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inHigh);
       double[] capRing_BodyShortTrailingIdx_inLow = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inLow, 0, cap_BodyShortTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inLow);
       double[] capRing_BodyShortTrailingIdx_inClose = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inClose, 0, cap_BodyShortTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inClose);
       sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
       sp.lag1_inOpen = inOpen[historyLen - 1];
@@ -817,29 +815,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLUPSIDEGAP2CROWS_OpenBody( CDLUPSIDEGAP2CROWS_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenBody( CDLUPSIDEGAP2CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDLUPSIDEGAP2CROWS_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillBody( CDLUPSIDEGAP2CROWS_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillBody( CDLUPSIDEGAP2CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLUPSIDEGAP2CROWS_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillInternalBody( CDLUPSIDEGAP2CROWS_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLUPSIDEGAP2CROWS_OpenAndFillInternalBody( CDLUPSIDEGAP2CROWS_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLUPSIDEGAP2CROWS_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLUPSIDEGAP2CROWS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
       RetCode retCode = CDLUPSIDEGAP2CROWS_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -850,7 +845,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLUPSIDEGAP2CROWS_Open (composition seam). */
-   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
       RetCode retCode = CDLUPSIDEGAP2CROWS_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -879,12 +874,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLUPSIDEGAP2CROWS_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -916,13 +911,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDLUPSIDEGAP2CROWS_Stream CDLUPSIDEGAP2CROWS_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLUPSIDEGAP2CROWS_Stream sp = new CDLUPSIDEGAP2CROWS_Stream(this);
       RetCode retCode = CDLUPSIDEGAP2CROWS_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

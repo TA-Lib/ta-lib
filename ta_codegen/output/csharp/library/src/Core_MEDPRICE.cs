@@ -75,11 +75,11 @@ public partial class Core
    }
    internal RetCode MEDPRICE( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -107,11 +107,11 @@ public partial class Core
    }
    internal RetCode MEDPRICE( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -163,13 +163,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MEDPRICE( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
-                             double[] outReal )
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MEDPRICE(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
@@ -214,13 +213,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MEDPRICE( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
-                             double[] outReal )
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MEDPRICE(startIdx, endIdx, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MEDPRICE", retCode);
@@ -330,7 +328,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
 
-   private RetCode MEDPRICE_OpenCore( MEDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MEDPRICE_OpenCore( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -361,29 +359,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx )
+   private RetCode MEDPRICE_OpenBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return MEDPRICE_OpenCore( sp, inHigh, inLow, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MEDPRICE_OpenAndFillBody( MEDPRICE_Stream sp, double[] inHigh, double[] inLow, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MEDPRICE_OpenAndFillBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return MEDPRICE_OpenCore( sp, inHigh, inLow, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MEDPRICE_OpenAndFillInternalBody( MEDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MEDPRICE_OpenAndFillInternalBody( MEDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MEDPRICE_OpenCore(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MEDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MEDPRICE_Stream MEDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       RetCode retCode = MEDPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -394,7 +392,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MEDPRICE_Open (composition seam). */
-   internal MEDPRICE_Stream MEDPRICE_OpenInternal( double[] inHigh, double[] inLow, int startIdx )
+   internal MEDPRICE_Stream MEDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx )
    {
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       RetCode retCode = MEDPRICE_OpenBody(sp, inHigh, inLow, startIdx);
@@ -420,10 +418,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MEDPRICE_Stream MEDPRICE_Open( double[] inHigh, double[] inLow )
+   public MEDPRICE_Stream MEDPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return MEDPRICE_OpenInternal(inHigh, inLow, 0);
    }
 
@@ -449,11 +447,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MEDPRICE_Stream MEDPRICE_OpenAndFill( double[] inHigh, double[] inLow, double[] outReal )
+   public MEDPRICE_Stream MEDPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       MEDPRICE_Stream sp = new MEDPRICE_Stream(this);
       RetCode retCode = MEDPRICE_OpenAndFillBody(sp, inHigh, inLow, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode ATAN( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -96,10 +96,10 @@ public partial class Core
    }
    internal RetCode ATAN( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -149,11 +149,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ATAN( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<double> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = ATAN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ATAN", retCode);
@@ -197,11 +196,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ATAN( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<float> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = ATAN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ATAN", retCode);
@@ -308,7 +306,7 @@ public partial class Core
       sp.cur_outReal = Math.Atan(inReal);
    }
 
-   private RetCode ATAN_OpenCore( ATAN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode ATAN_OpenCore( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -333,29 +331,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ATAN_OpenBody( ATAN_Stream sp, double[] inReal, int startIdx )
+   private RetCode ATAN_OpenBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return ATAN_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ATAN_OpenAndFillBody( ATAN_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ATAN_OpenAndFillBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return ATAN_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ATAN_OpenAndFillInternalBody( ATAN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ATAN_OpenAndFillInternalBody( ATAN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return ATAN_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ATAN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ATAN_Stream ATAN_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal ATAN_Stream ATAN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
       RetCode retCode = ATAN_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -366,7 +364,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind ATAN_Open (composition seam). */
-   internal ATAN_Stream ATAN_OpenInternal( double[] inReal, int startIdx )
+   internal ATAN_Stream ATAN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       ATAN_Stream sp = new ATAN_Stream(this);
       RetCode retCode = ATAN_OpenBody(sp, inReal, startIdx);
@@ -390,9 +388,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public ATAN_Stream ATAN_Open( double[] inReal )
+   public ATAN_Stream ATAN_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return ATAN_OpenInternal(inReal, 0);
    }
 
@@ -417,10 +415,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public ATAN_Stream ATAN_OpenAndFill( double[] inReal, double[] outReal )
+   public ATAN_Stream ATAN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       ATAN_Stream sp = new ATAN_Stream(this);
       RetCode retCode = ATAN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

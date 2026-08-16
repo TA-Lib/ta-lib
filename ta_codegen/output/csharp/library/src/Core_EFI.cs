@@ -83,12 +83,12 @@ public partial class Core
    }
    internal RetCode EFI( int startIdx,
                          int endIdx,
-                         double[] inClose,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inClose,
+                         ReadOnlySpan<double> inVolume,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -222,12 +222,12 @@ public partial class Core
    }
    internal RetCode EFI( int startIdx,
                          int endIdx,
-                         float[] inClose,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inClose,
+                         ReadOnlySpan<float> inVolume,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -352,14 +352,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange EFI( int startIdx,
                         int endIdx,
-                        double[] inClose,
-                        double[] inVolume,
+                        ReadOnlySpan<double> inClose,
+                        ReadOnlySpan<double> inVolume,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EFI", retCode);
@@ -417,14 +416,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange EFI( int startIdx,
                         int endIdx,
-                        float[] inClose,
-                        float[] inVolume,
+                        ReadOnlySpan<float> inClose,
+                        ReadOnlySpan<float> inVolume,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = EFI(startIdx, endIdx, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("EFI", retCode);
@@ -556,7 +554,7 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenCore( EFI_Stream sp, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode EFI_OpenCore( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -763,29 +761,29 @@ public partial class Core
       }
    }
 
-   private RetCode EFI_OpenBody( EFI_Stream sp, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   private RetCode EFI_OpenBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return EFI_OpenCore( sp, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode EFI_OpenAndFillBody( EFI_Stream sp, double[] inClose, double[] inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode EFI_OpenAndFillBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return EFI_OpenCore( sp, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode EFI_OpenAndFillInternalBody( EFI_Stream sp, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode EFI_OpenAndFillInternalBody( EFI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return EFI_OpenCore(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* EFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal EFI_Stream EFI_OpenAndFillInternal( double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal EFI_Stream EFI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       EFI_Stream sp = new EFI_Stream(this);
       RetCode retCode = EFI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -796,7 +794,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind EFI_Open (composition seam). */
-   internal EFI_Stream EFI_OpenInternal( double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   internal EFI_Stream EFI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       EFI_Stream sp = new EFI_Stream(this);
       RetCode retCode = EFI_OpenBody(sp, inClose, inVolume, startIdx, optInTimePeriod);
@@ -823,10 +821,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public EFI_Stream EFI_Open( double[] inClose, double[] inVolume, int optInTimePeriod )
+   public EFI_Stream EFI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return EFI_OpenInternal(inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -854,11 +852,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public EFI_Stream EFI_OpenAndFill( double[] inClose, double[] inVolume, int optInTimePeriod, double[] outReal )
+   public EFI_Stream EFI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       EFI_Stream sp = new EFI_Stream(this);
       RetCode retCode = EFI_OpenAndFillBody(sp, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

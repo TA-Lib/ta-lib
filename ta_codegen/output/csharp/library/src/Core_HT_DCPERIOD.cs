@@ -78,10 +78,10 @@ public partial class Core
    }
    internal RetCode HT_DCPERIOD( int startIdx,
                                  int endIdx,
-                                 double[] inReal,
+                                 ReadOnlySpan<double> inReal,
                                  out int outBegIdx,
                                  out int outNBElement,
-                                 double[] outReal )
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -420,10 +420,10 @@ public partial class Core
    }
    internal RetCode HT_DCPERIOD( int startIdx,
                                  int endIdx,
-                                 float[] inReal,
+                                 ReadOnlySpan<float> inReal,
                                  out int outBegIdx,
                                  out int outNBElement,
-                                 double[] outReal )
+                                 Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -736,11 +736,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_DCPERIOD( int startIdx,
                                 int endIdx,
-                                double[] inReal,
-                                double[] outReal )
+                                ReadOnlySpan<double> inReal,
+                                Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_DCPERIOD(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPERIOD", retCode);
@@ -781,11 +780,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_DCPERIOD( int startIdx,
                                 int endIdx,
-                                float[] inReal,
-                                double[] outReal )
+                                ReadOnlySpan<float> inReal,
+                                Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_DCPERIOD(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_DCPERIOD", retCode);
@@ -1247,7 +1245,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_DCPERIOD_OpenCore( HT_DCPERIOD_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode HT_DCPERIOD_OpenCore( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1591,7 +1589,7 @@ public partial class Core
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
-      Array.Copy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
+      inReal.Slice(historyLen - cap_trailingWMAIdx, cap_trailingWMAIdx).CopyTo(capRing_trailingWMAIdx_inReal);
       sp.tempReal = tempReal;
       sp.tempReal2 = tempReal2;
       sp.period = period;
@@ -1651,29 +1649,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_DCPERIOD_OpenBody( HT_DCPERIOD_Stream sp, double[] inReal, int startIdx )
+   private RetCode HT_DCPERIOD_OpenBody( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return HT_DCPERIOD_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode HT_DCPERIOD_OpenAndFillBody( HT_DCPERIOD_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode HT_DCPERIOD_OpenAndFillBody( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return HT_DCPERIOD_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode HT_DCPERIOD_OpenAndFillInternalBody( HT_DCPERIOD_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode HT_DCPERIOD_OpenAndFillInternalBody( HT_DCPERIOD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return HT_DCPERIOD_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* HT_DCPERIOD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       RetCode retCode = HT_DCPERIOD_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -1684,7 +1682,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind HT_DCPERIOD_Open (composition seam). */
-   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( double[] inReal, int startIdx )
+   internal HT_DCPERIOD_Stream HT_DCPERIOD_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       RetCode retCode = HT_DCPERIOD_OpenBody(sp, inReal, startIdx);
@@ -1709,9 +1707,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public HT_DCPERIOD_Stream HT_DCPERIOD_Open( double[] inReal )
+   public HT_DCPERIOD_Stream HT_DCPERIOD_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return HT_DCPERIOD_OpenInternal(inReal, 0);
    }
 
@@ -1737,10 +1735,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( double[] inReal, double[] outReal )
+   public HT_DCPERIOD_Stream HT_DCPERIOD_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       HT_DCPERIOD_Stream sp = new HT_DCPERIOD_Stream(this);
       RetCode retCode = HT_DCPERIOD_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

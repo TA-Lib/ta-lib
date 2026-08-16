@@ -78,13 +78,13 @@ public partial class Core
    }
    internal RetCode CDLLONGLEGGEDDOJI( int startIdx,
                                        int endIdx,
-                                       double[] inOpen,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       double[] inClose,
+                                       ReadOnlySpan<double> inOpen,
+                                       ReadOnlySpan<double> inHigh,
+                                       ReadOnlySpan<double> inLow,
+                                       ReadOnlySpan<double> inClose,
                                        out int outBegIdx,
                                        out int outNBElement,
-                                       int[] outInteger )
+                                       Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -170,13 +170,13 @@ public partial class Core
    }
    internal RetCode CDLLONGLEGGEDDOJI( int startIdx,
                                        int endIdx,
-                                       float[] inOpen,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       float[] inClose,
+                                       ReadOnlySpan<float> inOpen,
+                                       ReadOnlySpan<float> inHigh,
+                                       ReadOnlySpan<float> inLow,
+                                       ReadOnlySpan<float> inClose,
                                        out int outBegIdx,
                                        out int outNBElement,
-                                       int[] outInteger )
+                                       Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -279,17 +279,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLLONGLEGGEDDOJI( int startIdx,
                                       int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
-                                      int[] outInteger )
+                                      ReadOnlySpan<double> inOpen,
+                                      ReadOnlySpan<double> inHigh,
+                                      ReadOnlySpan<double> inLow,
+                                      ReadOnlySpan<double> inClose,
+                                      Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLLONGLEGGEDDOJI", retCode);
@@ -342,17 +341,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLLONGLEGGEDDOJI( int startIdx,
                                       int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
-                                      int[] outInteger )
+                                      ReadOnlySpan<float> inOpen,
+                                      ReadOnlySpan<float> inHigh,
+                                      ReadOnlySpan<float> inLow,
+                                      ReadOnlySpan<float> inClose,
+                                      Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLLONGLEGGEDDOJI(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLLONGLEGGEDDOJI", retCode);
@@ -610,7 +608,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLLONGLEGGEDDOJI_OpenCore( CDLLONGLEGGEDDOJI_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLLONGLEGGEDDOJI_OpenCore( CDLLONGLEGGEDDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -701,26 +699,26 @@ public partial class Core
       }
       int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
       double[] capRing_BodyDojiTrailingIdx_inOpen = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inOpen, 0, cap_BodyDojiTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inOpen);
       double[] capRing_BodyDojiTrailingIdx_inHigh = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inHigh, 0, cap_BodyDojiTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inHigh);
       double[] capRing_BodyDojiTrailingIdx_inLow = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inLow, 0, cap_BodyDojiTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inLow);
       double[] capRing_BodyDojiTrailingIdx_inClose = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inClose, 0, cap_BodyDojiTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inClose);
       int cap_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
       if( cap_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_ShadowLongTrailingIdx = (cap_ShadowLongTrailingIdx > 0)? cap_ShadowLongTrailingIdx : 1;
       double[] capRing_ShadowLongTrailingIdx_inOpen = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inOpen, 0, cap_ShadowLongTrailingIdx);
+      inOpen.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inOpen);
       double[] capRing_ShadowLongTrailingIdx_inHigh = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inHigh, 0, cap_ShadowLongTrailingIdx);
+      inHigh.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inHigh);
       double[] capRing_ShadowLongTrailingIdx_inLow = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inLow, 0, cap_ShadowLongTrailingIdx);
+      inLow.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inLow);
       double[] capRing_ShadowLongTrailingIdx_inClose = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inClose, 0, cap_ShadowLongTrailingIdx);
+      inClose.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inClose);
       sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp.ShadowLongPeriodTotal = ShadowLongPeriodTotal;
       sp.ringPos_BodyDojiTrailingIdx = 0;
@@ -745,29 +743,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLLONGLEGGEDDOJI_OpenBody( CDLLONGLEGGEDDOJI_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDLLONGLEGGEDDOJI_OpenBody( CDLLONGLEGGEDDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDLLONGLEGGEDDOJI_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillBody( CDLLONGLEGGEDDOJI_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillBody( CDLLONGLEGGEDDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLLONGLEGGEDDOJI_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillInternalBody( CDLLONGLEGGEDDOJI_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLLONGLEGGEDDOJI_OpenAndFillInternalBody( CDLLONGLEGGEDDOJI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLLONGLEGGEDDOJI_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLLONGLEGGEDDOJI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
       RetCode retCode = CDLLONGLEGGEDDOJI_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -778,7 +773,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLLONGLEGGEDDOJI_Open (composition seam). */
-   internal CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
       RetCode retCode = CDLLONGLEGGEDDOJI_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -807,12 +802,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLLONGLEGGEDDOJI_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -844,13 +839,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDLLONGLEGGEDDOJI_Stream CDLLONGLEGGEDDOJI_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLLONGLEGGEDDOJI_Stream sp = new CDLLONGLEGGEDDOJI_Stream(this);
       RetCode retCode = CDLLONGLEGGEDDOJI_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

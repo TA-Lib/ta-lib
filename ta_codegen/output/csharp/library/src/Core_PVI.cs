@@ -74,11 +74,11 @@ public partial class Core
    }
    internal RetCode PVI( int startIdx,
                          int endIdx,
-                         double[] inClose,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inClose,
+                         ReadOnlySpan<double> inVolume,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -138,11 +138,11 @@ public partial class Core
    }
    internal RetCode PVI( int startIdx,
                          int endIdx,
-                         float[] inClose,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inClose,
+                         ReadOnlySpan<float> inVolume,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -226,13 +226,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange PVI( int startIdx,
                         int endIdx,
-                        double[] inClose,
-                        double[] inVolume,
-                        double[] outReal )
+                        ReadOnlySpan<double> inClose,
+                        ReadOnlySpan<double> inVolume,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
@@ -289,13 +288,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange PVI( int startIdx,
                         int endIdx,
-                        float[] inClose,
-                        float[] inVolume,
-                        double[] outReal )
+                        ReadOnlySpan<float> inClose,
+                        ReadOnlySpan<float> inVolume,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = PVI(startIdx, endIdx, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVI", retCode);
@@ -444,7 +442,7 @@ public partial class Core
       sp.prevVolume = tempVolume;
    }
 
-   private RetCode PVI_OpenCore( PVI_Stream sp, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode PVI_OpenCore( PVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -511,29 +509,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode PVI_OpenBody( PVI_Stream sp, double[] inClose, double[] inVolume, int startIdx )
+   private RetCode PVI_OpenBody( PVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return PVI_OpenCore( sp, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode PVI_OpenAndFillBody( PVI_Stream sp, double[] inClose, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode PVI_OpenAndFillBody( PVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return PVI_OpenCore( sp, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode PVI_OpenAndFillInternalBody( PVI_Stream sp, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode PVI_OpenAndFillInternalBody( PVI_Stream sp, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return PVI_OpenCore(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* PVI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PVI_Stream PVI_OpenAndFillInternal( double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal PVI_Stream PVI_OpenAndFillInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       PVI_Stream sp = new PVI_Stream(this);
       RetCode retCode = PVI_OpenAndFillInternalBody(sp, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -544,7 +542,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind PVI_Open (composition seam). */
-   internal PVI_Stream PVI_OpenInternal( double[] inClose, double[] inVolume, int startIdx )
+   internal PVI_Stream PVI_OpenInternal( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       PVI_Stream sp = new PVI_Stream(this);
       RetCode retCode = PVI_OpenBody(sp, inClose, inVolume, startIdx);
@@ -569,10 +567,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public PVI_Stream PVI_Open( double[] inClose, double[] inVolume )
+   public PVI_Stream PVI_Open( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return PVI_OpenInternal(inClose, inVolume, 0);
    }
 
@@ -598,11 +596,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public PVI_Stream PVI_OpenAndFill( double[] inClose, double[] inVolume, double[] outReal )
+   public PVI_Stream PVI_OpenAndFill( ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       PVI_Stream sp = new PVI_Stream(this);
       RetCode retCode = PVI_OpenAndFillBody(sp, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

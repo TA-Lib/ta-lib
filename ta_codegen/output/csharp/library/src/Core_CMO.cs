@@ -86,11 +86,11 @@ public partial class Core
    }
    internal RetCode CMO( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -261,11 +261,11 @@ public partial class Core
    }
    internal RetCode CMO( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -417,12 +417,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMO( int startIdx,
                         int endIdx,
-                        double[] inReal,
+                        ReadOnlySpan<double> inReal,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = CMO(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMO", retCode);
@@ -473,12 +472,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMO( int startIdx,
                         int endIdx,
-                        float[] inReal,
+                        ReadOnlySpan<float> inReal,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = CMO(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMO", retCode);
@@ -620,7 +618,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMO_OpenCore( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode CMO_OpenCore( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -801,29 +799,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CMO_OpenBody( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode CMO_OpenBody( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return CMO_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CMO_OpenAndFillBody( CMO_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CMO_OpenAndFillBody( CMO_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return CMO_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CMO_OpenAndFillInternalBody( CMO_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CMO_OpenAndFillInternalBody( CMO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return CMO_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CMO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CMO_Stream CMO_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal CMO_Stream CMO_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CMO_Stream sp = new CMO_Stream(this);
       RetCode retCode = CMO_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -834,7 +832,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CMO_Open (composition seam). */
-   internal CMO_Stream CMO_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal CMO_Stream CMO_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       CMO_Stream sp = new CMO_Stream(this);
       RetCode retCode = CMO_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -860,9 +858,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CMO_Stream CMO_Open( double[] inReal, int optInTimePeriod )
+   public CMO_Stream CMO_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return CMO_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -889,10 +887,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CMO_Stream CMO_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   public CMO_Stream CMO_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       CMO_Stream sp = new CMO_Stream(this);
       RetCode retCode = CMO_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

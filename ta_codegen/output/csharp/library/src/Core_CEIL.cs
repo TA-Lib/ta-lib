@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode CEIL( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -95,10 +95,10 @@ public partial class Core
    }
    internal RetCode CEIL( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -148,11 +148,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CEIL( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<double> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = CEIL(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CEIL", retCode);
@@ -196,11 +195,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CEIL( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<float> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = CEIL(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CEIL", retCode);
@@ -307,7 +305,7 @@ public partial class Core
       sp.cur_outReal = Math.Ceiling(inReal);
    }
 
-   private RetCode CEIL_OpenCore( CEIL_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode CEIL_OpenCore( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -331,29 +329,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CEIL_OpenBody( CEIL_Stream sp, double[] inReal, int startIdx )
+   private RetCode CEIL_OpenBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return CEIL_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CEIL_OpenAndFillBody( CEIL_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CEIL_OpenAndFillBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return CEIL_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CEIL_OpenAndFillInternalBody( CEIL_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return CEIL_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CEIL_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CEIL_Stream CEIL_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal CEIL_Stream CEIL_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
       RetCode retCode = CEIL_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -364,7 +362,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CEIL_Open (composition seam). */
-   internal CEIL_Stream CEIL_OpenInternal( double[] inReal, int startIdx )
+   internal CEIL_Stream CEIL_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       CEIL_Stream sp = new CEIL_Stream(this);
       RetCode retCode = CEIL_OpenBody(sp, inReal, startIdx);
@@ -388,9 +386,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CEIL_Stream CEIL_Open( double[] inReal )
+   public CEIL_Stream CEIL_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return CEIL_OpenInternal(inReal, 0);
    }
 
@@ -415,10 +413,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CEIL_Stream CEIL_OpenAndFill( double[] inReal, double[] outReal )
+   public CEIL_Stream CEIL_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       CEIL_Stream sp = new CEIL_Stream(this);
       RetCode retCode = CEIL_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -96,17 +96,17 @@ public partial class Core
    }
    internal RetCode PVO( int startIdx,
                          int endIdx,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inVolume,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          MAType optInMAType,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
@@ -174,17 +174,17 @@ public partial class Core
    }
    internal RetCode PVO( int startIdx,
                          int endIdx,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inVolume,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          MAType optInMAType,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
@@ -286,14 +286,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange PVO( int startIdx,
                         int endIdx,
-                        double[] inVolume,
+                        ReadOnlySpan<double> inVolume,
                         int optInFastPeriod,
                         int optInSlowPeriod,
                         MAType optInMAType,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
@@ -354,14 +353,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange PVO( int startIdx,
                         int endIdx,
-                        float[] inVolume,
+                        ReadOnlySpan<float> inVolume,
                         int optInFastPeriod,
                         int optInSlowPeriod,
                         MAType optInMAType,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = PVO(startIdx, endIdx, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("PVO", retCode);
@@ -513,11 +511,11 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode PVO_OpenCore( PVO_Stream sp, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode PVO_OpenCore( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       double tempReal = 0;
       int tempInteger = 0;
@@ -551,7 +549,7 @@ public partial class Core
       if( historyLen < PVO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -606,29 +604,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode PVO_OpenBody( PVO_Stream sp, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   private RetCode PVO_OpenBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       double[] sink_outReal = new double[1];
       return PVO_OpenCore( sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode PVO_OpenAndFillBody( PVO_Stream sp, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode PVO_OpenAndFillBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return PVO_OpenCore( sp, inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode PVO_OpenAndFillInternalBody( PVO_Stream sp, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode PVO_OpenAndFillInternalBody( PVO_Stream sp, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return PVO_OpenCore(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* PVO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal PVO_Stream PVO_OpenAndFillInternal( double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal PVO_Stream PVO_OpenAndFillInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       PVO_Stream sp = new PVO_Stream(this);
       RetCode retCode = PVO_OpenAndFillInternalBody(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
@@ -639,7 +637,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind PVO_Open (composition seam). */
-   internal PVO_Stream PVO_OpenInternal( double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   internal PVO_Stream PVO_OpenInternal( ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       PVO_Stream sp = new PVO_Stream(this);
       RetCode retCode = PVO_OpenBody(sp, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -669,9 +667,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public PVO_Stream PVO_Open( double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public PVO_Stream PVO_Open( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return PVO_OpenInternal(inVolume, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -702,10 +700,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public PVO_Stream PVO_OpenAndFill( double[] inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double[] outReal )
+   public PVO_Stream PVO_OpenAndFill( ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       PVO_Stream sp = new PVO_Stream(this);
       RetCode retCode = PVO_OpenAndFillBody(sp, inVolume, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

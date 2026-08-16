@@ -82,12 +82,12 @@ public partial class Core
    }
    internal RetCode AROONOSC( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -210,12 +210,12 @@ public partial class Core
    }
    internal RetCode AROONOSC( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -340,14 +340,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AROONOSC( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AROONOSC", retCode);
@@ -400,14 +399,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AROONOSC( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = AROONOSC(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AROONOSC", retCode);
@@ -632,7 +630,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROONOSC_OpenCore( AROONOSC_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode AROONOSC_OpenCore( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -785,29 +783,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AROONOSC_OpenBody( AROONOSC_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   private RetCode AROONOSC_OpenBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return AROONOSC_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AROONOSC_OpenAndFillBody( AROONOSC_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AROONOSC_OpenAndFillBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return AROONOSC_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AROONOSC_OpenAndFillInternalBody( AROONOSC_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AROONOSC_OpenAndFillInternalBody( AROONOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return AROONOSC_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AROONOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AROONOSC_Stream AROONOSC_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal AROONOSC_Stream AROONOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
       RetCode retCode = AROONOSC_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -818,7 +816,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind AROONOSC_Open (composition seam). */
-   internal AROONOSC_Stream AROONOSC_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   internal AROONOSC_Stream AROONOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
       RetCode retCode = AROONOSC_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
@@ -846,10 +844,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public AROONOSC_Stream AROONOSC_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   public AROONOSC_Stream AROONOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return AROONOSC_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -877,11 +875,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public AROONOSC_Stream AROONOSC_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outReal )
+   public AROONOSC_Stream AROONOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       AROONOSC_Stream sp = new AROONOSC_Stream(this);
       RetCode retCode = AROONOSC_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

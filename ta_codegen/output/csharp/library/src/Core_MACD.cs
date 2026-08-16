@@ -115,15 +115,15 @@ public partial class Core
    }
    internal RetCode MACD( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           int optInFastPeriod,
                           int optInSlowPeriod,
                           int optInSignalPeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outMACD,
-                          double[] outMACDSignal,
-                          double[] outMACDHist )
+                          Span<double> outMACD,
+                          Span<double> outMACDSignal,
+                          Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -323,15 +323,15 @@ public partial class Core
    }
    internal RetCode MACD( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           int optInFastPeriod,
                           int optInSlowPeriod,
                           int optInSignalPeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outMACD,
-                          double[] outMACDSignal,
-                          double[] outMACDHist )
+                          Span<double> outMACD,
+                          Span<double> outMACDSignal,
+                          Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -514,18 +514,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACD( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          int optInSignalPeriod,
-                         double[] outMACD,
-                         double[] outMACDSignal,
-                         double[] outMACDHist )
+                         Span<double> outMACD,
+                         Span<double> outMACDSignal,
+                         Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
@@ -585,18 +582,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACD( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          int optInSignalPeriod,
-                         double[] outMACD,
-                         double[] outMACDSignal,
-                         double[] outMACDHist )
+                         Span<double> outMACD,
+                         Span<double> outMACDSignal,
+                         Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACD", retCode);
@@ -763,7 +757,7 @@ public partial class Core
       sp.cur_outMACDHist = macdValue - sp.prevSignal;
    }
 
-   private RetCode MACD_OpenCore( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist, int outStride )
+   private RetCode MACD_OpenCore( MACD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -974,7 +968,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MACD_OpenBody( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   private RetCode MACD_OpenBody( MACD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
@@ -982,23 +976,23 @@ public partial class Core
       return MACD_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out _, out _, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
    }
 
-   private RetCode MACD_OpenAndFillBody( MACD_Stream sp, double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   private RetCode MACD_OpenAndFillBody( MACD_Stream sp, ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outMACD, inReal) || ReferenceEquals(outMACDSignal, inReal) || ReferenceEquals(outMACDHist, inReal) || ReferenceEquals(outMACD, outMACDSignal) || ReferenceEquals(outMACD, outMACDHist) || ReferenceEquals(outMACDSignal, outMACDHist) ) {
+      if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          return RetCode.BadParam;
       }
       return MACD_OpenCore( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
    }
 
-   private RetCode MACD_OpenAndFillInternalBody( MACD_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   private RetCode MACD_OpenAndFillInternalBody( MACD_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       return MACD_OpenCore(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
    }
 
    /* MACD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MACD_Stream MACD_OpenAndFillInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   internal MACD_Stream MACD_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -1009,7 +1003,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MACD_Open (composition seam). */
-   internal MACD_Stream MACD_OpenInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   internal MACD_Stream MACD_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1039,9 +1033,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MACD_Stream MACD_Open( double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
+   public MACD_Stream MACD_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MACD_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
    }
 
@@ -1076,12 +1070,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MACD_Stream MACD_OpenAndFill( double[] inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   public MACD_Stream MACD_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, int optInSignalPeriod, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MACD_Stream sp = new MACD_Stream(this);
       RetCode retCode = MACD_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

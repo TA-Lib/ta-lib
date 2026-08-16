@@ -79,14 +79,14 @@ public partial class Core
    }
    internal RetCode CMF( int startIdx,
                          int endIdx,
-                         double[] inHigh,
-                         double[] inLow,
-                         double[] inClose,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inHigh,
+                         ReadOnlySpan<double> inLow,
+                         ReadOnlySpan<double> inClose,
+                         ReadOnlySpan<double> inVolume,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -214,14 +214,14 @@ public partial class Core
    }
    internal RetCode CMF( int startIdx,
                          int endIdx,
-                         float[] inHigh,
-                         float[] inLow,
-                         float[] inClose,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inHigh,
+                         ReadOnlySpan<float> inLow,
+                         ReadOnlySpan<float> inClose,
+                         ReadOnlySpan<float> inVolume,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -382,18 +382,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMF( int startIdx,
                         int endIdx,
-                        double[] inHigh,
-                        double[] inLow,
-                        double[] inClose,
-                        double[] inVolume,
+                        ReadOnlySpan<double> inHigh,
+                        ReadOnlySpan<double> inLow,
+                        ReadOnlySpan<double> inClose,
+                        ReadOnlySpan<double> inVolume,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
@@ -467,18 +466,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CMF( int startIdx,
                         int endIdx,
-                        float[] inHigh,
-                        float[] inLow,
-                        float[] inClose,
-                        float[] inVolume,
+                        ReadOnlySpan<float> inHigh,
+                        ReadOnlySpan<float> inLow,
+                        ReadOnlySpan<float> inClose,
+                        ReadOnlySpan<float> inVolume,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = CMF(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("CMF", retCode);
@@ -670,7 +668,7 @@ public partial class Core
       }
    }
 
-   private RetCode CMF_OpenCore( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode CMF_OpenCore( CMF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -818,29 +816,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CMF_OpenBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   private RetCode CMF_OpenBody( CMF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode CMF_OpenAndFillBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CMF_OpenAndFillBody( CMF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return CMF_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode CMF_OpenAndFillInternalBody( CMF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode CMF_OpenAndFillInternalBody( CMF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return CMF_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* CMF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CMF_Stream CMF_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal CMF_Stream CMF_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -851,7 +849,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CMF_Open (composition seam). */
-   internal CMF_Stream CMF_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInTimePeriod )
+   internal CMF_Stream CMF_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInTimePeriod);
@@ -880,12 +878,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CMF_Stream CMF_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod )
+   public CMF_Stream CMF_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return CMF_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInTimePeriod);
    }
 
@@ -915,13 +913,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CMF_Stream CMF_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInTimePeriod, double[] outReal )
+   public CMF_Stream CMF_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       CMF_Stream sp = new CMF_Stream(this);
       RetCode retCode = CMF_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

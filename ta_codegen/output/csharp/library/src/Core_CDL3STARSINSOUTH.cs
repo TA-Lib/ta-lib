@@ -84,13 +84,13 @@ public partial class Core
    }
    internal RetCode CDL3STARSINSOUTH( int startIdx,
                                       int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
+                                      ReadOnlySpan<double> inOpen,
+                                      ReadOnlySpan<double> inHigh,
+                                      ReadOnlySpan<double> inLow,
+                                      ReadOnlySpan<double> inClose,
                                       out int outBegIdx,
                                       out int outNBElement,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -229,13 +229,13 @@ public partial class Core
    }
    internal RetCode CDL3STARSINSOUTH( int startIdx,
                                       int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
+                                      ReadOnlySpan<float> inOpen,
+                                      ReadOnlySpan<float> inHigh,
+                                      ReadOnlySpan<float> inLow,
+                                      ReadOnlySpan<float> inClose,
                                       out int outBegIdx,
                                       out int outNBElement,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -370,17 +370,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDL3STARSINSOUTH( int startIdx,
                                      int endIdx,
-                                     double[] inOpen,
-                                     double[] inHigh,
-                                     double[] inLow,
-                                     double[] inClose,
-                                     int[] outInteger )
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
+                                     Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3STARSINSOUTH", retCode);
@@ -431,17 +430,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDL3STARSINSOUTH( int startIdx,
                                      int endIdx,
-                                     float[] inOpen,
-                                     float[] inHigh,
-                                     float[] inLow,
-                                     float[] inClose,
-                                     int[] outInteger )
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
+                                     Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDL3STARSINSOUTH(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDL3STARSINSOUTH", retCode);
@@ -929,7 +927,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDL3STARSINSOUTH_OpenCore( CDL3STARSINSOUTH_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDL3STARSINSOUTH_OpenCore( CDL3STARSINSOUTH_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1095,13 +1093,13 @@ public partial class Core
       }
       int allocN_BodyShortTrailingIdx = (cap_BodyShortTrailingIdx > 0)? cap_BodyShortTrailingIdx : 1;
       double[] capRing_BodyShortTrailingIdx_inOpen = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inOpen, 0, cap_BodyShortTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inOpen);
       double[] capRing_BodyShortTrailingIdx_inHigh = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inHigh, 0, cap_BodyShortTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inHigh);
       double[] capRing_BodyShortTrailingIdx_inLow = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inLow, 0, cap_BodyShortTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inLow);
       double[] capRing_BodyShortTrailingIdx_inClose = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inClose, 0, cap_BodyShortTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inClose);
       int capLag_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
       int cap_ShadowLongTrailingIdx = capLag_ShadowLongTrailingIdx + 3;
       if( capLag_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen ) {
@@ -1151,13 +1149,13 @@ public partial class Core
          return RetCode.InternalError;
       }
       double[] capWin_totIdx_inOpen = new double[cap_totIdx];
-      Array.Copy(inOpen, historyLen - cap_totIdx, capWin_totIdx_inOpen, 0, cap_totIdx);
+      inOpen.Slice(historyLen - cap_totIdx, cap_totIdx).CopyTo(capWin_totIdx_inOpen);
       double[] capWin_totIdx_inHigh = new double[cap_totIdx];
-      Array.Copy(inHigh, historyLen - cap_totIdx, capWin_totIdx_inHigh, 0, cap_totIdx);
+      inHigh.Slice(historyLen - cap_totIdx, cap_totIdx).CopyTo(capWin_totIdx_inHigh);
       double[] capWin_totIdx_inLow = new double[cap_totIdx];
-      Array.Copy(inLow, historyLen - cap_totIdx, capWin_totIdx_inLow, 0, cap_totIdx);
+      inLow.Slice(historyLen - cap_totIdx, cap_totIdx).CopyTo(capWin_totIdx_inLow);
       double[] capWin_totIdx_inClose = new double[cap_totIdx];
-      Array.Copy(inClose, historyLen - cap_totIdx, capWin_totIdx_inClose, 0, cap_totIdx);
+      inClose.Slice(historyLen - cap_totIdx, cap_totIdx).CopyTo(capWin_totIdx_inClose);
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
       sp.BodyShortPeriodTotal = BodyShortPeriodTotal;
       sp.ShadowLongPeriodTotal = ShadowLongPeriodTotal;
@@ -1220,29 +1218,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDL3STARSINSOUTH_OpenBody( CDL3STARSINSOUTH_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDL3STARSINSOUTH_OpenBody( CDL3STARSINSOUTH_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDL3STARSINSOUTH_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDL3STARSINSOUTH_OpenAndFillBody( CDL3STARSINSOUTH_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDL3STARSINSOUTH_OpenAndFillBody( CDL3STARSINSOUTH_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDL3STARSINSOUTH_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDL3STARSINSOUTH_OpenAndFillInternalBody( CDL3STARSINSOUTH_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDL3STARSINSOUTH_OpenAndFillInternalBody( CDL3STARSINSOUTH_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDL3STARSINSOUTH_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDL3STARSINSOUTH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
       RetCode retCode = CDL3STARSINSOUTH_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -1253,7 +1248,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDL3STARSINSOUTH_Open (composition seam). */
-   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
       RetCode retCode = CDL3STARSINSOUTH_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -1282,12 +1277,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDL3STARSINSOUTH_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -1318,13 +1313,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDL3STARSINSOUTH_Stream CDL3STARSINSOUTH_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDL3STARSINSOUTH_Stream sp = new CDL3STARSINSOUTH_Stream(this);
       RetCode retCode = CDL3STARSINSOUTH_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

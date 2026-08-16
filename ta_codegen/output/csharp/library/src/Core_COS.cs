@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode COS( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -95,10 +95,10 @@ public partial class Core
    }
    internal RetCode COS( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -148,11 +148,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange COS( int startIdx,
                         int endIdx,
-                        double[] inReal,
-                        double[] outReal )
+                        ReadOnlySpan<double> inReal,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = COS(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COS", retCode);
@@ -196,11 +195,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange COS( int startIdx,
                         int endIdx,
-                        float[] inReal,
-                        double[] outReal )
+                        ReadOnlySpan<float> inReal,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = COS(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("COS", retCode);
@@ -307,7 +305,7 @@ public partial class Core
       sp.cur_outReal = Math.Cos(inReal);
    }
 
-   private RetCode COS_OpenCore( COS_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode COS_OpenCore( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -331,29 +329,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode COS_OpenBody( COS_Stream sp, double[] inReal, int startIdx )
+   private RetCode COS_OpenBody( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return COS_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode COS_OpenAndFillBody( COS_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode COS_OpenAndFillBody( COS_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return COS_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode COS_OpenAndFillInternalBody( COS_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode COS_OpenAndFillInternalBody( COS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return COS_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* COS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal COS_Stream COS_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal COS_Stream COS_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       COS_Stream sp = new COS_Stream(this);
       RetCode retCode = COS_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -364,7 +362,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind COS_Open (composition seam). */
-   internal COS_Stream COS_OpenInternal( double[] inReal, int startIdx )
+   internal COS_Stream COS_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       COS_Stream sp = new COS_Stream(this);
       RetCode retCode = COS_OpenBody(sp, inReal, startIdx);
@@ -389,9 +387,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public COS_Stream COS_Open( double[] inReal )
+   public COS_Stream COS_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return COS_OpenInternal(inReal, 0);
    }
 
@@ -417,10 +415,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public COS_Stream COS_OpenAndFill( double[] inReal, double[] outReal )
+   public COS_Stream COS_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       COS_Stream sp = new COS_Stream(this);
       RetCode retCode = COS_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -75,13 +75,13 @@ public partial class Core
    }
    internal RetCode AVGPRICE( int startIdx,
                               int endIdx,
-                              double[] inOpen,
-                              double[] inHigh,
-                              double[] inLow,
-                              double[] inClose,
+                              ReadOnlySpan<double> inOpen,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inClose,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -104,13 +104,13 @@ public partial class Core
    }
    internal RetCode AVGPRICE( int startIdx,
                               int endIdx,
-                              float[] inOpen,
-                              float[] inHigh,
-                              float[] inLow,
-                              float[] inClose,
+                              ReadOnlySpan<float> inOpen,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inClose,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -165,17 +165,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AVGPRICE( int startIdx,
                              int endIdx,
-                             double[] inOpen,
-                             double[] inHigh,
-                             double[] inLow,
-                             double[] inClose,
-                             double[] outReal )
+                             ReadOnlySpan<double> inOpen,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inClose,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGPRICE", retCode);
@@ -223,17 +222,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AVGPRICE( int startIdx,
                              int endIdx,
-                             float[] inOpen,
-                             float[] inHigh,
-                             float[] inLow,
-                             float[] inClose,
-                             double[] outReal )
+                             ReadOnlySpan<float> inOpen,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inClose,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = AVGPRICE(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AVGPRICE", retCode);
@@ -347,7 +345,7 @@ public partial class Core
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
 
-   private RetCode AVGPRICE_OpenCore( AVGPRICE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode AVGPRICE_OpenCore( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -373,29 +371,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AVGPRICE_OpenBody( AVGPRICE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode AVGPRICE_OpenBody( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return AVGPRICE_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AVGPRICE_OpenAndFillBody( AVGPRICE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AVGPRICE_OpenAndFillBody( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inOpen) || ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return AVGPRICE_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AVGPRICE_OpenAndFillInternalBody( AVGPRICE_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AVGPRICE_OpenAndFillInternalBody( AVGPRICE_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return AVGPRICE_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AVGPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AVGPRICE_Stream AVGPRICE_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal AVGPRICE_Stream AVGPRICE_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
       RetCode retCode = AVGPRICE_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -406,7 +404,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind AVGPRICE_Open (composition seam). */
-   internal AVGPRICE_Stream AVGPRICE_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal AVGPRICE_Stream AVGPRICE_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
       RetCode retCode = AVGPRICE_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -434,12 +432,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public AVGPRICE_Stream AVGPRICE_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public AVGPRICE_Stream AVGPRICE_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return AVGPRICE_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -467,13 +465,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public AVGPRICE_Stream AVGPRICE_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double[] outReal )
+   public AVGPRICE_Stream AVGPRICE_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       AVGPRICE_Stream sp = new AVGPRICE_Stream(this);
       RetCode retCode = AVGPRICE_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

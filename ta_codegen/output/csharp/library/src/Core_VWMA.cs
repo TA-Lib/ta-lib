@@ -81,12 +81,12 @@ public partial class Core
    }
    internal RetCode VWMA( int startIdx,
                           int endIdx,
-                          double[] inReal,
-                          double[] inVolume,
+                          ReadOnlySpan<double> inReal,
+                          ReadOnlySpan<double> inVolume,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -193,12 +193,12 @@ public partial class Core
    }
    internal RetCode VWMA( int startIdx,
                           int endIdx,
-                          float[] inReal,
-                          float[] inVolume,
+                          ReadOnlySpan<float> inReal,
+                          ReadOnlySpan<float> inVolume,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -318,14 +318,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange VWMA( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] inVolume,
+                         ReadOnlySpan<double> inReal,
+                         ReadOnlySpan<double> inVolume,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VWMA", retCode);
@@ -384,14 +383,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange VWMA( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         float[] inVolume,
+                         ReadOnlySpan<float> inReal,
+                         ReadOnlySpan<float> inVolume,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = VWMA(startIdx, endIdx, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("VWMA", retCode);
@@ -574,7 +572,7 @@ public partial class Core
       }
    }
 
-   private RetCode VWMA_OpenCore( VWMA_Stream sp, double[] inReal, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode VWMA_OpenCore( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -697,9 +695,9 @@ public partial class Core
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
-      Array.Copy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      inReal.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal);
       double[] capRing_trailingIdx_inVolume = new double[allocN_trailingIdx];
-      Array.Copy(inVolume, historyLen - cap_trailingIdx, capRing_trailingIdx_inVolume, 0, cap_trailingIdx);
+      inVolume.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inVolume);
       sp.optInTimePeriod = optInTimePeriod;
       sp.sumPV = sumPV;
       sp.sumV = sumV;
@@ -713,29 +711,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode VWMA_OpenBody( VWMA_Stream sp, double[] inReal, double[] inVolume, int startIdx, int optInTimePeriod )
+   private RetCode VWMA_OpenBody( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return VWMA_OpenCore( sp, inReal, inVolume, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode VWMA_OpenAndFillBody( VWMA_Stream sp, double[] inReal, double[] inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode VWMA_OpenAndFillBody( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inReal) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return VWMA_OpenCore( sp, inReal, inVolume, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode VWMA_OpenAndFillInternalBody( VWMA_Stream sp, double[] inReal, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode VWMA_OpenAndFillInternalBody( VWMA_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return VWMA_OpenCore(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* VWMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal VWMA_Stream VWMA_OpenAndFillInternal( double[] inReal, double[] inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal VWMA_Stream VWMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
       RetCode retCode = VWMA_OpenAndFillInternalBody(sp, inReal, inVolume, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -746,7 +744,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind VWMA_Open (composition seam). */
-   internal VWMA_Stream VWMA_OpenInternal( double[] inReal, double[] inVolume, int startIdx, int optInTimePeriod )
+   internal VWMA_Stream VWMA_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int startIdx, int optInTimePeriod )
    {
       VWMA_Stream sp = new VWMA_Stream(this);
       RetCode retCode = VWMA_OpenBody(sp, inReal, inVolume, startIdx, optInTimePeriod);
@@ -774,10 +772,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public VWMA_Stream VWMA_Open( double[] inReal, double[] inVolume, int optInTimePeriod )
+   public VWMA_Stream VWMA_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return VWMA_OpenInternal(inReal, inVolume, 0, optInTimePeriod);
    }
 
@@ -806,11 +804,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public VWMA_Stream VWMA_OpenAndFill( double[] inReal, double[] inVolume, int optInTimePeriod, double[] outReal )
+   public VWMA_Stream VWMA_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inVolume, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       VWMA_Stream sp = new VWMA_Stream(this);
       RetCode retCode = VWMA_OpenAndFillBody(sp, inReal, inVolume, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

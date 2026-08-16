@@ -81,13 +81,13 @@ public partial class Core
    }
    internal RetCode CDLSHOOTINGSTAR( int startIdx,
                                      int endIdx,
-                                     double[] inOpen,
-                                     double[] inHigh,
-                                     double[] inLow,
-                                     double[] inClose,
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
                                      out int outBegIdx,
                                      out int outNBElement,
-                                     int[] outInteger )
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -194,13 +194,13 @@ public partial class Core
    }
    internal RetCode CDLSHOOTINGSTAR( int startIdx,
                                      int endIdx,
-                                     float[] inOpen,
-                                     float[] inHigh,
-                                     float[] inLow,
-                                     float[] inClose,
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
                                      out int outBegIdx,
                                      out int outNBElement,
-                                     int[] outInteger )
+                                     Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -314,17 +314,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLSHOOTINGSTAR( int startIdx,
                                     int endIdx,
-                                    double[] inOpen,
-                                    double[] inHigh,
-                                    double[] inLow,
-                                    double[] inClose,
-                                    int[] outInteger )
+                                    ReadOnlySpan<double> inOpen,
+                                    ReadOnlySpan<double> inHigh,
+                                    ReadOnlySpan<double> inLow,
+                                    ReadOnlySpan<double> inClose,
+                                    Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSHOOTINGSTAR", retCode);
@@ -374,17 +373,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLSHOOTINGSTAR( int startIdx,
                                     int endIdx,
-                                    float[] inOpen,
-                                    float[] inHigh,
-                                    float[] inLow,
-                                    float[] inClose,
-                                    int[] outInteger )
+                                    ReadOnlySpan<float> inOpen,
+                                    ReadOnlySpan<float> inHigh,
+                                    ReadOnlySpan<float> inLow,
+                                    ReadOnlySpan<float> inClose,
+                                    Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLSHOOTINGSTAR(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSHOOTINGSTAR", retCode);
@@ -719,7 +717,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLSHOOTINGSTAR_OpenCore( CDLSHOOTINGSTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLSHOOTINGSTAR_OpenCore( CDLSHOOTINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -831,39 +829,39 @@ public partial class Core
       }
       int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
       double[] capRing_BodyTrailingIdx_inOpen = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inOpen, 0, cap_BodyTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inOpen);
       double[] capRing_BodyTrailingIdx_inHigh = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inHigh, 0, cap_BodyTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inHigh);
       double[] capRing_BodyTrailingIdx_inLow = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inLow, 0, cap_BodyTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inLow);
       double[] capRing_BodyTrailingIdx_inClose = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inClose, 0, cap_BodyTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inClose);
       int cap_ShadowLongTrailingIdx = i - ShadowLongTrailingIdx;
       if( cap_ShadowLongTrailingIdx < 0 || cap_ShadowLongTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_ShadowLongTrailingIdx = (cap_ShadowLongTrailingIdx > 0)? cap_ShadowLongTrailingIdx : 1;
       double[] capRing_ShadowLongTrailingIdx_inOpen = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inOpen, 0, cap_ShadowLongTrailingIdx);
+      inOpen.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inOpen);
       double[] capRing_ShadowLongTrailingIdx_inHigh = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inHigh, 0, cap_ShadowLongTrailingIdx);
+      inHigh.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inHigh);
       double[] capRing_ShadowLongTrailingIdx_inLow = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inLow, 0, cap_ShadowLongTrailingIdx);
+      inLow.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inLow);
       double[] capRing_ShadowLongTrailingIdx_inClose = new double[allocN_ShadowLongTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_ShadowLongTrailingIdx, capRing_ShadowLongTrailingIdx_inClose, 0, cap_ShadowLongTrailingIdx);
+      inClose.Slice(historyLen - cap_ShadowLongTrailingIdx, cap_ShadowLongTrailingIdx).CopyTo(capRing_ShadowLongTrailingIdx_inClose);
       int cap_ShadowVeryShortTrailingIdx = i - ShadowVeryShortTrailingIdx;
       if( cap_ShadowVeryShortTrailingIdx < 0 || cap_ShadowVeryShortTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_ShadowVeryShortTrailingIdx = (cap_ShadowVeryShortTrailingIdx > 0)? cap_ShadowVeryShortTrailingIdx : 1;
       double[] capRing_ShadowVeryShortTrailingIdx_inOpen = new double[allocN_ShadowVeryShortTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_ShadowVeryShortTrailingIdx, capRing_ShadowVeryShortTrailingIdx_inOpen, 0, cap_ShadowVeryShortTrailingIdx);
+      inOpen.Slice(historyLen - cap_ShadowVeryShortTrailingIdx, cap_ShadowVeryShortTrailingIdx).CopyTo(capRing_ShadowVeryShortTrailingIdx_inOpen);
       double[] capRing_ShadowVeryShortTrailingIdx_inHigh = new double[allocN_ShadowVeryShortTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_ShadowVeryShortTrailingIdx, capRing_ShadowVeryShortTrailingIdx_inHigh, 0, cap_ShadowVeryShortTrailingIdx);
+      inHigh.Slice(historyLen - cap_ShadowVeryShortTrailingIdx, cap_ShadowVeryShortTrailingIdx).CopyTo(capRing_ShadowVeryShortTrailingIdx_inHigh);
       double[] capRing_ShadowVeryShortTrailingIdx_inLow = new double[allocN_ShadowVeryShortTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_ShadowVeryShortTrailingIdx, capRing_ShadowVeryShortTrailingIdx_inLow, 0, cap_ShadowVeryShortTrailingIdx);
+      inLow.Slice(historyLen - cap_ShadowVeryShortTrailingIdx, cap_ShadowVeryShortTrailingIdx).CopyTo(capRing_ShadowVeryShortTrailingIdx_inLow);
       double[] capRing_ShadowVeryShortTrailingIdx_inClose = new double[allocN_ShadowVeryShortTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_ShadowVeryShortTrailingIdx, capRing_ShadowVeryShortTrailingIdx_inClose, 0, cap_ShadowVeryShortTrailingIdx);
+      inClose.Slice(historyLen - cap_ShadowVeryShortTrailingIdx, cap_ShadowVeryShortTrailingIdx).CopyTo(capRing_ShadowVeryShortTrailingIdx_inClose);
       sp.BodyPeriodTotal = BodyPeriodTotal;
       sp.ShadowLongPeriodTotal = ShadowLongPeriodTotal;
       sp.ShadowVeryShortPeriodTotal = ShadowVeryShortPeriodTotal;
@@ -900,29 +898,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLSHOOTINGSTAR_OpenBody( CDLSHOOTINGSTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDLSHOOTINGSTAR_OpenBody( CDLSHOOTINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDLSHOOTINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLSHOOTINGSTAR_OpenAndFillBody( CDLSHOOTINGSTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLSHOOTINGSTAR_OpenAndFillBody( CDLSHOOTINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLSHOOTINGSTAR_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLSHOOTINGSTAR_OpenAndFillInternalBody( CDLSHOOTINGSTAR_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLSHOOTINGSTAR_OpenAndFillInternalBody( CDLSHOOTINGSTAR_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLSHOOTINGSTAR_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLSHOOTINGSTAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
       RetCode retCode = CDLSHOOTINGSTAR_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -933,7 +928,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLSHOOTINGSTAR_Open (composition seam). */
-   internal CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
       RetCode retCode = CDLSHOOTINGSTAR_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -962,12 +957,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLSHOOTINGSTAR_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -998,13 +993,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDLSHOOTINGSTAR_Stream CDLSHOOTINGSTAR_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLSHOOTINGSTAR_Stream sp = new CDLSHOOTINGSTAR_Stream(this);
       RetCode retCode = CDLSHOOTINGSTAR_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

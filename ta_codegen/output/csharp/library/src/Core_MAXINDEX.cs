@@ -78,11 +78,11 @@ public partial class Core
    }
    internal RetCode MAXINDEX( int startIdx,
                               int endIdx,
-                              double[] inReal,
+                              ReadOnlySpan<double> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              int[] outInteger )
+                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -161,11 +161,11 @@ public partial class Core
    }
    internal RetCode MAXINDEX( int startIdx,
                               int endIdx,
-                              float[] inReal,
+                              ReadOnlySpan<float> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              int[] outInteger )
+                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -264,12 +264,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAXINDEX( int startIdx,
                              int endIdx,
-                             double[] inReal,
+                             ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
-                             int[] outInteger )
+                             Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
@@ -319,12 +318,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAXINDEX( int startIdx,
                              int endIdx,
-                             float[] inReal,
+                             ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
-                             int[] outInteger )
+                             Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MAXINDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MAXINDEX", retCode);
@@ -492,7 +490,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MAXINDEX_OpenCore( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode MAXINDEX_OpenCore( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -594,29 +592,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAXINDEX_OpenBody( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode MAXINDEX_OpenBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       int[] sink_outInteger = new int[1];
       return MAXINDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode MAXINDEX_OpenAndFillBody( MAXINDEX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode MAXINDEX_OpenAndFillBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inReal) ) {
-         return RetCode.BadParam;
-      }
       return MAXINDEX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode MAXINDEX_OpenAndFillInternalBody( MAXINDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return MAXINDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* MAXINDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal MAXINDEX_Stream MAXINDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       RetCode retCode = MAXINDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
@@ -627,7 +622,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MAXINDEX_Open (composition seam). */
-   internal MAXINDEX_Stream MAXINDEX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal MAXINDEX_Stream MAXINDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       RetCode retCode = MAXINDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -654,9 +649,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MAXINDEX_Stream MAXINDEX_Open( double[] inReal, int optInTimePeriod )
+   public MAXINDEX_Stream MAXINDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MAXINDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -683,10 +678,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MAXINDEX_Stream MAXINDEX_OpenAndFill( double[] inReal, int optInTimePeriod, int[] outInteger )
+   public MAXINDEX_Stream MAXINDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MAXINDEX_Stream sp = new MAXINDEX_Stream(this);
       RetCode retCode = MAXINDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

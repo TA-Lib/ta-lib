@@ -103,17 +103,17 @@ public partial class Core
    }
    internal RetCode APO( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          MAType optInMAType,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       int tempInteger = 0;
       int fastBeg = 0;
@@ -175,17 +175,17 @@ public partial class Core
    }
    internal RetCode APO( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          int optInFastPeriod,
                          int optInSlowPeriod,
                          MAType optInMAType,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       int tempInteger = 0;
       int fastBeg = 0;
@@ -278,14 +278,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange APO( int startIdx,
                         int endIdx,
-                        double[] inReal,
+                        ReadOnlySpan<double> inReal,
                         int optInFastPeriod,
                         int optInSlowPeriod,
                         MAType optInMAType,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("APO", retCode);
@@ -343,14 +342,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange APO( int startIdx,
                         int endIdx,
-                        float[] inReal,
+                        ReadOnlySpan<float> inReal,
                         int optInFastPeriod,
                         int optInSlowPeriod,
                         MAType optInMAType,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = APO(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("APO", retCode);
@@ -496,11 +494,11 @@ public partial class Core
       sp.cur_outReal = cur_outReal;
    }
 
-   private RetCode APO_OpenCore( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode APO_OpenCore( APO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       RetCode retCode;
       int tempInteger = 0;
       int fastBeg = 0;
@@ -533,7 +531,7 @@ public partial class Core
       if( historyLen < APO_Lookback(optInFastPeriod, optInSlowPeriod, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outReal = outStride == 1 ? outReal : new double[historyLen];
+      Span<double> sc_outReal = outStride == 1 ? outReal : new double[historyLen];
       /* Allocate an intermediate buffer. */
       tempBuffer = new double[(int)((endIdx - startIdx + 1) * 1)];
       /* Make sure slow is really slower than
@@ -583,29 +581,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode APO_OpenBody( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   private RetCode APO_OpenBody( APO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       double[] sink_outReal = new double[1];
       return APO_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode APO_OpenAndFillBody( APO_Stream sp, double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode APO_OpenAndFillBody( APO_Stream sp, ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return APO_OpenCore( sp, inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode APO_OpenAndFillInternalBody( APO_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode APO_OpenAndFillInternalBody( APO_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return APO_OpenCore(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* APO_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal APO_Stream APO_OpenAndFillInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal APO_Stream APO_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       APO_Stream sp = new APO_Stream(this);
       RetCode retCode = APO_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType, out outBegIdx, out outNBElement, outReal);
@@ -616,7 +614,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind APO_Open (composition seam). */
-   internal APO_Stream APO_OpenInternal( double[] inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   internal APO_Stream APO_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
       APO_Stream sp = new APO_Stream(this);
       RetCode retCode = APO_OpenBody(sp, inReal, startIdx, optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -646,9 +644,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public APO_Stream APO_Open( double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
+   public APO_Stream APO_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return APO_OpenInternal(inReal, 0, optInFastPeriod, optInSlowPeriod, optInMAType);
    }
 
@@ -679,10 +677,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public APO_Stream APO_OpenAndFill( double[] inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, double[] outReal )
+   public APO_Stream APO_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, int optInSlowPeriod, MAType optInMAType, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       APO_Stream sp = new APO_Stream(this);
       RetCode retCode = APO_OpenAndFillBody(sp, inReal, optInFastPeriod, optInSlowPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

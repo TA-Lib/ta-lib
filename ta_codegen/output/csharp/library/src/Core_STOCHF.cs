@@ -108,16 +108,16 @@ public partial class Core
    }
    internal RetCode STOCHF( int startIdx,
                             int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
-                            double[] inClose,
+                            ReadOnlySpan<double> inHigh,
+                            ReadOnlySpan<double> inLow,
+                            ReadOnlySpan<double> inClose,
                             int optInFastK_Period,
                             int optInFastD_Period,
                             MAType optInFastD_MAType,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outFastK,
-                            double[] outFastD )
+                            Span<double> outFastK,
+                            Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -126,7 +126,7 @@ public partial class Core
       double highest = 0;
       double tmp = 0;
       double diff = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
       int highestIdx = 0;
@@ -321,7 +321,7 @@ public partial class Core
       /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      Array.Copy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement * 1);
+      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -339,16 +339,16 @@ public partial class Core
    }
    internal RetCode STOCHF( int startIdx,
                             int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
-                            float[] inClose,
+                            ReadOnlySpan<float> inHigh,
+                            ReadOnlySpan<float> inLow,
+                            ReadOnlySpan<float> inClose,
                             int optInFastK_Period,
                             int optInFastD_Period,
                             MAType optInFastD_MAType,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outFastK,
-                            double[] outFastD )
+                            Span<double> outFastK,
+                            Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -357,7 +357,7 @@ public partial class Core
       double highest = 0;
       double tmp = 0;
       double diff = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
       int highestIdx = 0;
@@ -467,7 +467,7 @@ public partial class Core
          outNBElement = 0;
          return retCode ;
       }
-      Array.Copy(tempBuffer, lookbackFastD, outFastK, 0, (int)outNBElement * 1);
+      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(outFastK.Slice(0));
       if( (bufferIsAllocated) != 0 ) {
       }
       if( retCode != RetCode.Success ) {
@@ -527,20 +527,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCHF( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           double[] inClose,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           ReadOnlySpan<double> inClose,
                            int optInFastK_Period,
                            int optInFastD_Period,
                            MAType optInFastD_MAType,
-                           double[] outFastK,
-                           double[] outFastD )
+                           Span<double> outFastK,
+                           Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHF", retCode);
@@ -602,20 +600,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCHF( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           float[] inClose,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           ReadOnlySpan<float> inClose,
                            int optInFastK_Period,
                            int optInFastD_Period,
                            MAType optInFastD_MAType,
-                           double[] outFastK,
-                           double[] outFastD )
+                           Span<double> outFastK,
+                           Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = STOCHF(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHF", retCode);
@@ -882,7 +878,7 @@ public partial class Core
       sp.cur_outFastD = cur_outFastD;
    }
 
-   private RetCode STOCHF_OpenCore( STOCHF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD, int outStride )
+   private RetCode STOCHF_OpenCore( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -891,7 +887,7 @@ public partial class Core
       double highest = 0;
       double tmp = 0;
       double diff = 0;
-      double[] tempBuffer;
+      Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
       int highestIdx = 0;
@@ -928,8 +924,8 @@ public partial class Core
       if( historyLen < STOCHF_Lookback(optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
-      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      Span<double> sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      Span<double> sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
       /* With stochastic, there is a total of 4 different lines that
        * are defined: FASTK, FASTD, SLOWK and SLOWD.
        *
@@ -1077,7 +1073,7 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       int subLen0 = (outIdx - 1) + 1;
       double[] subSrc0_0 = new double[subLen0];
-      Array.Copy(tempBuffer, subSrc0_0, subLen0);
+      tempBuffer.Slice(0, subLen0).CopyTo(subSrc0_0);
       MA_Stream sub0 = MA_OpenAndFillInternal(subSrc0_0, 0, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, sc_outFastD);
       retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
@@ -1096,7 +1092,7 @@ public partial class Core
       /* memmove, not memcpy: tempBuffer aliases outFastK when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      Array.Copy(tempBuffer, lookbackFastD, sc_outFastK, 0, (int)outNBElement * 1);
+      tempBuffer.Slice(lookbackFastD, (int)outNBElement * 1).CopyTo(sc_outFastK.Slice(0));
       /* Don't need K anymore, free it if it was allocated here. */
       if( (bufferIsAllocated) != 0 ) {
       }
@@ -1152,30 +1148,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STOCHF_OpenBody( STOCHF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   private RetCode STOCHF_OpenBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
       return STOCHF_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
    }
 
-   private RetCode STOCHF_OpenAndFillBody( STOCHF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   private RetCode STOCHF_OpenAndFillBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outFastK, inHigh) || ReferenceEquals(outFastK, inLow) || ReferenceEquals(outFastK, inClose) || ReferenceEquals(outFastD, inHigh) || ReferenceEquals(outFastD, inLow) || ReferenceEquals(outFastD, inClose) || ReferenceEquals(outFastK, outFastD) ) {
+      if( outFastK.Overlaps(inHigh) || outFastK.Overlaps(inLow) || outFastK.Overlaps(inClose) || outFastD.Overlaps(inHigh) || outFastD.Overlaps(inLow) || outFastD.Overlaps(inClose) || outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam;
       }
       return STOCHF_OpenCore( sp, inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
    }
 
-   private RetCode STOCHF_OpenAndFillInternalBody( STOCHF_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   private RetCode STOCHF_OpenAndFillInternalBody( STOCHF_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       return STOCHF_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
    }
 
    /* STOCHF_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal STOCHF_Stream STOCHF_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   internal STOCHF_Stream STOCHF_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
       RetCode retCode = STOCHF_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
@@ -1186,7 +1182,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind STOCHF_Open (composition seam). */
-   internal STOCHF_Stream STOCHF_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   internal STOCHF_Stream STOCHF_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHF_Stream sp = new STOCHF_Stream(this);
       RetCode retCode = STOCHF_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -1218,11 +1214,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public STOCHF_Stream STOCHF_Open( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public STOCHF_Stream STOCHF_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return STOCHF_OpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -1257,13 +1253,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public STOCHF_Stream STOCHF_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double[] outFastK, double[] outFastD )
+   public STOCHF_Stream STOCHF_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       STOCHF_Stream sp = new STOCHF_Stream(this);
       RetCode retCode = STOCHF_OpenAndFillBody(sp, inHigh, inLow, inClose, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

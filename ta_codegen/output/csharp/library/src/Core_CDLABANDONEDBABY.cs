@@ -88,14 +88,14 @@ public partial class Core
    }
    internal RetCode CDLABANDONEDBABY( int startIdx,
                                       int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
+                                      ReadOnlySpan<double> inOpen,
+                                      ReadOnlySpan<double> inHigh,
+                                      ReadOnlySpan<double> inLow,
+                                      ReadOnlySpan<double> inClose,
                                       double optInPenetration,
                                       out int outBegIdx,
                                       out int outNBElement,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -212,14 +212,14 @@ public partial class Core
    }
    internal RetCode CDLABANDONEDBABY( int startIdx,
                                       int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
+                                      ReadOnlySpan<float> inOpen,
+                                      ReadOnlySpan<float> inHigh,
+                                      ReadOnlySpan<float> inLow,
+                                      ReadOnlySpan<float> inClose,
                                       double optInPenetration,
                                       out int outBegIdx,
                                       out int outNBElement,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -340,18 +340,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLABANDONEDBABY( int startIdx,
                                      int endIdx,
-                                     double[] inOpen,
-                                     double[] inHigh,
-                                     double[] inLow,
-                                     double[] inClose,
+                                     ReadOnlySpan<double> inOpen,
+                                     ReadOnlySpan<double> inHigh,
+                                     ReadOnlySpan<double> inLow,
+                                     ReadOnlySpan<double> inClose,
                                      double optInPenetration,
-                                     int[] outInteger )
+                                     Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLABANDONEDBABY", retCode);
@@ -402,18 +401,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLABANDONEDBABY( int startIdx,
                                      int endIdx,
-                                     float[] inOpen,
-                                     float[] inHigh,
-                                     float[] inLow,
-                                     float[] inClose,
+                                     ReadOnlySpan<float> inOpen,
+                                     ReadOnlySpan<float> inHigh,
+                                     ReadOnlySpan<float> inLow,
+                                     ReadOnlySpan<float> inClose,
                                      double optInPenetration,
-                                     int[] outInteger )
+                                     Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLABANDONEDBABY(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLABANDONEDBABY", retCode);
@@ -774,7 +772,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLABANDONEDBABY_OpenCore( CDLABANDONEDBABY_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLABANDONEDBABY_OpenCore( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -896,39 +894,39 @@ public partial class Core
       }
       int allocN_BodyDojiTrailingIdx = (cap_BodyDojiTrailingIdx > 0)? cap_BodyDojiTrailingIdx : 1;
       double[] capRing_BodyDojiTrailingIdx_inOpen = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inOpen, 0, cap_BodyDojiTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inOpen);
       double[] capRing_BodyDojiTrailingIdx_inHigh = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inHigh, 0, cap_BodyDojiTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inHigh);
       double[] capRing_BodyDojiTrailingIdx_inLow = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inLow, 0, cap_BodyDojiTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inLow);
       double[] capRing_BodyDojiTrailingIdx_inClose = new double[allocN_BodyDojiTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyDojiTrailingIdx, capRing_BodyDojiTrailingIdx_inClose, 0, cap_BodyDojiTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyDojiTrailingIdx, cap_BodyDojiTrailingIdx).CopyTo(capRing_BodyDojiTrailingIdx_inClose);
       int cap_BodyLongTrailingIdx = i - BodyLongTrailingIdx;
       if( cap_BodyLongTrailingIdx < 0 || cap_BodyLongTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_BodyLongTrailingIdx = (cap_BodyLongTrailingIdx > 0)? cap_BodyLongTrailingIdx : 1;
       double[] capRing_BodyLongTrailingIdx_inOpen = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inOpen, 0, cap_BodyLongTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inOpen);
       double[] capRing_BodyLongTrailingIdx_inHigh = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inHigh, 0, cap_BodyLongTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inHigh);
       double[] capRing_BodyLongTrailingIdx_inLow = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inLow, 0, cap_BodyLongTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inLow);
       double[] capRing_BodyLongTrailingIdx_inClose = new double[allocN_BodyLongTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyLongTrailingIdx, capRing_BodyLongTrailingIdx_inClose, 0, cap_BodyLongTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyLongTrailingIdx, cap_BodyLongTrailingIdx).CopyTo(capRing_BodyLongTrailingIdx_inClose);
       int cap_BodyShortTrailingIdx = i - BodyShortTrailingIdx;
       if( cap_BodyShortTrailingIdx < 0 || cap_BodyShortTrailingIdx > historyLen ) {
          return RetCode.InternalError;
       }
       int allocN_BodyShortTrailingIdx = (cap_BodyShortTrailingIdx > 0)? cap_BodyShortTrailingIdx : 1;
       double[] capRing_BodyShortTrailingIdx_inOpen = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inOpen, 0, cap_BodyShortTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inOpen);
       double[] capRing_BodyShortTrailingIdx_inHigh = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inHigh, 0, cap_BodyShortTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inHigh);
       double[] capRing_BodyShortTrailingIdx_inLow = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inLow, 0, cap_BodyShortTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inLow);
       double[] capRing_BodyShortTrailingIdx_inClose = new double[allocN_BodyShortTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyShortTrailingIdx, capRing_BodyShortTrailingIdx_inClose, 0, cap_BodyShortTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyShortTrailingIdx, cap_BodyShortTrailingIdx).CopyTo(capRing_BodyShortTrailingIdx_inClose);
       sp.optInPenetration = optInPenetration;
       sp.BodyDojiPeriodTotal = BodyDojiPeriodTotal;
       sp.BodyLongPeriodTotal = BodyLongPeriodTotal;
@@ -972,29 +970,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLABANDONEDBABY_OpenBody( CDLABANDONEDBABY_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration )
+   private RetCode CDLABANDONEDBABY_OpenBody( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       int[] sink_outInteger = new int[1];
       return CDLABANDONEDBABY_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLABANDONEDBABY_OpenAndFillBody( CDLABANDONEDBABY_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLABANDONEDBABY_OpenAndFillBody( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLABANDONEDBABY_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLABANDONEDBABY_OpenAndFillInternalBody( CDLABANDONEDBABY_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLABANDONEDBABY_OpenAndFillInternalBody( CDLABANDONEDBABY_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLABANDONEDBABY_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLABANDONEDBABY_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
       RetCode retCode = CDLABANDONEDBABY_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
@@ -1005,7 +1000,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLABANDONEDBABY_Open (composition seam). */
-   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration )
+   internal CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
       RetCode retCode = CDLABANDONEDBABY_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
@@ -1036,12 +1031,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration )
+   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLABANDONEDBABY_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
@@ -1075,13 +1070,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, int[] outInteger )
+   public CDLABANDONEDBABY_Stream CDLABANDONEDBABY_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLABANDONEDBABY_Stream sp = new CDLABANDONEDBABY_Stream(this);
       RetCode retCode = CDLABANDONEDBABY_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

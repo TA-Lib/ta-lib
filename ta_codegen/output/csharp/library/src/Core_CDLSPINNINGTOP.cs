@@ -75,13 +75,13 @@ public partial class Core
    }
    internal RetCode CDLSPINNINGTOP( int startIdx,
                                     int endIdx,
-                                    double[] inOpen,
-                                    double[] inHigh,
-                                    double[] inLow,
-                                    double[] inClose,
+                                    ReadOnlySpan<double> inOpen,
+                                    ReadOnlySpan<double> inHigh,
+                                    ReadOnlySpan<double> inLow,
+                                    ReadOnlySpan<double> inClose,
                                     out int outBegIdx,
                                     out int outNBElement,
-                                    int[] outInteger )
+                                    Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -153,13 +153,13 @@ public partial class Core
    }
    internal RetCode CDLSPINNINGTOP( int startIdx,
                                     int endIdx,
-                                    float[] inOpen,
-                                    float[] inHigh,
-                                    float[] inLow,
-                                    float[] inClose,
+                                    ReadOnlySpan<float> inOpen,
+                                    ReadOnlySpan<float> inHigh,
+                                    ReadOnlySpan<float> inLow,
+                                    ReadOnlySpan<float> inClose,
                                     out int outBegIdx,
                                     out int outNBElement,
-                                    int[] outInteger )
+                                    Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -244,17 +244,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLSPINNINGTOP( int startIdx,
                                    int endIdx,
-                                   double[] inOpen,
-                                   double[] inHigh,
-                                   double[] inLow,
-                                   double[] inClose,
-                                   int[] outInteger )
+                                   ReadOnlySpan<double> inOpen,
+                                   ReadOnlySpan<double> inHigh,
+                                   ReadOnlySpan<double> inLow,
+                                   ReadOnlySpan<double> inClose,
+                                   Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSPINNINGTOP", retCode);
@@ -303,17 +302,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLSPINNINGTOP( int startIdx,
                                    int endIdx,
-                                   float[] inOpen,
-                                   float[] inHigh,
-                                   float[] inLow,
-                                   float[] inClose,
-                                   int[] outInteger )
+                                   ReadOnlySpan<float> inOpen,
+                                   ReadOnlySpan<float> inHigh,
+                                   ReadOnlySpan<float> inLow,
+                                   ReadOnlySpan<float> inClose,
+                                   Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLSPINNINGTOP(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLSPINNINGTOP", retCode);
@@ -507,7 +505,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLSPINNINGTOP_OpenCore( CDLSPINNINGTOP_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLSPINNINGTOP_OpenCore( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -584,13 +582,13 @@ public partial class Core
       }
       int allocN_BodyTrailingIdx = (cap_BodyTrailingIdx > 0)? cap_BodyTrailingIdx : 1;
       double[] capRing_BodyTrailingIdx_inOpen = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inOpen, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inOpen, 0, cap_BodyTrailingIdx);
+      inOpen.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inOpen);
       double[] capRing_BodyTrailingIdx_inHigh = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inHigh, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inHigh, 0, cap_BodyTrailingIdx);
+      inHigh.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inHigh);
       double[] capRing_BodyTrailingIdx_inLow = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inLow, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inLow, 0, cap_BodyTrailingIdx);
+      inLow.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inLow);
       double[] capRing_BodyTrailingIdx_inClose = new double[allocN_BodyTrailingIdx];
-      Array.Copy(inClose, historyLen - cap_BodyTrailingIdx, capRing_BodyTrailingIdx_inClose, 0, cap_BodyTrailingIdx);
+      inClose.Slice(historyLen - cap_BodyTrailingIdx, cap_BodyTrailingIdx).CopyTo(capRing_BodyTrailingIdx_inClose);
       sp.BodyPeriodTotal = BodyPeriodTotal;
       sp.ringPos_BodyTrailingIdx = 0;
       sp.ringCap_BodyTrailingIdx = cap_BodyTrailingIdx;
@@ -605,29 +603,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLSPINNINGTOP_OpenBody( CDLSPINNINGTOP_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDLSPINNINGTOP_OpenBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDLSPINNINGTOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLSPINNINGTOP_OpenAndFillBody( CDLSPINNINGTOP_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLSPINNINGTOP_OpenAndFillBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLSPINNINGTOP_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLSPINNINGTOP_OpenAndFillInternalBody( CDLSPINNINGTOP_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLSPINNINGTOP_OpenAndFillInternalBody( CDLSPINNINGTOP_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLSPINNINGTOP_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLSPINNINGTOP_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
       RetCode retCode = CDLSPINNINGTOP_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -638,7 +633,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLSPINNINGTOP_Open (composition seam). */
-   internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
       RetCode retCode = CDLSPINNINGTOP_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -666,12 +661,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLSPINNINGTOP_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -702,13 +697,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDLSPINNINGTOP_Stream CDLSPINNINGTOP_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLSPINNINGTOP_Stream sp = new CDLSPINNINGTOP_Stream(this);
       RetCode retCode = CDLSPINNINGTOP_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

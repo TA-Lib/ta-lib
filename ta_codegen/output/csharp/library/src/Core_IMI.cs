@@ -88,12 +88,12 @@ public partial class Core
    }
    internal RetCode IMI( int startIdx,
                          int endIdx,
-                         double[] inOpen,
-                         double[] inClose,
+                         ReadOnlySpan<double> inOpen,
+                         ReadOnlySpan<double> inClose,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -148,12 +148,12 @@ public partial class Core
    }
    internal RetCode IMI( int startIdx,
                          int endIdx,
-                         float[] inOpen,
-                         float[] inClose,
+                         ReadOnlySpan<float> inOpen,
+                         ReadOnlySpan<float> inClose,
                          int optInTimePeriod,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -236,14 +236,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange IMI( int startIdx,
                         int endIdx,
-                        double[] inOpen,
-                        double[] inClose,
+                        ReadOnlySpan<double> inOpen,
+                        ReadOnlySpan<double> inClose,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
@@ -291,14 +290,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange IMI( int startIdx,
                         int endIdx,
-                        float[] inOpen,
-                        float[] inClose,
+                        ReadOnlySpan<float> inOpen,
+                        ReadOnlySpan<float> inClose,
                         int optInTimePeriod,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = IMI(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("IMI", retCode);
@@ -465,7 +463,7 @@ public partial class Core
       }
    }
 
-   private RetCode IMI_OpenCore( IMI_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode IMI_OpenCore( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -524,9 +522,9 @@ public partial class Core
          return RetCode.InternalError;
       }
       double[] capWin_i_inOpen = new double[cap_i];
-      Array.Copy(inOpen, historyLen - cap_i, capWin_i_inOpen, 0, cap_i);
+      inOpen.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inOpen);
       double[] capWin_i_inClose = new double[cap_i];
-      Array.Copy(inClose, historyLen - cap_i, capWin_i_inClose, 0, cap_i);
+      inClose.Slice(historyLen - cap_i, cap_i).CopyTo(capWin_i_inClose);
       sp.optInTimePeriod = optInTimePeriod;
       sp.winPos_i = 0;
       sp.winCap_i = cap_i;
@@ -536,29 +534,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode IMI_OpenBody( IMI_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   private RetCode IMI_OpenBody( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return IMI_OpenCore( sp, inOpen, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode IMI_OpenAndFillBody( IMI_Stream sp, double[] inOpen, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode IMI_OpenAndFillBody( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inOpen) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return IMI_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode IMI_OpenAndFillInternalBody( IMI_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode IMI_OpenAndFillInternalBody( IMI_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return IMI_OpenCore(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* IMI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal IMI_Stream IMI_OpenAndFillInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal IMI_Stream IMI_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       IMI_Stream sp = new IMI_Stream(this);
       RetCode retCode = IMI_OpenAndFillInternalBody(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -569,7 +567,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind IMI_Open (composition seam). */
-   internal IMI_Stream IMI_OpenInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   internal IMI_Stream IMI_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       IMI_Stream sp = new IMI_Stream(this);
       RetCode retCode = IMI_OpenBody(sp, inOpen, inClose, startIdx, optInTimePeriod);
@@ -596,10 +594,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public IMI_Stream IMI_Open( double[] inOpen, double[] inClose, int optInTimePeriod )
+   public IMI_Stream IMI_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return IMI_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -627,11 +625,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public IMI_Stream IMI_OpenAndFill( double[] inOpen, double[] inClose, int optInTimePeriod, double[] outReal )
+   public IMI_Stream IMI_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       IMI_Stream sp = new IMI_Stream(this);
       RetCode retCode = IMI_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

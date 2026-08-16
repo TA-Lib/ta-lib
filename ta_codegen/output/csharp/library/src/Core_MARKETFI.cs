@@ -74,12 +74,12 @@ public partial class Core
    }
    internal RetCode MARKETFI( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
-                              double[] inVolume,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
+                              ReadOnlySpan<double> inVolume,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -129,12 +129,12 @@ public partial class Core
    }
    internal RetCode MARKETFI( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
-                              float[] inVolume,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
+                              ReadOnlySpan<float> inVolume,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -201,15 +201,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MARKETFI( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
-                             double[] inVolume,
-                             double[] outReal )
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
+                             ReadOnlySpan<double> inVolume,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MARKETFI", retCode);
@@ -265,15 +264,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MARKETFI( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
-                             float[] inVolume,
-                             double[] outReal )
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
+                             ReadOnlySpan<float> inVolume,
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = MARKETFI(startIdx, endIdx, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MARKETFI", retCode);
@@ -399,7 +397,7 @@ public partial class Core
       }
    }
 
-   private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MARKETFI_OpenCore( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -452,29 +450,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx )
+   private RetCode MARKETFI_OpenBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MARKETFI_OpenAndFillBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return MARKETFI_OpenCore( sp, inHigh, inLow, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MARKETFI_OpenAndFillInternalBody( MARKETFI_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MARKETFI_OpenCore(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MARKETFI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MARKETFI_Stream MARKETFI_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       RetCode retCode = MARKETFI_OpenAndFillInternalBody(sp, inHigh, inLow, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -485,7 +483,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MARKETFI_Open (composition seam). */
-   internal MARKETFI_Stream MARKETFI_OpenInternal( double[] inHigh, double[] inLow, double[] inVolume, int startIdx )
+   internal MARKETFI_Stream MARKETFI_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, int startIdx )
    {
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       RetCode retCode = MARKETFI_OpenBody(sp, inHigh, inLow, inVolume, startIdx);
@@ -512,11 +510,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MARKETFI_Stream MARKETFI_Open( double[] inHigh, double[] inLow, double[] inVolume )
+   public MARKETFI_Stream MARKETFI_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return MARKETFI_OpenInternal(inHigh, inLow, inVolume, 0);
    }
 
@@ -543,12 +541,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MARKETFI_Stream MARKETFI_OpenAndFill( double[] inHigh, double[] inLow, double[] inVolume, double[] outReal )
+   public MARKETFI_Stream MARKETFI_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       MARKETFI_Stream sp = new MARKETFI_Stream(this);
       RetCode retCode = MARKETFI_OpenAndFillBody(sp, inHigh, inLow, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

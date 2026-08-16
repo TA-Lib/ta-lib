@@ -91,13 +91,13 @@ public partial class Core
    }
    internal RetCode SAR( int startIdx,
                          int endIdx,
-                         double[] inHigh,
-                         double[] inLow,
+                         ReadOnlySpan<double> inHigh,
+                         ReadOnlySpan<double> inLow,
                          double optInAcceleration,
                          double optInMaximum,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -348,13 +348,13 @@ public partial class Core
    }
    internal RetCode SAR( int startIdx,
                          int endIdx,
-                         float[] inHigh,
-                         float[] inLow,
+                         ReadOnlySpan<float> inHigh,
+                         ReadOnlySpan<float> inLow,
                          double optInAcceleration,
                          double optInMaximum,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -548,15 +548,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SAR( int startIdx,
                         int endIdx,
-                        double[] inHigh,
-                        double[] inLow,
+                        ReadOnlySpan<double> inHigh,
+                        ReadOnlySpan<double> inLow,
                         double optInAcceleration,
                         double optInMaximum,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
@@ -609,15 +608,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SAR( int startIdx,
                         int endIdx,
-                        float[] inHigh,
-                        float[] inLow,
+                        ReadOnlySpan<float> inHigh,
+                        ReadOnlySpan<float> inLow,
                         double optInAcceleration,
                         double optInMaximum,
-                        double[] outReal )
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = SAR(startIdx, endIdx, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAR", retCode);
@@ -864,7 +862,7 @@ public partial class Core
       }
    }
 
-   private RetCode SAR_OpenCore( SAR_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode SAR_OpenCore( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1126,29 +1124,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SAR_OpenBody( SAR_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInAcceleration, double optInMaximum )
+   private RetCode SAR_OpenBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum )
    {
       double[] sink_outReal = new double[1];
       return SAR_OpenCore( sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode SAR_OpenAndFillBody( SAR_Stream sp, double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SAR_OpenAndFillBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return SAR_OpenCore( sp, inHigh, inLow, 0, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode SAR_OpenAndFillInternalBody( SAR_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SAR_OpenAndFillInternalBody( SAR_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return SAR_OpenCore(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* SAR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SAR_Stream SAR_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal SAR_Stream SAR_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SAR_Stream sp = new SAR_Stream(this);
       RetCode retCode = SAR_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum, out outBegIdx, out outNBElement, outReal);
@@ -1159,7 +1157,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind SAR_Open (composition seam). */
-   internal SAR_Stream SAR_OpenInternal( double[] inHigh, double[] inLow, int startIdx, double optInAcceleration, double optInMaximum )
+   internal SAR_Stream SAR_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInAcceleration, double optInMaximum )
    {
       SAR_Stream sp = new SAR_Stream(this);
       RetCode retCode = SAR_OpenBody(sp, inHigh, inLow, startIdx, optInAcceleration, optInMaximum);
@@ -1188,10 +1186,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public SAR_Stream SAR_Open( double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum )
+   public SAR_Stream SAR_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return SAR_OpenInternal(inHigh, inLow, 0, optInAcceleration, optInMaximum);
    }
 
@@ -1221,11 +1219,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public SAR_Stream SAR_OpenAndFill( double[] inHigh, double[] inLow, double optInAcceleration, double optInMaximum, double[] outReal )
+   public SAR_Stream SAR_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInAcceleration, double optInMaximum, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       SAR_Stream sp = new SAR_Stream(this);
       RetCode retCode = SAR_OpenAndFillBody(sp, inHigh, inLow, optInAcceleration, optInMaximum, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

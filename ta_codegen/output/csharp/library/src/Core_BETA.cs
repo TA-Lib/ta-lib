@@ -83,12 +83,12 @@ public partial class Core
    }
    internal RetCode BETA( int startIdx,
                           int endIdx,
-                          double[] inReal0,
-                          double[] inReal1,
+                          ReadOnlySpan<double> inReal0,
+                          ReadOnlySpan<double> inReal1,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -255,12 +255,12 @@ public partial class Core
    }
    internal RetCode BETA( int startIdx,
                           int endIdx,
-                          float[] inReal0,
-                          float[] inReal1,
+                          ReadOnlySpan<float> inReal0,
+                          ReadOnlySpan<float> inReal1,
                           int optInTimePeriod,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -423,14 +423,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BETA( int startIdx,
                          int endIdx,
-                         double[] inReal0,
-                         double[] inReal1,
+                         ReadOnlySpan<double> inReal0,
+                         ReadOnlySpan<double> inReal1,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       RetCode retCode = BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("BETA", retCode);
@@ -480,14 +479,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BETA( int startIdx,
                          int endIdx,
-                         float[] inReal0,
-                         float[] inReal1,
+                         ReadOnlySpan<float> inReal0,
+                         ReadOnlySpan<float> inReal1,
                          int optInTimePeriod,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       RetCode retCode = BETA(startIdx, endIdx, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("BETA", retCode);
@@ -718,7 +716,7 @@ public partial class Core
       }
    }
 
-   private RetCode BETA_OpenCore( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode BETA_OpenCore( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -890,9 +888,9 @@ public partial class Core
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inReal0 = new double[allocN_trailingIdx];
-      Array.Copy(inReal0, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal0, 0, cap_trailingIdx);
+      inReal0.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal0);
       double[] capRing_trailingIdx_inReal1 = new double[allocN_trailingIdx];
-      Array.Copy(inReal1, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal1, 0, cap_trailingIdx);
+      inReal1.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inReal1);
       sp.optInTimePeriod = optInTimePeriod;
       sp.S_xx = S_xx;
       sp.S_xy = S_xy;
@@ -913,29 +911,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode BETA_OpenBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   private RetCode BETA_OpenBody( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return BETA_OpenCore( sp, inReal0, inReal1, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode BETA_OpenAndFillBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode BETA_OpenAndFillBody( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal0) || ReferenceEquals(outReal, inReal1) ) {
+      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          return RetCode.BadParam;
       }
       return BETA_OpenCore( sp, inReal0, inReal1, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode BETA_OpenAndFillInternalBody( BETA_Stream sp, double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode BETA_OpenAndFillInternalBody( BETA_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return BETA_OpenCore(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* BETA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal BETA_Stream BETA_OpenAndFillInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal BETA_Stream BETA_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       BETA_Stream sp = new BETA_Stream(this);
       RetCode retCode = BETA_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -946,7 +944,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind BETA_Open (composition seam). */
-   internal BETA_Stream BETA_OpenInternal( double[] inReal0, double[] inReal1, int startIdx, int optInTimePeriod )
+   internal BETA_Stream BETA_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, int optInTimePeriod )
    {
       BETA_Stream sp = new BETA_Stream(this);
       RetCode retCode = BETA_OpenBody(sp, inReal0, inReal1, startIdx, optInTimePeriod);
@@ -975,10 +973,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public BETA_Stream BETA_Open( double[] inReal0, double[] inReal1, int optInTimePeriod )
+   public BETA_Stream BETA_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       return BETA_OpenInternal(inReal0, inReal1, 0, optInTimePeriod);
    }
 
@@ -1008,11 +1006,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public BETA_Stream BETA_OpenAndFill( double[] inReal0, double[] inReal1, int optInTimePeriod, double[] outReal )
+   public BETA_Stream BETA_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       BETA_Stream sp = new BETA_Stream(this);
       RetCode retCode = BETA_OpenAndFillBody(sp, inReal0, inReal1, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

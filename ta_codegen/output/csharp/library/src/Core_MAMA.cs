@@ -112,13 +112,13 @@ public partial class Core
    }
    internal RetCode MAMA( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           double optInFastLimit,
                           double optInSlowLimit,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outMAMA,
-                          double[] outFAMA )
+                          Span<double> outMAMA,
+                          Span<double> outFAMA )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -509,13 +509,13 @@ public partial class Core
    }
    internal RetCode MAMA( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           double optInFastLimit,
                           double optInSlowLimit,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outMAMA,
-                          double[] outFAMA )
+                          Span<double> outMAMA,
+                          Span<double> outFAMA )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -885,15 +885,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAMA( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          double optInFastLimit,
                          double optInSlowLimit,
-                         double[] outMAMA,
-                         double[] outFAMA )
+                         Span<double> outMAMA,
+                         Span<double> outFAMA )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMAMA);
-      ArgumentNullException.ThrowIfNull(outFAMA);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -948,15 +946,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAMA( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          double optInFastLimit,
                          double optInSlowLimit,
-                         double[] outMAMA,
-                         double[] outFAMA )
+                         Span<double> outMAMA,
+                         Span<double> outFAMA )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMAMA);
-      ArgumentNullException.ThrowIfNull(outFAMA);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MAMA(startIdx, endIdx, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       if( retCode != RetCode.Success ) {
          throw Failure("MAMA", retCode);
@@ -1479,7 +1475,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode MAMA_OpenCore( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA, int outStride )
+   private RetCode MAMA_OpenCore( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1872,7 +1868,7 @@ public partial class Core
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
-      Array.Copy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
+      inReal.Slice(historyLen - cap_trailingWMAIdx, cap_trailingWMAIdx).CopyTo(capRing_trailingWMAIdx_inReal);
       sp.optInFastLimit = optInFastLimit;
       sp.optInSlowLimit = optInSlowLimit;
       sp.tempReal = tempReal;
@@ -1937,30 +1933,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAMA_OpenBody( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
+   private RetCode MAMA_OpenBody( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
    {
       double[] sink_outMAMA = new double[1];
       double[] sink_outFAMA = new double[1];
       return MAMA_OpenCore( sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out _, out _, sink_outMAMA, sink_outFAMA, 0 );
    }
 
-   private RetCode MAMA_OpenAndFillBody( MAMA_Stream sp, double[] inReal, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   private RetCode MAMA_OpenAndFillBody( MAMA_Stream sp, ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outMAMA, inReal) || ReferenceEquals(outFAMA, inReal) || ReferenceEquals(outMAMA, outFAMA) ) {
+      if( outMAMA.Overlaps(inReal) || outFAMA.Overlaps(inReal) || outMAMA.Overlaps(outFAMA) ) {
          return RetCode.BadParam;
       }
       return MAMA_OpenCore( sp, inReal, 0, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1 );
    }
 
-   private RetCode MAMA_OpenAndFillInternalBody( MAMA_Stream sp, double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   private RetCode MAMA_OpenAndFillInternalBody( MAMA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
    {
       return MAMA_OpenCore(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA, 1);
    }
 
    /* MAMA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MAMA_Stream MAMA_OpenAndFillInternal( double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, double[] outMAMA, double[] outFAMA )
+   internal MAMA_Stream MAMA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit, out int outBegIdx, out int outNBElement, Span<double> outMAMA, Span<double> outFAMA )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastLimit, optInSlowLimit, out outBegIdx, out outNBElement, outMAMA, outFAMA);
@@ -1971,7 +1967,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MAMA_Open (composition seam). */
-   internal MAMA_Stream MAMA_OpenInternal( double[] inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
+   internal MAMA_Stream MAMA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, double optInFastLimit, double optInSlowLimit )
    {
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenBody(sp, inReal, startIdx, optInFastLimit, optInSlowLimit);
@@ -1999,9 +1995,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MAMA_Stream MAMA_Open( double[] inReal, double optInFastLimit, double optInSlowLimit )
+   public MAMA_Stream MAMA_Open( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MAMA_OpenInternal(inReal, 0, optInFastLimit, optInSlowLimit);
    }
 
@@ -2032,11 +2028,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MAMA_Stream MAMA_OpenAndFill( double[] inReal, double optInFastLimit, double optInSlowLimit, double[] outMAMA, double[] outFAMA )
+   public MAMA_Stream MAMA_OpenAndFill( ReadOnlySpan<double> inReal, double optInFastLimit, double optInSlowLimit, Span<double> outMAMA, Span<double> outFAMA )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMAMA);
-      ArgumentNullException.ThrowIfNull(outFAMA);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MAMA_Stream sp = new MAMA_Stream(this);
       RetCode retCode = MAMA_OpenAndFillBody(sp, inReal, optInFastLimit, optInSlowLimit, out int outBegIdx, out int outNBElement, outMAMA, outFAMA);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

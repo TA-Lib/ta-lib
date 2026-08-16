@@ -78,11 +78,11 @@ public partial class Core
    }
    internal RetCode HT_PHASOR( int startIdx,
                                int endIdx,
-                               double[] inReal,
+                               ReadOnlySpan<double> inReal,
                                out int outBegIdx,
                                out int outNBElement,
-                               double[] outInPhase,
-                               double[] outQuadrature )
+                               Span<double> outInPhase,
+                               Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -427,11 +427,11 @@ public partial class Core
    }
    internal RetCode HT_PHASOR( int startIdx,
                                int endIdx,
-                               float[] inReal,
+                               ReadOnlySpan<float> inReal,
                                out int outBegIdx,
                                out int outNBElement,
-                               double[] outInPhase,
-                               double[] outQuadrature )
+                               Span<double> outInPhase,
+                               Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -755,13 +755,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_PHASOR( int startIdx,
                               int endIdx,
-                              double[] inReal,
-                              double[] outInPhase,
-                              double[] outQuadrature )
+                              ReadOnlySpan<double> inReal,
+                              Span<double> outInPhase,
+                              Span<double> outQuadrature )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInPhase);
-      ArgumentNullException.ThrowIfNull(outQuadrature);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
@@ -808,13 +806,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange HT_PHASOR( int startIdx,
                               int endIdx,
-                              float[] inReal,
-                              double[] outInPhase,
-                              double[] outQuadrature )
+                              ReadOnlySpan<float> inReal,
+                              Span<double> outInPhase,
+                              Span<double> outQuadrature )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInPhase);
-      ArgumentNullException.ThrowIfNull(outQuadrature);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = HT_PHASOR(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       if( retCode != RetCode.Success ) {
          throw Failure("HT_PHASOR", retCode);
@@ -1291,7 +1287,7 @@ public partial class Core
       sp.streamParity = 1 - sp.streamParity;
    }
 
-   private RetCode HT_PHASOR_OpenCore( HT_PHASOR_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outInPhase, double[] outQuadrature, int outStride )
+   private RetCode HT_PHASOR_OpenCore( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1638,7 +1634,7 @@ public partial class Core
       }
       int allocN_trailingWMAIdx = (cap_trailingWMAIdx > 0)? cap_trailingWMAIdx : 1;
       double[] capRing_trailingWMAIdx_inReal = new double[allocN_trailingWMAIdx];
-      Array.Copy(inReal, historyLen - cap_trailingWMAIdx, capRing_trailingWMAIdx_inReal, 0, cap_trailingWMAIdx);
+      inReal.Slice(historyLen - cap_trailingWMAIdx, cap_trailingWMAIdx).CopyTo(capRing_trailingWMAIdx_inReal);
       sp.tempReal = tempReal;
       sp.tempReal2 = tempReal2;
       sp.period = period;
@@ -1698,30 +1694,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, double[] inReal, int startIdx )
+   private RetCode HT_PHASOR_OpenBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outInPhase = new double[1];
       double[] sink_outQuadrature = new double[1];
       return HT_PHASOR_OpenCore( sp, inReal, startIdx, out _, out _, sink_outInPhase, sink_outQuadrature, 0 );
    }
 
-   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outInPhase, double[] outQuadrature )
+   private RetCode HT_PHASOR_OpenAndFillBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInPhase, inReal) || ReferenceEquals(outQuadrature, inReal) || ReferenceEquals(outInPhase, outQuadrature) ) {
+      if( outInPhase.Overlaps(inReal) || outQuadrature.Overlaps(inReal) || outInPhase.Overlaps(outQuadrature) ) {
          return RetCode.BadParam;
       }
       return HT_PHASOR_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1 );
    }
 
-   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outInPhase, double[] outQuadrature )
+   private RetCode HT_PHASOR_OpenAndFillInternalBody( HT_PHASOR_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       return HT_PHASOR_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature, 1);
    }
 
    /* HT_PHASOR_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outInPhase, double[] outQuadrature )
+   internal HT_PHASOR_Stream HT_PHASOR_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outInPhase, Span<double> outQuadrature )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outInPhase, outQuadrature);
@@ -1732,7 +1728,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind HT_PHASOR_Open (composition seam). */
-   internal HT_PHASOR_Stream HT_PHASOR_OpenInternal( double[] inReal, int startIdx )
+   internal HT_PHASOR_Stream HT_PHASOR_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenBody(sp, inReal, startIdx);
@@ -1757,9 +1753,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public HT_PHASOR_Stream HT_PHASOR_Open( double[] inReal )
+   public HT_PHASOR_Stream HT_PHASOR_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return HT_PHASOR_OpenInternal(inReal, 0);
    }
 
@@ -1787,11 +1783,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( double[] inReal, double[] outInPhase, double[] outQuadrature )
+   public HT_PHASOR_Stream HT_PHASOR_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outInPhase, Span<double> outQuadrature )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInPhase);
-      ArgumentNullException.ThrowIfNull(outQuadrature);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       HT_PHASOR_Stream sp = new HT_PHASOR_Stream(this);
       RetCode retCode = HT_PHASOR_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outInPhase, outQuadrature);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

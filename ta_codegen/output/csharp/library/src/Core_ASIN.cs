@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode ASIN( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -95,10 +95,10 @@ public partial class Core
    }
    internal RetCode ASIN( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -151,11 +151,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ASIN( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<double> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = ASIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ASIN", retCode);
@@ -202,11 +201,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ASIN( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<float> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = ASIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ASIN", retCode);
@@ -313,7 +311,7 @@ public partial class Core
       sp.cur_outReal = Math.Asin(inReal);
    }
 
-   private RetCode ASIN_OpenCore( ASIN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode ASIN_OpenCore( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -337,29 +335,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ASIN_OpenBody( ASIN_Stream sp, double[] inReal, int startIdx )
+   private RetCode ASIN_OpenBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return ASIN_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ASIN_OpenAndFillBody( ASIN_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ASIN_OpenAndFillBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return ASIN_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ASIN_OpenAndFillInternalBody( ASIN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ASIN_OpenAndFillInternalBody( ASIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return ASIN_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ASIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ASIN_Stream ASIN_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal ASIN_Stream ASIN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
       RetCode retCode = ASIN_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -370,7 +368,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind ASIN_Open (composition seam). */
-   internal ASIN_Stream ASIN_OpenInternal( double[] inReal, int startIdx )
+   internal ASIN_Stream ASIN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       ASIN_Stream sp = new ASIN_Stream(this);
       RetCode retCode = ASIN_OpenBody(sp, inReal, startIdx);
@@ -395,9 +393,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public ASIN_Stream ASIN_Open( double[] inReal )
+   public ASIN_Stream ASIN_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return ASIN_OpenInternal(inReal, 0);
    }
 
@@ -423,10 +421,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public ASIN_Stream ASIN_OpenAndFill( double[] inReal, double[] outReal )
+   public ASIN_Stream ASIN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       ASIN_Stream sp = new ASIN_Stream(this);
       RetCode retCode = ASIN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

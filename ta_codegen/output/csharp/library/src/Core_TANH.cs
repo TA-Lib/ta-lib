@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode TANH( int startIdx,
                           int endIdx,
-                          double[] inReal,
+                          ReadOnlySpan<double> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -95,10 +95,10 @@ public partial class Core
    }
    internal RetCode TANH( int startIdx,
                           int endIdx,
-                          float[] inReal,
+                          ReadOnlySpan<float> inReal,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -147,11 +147,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange TANH( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<double> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = TANH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TANH", retCode);
@@ -194,11 +193,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange TANH( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         double[] outReal )
+                         ReadOnlySpan<float> inReal,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = TANH(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TANH", retCode);
@@ -305,7 +303,7 @@ public partial class Core
       sp.cur_outReal = Math.Tanh(inReal);
    }
 
-   private RetCode TANH_OpenCore( TANH_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode TANH_OpenCore( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -329,29 +327,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TANH_OpenBody( TANH_Stream sp, double[] inReal, int startIdx )
+   private RetCode TANH_OpenBody( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return TANH_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TANH_OpenAndFillBody( TANH_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode TANH_OpenAndFillBody( TANH_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return TANH_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TANH_OpenAndFillInternalBody( TANH_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode TANH_OpenAndFillInternalBody( TANH_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return TANH_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TANH_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TANH_Stream TANH_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal TANH_Stream TANH_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TANH_Stream sp = new TANH_Stream(this);
       RetCode retCode = TANH_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -362,7 +360,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind TANH_Open (composition seam). */
-   internal TANH_Stream TANH_OpenInternal( double[] inReal, int startIdx )
+   internal TANH_Stream TANH_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       TANH_Stream sp = new TANH_Stream(this);
       RetCode retCode = TANH_OpenBody(sp, inReal, startIdx);
@@ -386,9 +384,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public TANH_Stream TANH_Open( double[] inReal )
+   public TANH_Stream TANH_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return TANH_OpenInternal(inReal, 0);
    }
 
@@ -413,10 +411,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public TANH_Stream TANH_OpenAndFill( double[] inReal, double[] outReal )
+   public TANH_Stream TANH_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       TANH_Stream sp = new TANH_Stream(this);
       RetCode retCode = TANH_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

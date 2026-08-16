@@ -80,12 +80,12 @@ public partial class Core
    }
    internal RetCode QSTICK( int startIdx,
                             int endIdx,
-                            double[] inOpen,
-                            double[] inClose,
+                            ReadOnlySpan<double> inOpen,
+                            ReadOnlySpan<double> inClose,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -172,12 +172,12 @@ public partial class Core
    }
    internal RetCode QSTICK( int startIdx,
                             int endIdx,
-                            float[] inOpen,
-                            float[] inClose,
+                            ReadOnlySpan<float> inOpen,
+                            ReadOnlySpan<float> inClose,
                             int optInTimePeriod,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -270,14 +270,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange QSTICK( int startIdx,
                            int endIdx,
-                           double[] inOpen,
-                           double[] inClose,
+                           ReadOnlySpan<double> inOpen,
+                           ReadOnlySpan<double> inClose,
                            int optInTimePeriod,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("QSTICK", retCode);
@@ -330,14 +329,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange QSTICK( int startIdx,
                            int endIdx,
-                           float[] inOpen,
-                           float[] inClose,
+                           ReadOnlySpan<float> inOpen,
+                           ReadOnlySpan<float> inClose,
                            int optInTimePeriod,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = QSTICK(startIdx, endIdx, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("QSTICK", retCode);
@@ -498,7 +496,7 @@ public partial class Core
       }
    }
 
-   private RetCode QSTICK_OpenCore( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode QSTICK_OpenCore( QSTICK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -590,9 +588,9 @@ public partial class Core
       }
       int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
       double[] capRing_trailingIdx_inOpen = new double[allocN_trailingIdx];
-      Array.Copy(inOpen, historyLen - cap_trailingIdx, capRing_trailingIdx_inOpen, 0, cap_trailingIdx);
+      inOpen.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inOpen);
       double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
-      Array.Copy(inClose, historyLen - cap_trailingIdx, capRing_trailingIdx_inClose, 0, cap_trailingIdx);
+      inClose.Slice(historyLen - cap_trailingIdx, cap_trailingIdx).CopyTo(capRing_trailingIdx_inClose);
       sp.optInTimePeriod = optInTimePeriod;
       sp.periodTotal = periodTotal;
       sp.tempReal = tempReal;
@@ -604,29 +602,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode QSTICK_OpenBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   private RetCode QSTICK_OpenBody( QSTICK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return QSTICK_OpenCore( sp, inOpen, inClose, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode QSTICK_OpenAndFillBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode QSTICK_OpenAndFillBody( QSTICK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inOpen) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inOpen) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return QSTICK_OpenCore( sp, inOpen, inClose, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode QSTICK_OpenAndFillInternalBody( QSTICK_Stream sp, double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode QSTICK_OpenAndFillInternalBody( QSTICK_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return QSTICK_OpenCore(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* QSTICK_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal QSTICK_Stream QSTICK_OpenAndFillInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal QSTICK_Stream QSTICK_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenAndFillInternalBody(sp, inOpen, inClose, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -637,7 +635,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind QSTICK_Open (composition seam). */
-   internal QSTICK_Stream QSTICK_OpenInternal( double[] inOpen, double[] inClose, int startIdx, int optInTimePeriod )
+   internal QSTICK_Stream QSTICK_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod )
    {
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenBody(sp, inOpen, inClose, startIdx, optInTimePeriod);
@@ -664,10 +662,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public QSTICK_Stream QSTICK_Open( double[] inOpen, double[] inClose, int optInTimePeriod )
+   public QSTICK_Stream QSTICK_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return QSTICK_OpenInternal(inOpen, inClose, 0, optInTimePeriod);
    }
 
@@ -695,11 +693,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public QSTICK_Stream QSTICK_OpenAndFill( double[] inOpen, double[] inClose, int optInTimePeriod, double[] outReal )
+   public QSTICK_Stream QSTICK_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inClose, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       QSTICK_Stream sp = new QSTICK_Stream(this);
       RetCode retCode = QSTICK_OpenAndFillBody(sp, inOpen, inClose, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

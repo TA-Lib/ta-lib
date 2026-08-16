@@ -75,13 +75,13 @@ public partial class Core
    }
    internal RetCode AD( int startIdx,
                         int endIdx,
-                        double[] inHigh,
-                        double[] inLow,
-                        double[] inClose,
-                        double[] inVolume,
+                        ReadOnlySpan<double> inHigh,
+                        ReadOnlySpan<double> inLow,
+                        ReadOnlySpan<double> inClose,
+                        ReadOnlySpan<double> inVolume,
                         out int outBegIdx,
                         out int outNBElement,
-                        double[] outReal )
+                        Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -136,13 +136,13 @@ public partial class Core
    }
    internal RetCode AD( int startIdx,
                         int endIdx,
-                        float[] inHigh,
-                        float[] inLow,
-                        float[] inClose,
-                        float[] inVolume,
+                        ReadOnlySpan<float> inHigh,
+                        ReadOnlySpan<float> inLow,
+                        ReadOnlySpan<float> inClose,
+                        ReadOnlySpan<float> inVolume,
                         out int outBegIdx,
                         out int outNBElement,
-                        double[] outReal )
+                        Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -216,17 +216,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AD( int startIdx,
                        int endIdx,
-                       double[] inHigh,
-                       double[] inLow,
-                       double[] inClose,
-                       double[] inVolume,
-                       double[] outReal )
+                       ReadOnlySpan<double> inHigh,
+                       ReadOnlySpan<double> inLow,
+                       ReadOnlySpan<double> inClose,
+                       ReadOnlySpan<double> inVolume,
+                       Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
@@ -275,17 +274,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AD( int startIdx,
                        int endIdx,
-                       float[] inHigh,
-                       float[] inLow,
-                       float[] inClose,
-                       float[] inVolume,
-                       double[] outReal )
+                       ReadOnlySpan<float> inHigh,
+                       ReadOnlySpan<float> inLow,
+                       ReadOnlySpan<float> inClose,
+                       ReadOnlySpan<float> inVolume,
+                       Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = AD(startIdx, endIdx, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("AD", retCode);
@@ -412,7 +410,7 @@ public partial class Core
       sp.cur_outReal = sp.ad;
    }
 
-   private RetCode AD_OpenCore( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode AD_OpenCore( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -471,29 +469,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AD_OpenBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx )
+   private RetCode AD_OpenBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode AD_OpenAndFillBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AD_OpenAndFillBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return AD_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode AD_OpenAndFillInternalBody( AD_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode AD_OpenAndFillInternalBody( AD_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return AD_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* AD_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AD_Stream AD_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal AD_Stream AD_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       AD_Stream sp = new AD_Stream(this);
       RetCode retCode = AD_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -504,7 +502,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind AD_Open (composition seam). */
-   internal AD_Stream AD_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx )
+   internal AD_Stream AD_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx )
    {
       AD_Stream sp = new AD_Stream(this);
       RetCode retCode = AD_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx);
@@ -531,12 +529,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public AD_Stream AD_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume )
+   public AD_Stream AD_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return AD_OpenInternal(inHigh, inLow, inClose, inVolume, 0);
    }
 
@@ -564,13 +562,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public AD_Stream AD_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, double[] outReal )
+   public AD_Stream AD_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       AD_Stream sp = new AD_Stream(this);
       RetCode retCode = AD_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

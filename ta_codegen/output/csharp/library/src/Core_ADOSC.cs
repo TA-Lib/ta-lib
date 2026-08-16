@@ -95,15 +95,15 @@ public partial class Core
    }
    internal RetCode ADOSC( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           double[] inClose,
-                           double[] inVolume,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           ReadOnlySpan<double> inClose,
+                           ReadOnlySpan<double> inVolume,
                            int optInFastPeriod,
                            int optInSlowPeriod,
                            out int outBegIdx,
                            out int outNBElement,
-                           double[] outReal )
+                           Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -241,15 +241,15 @@ public partial class Core
    }
    internal RetCode ADOSC( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           float[] inClose,
-                           float[] inVolume,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           ReadOnlySpan<float> inClose,
+                           ReadOnlySpan<float> inVolume,
                            int optInFastPeriod,
                            int optInSlowPeriod,
                            out int outBegIdx,
                            out int outNBElement,
-                           double[] outReal )
+                           Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -387,19 +387,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ADOSC( int startIdx,
                           int endIdx,
-                          double[] inHigh,
-                          double[] inLow,
-                          double[] inClose,
-                          double[] inVolume,
+                          ReadOnlySpan<double> inHigh,
+                          ReadOnlySpan<double> inLow,
+                          ReadOnlySpan<double> inClose,
+                          ReadOnlySpan<double> inVolume,
                           int optInFastPeriod,
                           int optInSlowPeriod,
-                          double[] outReal )
+                          Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
@@ -455,19 +454,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ADOSC( int startIdx,
                           int endIdx,
-                          float[] inHigh,
-                          float[] inLow,
-                          float[] inClose,
-                          float[] inVolume,
+                          ReadOnlySpan<float> inHigh,
+                          ReadOnlySpan<float> inLow,
+                          ReadOnlySpan<float> inClose,
+                          ReadOnlySpan<float> inVolume,
                           int optInFastPeriod,
                           int optInSlowPeriod,
-                          double[] outReal )
+                          Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       RetCode retCode = ADOSC(startIdx, endIdx, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ADOSC", retCode);
@@ -620,7 +618,7 @@ public partial class Core
       sp.cur_outReal = sp.fastEMA - sp.slowEMA;
    }
 
-   private RetCode ADOSC_OpenCore( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode ADOSC_OpenCore( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -770,29 +768,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   private RetCode ADOSC_OpenBody( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       double[] sink_outReal = new double[1];
       return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ADOSC_OpenAndFillBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ADOSC_OpenAndFillBody( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) || ReferenceEquals(outReal, inVolume) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || outReal.Overlaps(inVolume) ) {
          return RetCode.BadParam;
       }
       return ADOSC_OpenCore( sp, inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ADOSC_OpenAndFillInternalBody( ADOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ADOSC_OpenAndFillInternalBody( ADOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return ADOSC_OpenCore(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ADOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ADOSC_Stream ADOSC_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal ADOSC_Stream ADOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outReal);
@@ -803,7 +801,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind ADOSC_Open (composition seam). */
-   internal ADOSC_Stream ADOSC_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
+   internal ADOSC_Stream ADOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int startIdx, int optInFastPeriod, int optInSlowPeriod )
    {
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenBody(sp, inHigh, inLow, inClose, inVolume, startIdx, optInFastPeriod, optInSlowPeriod);
@@ -834,12 +832,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public ADOSC_Stream ADOSC_Open( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod )
+   public ADOSC_Stream ADOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       return ADOSC_OpenInternal(inHigh, inLow, inClose, inVolume, 0, optInFastPeriod, optInSlowPeriod);
    }
 
@@ -871,13 +869,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public ADOSC_Stream ADOSC_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] inVolume, int optInFastPeriod, int optInSlowPeriod, double[] outReal )
+   public ADOSC_Stream ADOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, ReadOnlySpan<double> inVolume, int optInFastPeriod, int optInSlowPeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(inVolume);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
+      if( inVolume.IsEmpty ) throw new ArgumentException("inVolume is empty", nameof(inVolume));
       ADOSC_Stream sp = new ADOSC_Stream(this);
       RetCode retCode = ADOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, inVolume, optInFastPeriod, optInSlowPeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

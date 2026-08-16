@@ -166,13 +166,11 @@ fn out_cs_type(func: &FuncDef, name: &str) -> &'static str {
     }
 }
 
-/// `double[]` / `int[]` array type of an output.
-fn out_cs_array_type(func: &FuncDef, name: &str) -> &'static str {
-    if out_is_int(func, name) {
-        "int[]"
-    } else {
-        cs_series_out()
-    }
+/// The output-series PARAMETER type of an output. All three call sites are
+/// signatures, so this is the span form; the handle's own buffers are fields
+/// and stay arrays (see [`field_type_and_default`]).
+fn out_cs_param_type(func: &FuncDef, name: &str) -> String {
+    cs_series_out(if out_is_int(func, name) { "int" } else { "double" })
 }
 
 /// Whether `Update`/`Peek`/`Value` return the multi-output `<NAME>_Value`.
@@ -274,9 +272,9 @@ fn field_type_and_default(ty: &VarType) -> (String, String) {
         VarType::Real => ("double".into(), "0.0".into()),
         VarType::Integer | VarType::Index => ("int".into(), "0".into()),
         VarType::RetCodeType => ("RetCode".into(), "RetCode.Success".into()),
-        VarType::RealPointer => (cs_series_in().into(), "new double[1]".into()),
+        VarType::RealPointer => ("double[]".into(), "new double[1]".into()),
         VarType::IntPointer => ("int[]".into(), "new int[1]".into()),
-        VarType::RealArray(size) => (cs_series_in().into(), format!("new double[{size}]")),
+        VarType::RealArray(size) => ("double[]".into(), format!("new double[{size}]")),
         VarType::IntArray(size) => ("int[]".into(), format!("new int[{size}]")),
     }
 }
@@ -374,7 +372,7 @@ fn state_fields_from(
             };
             fields.push((
                 format!("ring_{v}_{arr}"),
-                cs_series_in().into(),
+                "double[]".into(),
                 format!("new double[{id_len}]"),
             ));
         }
@@ -386,7 +384,7 @@ fn state_fields_from(
         for arr in &win.arrays {
             fields.push((
                 format!("win_{v}_{arr}"),
-                cs_series_in().into(),
+                "double[]".into(),
                 "new double[1]".into(),
             ));
         }
@@ -405,7 +403,7 @@ fn state_fields_from(
     if let Some(ex) = model.extrema() {
         fields.push(("xMask".into(), "int".into(), "0".into()));
         for arr in &ex.arrays {
-            fields.push((format!("x_{arr}"), cs_series_in().into(), "new double[1]".into()));
+            fields.push((format!("x_{arr}"), "double[]".into(), "new double[1]".into()));
         }
     }
     // Candle-settings snapshot: the step reads these primitives, never the live
@@ -1397,20 +1395,40 @@ fn emit_open_and_fill_wrapper(o: &mut String, func: &FuncDef) {
 
 /// The output/input and output/output aliasing reject.
 ///
-/// `ReferenceEquals`, not `==`: it is complete over managed arrays (identical or
-/// disjoint) and it also compiles for a cross-typed `double[]`/`int[]` output
-/// pair, where `==` would not.
+/// `MemoryExtensions.Overlaps`, not reference identity. Over arrays the two
+/// agreed, because two arrays are identical or disjoint and nothing in
+/// between. Spans made the in-between expressible: `buf.Slice(0, n)` and
+/// `buf.Slice(1, n)` are different spans over overlapping memory, and identity
+/// would call them unrelated.
+///
+/// This is not only about the reject. Several transcribed bodies branch on
+/// series identity as part of the ALGORITHM — BBANDS elects its scratch with
+/// `if (inReal == outRealUpperBand)` — and on a partially-overlapping pair that
+/// test is false while the buffers do in fact collide, so the body would take
+/// the wrong arm and write through its own input. Rejecting overlap up front is
+/// what keeps those branches sound.
+///
+/// Cross-typed output pairs (`Span<double>` against `Span<int>`) cannot alias
+/// and are skipped: `Overlaps` is not defined across element types, and the
+/// runtime cannot place them on the same memory anyway.
 fn alias_reject(func: &FuncDef, inputs: &[String]) -> String {
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     let mut pairs: Vec<String> = Vec::new();
     for out in &outs {
+        // An int output cannot overlap a double input series.
+        if out_is_int(func, out) {
+            continue;
+        }
         for input in inputs {
-            pairs.push(format!("ReferenceEquals({out}, {input})"));
+            pairs.push(format!("{out}.Overlaps({input})"));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            pairs.push(format!("ReferenceEquals({}, {b})", outs[i]));
+            if out_is_int(func, outs[i]) != out_is_int(func, b) {
+                continue;
+            }
+            pairs.push(format!("{}.Overlaps({b})", outs[i]));
         }
     }
     if pairs.is_empty() {
@@ -1561,7 +1579,7 @@ fn emit_open_body_sig(o: &mut String, func: &FuncDef, mode: OutMode) {
     let class = stream_class_name(func);
     let mut params: Vec<String> = vec![format!("{class} sp")];
     for input in streaming::input_array_names(func) {
-        params.push(format!("{} {input}", cs_series_in()));
+        params.push(format!("{} {input}", cs_series_in("double")));
     }
     if mode == OutMode::Scalar || mode == OutMode::Core {
         params.push("int startIdx".to_string());
@@ -1600,7 +1618,7 @@ fn push_out_tail(params: &mut Vec<String>, func: &FuncDef) {
     params.push("out int outBegIdx".to_string());
     params.push("out int outNBElement".to_string());
     for out in &func.outputs {
-        params.push(format!("{} {}", out_cs_array_type(func, &out.name), out.name));
+        params.push(format!("{} {}", out_cs_param_type(func, &out.name), out.name));
     }
 }
 
@@ -1938,7 +1956,7 @@ fn emit_capture(
             } else {
                 let _ = writeln!(
                     o,
-                    "      Array.Copy({arr}, historyLen - cap_{v}, capRing_{v}_{arr}, 0, cap_{v});"
+                    "      {arr}.Slice(historyLen - cap_{v}, cap_{v}).CopyTo(capRing_{v}_{arr});"
                 );
             }
         }
@@ -1956,7 +1974,7 @@ fn emit_capture(
             let _ = writeln!(o, "      double[] capWin_{v}_{arr} = new double[cap_{v}];");
             let _ = writeln!(
                 o,
-                "      Array.Copy({arr}, historyLen - cap_{v}, capWin_{v}_{arr}, 0, cap_{v});"
+                "      {arr}.Slice(historyLen - cap_{v}, cap_{v}).CopyTo(capWin_{v}_{arr});"
             );
         }
     }
@@ -2160,7 +2178,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     let outs: Vec<String> = func.outputs.iter().map(|out| out.name.clone()).collect();
     let mut fi_sig: Vec<String> = in_fwd
         .iter()
-        .map(|a| format!("{} {a}", cs_series_in()))
+        .map(|a| format!("{} {a}", cs_series_in("double")))
         .collect();
     fi_sig.push("int startIdx".to_string());
     for p in &func.optional_inputs {
@@ -2169,7 +2187,7 @@ fn emit_open_and_fill_internal_wrapper(o: &mut String, func: &FuncDef) {
     fi_sig.push("out int outBegIdx".to_string());
     fi_sig.push("out int outNBElement".to_string());
     for out in &outs {
-        fi_sig.push(format!("{} {out}", out_cs_array_type(func, out)));
+        fi_sig.push(format!("{} {out}", out_cs_param_type(func, out)));
     }
     let _ = writeln!(
         o,
@@ -2213,7 +2231,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     let mut in_sig: Vec<String> = Vec::new();
     let mut in_fwd: Vec<String> = Vec::new();
     for input in streaming::input_array_names(func) {
-        in_sig.push(format!("{} {input}", cs_series_in()));
+        in_sig.push(format!("{} {input}", cs_series_in("double")));
         in_fwd.push(input.clone());
     }
     let mut opt_sig: Vec<String> = Vec::new();
@@ -2302,7 +2320,10 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     // composition seam and is reached only with generator-created arrays, so
     // it stays unchecked.
     for input in &in_fwd {
-        let _ = writeln!(o, "      ArgumentNullException.ThrowIfNull({input});");
+        let _ = writeln!(
+            o,
+            "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
+        );
     }
     let _ = writeln!(
         o,
@@ -2325,7 +2346,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     fill_fwd.push("out int outBegIdx".to_string());
     fill_fwd.push("out int outNBElement".to_string());
     for out in &func.outputs {
-        fill_sig.push(format!("{} {}", out_cs_array_type(func, &out.name), out.name));
+        fill_sig.push(format!("{} {}", out_cs_param_type(func, &out.name), out.name));
         fill_fwd.push(out.name.clone());
     }
 
@@ -2391,8 +2412,11 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef) {
     // a null output is as much a caller error as a null input, and the
     // aliasing guard below would otherwise see two nulls as "equal" and answer
     // BadParam instead of naming the argument.
-    for name in in_fwd.iter().chain(func.outputs.iter().map(|o2| &o2.name)) {
-        let _ = writeln!(o, "      ArgumentNullException.ThrowIfNull({name});");
+    for input in &in_fwd {
+        let _ = writeln!(
+            o,
+            "      if( {input}.IsEmpty ) throw new ArgumentException(\"{input} is empty\", nameof({input}));"
+        );
     }
     let _ = writeln!(o, "      {class} sp = new {class}(this);");
     let _ = writeln!(
@@ -3107,7 +3131,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      {subty}[] bank = new {subty}[nBank];");
     let _ = writeln!(o, "      double[] scratch = new double[nBank];");
     let _ = writeln!(o, "      double[] seedPrefix = new double[lookbackTotal + 1];");
-    let _ = writeln!(o, "      Array.Copy({price}, seedPrefix, lookbackTotal + 1);");
+    let _ = writeln!(o, "      {price}.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);");
     let _ = writeln!(o, "      for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {{");
     let _ = writeln!(o, "         {subty} sub = {callee_base}_OpenInternal(seedPrefix, lookbackTotal, {open_opts});");
     let _ = writeln!(o, "         bank[bankIdx] = sub;");
@@ -3566,10 +3590,10 @@ fn emit_composed_open(
         if alias_fill {
             let _ = writeln!(
                 o,
-                "      double[] sc_{out} = outStride == 1 ? {out} : new double[historyLen];"
+                "      Span<double> sc_{out} = outStride == 1 ? {out} : new double[historyLen];"
             );
         } else {
-            let _ = writeln!(o, "      double[] sc_{out} = new double[historyLen];");
+            let _ = writeln!(o, "      Span<double> sc_{out} = new double[historyLen];");
         }
     }
 
@@ -3673,7 +3697,7 @@ fn emit_composed_open(
             }
             let local = format!("subSrc{si}_{}", materialized.len());
             let _ = writeln!(src_locals, "      double[] {local} = new double[subLen{si}];");
-            let _ = writeln!(src_locals, "      Array.Copy({name}, {local}, subLen{si});");
+            let _ = writeln!(src_locals, "      {name}.Slice(0, subLen{si}).CopyTo({local});");
             materialized.insert(name.clone(), local.clone());
             src_names.push(local);
         }
@@ -3801,7 +3825,7 @@ fn emit_composed_open(
         for out in outputs {
             let _ = writeln!(
                 o,
-                "      if( outStride == 1 ) Array.Copy(sc_{out}, 0, {out}, 0, outNBElement);"
+                "      if( outStride == 1 ) sc_{out}.Slice(0, outNBElement).CopyTo({out});"
             );
         }
     }

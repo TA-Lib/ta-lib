@@ -136,16 +136,16 @@ public partial class Core
    }
    internal RetCode BBANDS( int startIdx,
                             int endIdx,
-                            double[] inReal,
+                            ReadOnlySpan<double> inReal,
                             int optInTimePeriod,
                             double optInNbDevUp,
                             double optInNbDevDn,
                             MAType optInMAType,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outRealUpperBand,
-                            double[] outRealMiddleBand,
-                            double[] outRealLowerBand )
+                            Span<double> outRealUpperBand,
+                            Span<double> outRealMiddleBand,
+                            Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -155,8 +155,8 @@ public partial class Core
       int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
+      Span<double> tempBuffer1;
+      Span<double> tempBuffer2;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -313,7 +313,7 @@ public partial class Core
           * the calculation was done into it already!
           */
          if( tempBuffer1 != outRealMiddleBand ) {
-            Array.Copy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement * 1);
+            tempBuffer1.Slice(0, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
          }
          /* Now do a tight loop to calculate the upper/lower band at the same time. */
          if( optInNbDevUp == optInNbDevDn ) {
@@ -368,7 +368,7 @@ public partial class Core
       } else {
          shiftIdx = 0;
       }
-      Array.Copy(tempBuffer1, shiftIdx, outRealMiddleBand, 0, outNBElement * 1);
+      tempBuffer1.Slice(shiftIdx, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
       /* Now do a tight loop to calculate the upper/lower band at the same time. */
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
@@ -388,16 +388,16 @@ public partial class Core
    }
    internal RetCode BBANDS( int startIdx,
                             int endIdx,
-                            float[] inReal,
+                            ReadOnlySpan<float> inReal,
                             int optInTimePeriod,
                             double optInNbDevUp,
                             double optInNbDevDn,
                             MAType optInMAType,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outRealUpperBand,
-                            double[] outRealMiddleBand,
-                            double[] outRealLowerBand )
+                            Span<double> outRealUpperBand,
+                            Span<double> outRealMiddleBand,
+                            Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -407,8 +407,8 @@ public partial class Core
       int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
+      Span<double> tempBuffer1;
+      Span<double> tempBuffer2;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -531,7 +531,7 @@ public partial class Core
          outNBElement = _outIdx;
          outBegIdx = startIdx;
          if( tempBuffer1 != outRealMiddleBand ) {
-            Array.Copy(tempBuffer1, 0, outRealMiddleBand, 0, outNBElement * 1);
+            tempBuffer1.Slice(0, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
          }
          if( optInNbDevUp == optInNbDevDn ) {
             for( i = 0; i < (int)outNBElement; i += 1 ) {
@@ -568,7 +568,7 @@ public partial class Core
       } else {
          shiftIdx = 0;
       }
-      Array.Copy(tempBuffer1, shiftIdx, outRealMiddleBand, 0, outNBElement * 1);
+      tempBuffer1.Slice(shiftIdx, outNBElement * 1).CopyTo(outRealMiddleBand.Slice(0));
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
             tempReal = tempBuffer2[i] * optInNbDevUp;
@@ -645,19 +645,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
-                           double[] inReal,
+                           ReadOnlySpan<double> inReal,
                            int optInTimePeriod,
                            double optInNbDevUp,
                            double optInNbDevDn,
                            MAType optInMAType,
-                           double[] outRealUpperBand,
-                           double[] outRealMiddleBand,
-                           double[] outRealLowerBand )
+                           Span<double> outRealUpperBand,
+                           Span<double> outRealMiddleBand,
+                           Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
@@ -730,19 +727,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
-                           float[] inReal,
+                           ReadOnlySpan<float> inReal,
                            int optInTimePeriod,
                            double optInNbDevUp,
                            double optInNbDevDn,
                            MAType optInMAType,
-                           double[] outRealUpperBand,
-                           double[] outRealMiddleBand,
-                           double[] outRealLowerBand )
+                           Span<double> outRealUpperBand,
+                           Span<double> outRealMiddleBand,
+                           Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = BBANDS(startIdx, endIdx, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       if( retCode != RetCode.Success ) {
          throw Failure("BBANDS", retCode);
@@ -927,7 +921,7 @@ public partial class Core
       sp.cur_outRealLowerBand = cur_outRealLowerBand;
    }
 
-   private RetCode BBANDS_OpenCore( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand, int outStride )
+   private RetCode BBANDS_OpenCore( BBANDS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -937,8 +931,8 @@ public partial class Core
       int shiftIdx = 0;
       double tempReal = 0;
       double tempReal2 = 0;
-      double[] tempBuffer1;
-      double[] tempBuffer2;
+      Span<double> tempBuffer1;
+      Span<double> tempBuffer2;
       int historyLen = inReal.Length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -970,9 +964,9 @@ public partial class Core
       if( historyLen < BBANDS_Lookback(optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
-      double[] sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
-      double[] sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
+      Span<double> sc_outRealUpperBand = outStride == 1 ? outRealUpperBand : new double[historyLen];
+      Span<double> sc_outRealMiddleBand = outStride == 1 ? outRealMiddleBand : new double[historyLen];
+      Span<double> sc_outRealLowerBand = outStride == 1 ? outRealLowerBand : new double[historyLen];
       /* General path (every MA type other than SMA): the middle band is the moving
        * average and the deviation is the standard deviation of the input, combined
        * at the same bar. Two intermediate buffers are allocated so the input may
@@ -1014,7 +1008,7 @@ public partial class Core
       } else {
          shiftIdx = 0;
       }
-      Array.Copy(tempBuffer1, shiftIdx, sc_outRealMiddleBand, 0, outNBElement * 1);
+      tempBuffer1.Slice(shiftIdx, outNBElement * 1).CopyTo(sc_outRealMiddleBand.Slice(0));
       /* Now do a tight loop to calculate the upper/lower band at the same time. */
       if( optInNbDevUp == optInNbDevDn ) {
          for( i = 0; i < (int)outNBElement; i += 1 ) {
@@ -1046,7 +1040,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode BBANDS_OpenBody( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   private RetCode BBANDS_OpenBody( BBANDS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       double[] sink_outRealUpperBand = new double[1];
       double[] sink_outRealMiddleBand = new double[1];
@@ -1054,23 +1048,23 @@ public partial class Core
       return BBANDS_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out _, out _, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0 );
    }
 
-   private RetCode BBANDS_OpenAndFillBody( BBANDS_Stream sp, double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   private RetCode BBANDS_OpenAndFillBody( BBANDS_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outRealUpperBand, inReal) || ReferenceEquals(outRealMiddleBand, inReal) || ReferenceEquals(outRealLowerBand, inReal) || ReferenceEquals(outRealUpperBand, outRealMiddleBand) || ReferenceEquals(outRealUpperBand, outRealLowerBand) || ReferenceEquals(outRealMiddleBand, outRealLowerBand) ) {
+      if( outRealUpperBand.Overlaps(inReal) || outRealMiddleBand.Overlaps(inReal) || outRealLowerBand.Overlaps(inReal) || outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam;
       }
       return BBANDS_OpenCore( sp, inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
    }
 
-   private RetCode BBANDS_OpenAndFillInternalBody( BBANDS_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   private RetCode BBANDS_OpenAndFillInternalBody( BBANDS_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       return BBANDS_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
    }
 
    /* BBANDS_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal BBANDS_Stream BBANDS_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   internal BBANDS_Stream BBANDS_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out outBegIdx, out outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
@@ -1081,7 +1075,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind BBANDS_Open (composition seam). */
-   internal BBANDS_Stream BBANDS_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   internal BBANDS_Stream BBANDS_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -1113,9 +1107,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public BBANDS_Stream BBANDS_Open( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
+   public BBANDS_Stream BBANDS_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return BBANDS_OpenInternal(inReal, 0, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
    }
 
@@ -1152,12 +1146,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public BBANDS_Stream BBANDS_OpenAndFill( double[] inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, double[] outRealUpperBand, double[] outRealMiddleBand, double[] outRealLowerBand )
+   public BBANDS_Stream BBANDS_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType, Span<double> outRealUpperBand, Span<double> outRealMiddleBand, Span<double> outRealLowerBand )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outRealUpperBand);
-      ArgumentNullException.ThrowIfNull(outRealMiddleBand);
-      ArgumentNullException.ThrowIfNull(outRealLowerBand);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       BBANDS_Stream sp = new BBANDS_Stream(this);
       RetCode retCode = BBANDS_OpenAndFillBody(sp, inReal, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, out int outBegIdx, out int outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

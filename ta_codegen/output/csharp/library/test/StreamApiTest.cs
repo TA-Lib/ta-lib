@@ -343,7 +343,7 @@ public static class StreamApiTest
         }
     }
 
-    /// <summary>Null arguments are named, not dereferenced.</summary>
+    /// <summary>Empty spans — which is what a null array becomes — are named.</summary>
     /// <remarks>The public openers are the only place this is checked — the
     /// composition seam and the internal cores are reached only with arrays the
     /// generator created, so a check there would be dead weight.</remarks>
@@ -353,31 +353,32 @@ public static class StreamApiTest
         double[] closes = Closes(120);
         var outReal = new double[closes.Length];
 
-        CheckThrows<ArgumentNullException>(
+        CheckThrows<ArgumentException>(
             () => core.SMA_Open(null!, 14),
-            "SMA_Open(null) throws ArgumentNullException");
-        CheckThrows<ArgumentNullException>(
+            "SMA_Open(null) throws ArgumentException");
+        CheckThrows<ArgumentException>(
+            () => core.SMA_Open(Array.Empty<double>(), 14),
+            "SMA_Open(empty) throws ArgumentException");
+        CheckThrows<ArgumentException>(
             () => core.SMA_OpenAndFill(null!, 14, outReal),
-            "SMA_OpenAndFill with a null input throws ArgumentNullException");
-        CheckThrows<ArgumentNullException>(
-            () => core.SMA_OpenAndFill(closes, 14, null!),
-            "SMA_OpenAndFill with a null output throws ArgumentNullException");
+            "SMA_OpenAndFill with a null input throws ArgumentException");
 
-        // It names the offending parameter. Without the check, two null arrays
-        // would compare equal and be rejected as aliasing instead.
+        // It names the offending parameter. Without the check the empty input
+        // and the empty output would compare as overlapping and be rejected as
+        // aliasing instead, which names the wrong problem.
         _checks++;
         try
         {
             core.SMA_OpenAndFill(null!, 14, null!);
             _failures++;
-            Console.WriteLine("  FAIL: expected a null rejection");
+            Console.WriteLine("  FAIL: expected an empty-input rejection");
         }
-        catch (ArgumentNullException e)
+        catch (ArgumentException e)
         {
             if (e.ParamName != "inReal")
             {
                 _failures++;
-                Console.WriteLine($"  FAIL: two nulls reported \"{e.ParamName}\", expected \"inReal\"");
+                Console.WriteLine($"  FAIL: reported \"{e.ParamName}\", expected \"inReal\"");
             }
         }
     }

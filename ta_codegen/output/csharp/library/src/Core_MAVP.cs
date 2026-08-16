@@ -108,14 +108,14 @@ public partial class Core
    }
    internal RetCode MAVP( int startIdx,
                           int endIdx,
-                          double[] inReal,
-                          double[] inPeriods,
+                          ReadOnlySpan<double> inReal,
+                          ReadOnlySpan<double> inPeriods,
                           int optInMinPeriod,
                           int optInMaxPeriod,
                           MAType optInMAType,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -131,11 +131,11 @@ public partial class Core
       int bucketEnd = 0;
       int minUsed = 0;
       int maxUsed = 0;
-      int[] localPeriodArray;
-      int[] sortedIdx;
-      int[] bucketOfs;
-      double[] localOutputArray;
-      double[] localFinalArray;
+      Span<int> localPeriodArray;
+      Span<int> sortedIdx;
+      Span<int> bucketOfs;
+      Span<double> localOutputArray;
+      Span<double> localFinalArray;
       int finalIsAllocated = 0;
       int localBegIdx = 0;
       int localNbElement = 0;
@@ -351,7 +351,7 @@ public partial class Core
                }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
                   /* The period's outputs form one contiguous run: block copy. */
-                  Array.Copy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
+                  localOutputArray.Slice(firstOccurrence, (bucketEnd - bucketStart) * 1).CopyTo(localFinalArray.Slice(firstOccurrence));
                } else {
                   for( i = bucketStart; i < bucketEnd; i += 1 ) {
                      tempInt = sortedIdx[i];
@@ -367,7 +367,7 @@ public partial class Core
        * always run; in C/Java the non-aliased self-copy is skipped.
        */
       if( localFinalArray != outReal ) {
-         Array.Copy(localFinalArray, 0, outReal, 0, outputSize * 1);
+         localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
       }
       if( (finalIsAllocated) != 0 ) {
       }
@@ -378,14 +378,14 @@ public partial class Core
    }
    internal RetCode MAVP( int startIdx,
                           int endIdx,
-                          float[] inReal,
-                          float[] inPeriods,
+                          ReadOnlySpan<float> inReal,
+                          ReadOnlySpan<float> inPeriods,
                           int optInMinPeriod,
                           int optInMaxPeriod,
                           MAType optInMAType,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -401,11 +401,11 @@ public partial class Core
       int bucketEnd = 0;
       int minUsed = 0;
       int maxUsed = 0;
-      int[] localPeriodArray;
-      int[] sortedIdx;
-      int[] bucketOfs;
-      double[] localOutputArray;
-      double[] localFinalArray;
+      Span<int> localPeriodArray;
+      Span<int> sortedIdx;
+      Span<int> bucketOfs;
+      Span<double> localOutputArray;
+      Span<double> localFinalArray;
       int finalIsAllocated = 0;
       int localBegIdx = 0;
       int localNbElement = 0;
@@ -532,7 +532,7 @@ public partial class Core
                   return retCode ;
                }
                if( lastOccurrence - firstOccurrence == bucketEnd - 1 - bucketStart ) {
-                  Array.Copy(localOutputArray, firstOccurrence, localFinalArray, firstOccurrence, (bucketEnd - bucketStart) * 1);
+                  localOutputArray.Slice(firstOccurrence, (bucketEnd - bucketStart) * 1).CopyTo(localFinalArray.Slice(firstOccurrence));
                } else {
                   for( i = bucketStart; i < bucketEnd; i += 1 ) {
                      tempInt = sortedIdx[i];
@@ -544,7 +544,7 @@ public partial class Core
          }
       }
       if( localFinalArray != outReal ) {
-         Array.Copy(localFinalArray, 0, outReal, 0, outputSize * 1);
+         localFinalArray.Slice(0, outputSize * 1).CopyTo(outReal.Slice(0));
       }
       if( (finalIsAllocated) != 0 ) {
       }
@@ -597,16 +597,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAVP( int startIdx,
                          int endIdx,
-                         double[] inReal,
-                         double[] inPeriods,
+                         ReadOnlySpan<double> inReal,
+                         ReadOnlySpan<double> inPeriods,
                          int optInMinPeriod,
                          int optInMaxPeriod,
                          MAType optInMAType,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inPeriods);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
       RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
@@ -664,16 +663,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MAVP( int startIdx,
                          int endIdx,
-                         float[] inReal,
-                         float[] inPeriods,
+                         ReadOnlySpan<float> inReal,
+                         ReadOnlySpan<float> inPeriods,
                          int optInMinPeriod,
                          int optInMaxPeriod,
                          MAType optInMAType,
-                         double[] outReal )
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inPeriods);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
       RetCode retCode = MAVP(startIdx, endIdx, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MAVP", retCode);
@@ -829,7 +827,7 @@ public partial class Core
       }
    }
 
-   private RetCode MAVP_OpenBody( MAVP_Stream sp, double[] inReal, double[] inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   private RetCode MAVP_OpenBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 || inPeriods.Length != inReal.Length ) {
@@ -886,7 +884,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MAVP_OpenAndFillBody( MAVP_Stream sp, ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -912,7 +910,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( ReferenceEquals(outReal, inReal) || ReferenceEquals(outReal, inPeriods) ) {
+      if( outReal.Overlaps(inReal) || outReal.Overlaps(inPeriods) ) {
          return RetCode.BadParam;
       }
       /* An inverted [min, max] period window is invalid (batch rejects). */
@@ -928,7 +926,7 @@ public partial class Core
       MA_Stream[] bank = new MA_Stream[nBank];
       double[] scratch = new double[nBank];
       double[] seedPrefix = new double[lookbackTotal + 1];
-      Array.Copy(inReal, seedPrefix, lookbackTotal + 1);
+      inReal.Slice(0, lookbackTotal + 1).CopyTo(seedPrefix);
       for( int bankIdx = 0; bankIdx < nBank; bankIdx++ ) {
          MA_Stream sub = MA_OpenInternal(seedPrefix, lookbackTotal, optInMinPeriod + bankIdx, optInMAType);
          bank[bankIdx] = sub;
@@ -965,7 +963,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MAVP_Open (composition seam). */
-   internal MAVP_Stream MAVP_OpenInternal( double[] inReal, double[] inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   internal MAVP_Stream MAVP_OpenInternal( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int startIdx, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenBody(sp, inReal, inPeriods, startIdx, optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -996,10 +994,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MAVP_Stream MAVP_Open( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
+   public MAVP_Stream MAVP_Open( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inPeriods);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
       return MAVP_OpenInternal(inReal, inPeriods, 0, optInMinPeriod, optInMaxPeriod, optInMAType);
    }
 
@@ -1031,11 +1029,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MAVP_Stream MAVP_OpenAndFill( double[] inReal, double[] inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, double[] outReal )
+   public MAVP_Stream MAVP_OpenAndFill( ReadOnlySpan<double> inReal, ReadOnlySpan<double> inPeriods, int optInMinPeriod, int optInMaxPeriod, MAType optInMAType, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(inPeriods);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
+      if( inPeriods.IsEmpty ) throw new ArgumentException("inPeriods is empty", nameof(inPeriods));
       MAVP_Stream sp = new MAVP_Stream(this);
       RetCode retCode = MAVP_OpenAndFillBody(sp, inReal, inPeriods, optInMinPeriod, optInMaxPeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

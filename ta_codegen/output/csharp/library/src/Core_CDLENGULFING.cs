@@ -74,13 +74,13 @@ public partial class Core
    }
    internal RetCode CDLENGULFING( int startIdx,
                                   int endIdx,
-                                  double[] inOpen,
-                                  double[] inHigh,
-                                  double[] inLow,
-                                  double[] inClose,
+                                  ReadOnlySpan<double> inOpen,
+                                  ReadOnlySpan<double> inHigh,
+                                  ReadOnlySpan<double> inLow,
+                                  ReadOnlySpan<double> inClose,
                                   out int outBegIdx,
                                   out int outNBElement,
-                                  int[] outInteger )
+                                  Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -145,13 +145,13 @@ public partial class Core
    }
    internal RetCode CDLENGULFING( int startIdx,
                                   int endIdx,
-                                  float[] inOpen,
-                                  float[] inHigh,
-                                  float[] inLow,
-                                  float[] inClose,
+                                  ReadOnlySpan<float> inOpen,
+                                  ReadOnlySpan<float> inHigh,
+                                  ReadOnlySpan<float> inLow,
+                                  ReadOnlySpan<float> inClose,
                                   out int outBegIdx,
                                   out int outNBElement,
-                                  int[] outInteger )
+                                  Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -230,17 +230,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLENGULFING( int startIdx,
                                  int endIdx,
-                                 double[] inOpen,
-                                 double[] inHigh,
-                                 double[] inLow,
-                                 double[] inClose,
-                                 int[] outInteger )
+                                 ReadOnlySpan<double> inOpen,
+                                 ReadOnlySpan<double> inHigh,
+                                 ReadOnlySpan<double> inLow,
+                                 ReadOnlySpan<double> inClose,
+                                 Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLENGULFING", retCode);
@@ -292,17 +291,16 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLENGULFING( int startIdx,
                                  int endIdx,
-                                 float[] inOpen,
-                                 float[] inHigh,
-                                 float[] inLow,
-                                 float[] inClose,
-                                 int[] outInteger )
+                                 ReadOnlySpan<float> inOpen,
+                                 ReadOnlySpan<float> inHigh,
+                                 ReadOnlySpan<float> inLow,
+                                 ReadOnlySpan<float> inClose,
+                                 Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLENGULFING(startIdx, endIdx, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLENGULFING", retCode);
@@ -434,7 +432,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode CDLENGULFING_OpenCore( CDLENGULFING_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLENGULFING_OpenCore( CDLENGULFING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -504,29 +502,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLENGULFING_OpenBody( CDLENGULFING_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode CDLENGULFING_OpenBody( CDLENGULFING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       int[] sink_outInteger = new int[1];
       return CDLENGULFING_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLENGULFING_OpenAndFillBody( CDLENGULFING_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLENGULFING_OpenAndFillBody( CDLENGULFING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLENGULFING_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLENGULFING_OpenAndFillInternalBody( CDLENGULFING_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLENGULFING_OpenAndFillInternalBody( CDLENGULFING_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLENGULFING_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLENGULFING_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLENGULFING_Stream CDLENGULFING_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLENGULFING_Stream CDLENGULFING_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
       RetCode retCode = CDLENGULFING_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outInteger);
@@ -537,7 +532,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLENGULFING_Open (composition seam). */
-   internal CDLENGULFING_Stream CDLENGULFING_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal CDLENGULFING_Stream CDLENGULFING_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
       RetCode retCode = CDLENGULFING_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx);
@@ -565,12 +560,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLENGULFING_Stream CDLENGULFING_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose )
+   public CDLENGULFING_Stream CDLENGULFING_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLENGULFING_OpenInternal(inOpen, inHigh, inLow, inClose, 0);
    }
 
@@ -602,13 +597,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int[] outInteger )
+   public CDLENGULFING_Stream CDLENGULFING_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLENGULFING_Stream sp = new CDLENGULFING_Stream(this);
       RetCode retCode = CDLENGULFING_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

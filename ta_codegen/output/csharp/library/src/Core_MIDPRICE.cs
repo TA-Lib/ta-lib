@@ -86,12 +86,12 @@ public partial class Core
    }
    internal RetCode MIDPRICE( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -278,12 +278,12 @@ public partial class Core
    }
    internal RetCode MIDPRICE( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -457,14 +457,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MIDPRICE( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
@@ -512,14 +511,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MIDPRICE( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MIDPRICE(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPRICE", retCode);
@@ -727,7 +725,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIDPRICE_OpenCore( MIDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MIDPRICE_OpenCore( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -877,29 +875,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MIDPRICE_OpenBody( MIDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   private RetCode MIDPRICE_OpenBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return MIDPRICE_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MIDPRICE_OpenAndFillBody( MIDPRICE_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MIDPRICE_OpenAndFillBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return MIDPRICE_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MIDPRICE_OpenAndFillInternalBody( MIDPRICE_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MIDPRICE_OpenAndFillInternalBody( MIDPRICE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MIDPRICE_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MIDPRICE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MIDPRICE_Stream MIDPRICE_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MIDPRICE_Stream MIDPRICE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       RetCode retCode = MIDPRICE_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -910,7 +908,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MIDPRICE_Open (composition seam). */
-   internal MIDPRICE_Stream MIDPRICE_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   internal MIDPRICE_Stream MIDPRICE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       RetCode retCode = MIDPRICE_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
@@ -938,10 +936,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MIDPRICE_Stream MIDPRICE_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   public MIDPRICE_Stream MIDPRICE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return MIDPRICE_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -969,11 +967,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MIDPRICE_Stream MIDPRICE_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outReal )
+   public MIDPRICE_Stream MIDPRICE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       MIDPRICE_Stream sp = new MIDPRICE_Stream(this);
       RetCode retCode = MIDPRICE_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

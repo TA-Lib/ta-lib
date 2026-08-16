@@ -136,8 +136,8 @@ public partial class Core
    }
    internal RetCode SAREXT( int startIdx,
                             int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
+                            ReadOnlySpan<double> inHigh,
+                            ReadOnlySpan<double> inLow,
                             double optInStartValue,
                             double optInOffsetOnReverse,
                             double optInAccelerationInitLong,
@@ -148,7 +148,7 @@ public partial class Core
                             double optInAccelerationMaxShort,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -487,8 +487,8 @@ public partial class Core
    }
    internal RetCode SAREXT( int startIdx,
                             int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
+                            ReadOnlySpan<float> inHigh,
+                            ReadOnlySpan<float> inLow,
                             double optInStartValue,
                             double optInOffsetOnReverse,
                             double optInAccelerationInitLong,
@@ -499,7 +499,7 @@ public partial class Core
                             double optInAccelerationMaxShort,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -766,8 +766,8 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SAREXT( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
                            double optInStartValue,
                            double optInOffsetOnReverse,
                            double optInAccelerationInitLong,
@@ -776,11 +776,10 @@ public partial class Core
                            double optInAccelerationInitShort,
                            double optInAccelerationShort,
                            double optInAccelerationMaxShort,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
@@ -844,8 +843,8 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SAREXT( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
                            double optInStartValue,
                            double optInOffsetOnReverse,
                            double optInAccelerationInitLong,
@@ -854,11 +853,10 @@ public partial class Core
                            double optInAccelerationInitShort,
                            double optInAccelerationShort,
                            double optInAccelerationMaxShort,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = SAREXT(startIdx, endIdx, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SAREXT", retCode);
@@ -1133,7 +1131,7 @@ public partial class Core
       }
    }
 
-   private RetCode SAREXT_OpenCore( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode SAREXT_OpenCore( SAREXT_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1490,29 +1488,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SAREXT_OpenBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   private RetCode SAREXT_OpenBody( SAREXT_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       double[] sink_outReal = new double[1];
       return SAREXT_OpenCore( sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode SAREXT_OpenAndFillBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SAREXT_OpenAndFillBody( SAREXT_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return SAREXT_OpenCore( sp, inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode SAREXT_OpenAndFillInternalBody( SAREXT_Stream sp, double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SAREXT_OpenAndFillInternalBody( SAREXT_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return SAREXT_OpenCore(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* SAREXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SAREXT_Stream SAREXT_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal SAREXT_Stream SAREXT_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SAREXT_Stream sp = new SAREXT_Stream(this);
       RetCode retCode = SAREXT_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out outBegIdx, out outNBElement, outReal);
@@ -1523,7 +1521,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind SAREXT_Open (composition seam). */
-   internal SAREXT_Stream SAREXT_OpenInternal( double[] inHigh, double[] inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   internal SAREXT_Stream SAREXT_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
       SAREXT_Stream sp = new SAREXT_Stream(this);
       RetCode retCode = SAREXT_OpenBody(sp, inHigh, inLow, startIdx, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -1564,10 +1562,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public SAREXT_Stream SAREXT_Open( double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
+   public SAREXT_Stream SAREXT_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return SAREXT_OpenInternal(inHigh, inLow, 0, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
    }
 
@@ -1609,11 +1607,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public SAREXT_Stream SAREXT_OpenAndFill( double[] inHigh, double[] inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, double[] outReal )
+   public SAREXT_Stream SAREXT_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       SAREXT_Stream sp = new SAREXT_Stream(this);
       RetCode retCode = SAREXT_OpenAndFillBody(sp, inHigh, inLow, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

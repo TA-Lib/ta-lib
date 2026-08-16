@@ -83,11 +83,11 @@ public partial class Core
    }
    internal RetCode MIDPOINT( int startIdx,
                               int endIdx,
-                              double[] inReal,
+                              ReadOnlySpan<double> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -273,11 +273,11 @@ public partial class Core
    }
    internal RetCode MIDPOINT( int startIdx,
                               int endIdx,
-                              float[] inReal,
+                              ReadOnlySpan<float> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -447,12 +447,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MIDPOINT( int startIdx,
                              int endIdx,
-                             double[] inReal,
+                             ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPOINT", retCode);
@@ -499,12 +498,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MIDPOINT( int startIdx,
                              int endIdx,
-                             float[] inReal,
+                             ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MIDPOINT(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MIDPOINT", retCode);
@@ -697,7 +695,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MIDPOINT_OpenCore( MIDPOINT_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MIDPOINT_OpenCore( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -848,29 +846,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MIDPOINT_OpenBody( MIDPOINT_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode MIDPOINT_OpenBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return MIDPOINT_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MIDPOINT_OpenAndFillBody( MIDPOINT_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MIDPOINT_OpenAndFillBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return MIDPOINT_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MIDPOINT_OpenAndFillInternalBody( MIDPOINT_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MIDPOINT_OpenAndFillInternalBody( MIDPOINT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MIDPOINT_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MIDPOINT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MIDPOINT_Stream MIDPOINT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -881,7 +879,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MIDPOINT_Open (composition seam). */
-   internal MIDPOINT_Stream MIDPOINT_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal MIDPOINT_Stream MIDPOINT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -909,9 +907,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MIDPOINT_Stream MIDPOINT_Open( double[] inReal, int optInTimePeriod )
+   public MIDPOINT_Stream MIDPOINT_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MIDPOINT_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -939,10 +937,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MIDPOINT_Stream MIDPOINT_OpenAndFill( double[] inReal, int optInTimePeriod, double[] outReal )
+   public MIDPOINT_Stream MIDPOINT_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MIDPOINT_Stream sp = new MIDPOINT_Stream(this);
       RetCode retCode = MIDPOINT_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -73,12 +73,12 @@ public partial class Core
    }
    internal RetCode TRANGE( int startIdx,
                             int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
-                            double[] inClose,
+                            ReadOnlySpan<double> inHigh,
+                            ReadOnlySpan<double> inLow,
+                            ReadOnlySpan<double> inClose,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -147,12 +147,12 @@ public partial class Core
    }
    internal RetCode TRANGE( int startIdx,
                             int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
-                            float[] inClose,
+                            ReadOnlySpan<float> inHigh,
+                            ReadOnlySpan<float> inLow,
+                            ReadOnlySpan<float> inClose,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -238,15 +238,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange TRANGE( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           double[] inClose,
-                           double[] outReal )
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           ReadOnlySpan<double> inClose,
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
@@ -297,15 +296,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange TRANGE( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           float[] inClose,
-                           double[] outReal )
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           ReadOnlySpan<float> inClose,
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = TRANGE(startIdx, endIdx, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("TRANGE", retCode);
@@ -443,7 +441,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode TRANGE_OpenCore( TRANGE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode TRANGE_OpenCore( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -517,29 +515,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   private RetCode TRANGE_OpenBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return TRANGE_OpenCore( sp, inHigh, inLow, inClose, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode TRANGE_OpenAndFillBody( TRANGE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode TRANGE_OpenAndFillBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return TRANGE_OpenCore( sp, inHigh, inLow, inClose, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode TRANGE_OpenAndFillInternalBody( TRANGE_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode TRANGE_OpenAndFillInternalBody( TRANGE_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return TRANGE_OpenCore(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* TRANGE_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal TRANGE_Stream TRANGE_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal TRANGE_Stream TRANGE_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
       RetCode retCode = TRANGE_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -550,7 +548,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind TRANGE_Open (composition seam). */
-   internal TRANGE_Stream TRANGE_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx )
+   internal TRANGE_Stream TRANGE_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx )
    {
       TRANGE_Stream sp = new TRANGE_Stream(this);
       RetCode retCode = TRANGE_OpenBody(sp, inHigh, inLow, inClose, startIdx);
@@ -576,11 +574,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public TRANGE_Stream TRANGE_Open( double[] inHigh, double[] inLow, double[] inClose )
+   public TRANGE_Stream TRANGE_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return TRANGE_OpenInternal(inHigh, inLow, inClose, 0);
    }
 
@@ -607,12 +605,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public TRANGE_Stream TRANGE_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, double[] outReal )
+   public TRANGE_Stream TRANGE_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       TRANGE_Stream sp = new TRANGE_Stream(this);
       RetCode retCode = TRANGE_OpenAndFillBody(sp, inHigh, inLow, inClose, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

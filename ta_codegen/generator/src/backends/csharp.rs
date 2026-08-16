@@ -5,20 +5,44 @@
 //!
 //! # Pinned decisions
 //!
-//! - **Public array surface is `double[]`, not `Span<double>`.** Note the
-//!   reason is *not* that spans lack `==`: `ReadOnlySpan<T>` has had a
-//!   ref+length `==` since .NET Core 2.1, and the three mechanisms that turn on
-//!   array reference equality — BBANDS' scratch election
-//!   (`if (inReal == outRealUpperBand)`), the output-distinctness reject
-//!   (#108), and the `float[]`-overload comparison fold — all survive a span
-//!   migration. The real reasons are that the transcribed bodies' own call
-//!   sites take `double[]`, and that binding languages consuming this assembly
-//!   are not all span-capable. Both tiers route through [`cs_series_in`] /
-//!   [`cs_series_out`], so a migration is a two-line change — but it is
-//!   API-breaking, and it would replace the reference-equality aliasing reject
-//!   (which the streaming gate pins by test) with `MemoryExtensions.Overlaps`,
-//!   a semantic change to a gated reject. Its own issue, with its own
-//!   byte-identical-hash gate, never a side effect of other work.
+//! - **Public series surface is spans, not arrays** — `ReadOnlySpan<T>` in,
+//!   `Span<T>` out, for both the `double` and `float` precisions. A caller can
+//!   pass a window of a larger buffer without copying it, which is what the
+//!   array surface could never offer. Array call sites keep compiling, since
+//!   `double[]` converts implicitly, so this is source-compatible for the
+//!   ordinary case despite changing every signature.
+//!
+//!   Both tiers route through [`cs_series_in`] / [`cs_series_out`], so the
+//!   surface type is stated once. Adding array overloads back is additive and
+//!   non-breaking — an exact array match outranks the implicit conversion —
+//!   which is why this direction was taken first: it is the reversible one.
+//!
+//!   Three consequences, none of them optional:
+//!
+//!   1. **Reflective invocation of this API is impossible.** A span is a
+//!      `ref struct` and cannot be boxed into the `object[]` that
+//!      `MethodInfo.Invoke` takes. `GetMethod` still resolves a span signature,
+//!      so shape *lookup* works — only the call does not. The metadata suite
+//!      compares values through the binder's generated thunks for exactly this
+//!      reason. A consumer doing reflective dispatch has no workaround short of
+//!      array overloads.
+//!   2. **The aliasing reject is `Overlaps`, not reference identity.** Arrays
+//!      are identical or disjoint; spans made partial overlap expressible.
+//!      This matters beyond the reject: BBANDS elects its scratch with
+//!      `if (inReal == outRealUpperBand)`, an ALGORITHMIC branch that reads
+//!      false on a partially-overlapping pair whose buffers do collide. See
+//!      `csharp_stream::alias_reject`.
+//!   3. **Null becomes empty.** `(double[])null` converts to a length-0 span,
+//!      so `ArgumentNullException.ThrowIfNull` does not even compile. The
+//!      public wrappers test `IsEmpty` on INPUTS instead, which carries the
+//!      same information here — any valid range needs `endIdx >= 0`, hence at
+//!      least one element. Outputs are deliberately not checked: an empty
+//!      output is legitimate when the range is shorter than the lookback.
+//!
+//!   A pointer local in the C source becomes `Span<T>`, not an array: those
+//!   alias either an output parameter or an allocated buffer, and only a span
+//!   holds both. A fixed-size array local stays an array — it owns storage.
+//!   Handle fields stay arrays too; a ref struct can never be a field.
 //!
 //! - **Cores return `RetCode`; only the public wrapper throws.** Cross-indicator
 //!   callees return RetCode that callers *inspect* (MA, BBANDS, MAVP, STOCHRSI,
@@ -198,20 +222,23 @@ pub(crate) const RESERVED_WORDS: &[&str] = &[
     "while",
 ];
 
-/// The public surface type for a real input series. One seam, so the batch and
-/// streaming tiers cannot drift and a later span migration is a two-line change
-/// rather than a sweep over two emitters. See the module header for why the
-/// answer is `double[]` today.
-pub(crate) fn cs_series_in() -> &'static str {
-    "double[]"
+/// The public surface type for an input series. One seam, so the batch and
+/// streaming tiers cannot drift.
+///
+/// Spans, not arrays: a caller can pass a window of a larger buffer without
+/// copying it. Array call sites keep compiling — `double[]` converts
+/// implicitly — so this is source-compatible for the ordinary case even though
+/// it changes the signature. Adding array overloads back is additive and
+/// non-breaking (an exact array match outranks the implicit conversion), which
+/// is why this direction was taken first.
+pub(crate) fn cs_series_in(elem: &str) -> String {
+    format!("ReadOnlySpan<{elem}>")
 }
 
-/// The public surface type for a real output series. Separate from
-/// [`cs_series_in`] because a span migration would split them
-/// (`ReadOnlySpan<double>` in, `Span<double>` out).
-#[allow(dead_code)] // consumed by csharp_stream.rs's output signatures
-pub(crate) fn cs_series_out() -> &'static str {
-    "double[]"
+/// The public surface type for an output series. Separate from
+/// [`cs_series_in`] because the two differ: an output is written.
+pub(crate) fn cs_series_out(elem: &str) -> String {
+    format!("Span<{elem}>")
 }
 
 /// C# type name for a scalar or pointer `VarType`.
@@ -220,8 +247,15 @@ pub(crate) fn cs_type_str(var_type: &VarType) -> &'static str {
         VarType::Real => "double",
         VarType::Integer | VarType::Index => "int",
         VarType::RetCodeType => "RetCode",
-        VarType::RealPointer | VarType::RealArray(_) => cs_series_in(),
-        VarType::IntPointer | VarType::IntArray(_) => "int[]",
+        // A POINTER local is a span: in the C source these alias either an
+        // output parameter or an allocated buffer, and only a span can hold
+        // both (BBANDS' scratch election assigns an output to one). A
+        // fixed-size ARRAY local stays an array — it owns its storage, and it
+        // converts implicitly wherever a span is wanted.
+        VarType::RealPointer => "Span<double>",
+        VarType::IntPointer => "Span<int>",
+        VarType::RealArray(_) => "double[]",
+        VarType::IntArray(_) => "int[]",
     }
 }
 
@@ -523,7 +557,7 @@ fn gen_public_wrapper(
             (ParamType::Real, false) => "double",
             _ => "int",
         };
-        params.push(format!("{}[] {}", cs_type, input.name));
+        params.push(format!("{} {}", cs_series_in(cs_type), input.name));
         args.push(input.name.clone());
     }
     for opt in &func.optional_inputs {
@@ -537,7 +571,7 @@ fn gen_public_wrapper(
             ParamType::Real => "double",
             _ => "int",
         };
-        params.push(format!("{}[] {}", cs_type, output.name));
+        params.push(format!("{} {}", cs_series_out(cs_type), output.name));
         args.push(output.name.clone());
     }
 
@@ -553,20 +587,26 @@ fn gen_public_wrapper(
         out.push_str(param);
     }
     out.push_str(" )\n   {\n");
-    // Null checks belong on the PUBLIC wrappers only. The internal cores are
-    // what cross-indicator calls and the JSON-RPC server reach, and every one
-    // of those call sites passes an array the generator itself created — so a
-    // check there would be dead weight on the hot path. Here it converts an
-    // NRE thrown from wherever the first access happens into an
-    // ArgumentNullException that names the parameter, which is also what the
-    // metadata binder already throws.
-    for name in func
-        .inputs
-        .iter()
-        .map(|i| &i.name)
-        .chain(func.outputs.iter().map(|o| &o.name))
-    {
-        let _ = writeln!(out, "      ArgumentNullException.ThrowIfNull({name});");
+    // A span is never null: `(double[])null` converts to a span of length 0.
+    // So the null check becomes an emptiness check, which carries the same
+    // information here — any valid range needs `endIdx >= 0`, hence at least
+    // one element, so an empty INPUT is always a caller error and is the shape
+    // a passed null arrives in. Without this it surfaces as an
+    // IndexOutOfRangeException from wherever the body first indexes, naming
+    // nothing.
+    //
+    // Inputs only. An empty OUTPUT is legitimate: when the requested range is
+    // shorter than the lookback the call succeeds having written nothing, and
+    // rejecting a zero-length output would break that.
+    //
+    // Public wrappers only — the internal cores are reached by cross-indicator
+    // calls and the JSON-RPC server with buffers the generator itself created.
+    for input in &func.inputs {
+        let _ = writeln!(
+            out,
+            "      if( {0}.IsEmpty ) throw new ArgumentException(\"{0} is empty\", nameof({0}));",
+            input.name
+        );
     }
     {
         let _ = write!(out, "      RetCode retCode = {core}(");
@@ -632,7 +672,7 @@ fn gen_func_inner(
             (ParamType::Real, false) => "double",
             _ => "int",
         };
-        params.push(format!("{}[] {}", cs_type, input.name));
+        params.push(format!("{} {}", cs_series_in(cs_type), input.name));
     }
 
     for opt in &func.optional_inputs {
@@ -658,7 +698,7 @@ fn gen_func_inner(
             ParamType::Real => "double",
             _ => "int",
         };
-        params.push(format!("{}[] {}", cs_type, output.name));
+        params.push(format!("{} {}", cs_series_out(cs_type), output.name));
     }
 
     // Format signature. Internal: these are the cores the public OutRange
@@ -1896,7 +1936,7 @@ fn render_func_call(
             }
             SpecialBuiltin::ArrayCopy => {
                 // ARRAY_COPY(dst, dstOff, src, srcOff, count)
-                // -> Array.Copy(src, srcOff, dst, dstOff, count) (arg reordering,
+                // -> src.Slice(srcOff, count).CopyTo(dst.Slice(dstOff)) (arg reordering,
                 //    matching System.arraycopy's parameter order)
                 if args.len() == 5 {
                     let dst = render_expr(&args[0], ctx, registry, helpers);
@@ -1904,7 +1944,7 @@ fn render_func_call(
                     let src = render_expr(&args[2], ctx, registry, helpers);
                     let src_off = render_expr(&args[3], ctx, registry, helpers);
                     let count = render_expr(&args[4], ctx, registry, helpers);
-                    return format!("Array.Copy({src}, {src_off}, {dst}, {dst_off}, {count})");
+                    return format!("{src}.Slice({src_off}, {count}).CopyTo({dst}.Slice({dst_off}))");
                 }
                 "/* ARRAY_COPY: bad args */".to_string()
             }
@@ -1969,13 +2009,13 @@ fn render_func_call(
                 String::new()
             }
             StdlibFn::Memcpy | StdlibFn::Memmove => {
-                // memcpy/memmove(dst, src, count) → Array.Copy(src, srcOff, dst, dstOff, count).
-                // Array.Copy handles overlapping ranges like memmove.
+                // memcpy/memmove(dst, src, count) -> src.Slice(..).CopyTo(dst.Slice(..)).
+                // Span.CopyTo handles overlapping ranges like memmove.
                 if args.len() >= 3 {
                     let (dst_arr, dst_off) = decompose_array_ref(&args[0], ctx, registry, helpers);
                     let (src_arr, src_off) = decompose_array_ref(&args[1], ctx, registry, helpers);
                     let count = render_expr(&args[2], ctx, registry, helpers);
-                    format!("Array.Copy({src_arr}, {src_off}, {dst_arr}, {dst_off}, {count})")
+                    format!("{src_arr}.Slice({src_off}, {count}).CopyTo({dst_arr}.Slice({dst_off}))")
                 } else {
                     format!("/* {fname}: bad args */")
                 }

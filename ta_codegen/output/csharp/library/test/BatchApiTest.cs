@@ -221,30 +221,47 @@ public static class BatchApiTest
 
         // The cast is required, not incidental: `null` alone is ambiguous between
         // the double[] and float[] overloads. Real callers pass a typed array.
-        CheckThrows<ArgumentNullException>(
+        // A span is never null: a null array converts to a span of length 0,
+        // and so does an empty array. Both are rejected the same way, because
+        // for this library they mean the same thing — any valid range needs
+        // endIdx >= 0, so an empty input cannot be satisfied.
+        CheckThrows<ArgumentException>(
             () => core.SMA(0, 50, (double[])null!, 10, output),
-            "null input -> ArgumentNullException");
-        CheckThrows<ArgumentNullException>(
-            () => core.SMA(0, 50, input, 10, null!),
-            "null output -> ArgumentNullException");
+            "null input -> ArgumentException");
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, 50, Array.Empty<double>(), 10, output),
+            "empty input -> ArgumentException");
 
-        // The exception names the parameter. That is the whole point of
-        // checking rather than letting the first array access throw: an NRE
-        // from inside a transcribed body says nothing about which argument was
-        // wrong, and the two-array functions have several candidates.
+        // It names the parameter, which is the whole point of checking rather
+        // than letting the body fault on its first index.
         _checks++;
         try
         {
             core.SMA(0, 50, (double[])null!, 10, output);
             _failures++;
-            Console.WriteLine("  FAIL: expected a null rejection");
+            Console.WriteLine("  FAIL: expected an empty-input rejection");
         }
-        catch (ArgumentNullException e)
+        catch (ArgumentException e)
         {
             if (e.ParamName != "inReal")
             {
                 _failures++;
                 Console.WriteLine($"  FAIL: ParamName was \"{e.ParamName}\", expected \"inReal\"");
+            }
+        }
+
+        // Outputs are NOT capacity-checked, unchanged from the array API: the
+        // caller has always been responsible for sizing them, and a too-small
+        // output faults on write rather than being diagnosed. An empty output
+        // is deliberately not rejected — it is legitimate when the requested
+        // range is shorter than the lookback and the call writes nothing.
+        _checks++;
+        {
+            OutRange r = core.SMA(0, 5, input, 30, Array.Empty<double>());
+            if (!r.IsEmpty)
+            {
+                _failures++;
+                Console.WriteLine("  FAIL: a range shorter than the lookback must write nothing");
             }
         }
 

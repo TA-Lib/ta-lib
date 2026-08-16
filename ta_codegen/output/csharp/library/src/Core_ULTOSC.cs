@@ -101,15 +101,15 @@ public partial class Core
    }
    internal RetCode ULTOSC( int startIdx,
                             int endIdx,
-                            double[] inHigh,
-                            double[] inLow,
-                            double[] inClose,
+                            ReadOnlySpan<double> inHigh,
+                            ReadOnlySpan<double> inLow,
+                            ReadOnlySpan<double> inClose,
                             int optInTimePeriod1,
                             int optInTimePeriod2,
                             int optInTimePeriod3,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -342,15 +342,15 @@ public partial class Core
    }
    internal RetCode ULTOSC( int startIdx,
                             int endIdx,
-                            float[] inHigh,
-                            float[] inLow,
-                            float[] inClose,
+                            ReadOnlySpan<float> inHigh,
+                            ReadOnlySpan<float> inLow,
+                            ReadOnlySpan<float> inClose,
                             int optInTimePeriod1,
                             int optInTimePeriod2,
                             int optInTimePeriod3,
                             out int outBegIdx,
                             out int outNBElement,
-                            double[] outReal )
+                            Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -591,18 +591,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ULTOSC( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
-                           double[] inClose,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
+                           ReadOnlySpan<double> inClose,
                            int optInTimePeriod1,
                            int optInTimePeriod2,
                            int optInTimePeriod3,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
@@ -663,18 +662,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange ULTOSC( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
-                           float[] inClose,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
+                           ReadOnlySpan<float> inClose,
                            int optInTimePeriod1,
                            int optInTimePeriod2,
                            int optInTimePeriod3,
-                           double[] outReal )
+                           Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = ULTOSC(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("ULTOSC", retCode);
@@ -927,7 +925,7 @@ public partial class Core
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode ULTOSC_OpenCore( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode ULTOSC_OpenCore( ULTOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1185,29 +1183,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode ULTOSC_OpenBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   private RetCode ULTOSC_OpenBody( ULTOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       double[] sink_outReal = new double[1];
       return ULTOSC_OpenCore( sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode ULTOSC_OpenAndFillBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ULTOSC_OpenAndFillBody( ULTOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) || ReferenceEquals(outReal, inClose) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
          return RetCode.BadParam;
       }
       return ULTOSC_OpenCore( sp, inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode ULTOSC_OpenAndFillInternalBody( ULTOSC_Stream sp, double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode ULTOSC_OpenAndFillInternalBody( ULTOSC_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return ULTOSC_OpenCore(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* ULTOSC_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal ULTOSC_Stream ULTOSC_OpenAndFillInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal ULTOSC_Stream ULTOSC_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
       RetCode retCode = ULTOSC_OpenAndFillInternalBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out outBegIdx, out outNBElement, outReal);
@@ -1218,7 +1216,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind ULTOSC_Open (composition seam). */
-   internal ULTOSC_Stream ULTOSC_OpenInternal( double[] inHigh, double[] inLow, double[] inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   internal ULTOSC_Stream ULTOSC_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
       RetCode retCode = ULTOSC_OpenBody(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -1250,11 +1248,11 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public ULTOSC_Stream ULTOSC_Open( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
+   public ULTOSC_Stream ULTOSC_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3 )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return ULTOSC_OpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
    }
 
@@ -1287,12 +1285,11 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public ULTOSC_Stream ULTOSC_OpenAndFill( double[] inHigh, double[] inLow, double[] inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double[] outReal )
+   public ULTOSC_Stream ULTOSC_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       ULTOSC_Stream sp = new ULTOSC_Stream(this);
       RetCode retCode = ULTOSC_OpenAndFillBody(sp, inHigh, inLow, inClose, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

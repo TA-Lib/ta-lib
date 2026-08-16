@@ -132,7 +132,7 @@ public partial class Core
    }
    internal RetCode MACDEXT( int startIdx,
                              int endIdx,
-                             double[] inReal,
+                             ReadOnlySpan<double> inReal,
                              int optInFastPeriod,
                              MAType optInFastMAType,
                              int optInSlowPeriod,
@@ -141,14 +141,14 @@ public partial class Core
                              MAType optInSignalMAType,
                              out int outBegIdx,
                              out int outNBElement,
-                             double[] outMACD,
-                             double[] outMACDSignal,
-                             double[] outMACDHist )
+                             Span<double> outMACD,
+                             Span<double> outMACDSignal,
+                             Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] slowMABuffer;
-      double[] fastMABuffer;
+      Span<double> slowMABuffer;
+      Span<double> fastMABuffer;
       RetCode retCode;
       int tempInteger = 0;
       int outBegIdx1 = 0;
@@ -287,7 +287,7 @@ public partial class Core
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
+      fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outMACD.Slice(0));
       /* Calculate the signal/trigger line. */
       retCode = MA(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
@@ -306,7 +306,7 @@ public partial class Core
    }
    internal RetCode MACDEXT( int startIdx,
                              int endIdx,
-                             float[] inReal,
+                             ReadOnlySpan<float> inReal,
                              int optInFastPeriod,
                              MAType optInFastMAType,
                              int optInSlowPeriod,
@@ -315,14 +315,14 @@ public partial class Core
                              MAType optInSignalMAType,
                              out int outBegIdx,
                              out int outNBElement,
-                             double[] outMACD,
-                             double[] outMACDSignal,
-                             double[] outMACDHist )
+                             Span<double> outMACD,
+                             Span<double> outMACDSignal,
+                             Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] slowMABuffer;
-      double[] fastMABuffer;
+      Span<double> slowMABuffer;
+      Span<double> fastMABuffer;
       RetCode retCode;
       int tempInteger = 0;
       int outBegIdx1 = 0;
@@ -423,7 +423,7 @@ public partial class Core
       for( i = 0; i < outNbElement1; i += 1 ) {
          fastMABuffer[i] = fastMABuffer[i] - slowMABuffer[i];
       }
-      Array.Copy(fastMABuffer, lookbackSignal, outMACD, 0, (endIdx - startIdx + 1) * 1);
+      fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(outMACD.Slice(0));
       retCode = MA(0, outNbElement1 - 1, fastMABuffer, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, outMACDSignal);
       if( retCode != RetCode.Success ) {
          outBegIdx = 0;
@@ -500,21 +500,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
-                            double[] inReal,
+                            ReadOnlySpan<double> inReal,
                             int optInFastPeriod,
                             MAType optInFastMAType,
                             int optInSlowPeriod,
                             MAType optInSlowMAType,
                             int optInSignalPeriod,
                             MAType optInSignalMAType,
-                            double[] outMACD,
-                            double[] outMACDSignal,
-                            double[] outMACDHist )
+                            Span<double> outMACD,
+                            Span<double> outMACDSignal,
+                            Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
@@ -590,21 +587,18 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
-                            float[] inReal,
+                            ReadOnlySpan<float> inReal,
                             int optInFastPeriod,
                             MAType optInFastMAType,
                             int optInSlowPeriod,
                             MAType optInSlowMAType,
                             int optInSignalPeriod,
                             MAType optInSignalMAType,
-                            double[] outMACD,
-                            double[] outMACDSignal,
-                            double[] outMACDHist )
+                            Span<double> outMACD,
+                            Span<double> outMACDSignal,
+                            Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MACDEXT(startIdx, endIdx, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       if( retCode != RetCode.Success ) {
          throw Failure("MACDEXT", retCode);
@@ -794,12 +788,12 @@ public partial class Core
       sp.cur_outMACDHist = cur_outMACDHist;
    }
 
-   private RetCode MACDEXT_OpenCore( MACDEXT_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist, int outStride )
+   private RetCode MACDEXT_OpenCore( MACDEXT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] slowMABuffer;
-      double[] fastMABuffer;
+      Span<double> slowMABuffer;
+      Span<double> fastMABuffer;
       RetCode retCode;
       int tempInteger = 0;
       int outBegIdx1 = 0;
@@ -852,9 +846,9 @@ public partial class Core
       if( historyLen < MACDEXT_Lookback(optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
-      double[] sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
-      double[] sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
+      Span<double> sc_outMACD = outStride == 1 ? outMACD : new double[historyLen];
+      Span<double> sc_outMACDSignal = outStride == 1 ? outMACDSignal : new double[historyLen];
+      Span<double> sc_outMACDHist = outStride == 1 ? outMACDHist : new double[historyLen];
       /* Make sure slow is really slower than
        * the fast period! if not, swap...
        */
@@ -934,13 +928,13 @@ public partial class Core
       /* memmove, not memcpy: fastMABuffer aliases outMACD when the caller buffer is
        * reused as scratch, so source and destination overlap (issue #94).
        */
-      Array.Copy(fastMABuffer, lookbackSignal, sc_outMACD, 0, (endIdx - startIdx + 1) * 1);
+      fastMABuffer.Slice(lookbackSignal, (endIdx - startIdx + 1) * 1).CopyTo(sc_outMACD.Slice(0));
       /* Calculate the signal/trigger line. */
       /* Sub-stream 2: ma over `fastMABuffer`, warmed from bar 0 up to the
        * sub-call's own startIdx (the seeding point). */
       int subLen2 = (outNbElement1 - 1) + 1;
       double[] subSrc2_0 = new double[subLen2];
-      Array.Copy(fastMABuffer, subSrc2_0, subLen2);
+      fastMABuffer.Slice(0, subLen2).CopyTo(subSrc2_0);
       MA_Stream sub2 = MA_OpenAndFillInternal(subSrc2_0, 0, optInSignalPeriod, optInSignalMAType, out outBegIdx2, out outNbElement2, sc_outMACDSignal);
       retCode = RetCode.Success;
       if( retCode != RetCode.Success ) {
@@ -974,7 +968,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MACDEXT_OpenBody( MACDEXT_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   private RetCode MACDEXT_OpenBody( MACDEXT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       double[] sink_outMACD = new double[1];
       double[] sink_outMACDSignal = new double[1];
@@ -982,23 +976,23 @@ public partial class Core
       return MACDEXT_OpenCore( sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out _, out _, sink_outMACD, sink_outMACDSignal, sink_outMACDHist, 0 );
    }
 
-   private RetCode MACDEXT_OpenAndFillBody( MACDEXT_Stream sp, double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   private RetCode MACDEXT_OpenAndFillBody( MACDEXT_Stream sp, ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outMACD, inReal) || ReferenceEquals(outMACDSignal, inReal) || ReferenceEquals(outMACDHist, inReal) || ReferenceEquals(outMACD, outMACDSignal) || ReferenceEquals(outMACD, outMACDHist) || ReferenceEquals(outMACDSignal, outMACDHist) ) {
+      if( outMACD.Overlaps(inReal) || outMACDSignal.Overlaps(inReal) || outMACDHist.Overlaps(inReal) || outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          return RetCode.BadParam;
       }
       return MACDEXT_OpenCore( sp, inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1 );
    }
 
-   private RetCode MACDEXT_OpenAndFillInternalBody( MACDEXT_Stream sp, double[] inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   private RetCode MACDEXT_OpenAndFillInternalBody( MACDEXT_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       return MACDEXT_OpenCore(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist, 1);
    }
 
    /* MACDEXT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MACDEXT_Stream MACDEXT_OpenAndFillInternal( double[] inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   internal MACDEXT_Stream MACDEXT_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, out int outBegIdx, out int outNBElement, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       RetCode retCode = MACDEXT_OpenAndFillInternalBody(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out outBegIdx, out outNBElement, outMACD, outMACDSignal, outMACDHist);
@@ -1009,7 +1003,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MACDEXT_Open (composition seam). */
-   internal MACDEXT_Stream MACDEXT_OpenInternal( double[] inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   internal MACDEXT_Stream MACDEXT_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       RetCode retCode = MACDEXT_OpenBody(sp, inReal, startIdx, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -1045,9 +1039,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MACDEXT_Stream MACDEXT_Open( double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
+   public MACDEXT_Stream MACDEXT_Open( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MACDEXT_OpenInternal(inReal, 0, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
    }
 
@@ -1088,12 +1082,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MACDEXT_Stream MACDEXT_OpenAndFill( double[] inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, double[] outMACD, double[] outMACDSignal, double[] outMACDHist )
+   public MACDEXT_Stream MACDEXT_OpenAndFill( ReadOnlySpan<double> inReal, int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType, Span<double> outMACD, Span<double> outMACDSignal, Span<double> outMACDHist )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outMACD);
-      ArgumentNullException.ThrowIfNull(outMACDSignal);
-      ArgumentNullException.ThrowIfNull(outMACDHist);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MACDEXT_Stream sp = new MACDEXT_Stream(this);
       RetCode retCode = MACDEXT_OpenAndFillBody(sp, inReal, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, out int outBegIdx, out int outNBElement, outMACD, outMACDSignal, outMACDHist);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -78,11 +78,11 @@ public partial class Core
    }
    internal RetCode MININDEX( int startIdx,
                               int endIdx,
-                              double[] inReal,
+                              ReadOnlySpan<double> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              int[] outInteger )
+                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -161,11 +161,11 @@ public partial class Core
    }
    internal RetCode MININDEX( int startIdx,
                               int endIdx,
-                              float[] inReal,
+                              ReadOnlySpan<float> inReal,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              int[] outInteger )
+                              Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -264,12 +264,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MININDEX( int startIdx,
                              int endIdx,
-                             double[] inReal,
+                             ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
-                             int[] outInteger )
+                             Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MININDEX", retCode);
@@ -319,12 +318,11 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MININDEX( int startIdx,
                              int endIdx,
-                             float[] inReal,
+                             ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
-                             int[] outInteger )
+                             Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MININDEX(startIdx, endIdx, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("MININDEX", retCode);
@@ -492,7 +490,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode MININDEX_OpenCore( MININDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode MININDEX_OpenCore( MININDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -594,29 +592,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MININDEX_OpenBody( MININDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod )
+   private RetCode MININDEX_OpenBody( MININDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       int[] sink_outInteger = new int[1];
       return MININDEX_OpenCore( sp, inReal, startIdx, optInTimePeriod, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode MININDEX_OpenAndFillBody( MININDEX_Stream sp, double[] inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode MININDEX_OpenAndFillBody( MININDEX_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inReal) ) {
-         return RetCode.BadParam;
-      }
       return MININDEX_OpenCore( sp, inReal, 0, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode MININDEX_OpenAndFillInternalBody( MININDEX_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode MININDEX_OpenAndFillInternalBody( MININDEX_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return MININDEX_OpenCore(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* MININDEX_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MININDEX_Stream MININDEX_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal MININDEX_Stream MININDEX_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
       RetCode retCode = MININDEX_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outInteger);
@@ -627,7 +622,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MININDEX_Open (composition seam). */
-   internal MININDEX_Stream MININDEX_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod )
+   internal MININDEX_Stream MININDEX_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod )
    {
       MININDEX_Stream sp = new MININDEX_Stream(this);
       RetCode retCode = MININDEX_OpenBody(sp, inReal, startIdx, optInTimePeriod);
@@ -654,9 +649,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MININDEX_Stream MININDEX_Open( double[] inReal, int optInTimePeriod )
+   public MININDEX_Stream MININDEX_Open( ReadOnlySpan<double> inReal, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MININDEX_OpenInternal(inReal, 0, optInTimePeriod);
    }
 
@@ -683,10 +678,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MININDEX_Stream MININDEX_OpenAndFill( double[] inReal, int optInTimePeriod, int[] outInteger )
+   public MININDEX_Stream MININDEX_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MININDEX_Stream sp = new MININDEX_Stream(this);
       RetCode retCode = MININDEX_OpenAndFillBody(sp, inReal, optInTimePeriod, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -88,12 +88,12 @@ public partial class Core
    }
    internal RetCode MINUS_DM( int startIdx,
                               int endIdx,
-                              double[] inHigh,
-                              double[] inLow,
+                              ReadOnlySpan<double> inHigh,
+                              ReadOnlySpan<double> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -303,12 +303,12 @@ public partial class Core
    }
    internal RetCode MINUS_DM( int startIdx,
                               int endIdx,
-                              float[] inHigh,
-                              float[] inLow,
+                              ReadOnlySpan<float> inHigh,
+                              ReadOnlySpan<float> inLow,
                               int optInTimePeriod,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outReal )
+                              Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -461,14 +461,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINUS_DM( int startIdx,
                              int endIdx,
-                             double[] inHigh,
-                             double[] inLow,
+                             ReadOnlySpan<double> inHigh,
+                             ReadOnlySpan<double> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MINUS_DM", retCode);
@@ -520,14 +519,13 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MINUS_DM( int startIdx,
                              int endIdx,
-                             float[] inHigh,
-                             float[] inLow,
+                             ReadOnlySpan<float> inHigh,
+                             ReadOnlySpan<float> inLow,
                              int optInTimePeriod,
-                             double[] outReal )
+                             Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = MINUS_DM(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MINUS_DM", retCode);
@@ -690,7 +688,7 @@ public partial class Core
       }
    }
 
-   private RetCode MINUS_DM_OpenCore( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MINUS_DM_OpenCore( MINUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1015,29 +1013,29 @@ public partial class Core
       }
    }
 
-   private RetCode MINUS_DM_OpenBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   private RetCode MINUS_DM_OpenBody( MINUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outReal = new double[1];
       return MINUS_DM_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MINUS_DM_OpenAndFillBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MINUS_DM_OpenAndFillBody( MINUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inHigh) || ReferenceEquals(outReal, inLow) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) ) {
          return RetCode.BadParam;
       }
       return MINUS_DM_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MINUS_DM_OpenAndFillInternalBody( MINUS_DM_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MINUS_DM_OpenAndFillInternalBody( MINUS_DM_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MINUS_DM_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MINUS_DM_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MINUS_DM_Stream MINUS_DM_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       RetCode retCode = MINUS_DM_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
@@ -1048,7 +1046,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MINUS_DM_Open (composition seam). */
-   internal MINUS_DM_Stream MINUS_DM_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   internal MINUS_DM_Stream MINUS_DM_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       RetCode retCode = MINUS_DM_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
@@ -1076,10 +1074,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MINUS_DM_Stream MINUS_DM_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   public MINUS_DM_Stream MINUS_DM_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return MINUS_DM_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -1107,11 +1105,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MINUS_DM_Stream MINUS_DM_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outReal )
+   public MINUS_DM_Stream MINUS_DM_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       MINUS_DM_Stream sp = new MINUS_DM_Stream(this);
       RetCode retCode = MINUS_DM_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

@@ -83,14 +83,14 @@ public partial class Core
    }
    internal RetCode CDLDARKCLOUDCOVER( int startIdx,
                                        int endIdx,
-                                       double[] inOpen,
-                                       double[] inHigh,
-                                       double[] inLow,
-                                       double[] inClose,
+                                       ReadOnlySpan<double> inOpen,
+                                       ReadOnlySpan<double> inHigh,
+                                       ReadOnlySpan<double> inLow,
+                                       ReadOnlySpan<double> inClose,
                                        double optInPenetration,
                                        out int outBegIdx,
                                        out int outNBElement,
-                                       int[] outInteger )
+                                       Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -177,14 +177,14 @@ public partial class Core
    }
    internal RetCode CDLDARKCLOUDCOVER( int startIdx,
                                        int endIdx,
-                                       float[] inOpen,
-                                       float[] inHigh,
-                                       float[] inLow,
-                                       float[] inClose,
+                                       ReadOnlySpan<float> inOpen,
+                                       ReadOnlySpan<float> inHigh,
+                                       ReadOnlySpan<float> inLow,
+                                       ReadOnlySpan<float> inClose,
                                        double optInPenetration,
                                        out int outBegIdx,
                                        out int outNBElement,
-                                       int[] outInteger )
+                                       Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -277,18 +277,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLDARKCLOUDCOVER( int startIdx,
                                       int endIdx,
-                                      double[] inOpen,
-                                      double[] inHigh,
-                                      double[] inLow,
-                                      double[] inClose,
+                                      ReadOnlySpan<double> inOpen,
+                                      ReadOnlySpan<double> inHigh,
+                                      ReadOnlySpan<double> inLow,
+                                      ReadOnlySpan<double> inClose,
                                       double optInPenetration,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDARKCLOUDCOVER", retCode);
@@ -339,18 +338,17 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange CDLDARKCLOUDCOVER( int startIdx,
                                       int endIdx,
-                                      float[] inOpen,
-                                      float[] inHigh,
-                                      float[] inLow,
-                                      float[] inClose,
+                                      ReadOnlySpan<float> inOpen,
+                                      ReadOnlySpan<float> inHigh,
+                                      ReadOnlySpan<float> inLow,
+                                      ReadOnlySpan<float> inClose,
                                       double optInPenetration,
-                                      int[] outInteger )
+                                      Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       RetCode retCode = CDLDARKCLOUDCOVER(startIdx, endIdx, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       if( retCode != RetCode.Success ) {
          throw Failure("CDLDARKCLOUDCOVER", retCode);
@@ -570,7 +568,7 @@ public partial class Core
       }
    }
 
-   private RetCode CDLDARKCLOUDCOVER_OpenCore( CDLDARKCLOUDCOVER_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger, int outStride )
+   private RetCode CDLDARKCLOUDCOVER_OpenCore( CDLDARKCLOUDCOVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -698,29 +696,26 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode CDLDARKCLOUDCOVER_OpenBody( CDLDARKCLOUDCOVER_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration )
+   private RetCode CDLDARKCLOUDCOVER_OpenBody( CDLDARKCLOUDCOVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       int[] sink_outInteger = new int[1];
       return CDLDARKCLOUDCOVER_OpenCore( sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out _, out _, sink_outInteger, 0 );
    }
 
-   private RetCode CDLDARKCLOUDCOVER_OpenAndFillBody( CDLDARKCLOUDCOVER_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLDARKCLOUDCOVER_OpenAndFillBody( CDLDARKCLOUDCOVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outInteger, inOpen) || ReferenceEquals(outInteger, inHigh) || ReferenceEquals(outInteger, inLow) || ReferenceEquals(outInteger, inClose) ) {
-         return RetCode.BadParam;
-      }
       return CDLDARKCLOUDCOVER_OpenCore( sp, inOpen, inHigh, inLow, inClose, 0, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1 );
    }
 
-   private RetCode CDLDARKCLOUDCOVER_OpenAndFillInternalBody( CDLDARKCLOUDCOVER_Stream sp, double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   private RetCode CDLDARKCLOUDCOVER_OpenAndFillInternalBody( CDLDARKCLOUDCOVER_Stream sp, ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       return CDLDARKCLOUDCOVER_OpenCore(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger, 1);
    }
 
    /* CDLDARKCLOUDCOVER_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFillInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, int[] outInteger )
+   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFillInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration, out int outBegIdx, out int outNBElement, Span<int> outInteger )
    {
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
       RetCode retCode = CDLDARKCLOUDCOVER_OpenAndFillInternalBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration, out outBegIdx, out outNBElement, outInteger);
@@ -731,7 +726,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind CDLDARKCLOUDCOVER_Open (composition seam). */
-   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenInternal( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, int startIdx, double optInPenetration )
+   internal CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenInternal( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, double optInPenetration )
    {
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
       RetCode retCode = CDLDARKCLOUDCOVER_OpenBody(sp, inOpen, inHigh, inLow, inClose, startIdx, optInPenetration);
@@ -762,12 +757,12 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_Open( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration )
+   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_Open( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       return CDLDARKCLOUDCOVER_OpenInternal(inOpen, inHigh, inLow, inClose, 0, optInPenetration);
    }
 
@@ -801,13 +796,12 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( double[] inOpen, double[] inHigh, double[] inLow, double[] inClose, double optInPenetration, int[] outInteger )
+   public CDLDARKCLOUDCOVER_Stream CDLDARKCLOUDCOVER_OpenAndFill( ReadOnlySpan<double> inOpen, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, double optInPenetration, Span<int> outInteger )
    {
-      ArgumentNullException.ThrowIfNull(inOpen);
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(inClose);
-      ArgumentNullException.ThrowIfNull(outInteger);
+      if( inOpen.IsEmpty ) throw new ArgumentException("inOpen is empty", nameof(inOpen));
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
+      if( inClose.IsEmpty ) throw new ArgumentException("inClose is empty", nameof(inClose));
       CDLDARKCLOUDCOVER_Stream sp = new CDLDARKCLOUDCOVER_Stream(this);
       RetCode retCode = CDLDARKCLOUDCOVER_OpenAndFillBody(sp, inOpen, inHigh, inLow, inClose, optInPenetration, out int outBegIdx, out int outNBElement, outInteger);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

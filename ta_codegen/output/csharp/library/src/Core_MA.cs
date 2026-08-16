@@ -135,12 +135,12 @@ public partial class Core
    }
    internal RetCode MA( int startIdx,
                         int endIdx,
-                        double[] inReal,
+                        ReadOnlySpan<double> inReal,
                         int optInTimePeriod,
                         MAType optInMAType,
                         out int outBegIdx,
                         out int outNBElement,
-                        double[] outReal )
+                        Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -220,12 +220,12 @@ public partial class Core
    }
    internal RetCode MA( int startIdx,
                         int endIdx,
-                        float[] inReal,
+                        ReadOnlySpan<float> inReal,
                         int optInTimePeriod,
                         MAType optInMAType,
                         out int outBegIdx,
                         out int outNBElement,
-                        double[] outReal )
+                        Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -339,13 +339,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MA( int startIdx,
                        int endIdx,
-                       double[] inReal,
+                       ReadOnlySpan<double> inReal,
                        int optInTimePeriod,
                        MAType optInMAType,
-                       double[] outReal )
+                       Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
@@ -401,13 +400,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MA( int startIdx,
                        int endIdx,
-                       float[] inReal,
+                       ReadOnlySpan<float> inReal,
                        int optInTimePeriod,
                        MAType optInMAType,
-                       double[] outReal )
+                       Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = MA(startIdx, endIdx, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MA", retCode);
@@ -698,7 +696,7 @@ public partial class Core
       }
    }
 
-   private RetCode MA_OpenBody( MA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
+   private RetCode MA_OpenBody( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       int historyLen = inReal.Length;
       if( historyLen < 1 ) {
@@ -800,7 +798,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillBody( MA_Stream sp, double[] inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MA_OpenAndFillBody( MA_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -821,7 +819,7 @@ public partial class Core
       } else if( (int)optInMAType < MATypes.Min || (int)optInMAType > MATypes.Max ) {
          return RetCode.BadParam;
       }
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       if( historyLen < MA_Lookback(optInTimePeriod, optInMAType) + 1 ) {
@@ -933,7 +931,7 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MA_OpenAndFillInternalBody( MA_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MA_OpenAndFillInternalBody( MA_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1048,7 +1046,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MA_Open (composition seam). */
-   internal MA_Stream MA_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
+   internal MA_Stream MA_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType )
    {
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInMAType);
@@ -1076,9 +1074,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MA_Stream MA_Open( double[] inReal, int optInTimePeriod, MAType optInMAType )
+   public MA_Stream MA_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return MA_OpenInternal(inReal, 0, optInTimePeriod, optInMAType);
    }
 
@@ -1107,10 +1105,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MA_Stream MA_OpenAndFill( double[] inReal, int optInTimePeriod, MAType optInMAType, double[] outReal )
+   public MA_Stream MA_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, MAType optInMAType, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillBody(sp, inReal, optInTimePeriod, optInMAType, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
@@ -1121,7 +1118,7 @@ public partial class Core
    }
 
    /* MA_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MA_Stream MA_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MA_Stream MA_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, MAType optInMAType, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MA_Stream sp = new MA_Stream(this);
       RetCode retCode = MA_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInMAType, out outBegIdx, out outNBElement, outReal);

@@ -71,10 +71,10 @@ public partial class Core
    }
    internal RetCode SIN( int startIdx,
                          int endIdx,
-                         double[] inReal,
+                         ReadOnlySpan<double> inReal,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -95,10 +95,10 @@ public partial class Core
    }
    internal RetCode SIN( int startIdx,
                          int endIdx,
-                         float[] inReal,
+                         ReadOnlySpan<float> inReal,
                          out int outBegIdx,
                          out int outNBElement,
-                         double[] outReal )
+                         Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -148,11 +148,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SIN( int startIdx,
                         int endIdx,
-                        double[] inReal,
-                        double[] outReal )
+                        ReadOnlySpan<double> inReal,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = SIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SIN", retCode);
@@ -196,11 +195,10 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange SIN( int startIdx,
                         int endIdx,
-                        float[] inReal,
-                        double[] outReal )
+                        ReadOnlySpan<float> inReal,
+                        Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = SIN(startIdx, endIdx, inReal, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("SIN", retCode);
@@ -307,7 +305,7 @@ public partial class Core
       sp.cur_outReal = Math.Sin(inReal);
    }
 
-   private RetCode SIN_OpenCore( SIN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode SIN_OpenCore( SIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -331,29 +329,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode SIN_OpenBody( SIN_Stream sp, double[] inReal, int startIdx )
+   private RetCode SIN_OpenBody( SIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return SIN_OpenCore( sp, inReal, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode SIN_OpenAndFillBody( SIN_Stream sp, double[] inReal, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SIN_OpenAndFillBody( SIN_Stream sp, ReadOnlySpan<double> inReal, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal) ) {
+      if( outReal.Overlaps(inReal) ) {
          return RetCode.BadParam;
       }
       return SIN_OpenCore( sp, inReal, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode SIN_OpenAndFillInternalBody( SIN_Stream sp, double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode SIN_OpenAndFillInternalBody( SIN_Stream sp, ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return SIN_OpenCore(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* SIN_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SIN_Stream SIN_OpenAndFillInternal( double[] inReal, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal SIN_Stream SIN_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       SIN_Stream sp = new SIN_Stream(this);
       RetCode retCode = SIN_OpenAndFillInternalBody(sp, inReal, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -364,7 +362,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind SIN_Open (composition seam). */
-   internal SIN_Stream SIN_OpenInternal( double[] inReal, int startIdx )
+   internal SIN_Stream SIN_OpenInternal( ReadOnlySpan<double> inReal, int startIdx )
    {
       SIN_Stream sp = new SIN_Stream(this);
       RetCode retCode = SIN_OpenBody(sp, inReal, startIdx);
@@ -388,9 +386,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public SIN_Stream SIN_Open( double[] inReal )
+   public SIN_Stream SIN_Open( ReadOnlySpan<double> inReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return SIN_OpenInternal(inReal, 0);
    }
 
@@ -415,10 +413,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public SIN_Stream SIN_OpenAndFill( double[] inReal, double[] outReal )
+   public SIN_Stream SIN_OpenAndFill( ReadOnlySpan<double> inReal, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       SIN_Stream sp = new SIN_Stream(this);
       RetCode retCode = SIN_OpenAndFillBody(sp, inReal, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

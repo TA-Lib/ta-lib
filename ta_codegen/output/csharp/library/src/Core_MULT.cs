@@ -71,11 +71,11 @@ public partial class Core
    }
    internal RetCode MULT( int startIdx,
                           int endIdx,
-                          double[] inReal0,
-                          double[] inReal1,
+                          ReadOnlySpan<double> inReal0,
+                          ReadOnlySpan<double> inReal1,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -100,11 +100,11 @@ public partial class Core
    }
    internal RetCode MULT( int startIdx,
                           int endIdx,
-                          float[] inReal0,
-                          float[] inReal1,
+                          ReadOnlySpan<float> inReal0,
+                          ReadOnlySpan<float> inReal1,
                           out int outBegIdx,
                           out int outNBElement,
-                          double[] outReal )
+                          Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -159,13 +159,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MULT( int startIdx,
                          int endIdx,
-                         double[] inReal0,
-                         double[] inReal1,
-                         double[] outReal )
+                         ReadOnlySpan<double> inReal0,
+                         ReadOnlySpan<double> inReal1,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       RetCode retCode = MULT(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MULT", retCode);
@@ -210,13 +209,12 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange MULT( int startIdx,
                          int endIdx,
-                         float[] inReal0,
-                         float[] inReal1,
-                         double[] outReal )
+                         ReadOnlySpan<float> inReal0,
+                         ReadOnlySpan<float> inReal1,
+                         Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       RetCode retCode = MULT(startIdx, endIdx, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       if( retCode != RetCode.Success ) {
          throw Failure("MULT", retCode);
@@ -325,7 +323,7 @@ public partial class Core
       sp.cur_outReal = inReal0 * inReal1;
    }
 
-   private RetCode MULT_OpenCore( MULT_Stream sp, double[] inReal0, double[] inReal1, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal, int outStride )
+   private RetCode MULT_OpenCore( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -353,29 +351,29 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode MULT_OpenBody( MULT_Stream sp, double[] inReal0, double[] inReal1, int startIdx )
+   private RetCode MULT_OpenBody( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       double[] sink_outReal = new double[1];
       return MULT_OpenCore( sp, inReal0, inReal1, startIdx, out _, out _, sink_outReal, 0 );
    }
 
-   private RetCode MULT_OpenAndFillBody( MULT_Stream sp, double[] inReal0, double[] inReal1, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MULT_OpenAndFillBody( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outReal, inReal0) || ReferenceEquals(outReal, inReal1) ) {
+      if( outReal.Overlaps(inReal0) || outReal.Overlaps(inReal1) ) {
          return RetCode.BadParam;
       }
       return MULT_OpenCore( sp, inReal0, inReal1, 0, out outBegIdx, out outNBElement, outReal, 1 );
    }
 
-   private RetCode MULT_OpenAndFillInternalBody( MULT_Stream sp, double[] inReal0, double[] inReal1, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   private RetCode MULT_OpenAndFillInternalBody( MULT_Stream sp, ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       return MULT_OpenCore(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal, 1);
    }
 
    /* MULT_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal MULT_Stream MULT_OpenAndFillInternal( double[] inReal0, double[] inReal1, int startIdx, out int outBegIdx, out int outNBElement, double[] outReal )
+   internal MULT_Stream MULT_OpenAndFillInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx, out int outBegIdx, out int outNBElement, Span<double> outReal )
    {
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenAndFillInternalBody(sp, inReal0, inReal1, startIdx, out outBegIdx, out outNBElement, outReal);
@@ -386,7 +384,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind MULT_Open (composition seam). */
-   internal MULT_Stream MULT_OpenInternal( double[] inReal0, double[] inReal1, int startIdx )
+   internal MULT_Stream MULT_OpenInternal( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, int startIdx )
    {
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenBody(sp, inReal0, inReal1, startIdx);
@@ -411,10 +409,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public MULT_Stream MULT_Open( double[] inReal0, double[] inReal1 )
+   public MULT_Stream MULT_Open( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1 )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       return MULT_OpenInternal(inReal0, inReal1, 0);
    }
 
@@ -440,11 +438,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public MULT_Stream MULT_OpenAndFill( double[] inReal0, double[] inReal1, double[] outReal )
+   public MULT_Stream MULT_OpenAndFill( ReadOnlySpan<double> inReal0, ReadOnlySpan<double> inReal1, Span<double> outReal )
    {
-      ArgumentNullException.ThrowIfNull(inReal0);
-      ArgumentNullException.ThrowIfNull(inReal1);
-      ArgumentNullException.ThrowIfNull(outReal);
+      if( inReal0.IsEmpty ) throw new ArgumentException("inReal0 is empty", nameof(inReal0));
+      if( inReal1.IsEmpty ) throw new ArgumentException("inReal1 is empty", nameof(inReal1));
       MULT_Stream sp = new MULT_Stream(this);
       RetCode retCode = MULT_OpenAndFillBody(sp, inReal0, inReal1, out int outBegIdx, out int outNBElement, outReal);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

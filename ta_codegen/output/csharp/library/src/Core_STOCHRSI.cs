@@ -108,19 +108,19 @@ public partial class Core
    }
    internal RetCode STOCHRSI( int startIdx,
                               int endIdx,
-                              double[] inReal,
+                              ReadOnlySpan<double> inReal,
                               int optInTimePeriod,
                               int optInFastK_Period,
                               int optInFastD_Period,
                               MAType optInFastD_MAType,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outFastK,
-                              double[] outFastD )
+                              Span<double> outFastK,
+                              Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempRSIBuffer;
+      Span<double> tempRSIBuffer;
       RetCode retCode;
       int lookbackTotal = 0;
       int lookbackSTOCHF = 0;
@@ -214,19 +214,19 @@ public partial class Core
    }
    internal RetCode STOCHRSI( int startIdx,
                               int endIdx,
-                              float[] inReal,
+                              ReadOnlySpan<float> inReal,
                               int optInTimePeriod,
                               int optInFastK_Period,
                               int optInFastD_Period,
                               MAType optInFastD_MAType,
                               out int outBegIdx,
                               out int outNBElement,
-                              double[] outFastK,
-                              double[] outFastD )
+                              Span<double> outFastK,
+                              Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempRSIBuffer;
+      Span<double> tempRSIBuffer;
       RetCode retCode;
       int lookbackTotal = 0;
       int lookbackSTOCHF = 0;
@@ -343,17 +343,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCHRSI( int startIdx,
                              int endIdx,
-                             double[] inReal,
+                             ReadOnlySpan<double> inReal,
                              int optInTimePeriod,
                              int optInFastK_Period,
                              int optInFastD_Period,
                              MAType optInFastD_MAType,
-                             double[] outFastK,
-                             double[] outFastD )
+                             Span<double> outFastK,
+                             Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
@@ -417,17 +415,15 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange STOCHRSI( int startIdx,
                              int endIdx,
-                             float[] inReal,
+                             ReadOnlySpan<float> inReal,
                              int optInTimePeriod,
                              int optInFastK_Period,
                              int optInFastD_Period,
                              MAType optInFastD_MAType,
-                             double[] outFastK,
-                             double[] outFastD )
+                             Span<double> outFastK,
+                             Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       RetCode retCode = STOCHRSI(startIdx, endIdx, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       if( retCode != RetCode.Success ) {
          throw Failure("STOCHRSI", retCode);
@@ -597,11 +593,11 @@ public partial class Core
       sp.cur_outFastD = cur_outFastD;
    }
 
-   private RetCode STOCHRSI_OpenCore( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD, int outStride )
+   private RetCode STOCHRSI_OpenCore( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      double[] tempRSIBuffer;
+      Span<double> tempRSIBuffer;
       RetCode retCode;
       int lookbackTotal = 0;
       int lookbackSTOCHF = 0;
@@ -640,8 +636,8 @@ public partial class Core
       if( historyLen < STOCHRSI_Lookback(optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType) + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      double[] sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
-      double[] sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
+      Span<double> sc_outFastK = outStride == 1 ? outFastK : new double[historyLen];
+      Span<double> sc_outFastD = outStride == 1 ? outFastD : new double[historyLen];
       /* Stochastic RSI
        *
        * Reference: "Stochastic RSI and Dynamic Momentum Index"
@@ -696,7 +692,7 @@ public partial class Core
        * sub-call's own startIdx (the seeding point). */
       int subLen1 = (tempArraySize - 1) + 1;
       double[] subSrc1_0 = new double[subLen1];
-      Array.Copy(tempRSIBuffer, subSrc1_0, subLen1);
+      tempRSIBuffer.Slice(0, subLen1).CopyTo(subSrc1_0);
       STOCHF_Stream sub1 = STOCHF_OpenAndFillInternal(subSrc1_0, subSrc1_0, subSrc1_0, 0, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx2, out outNBElement, sc_outFastK, sc_outFastD);
       retCode = RetCode.Success;
       if( retCode != RetCode.Success || (int)outNBElement == 0 ) {
@@ -719,30 +715,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   private RetCode STOCHRSI_OpenBody( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       double[] sink_outFastK = new double[1];
       double[] sink_outFastD = new double[1];
       return STOCHRSI_OpenCore( sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out _, out _, sink_outFastK, sink_outFastD, 0 );
    }
 
-   private RetCode STOCHRSI_OpenAndFillBody( STOCHRSI_Stream sp, double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   private RetCode STOCHRSI_OpenAndFillBody( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outFastK, inReal) || ReferenceEquals(outFastD, inReal) || ReferenceEquals(outFastK, outFastD) ) {
+      if( outFastK.Overlaps(inReal) || outFastD.Overlaps(inReal) || outFastK.Overlaps(outFastD) ) {
          return RetCode.BadParam;
       }
       return STOCHRSI_OpenCore( sp, inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1 );
    }
 
-   private RetCode STOCHRSI_OpenAndFillInternalBody( STOCHRSI_Stream sp, double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   private RetCode STOCHRSI_OpenAndFillInternalBody( STOCHRSI_Stream sp, ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       return STOCHRSI_OpenCore(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD, 1);
    }
 
    /* STOCHRSI_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, double[] outFastK, double[] outFastD )
+   internal STOCHRSI_Stream STOCHRSI_OpenAndFillInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, out int outBegIdx, out int outNBElement, Span<double> outFastK, Span<double> outFastD )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillInternalBody(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out outBegIdx, out outNBElement, outFastK, outFastD);
@@ -753,7 +749,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind STOCHRSI_Open (composition seam). */
-   internal STOCHRSI_Stream STOCHRSI_OpenInternal( double[] inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   internal STOCHRSI_Stream STOCHRSI_OpenInternal( ReadOnlySpan<double> inReal, int startIdx, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenBody(sp, inReal, startIdx, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -787,9 +783,9 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public STOCHRSI_Stream STOCHRSI_Open( double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
+   public STOCHRSI_Stream STOCHRSI_Open( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       return STOCHRSI_OpenInternal(inReal, 0, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
    }
 
@@ -825,11 +821,9 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public STOCHRSI_Stream STOCHRSI_OpenAndFill( double[] inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, double[] outFastK, double[] outFastD )
+   public STOCHRSI_Stream STOCHRSI_OpenAndFill( ReadOnlySpan<double> inReal, int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType, Span<double> outFastK, Span<double> outFastD )
    {
-      ArgumentNullException.ThrowIfNull(inReal);
-      ArgumentNullException.ThrowIfNull(outFastK);
-      ArgumentNullException.ThrowIfNull(outFastD);
+      if( inReal.IsEmpty ) throw new ArgumentException("inReal is empty", nameof(inReal));
       STOCHRSI_Stream sp = new STOCHRSI_Stream(this);
       RetCode retCode = STOCHRSI_OpenAndFillBody(sp, inReal, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, out int outBegIdx, out int outNBElement, outFastK, outFastD);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);

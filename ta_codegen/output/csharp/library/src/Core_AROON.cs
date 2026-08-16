@@ -81,13 +81,13 @@ public partial class Core
    }
    internal RetCode AROON( int startIdx,
                            int endIdx,
-                           double[] inHigh,
-                           double[] inLow,
+                           ReadOnlySpan<double> inHigh,
+                           ReadOnlySpan<double> inLow,
                            int optInTimePeriod,
                            out int outBegIdx,
                            out int outNBElement,
-                           double[] outAroonDown,
-                           double[] outAroonUp )
+                           Span<double> outAroonDown,
+                           Span<double> outAroonUp )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -198,13 +198,13 @@ public partial class Core
    }
    internal RetCode AROON( int startIdx,
                            int endIdx,
-                           float[] inHigh,
-                           float[] inLow,
+                           ReadOnlySpan<float> inHigh,
+                           ReadOnlySpan<float> inLow,
                            int optInTimePeriod,
                            out int outBegIdx,
                            out int outNBElement,
-                           double[] outAroonDown,
-                           double[] outAroonUp )
+                           Span<double> outAroonDown,
+                           Span<double> outAroonUp )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -330,16 +330,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AROON( int startIdx,
                           int endIdx,
-                          double[] inHigh,
-                          double[] inLow,
+                          ReadOnlySpan<double> inHigh,
+                          ReadOnlySpan<double> inLow,
                           int optInTimePeriod,
-                          double[] outAroonDown,
-                          double[] outAroonUp )
+                          Span<double> outAroonDown,
+                          Span<double> outAroonUp )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outAroonDown);
-      ArgumentNullException.ThrowIfNull(outAroonUp);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.Success ) {
          throw Failure("AROON", retCode);
@@ -391,16 +389,14 @@ public partial class Core
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
    public OutRange AROON( int startIdx,
                           int endIdx,
-                          float[] inHigh,
-                          float[] inLow,
+                          ReadOnlySpan<float> inHigh,
+                          ReadOnlySpan<float> inLow,
                           int optInTimePeriod,
-                          double[] outAroonDown,
-                          double[] outAroonUp )
+                          Span<double> outAroonDown,
+                          Span<double> outAroonUp )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outAroonDown);
-      ArgumentNullException.ThrowIfNull(outAroonUp);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       RetCode retCode = AROON(startIdx, endIdx, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       if( retCode != RetCode.Success ) {
          throw Failure("AROON", retCode);
@@ -631,7 +627,7 @@ public partial class Core
       sp.today += 1;
    }
 
-   private RetCode AROON_OpenCore( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp, int outStride )
+   private RetCode AROON_OpenCore( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -769,30 +765,30 @@ public partial class Core
       return RetCode.Success;
    }
 
-   private RetCode AROON_OpenBody( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   private RetCode AROON_OpenBody( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       double[] sink_outAroonDown = new double[1];
       double[] sink_outAroonUp = new double[1];
       return AROON_OpenCore( sp, inHigh, inLow, startIdx, optInTimePeriod, out _, out _, sink_outAroonDown, sink_outAroonUp, 0 );
    }
 
-   private RetCode AROON_OpenAndFillBody( AROON_Stream sp, double[] inHigh, double[] inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   private RetCode AROON_OpenAndFillBody( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
    {
       outBegIdx = 0;
       outNBElement = 0;
-      if( ReferenceEquals(outAroonDown, inHigh) || ReferenceEquals(outAroonDown, inLow) || ReferenceEquals(outAroonUp, inHigh) || ReferenceEquals(outAroonUp, inLow) || ReferenceEquals(outAroonDown, outAroonUp) ) {
+      if( outAroonDown.Overlaps(inHigh) || outAroonDown.Overlaps(inLow) || outAroonUp.Overlaps(inHigh) || outAroonUp.Overlaps(inLow) || outAroonDown.Overlaps(outAroonUp) ) {
          return RetCode.BadParam;
       }
       return AROON_OpenCore( sp, inHigh, inLow, 0, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1 );
    }
 
-   private RetCode AROON_OpenAndFillInternalBody( AROON_Stream sp, double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   private RetCode AROON_OpenAndFillInternalBody( AROON_Stream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
    {
       return AROON_OpenCore(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp, 1);
    }
 
    /* AROON_OpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal AROON_Stream AROON_OpenAndFillInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, double[] outAroonDown, double[] outAroonUp )
+   internal AROON_Stream AROON_OpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod, out int outBegIdx, out int outNBElement, Span<double> outAroonDown, Span<double> outAroonUp )
    {
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillInternalBody(sp, inHigh, inLow, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outAroonDown, outAroonUp);
@@ -803,7 +799,7 @@ public partial class Core
    }
 
    /* Internal startIdx-anchored open behind AROON_Open (composition seam). */
-   internal AROON_Stream AROON_OpenInternal( double[] inHigh, double[] inLow, int startIdx, int optInTimePeriod )
+   internal AROON_Stream AROON_OpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int startIdx, int optInTimePeriod )
    {
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenBody(sp, inHigh, inLow, startIdx, optInTimePeriod);
@@ -830,10 +826,10 @@ public partial class Core
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
    /// have different lengths.</exception>
    /// <exception cref="System.ArgumentNullException">An input array is null.</exception>
-   public AROON_Stream AROON_Open( double[] inHigh, double[] inLow, int optInTimePeriod )
+   public AROON_Stream AROON_Open( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       return AROON_OpenInternal(inHigh, inLow, 0, optInTimePeriod);
    }
 
@@ -863,12 +859,10 @@ public partial class Core
    /// have different lengths, or an output array aliases an input or another
    /// output.</exception>
    /// <exception cref="System.ArgumentNullException">An input or output array is null.</exception>
-   public AROON_Stream AROON_OpenAndFill( double[] inHigh, double[] inLow, int optInTimePeriod, double[] outAroonDown, double[] outAroonUp )
+   public AROON_Stream AROON_OpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, int optInTimePeriod, Span<double> outAroonDown, Span<double> outAroonUp )
    {
-      ArgumentNullException.ThrowIfNull(inHigh);
-      ArgumentNullException.ThrowIfNull(inLow);
-      ArgumentNullException.ThrowIfNull(outAroonDown);
-      ArgumentNullException.ThrowIfNull(outAroonUp);
+      if( inHigh.IsEmpty ) throw new ArgumentException("inHigh is empty", nameof(inHigh));
+      if( inLow.IsEmpty ) throw new ArgumentException("inLow is empty", nameof(inLow));
       AROON_Stream sp = new AROON_Stream(this);
       RetCode retCode = AROON_OpenAndFillBody(sp, inHigh, inLow, optInTimePeriod, out int outBegIdx, out int outNBElement, outAroonDown, outAroonUp);
       sp.fillRange = new OutRange(outBegIdx, outNBElement);
