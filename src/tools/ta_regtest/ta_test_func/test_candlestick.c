@@ -3478,9 +3478,12 @@ static void build_dojistar( void )
  * Six flat, parameterless patterns, and the first unit where CONDITIONS ARE
  * ENTAILED BY THEIR SIBLINGS. Every previous unit had a flip for every
  * condition; these constrain the same prices from several directions at once,
- * so six of the thirty-six cannot be falsified alone and carry a derivation
+ * so five of the thirty-six cannot be falsified alone and carry a derivation
  * instead. Each waiver is refutable in the usual way: produce a flip whose
- * paired control fires and it is wrong.
+ * paired control fires and it is wrong -- and a sixth was, so read the ones
+ * that remain as claims rather than as settled facts. All five reason purely
+ * from inequalities among prices, which hold for any valid OHLC; the refuted
+ * one reasoned about a settings average, which the builder controls.
  *
  * INNECK, ONNECK, THRUSTING and PIERCING share their first conditions
  * character for character -- prior black, prior long, this white, this opening
@@ -3495,9 +3498,19 @@ static void build_dojistar( void )
  *   THRUSTING  close(i) above close(i-1) + Equal, up to the prior body's midpoint
  *   PIERCING   close(i) above that same midpoint, below the prior OPEN
  *
- * The prior bar is (105,106,96,100) throughout: black, body 5, and a HighLow
- * of exactly 10 so it leaves the averages at i on their exact values, as in
- * unit 3. Its close is 100, its low 96, its open 105, and avg(Equal) is 0.5.
+ * The prior bar is (112,113,96,100) throughout: black, open 112, close 100,
+ * low 96, real body 12. The body is the load-bearing part. It sits inside the
+ * 10-bar window ending at i, so it sets the averages THERE, and 12 keeps them
+ * exact where unit 3's body of 5 would not:
+ *
+ *   prior body  5  ->  avg at i = (9*2 +  5)/10 = 2.2999999999999998
+ *   prior body 12  ->  avg at i = (9*2 + 12)/10 = 3.0   exact
+ *                      midpoint = 100 + 12*0.5  = 106   exact
+ *
+ * Only RealBody-typed settings and an Equal read at i-1 are consulted by these
+ * six, and avg(Equal, i-1) excludes bar i-1, so the prior bar's HighLow is free
+ * to be whatever the body needs. avg(Equal, i-1) is 0.5 off the primer alone,
+ * and avg(BodyLong, i-1) is 2.
  */
 
 /* CDLINNECK -- the white candle closes just barely into the prior black body.
@@ -3800,11 +3813,15 @@ static void build_thrusting( void )
  *   c5  close(i) < open(i-1)
  *   c6  close(i) > close(i-1) + realbody(i-1) * 0.5
  *
- * Three of the seven are entailed, the most of any pattern covered so far, and
- * they are entailed for three different reasons -- which is why each carries
- * its own derivation rather than one shared note. THRUSTING's c5 and this c6
- * are the same midpoint approached from opposite sides, so the two patterns
+ * Two of the seven are entailed, for two different reasons, so each carries its
+ * own derivation rather than one shared note. THRUSTING's c5 and this c6 are
+ * the same midpoint approached from opposite sides, so the two patterns
  * partition the prior body between them.
+ *
+ * c3 is NOT entailed, though it reads as if it were: c4 and c6 do bound
+ * realbody(i) from below, but by a quantity built from the PRIOR bar, while the
+ * average c3 tests against is set by the ten bars before i -- which the builder
+ * chooses. Lift the primer and the average clears the bound. See the flip.
  */
 static void cond_piercing( int i, int *c )
 {
@@ -3828,11 +3845,6 @@ static void build_piercing( void )
   pb_waive(2, "c4 puts open(i) below low(i-1) <= close(i-1), and c6 puts close(i) "
               "above close(i-1). So close(i) > open(i) and the candle is white by "
               "construction");
-  pb_waive(3, "c4 and c6 bracket the body from both ends: open(i) < low(i-1) and "
-              "close(i) > close(i-1) + realbody(i-1)/2, so realbody(i) exceeds "
-              "close(i-1) + realbody(i-1)/2 - low(i-1). On the detect bars that is "
-              "6.5 against an average of 2, and it cannot be shrunk to the average "
-              "without releasing c4 or c6 first");
 
   pb_flat(6);
   pb_primer(12,100,2,4);
@@ -3850,6 +3862,31 @@ static void build_piercing( void )
   pb_bar(112,113,96,100);
   int k1=pb_bar(95,113,94,108);
   pb_control(k1,100,1,"restore c1: prior body 12 > 2");
+  pb_flat(8);
+
+  /* c3 is the only condition in this unit whose threshold the BUILDER sets, and
+   * that is what makes it flippable. c4 and c6 do bound realbody(i) from below
+   * -- open(i) < low(i-1) and close(i) > close(i-1) + realbody(i-1)/2 give
+   * realbody(i) > realbody(i-1)/2 + (close(i-1) - low(i-1)) -- but every term
+   * there comes from the PRIOR bar, while avg(BodyLong, i) is the mean body
+   * over the ten bars ending at i-1. Raising the primer raises the average and
+   * leaves the floor where it was.
+   *
+   * Primer 10 with a prior body of 20 and low == close puts that floor at
+   * 20/2 + 0 = 10 and the average at (9*10 + 20)/10 = 11 exact, so realbody(i)
+   * in (10, 11] breaks c3 and nothing else. c4 then needs open(i) < 100 and c6
+   * needs close(i) > 110: open 99.5 / close 110.5 clears both by a hair while
+   * realbody(i) lands exactly ON the average, which is where a strict test has
+   * to be pinned -- the same shape as c1's flip above. */
+  pb_primer(12,100,10,4);
+  pb_bar(120,120,100,100);                 /* prior: black, body 20, low == close */
+  int f3=pb_bar(99.5,110.5,99.5,110.5);    /* body 11 == avg 11 */
+  pb_flip(f3,3,"break c3: body 11 == avg 11, the test is strict");
+  pb_flat(8);
+  pb_primer(12,100,10,4);
+  pb_bar(120,120,100,100);
+  int k3=pb_bar(99.5,111.5,99.5,111.5);    /* body 12 > avg 11 */
+  pb_control(k3,100,3,"restore c3: body 12 > avg 11");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
