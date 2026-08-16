@@ -4142,7 +4142,14 @@ static void build_counterattack( void )
  *   avg(BodyShort, i)   = (8P + A + B)/10    both are
  *
  * P=2 with A=12, B=2 gives 2.0, 3.0, 3.0 -- all exact -- and that is what the
- * two STAR builders use. The DOJISTAR builders cannot: their middle bar must
+ * two STAR builders use, except in the c5 control, which raises B to 3 so that
+ * it sits ON the inclusive boundary (3 <= 3) instead of inside it. c5 is the
+ * one conjunct here spelled <= rather than <, and a control strictly inside it
+ * leaves the two indistinguishable: 2 <= 3 and 2 < 3 are both true, so nothing
+ * would fail were the library to lose the equality. The DOJISTAR pair gets the
+ * placement for free -- its doji body of 1 is exactly its threshold.
+ *
+ * The DOJISTAR builders cannot use the STAR geometry: their middle bar must
  * be a doji, so B is 0, and their c5 reads BodyDoji, which is HighLow-typed
  * and therefore constrains the FIRST bar's high-low range to 10 -- capping its
  * body at 10, so A=12 is unavailable. A=4, B=0 gives 2.0, 1.0, 2.0 instead,
@@ -4355,9 +4362,9 @@ static void build_morningstar( void )
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(112,113,96,100);
-  pb_bar(97,98,94,95);                     /* body 2 */
+  pb_bar(97,98,93,94);                     /* body 3 == avg 3, the inclusive side */
   int k5=pb_bar(99,105,98,104);
-  pb_control(k5,100,5,"restore c5: second body 2 <= 3");
+  pb_control(k5,100,5,"restore c5: second body 3 == avg 3, inclusive");
   pb_flat(8);
 
   pb_primer(12,100,2,4);
@@ -4484,9 +4491,9 @@ static void build_eveningstar( void )
   pb_flat(8);
   pb_primer(12,100,2,4);
   pb_bar(100,113,96,112);
-  pb_bar(115,118,114,117);
+  pb_bar(115,119,114,118);                 /* body 3 == avg 3, the inclusive side */
   int k5=pb_bar(113,114,107,108);
-  pb_control(k5,-100,5,"restore c5: second body 2 <= 3");
+  pb_control(k5,-100,5,"restore c5: second body 3 == avg 3, inclusive");
   pb_flat(8);
 
   pb_primer(12,100,2,4);

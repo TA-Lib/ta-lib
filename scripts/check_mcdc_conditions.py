@@ -312,11 +312,34 @@ def main():
     test_path = os.path.join(root, TEST_FILE)
     src = strip_comments(open(test_path, encoding="utf-8").read())
 
-    # build_<x>() ... pb_check_mcdc("CDL<NAME>"  -- the call line pairs them.
+    # build_<x>() ... pb_check_mcdc*("CDL<NAME>"  -- the call line pairs them.
+    # The entry point is matched by prefix, not exactly: the penetration
+    # patterns register through pb_check_mcdc_p, and a pattern demanding a
+    # bare `(` silently dropped all five of them.
     pairs = re.findall(
-        r"(build_\w+)\s*\(\s*\)\s*;\s*e\s*=\s*pb_check_mcdc\(\s*\"([A-Z0-9_]+)\"", src)
+        r"(build_\w+)\s*\(\s*\)\s*;\s*e\s*=\s*pb_check_mcdc\w*\(\s*\"([A-Z0-9_]+)\"",
+        src)
     if not pairs:
         sys.exit("check_mcdc_conditions: found no pb_check_mcdc call sites")
+
+    # Then fail CLOSED, and do it against the BUILDERS rather than against the
+    # registrations. A builder this pairing never reaches is not reported as
+    # skipped -- it simply is not printed, and the run still ends in OK, which
+    # is how five functions went unchecked while the gate stayed green. Keying
+    # the completeness check on the entry-point name would inherit whatever
+    # blind spot the pairing has; keying it on `pb_conditions()` does not,
+    # because that call is what the check exists to pin and no renaming of the
+    # entry point can hide it.
+    unpaired = sorted(
+        fn for fn, body in re.findall(
+            r"static void (build_\w+)\(\s*void\s*\)\s*\{(.*?)\n\}", src, re.S)
+        if re.search(r"pb_conditions\(", body)
+        and fn not in set(p[0] for p in pairs))
+    if unpaired:
+        sys.exit("check_mcdc_conditions: %d builder(s) declare pb_conditions() "
+                 "but pair with no pb_check_mcdc* registration, so their "
+                 "declared count is unchecked: %s"
+                 % (len(unpaired), ", ".join(unpaired)))
 
     # pb_conditions(N) declared inside each builder body.
     declared = {}
